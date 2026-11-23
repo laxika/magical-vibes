@@ -6,13 +6,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentCreatesTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetOpponentMayDrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -49,7 +51,9 @@ public class Phelddagrif extends Card {
                 OPPONENT_TARGET));
 
         addActivatedAbility(new ActivatedAbility(false, "{U}",
-                List.of(ReturnToHandEffect.self(), TargetOpponentMayDrawCardEffect.ofChosenTarget()),
+                List.of(ReturnToHandEffect.self(), new MayEffect(
+                        new DrawCardEffect(1, Subjects.targetPlayerDeclaredElsewhere()), "Draw a card?", null,
+                        MayChoicePlayer.TARGET_PLAYER)),
                 "{U}: Return Phelddagrif to its owner's hand. Target opponent may draw a card.",
                 OPPONENT_TARGET));
     }

@@ -145,7 +145,17 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, PlayerSubject play
      * resolves without targeting ("deals 1 damage to that player or a planeswalker that player controls").
      */
     public static DealDamageToPlayersEffect toPlayerOrTheirPlaneswalker(int damage, PlayerSubject player) {
-        return new DealDamageToPlayersEffect(new Fixed(damage), player, null, false, false, null,
+        return toPlayerOrTheirPlaneswalker(new Fixed(damage), player);
+    }
+
+    /**
+     * Deals {@code amount} to the player {@code player} names or to a planeswalker that player controls, chosen as it
+     * resolves without targeting ("choose an opponent at random. It deals damage equal to that spell's mana value to that
+     * player or a planeswalker that player controls": {@code playersThisWay(CHOOSE)} after a
+     * {@code ChoosePlayerAtRandomEffect}, Vial Smasher the Fierce).
+     */
+    public static DealDamageToPlayersEffect toPlayerOrTheirPlaneswalker(DynamicAmount amount, PlayerSubject player) {
+        return new DealDamageToPlayersEffect(amount, player, null, false, false, null,
                 DamageSource.ABILITY_SOURCE, true);
     }
 

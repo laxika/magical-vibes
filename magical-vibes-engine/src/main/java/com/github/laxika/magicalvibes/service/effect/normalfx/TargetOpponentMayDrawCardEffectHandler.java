@@ -10,15 +10,13 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentMayDrawCardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link TargetOpponentMayDrawCardEffect}: queues the optional draw for the resolving
- * controller's opponent, so that player is the one asked. Mirrors how
- * {@code DefendingPlayerMayDrawCardEffect} routes Sibilant Spirit's draw to the defending player.
+ * controller's opponent, so that player is the one asked.
  */
 @Component
 @RequiredArgsConstructor
@@ -39,15 +37,7 @@ public class TargetOpponentMayDrawCardEffectHandler implements NormalEffectHandl
             return;
         }
 
-        UUID opponentId;
-        if (effect instanceof TargetOpponentMayDrawCardEffect draw && draw.chosenTarget()) {
-            List<UUID> bound = entry.targetsForBoundEffectGroup(effect);
-            opponentId = bound == null
-                    ? entry.getTargetId()
-                    : bound.stream().findFirst().orElse(null);
-        } else {
-            opponentId = gameQueryService.getOpponentId(gameData, controllerId);
-        }
+        UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
         if (opponentId == null) {
             return;
         }

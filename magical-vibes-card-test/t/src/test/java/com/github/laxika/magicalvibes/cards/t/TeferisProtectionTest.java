@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.cards.s.SerraAscendant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -39,7 +39,7 @@ class TeferisProtectionTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(land);
         assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(land);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentBears);
-        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), LifeTotalCantChangeUntilNextTurnEffect.class))
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), LifeTotalCantChangeEffect.class))
                 .isTrue();
         assertThat(gqs.playerHasProtectionFromEverything(gd, player1.getId())).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -78,7 +78,7 @@ class TeferisProtectionTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), LifeTotalCantChangeUntilNextTurnEffect.class))
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), LifeTotalCantChangeEffect.class))
                 .isTrue();
         assertThat(gqs.playerHasProtectionFromEverything(gd, player1.getId())).isTrue();
 
@@ -87,7 +87,7 @@ class TeferisProtectionTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
-        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), LifeTotalCantChangeUntilNextTurnEffect.class))
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), LifeTotalCantChangeEffect.class))
                 .isFalse();
         assertThat(gqs.playerHasProtectionFromEverything(gd, player1.getId())).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);

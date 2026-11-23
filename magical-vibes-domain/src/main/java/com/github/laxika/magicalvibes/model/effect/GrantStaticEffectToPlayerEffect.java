@@ -5,9 +5,13 @@ import java.util.Set;
 
 /**
  * Stamps a static effect onto each player {@code player} names as a player-scoped floating effect for {@code duration}:
- * "until end of turn" (Web of Inertia, Yusri, Fortune's Flame), "until your next turn" (Teferi's Protection) or "until a
- * player planeswalks" (Agyrem, Celestine Reef). The stamped effect is independent of the source's continued presence.
- * A target player ({@link Subjects#targetPlayer()}) is a harmful player target.
+ * "until end of turn" (Web of Inertia, Yusri, Fortune's Flame, Angel of Grace), "this combat" (Mirri, Weatherlight
+ * Duelist's "each opponent can't block with more than one creature"), "until your next turn" (Teferi's Protection, Fixed
+ * Point in Time) or "until a player planeswalks" (Agyrem, Celestine Reef). The stamped effect is independent of the
+ * source's continued presence; a reader asks for the player's floating copy ({@code GameData.hasFloatingEffectOnPlayer},
+ * {@code floatingEffectsOnPlayer}) beside the battlefield's static abilities. "Until your next turn" counts from the
+ * ability's controller and ends as that turn begins. A target player ({@link Subjects#targetPlayer()}) is a harmful
+ * player target.
  *
  * @param staticEffect static effect to apply to the player's scope
  * @param player       who gets it; the ability's controller by default
@@ -17,7 +21,8 @@ public record GrantStaticEffectToPlayerEffect(CardEffect staticEffect, PlayerSub
         implements CardEffect {
 
     private static final Set<Duration> DURATIONS =
-            Set.of(Duration.UNTIL_END_OF_TURN, Duration.UNTIL_YOUR_NEXT_TURN, Duration.UNTIL_PLANESWALK);
+            Set.of(Duration.UNTIL_END_OF_TURN, Duration.UNTIL_END_OF_COMBAT, Duration.UNTIL_YOUR_NEXT_TURN,
+                    Duration.UNTIL_PLANESWALK);
 
     public GrantStaticEffectToPlayerEffect {
         Objects.requireNonNull(staticEffect, "staticEffect");

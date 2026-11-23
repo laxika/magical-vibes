@@ -3,12 +3,10 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtFaceDownCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyCombatDamageFromTargetCreatureToOpponentsUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyControllerDamageToOpponentsAndTheirPermanentsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyControllerDamageToOpponentsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToDamagedPlayerUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageLifeFloorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetCreatureFromTargetingSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.CraftyCutpurseEffect;
 import com.github.laxika.magicalvibes.model.effect.GatherSpecimensEffect;
@@ -47,7 +45,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantSacrificeTargetThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LandManaProducesFixedColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LandsOfSubtypeProduceFixedManaColorUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsProduceFixedManaColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PayBlackManaWithLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MaxSpeedFreeFirstUnearthEffect;
@@ -2192,7 +2189,7 @@ public class GameQueryService {
      * effect prevents life-total changes).
      */
     public boolean canPlayerLifeChange(GameData gameData, UUID playerId) {
-        return !gameData.hasFloatingEffectOnPlayer(playerId, LifeTotalCantChangeUntilNextTurnEffect.class)
+        return !gameData.hasFloatingEffectOnPlayer(playerId, LifeTotalCantChangeEffect.class)
                 && !playerBattlefieldHasStaticEffect(gameData, playerId, LifeTotalCantChangeEffect.class);
     }
 
@@ -3059,7 +3056,7 @@ public class GameQueryService {
 
     /** Returns whether a player may look at opposing face-down creatures. */
     public boolean mayLookAtOpposingFaceDownCreatures(GameData gameData, UUID playerId) {
-        if (gameData.hasFloatingEffectOnPlayer(playerId, LookAtFaceDownCreaturesUntilEndOfTurnEffect.class)) {
+        if (gameData.hasFloatingEffectOnPlayer(playerId, LookAtFaceDownCreaturesEffect.class)) {
             return true;
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -3435,19 +3432,14 @@ public class GameQueryService {
 
     /**
      * Returns the highest life-total floor that damage dealt to this player can't reduce them past,
-     * or {@code 0} when no battlefield, emblem, or turn-scoped life-floor effect currently applies.
      * or {@code 0} when no {@link DamageLifeFloorEffect} on their battlefield, in an emblem they
-     * control, or in their temporary player effects currently applies.
+     * control, or floating on them ("until end of turn", Angel's Grace, Angel of Grace) currently applies.
      * Callers must treat {@code 0} as "no floor" (do not clamp life to 0). Each such effect only
      * contributes its floor while its {@link LifeFloorCondition} holds, evaluated against the
      * player's state before the damage is applied ({@code currentLife}).
      */
     public int damageLifeFloor(GameData gameData, UUID playerId, int currentLife) {
         int floor = 0;
-        for (CardEffect turnFloor : gameData.floatingPlayerEffects(playerId, DamageLifeFloorUntilEndOfTurnEffect.class)) {
-            int turnFloorValue = ((DamageLifeFloorUntilEndOfTurnEffect) turnFloor).floor();
-            if (currentLife >= turnFloorValue) floor = Math.max(floor, turnFloorValue);
-        }
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         boolean controlsCreature = bf != null && bf.stream().anyMatch(p -> isCreature(gameData, p));
         for (ActiveStaticEffect<DamageLifeFloorEffect> active
@@ -10327,11 +10319,12 @@ public class GameQueryService {
 
     /**
      * Returns {@code true} if the player controls a permanent with
-     * {@link AllowExtraLoyaltyActivationEffect}, allowing planeswalker loyalty abilities
-     * to be activated twice per turn instead of once (Oath of Teferi).
+     * {@link AllowExtraLoyaltyActivationEffect}, or has it as a floating effect ("twice this turn", Urza Assembles the
+     * Titans), allowing planeswalker loyalty abilities to be activated twice per turn instead of once (Oath of Teferi).
      */
     public boolean hasExtraLoyaltyActivation(GameData gameData, UUID playerId) {
-        return playerBattlefieldHasStaticEffect(gameData, playerId, AllowExtraLoyaltyActivationEffect.class);
+        return gameData.hasFloatingEffectOnPlayer(playerId, AllowExtraLoyaltyActivationEffect.class)
+                || playerBattlefieldHasStaticEffect(gameData, playerId, AllowExtraLoyaltyActivationEffect.class);
     }
 
     public boolean hasExtraBoastActivation(GameData gameData, UUID playerId) {

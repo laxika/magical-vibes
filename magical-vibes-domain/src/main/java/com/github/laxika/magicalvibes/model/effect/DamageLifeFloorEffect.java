@@ -8,7 +8,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * damage triggers see the whole amount); only the life-total reduction is capped.
  *
  * <p>Worship is {@code (1, CONTROLS_A_CREATURE)}; Elderscale Wurm is
- * {@code (7, LIFE_AT_LEAST_FLOOR)}. Multiple such effects apply the highest active floor.
+ * {@code (7, LIFE_AT_LEAST_FLOOR)}; floated on a player for "until end of turn" it is Angel of Grace's
+ * {@code (1, LIFE_AT_LEAST_FLOOR)}. Multiple such effects apply the highest active floor.
  */
 public record DamageLifeFloorEffect(int floor, LifeFloorCondition condition) implements CardEffect {
 }

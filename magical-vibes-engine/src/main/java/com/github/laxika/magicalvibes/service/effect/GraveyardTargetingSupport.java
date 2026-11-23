@@ -199,7 +199,7 @@ public class GraveyardTargetingSupport {
                 case SHUFFLE_INTO_OWNERS_LIBRARY -> "into its owner's library";
                 case EXILE -> "to exile";
                 case DREDGE -> "with dredge";
-                case MAY_ABILITY_TARGET, RANDOM_PLAYER_GRAVEYARD_COPY, CONJURE_DUPLICATE_INTO_HAND,
+                case MAY_ABILITY_TARGET, CONJURE_DUPLICATE_INTO_HAND,
                         COPY_FROM_LEAVING_GRAVEYARD, ENCHANT_GRAVEYARD_CARD -> "as chosen";
             };
             return new Target(returnEffect.filter(), returnEffect.source(), destination, 1,

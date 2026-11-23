@@ -107,9 +107,10 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
                                 .text(" from the top of their library.")
                                 .build());
 
-                if (isCastable(card, e, entry) && card.getManaValue() <= manaValueLimit
-                        || hasCastableAdventureFace(card, e, entry, manaValueLimit)) {
+                if (isCastable(card, e, entry) && card.getManaValue() <= manaValueLimit) {
                     castableSpellIds.add(card.getId());
+                } else if (hasCastableAdventureFace(card, e, entry, manaValueLimit)) {
+                    offerAsAdventure(gameData, e, card, castableSpellIds);
                 } else if (e.playLands() && card.hasType(CardType.LAND)) {
                     castableSpellIds.add(card.getId());
                     playableLandIds.add(card.getId());
@@ -122,9 +123,10 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
                 if (exiledCardIds.contains(earlier.getId()) || castableSpellIds.contains(earlier.getId())) {
                     continue;
                 }
-                if (isCastable(earlier, e, entry) && earlier.getManaValue() <= manaValueLimit
-                        || hasCastableAdventureFace(earlier, e, entry, manaValueLimit)) {
+                if (isCastable(earlier, e, entry) && earlier.getManaValue() <= manaValueLimit) {
                     castableSpellIds.add(earlier.getId());
+                } else if (hasCastableAdventureFace(earlier, e, entry, manaValueLimit)) {
+                    offerAsAdventure(gameData, e, earlier, castableSpellIds);
                 }
             }
         }
@@ -192,6 +194,19 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
             return true;
         }
         return card.getType().isPermanentType() && !card.hasType(CardType.LAND);
+    }
+
+    /**
+     * An Adventure card whose card fits no limit but whose Adventure does is offered as its Adventure: cast that way
+     * only the Adventure's characteristics are evaluated (CR 716.3a), so the free-cast queue casts it as the Adventure
+     * ({@code GameData.pendingFreeCastAdventureIds}), not as the card, whose mana value is over the limit.
+     */
+    private static void offerAsAdventure(GameData gameData, ExileTopCardsAndMayCastSpellsEffect effect, Card card,
+                                         List<UUID> castableSpellIds) {
+        if (!effect.normalCost()) {
+            gameData.pendingFreeCastAdventureIds.add(card.getId());
+        }
+        castableSpellIds.add(card.getId());
     }
 
     /** The Adventure half of an exiled Adventure card is a spell of its own, with its own mana value. */

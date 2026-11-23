@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.AllowTwiceLoyaltyActivationsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowExtraLoyaltyActivationEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
@@ -41,6 +42,7 @@ public class UrzaAssemblesTheTitans extends Card {
                 "Put a planeswalker card with mana value 6 or less from your hand onto the battlefield?"
         ));
 
-        addTrigger(Triggers.chapter(3), new AllowTwiceLoyaltyActivationsThisTurnEffect());
+        addTrigger(Triggers.chapter(3), GrantStaticEffectToPlayerEffect.untilEndOfTurn(
+                new AllowExtraLoyaltyActivationEffect()));
     }
 }

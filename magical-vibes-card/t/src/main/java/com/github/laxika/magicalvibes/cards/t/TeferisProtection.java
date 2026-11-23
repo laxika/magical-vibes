@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromEverythingUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "SLD", collectorNumber = "164")
@@ -19,7 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 public class TeferisProtection extends Card {
 
     public TeferisProtection() {
-        addSpellEffect(new LifeTotalCantChangeUntilNextTurnEffect());
+        addSpellEffect(GrantStaticEffectToPlayerEffect.untilYourNextTurn(new LifeTotalCantChangeEffect()));
         addSpellEffect(new GrantProtectionFromEverythingUntilNextTurnEffect());
         addSpellEffect(new PhaseOutEffect(Subjects.controlledBy(Subjects.you(), new PermanentTruePredicate())));
         addSpellEffect(new ExileSpellEffect());

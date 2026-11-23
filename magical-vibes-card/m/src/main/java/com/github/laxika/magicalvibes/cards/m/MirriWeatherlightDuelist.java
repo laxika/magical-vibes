@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.effect.CombatAttackTargetScope;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.LimitOpposingBlockersThisCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MaximumCombatCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SLD", collectorNumber = "26")
@@ -19,7 +21,8 @@ public class MirriWeatherlightDuelist extends Card {
 
     public MirriWeatherlightDuelist() {
         // Whenever Mirri attacks, each opponent can't block with more than one creature this combat.
-        addTrigger(Triggers.attacks(), new LimitOpposingBlockersThisCombatEffect());
+        addTrigger(Triggers.attacks(), new GrantStaticEffectToPlayerEffect(
+                new MaximumCombatCreaturesEffect(Integer.MAX_VALUE, 1), Subjects.eachOpponent(), Duration.UNTIL_END_OF_COMBAT));
 
         // As long as Mirri is tapped, no more than one creature can attack you each combat.
         addStaticEffect(new ConditionalEffect(

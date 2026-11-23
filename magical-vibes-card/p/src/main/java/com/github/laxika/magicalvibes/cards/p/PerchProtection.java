@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -14,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromEverythingUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -38,7 +39,7 @@ public class PerchProtection extends Card {
         addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 new PhaseOutEffect(Subjects.controlledBy(Subjects.you(), new PermanentTruePredicate()))));
         addSpellEffect(new ConditionalEffect(new GiftPromised(),
-                new LifeTotalCantChangeUntilNextTurnEffect()));
+                GrantStaticEffectToPlayerEffect.untilYourNextTurn(new LifeTotalCantChangeEffect())));
         addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 new GrantProtectionFromEverythingUntilNextTurnEffect()));
         addSpellEffect(new ExileSpellEffect());

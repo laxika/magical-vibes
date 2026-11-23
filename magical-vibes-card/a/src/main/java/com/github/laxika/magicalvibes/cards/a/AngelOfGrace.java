@@ -4,8 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageLifeFloorUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageLifeFloorEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.LifeFloorCondition;
 import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,7 +18,8 @@ import java.util.List;
 public class AngelOfGrace extends Card {
 
     public AngelOfGrace() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DamageLifeFloorUntilEndOfTurnEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), GrantStaticEffectToPlayerEffect.untilEndOfTurn(
+                new DamageLifeFloorEffect(1, LifeFloorCondition.LIFE_AT_LEAST_FLOOR)));
 
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,

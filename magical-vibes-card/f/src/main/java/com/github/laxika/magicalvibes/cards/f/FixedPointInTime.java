@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PlanarDiePlaneswalkToChaosEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class FixedPointInTime extends Card {
 
     public FixedPointInTime() {
-        addTrigger(Triggers.encounterThis(), new PlanarDiePlaneswalkToChaosEffect());
+        addTrigger(Triggers.encounterThis(), GrantStaticEffectToPlayerEffect.untilYourNextTurn(
+                new PlanarDiePlaneswalkToChaosEffect()));
     }
 }

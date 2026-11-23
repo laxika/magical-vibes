@@ -44,6 +44,31 @@ class ShakedownHeavyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Attacking a planeswalker that leaves before resolution still asks its controller (CR 508.5)")
+    void attackedPlaneswalkerLeavingStillAsksDefendingPlayer() {
+        addCreatureReady(player1, new ShakedownHeavy());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new NarsetParterOfVeils());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
+        harness.setLibrary(player1, List.of(new Forest()));
+        int controllerHandBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of(0), java.util.Map.of(0, planeswalker.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(planeswalker);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(controllerHandBefore + 1);
+    }
+
+    @Test
     @DisplayName("The defending player may decline")
     void defendingPlayerDeclines() {
         Permanent heavy = addCreatureReady(player1, new ShakedownHeavy());

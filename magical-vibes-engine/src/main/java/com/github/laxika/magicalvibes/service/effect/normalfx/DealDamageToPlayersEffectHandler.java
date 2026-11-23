@@ -147,11 +147,13 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
 
     /**
      * "That player or a planeswalker that player controls": the player is found once, then, if they control a
-     * planeswalker, the controller chooses without targeting and the effect is resolved again with the answer.
+     * planeswalker, the controller chooses without targeting and the effect is resolved again with the answer; with
+     * none, the damage goes to that player, whatever the entry's own target is (a spell-cast trigger's "that player").
      */
     private void resolvePlayerOrTheirPlaneswalker(GameData gameData, StackEntry entry, StackEntry dealing,
                                                   DealDamageToPlayersEffect effect) {
         UUID player = entry.getOpponentChosenTargetPlayerId();
+        UUID recipient;
         if (player == null) {
             player = subjectResolutionService.player(gameData, entry, effect, effect.player());
             if (player == null || !gameData.playerIds.contains(player)) return;
@@ -166,13 +168,16 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
                 gameData.interaction.setPermanentChoiceContext(
                         new PermanentChoiceContext.RandomOpponentDamageChoice(entry.getCard(), entry.getControllerId()));
                 playerInputService.beginAnyTargetChoice(gameData, entry.getControllerId(), planeswalkers,
-                        List.of(thatPlayer), entry.getCard().getName()
-                                + " ? Choose the enchanted player or a planeswalker they control.");
+                        List.of(thatPlayer), FaceDownVisibility.sourceName(gameData, entry)
+                                + " \u2014 Choose " + gameData.playerIdToName.get(thatPlayer)
+                                + " or a planeswalker they control.");
                 return;
             }
+            recipient = player;
+        } else {
+            recipient = entry.getTargetId() == null ? player : entry.getTargetId();
         }
         gameData.rerunCurrentEffectAfterInteraction = false;
-        UUID recipient = entry.getTargetId() == null ? player : entry.getTargetId();
         if (!damageSupport.isDamageSourcePreventedWithLog(gameData, dealing)) {
             int amount = evaluateAmount(gameData, entry, effect, player);
             damageSupport.resolveAnyTargetDamage(gameData, dealing, recipient, amount, false);

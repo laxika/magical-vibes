@@ -3,12 +3,17 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SwordsToPlowshares;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.service.combat.CombatHelper;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -59,6 +64,20 @@ class MirriWeatherlightDuelistTest extends BaseCardTest {
                 new BlockerAssignment(1, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("No more than 1 distinct creature can block each combat");
+    }
+
+    @Test
+    @DisplayName("Each opponent, not only the defending player, can block with only one creature this combat")
+    void attackTriggerLimitsEveryOpponent() {
+        UUID thirdPlayerId = addThirdPlayer();
+        addCreatureReady(player1, new MirriWeatherlightDuelist());
+
+        declareAttackers(player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
+
+        assertThat(CombatHelper.getMaximumBlockers(gd, player2.getId(), null)).isEqualTo(1);
+        assertThat(CombatHelper.getMaximumBlockers(gd, thirdPlayerId, null)).isEqualTo(1);
+        assertThat(CombatHelper.getMaximumBlockers(gd, player1.getId(), null)).isEqualTo(Integer.MAX_VALUE);
     }
 
     @Test
@@ -154,6 +173,23 @@ class MirriWeatherlightDuelistTest extends BaseCardTest {
     @Test
     void blockerRestrictionSurvivesRemovalAfterTriggerResolves() {
         assertRestrictionSurvivesRemoval(true);
+    }
+
+    private UUID addThirdPlayer() {
+        UUID playerId = UUID.randomUUID();
+        gd.playerIds.add(playerId);
+        gd.orderedPlayerIds.add(playerId);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(playerId, "Charlie");
+        gd.playerDecks.put(playerId, new ArrayList<>());
+        gd.playerHands.put(playerId, new ArrayList<>());
+        gd.playerBattlefields.put(playerId, new ArrayList<>());
+        gd.playerGraveyards.put(playerId, new ArrayList<>());
+        gd.playerCommandZones.put(playerId, new ArrayList<>());
+        gd.playerManaPools.put(playerId, new ManaPool());
+        gd.playerLifeTotals.put(playerId, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), playerId, "Charlie");
+        return playerId;
     }
 
     private void assertRestrictionSurvivesRemoval(boolean resolveTriggerFirst) {

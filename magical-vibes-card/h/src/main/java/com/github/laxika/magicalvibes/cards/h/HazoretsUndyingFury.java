@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.HazoretsUndyingFuryEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardsAndMayCastSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -21,6 +23,7 @@ public class HazoretsUndyingFury extends Card {
 
         // "Shuffle your library, then exile the top four cards. You may cast any number of spells with
         // mana value 5 or less from among them without paying their mana costs."
-        addSpellEffect(new HazoretsUndyingFuryEffect(4, 5));
+        addSpellEffect(new ShuffleLibraryEffect(false));
+        addSpellEffect(new ExileTopCardsAndMayCastSpellsEffect(4, new Fixed(5), null, Integer.MAX_VALUE, false));
     }
 }

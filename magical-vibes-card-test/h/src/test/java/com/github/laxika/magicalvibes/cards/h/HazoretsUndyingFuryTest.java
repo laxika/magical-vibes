@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.c.CollectiveEffort;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
@@ -27,12 +28,14 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({HazoretsUndyingFury.class, AvatarOfMight.class, BorrowedGrace.class, CollectiveBrutality.class,
-        CollectiveEffort.class, Forest.class, GloriousAnthem.class, GrizzlyBears.class, HollowOne.class, Plains.class, Shock.class})
+        CollectiveEffort.class, Forest.class, GloriousAnthem.class, GrizzlyBears.class, HollowOne.class, Plains.class, Shock.class,
+        InvasionOfZendikar.class})
 class HazoretsUndyingFuryTest extends BaseCardTest {
 
     @Nested
     @CardUsed({HazoretsUndyingFury.class, AvatarOfMight.class, BorrowedGrace.class, CollectiveBrutality.class,
-            CollectiveEffort.class, Forest.class, GloriousAnthem.class, GrizzlyBears.class, HollowOne.class, Shock.class})
+            CollectiveEffort.class, Forest.class, GloriousAnthem.class, GrizzlyBears.class, HollowOne.class, Shock.class,
+            InvasionOfZendikar.class})
     @DisplayName("Shuffle, exile the top four, may cast spells with mana value 5 or less")
     class ExileAndCast {
 
@@ -99,6 +102,18 @@ class HazoretsUndyingFuryTest extends BaseCardTest {
 
             harness.assertInGraveyard(player2, "Shock");
             assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        }
+
+        @Test
+        @DisplayName("A battle card with mana value 5 or less is offered: it is a spell like any other permanent card")
+        void offersABattleSpell() {
+            InvasionOfZendikar invasion = new InvasionOfZendikar(); // battle, MV 4
+
+            cast(List.of(invasion, new Forest()));
+
+            PendingInteraction.ImprovisationCapstoneCastChoice interaction =
+                    (PendingInteraction.ImprovisationCapstoneCastChoice) gd.interaction.activeInteraction();
+            assertThat(interaction.validCardIds()).containsExactly(invasion.getId());
         }
 
         @Test

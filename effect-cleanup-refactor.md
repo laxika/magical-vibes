@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold run 1 (2026-11-23): `dead`, `p-cost`, `p-lib`: 10 dead, 9 absorbed, 2 re-batched into `targets-x`, 7 `blocked-other`. Fold run 2 (2026-11-23): `p-dmg`: 14 absorbed, 9 split, 4 unique, 5 `blocked-other`. Fold run 3 (2026-11-23): `p-perm`, `sac-singles`, `destroy-singles`: 10 absorbed, 9 split, 1 survivor, 6 `blocked-other`, 3 re-batched. Fold run 4 (2026-11-23): `gc-singles`, `search-singles`, `cant-singles`, `shuffle-params`, `copy-params`, `base-pt`, `seek-params`: 17 absorbed, 3 split, 8 `blocked-other`. Next: fold run 5. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold run 1 (2026-11-23): `dead`, `p-cost`, `p-lib`: 10 dead, 9 absorbed, 2 re-batched into `targets-x`, 7 `blocked-other`. Fold run 2 (2026-11-23): `p-dmg`: 14 absorbed, 9 split, 4 unique, 5 `blocked-other`. Fold run 3 (2026-11-23): `p-perm`, `sac-singles`, `destroy-singles`: 10 absorbed, 9 split, 1 survivor, 6 `blocked-other`, 3 re-batched. Fold run 4 (2026-11-23): `gc-singles`, `search-singles`, `cant-singles`, `shuffle-params`, `copy-params`, `base-pt`, `seek-params`: 17 absorbed, 3 split, 8 `blocked-other`. Fold run 5 (2026-11-23): `player-floated`, `life-lock`, `may-draw`, `random-player`, `exile-cast`, `lukka`, `look-top-n`: 9 absorbed, 6 split, 3 survivor, 7 `blocked-other`, 2 re-batched into `same-quality`. Next: fold run 6. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,964 / 3,227 (fold run 4; 3,984 / 3,246 after fold run 3; 4,003 / 3,263 after fold run 2, 4,025 / 3,286 after fold run 1, 4,044 / 3,299 before) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,951 / 3,211 (fold run 5; 3,964 / 3,227 after fold run 4; 3,984 / 3,246 after fold run 3; 4,003 / 3,263 after fold run 2, 4,025 / 3,286 after fold run 1, 4,044 / 3,299 before) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -65,8 +65,8 @@ Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | a
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
 `scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,052 rows over 4,404 classes, the consolidation's 102, defect run
-D10's 73 and fold runs 1 to 4's 28, 32, 29 and 28 included. Latest verdict per class: `step-9` 1,210, unique 1,165, absorbed 556, split 475,
-blocked-other 441, survivor 260, blocked-step-model 140, blocked-player-loop 97, dead 60. Waiting: 1,210 `step-9` rows for fold runs after fold run 4 (1,238 after fold run 3, 1,264 after fold run 2, 1,322 before fold run 1); 5 rows on the owner's open
+D10's 73 and fold runs 1 to 5's 28, 32, 29, 28 and 27 included (5,079 rows). Latest verdict per class: `step-9` 1,185, unique 1,165, absorbed 565, split 481,
+blocked-other 448, survivor 263, blocked-step-model 140, blocked-player-loop 97, dead 60. Waiting: 1,185 `step-9` rows for fold runs after fold run 5 (1,210 after fold run 4, 1,238 after fold run 3, 1,264 after fold run 2, 1,322 before fold run 1); 5 rows on the owner's open
 questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
@@ -465,6 +465,16 @@ Step and choice records:
   `EachPlayerSearchesLibraryEffect.cardToTop(players)` (`TOP_OF_LIBRARY`); `SearchTargetLibraryEffect` with `CAST_WITHOUT_PAYING`;
   `SeekLibraryEffect` to the battlefield passes through the hand (a library-entry ban doesn't apply) and runs a land's enter abilities;
   "can't be blocked if [condition]" on a creature is a static `ConditionalEffect(condition, GrantEffectEffect(CantBeBlockedEffect, source()))`.
+- Player floats, may-draws, random players, exile-and-cast (fold run 5): a resolution's "until end of turn / this combat / until your
+  next turn, you [rule]" is `GrantStaticEffectToPlayerEffect` over the rule's static record, its reader asking for the player's floating
+  copy beside the battlefield (`hasFloatingEffectOnPlayer`; floated now: `LookAtFaceDownCreaturesEffect`, `AlternativeCostForSpellsEffect`
+  "{0}" hand only, `AllowExtraLoyaltyActivationEffect`, `DamageLifeFloorEffect`, `LifeTotalCantChangeEffect`, `MaximumCombatCreaturesEffect`
+  with `UNTIL_END_OF_COMBAT`); "[player] may draw a card" is `MayEffect(DrawCardEffect(1, player), ..., chooser)` (`DEFENDING_PLAYER` reads
+  the recorded defending player, CR 508.5); "choose an opponent at random ... that player or a planeswalker that player controls" is
+  `ChoosePlayerAtRandomEffect` + `DealDamageToPlayersEffect.toPlayerOrTheirPlaneswalker(amount, playersThisWay(CHOOSE))`; "that player
+  exiles a card from their graveyard" is `ChooseCardEffect.oneOf(cardsInGraveyards(playersThisWay(CHOOSE), f)).by(playersThisWay(CHOOSE))`
+  + `ExileGraveyardCardsEffect.cards(cardsThisWay(CHOOSE))`; `ExileTopCardsAndMayCastSpellsEffect` casts an Adventure-only-fits card as
+  its Adventure (CR 716.3a).
 
 Permissions, restrictions and grants:
 
@@ -589,6 +599,8 @@ there and updates them when it lands.
   of three or more cards (17); the graveyard-ability grant with the scavenge record; `GrantSupertypeEffect` with its 4-card enchanted twin;
   a copy verb with a copier subject (Mirrorform, run 8).
 - **Leftover to drop in a collapse**: `ExileGraveyardCardsEffect.eventValueFilter` (no card left, run 5).
+- **Player grants**: `GrantPlayerStaticEffectsUntilEndOfTurnEffect` (10 cards, Angel's Grace) is `GrantStaticEffectToPlayerEffect.untilEndOfTurn` over a list,
+  plus its escape-grant snapshot; merge them (fold run 5).
 
 ## Findings
 
@@ -1119,6 +1131,73 @@ then-effect waits on the removal's success.
 
 **For the next run.** Fold run 5. Before folding onto a card subject, check what it drops: a stay check or an ability link the old
 handler didn't have can narrow a card, and a gained ability (Patchwork Crawler, Dark Impostor) is where it shows.
+
+### Step 9, fold run 5 (2026-11-23)
+
+Fold run 5 of the Fold queue: batches `player-floated`, `life-lock`, `may-draw`, `random-player`, `exile-cast`, `lukka`, `look-top-n`
+(27 rows) and their "Fold:" defect lines (may-draw, lukka, exile-cast, player-floated). Ratchet 3,964 / 3,227 → 3,951 / 3,211
+(13 records; 16 handlers: the 13 records' normal handlers, Minamo's may handler, and the handlers of the two records that stay as
+floated payloads). Ledger: 27 rows (absorbed 9, split 6, survivor 3, `blocked-other` 7, re-batched 2). 19 card files rewritten,
+Oracle text checked with `get_card` for all of them (Yawgmoth's Testament under CMB1 52); rulings for Lukka, Coppercoat Outcast.
+CR 118.9, 400.7, 508.5, 603.5, 608.2d, 608.2h, 611.2c, 702.73a, 716.3a checked with `get_rule`.
+
+| Batch | Result |
+|---|---|
+| `player-floated` (8) | all folded onto `GrantStaticEffectToPlayerEffect`, each reader asking for the player's floating copy: Lumbering Laundry (`LookAtFaceDownCreaturesEffect`), Chandra, Flame's Catalyst (Yusri's `AlternativeCostForSpellsEffect("{0}", hand only)`), Urza Assembles the Titans (`AllowExtraLoyaltyActivationEffect`, now the survivor of the loyalty pair), Angel of Grace (`DamageLifeFloorEffect(1, LIFE_AT_LEAST_FLOOR)`), Mirri (`MaximumCombatCreaturesEffect(MAX, 1)` over `eachOpponent()`, `UNTIL_END_OF_COMBAT`). Yawgmoth's Testament's and Fixed Point in Time's records stay as floated payloads (split), their handlers gone |
+| `life-lock` (2) | Teferi's Protection, Perch Protection: `untilYourNextTurn(new LifeTotalCantChangeEffect())`; `canPlayerLifeChange` reads the floating copy |
+| `may-draw` (3) | Sibilant Spirit, Harbor Guardian (`MayEffect(DrawCardEffect(1, defendingPlayer()), DEFENDING_PLAYER)`), Minamo (as Fields of Summer); Phelddagrif and Tataru Taru moved to `MayEffect(..., TARGET_PLAYER)`. Left: Soldevi Heretic (`blocked-other`) |
+| `random-player` (4) | Vial Smasher (`ChoosePlayerAtRandomEffect` + `toPlayerOrTheirPlaneswalker(DynamicAmount, playersThisWay(CHOOSE))`), Wildfire Devils (random player, `ChooseCardEffect.by(playersThisWay(CHOOSE))`, exile, copy). Left: Strax's two records (`blocked-other`) |
+| `exile-cast` (4) | Villainous Wealth, Hazoret's Undying Fury (with `ShuffleLibraryEffect`). Left: Epic Experiment (`blocked-other`) |
+| `lukka` (2) | none: both `blocked-other` |
+| `look-top-n` (4) | For the Ancestors (`ChooseCreatureTypeAtResolutionEffect` + `mayRevealUpToToHandRestOnBottomRandom`). Left: Break Out (`blocked-other`); Call to the Kindred and Conjurer's Mantle re-batched into `same-quality` (run 41) |
+
+**Where the triage was wrong.** Yawgmoth's Testament's "exiled-counter batch's static exile permission" does not exist, and the
+one-shot `AllowPlayCardsFromExileEffect` would lock the set (CR 611.2c: the rule applies to cards exiled later), so the record stays as
+the floated rule. Lukka's `mayOnlyCast(creature)` would stop an adventurer card being cast as its Adventure (ruling 2020-04-17). The
+look-top-n "same-quality predicate" is run 41's unbuilt piece. Break Out's survivor path puts the card into the hand before its
+follow-up. Soldevi Heretic's second target can't be read by `MayEffect`'s `TARGET_PLAYER` on an activated ability. Strax's and Epic
+Experiment's notes each need an option only that card would set.
+
+**Shared pieces widened** (Standing knowledge): `GrantStaticEffectToPlayerEffect` accepts `UNTIL_END_OF_COMBAT`; the floating copies
+read by `mayLookAtOpposingFaceDownCreatures`, `hasExtraLoyaltyActivation`, `canPlayerLifeChange`, `damageLifeFloor` (its turn-floor
+branch gone), `CastingCostService.findFreeCastSource` (a floating unlimited alternative cost is used before a next-spell grant);
+`MayEffect`'s `DEFENDING_PLAYER` reads the recorded defending player (CR 508.5) and a battle's protector;
+`DealDamageToPlayersEffect.toPlayerOrTheirPlaneswalker(DynamicAmount, player)`; `ExileTopCardsAndMayCastSpellsEffect` casts an
+Adventure-only-fits card as its Adventure.
+
+**Behaviour changes.**
+- Mirri, Weatherlight Duelist limits each opponent, not only the defending player (the Oracle text): new
+  `MirriWeatherlightDuelistTest.attackTriggerLimitsEveryOpponent` (three players; fails on the old code by reading).
+- `MayEffect` `DEFENDING_PLAYER`: Shakedown Heavy now asks the defending player after the attacked planeswalker left, or a battle's
+  protector (CR 508.5): new `ShakedownHeavyTest.attackedPlaneswalkerLeavingStillAsksDefendingPlayer` (fails on the old code by reading:
+  `findPermanentController` of a gone planeswalker found nobody). Sibilant Spirit's and Harbor Guardian's existing leave/battle cases
+  pass on the survivor.
+- Hazoret's Undying Fury offers battles and Adventures whose Adventure fits (defect line, CR 716.3a): new
+  `HazoretsUndyingFuryTest.offersABattleSpell`. Every `ExileTopCardsAndMayCastSpellsEffect` card casts an exiled Adventure card whose
+  card is over the limit but whose Adventure fits as its Adventure (before, the queue cast the card itself); Villainous Wealth's
+  existing Adventure case covers it.
+- `toPlayerOrTheirPlaneswalker` with no planeswalker deals the damage to that player, never the entry's own target (a cast trigger's
+  "that player"); its prompt names the player instead of "? Choose the enchanted player" (Curse of the Pierced Heart too).
+- Logs: the survivors' (silent) lines replace Lumbering Laundry's, Chandra's, Angel of Grace's, Teferi's Protection's grant lines and
+  Phelddagrif's/Tataru's "offers ... a card"; Vial Smasher and Wildfire Devils log "chooses ... at random". Wildfire Devils' card choice
+  is the card choice prompt (`MultiGraveyardChoice`, at least one).
+- AI only: Minamo's draw is now a `CardDrawingEffect` the AI accepts; Chandra's free casts and Yusri's are used before a next-spell grant.
+
+**Tests changed.** `TeferisProtectionTest` (asks for the floating `LifeTotalCantChangeEffect`), `Prevention.damageLifeFloor` fixture
+(reads the floating `DamageLifeFloorEffect`; Runed Terror's cases), `WildfireDevilsTest` (the card choice prompt; display names added),
+`EffectCountRatchetTest` (baselines). New: the Mirri, Shakedown Heavy and Hazoret cases.
+
+**Tests run.** 182 classes: every test class naming a rewritten card or a survivor's or reader's card (`git grep -lwF 'X.class'`, 166),
+plus the application game-query, ability-activation, planechase, interaction-contract, targeting-consistency, subject, casting-cost,
+may, look-at-top, player-damage, block, graveyard-choice, may-ability, cost-classification, coin-flip and ratchet tests: 326 XML
+files (nested classes counted), 2,498 cases, 0 failures. No deleted handler asked death replacements first.
+
+**Seen, not changed.** Lukka's subtype check still needs a `CardSubtype` LUKKA (a conversion-version bump; its Defect queue line);
+Soldevi Heretic still targets no opponent (its line). Step-10 hand-off: `GrantPlayerStaticEffectsUntilEndOfTurnEffect` (10 cards) is
+`GrantStaticEffectToPlayerEffect.untilEndOfTurn` over a list.
+
+**For the next run.** Fold run 6. A `step-9` note that names a predicate or option "from another batch" may name one not built yet
+(run 41's same-quality, the exiled-counter subject): check it exists before folding, and re-batch rather than build it for one card.
 
 ## Prompt
 

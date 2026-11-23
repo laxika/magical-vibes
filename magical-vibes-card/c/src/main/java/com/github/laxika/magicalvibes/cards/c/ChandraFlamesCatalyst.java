@@ -5,11 +5,12 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.AllowCastSpellsFromHandWithoutPayingManaCostUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
@@ -45,7 +46,8 @@ public class ChandraFlamesCatalyst extends Card {
                 List.of(
                         new DiscardHandEffect(),
                         new DrawCardEffect(7),
-                        new AllowCastSpellsFromHandWithoutPayingManaCostUntilEndOfTurnEffect()
+                        GrantStaticEffectToPlayerEffect.untilEndOfTurn(
+                                new AlternativeCostForSpellsEffect("{0}", null, null, false, true))
                 ),
                 "−8: Discard your hand, then draw seven cards. Until end of turn, you may cast spells "
                         + "from your hand without paying their mana costs."

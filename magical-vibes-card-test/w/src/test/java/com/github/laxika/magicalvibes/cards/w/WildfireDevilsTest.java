@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -20,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class WildfireDevilsTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The randomly chosen player chooses which instant or sorcery card of their graveyard is exiled")
     void etbLetsRandomlyChosenPlayerChooseTheCardToCopy() {
         Card ownDivination = new Divination();
         Card ownCounsel = new CounselOfTheSoratami();
@@ -31,15 +33,15 @@ class WildfireDevilsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        PendingInteraction.GraveyardChoice choice = gd.interaction.activeInteraction(
-                PendingInteraction.GraveyardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice = gd.interaction.activeInteraction(
+                PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIndices()).hasSize(2);
-        Card chosenCard = gd.playerGraveyards.get(choice.playerId()).get(choice.validIndices().getFirst());
+        assertThat(choice.cards()).hasSize(2);
+        assertThat(choice.minCount()).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(choice.playerId())).containsAll(choice.cards());
+        Card chosenCard = choice.cards().getFirst();
 
-        harness.handleGraveyardCardChosen(
-                choice.playerId().equals(player1.getId()) ? player1 : player2,
-                choice.validIndices().getFirst());
+        chooseOfferedCards(choice.playerId().equals(player1.getId()) ? player1 : player2, 0);
 
         assertThat(gd.findExiledCard(chosenCard.getId())).isNotNull();
         assertThat(gd.playerGraveyards.get(choice.playerId())).doesNotContain(chosenCard);
@@ -57,6 +59,7 @@ class WildfireDevilsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("At the beginning of your upkeep it also exiles and copies a chosen card")
     void upkeepTriggerAlsoCopiesAChosenInstantOrSorcery() {
         Divination divination = new Divination();
         Card opponentDivination = new Divination();
@@ -76,6 +79,7 @@ class WildfireDevilsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does nothing when the randomly chosen player has no instant or sorcery card")
     void doesNothingWhenRandomlyChosenPlayerHasNoInstantOrSorcery() {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
         harness.setGraveyard(player2, List.of(new GrizzlyBears()));
@@ -89,6 +93,7 @@ class WildfireDevilsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the copy still leaves the original exiled")
     void decliningCopyStillExilesOriginalAndRemovesCopy() {
         Card ownCard = new Divination();
         Card opponentCard = new Divination();
@@ -114,6 +119,7 @@ class WildfireDevilsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A copy with no legal target is not cast")
     void instantCopyWithNoLegalTargetCeasesToExist() {
         Card ownCard = new Cancel();
         Card opponentCard = new Cancel();
@@ -135,6 +141,7 @@ class WildfireDevilsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not trigger during an opponent's upkeep")
     void doesNotTriggerDuringOpponentsUpkeep() {
         harness.setGraveyard(player1, List.of(new Divination()));
         harness.setGraveyard(player2, List.of(new Divination()));
@@ -149,6 +156,7 @@ class WildfireDevilsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The copy's mandatory discard cost can be paid")
     void canPayMandatoryDiscardCostToCastCopy() {
         harness.setGraveyard(player1, List.of(new TormentingVoice()));
         harness.setGraveyard(player2, List.of(new TormentingVoice()));

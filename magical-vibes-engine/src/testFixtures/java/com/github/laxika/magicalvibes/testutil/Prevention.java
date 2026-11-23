@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.testutil;
 
 import java.util.List;
-import com.github.laxika.magicalvibes.model.effect.DamageLifeFloorUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageLifeFloorEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.PlayerSourceDamagePrevention;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -86,10 +86,10 @@ public final class Prevention {
         return gd.floatingEffectsOfTypes(type).stream().map(FloatingContinuousEffect::affectedPlayerId).toList();
     }
 
-    /** The highest "damage can't reduce your life total below" floor of {@code playerId}'s turn-long effects, or 0. */
+    /** The highest "damage can't reduce your life total below" floor floating on {@code playerId}, or 0. */
     public static int damageLifeFloor(GameData gd, UUID playerId) {
-        return gd.floatingPlayerEffects(playerId, DamageLifeFloorUntilEndOfTurnEffect.class).stream()
-                .mapToInt(effect -> ((DamageLifeFloorUntilEndOfTurnEffect) effect).floor()).max().orElse(0);
+        return gd.floatingPlayerEffects(playerId, DamageLifeFloorEffect.class).stream()
+                .mapToInt(effect -> ((DamageLifeFloorEffect) effect).floor()).max().orElse(0);
     }
 
     /** The colors of every floating "prevent all damage from [colors] sources" effect. */

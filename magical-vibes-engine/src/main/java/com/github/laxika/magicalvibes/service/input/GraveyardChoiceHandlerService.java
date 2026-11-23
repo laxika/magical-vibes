@@ -155,7 +155,6 @@ public class GraveyardChoiceHandlerService {
         if (cardIndex == -1) {
             if (destination == GraveyardChoiceDestination.EXILE
                     || destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET
-                    || destination == GraveyardChoiceDestination.RANDOM_PLAYER_GRAVEYARD_COPY
                     || destination == GraveyardChoiceDestination.CONJURE_DUPLICATE_INTO_HAND
                     || destination == GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD
                     || graveyardChoice.mandatory()) {
@@ -358,7 +357,6 @@ public class GraveyardChoiceHandlerService {
         if (cardIndex == -1) {
             if (destination == GraveyardChoiceDestination.EXILE
                     || destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET
-                    || destination == GraveyardChoiceDestination.RANDOM_PLAYER_GRAVEYARD_COPY
                     || destination == GraveyardChoiceDestination.CONJURE_DUPLICATE_INTO_HAND
                     || destination == GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD
                     || graveyardChoice.mandatory()) {
@@ -406,7 +404,6 @@ public class GraveyardChoiceHandlerService {
             // A card that can't enter the battlefield (Grafdigger's Cage) never leaves the graveyard.
             boolean blockedFromEntering = false;
             if (destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET
-                    || destination == GraveyardChoiceDestination.RANDOM_PLAYER_GRAVEYARD_COPY
                     || destination == GraveyardChoiceDestination.CONJURE_DUPLICATE_INTO_HAND) {
                 // MAY_ABILITY_TARGET: get reference without removal — the effect handler will exile it
                 if (cardPool != null) {
@@ -701,18 +698,6 @@ public class GraveyardChoiceHandlerService {
                         gameData.graveyardExileChoiceLeaveBatchOpen = false;
                         graveyardService.endGraveyardLeaveBatch(gameData);
                     }
-                }
-                case RANDOM_PLAYER_GRAVEYARD_COPY -> {
-                    StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-                    if (pendingEntry == null) {
-                        throw new IllegalStateException("No pending effect resolution for graveyard copy choice");
-                    }
-                    pendingEntry.setTargetId(card.getId());
-                    gameLogService.append(gameData, GameLog.textCardText(
-                            player.getUsername() + " chooses ", card,
-                            " to exile from their graveyard."));
-                    log.info("Game {} - {} chooses {} for a random-player graveyard copy ability",
-                            gameData.id, player.getUsername(), card.getName());
                 }
                 case CONJURE_DUPLICATE_INTO_HAND -> {
                     StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;

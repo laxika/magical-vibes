@@ -99,7 +99,7 @@ Owner: `DurationClock`, `EndOfTurnStateField`, `TurnCleanupService`.
 Why: an untracked store ends at another player's cleanup step.
 
 ### A partly used shield keeps its place
-Using part of a shield ("prevent the next 3 damage") replaces its floating effect with a reduced copy through `GameData.reduceShield` (`replaceFloatingEffect`), keeping its place and timestamp; several "can't go below" floors (`DamageLifeFloorUntilEndOfTurnEffect`) are separate floating effects and the strongest applies.
+Using part of a shield ("prevent the next 3 damage") replaces its floating effect with a reduced copy through `GameData.reduceShield` (`replaceFloatingEffect`), keeping its place and timestamp; several "can't go below" floors (`DamageLifeFloorEffect` floated on a player) are separate floating effects and the strongest applies.
 Owner: `GameData`, `GameQueryService`.
 Why: a shield that moved last would be offered in the wrong order; a weaker floor must not outlive or override the stronger one.
 

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.ability;
 
 import com.github.laxika.magicalvibes.model.effect.GrantExtraLoyaltyActivationToPlaneswalkersEffect;
-import com.github.laxika.magicalvibes.model.effect.AllowTwiceLoyaltyActivationsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GuardianAngelPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
@@ -9070,11 +9069,10 @@ public class AbilityActivationService {
                 throw new IllegalStateException("Loyalty abilities can only be activated when the stack is empty");
             }
         }
-        // Once per turn (twice with AllowExtraLoyaltyActivationEffect, e.g. Oath of Teferi, or with a
-        // this-turn "twice rather than once" grant, e.g. Urza Assembles the Titans), plus any one-shot extra
-        // activations granted to this planeswalker this turn (The Chain Veil).
-        boolean twiceThisTurn = gameQueryService.hasExtraLoyaltyActivation(gameData, playerId)
-                || gameData.hasFloatingEffectOnPlayer(playerId, AllowTwiceLoyaltyActivationsThisTurnEffect.class);
+        // Once per turn (twice with AllowExtraLoyaltyActivationEffect, e.g. Oath of Teferi, or floated on the player
+        // for this turn, e.g. Urza Assembles the Titans), plus any one-shot extra activations granted to this
+        // planeswalker this turn (The Chain Veil).
+        boolean twiceThisTurn = gameQueryService.hasExtraLoyaltyActivation(gameData, playerId);
         int maxActivations = (twiceThisTurn ? 2 : 1)
                 + gameData.extraLoyaltyActivationsThisTurn(permanent.getId())
                 + gameData.floatingEffectsOnPlayer(playerId,

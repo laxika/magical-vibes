@@ -255,7 +255,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             // effects such as Obeka's "the player whose turn it is may ...".
             case ACTIVE_PLAYER -> entry.getActivePlayerId() != null
                     ? entry.getActivePlayerId() : gameData.activePlayerId;
-            case DEFENDING_PLAYER -> findDefendingPlayerId(gameData, entry.getAttackedTargetId());
+            case DEFENDING_PLAYER -> findDefendingPlayerId(gameData, entry);
             case TARGET_PLAYER -> targetId != null && gameData.playerIds.contains(targetId) ? targetId : null;
             case TARGET_PERMANENT_CONTROLLER -> targetPermanentController(gameData, entry, targetId);
             case TARGET_SPELL_CONTROLLER -> {
@@ -526,13 +526,15 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 .anyMatch(playerId -> auraAttachmentService.canEnchantPlayer(gameData, aura, controllerId, playerId));
     }
 
-    private UUID findDefendingPlayerId(GameData gameData, UUID attackedTargetId) {
-        if (attackedTargetId == null) {
-            return null;
-        }
-        return gameData.playerIds.contains(attackedTargetId)
-                ? attackedTargetId
-                : gameQueryService.findPermanentController(gameData, attackedTargetId);
+    /**
+     * The defending player of an attack trigger: the one recorded as it triggered, who stays the defending player
+     * after an attacked planeswalker or battle left the battlefield (CR 508.5), else the attacked player, the attacked
+     * planeswalker's controller or the attacked battle's protector, as {@code Subjects.defendingPlayer()} reads it.
+     */
+    private UUID findDefendingPlayerId(GameData gameData, StackEntry entry) {
+        return entry.getDefendingPlayerId() != null
+                ? entry.getDefendingPlayerId()
+                : gameQueryService.defendingPlayerOfAttackTarget(gameData, entry.getAttackedTargetId());
     }
 
     /**

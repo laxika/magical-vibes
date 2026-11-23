@@ -48,7 +48,8 @@ class DauthiVoidwalkerTestMarRegression extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ExiledCardMayPlayChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
+                .containsExactly(exiled.getId());
         harness.handleMultipleCardsChosen(player1, List.of(exiled.getId()));
         harness.castFromExile(player1, exiled.getId());
         harness.passBothPriorities();

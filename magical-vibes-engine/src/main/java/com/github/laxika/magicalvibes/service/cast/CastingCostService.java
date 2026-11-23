@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.cast;
 
-import com.github.laxika.magicalvibes.model.effect.AllowCastSpellsFromHandWithoutPayingManaCostUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.AdventureCast;
@@ -1877,19 +1876,8 @@ public class CastingCostService {
             return cardSelfSource;
         }
 
-        if (sourceZone == Zone.HAND && gameData.hasFloatingEffectOnPlayer(playerId,
-                AllowCastSpellsFromHandWithoutPayingManaCostUntilEndOfTurnEffect.class)) {
-            return new FreeCastSource(null, null, null);
-        }
-        for (var floating : gameData.floatingEffectsOnPlayer(playerId, GrantFreeCastForNextMatchingSpellEffect.class)) {
-            CardPredicate predicate = ((GrantFreeCastForNextMatchingSpellEffect) floating.effect()).predicate();
-            if (predicateEvaluationService.matchesCardPredicate(card, predicate, null)) {
-                return new FreeCastSource(null, null, predicate);
-            }
-        }
-        FreeCastSource emblemSource = findEmblemFreeCastSource(gameData, playerId, card, sourceZone);
-        if (emblemSource != null) return emblemSource;
-
+        // An unlimited permission floated on the player ("until end of turn, you may cast spells from your hand without
+        // paying their mana costs") is used before a "next spell" one, which a cast would use up.
         synchronized (gameData.floatingEffects) {
             for (var floating : gameData.floatingEffects) {
                 if (!playerId.equals(floating.affectedPlayerId())
@@ -1901,6 +1889,14 @@ public class CastingCostService {
                 return new FreeCastSource(null, altCost, null);
             }
         }
+        for (var floating : gameData.floatingEffectsOnPlayer(playerId, GrantFreeCastForNextMatchingSpellEffect.class)) {
+            CardPredicate predicate = ((GrantFreeCastForNextMatchingSpellEffect) floating.effect()).predicate();
+            if (predicateEvaluationService.matchesCardPredicate(card, predicate, null)) {
+                return new FreeCastSource(null, null, predicate);
+            }
+        }
+        FreeCastSource emblemSource = findEmblemFreeCastSource(gameData, playerId, card, sourceZone);
+        if (emblemSource != null) return emblemSource;
 
         FreeCastSource oncePerTurnFallback = null;
         for (GameQueryService.ActiveStaticEffect<AlternativeCostForSpellsEffect> active
