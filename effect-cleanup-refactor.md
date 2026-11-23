@@ -2815,6 +2815,78 @@ Only verdicts this time. No repo file changed; the plan and ledger were read at 
   6. Player control.
   7. Blight costs, with the cost-shape singles and step 10.
 
+### Step 9, parallel triage chunk 11 (2026-11-23)
+
+Verdicts only: no repo file changed. 85 ledger rows (notes `triage P11: …`), read against `cc2d6a59fe`. Chunk 11 holds the rare records whose first word runs from Remember to Zndrsplats (40), and from Abstract to Close (45).
+
+Every record was read with its handler to the end, along with every card class that uses it. For records with no handler, their readers were read:
+- `ExploreEffectHandler.countExploreReplacements`.
+- `CastingCostService`'s shared-colour discard path.
+- `DrawService` (Abundance, Archmage Ascension, Chains, Shared Fate, the exile-replacement collector) and `BreathstealersCryptDrawReplacementHandler`.
+- `TurnProgressionService.hasApplicableExtraTurnSkipReplacement`.
+- `GameQueryService`'s lethal-damage, crew/saddle and entering-trigger checks.
+- `AmountEvaluationService`'s station reads.
+- `TokenAdditionReplacements`.
+- `LayerSystemService` / `GameData`'s suppression cases.
+- `PlayerDamagePreventions`' Channel Harm shield.
+- `SecretMissionService` / `MayMiscHandlerService`.
+
+Oracle text was checked with `get_card` for every `unique` and `blocked-*` card. The MB1/MB2 playtest cards (Buried Ogre, Pyromancy 101, Marchesa's Surprise Party, Bucket List, Whammy Burn, Memory Bank, Bombardment) are in no feed, so their text was read from the card-data cache. Oracle text was also checked for Play with Fire, Sonic Shrieker, Sands of Time, Fatespinner, Gerrard's Hourglass Pendant, Loran, Doorkeeper Thrull, Academy Manufactor, Ajani, Liliana, Cryptic Coat, Burning-Rune Demon, Binding Negotiation, Animal Magnetism, Bounty of the Luxa, Cemetery Desecrator and Celestial Judgment. Rulings were read for Sorrow's Path. CR 101.4, 119.8, 607.2a, 608.2d, 613.1f, 614.5, 616.1, 701.23a, 701.38a, 702.65a and 708.2a were checked with `get_rule` (2026-11-23).
+
+| Family | Triaged | `step-9` | `blocked-other` | `unique` |
+|---|---|---|---|---|
+| Remember … Zndrsplats | 40 | 12 | 2 | 26 |
+| Abstract … Close | 45 | 18 | 5 | 22 |
+| All | 85 | 30 | 7 | 48 |
+
+**Fold batches** (survivor or shared component → records of this chunk, cards):
+
+| Batch | Survivor / component | Records (cards) |
+|---|---|---|
+| suppression pair | `SuppressStaticEffectUntilEndOfTurnEffect` + `PermanentSubject` (source() / target()) | itself, `SuppressStaticEffectOnTargetUntilEndOfTurnEffect`: 2 (4) |
+| unsuspect pair | `UnsuspectEffect` (subject) | itself, `UnsuspectAllCreaturesEffect`: 2 (4) |
+| tap-flip pair | `SimultaneouslyFlipAllPermanentsTapStatesEffect` + `PermanentSubject` | itself, `SimultaneouslyFlipControlledPermanentsTapStatesEffect`: 2 (2) |
+| P02 extra-turn skip | `SkipAllExtraTurnsReplacementEffect` + whose `PlayerSubject` (survivor) | itself; joins `OpponentExtraTurnSkipReplacementEffect`: 1 (1) |
+| P02 entering-trigger | `CreatureEnteringDontCauseTriggersEffect` + entering filter + whose subject | `ArtifactOrCreatureEnteringDontCauseTriggersEffect`: 1 (1) |
+| P02 opponent-chosen card | `ChoosePlayerEffect.opponent()` + `ChooseCardEffect(chooser playersThisWay(CHOOSE))` + mover; needs a rest-of-revealed card subject and the card CHOOSE to keep its chooser | `AnimalMagnetismEffect`, `AllureOfTheUnknownEffect`: 2 (2) |
+| P05 skip-step | `SkipDrawStepEffect` with a step/phase kind, floated by `GrantStaticEffectToPlayerEffect.thisTurn` | `SkipChosenStepOrPhaseEffect`: 1 (1) |
+| P07 chosen-land-type | `GrantSubtypeEffect` with the source's second chosen subtype over basics of the first, overriding | `BasicLandsOfChosenTypesBecomeTypeEffect`: 1 (1) |
+| T4 look-and-cast | `LookAtTopCardsAndMayCastEffect` | `AetherworksMarvelEffect`: 1 (2) |
+| T5 token addition | `AddTokenCreationEffect` (Clue/Food/Treasure filter, one per token, two blueprints) | `AcademyManufactorTokenReplacementEffect`: 1 (1) |
+| T6 copier subject | `BecomeCopyOfSubjectEffect` copier attached() over a chosen `exiledWithSource()` creature card, with a Duration | `AttachedCreatureBecomesCopyOfExiledCreatureEffect`: 1 (2) |
+| T7 card-copy-cast | `CopyImprintedCardAndMayCastCopyEffect.of(the encoded card)` free | `CipherCastCopyEffect` (engine-built): 1 (0) |
+| may-draw rows | `MayEffect(DrawCardEffect(1, triggeringPlayer()), TRIGGERING_SPELL_CONTROLLER)` | `CastingPlayerMayDrawCardEffect`: 1 (1) |
+| Intuition | `IntuitionEffect` + count, distinct names, filter, untargeted opponent chooser | `BurningRuneDemonEffect`: 1 (1) |
+| look-X to battlefield | `LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect(…, ControllerLifeTotal)` + shuffle | `AjaniUltimateEffect`: 1 (1) |
+| by parameters | `DrawCardEffect(1, allOf(you(), targetPlayerDeclaredElsewhere()))`; `ConditionalEffect(CastFromZone(HAND), ExileSpellEffect.immediately())` (check Bank's text) | `YouAndTargetPlayerEachDrawCardEffect`, `BankEffect`: 2 (2) |
+| player damage-this-way | `ConditionalEffect(player form of HappenedThisWay(DEAL_DAMAGE), ScryEffect(1))`; stale `DiscardIfPlayerDealtDamageThisWayEffect` → `DiscardEffect(playersThisWay(DEAL_DAMAGE))` | `ScryIfPlayerDealtDamageThisWayEffect`: 1 (1) |
+| keyword-action power | `UseToughnessForCrewAndSaddleEffect` with an action set (crew/saddle/station), granted with a toughness>power filter; `PowerBoostForCrewAndStationEffect` → `PowerBoostForCrewAndSaddleEffect` | `UseToughnessForStationEffect`: 1 (1) |
+| alternative cost (cost-shape) | `AlternativeCostForSpellsEffect` + a shares-a-colour discard non-mana cost, all players | `SharedColorDiscardAlternativeCostEffect`: 1 (1) |
+| choose then sparing destroy | `ChoosePermanentsEffect` (different POWER, one per distinct power) + `DestroyAllPermanentsEffect.sparing` (find a second user first) | `CelestialJudgmentEffect`: 1 (1) |
+| splits | existing steps | Binding Negotiation (hand reveal, choose, discard, otherwise exile-to-graveyard), Bounty of the Luxa (remove counters + negated / plain `removedCounters()` gates), Cemetery Desecrator (choose, exile, reflexive modal on `exiledManaValue()`), Cryptic Coat (cloak recording MANIFEST + attach to `thisWay(MANIFEST)`), Liliana's −7 (`ChooseCardEffect.upTo(2)` + `PutCardsOntoBattlefieldEffect`; `OpenGraveyardReturnBatchEffect` goes): 5 (5) |
+
+**Blocked (7):**
+- Draw replacements whose payload `DrawService` runs inline (run 32's DrawService replacement-pass redesign): Abundance, Archmage Ascension, Breathstealer's Crypt, Chains of Mephistopheles (+ Magus), Shared Fate.
+- A VOTE step whose result carries a tally per candidate (StepOutcome has one amount): Trap the Trespassers (`SecretCouncilEffect`), Círdan. The unaudited `VoteForCreatureThenDestroyMostVotedEffect`, `WillOfTheCouncilEffect` and `CouncilDilemmaEffect` share this need. That is five or more records, so a run could build the step.
+
+**Unique (48):**
+- Remember … Zndrsplats (26): Cyclopean Tomb's mire store, the shared remember-target-player record, Twists and Turns' explore replacement, Secret Mission, both Soul Burn / Drain Life, Soul Echo, Sphinx Ambassador and its engine marker, Buried Ogre, Shahrazad, Sorrow's Path, General Jarkeld, Tainted Pact and its marker, Teach and its cast copy, Time and Tide, Time Vault, Bucket List, Cackling Observer's link step, Zilortha, Whammy Burn and its continuation, Null Chamber, Zndrsplt's Judgment and its action.
+- Abstract … Close (22): Abstract Performance, Ad Nauseam, Struggle for Sanity, Thick-Skinned Goblin, Amulet of Quoz, Applejack, Olag, Approach of the Second Sun, `AsEntersDiscardEntry`, the shared attack-direction record, Arcanum Wings (aura swap), Balduvian Warlord, Bend or Break, Chaotic Aether, Bombardment, Brilliant Ultimatum, Bronze Tablet, Cait, Camouflage, Channel Harm, the shared chaos-ensues record, Captivating Glance.
+
+**Seen, not changed** (confirmed by reading, not run):
+- Burning-Rune Demon (`BurningRuneDemonEffectHandler`) never calls `LibrarySearchTriggerHelper.recordSearchAndQueueTriggers`. It also ignores Opposition Agent and Aven Mindcensor's top-cards limit, all of which `IntuitionEffectHandler` handles. Searching with it misses "whenever a player searches" (CR 701.23a). Sure of the code.
+- Shared Fate exiles from `getOpponentId`, where its text says "one of their opponents' libraries", chosen by the drawing player. Abstract Performance, Brilliant Ultimatum, Burning-Rune Demon and Captivating Glance's clash all take the first other player as "an opponent". Wrong only with more than two players. Sure of the code.
+- `SwapBlockingAssignmentsBetweenTwoCreaturesEffect`'s Javadoc says the blocks don't trigger again. Its handler re-blocks through `applyBlockFromEffect`, and the rulings say "blocks" abilities trigger again, so the handler is right and the Javadoc is stale. Sure.
+- Bounty of the Luxa sets flood counters with `setCounterCount`. Placement replacements (counter doublers) and the counter-removed events are skipped. Sure of the code, low impact.
+- Animal Magnetism puts the chosen creature onto the battlefield with `putPermanentOntoBattlefield` + `handleCreatureEnteredBattlefield`, outside the entry batch. As-enters copy choices may be skipped. Unverified.
+- The draw-replacement source scans for Abundance (`findAbundanceSourceCard`), Archmage Ascension (`findCounterThresholdDrawReplacementSource`), Shared Fate (`findSharedFateSources`) and Breathstealer's Crypt (`findCryptSources`) read `getCard().getStaticEffects()` with no lost-abilities or face-down check (CR 613.1f, 708.2a). `ExploreEffectHandler` checks lost abilities but not face-down. Sure of the code.
+
+**Anything left.** Nothing in this chunk. The batches reach records outside it:
+- Unaudited: `OpenGraveyardReturnBatchEffect`, `CreatureEnteringDontCauseTriggersEffect`, `SkipDrawStepEffect`, `PowerBoostForCrewAndSaddleEffect`, `PowerBoostForCrewAndStationEffect`, the Vote family.
+- Rows to update: `DiscardIfPlayerDealtDamageThisWayEffect` (stale 4e row, now a parameters fold); `UseToughnessForCrewAndSaddleEffect` and `ClashEffect` (run 29 unique rows; the first now gains a station use).
+
+Cheapest fold-run starts, by parameters or a subject only: the suppression, unsuspect and tap-flip pairs; Loran; Aetherworks Marvel; Minamo; Doorkeeper Thrull; Gerrard's Hourglass Pendant.
+
 ## Prompt
 
 Replace `<N>` with the step number. For step 9, add the run kind and its scope (`step 9, triage run: Destroy, Search`;
