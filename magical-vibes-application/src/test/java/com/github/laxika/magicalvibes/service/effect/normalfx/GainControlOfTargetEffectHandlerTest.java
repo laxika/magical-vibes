@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -385,6 +388,74 @@ class GainControlOfTargetEffectHandlerTest {
             handler.resolve(gd, entry, effect);
 
             verify(creatureControlService, never()).applyControlEffect(any(), any(), any(), any(), any(), any(), any());
+        }
+    }
+
+    @Nested
+    @DisplayName("Who gains control, and the GAIN_CONTROL step")
+    class GainingPlayerAndStep {
+
+        @Test
+        @DisplayName("Another player the effect names gains control until end of turn")
+        void anotherPlayerGainsControl() {
+            Card card = createCard("Domineering Will");
+            Permanent target = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player1Id).add(target);
+            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN)
+                    .gainedBy(Subjects.targetPlayer(0));
+            StackEntry entry = entryWithMultiTargets(card, player1Id, List.of(effect), List.of(target.getId()));
+            when(subjectResolutionService.players(gd, entry, effect, Subjects.targetPlayer(0)))
+                    .thenReturn(List.of(player2Id));
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id, player2Id);
+            when(creatureControlService.applyControlEffect(gd, player2Id, target, effect, Duration.UNTIL_END_OF_TURN,
+                    null, "Domineering Will")).thenReturn(true);
+
+            handler.resolve(gd, entry, effect);
+
+            verify(creatureControlService).applyControlEffect(gd, player2Id, target, effect,
+                    Duration.UNTIL_END_OF_TURN, null, "Domineering Will");
+            StepOutcome outcome = entry.getResolutionResults().outcome(StepKind.GAIN_CONTROL);
+            assertThat(outcome.objectIds()).containsExactly(target.getId());
+            assertThat(outcome.playerIds()).containsExactly(player2Id);
+        }
+
+        @Test
+        @DisplayName("Records only the permanents whose controller changed")
+        void recordsOnlyChangedPermanents() {
+            Card card = createCard("Steal");
+            Permanent stolen = createCreature("Grizzly Bears");
+            Permanent own = createCreature("Hill Giant");
+            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(Duration.PERMANENT);
+            StackEntry entry = entryWithMultiTargets(card, player1Id, List.of(effect),
+                    List.of(stolen.getId(), own.getId()));
+            when(gameQueryService.findPermanentById(gd, stolen.getId())).thenReturn(stolen);
+            when(gameQueryService.findPermanentById(gd, own.getId())).thenReturn(own);
+            when(gameQueryService.findPermanentController(gd, stolen.getId())).thenReturn(player2Id, player1Id);
+            when(gameQueryService.findPermanentController(gd, own.getId())).thenReturn(player1Id, player1Id);
+            when(creatureControlService.applyControlEffect(any(), any(), any(), any(), any(), any(), any()))
+                    .thenReturn(true);
+
+            handler.resolve(gd, entry, effect);
+
+            assertThat(entry.getResolutionResults().outcome(StepKind.GAIN_CONTROL).objectIds())
+                    .containsExactly(stolen.getId());
+        }
+
+        @Test
+        @DisplayName("Changes nothing and records nothing when the named player is gone")
+        void noGainingPlayer() {
+            Card card = createCard("Domineering Will");
+            Permanent target = createCreature("Grizzly Bears");
+            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN)
+                    .gainedBy(Subjects.targetPlayer(0));
+            StackEntry entry = entryWithMultiTargets(card, player1Id, List.of(effect), List.of(target.getId()));
+            when(subjectResolutionService.players(gd, entry, effect, Subjects.targetPlayer(0))).thenReturn(List.of());
+
+            handler.resolve(gd, entry, effect);
+
+            verify(creatureControlService, never()).applyControlEffect(any(), any(), any(), any(), any(), any(), any());
+            assertThat(entry.getResolutionResults().outcome(StepKind.GAIN_CONTROL).amount()).isZero();
         }
     }
 }

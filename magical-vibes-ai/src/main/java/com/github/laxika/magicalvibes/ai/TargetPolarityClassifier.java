@@ -382,6 +382,11 @@ public class TargetPolarityClassifier {
             return TargetPolarity.HARMFUL;
         }
 
+        // "Target player gains control of up to three target creatures" (Domineering Will) may hand the AI's own
+        // creatures to an ally or take an opponent's: no side is implied.
+        if (effect instanceof GainControlOfTargetEffect gain && !(gain.gainingPlayer() instanceof PlayerSubject.You)) {
+            return TargetPolarity.NEUTRAL;
+        }
         if (effect instanceof TargetCreatureMustAttackSourcePermanentNextTurnEffect
                 || effect instanceof GainControlOfTargetEffect) {
             return TargetPolarity.HARMFUL;
@@ -753,7 +758,6 @@ public class TargetPolarityClassifier {
             entry("ExchangeTextBoxesEffect", TargetPolarity.NEUTRAL),
             entry("ExchangeControlOfTargetSpellAndCreatureEffect", TargetPolarity.NEUTRAL),
             entry("ShuffleTargetPermanentsThenEachControllerMayCastEffect", TargetPolarity.NEUTRAL),
-            entry("TargetPlayerGainsControlOfTargetPermanentsUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("MustBlockEachAttackingCreatureThisTurnEffect", TargetPolarity.NEUTRAL),
             entry("BecomeChosenColorsUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("BecomeChosenColorsIndefinitelyEffect", TargetPolarity.NEUTRAL),

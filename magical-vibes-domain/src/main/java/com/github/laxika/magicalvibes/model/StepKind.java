@@ -60,6 +60,9 @@ package com.github.laxika.magicalvibes.model;
  *   <li>{@link #NOTE}: the number noted ({@code NoteAmountEffect}: "note its power", "note that excess damage"),
  *       nothing, no player; a delayed ability the same resolution makes keeps it ("where X is the noted number",
  *       {@code TemporaryGlobalTriggeredAbility.keepingNotedAmount}).</li>
+ *   <li>{@link #GAIN_CONTROL}: the number of permanents whose controller the step changed
+ *       ({@code GainControlOfTargetEffect}; one the gaining player already controlled is not counted), those
+ *       permanents, the gaining player.</li>
  * </ul>
  *
  * <p>A later step may read a step only if that step finishes before the next one starts (CR 608.2c): its handler never
@@ -72,7 +75,7 @@ package com.github.laxika.magicalvibes.model;
  * source and return it transformed ({@code ExileSelfAndReturnTransformedEffect}), transform the source
  * ({@code TransformSelfEffect}) (never prompt, or
  * rerun before any change); the self sacrifice ({@code departAsStep}), discard and
- * sacrifice (their prompts add to the result as they are answered, through {@code GameData.discarded} and
+ * gain control ({@code GainControlOfTargetEffect}, never prompting), sacrifice (their prompts add to the result as they are answered, through {@code GameData.discarded} and
  * {@code DestructionSupport.sacrificeTogether}), the chosen return to hand
  * ({@code ReturnPermanentControlledByPlayerToHandEffect}: its {@code BounceCreature} choice adds the returned
  * permanent; {@code ReturnChosenPermanentsToHandEffect}: its answer adds all of them), put counters (a replacement order answered later adds the rest; on each matching permanent,
@@ -118,5 +121,6 @@ public enum StepKind {
     PAY_MANA,
     SHUFFLE_INTO_LIBRARY,
     PUT_INTO_LIBRARY,
+    GAIN_CONTROL,
     NOTE
 }

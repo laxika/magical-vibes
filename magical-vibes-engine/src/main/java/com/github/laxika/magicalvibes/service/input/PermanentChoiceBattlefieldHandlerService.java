@@ -1359,16 +1359,6 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    public void handleExileChosenPermanent(GameData gameData, UUID permanentId,
-                                            PermanentChoiceContext.ExileChosenPermanent context) {
-        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
-        if (target == null) {
-            throw new IllegalStateException("Chosen permanent no longer exists");
-        }
-        exileSupport.exilePermanentAndLog(gameData, target, context.sourceCardName());
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
     public void handleAnimateChosenOwnPermanent(GameData gameData, UUID permanentId,
             PermanentChoiceContext.AnimateChosenOwnPermanent context) {
         StackEntry entry = gameData.pendingEffectResolutionEntry;

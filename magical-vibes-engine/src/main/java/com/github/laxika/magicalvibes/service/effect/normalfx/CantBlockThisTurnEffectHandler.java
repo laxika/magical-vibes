@@ -54,7 +54,12 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CantBlockThisTurnEffect) effect;
         if (e.subject() instanceof PermanentSubject.ControlledBy set) {
-            resolveRule(gameData, entry, e, set);
+            resolveRule(gameData, entry, e, set, subjectResolutionService.lastingRule(gameData, entry, e, set), false);
+            return;
+        }
+        if (e.subject() instanceof PermanentSubject.Except except
+                && except.permanents() instanceof PermanentSubject.ControlledBy set) {
+            resolveRule(gameData, entry, e, set, subjectResolutionService.lastingRule(gameData, entry, e, except), true);
             return;
         }
         for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, e, e.subject())) {
@@ -69,8 +74,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void resolveRule(GameData gameData, StackEntry entry, CantBlockThisTurnEffect effect,
-                             PermanentSubject.ControlledBy set) {
-        PermanentPredicate predicate = subjectResolutionService.lastingRule(gameData, entry, effect, set);
+                             PermanentSubject.ControlledBy set, PermanentPredicate predicate, boolean others) {
         if (predicate == null) {
             return;
         }
@@ -88,7 +92,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
         String playerNames = subjectResolutionService.players(gameData, entry, effect, set.players()).stream()
                 .map(gameData.playerIdToName::get)
                 .collect(Collectors.joining(" and "));
-        String text = (excludesTarget(set.filter()) ? "Other creatures" : "Creatures") + " controlled by "
+        String text = (others || excludesTarget(set.filter()) ? "Other creatures" : "Creatures") + " controlled by "
                 + playerNames + " can't block this turn.";
         gameLogService.append(gameData, GameLog.text(text));
         log.info("Game {} - {}", gameData.id, text);

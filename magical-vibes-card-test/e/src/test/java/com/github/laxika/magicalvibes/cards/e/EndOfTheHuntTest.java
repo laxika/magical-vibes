@@ -13,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -124,6 +125,19 @@ class EndOfTheHuntTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(original);
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(larger.getCard());
+    }
+
+    @Test
+    @DisplayName("A face-down creature's mana value is 0, so a face-up creature with a greater one is exiled")
+    void faceDownCreatureHasManaValueZero() {
+        Permanent faceDown = addCreature(player2, "Hidden creature", "{5}{B}");
+        faceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Permanent faceUp = addCreature(player2, "Face-up creature", "{1}");
+
+        castEndOfTheHunt();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(faceDown);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(faceUp.getCard());
     }
 
     private void castEndOfTheHunt() {

@@ -51,7 +51,7 @@ class ImperialEdictTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
                 .isEqualTo(player2.getId());
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.DestroyChosenCreature.class);
+                .isInstanceOf(PermanentChoiceContext.RecordChosenPermanents.class);
     }
 
     @Test
@@ -126,7 +126,7 @@ class ImperialEdictTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gameLogContains("no creatures to destroy")).isTrue();
+        assertThat(gameLogContains("there is nothing to choose")).isTrue();
     }
 
     @Test

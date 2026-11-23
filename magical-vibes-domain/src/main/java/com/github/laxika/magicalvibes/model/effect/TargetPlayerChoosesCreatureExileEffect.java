@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 /**
  * "Target opponent exiles a creature they control." (Doomfall mode 1).
  *
- * <p>The exile analog of {@link TargetPlayerChoosesCreatureDestroyEffect}: the targeted player
+ * <p>An edict that exiles: the targeted player
  * chooses which eligible permanent to lose, but it is <em>exiled</em> rather than destroyed, so
  * regeneration and indestructible do not apply and no "dies" triggers fire. With 0 eligible
  * permanents nothing happens; with exactly 1 it is exiled automatically; with 2+ the choosing

@@ -724,8 +724,6 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleExquisiteArchangelLossReplacement(gameData, permanentId, lossReplacement);
         } else if (context instanceof PermanentChoiceContext.DestroyChosenCreature destroyChosenCreature) {
             battlefieldHandler.handleDestroyChosenCreature(gameData, permanentId, destroyChosenCreature);
-        } else if (context instanceof PermanentChoiceContext.ExileChosenPermanent exileChosenPermanent) {
-            battlefieldHandler.handleExileChosenPermanent(gameData, permanentId, exileChosenPermanent);
         } else if (context instanceof PermanentChoiceContext.GildedAmbusherChoice gildedAmbusherChoice) {
             gildedAmbusherEffectHandler.completeChoice(gameData, permanentId, gildedAmbusherChoice);
             if (!gameData.interaction.isAwaitingInput()) {

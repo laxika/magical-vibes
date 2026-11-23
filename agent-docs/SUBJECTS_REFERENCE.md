@@ -52,7 +52,7 @@ target), `allCreatures()` / `otherCreatures()`, `allPermanents()` / `otherPerman
 `sourceAndPaired()` (soulbond, CR 702.95: the source and its pair, as a set). Pick by the card's words: "creatures you
 control" includes the source, "other creatures you control" does not; a one-shot "all creatures gain ..." is
 `allCreatures()`.
-| `except(permanents, excluded)` | "then exile all other Nightmare tokens you control" after the copy step: `except(controlledBy(you(), Nightmare token), createdThisResolution())` (the permanents `permanents` names but those `excluded` names; neither part may target; Abyssal Harvester) | no | if both may |
+| `except(permanents, excluded)` | "then exile all other Nightmare tokens you control" after the copy step: `except(controlledBy(you(), Nightmare token), createdThisResolution())` (the permanents `permanents` names but those `excluded` names; neither part may target; Abyssal Harvester). As a lasting rule over a `controlledBy` set (`CantBlockThisTurnEffect`, "other creatures they control can't block this turn"), the excluded permanents are found as the effect resolves and later arrivals are still covered | no | if both may |
 | `oneOf(options...)` | "exile this permanent or up to one target creature": one of the options, chosen by the controller as the effect resolves; the resolver refuses it, the verb's handler resolves each option and asks; a target option is declared by the ability (Kaya, Ghost Assassin) | no | no |
 
 ## PlayerSubject

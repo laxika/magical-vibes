@@ -187,6 +187,7 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
             case SHUFFLE_INTO_LIBRARY -> "shuffled into a library";
             case PUT_INTO_LIBRARY -> "put into a library";
             case NOTE -> "noted";
+            case GAIN_CONTROL -> "taken over";
         };
     }
 }

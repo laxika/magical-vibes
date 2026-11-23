@@ -817,13 +817,6 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
-     * {@code targetPlayerId} chose one creature to keep able to block; every other creature they
-     * control can't block this turn (Goblin War Cry).
-     */
-    record ChooseCreatureRestCantBlock(UUID targetPlayerId) implements MultiPermanentChoiceContext {
-    }
-
-    /**
      * Oracle en-Vec: {@code targetPlayerId} chose any number of creatures they control. The chosen
      * set is made a floating {@code OnlyChosenCreaturesCanAttackEffect} that applies during that
      * player's next turn — the chosen creatures attack if able, every other creature can't

@@ -888,6 +888,24 @@ class SubjectResolutionServiceTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("Leaves out what an exception names now, and keeps reaching later arrivals (\"other creatures they control\")")
+        void leavesOutTheExceptionFoundNow() {
+            Permanent chosen = addCreatureReady(player2, new GrizzlyBears());
+            Permanent other = addCreatureReady(player2, new HillGiant());
+            StackEntry entry = entry(player1, player2.getId(), null);
+            entry.recordStep(StepKind.CHOOSE, StepOutcome.ofObjects(List.of(chosen.getId()), List.of(player2.getId())));
+
+            PermanentPredicate rule = subjects.lastingRule(gd, entry, EFFECT, (PermanentSubject.Except) except(
+                    controlledBy(targetPlayer(), new PermanentIsCreaturePredicate()),
+                    Subjects.thisWay(StepKind.CHOOSE)));
+            Permanent laterBears = addCreatureReady(player2, new GrizzlyBears());
+
+            assertThat(matches(rule, chosen)).isFalse();
+            assertThat(matches(rule, other)).isTrue();
+            assertThat(matches(rule, laterBears)).isTrue();
+        }
+
+        @Test
         @DisplayName("Is null when the set names no player")
         void namesNoPlayer() {
             StackEntry entry = entry(player1, null, null);

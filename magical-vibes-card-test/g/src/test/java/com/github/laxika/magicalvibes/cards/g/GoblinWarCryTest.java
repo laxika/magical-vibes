@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.b.BearCub;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -31,7 +32,7 @@ class GoblinWarCryTest extends BaseCardTest {
         Permanent other = addReadyCreature(player2);
 
         castGoblinWarCry();
-        harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
+        harness.handlePermanentChosen(player2, kept.getId());
 
         assertThat(canBlockACreature(kept)).isTrue();
         assertThat(canBlockACreature(other)).isFalse();
@@ -45,7 +46,7 @@ class GoblinWarCryTest extends BaseCardTest {
         Permanent other2 = addReadyCreature(player2);
 
         castGoblinWarCry();
-        harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
+        harness.handlePermanentChosen(player2, kept.getId());
 
         assertThat(canBlockACreature(kept)).isTrue();
         assertThat(canBlockACreature(other1)).isFalse();
@@ -60,7 +61,7 @@ class GoblinWarCryTest extends BaseCardTest {
         Permanent other = addReadyCreature(player2);
 
         castGoblinWarCry();
-        harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
+        harness.handlePermanentChosen(player2, kept.getId());
 
         assertThat(gd.hasFloatingEffectOnPermanent(island.getId(), CantBlockEffect.class)).isFalse();
         assertThat(canBlockACreature(kept)).isTrue();
@@ -73,7 +74,8 @@ class GoblinWarCryTest extends BaseCardTest {
         Permanent only = addReadyCreature(player2);
 
         castGoblinWarCry();
-        harness.handleMultiplePermanentsChosen(player2, List.of(only.getId()));
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
 
         assertThat(canBlockACreature(only)).isTrue();
     }
@@ -94,7 +96,7 @@ class GoblinWarCryTest extends BaseCardTest {
         Permanent other = addReadyCreature(player2);
 
         castGoblinWarCry();
-        harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
+        harness.handlePermanentChosen(player2, kept.getId());
 
         assertThat(canBlockACreature(own)).isTrue();
         assertThat(canBlockACreature(other)).isFalse();
@@ -108,7 +110,7 @@ class GoblinWarCryTest extends BaseCardTest {
         addReadyCreature(player2); // the restricted blocker (index 1)
 
         castGoblinWarCry();
-        harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
+        harness.handlePermanentChosen(player2, kept.getId());
 
         declareAttackersAndPrepareBlockers(List.of(0));
 
@@ -130,13 +132,16 @@ class GoblinWarCryTest extends BaseCardTest {
     @DisplayName("The opponent must choose a creature when they control one")
     void cannotDeclineCreatureChoice() {
         Permanent kept = addReadyCreature(player2);
-        addReadyCreature(player2);
+        Permanent other = addReadyCreature(player2);
 
         castGoblinWarCry();
 
-        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player2, List.of()))
-                .isInstanceOf(IllegalStateException.class);
-        harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOfSatisfying(PendingInteraction.PermanentChoice.class, choice -> {
+                    assertThat(choice.playerId()).isEqualTo(player2.getId());
+                    assertThat(choice.validPermanentIds()).containsExactlyInAnyOrder(kept.getId(), other.getId());
+                });
+        harness.handlePermanentChosen(player2, kept.getId());
     }
 
     @Test
@@ -147,7 +152,7 @@ class GoblinWarCryTest extends BaseCardTest {
         addReadyCreature(player2);
 
         castGoblinWarCry();
-        harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
+        harness.handlePermanentChosen(player2, kept.getId());
         declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
@@ -158,10 +163,9 @@ class GoblinWarCryTest extends BaseCardTest {
     @DisplayName("Creatures entering after the choice also can't block")
     void laterCreatureCantBlock() {
         addReadyCreature(player1);
-        Permanent kept = addReadyCreature(player2);
+        addReadyCreature(player2); // the lone creature, chosen unasked
 
         castGoblinWarCry();
-        harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
         harness.addToBattlefield(player2, new BearCub());
         declareAttackersAndPrepareBlockers(List.of(0));
 
@@ -189,7 +193,7 @@ class GoblinWarCryTest extends BaseCardTest {
         Permanent other = addReadyCreature(player2);
 
         castGoblinWarCry();
-        harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
+        harness.handlePermanentChosen(player2, kept.getId());
         harness.setLibrary(player2, List.of(new Island()));
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
@@ -210,7 +214,7 @@ class GoblinWarCryTest extends BaseCardTest {
         Permanent other = addReadyCreature(player2);
 
         castGoblinWarCry();
-        harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
+        harness.handlePermanentChosen(player2, kept.getId());
         harness.setHand(player1, List.of(new RayOfCommand()));
         harness.addMana(player1, ManaColor.BLUE, 4);
         harness.castAndResolveInstant(player1, 0, other.getId());

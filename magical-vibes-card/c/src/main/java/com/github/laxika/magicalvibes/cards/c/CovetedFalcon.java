@@ -4,7 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfTargetPermanentsAndDrawPerPermanentEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetGroupMarkerEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
@@ -36,8 +39,8 @@ public class CovetedFalcon extends Card {
                 new GainControlOfTargetEffect(Duration.PERMANENT));
 
         TargetGroupMarkerEffect opponent = new TargetGroupMarkerEffect();
-        TargetPlayerGainsControlOfTargetPermanentsAndDrawPerPermanentEffect gainControl =
-                new TargetPlayerGainsControlOfTargetPermanentsAndDrawPerPermanentEffect(2);
+        GainControlOfTargetEffect gainControl = new GainControlOfTargetEffect(Duration.PERMANENT)
+                .gainedBy(Subjects.targetPlayer(1));
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
@@ -46,6 +49,7 @@ public class CovetedFalcon extends Card {
                 new PermanentTruePredicate(),
                 "Target must be a permanent you control"
         ), 0, Integer.MAX_VALUE).bindEffect(gainControl);
-        addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS), opponent, gainControl);
+        addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS), opponent, gainControl,
+                new DrawCardEffect(new AmountThisWay(StepKind.GAIN_CONTROL)));
     }
 }

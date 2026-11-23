@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.s.ShuFootSoldiers;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -25,7 +26,7 @@ class EunuchsIntriguesTest extends BaseCardTest {
         Permanent other = addCreatureReady(player2, new ShuFootSoldiers());
 
         castEunuchsIntrigues();
-        harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
+        harness.handlePermanentChosen(player2, kept.getId());
 
         assertThat(canBlockACreature(kept)).isTrue();
         assertThat(canBlockACreature(other)).isFalse();
@@ -37,7 +38,8 @@ class EunuchsIntriguesTest extends BaseCardTest {
         Permanent only = addCreatureReady(player2, new ShuFootSoldiers());
 
         castEunuchsIntrigues();
-        harness.handleMultiplePermanentsChosen(player2, List.of(only.getId()));
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
 
         assertThat(canBlockACreature(only)).isTrue();
     }
@@ -58,7 +60,7 @@ class EunuchsIntriguesTest extends BaseCardTest {
         Permanent other = addCreatureReady(player2, new ShuFootSoldiers());
 
         castEunuchsIntrigues();
-        harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
+        harness.handlePermanentChosen(player2, kept.getId());
 
         assertThat(canBlockACreature(own)).isTrue();
         assertThat(canBlockACreature(other)).isFalse();
@@ -72,7 +74,7 @@ class EunuchsIntriguesTest extends BaseCardTest {
         addCreatureReady(player2, new ShuFootSoldiers()); // the restricted blocker (index 1)
 
         castEunuchsIntrigues();
-        harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
+        harness.handlePermanentChosen(player2, kept.getId());
 
         declareAttackersAndPrepareBlockers(List.of(0));
 
@@ -88,7 +90,7 @@ class EunuchsIntriguesTest extends BaseCardTest {
         addCreatureReady(player2, new ShuFootSoldiers());
 
         castEunuchsIntrigues();
-        harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
+        harness.handlePermanentChosen(player2, kept.getId());
 
         declareAttackersAndPrepareBlockers(List.of(0));
 
@@ -100,10 +102,9 @@ class EunuchsIntriguesTest extends BaseCardTest {
     @DisplayName("A creature entering later this turn also can't block")
     void laterCreatureCantBlock() {
         addCreatureReady(player1, new ShuFootSoldiers());
-        Permanent kept = addCreatureReady(player2, new ShuFootSoldiers());
+        addCreatureReady(player2, new ShuFootSoldiers()); // the lone creature, chosen unasked
 
         castEunuchsIntrigues();
-        harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
 
         addCreatureReady(player2, new ShuFootSoldiers());
         declareAttackersAndPrepareBlockers(List.of(0));
@@ -126,13 +127,16 @@ class EunuchsIntriguesTest extends BaseCardTest {
     @DisplayName("An opponent with creatures must choose exactly one")
     void cannotDeclineCreatureChoice() {
         Permanent kept = addCreatureReady(player2, new ShuFootSoldiers());
-        addCreatureReady(player2, new ShuFootSoldiers());
+        Permanent other = addCreatureReady(player2, new ShuFootSoldiers());
 
         castEunuchsIntrigues();
 
-        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player2, List.of()))
-                .isInstanceOf(IllegalStateException.class);
-        harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOfSatisfying(PendingInteraction.PermanentChoice.class, choice -> {
+                    assertThat(choice.playerId()).isEqualTo(player2.getId());
+                    assertThat(choice.validPermanentIds()).containsExactlyInAnyOrder(kept.getId(), other.getId());
+                });
+        harness.handlePermanentChosen(player2, kept.getId());
     }
 
     @Test

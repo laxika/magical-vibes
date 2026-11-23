@@ -64,7 +64,7 @@ class EarlyWinterTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.ExileChosenPermanent.class);
+                .isInstanceOf(PermanentChoiceContext.DestroyChosenCreature.class);
 
         harness.handlePermanentChosen(player2, first.getId());
 

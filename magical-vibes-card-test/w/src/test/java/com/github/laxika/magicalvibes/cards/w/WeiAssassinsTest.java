@@ -50,7 +50,7 @@ class WeiAssassinsTest extends BaseCardTest {
         assertThat(choice.playerId()).isEqualTo(player2.getId());
         assertThat(choice.validIds()).containsExactly(infantry.getId(), eliteCompanions.getId());
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.DestroyChosenCreature.class);
+                .isInstanceOf(PermanentChoiceContext.RecordChosenPermanents.class);
 
         harness.handlePermanentChosen(player2, infantry.getId());
 
@@ -67,7 +67,7 @@ class WeiAssassinsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gameLogContains("no creatures to destroy")).isTrue();
+        assertThat(gameLogContains("there is nothing to choose")).isTrue();
     }
 
     @Test

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -31,6 +32,8 @@ import java.util.UUID;
 /**
  * Resolves {@link ChoosePermanentsEffect}: asks for a single permanent or for several, pauses at its end on the choice
  * and records {@link StepKind#CHOOSE} as it is answered. The log names no face-down permanent's card (CR 708.2).
+ * The choosing player is the effect's {@link ChoosePermanentsEffect#choosingPlayer()}, the controller unless the text
+ * names another ("target opponent chooses a creature they control"); with none left to choose, nothing is chosen.
  */
 @Component
 @RequiredArgsConstructor
@@ -53,6 +56,10 @@ public class ChoosePermanentsEffectHandler implements NormalEffectHandlerBean {
         List<Permanent> candidates = subjectResolutionService.permanents(gameData, entry, effect, choose.candidates())
                 .stream().filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent)).toList();
         entry.recordStep(StepKind.CHOOSE, StepOutcome.NONE);
+        UUID chooserId = chooserId(gameData, entry, choose);
+        if (chooserId == null) {
+            return;
+        }
         AmountContext context = AmountContext.forStackEntry(entry, entry.getSourcePermanentSnapshot());
         int maximum = choose.maximum() == null ? candidates.size() : Math.min(candidates.size(),
                 amountEvaluationService.evaluate(gameData, choose.maximum(), context));
@@ -87,13 +94,13 @@ public class ChoosePermanentsEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         List<UUID> ids = candidates.stream().map(Permanent::getId).toList();
-        String prompt = entry.getCard().getName() + " — choose " + choose.label() + ".";
+        String prompt = FaceDownVisibility.sourceName(gameData, entry) + " — choose " + choose.label() + ".";
         if (minimum == 1 && maximum == 1) {
             var single = new PermanentChoiceContext.RecordChosenPermanents(choose);
             gameData.interaction.setPermanentChoiceContext(single);
-            playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), ids, single, prompt);
+            playerInputService.beginPermanentChoice(gameData, chooserId, ids, single, prompt);
         } else {
-            playerInputService.beginMultiPermanentChoice(gameData, entry.getControllerId(), ids, maximum,
+            playerInputService.beginMultiPermanentChoice(gameData, chooserId, ids, maximum,
                     new MultiPermanentChoiceContext.ChoosePermanents(choose, minimum), prompt);
         }
     }
@@ -116,7 +123,7 @@ public class ChoosePermanentsEffectHandler implements NormalEffectHandlerBean {
             gameData.interaction.setPermanentChoiceContext(next);
             UUID controllerId = gameQueryService.findPermanentController(gameData, offered.getFirst());
             playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), offered, next,
-                    entry.getCard().getName() + " — choose " + choose.label() + " "
+                    FaceDownVisibility.sourceName(gameData, entry) + " — choose " + choose.label() + " "
                             + gameData.playerIdToName.get(controllerId) + " controls.");
             return true;
         }
@@ -179,8 +186,18 @@ public class ChoosePermanentsEffectHandler implements NormalEffectHandlerBean {
         return present;
     }
 
+    /** The player who chooses: the controller, or the one the effect names as it resolves; {@code null} for none. */
+    private UUID chooserId(GameData gameData, StackEntry entry, ChoosePermanentsEffect choose) {
+        if (choose.chooser() == null) {
+            return entry.getControllerId();
+        }
+        List<UUID> players = subjectResolutionService.players(gameData, entry, choose, choose.chooser());
+        return players.isEmpty() ? null : players.getFirst();
+    }
+
     private void record(GameData gameData, StackEntry entry, ChoosePermanentsEffect choose, List<Permanent> chosen) {
-        String chooser = gameData.playerIdToName.get(entry.getControllerId());
+        UUID chooserId = chooserId(gameData, entry, choose);
+        String chooser = gameData.playerIdToName.get(chooserId != null ? chooserId : entry.getControllerId());
         if (chosen.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(chooser + " chooses nothing."));
             return;

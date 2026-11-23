@@ -7,6 +7,14 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -247,6 +255,57 @@ class PermanentChoiceAiStrategyTest {
                     new PermanentChoiceContext.LegendRule("Duplicate")), context());
 
             assertChosen(oppThreat.getId());
+        }
+    }
+
+    @Nested
+    @DisplayName("Choosing among its own creatures for an opponent's spell")
+    class ChoiceForOpponentsSpell {
+
+        private final ChoosePermanentsEffect choice = ChoosePermanentsEffect.exactly(1,
+                        Subjects.controlledBy(Subjects.targetPlayerDeclaredElsewhere(), new PermanentIsCreaturePredicate()),
+                        "a creature you control")
+                .chosenBy(Subjects.targetPlayer());
+
+        @Test
+        @DisplayName("Keeps its strongest creature able to block when the others can't (Goblin War Cry)")
+        void keepsStrongestBlocker() throws Exception {
+            Permanent weak = creature("Weak", "{1}", 1);
+            Permanent strong = creature("Strong", "{3}", 5);
+            gameData.playerBattlefields.get(aiPlayerId).add(weak);
+            gameData.playerBattlefields.get(aiPlayerId).add(strong);
+            when(gameQueryService.getEffectivePower(gameData, weak)).thenReturn(1);
+            when(gameQueryService.getEffectivePower(gameData, strong)).thenReturn(5);
+            resolving(new CantBlockThisTurnEffect(Subjects.except(
+                    Subjects.controlledBy(Subjects.targetPlayerDeclaredElsewhere(), new PermanentIsCreaturePredicate()),
+                    Subjects.thisWay(StepKind.CHOOSE))));
+
+            strategy.answer(permanentChoice(aiPlayerId, List.of(weak.getId(), strong.getId()),
+                    new PermanentChoiceContext.RecordChosenPermanents(choice)), context());
+
+            assertChosen(strong.getId());
+        }
+
+        @Test
+        @DisplayName("Gives up its weakest creature to a destroy edict (Imperial Edict)")
+        void losesWeakestToEdict() throws Exception {
+            Permanent weak = creature("Weak", "{1}", 1);
+            Permanent strong = creature("Strong", "{3}", 5);
+            gameData.playerBattlefields.get(aiPlayerId).add(weak);
+            gameData.playerBattlefields.get(aiPlayerId).add(strong);
+            when(gameQueryService.getEffectivePower(gameData, weak)).thenReturn(1);
+            when(gameQueryService.getEffectivePower(gameData, strong)).thenReturn(5);
+            resolving(new DestroyTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE)));
+
+            strategy.answer(permanentChoice(aiPlayerId, List.of(weak.getId(), strong.getId()),
+                    new PermanentChoiceContext.RecordChosenPermanents(choice)), context());
+
+            assertChosen(weak.getId());
+        }
+
+        private void resolving(CardEffect after) {
+            gameData.pendingEffectResolutionEntry = new StackEntry(StackEntryType.SORCERY_SPELL, new Card(),
+                    opponentId, "Edict", List.of(choice, after));
         }
     }
 

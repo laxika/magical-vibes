@@ -505,10 +505,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             List<UUID> chosenPermanentIds
     ) implements PermanentChoiceContext {}
 
-    /** A player chooses a matching permanent to exile during a resolving effect. */
-    record ExileChosenPermanent(UUID choosingPlayerId, String sourceCardName, String permanentLabel)
-            implements PermanentChoiceContext {}
-
     /** The controller chooses the opponent who will choose a matching permanent to sacrifice. */
     record ChooseOpponentForPermanentSacrifice(UUID sacrificingPlayerId, String sourceCardName,
                                                 PermanentPredicate filter) implements PermanentChoiceContext {}

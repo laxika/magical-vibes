@@ -592,6 +592,29 @@ public class SubjectResolutionService {
                 : new PermanentAllOfPredicate(List.of(controlled, filter));
     }
 
+    /**
+     * {@link #lastingRule(GameData, StackEntry, CardEffect, PermanentSubject.ControlledBy)} of a set but the
+     * permanents another subject names ("other creatures they control" after a choice): those are found now, as the
+     * effect resolves, and stay left out whatever they become. {@code null} when the set names no player.
+     */
+    public PermanentPredicate lastingRule(GameData gameData, StackEntry entry, CardEffect effect,
+                                          PermanentSubject.Except except) {
+        if (!(except.permanents() instanceof PermanentSubject.ControlledBy set)) {
+            throw new IllegalArgumentException("A lasting rule is made of a set: " + except.permanents());
+        }
+        PermanentPredicate rule = lastingRule(gameData, entry, effect, set);
+        if (rule == null) {
+            return null;
+        }
+        List<PermanentPredicate> excluded = ids(new Context(gameData, entry, effect, null, entry.getControllerId()),
+                except.excluded()).stream()
+                .<PermanentPredicate>map(PermanentIsSpecificPermanentPredicate::new)
+                .toList();
+        return excluded.isEmpty() ? rule : new PermanentAllOfPredicate(List.of(rule,
+                new PermanentNotPredicate(excluded.size() == 1 ? excluded.getFirst()
+                        : new PermanentAnyOfPredicate(excluded))));
+    }
+
     private PermanentPredicate bindTarget(Context ctx, PermanentPredicate predicate) {
         return switch (predicate) {
             case PermanentIsTargetCardPredicate ignored -> {

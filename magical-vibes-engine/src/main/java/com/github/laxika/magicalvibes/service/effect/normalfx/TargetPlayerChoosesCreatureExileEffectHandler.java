@@ -68,9 +68,10 @@ public class TargetPlayerChoosesCreatureExileEffectHandler implements NormalEffe
 
         if (eligibleIds.isEmpty()) {
             String playerName = gameData.playerIdToName.get(targetPlayerId);
-            String logEntry = playerName + " has no creatures to exile.";
+            String logEntry = playerName + (exileEffect.permanentFilter() == null
+                    ? " has no creatures to exile." : " has nothing to exile.");
             gameLogService.append(gameData, GameLog.text(logEntry));
-            log.info("Game {} - {} has no creatures to exile", gameData.id, playerName);
+            log.info("Game {} - {}", gameData.id, logEntry);
             return;
         }
 

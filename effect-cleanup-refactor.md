@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 34: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May and Register closed (May's 11 cost combinators listed for step 10; Register's three `RegisterGlobalTriggeredAbility…` duration records wait for the owner); 1,806 rare records left, Perpetually open (30 rare, waiting for the human's logging and "it" decisions), Conjure open (39 rare), Target open (36 rare)) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 35: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May and Register closed (May's 11 cost combinators listed for step 10; Register's three `RegisterGlobalTriggeredAbility…` duration records wait for the owner); 1,797 rare records left, Perpetually open (30 rare, waiting for the human's logging and "it" decisions), Conjure open (39 rare), Target open (27 rare)) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -640,6 +640,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 32 | Register's delayed returns from a graveyard, its next-draw replacements and one-shot boons, then Target | Register and Target open (21 rows: 7 absorbed, 1 split, 2 survivors (one gaining an option, one a subject), 2 unique, 9 blocked-other (the next-draw payloads); 8 records and 8 handlers deleted; 9 card files rewritten; `RegisterDelayedStepTriggerEffect.aboutCardAtNext`, `TargetPlayerLosesAllUnspentManaEffect(PlayerSubject)`; Loyal Cathar and Biolume Egg no longer return a card that left its graveyard and came back before the trigger resolved; the boons left for a noted-amount part; 23 rare Register and 45 rare Target records left) |
 | 33 | The noted amount and the boons, Ochre Jelly and Mana Sculpt on it, Register's rare records, then Target | Register nearly closed, Target open (25 rows: 5 absorbed, 3 split, 1 survivor (new), 15 unique, 1 blocked-other; 8 records and 8 handlers deleted, 1 of each added; 9 card files rewritten; `NoteAmountEffect` with `StepKind.NOTE` and `AmountThisWay.noted()`, kept by the delayed abilities (`keepingNotedAmount`), `TargetSpellManaSpent`, `RegisterDelayedStepTriggerEffect.atNextMainPhase` / `.aboutAtNext`, entering counters of the source token copy a `DynamicAmount`; Mana Sculpt's delayed mana is made for a spell cast for no mana; 2 rare Register and 42 rare Target records left) |
 | 34 | Register's linked pair (the source leaves / untaps / control is lost, "that creature"), then Target's rare records | Register closed, Target open (13 rows: 8 absorbed (two of them re-ledgered rows, one a corrected unique verdict), 2 survivors gaining a subject or options, 3 unique; 8 records and 8 handlers deleted; 9 card files rewritten; `RegisterDelayedEventTriggerEffect.aboutWhenSourceLeavesThisTurn` / `.aboutWhenSourceLeavesOrUntaps` / `.aboutWhenSourceUntapsOrControlLost`, `LookAtHandEffect(PlayerSubject)`, Gravestorm's empty graveyard in `MayEffectHandler`; 0 rare Register and 36 rare Target records left) |
+| 35 | Target's player-choice records (a chooser on `ChoosePermanentsEffect`) and control-gift records (a gaining player and a GAIN_CONTROL step on `GainControlOfTargetEffect`) | Target open (12 rows: 7 absorbed, 3 survivors gaining an option, 2 unique; 7 records and 7 handlers deleted, 2 choice contexts with them; 9 card files rewritten; `ChoosePermanentsEffect.chosenBy`, `GainControlOfTargetEffect.gainedBy`, `StepKind.GAIN_CONTROL`, `CantBlockThisTurnEffect` over `except(controlledBy(…), …)`; End of the Hunt reads a face-down creature as mana value 0; the must-attack and power-damage records not reached; 27 rare Target records left) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -9651,6 +9652,120 @@ verified: more than two players.
   `TargetPermanentControllerMaySacrificeOrDamageEffect`, `TargetPlayerPutsCounterOnCreatureEffect`.
 - Still the owner's: the gift opponent (CR 702.174a), the hidden-zone conjure and perpetual logging, the perpetual "it" (CR 400.7), one
   `Duration` for the three `RegisterGlobalTriggeredAbility…` records, `RegisterDelayedSacrificeSourceWhenTargetLeavesEffect` (6 cards).
+
+### Step 9, run 35 (2026-11-23, Target open)
+
+Run 34's two shared parts for Target, built and folded: a chooser on `ChoosePermanentsEffect` for the player-choice records, and a
+gaining player with a recorded GAIN_CONTROL step on `GainControlOfTargetEffect` for the control-gift records. Ratchet 4,075 / 3,329 →
+4,068 / 3,322 records / handlers (7 records and 7 handlers deleted, none added). 9 card files rewritten (Imperial Edict, Wei Assassins,
+Goblin War Cry, Eunuchs' Intrigues, Early Winter, End of the Hunt, Domineering Will, Coveted Falcon, Sky Swallower); Oracle text checked
+with `get_card` for those 9 and for Speedbrood Stalker, Oracle en-Vec and Iroh, Tea Master; rulings with `get_rulings` for Goblin War Cry
+(none), Coveted Falcon, Sky Swallower, Domineering Will and End of the Hunt. CR 101.4, 202.3a, 608.2b, 608.2d, 611.2c, 613.1b, 702.174a,
+708.2 and 708.2a checked with `get_rule` (2026-11-23).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | Left unaudited |
+|---|---|---|---|---|---|---|---|
+| Target | 9 rare records | 7 | 0 | 0 | 0 | 2 | 27 rare, 37 in all |
+| (other) | `ChoosePermanentsEffect`, `GainControlOfTargetEffect`, `CantBlockThisTurnEffect` | | | 3 (an option each) | | | |
+
+All families: 1,797 rare records without a row (run 34: 1,806). Perpetually 30 rare and Conjure 39 rare, unchanged.
+
+- **The chooser.** `ChoosePermanentsEffect` gained `PlayerSubject chooser` (`chosenBy(player)`, `choosingPlayer()`; not with `oneForEach`
+  or `atRandom`). The one choice, its prompt and its log line ("Player2 chooses Grizzly Bears.") go to that player, found as the effect
+  resolves (none: nothing is chosen); a target-declaring chooser (`targetPlayer()`) makes the record declare the benign player target the
+  old records declared, and the candidates read it with `targetPlayerDeclaredElsewhere()`. The prompt names the source through
+  `FaceDownVisibility.sourceName`. Candidates are still found as it resolves and the can't-be-chosen ones dropped; with no more candidates
+  than must be chosen they are taken unasked. The target's legality on resolution is the stack's (CR 608.2b); the choice is the
+  resolution-time choice of CR 608.2d. No several-player choice is involved (CR 101.4 untouched: `oneForEach` keeps its controller).
+- **Imperial Edict / Wei Assassins**: `ChoosePermanentsEffect.exactly(1, controlledBy(targetPlayerDeclaredElsewhere(), creature), "a creature
+  you control").chosenBy(targetPlayer())` + `DestroyTargetPermanentEffect(thisWay(CHOOSE))` (a `SequenceEffect` on Wei Assassins' trigger).
+  Destroyed, so regeneration and indestructible apply as before; the destroy step asks the death replacements first.
+- **Goblin War Cry / Eunuchs' Intrigues**: the same choice + `CantBlockThisTurnEffect(except(controlledBy(targetPlayerDeclaredElsewhere(),
+  creature), thisWay(CHOOSE)))`. `CantBlockThisTurnEffect` accepts an `except` over a `controlledBy` set, and the new
+  `SubjectResolutionService.lastingRule(…, Except)` binds the excluded permanents as it resolves and keeps the rule reaching later arrivals
+  (CR 611.2c: a can't-block effect changes no characteristics), exactly the old predicate (`controlled by that player ∧ creature ∧ ¬ the
+  kept one`). With no creature the rule covers all of them, as before.
+- **Early Winter / End of the Hunt**: `TargetPlayerChoosesCreatureExileEffect(filter)`, the 6-card exile edict, with an enchantment filter
+  and with Blot Out's greatest-mana-value filter (End of the Hunt and Blot Out have the same Oracle text). Its empty log for a filtered
+  edict is "has nothing to exile." (it said "has no creatures to exile." for Blot Out's planeswalkers too).
+- **Unique**: Speedbrood Stalker (the controller's *secret* choice: the chooser's log and recorded step would show it; a secret option would
+  have this card only) and Oracle en-Vec (the chosen set's next-turn attack rule and the end-step destroy; one card).
+- **The gaining player and GAIN_CONTROL.** `GainControlOfTargetEffect` gained `PlayerSubject gainer` (`gainedBy(player)`,
+  `gainingPlayer()`): another player gains control only permanently or until end of turn with no rider (the constructor refuses the
+  rest; no card needs them). The handler gives control to that player (none found: nothing changes) and records the new
+  `StepKind.GAIN_CONTROL`: the permanents whose controller became the gainer, the gainer; one it already controlled still gets the new
+  control effect (Bazaar Trader's ruling) but isn't counted. The default gainer stays `entry.getControllerId()` without the resolver,
+  so the 160-odd steal cards take the same path. Durations are the old ones: Domineering Will until end of turn, Coveted Falcon and Sky
+  Swallower permanently (Sky Swallower's ruling: they don't come back when it leaves); both are layer-2 floating effects as before
+  (CR 613.1b). A face-down permanent's control change logs through the existing `FaceDownVisibility` source name.
+- **Domineering Will**: `GainControlOfTargetEffect(UNTIL_END_OF_TURN).gainedBy(targetPlayer(0))`. **Coveted Falcon**:
+  `GainControlOfTargetEffect(PERMANENT).gainedBy(targetPlayer(1))` bound to its permanent group + `DrawCardEffect(new
+  AmountThisWay(StepKind.GAIN_CONTROL))`. **Sky Swallower**: `GainControlOfTargetEffect.of(except(controlledBy(you()), source()),
+  PERMANENT).gainedBy(targetPlayer())` (the source excluded by its id; one that left is excluded by nothing, as the old handler did).
+- **Gift** (the owner's question, not changed): no record this run touched handles a gift.
+- **AI.** `ChosenPermanentsAiChoice` answers a choice of its own permanents for an opponent's spell: its weakest for the destroy edict
+  (old: the lowest mana value), its strongest when the chosen one is spared from the can't-block rule (old: the first offered). A
+  `GainControlOfTargetEffect` for another player is a NEUTRAL target (Domineering Will's old classification) and its `controlDuration()`
+  is `null`, so Domineering Will and Coveted Falcon are no longer scored as steals (they were, though they hand permanents away). End of
+  the Hunt lost its `RemovalEffect` marker with its record: an edict can't remove a creature the AI picks, and Blot Out (same text) never
+  had it. `TargetPolarityGuardTest` passes.
+
+**Behaviour changes.**
+
+1. End of the Hunt reads a face-down creature's mana value as 0 (CR 708.2a, 202.3a; the old handler read the card's):
+   `EndOfTheHuntTest.faceDownCreatureHasManaValueZero` (new; not run on HEAD).
+2. Goblin War Cry / Eunuchs' Intrigues: a single-permanent prompt instead of a multi-choice of one, and a lone creature is chosen unasked.
+   Imperial Edict / Wei Assassins: prompt "Imperial Edict — choose a creature you control.", empty log "Imperial Edict: there is nothing
+   to choose." (was "… has no creatures to destroy."). Early Winter's prompt is "Choose a matching permanent to exile.".
+3. Goblin War Cry's floating rule names its source (it named "Other creatures can't block"), and its log line is the can't-block step's.
+4. The AI answers and scores above.
+
+**What a player sees.** The prompts and log lines above; the chooser is told the source by `FaceDownVisibility`; nothing names a hidden card.
+
+**Seen, not changed.**
+
+- `TargetPlayerGainsControlOfTargetPermanentEffect` (6 cards, blocked-other since step 8 for "no GAIN_CONTROL step kind") could now be
+  `GainControlOfTargetEffect(PERMANENT).gainedBy(targetPlayer())` with its follow-up gated on `HappenedThisWay(GAIN_CONTROL)`; three or more
+  cards, so the owner's sign-off. Its row is unchanged.
+- `TargetPlayerGainsControlOfTargetPermanentThenEffect` (Iroh, Tea Master: "you may have target opponent gain control of target permanent
+  you control. When you do, …") would be a may of the gain step + `ConditionalEffect(HappenedThisWay(GAIN_CONTROL), QueueReflexiveAbilityEffect)`;
+  not done because its two targets are chosen as an unbound list on the trigger, and which target the gain's `target()` and the gainer read
+  inside a spliced `MayEffect` was not established. Left unaudited. Shuriken's `TargetPermanentControllerGainsControlOfGrantingEquipmentEffect`
+  (the granting Equipment bound at activation, the Ninja check) not reached.
+- The head's permanent path (`resolvePermanent`) reads all of the entry's targets, not the effect's group; player ids are skipped, so it is
+  harmless today, but a card with two permanent groups would give control of both.
+
+**Tests edited.** `EarlyWinterTest`, `ImperialEdictTest`, `WeiAssassinsTest`: the choice context class (the deleted contexts) and the empty
+log line (the survivor's wins). `GoblinWarCryTest`, `EunuchsIntriguesTest`: answered as a single choice; the lone-creature cases assert no
+prompt; the "can't decline" case asserts the target opponent's prompt offers exactly its two creatures. `TargetPolarityGuardTest`: the
+deleted record replaced by its expression (still NEUTRAL). New: `EndOfTheHuntTest` (face-down), `PermanentChoiceAiStrategyTest` (2: the
+spared blocker, the edict), `SubjectResolutionServiceTest` (the excepted lasting rule), `GainControlOfTargetEffectHandlerTest` (3: another
+gainer, only changed permanents recorded, no gainer). `EffectCountRatchetTest`'s baselines.
+
+**Tests run.** Three Gradle runs, one `--tests` list per task, counted from each run's XML by timestamp; the last on the final sources: 90
+classes, 140 XML files, 1,323 cases, 0 failures, 0 errors, 0 skipped (the 13 classes referencing a changed card, Blot Out, Doomfall,
+Strategic Betrayal and the other exile-edict cards, a sample of `ChoosePermanentsEffect` and `CantBlockThisTurnEffect` cards, 15 sampled
+`GainControlOfTargetEffect` cards plus Bazaar Trader, Ray of Command, Magus of the Unseen, Captivating Vampire, Iroh, the 28 `Mastery` /
+`DeathReplacement` classes (a deleted handler was `AsksDeathReplacementsFirst`), `SubjectResolutionServiceTest`,
+`GainControlOfTargetEffectHandlerTest`, `StepResultsTest`, `CardEffectTargetingConsistencyTest`, `EffectCountRatchetTest` at 4,068 / 3,322,
+the AI's `TargetPolarityGuardTest`, `GameDataDeepCopyTest`, `PermanentChoiceAiStrategyTest`, `MultiPermanentChoiceAiStrategyTest`).
+Compiled: domain, engine (and its test fixtures), AI, websocket, webservice, every card module, the application and AI test sources and
+the card-test sources of the letters c, d, e, g, i, k, s, w. No deleted type is named by any source (grepped). Not run: the full suites,
+the AI fuzz and stress tests, the frontend. Not verified: more than two players.
+
+**For the next run (run 36: Target's rare records).**
+
+- Iroh's `TargetPlayerGainsControlOfTargetPermanentThenEffect` on the gain step (establish the trigger's target binding first), Shuriken's
+  record.
+- The must-attack records (`TargetCreatureMustAttackTargetPlayerThisTurnEffect`, `TargetCreatureMustAttackSourcePermanentNextTurnEffect`,
+  `TargetCreatureMustAttackNextCombatEffect`, `TargetPlayersCreaturesMustAttackEachOtherUntilNextTurnEffect`; `TargetPlayersCreaturesMustAttackThisTurnEffect`
+  has three cards): each pairs a requirement with its own duration, so check whether `SetCombatRequirementThisTurnEffect` can take a
+  `Duration` before folding. The power-damage records (`TargetCreaturesDealPowerDamageToTargetEffect`, `TargetCreatureDealsPowerDamageToEachTargetEffect`,
+  the each-other-creature and perpetual ones), `TargetPermanentControllerSacrificeThenEffect`, `TargetPermanentControllerMaySacrificeOrDamageEffect`,
+  `TargetPlayerPutsCounterOnCreatureEffect`.
+- Still the owner's: the gift opponent (CR 702.174a), the hidden-zone conjure and perpetual logging, the perpetual "it" (CR 400.7), one
+  `Duration` for the three `RegisterGlobalTriggeredAbility…` records, `RegisterDelayedSacrificeSourceWhenTargetLeavesEffect` (6 cards),
+  `TargetPlayerGainsControlOfTargetPermanentEffect` (6 cards) on the gain step.
 
 ## Prompt
 

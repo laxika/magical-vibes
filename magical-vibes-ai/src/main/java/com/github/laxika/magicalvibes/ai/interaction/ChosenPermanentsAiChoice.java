@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AttachAnyNumberOfControlledEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
@@ -26,8 +27,9 @@ import java.util.UUID;
 
 /**
  * The AI's answer to a {@link ChoosePermanentsEffect}: its own strongest where the steps after the choice keep or
- * improve what is chosen, the opponents' strongest otherwise, as many as must be chosen, no two sharing a quality
- * that must differ.
+ * improve what is chosen (spare it from a wipe or a can't-block rule, ...), the opponents' strongest otherwise, its own
+ * weakest when it must choose among its own (an edict it is the target of), as many as must be chosen, no two sharing
+ * a quality that must differ.
  */
 final class ChosenPermanentsAiChoice {
 
@@ -79,6 +81,8 @@ final class ChosenPermanentsAiChoice {
         for (CardEffect effect : resolving.getEffectsToResolve()) {
             boolean favors = switch (effect) {
                 case DestroyAllPermanentsEffect wipe -> chosen.equals(wipe.spared());
+                case CantBlockThisTurnEffect restriction -> restriction.subject() instanceof PermanentSubject.Except except
+                        && chosen.equals(except.excluded());
                 case GrantKeywordEffect grant -> chosen.equals(grant.subject());
                 case CreateTokenCopyOfTargetPermanentEffect copy -> chosen.equals(copy.subject());
                 case PutCounterOnTargetPermanentEffect counters -> chosen.equals(counters.subject())

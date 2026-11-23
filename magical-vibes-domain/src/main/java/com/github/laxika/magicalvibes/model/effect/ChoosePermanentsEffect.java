@@ -11,7 +11,8 @@ import java.util.Objects;
  * (CR 608.2d); none of them is targeted. With no more candidates than must be chosen, all of them are, unasked.
  * "For each opponent, choose a nonland permanent that player controls" is {@link #oneForEach}: one choice for each
  * of those players in turn, among the candidates that player controls. "One of them chosen at random" is
- * {@link #atRandom}: nobody is asked.
+ * {@link #atRandom}: nobody is asked. "Target opponent chooses a creature they control" is {@link #chosenBy}: that player
+ * makes the one choice, and this effect declares the player target the chooser names.
  *
  * <p>A CHOOSE step that pauses at its end on the choice: {@code Subjects.thisWay(StepKind.CHOOSE)} is what was chosen,
  * for the steps after it. A source that chose one permanent also keeps it as its chosen permanent ("when the chosen
@@ -24,10 +25,11 @@ import java.util.Objects;
  * @param label      what is chosen, for the prompt ("up to two creatures")
  * @param oneForEach for each of whom one that player controls is chosen; {@code null} for one choice among all
  * @param random     whether they are chosen at random, {@code maximum} of them
+ * @param chooser    who makes the one choice; {@code null} for the controller
  */
 public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount minimum, DynamicAmount maximum,
                                      Different different, String label, PlayerSubject oneForEach,
-                                     boolean random) implements CardEffect {
+                                     boolean random, PlayerSubject chooser) implements CardEffect {
 
     /** "With different powers", "with different mana values". */
     public enum Different {
@@ -62,24 +64,35 @@ public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount 
         if (random && (different != null || maximum == null)) {
             throw new IllegalArgumentException("A number of permanents is chosen at random: " + maximum);
         }
+        if (chooser != null && (oneForEach != null || random)) {
+            throw new IllegalArgumentException("Only the one choice among all is made by another player: " + chooser);
+        }
+    }
+
+    /** "Target opponent chooses …" declares that player target; the candidates never declare one. */
+    @Override
+    public TargetSpec targetSpec() {
+        return chooser != null && chooser.declaresTarget()
+                ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
     }
 
     /** The controller's one choice among all the candidates. */
     public ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount minimum, DynamicAmount maximum,
                                   Different different, String label) {
-        this(candidates, minimum, maximum, different, label, null, false);
+        this(candidates, minimum, maximum, different, label, null, false, null);
     }
 
     /** "For each [of players], choose [one of candidates] that player controls." */
     public static ChoosePermanentsEffect oneForEach(PlayerSubject players, PermanentSubject candidates,
                                                     String label) {
         return new ChoosePermanentsEffect(candidates, new Fixed(1), new Fixed(1), null, label,
-                Objects.requireNonNull(players, "players"), false);
+                Objects.requireNonNull(players, "players"), false, null);
     }
 
     /** "[Count] of [candidates] chosen at random." */
     public static ChoosePermanentsEffect atRandom(int count, PermanentSubject candidates, String label) {
-        return new ChoosePermanentsEffect(candidates, new Fixed(count), new Fixed(count), null, label, null, true);
+        return new ChoosePermanentsEffect(candidates, new Fixed(count), new Fixed(count), null, label, null, true,
+                null);
     }
 
     /** "Choose [count] [candidates]." */
@@ -100,6 +113,17 @@ public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount 
     /** These, no two with the same {@code quality}. */
     public ChoosePermanentsEffect withDifferent(Different quality) {
         return new ChoosePermanentsEffect(candidates, minimum, maximum, quality,
-                label + " with different " + quality.plural());
+                label + " with different " + quality.plural(), oneForEach, random, chooser);
+    }
+
+    /** The same choice made by {@code player} ("target opponent chooses a creature they control"). */
+    public ChoosePermanentsEffect chosenBy(PlayerSubject player) {
+        return new ChoosePermanentsEffect(candidates, minimum, maximum, different, label, oneForEach, random,
+                Objects.requireNonNull(player, "player"));
+    }
+
+    /** Who makes the choice. */
+    public PlayerSubject choosingPlayer() {
+        return chooser == null ? Subjects.you() : chooser;
     }
 }

@@ -1672,7 +1672,7 @@ Independent, all LOW. Do as many as land cleanly; note any that don't.
 | `AddOneOfEachManaTypeProducedByLandEffect(boolean controllerOnly)` + the trigger's `withFilter` | `AddProducedManaWhenLandOfSubtypeTappedEffect`, `AddProducedManaWhenSnowLandTappedEffect` (and `TappedSnowLandDoesntUntapEffect`): **Gone** | 1 + 1 |
 | `PlayWithHandRevealedEffect(boolean controllerOnly)` | `PlayWithHandsRevealedEffect`, `PlayWithOwnHandRevealedEffect` (+ delete the `PubliclyRevealedHandEffect` interface) | 1 + 1 |
 | `PayXManaThenEffect(String manaCost, CardEffect payload)` | `PayXManaGainXLifeEffect`, `PayXManaCreateXTokensEffect` | 1 + 1 |
-| `TargetPlayerChoosesCreatureEffect(boolean exile)` | `TargetPlayerChoosesCreatureDestroyEffect`, `TargetPlayerChoosesCreatureExileEffect` | 2 + 1 |
+| `TargetPlayerChoosesCreatureEffect(boolean exile)` | `TargetPlayerChoosesCreatureDestroyEffect`: **Done differently** (effect-cleanup step 9 run 35: `ChoosePermanentsEffect.chosenBy` + `DestroyTargetPermanentEffect(thisWay(CHOOSE))`); `TargetPlayerChoosesCreatureExileEffect` kept | 2 + 1 |
 | `TargetPlayerCantThisTurnEffect(TurnRestriction)` | `TargetPlayerCantPlayLandsThisTurnEffect`, `TargetPlayerCantCastCreatureSpellsThisTurnEffect` | 2 + 1 |
 | `SacrificeCreatureForTokenEffect(CreateTokenEffect, PermanentPredicate, SacrificedStat, TokenScaling)` | **Moot**: `SacrificeCreatureCreateSizedTokenEqualToPowerEffect` had no card left and was deleted (`effect-cleanup-refactor.md` step 2); `SacrificeCreatureToCreateTokensEqualToToughnessEffect` stays alone | 0 + 1 |
 | `SacrificeAllYouControlCost(PermanentPredicate, boolean trackTotalPower)` | `SacrificeAllCreaturesYouControlCost`, `SacrificeAllPermanentsYouControlCost` | 1 + 1 |

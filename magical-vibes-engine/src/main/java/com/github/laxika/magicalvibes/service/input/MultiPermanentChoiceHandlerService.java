@@ -426,10 +426,6 @@ public class MultiPermanentChoiceHandlerService {
         if (mandatoryCounterChoice && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one permanent must be selected");
         }
-        if (context instanceof MultiPermanentChoiceContext.ChooseCreatureRestCantBlock
-                && permanentIds.size() != 1) {
-            throw new IllegalStateException("Exactly one creature must be selected");
-        }
         // Calamity, Galloping Inferno: "choose a nonlegendary creature that saddled it" is mandatory
         if (context instanceof MultiPermanentChoiceContext.CreateTokenCopiesOfSaddledCreature
                 && permanentIds.size() != 1) {
@@ -1057,8 +1053,6 @@ public class MultiPermanentChoiceHandlerService {
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
             }
-        } else if (context instanceof MultiPermanentChoiceContext.ChooseCreatureRestCantBlock ctx) {
-            handleChooseCreatureRestCantBlock(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseCreaturesToAttackNextTurn ctx) {
             handleChooseCreaturesToAttackNextTurn(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.CulturalExchange ctx) {
@@ -2569,29 +2563,6 @@ public class MultiPermanentChoiceHandlerService {
 
         // Destruction is complete — follow standard completion: SBA → may abilities → resume effects
         permanentRemovalService.removeOrphanedAuras(gameData);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    private void handleChooseCreatureRestCantBlock(GameData gameData, List<UUID> permanentIds,
-                                                   MultiPermanentChoiceContext.ChooseCreatureRestCantBlock context) {
-        UUID targetPlayerId = context.targetPlayerId();
-        UUID keptId = permanentIds.isEmpty() ? null : permanentIds.getFirst();
-        com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerChoosesCreatureRestCantBlockEffectHandler
-                .restrictOtherCreatures(gameData, targetPlayerId, keptId);
-
-        // The floating effect follows control (CR 611.2c), so no per-creature flag is set here: a creature
-        // that leaves the player's control may block again.
-        List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
-        long count = battlefield == null ? 0 : battlefield.stream()
-                .filter(perm -> gameQueryService.isCreature(gameData, perm) && !perm.getId().equals(keptId))
-                .count();
-
-        if (count > 0) {
-            String playerName = gameData.playerIdToName.get(targetPlayerId);
-            gameLogService.append(gameData, GameLog.text("Other creatures controlled by " + playerName + " can't block this turn."));
-        }
-
-        // Standard completion: SBA → may abilities → resume effects
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 

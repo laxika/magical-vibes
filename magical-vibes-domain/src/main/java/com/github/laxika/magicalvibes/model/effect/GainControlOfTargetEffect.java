@@ -13,6 +13,9 @@ import java.util.Objects;
  * Haste/untap riders (Act of Treason pattern) are composed as separate effects on the
  * card, not baked into this effect.
  *
+ * <p>A {@link com.github.laxika.magicalvibes.model.StepKind#GAIN_CONTROL} step: it records the permanents whose
+ * controller it changed ("draw a card for each one they gained control of this way", "when you do").
+ *
  * @param duration           how long control is retained
  * @param grantedSubtype     if non-null, this subtype is permanently added to the stolen
  *                           permanent (e.g. Captivating Vampire's "It becomes a Vampire in
@@ -28,11 +31,16 @@ import java.util.Objects;
  * @param subject            {@code target()}, the declared target, or permanents that are no target: {@code triggering()}
  *                           (Treasure Nabber's "gain control of that artifact"), the ones an earlier step chose
  *                           ("choose a creature at random. You gain control of that creature")
+ * @param gainer             who gains control: {@code null} for the effect's controller ("gain control of"), or the
+ *                           player it names ("target player gains control of up to three target creatures until end
+ *                           of turn", "target opponent gains control of all other permanents you control"); another
+ *                           player gains control only permanently or until end of turn, with no rider
  */
 public record GainControlOfTargetEffect(Duration duration, CardSubtype grantedSubtype,
                                         boolean tapWhenControlLost,
                                         PermanentPredicate targetPredicate, boolean opponentChoosesTarget,
-                                        boolean maintainTargetPredicate, PermanentSubject subject)
+                                        boolean maintainTargetPredicate, PermanentSubject subject,
+                                        PlayerSubject gainer)
         implements ControlStealingEffect {
 
     public GainControlOfTargetEffect {
@@ -40,6 +48,20 @@ public record GainControlOfTargetEffect(Duration duration, CardSubtype grantedSu
         if (!(subject instanceof PermanentSubject.Target) && subject.declaresTarget()) {
             throw new IllegalArgumentException("Control is gained of the target or of no target: " + subject);
         }
+        if (gainer != null && !(gainer instanceof PlayerSubject.You)
+                && (!(Duration.PERMANENT.equals(duration) || Duration.UNTIL_END_OF_TURN.equals(duration))
+                        || grantedSubtype != null || tapWhenControlLost || opponentChoosesTarget)) {
+            throw new IllegalArgumentException("Another player gains control permanently or until end of turn: "
+                    + gainer + " " + duration);
+        }
+    }
+
+    public GainControlOfTargetEffect(Duration duration, CardSubtype grantedSubtype,
+                                     boolean tapWhenControlLost, PermanentPredicate targetPredicate,
+                                     boolean opponentChoosesTarget, boolean maintainTargetPredicate,
+                                     PermanentSubject subject) {
+        this(duration, grantedSubtype, tapWhenControlLost, targetPredicate, opponentChoosesTarget,
+                maintainTargetPredicate, subject, null);
     }
 
     public GainControlOfTargetEffect(Duration duration, CardSubtype grantedSubtype,
@@ -89,14 +111,30 @@ public record GainControlOfTargetEffect(Duration duration, CardSubtype grantedSu
         return new GainControlOfTargetEffect(duration, null, false, null, true, false);
     }
 
-    @Override
-    public Duration controlDuration() {
-        return duration;
+    /** The same control change, to {@code player} instead of the effect's controller. */
+    public GainControlOfTargetEffect gainedBy(PlayerSubject player) {
+        return new GainControlOfTargetEffect(duration, grantedSubtype, tapWhenControlLost, targetPredicate,
+                opponentChoosesTarget, maintainTargetPredicate, subject, Objects.requireNonNull(player, "player"));
     }
 
+    /** Who gains control. */
+    public PlayerSubject gainingPlayer() {
+        return gainer == null ? Subjects.you() : gainer;
+    }
+
+    /** The duration of the steal; {@code null} when another player than the controller gains control (no steal). */
+    @Override
+    public Duration controlDuration() {
+        return gainingPlayer() instanceof PlayerSubject.You ? duration : null;
+    }
+
+    /** The permanent target, else the player target the gainer declares ("target opponent gains control of …"). */
     @Override
     public TargetSpec targetSpec() {
-        return subject instanceof PermanentSubject.Target
-                ? TargetSpec.benign(TargetPredicates.permanent(), targetPredicate) : TargetSpec.NONE;
+        if (subject instanceof PermanentSubject.Target) {
+            return TargetSpec.benign(TargetPredicates.permanent(), targetPredicate);
+        }
+        return gainer != null && gainer.declaresTarget() ? TargetSpec.benign(TargetPredicates.player())
+                : TargetSpec.NONE;
     }
 }
