@@ -141,6 +141,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithCon
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithAPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithTriggeringPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithTriggeringSpellPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithLegendaryControlledPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
@@ -1391,6 +1392,8 @@ public class PredicateEvaluationService {
                             .anyMatch(perm -> !perm.isFaceDown() && perm.getCard().getName().equals(card.getName()));
             // Only the graveyard count that has the resolving entry knows the triggering spell (AmountEvaluationService).
             case CardSharesNameWithTriggeringSpellPredicate ignored -> false;
+            // Bound to the resolving entry's triggering spell by AmountEvaluationService.bindTriggeringSpellCardTypes.
+            case CardSharesCardTypeWithTriggeringSpellPredicate ignored -> false;
             case CardSharesNameWithTriggeringPermanentPredicate ignored -> false;
             case CardIsTriggeringCardPredicate ignored -> false;
             // Bound to the resolving entry's triggering spell by AmountEvaluationService.bindTriggeringSpellManaValue.

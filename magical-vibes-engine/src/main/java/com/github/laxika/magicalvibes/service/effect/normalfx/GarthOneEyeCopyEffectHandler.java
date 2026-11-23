@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GarthOneEyeCopyEffect;
-import com.github.laxika.magicalvibes.model.effect.MayCastCopyWithNormalCostEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastCopyWithManaCostEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -47,7 +47,7 @@ public class GarthOneEyeCopyEffectHandler implements NormalEffectHandlerBean {
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 copy,
                 entry.getControllerId(),
-                List.of(new MayCastCopyWithNormalCostEffect()),
+                List.of(new MayCastCopyWithManaCostEffect()),
                 "Cast the copy of " + copy.getName() + " by paying its mana cost?",
                 copy.getId()));
         gameLogService.append(gameData, GameLog.textCardText(

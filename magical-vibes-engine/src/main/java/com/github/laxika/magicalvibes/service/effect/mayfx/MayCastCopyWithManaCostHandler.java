@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Handles the optional cast of a copy with a fixed mana cost. */
+/** Handles the optional cast of a copy for its own mana cost or a fixed one. */
 @Component
 @RequiredArgsConstructor
 public class MayCastCopyWithManaCostHandler implements MayEffectHandlerBean {

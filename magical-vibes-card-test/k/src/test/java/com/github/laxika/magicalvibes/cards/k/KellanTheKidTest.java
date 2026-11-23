@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class KellanTheKidTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Casting a spell from a graveyard offers a permanent spell from hand")
     void castsAnEligiblePermanentFromHandAfterCastingFromGraveyard() {
         harness.addToBattlefield(player1, new KellanTheKid());
         harness.setGraveyard(player1, List.of(new Firebolt()));
@@ -37,6 +39,7 @@ class KellanTheKidTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With no permanent spell to cast, offers a land card from hand")
     void offersALandWhenThePermanentSpellIsTooExpensive() {
         harness.addToBattlefield(player1, new KellanTheKid());
         harness.setGraveyard(player1, List.of(new Firebolt()));
@@ -46,7 +49,7 @@ class KellanTheKidTest extends BaseCardTest {
 
         harness.castAndResolveFlashback(player1, 0, player2.getId());
 
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNotNull();
         harness.handleCardChosen(player1, 1);
 
@@ -56,6 +59,7 @@ class KellanTheKidTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not trigger for a spell cast from hand")
     void doesNotTriggerForASpellCastFromHand() {
         harness.addToBattlefield(player1, new KellanTheKid());
         harness.setHand(player1, List.of(new Firebolt(), new DoomedTraveler()));
@@ -68,6 +72,7 @@ class KellanTheKidTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining one offer and casting another offers no land")
     void decliningOneCandidateThenCastingAnotherDoesNotAlsoAllowALand() {
         harness.addToBattlefield(player1, new KellanTheKid());
         harness.setGraveyard(player1, List.of(new Firebolt()));
@@ -87,6 +92,7 @@ class KellanTheKidTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining every offer lets one land be put onto the battlefield")
     void decliningAllCandidatesAllowsOnlyOneLand() {
         harness.addToBattlefield(player1, new KellanTheKid());
         harness.setGraveyard(player1, List.of(new Firebolt()));
@@ -108,6 +114,7 @@ class KellanTheKidTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can decline both the permanent spell and the land")
     void canDeclineBothAnEligiblePermanentAndTheLand() {
         harness.addToBattlefield(player1, new KellanTheKid());
         harness.setGraveyard(player1, List.of(new Firebolt()));
@@ -127,6 +134,7 @@ class KellanTheKidTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not trigger for an opponent's spell")
     void doesNotTriggerForAnOpponentsSpellCastFromGraveyard() {
         harness.addToBattlefield(player1, new KellanTheKid());
         harness.setHand(player1, List.of(new DoomedTraveler(), new Mountain()));

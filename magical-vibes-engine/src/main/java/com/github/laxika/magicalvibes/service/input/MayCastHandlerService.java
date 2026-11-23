@@ -40,7 +40,6 @@ import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingM
 import com.github.laxika.magicalvibes.model.effect.MayCastSpellWithSuspendCostFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromSideboardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWithoutPayingManaCostEffect;
-import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TieredManaCost;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -2447,16 +2446,15 @@ public class MayCastHandlerService {
                 .orElse(true);
         handleMayCastFromHandWithoutPaying(gameData, player, accepted, ability,
                 clearOtherOffers ? MayCastFromHandWithoutPayingManaCostEffect.class : null,
-                revealCardOnDecline, false);
+                revealCardOnDecline);
     }
 
     public void handleMayCastFromHandWithoutPaying(GameData gameData, Player player, boolean accepted,
                                                     PendingMayAbility ability,
                                                     Class<? extends CardEffect> pendingEffectType,
-                                                    boolean revealCardOnDecline,
-                                                    boolean scryIfDeclined) {
+                                                    boolean revealCardOnDecline) {
         handleMayCastFromHandWithoutPaying(gameData, player, accepted, ability, pendingEffectType,
-                revealCardOnDecline, scryIfDeclined, Integer.MAX_VALUE);
+                revealCardOnDecline, Integer.MAX_VALUE);
     }
 
     /**
@@ -2466,8 +2464,7 @@ public class MayCastHandlerService {
     public void handleMayCastFromHandWithoutPaying(GameData gameData, Player player, boolean accepted,
                                                     PendingMayAbility ability,
                                                     Class<? extends CardEffect> pendingEffectType,
-                                                    boolean revealCardOnDecline,
-                                                    boolean scryIfDeclined, int maxSpellManaValue) {
+                                                    boolean revealCardOnDecline, int maxSpellManaValue) {
         boolean exileInsteadOfGraveyard = ability.effects().stream()
                 .filter(MayCastFromHandWithoutPayingManaCostEffect.class::isInstance)
                 .map(MayCastFromHandWithoutPayingManaCostEffect.class::cast)
@@ -2493,7 +2490,7 @@ public class MayCastHandlerService {
                 .map(MayCastFromHandWithoutPayingManaCostEffect.class::cast)
                 .anyMatch(MayCastFromHandWithoutPayingManaCostEffect::castAsAdventure);
         handleMayCastFromHandWithoutPaying(gameData, player, accepted, ability, pendingEffectType,
-                revealCardOnDecline, scryIfDeclined, exileInsteadOfGraveyard,
+                revealCardOnDecline, exileInsteadOfGraveyard,
                 afterSuccessfulCastEffect, maxSpellManaValue, castableSplitModes, castAsAdventure);
     }
 
@@ -2678,7 +2675,6 @@ public class MayCastHandlerService {
                                                      PendingMayAbility ability,
                                                      Class<? extends CardEffect> pendingEffectType,
                                                      boolean revealCardOnDecline,
-                                                     boolean scryIfDeclined,
                                                      boolean exileInsteadOfGraveyard,
                                                      CardEffect afterSuccessfulCastEffect,
                                                      int maxSpellManaValue,
@@ -2693,13 +2689,7 @@ public class MayCastHandlerService {
 
         if (!accepted) {
             queueDeclineEffect(gameData, ability);
-            if (scryIfDeclined) {
-                queueScryFallback(gameData);
-                gameLogService.append(gameData,
-                        GameLog.text(playerName + " declines to cast a permanent spell from hand."));
-                log.info("Game {} - {} declines all eligible permanent spells from hand", gameData.id,
-                        playerName);
-            } else if (revealCardOnDecline) {
+            if (revealCardOnDecline) {
                 gameLogService.append(gameData,
                         GameLog.textCardText(playerName + " declines to cast ", cardToCast, "."));
                 log.info("Game {} - {} declines to cast {} from hand", gameData.id,
@@ -2731,9 +2721,6 @@ public class MayCastHandlerService {
 
         if (cardIndex == -1) {
             queueDeclineEffect(gameData, ability);
-            if (scryIfDeclined) {
-                queueScryFallback(gameData);
-            }
             gameLogService.append(gameData, GameLog.cardThen(cardToCast, " is no longer in hand."));
             log.info("Game {} - {} no longer in hand for cast-from-hand", gameData.id, cardToCast.getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -2766,7 +2753,6 @@ public class MayCastHandlerService {
 
         if (!additionalSpellCostService.satisfiableWithoutManaCost(gameData, player.getId(), cardToCast)) {
             queueDeclineEffect(gameData, ability);
-            if (scryIfDeclined) queueScryFallback(gameData);
             gameLogService.append(gameData, GameLog.text(playerName
                     + " cannot cast the chosen card because its additional cost cannot be paid."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -2779,7 +2765,6 @@ public class MayCastHandlerService {
                 && buildValidSpellTargets(gameData, cardToCast, cardToCast.getCastingCostsAndSpellEffects(),
                 player.getId(), 0, false).isEmpty()) {
             queueDeclineEffect(gameData, ability);
-            if (scryIfDeclined) queueScryFallback(gameData);
             gameLogService.append(gameData, GameLog.cardThen(cardToCast,
                     " has no legal targets and remains in hand."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -2788,7 +2773,6 @@ public class MayCastHandlerService {
 
         if (!castingPermissionService.isSpellCastingAllowed(gameData, player.getId(), cardToCast)) {
             queueDeclineEffect(gameData, ability);
-            if (scryIfDeclined) queueScryFallback(gameData);
             gameLogService.append(gameData, GameLog.cardThen(cardToCast,
                     " can't be cast right now and remains in hand."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -2797,7 +2781,6 @@ public class MayCastHandlerService {
 
         if (!castingPermissionService.canCastWithCastCondition(gameData, player.getId(), cardToCast)) {
             queueDeclineEffect(gameData, ability);
-            if (scryIfDeclined) queueScryFallback(gameData);
             gameLogService.append(gameData, GameLog.cardThen(cardToCast,
                     " can't be cast right now and remains in hand."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -2811,7 +2794,6 @@ public class MayCastHandlerService {
             spellCastingService.paySpellManaCost(gameData, player.getId(), taxPayment, 0, List.of());
         } catch (IllegalArgumentException | IllegalStateException exception) {
             queueDeclineEffect(gameData, ability);
-            if (scryIfDeclined) queueScryFallback(gameData);
             gameLogService.append(gameData, GameLog.cardThen(cardToCast,
                     " cannot be cast because its additional mana cost cannot be paid."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -2839,7 +2821,6 @@ public class MayCastHandlerService {
                 return;
             }
             queueDeclineEffect(gameData, ability);
-            if (scryIfDeclined) queueScryFallback(gameData);
             gameLogService.append(gameData, GameLog.cardThen(cardToCast,
                     " has no half that can be cast and remains in hand."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -2852,13 +2833,6 @@ public class MayCastHandlerService {
                 exileInsteadOfGraveyard, Zone.HAND, declineEffect(ability),
                 ability.sourcePermanentId(), afterSuccessfulCastEffect,
                 castAsAdventure ? physicalCard : null);
-    }
-
-    private void queueScryFallback(GameData gameData) {
-        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-        if (pendingEntry != null) {
-            queueEffectAfterMayChoice(gameData, new ScryEffect(1));
-        }
     }
 
     private void queueDeclineEffect(GameData gameData, PendingMayAbility ability) {

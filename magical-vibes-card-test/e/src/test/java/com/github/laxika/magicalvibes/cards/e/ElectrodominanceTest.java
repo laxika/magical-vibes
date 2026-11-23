@@ -100,6 +100,7 @@ class ElectrodominanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Offers no spell whose mandatory additional cost cannot be paid")
     void cannotCastSpellWithoutMandatoryAdditionalCost() {
         BankruptInBlood spell = new BankruptInBlood();
         harness.setHand(player1, List.of(new Electrodominance(), spell));
@@ -116,6 +117,7 @@ class ElectrodominanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An accepted spell with no legal targets stays in hand")
     void spellWithNoLegalTargetsStaysInHand() {
         EssenceCapture spell = new EssenceCapture();
         harness.setHand(player1, List.of(new Electrodominance(), spell));
@@ -132,6 +134,7 @@ class ElectrodominanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The free spell can target Electrodominance while it resolves")
     void freeSpellCanTargetResolvingElectrodominance() {
         Electrodominance electrodominance = new Electrodominance();
         Quench spell = new Quench();
@@ -155,6 +158,7 @@ class ElectrodominanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With X of 0 it deals no damage and offers no spell with greater mana value")
     void zeroXDealsNoDamageAndDoesNotOfferPositiveManaValueSpell() {
         Electrodominance ineligibleSpell = new Electrodominance();
         harness.setHand(player1, List.of(new Electrodominance(), ineligibleSpell));
@@ -168,6 +172,7 @@ class ElectrodominanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Casting one spell withdraws the other offers")
     void acceptingOneSpellRemovesOtherFreeCastOffers() {
         GrizzlyBears first = new GrizzlyBears();
         GrizzlyBears second = new GrizzlyBears();
@@ -184,6 +189,7 @@ class ElectrodominanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A lethally damaged creature stays until the free-cast choice is answered")
     void lethallyDamagedCreatureRemainsUntilTheFreeCastChoiceFinishes() {
         GrizzlyBears target = new GrizzlyBears();
         harness.addToBattlefield(player2, target);

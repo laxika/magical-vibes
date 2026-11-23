@@ -43,7 +43,7 @@ public class CastInvokeCalamityChosenSpellHandler implements MayEffectHandlerBea
                     maxManaValue);
         } else {
             mayCastHandlerService.handleMayCastFromHandWithoutPaying(
-                    gameData, player, accepted, ability, null, false, false, maxManaValue);
+                    gameData, player, accepted, ability, null, false, maxManaValue);
         }
     }
 

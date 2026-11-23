@@ -1,13 +1,18 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.c.ChitteringHost;
+import com.github.laxika.magicalvibes.cards.g.GrafRats;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MidnightScavengers;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.j.JasperaSentinel;
 import com.github.laxika.magicalvibes.cards.r.RavenousLindwurm;
 import com.github.laxika.magicalvibes.cards.s.SculptorOfWinter;
 import com.github.laxika.magicalvibes.cards.t.TibaltCosmicImpostor;
+import com.github.laxika.magicalvibes.cards.u.UlamogsCrusher;
 import com.github.laxika.magicalvibes.cards.v.ValkiGodOfLies;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -104,6 +109,7 @@ class InSearchOfGreatnessTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Offers the back face of a modal double-faced card when that face fits")
     void offersMatchingBackFaceOfModalDoubleFacedCard() {
         harness.addToBattlefield(player1, new InSearchOfGreatness());
         harness.addToBattlefield(player1, new RavenousLindwurm());
@@ -118,6 +124,7 @@ class InSearchOfGreatnessTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Reads the other permanents as the trigger resolves")
     void determinesManaValueWhenTriggerResolves() {
         harness.addToBattlefield(player1, new InSearchOfGreatness());
         var other = harness.addToBattlefieldAndReturn(player1, new SculptorOfWinter());
@@ -137,6 +144,7 @@ class InSearchOfGreatnessTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Casting the second offer casts one spell and does not scry")
     void acceptsSecondOfferAndCastsOnlyOneSpellWithoutScrying() {
         harness.addToBattlefield(player1, new InSearchOfGreatness());
         harness.addToBattlefield(player1, new JasperaSentinel());
@@ -158,6 +166,7 @@ class InSearchOfGreatnessTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Uses the greatest mana value among other permanents, not any of them")
     void usesGreatestOtherManaValueRatherThanAnyOtherManaValue() {
         harness.addToBattlefield(player1, new InSearchOfGreatness());
         harness.addToBattlefield(player1, new JasperaSentinel());
@@ -175,6 +184,7 @@ class InSearchOfGreatnessTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not trigger in an opponent's upkeep")
     void doesNotTriggerDuringOpponentsUpkeep() {
         harness.addToBattlefield(player1, new InSearchOfGreatness());
         harness.setHand(player1, List.of(new JasperaSentinel()));
@@ -203,5 +213,28 @@ class InSearchOfGreatnessTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Llanowar Elves")).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed({GrafRats.class, MidnightScavengers.class, ChitteringHost.class, UlamogsCrusher.class})
+    @DisplayName("Reads a melded permanent's mana value as its front faces' combined")
+    void readsAMeldedPermanentsCombinedManaValue() {
+        harness.addToBattlefield(player1, new InSearchOfGreatness());
+        Card rats = new GrafRats();
+        Card scavengers = new MidnightScavengers();
+        rats.setOwnerId(player1.getId());
+        scavengers.setOwnerId(player1.getId());
+        Permanent host = harness.addToBattlefieldAndReturn(player1, new ChitteringHost());
+        host.getMeldComponentCards().addAll(List.of(rats, scavengers));
+        UlamogsCrusher freeCard = new UlamogsCrusher();
+        harness.setHand(player1, new ArrayList<>(List.of(freeCard)));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        PendingInteraction.MayAbilityChoice offer =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(offer).isNotNull();
+        assertThat(offer.description()).contains("Ulamog's Crusher");
     }
 }

@@ -12,17 +12,29 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * casting one clears the rest, so only a single spell is cast. A {@code null}
  * {@code spellFilter} matches every nonland hand card. A filter about the source (Brain in a Jar's
  * "mana value equal to the number of charge counters on this artifact") reads the source as it is, or as
- * it last existed once it has left the battlefield.
+ * it last existed once it has left the battlefield; one about the triggering spell (Baral and Kari Zev's "shares a
+ * card type with it") reads that spell.
  *
  * @param spellFilter which hand cards are eligible ({@code null} = any nonland)
  * @param maxManaValue maximum eligible mana value ({@code null} = no maximum)
  * @param afterSuccessfulCastEffect optional "if you do" follow-up, resolved as part of this ability once the spell is cast
+ * @param declineEffect optional "if you don't" follow-up, resolved as part of this ability once no spell is cast: every
+ *                      offer was declined or couldn't be cast, or nothing was offered (In Search of Greatness's
+ *                      scry, Kellan, the Kid's land, Baral and Kari Zev's token)
  */
 public record MayCastAnySpellFromHandWithoutPayingManaCostEffect(CardPredicate spellFilter,
                                                                   DynamicAmount maxManaValue,
                                                                   CardEffect afterSuccessfulCastEffect,
-                                                                  boolean drawnCardsOnly, boolean revealDrawnCards)
+                                                                  boolean drawnCardsOnly, boolean revealDrawnCards,
+                                                                  CardEffect declineEffect)
         implements CardEffect {
+
+    public MayCastAnySpellFromHandWithoutPayingManaCostEffect(CardPredicate spellFilter,
+                                                               DynamicAmount maxManaValue,
+                                                               CardEffect afterSuccessfulCastEffect,
+                                                               boolean drawnCardsOnly, boolean revealDrawnCards) {
+        this(spellFilter, maxManaValue, afterSuccessfulCastEffect, drawnCardsOnly, revealDrawnCards, null);
+    }
 
     public MayCastAnySpellFromHandWithoutPayingManaCostEffect(CardPredicate spellFilter,
                                                                DynamicAmount maxManaValue) {
@@ -48,5 +60,11 @@ public record MayCastAnySpellFromHandWithoutPayingManaCostEffect(CardPredicate s
     /** A matching nonland spell with no mana-value cap. */
     public MayCastAnySpellFromHandWithoutPayingManaCostEffect(CardPredicate spellFilter) {
         this(spellFilter, null, null);
+    }
+
+    /** This effect with "if you don't, [effect]" ({@code declineEffect}). */
+    public MayCastAnySpellFromHandWithoutPayingManaCostEffect orElse(CardEffect effect) {
+        return new MayCastAnySpellFromHandWithoutPayingManaCostEffect(spellFilter, maxManaValue,
+                afterSuccessfulCastEffect, drawnCardsOnly, revealDrawnCards, effect);
     }
 }

@@ -46,7 +46,7 @@ public class MayCastLegendarySpellFromAnyZoneHandler implements MayEffectHandler
         if (inHand(gameData, player, card)) {
             mayCastHandlerService.handleMayCastFromHandWithoutPaying(
                     gameData, player, accepted, ability,
-                    MayCastLegendarySpellFromAnyZoneEffect.class, false, false);
+                    MayCastLegendarySpellFromAnyZoneEffect.class, false);
             return;
         }
 

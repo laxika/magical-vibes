@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCardsExiledWithSourceAndMayCastCopiesEffect.CopyCastCost;
 import com.github.laxika.magicalvibes.model.effect.CopyCardsExiledWithSourceAndMayCastCopiesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastCopyWithManaCostEffect;
-import com.github.laxika.magicalvibes.model.effect.MayCastCopyWithNormalCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastCopyWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -111,7 +110,7 @@ public class CopyCardsExiledWithSourceAndMayCastCopiesEffectHandler
 
     private CardEffect copyCastChoice(CopyCastCost castCost) {
         return switch (castCost) {
-            case NORMAL -> new MayCastCopyWithNormalCostEffect();
+            case NORMAL -> new MayCastCopyWithManaCostEffect();
             case ONE_GENERIC -> new MayCastCopyWithManaCostEffect("{1}");
             case THREE_GENERIC -> new MayCastCopyWithManaCostEffect("{3}");
             case FREE -> new MayCastCopyWithoutPayingManaCostEffect();

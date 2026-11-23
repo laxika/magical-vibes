@@ -58,6 +58,7 @@ class RiverSongsDiaryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not trigger with only three cards exiled with it")
     void upkeepDoesNotTriggerWithOnlyThreeExiledCards() {
         Permanent diary = harness.addToBattlefieldAndReturn(player1, new RiverSongsDiary());
         for (int i = 0; i < 3; i++) {
@@ -71,6 +72,7 @@ class RiverSongsDiaryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does nothing when fewer than four cards are exiled with it on resolution")
     void upkeepDoesNothingIfExiledCountDropsBelowFourBeforeResolution() {
         Permanent diary = harness.addToBattlefieldAndReturn(player1, new RiverSongsDiary());
         for (int i = 0; i < 4; i++) {
@@ -88,6 +90,7 @@ class RiverSongsDiaryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the random card leaves every card exiled")
     void decliningRandomCardLeavesAllCardsExiled() {
         Permanent diary = harness.addToBattlefieldAndReturn(player1, new RiverSongsDiary());
         for (int i = 0; i < 4; i++) {
@@ -105,6 +108,7 @@ class RiverSongsDiaryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not trigger in an opponent's upkeep")
     void doesNotTriggerDuringOpponentsUpkeep() {
         Permanent diary = harness.addToBattlefieldAndReturn(player1, new RiverSongsDiary());
         for (int i = 0; i < 4; i++) {
@@ -118,6 +122,7 @@ class RiverSongsDiaryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A sorcery cast from hand resolves before it is exiled")
     void handCastSorceryResolvesBeforeBeingExiled() {
         Permanent diary = harness.addToBattlefieldAndReturn(player1, new RiverSongsDiary());
         CounselOfTheSoratami spell = new CounselOfTheSoratami();
@@ -134,6 +139,7 @@ class RiverSongsDiaryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Casts an opponent's exiled sorcery for free without exiling it again")
     void canCastOpponentsSorceryForFreeWithoutExilingItAgain() {
         Permanent diary = harness.addToBattlefieldAndReturn(player1, new RiverSongsDiary());
         for (int i = 0; i < 4; i++) {

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.g.GreenbeltRadical;
 import com.github.laxika.magicalvibes.cards.l.LowlandOaf;
+import com.github.laxika.magicalvibes.cards.o.OmnipresentImpostor;
 import com.github.laxika.magicalvibes.cards.w.WoodlandChangeling;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -16,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TwinningGlass.class, WoodlandChangeling.class, LowlandOaf.class, Tarfire.class, ThornOfAmethyst.class})
+@CardUsed({TwinningGlass.class, WoodlandChangeling.class, LowlandOaf.class, Tarfire.class, ThornOfAmethyst.class,
+        OmnipresentImpostor.class, GreenbeltRadical.class})
 class TwinningGlassTest extends BaseCardTest {
 
     @Test
@@ -149,6 +152,7 @@ class TwinningGlassTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining names no hand card in the log")
     void decliningDoesNotPubliclyIdentifyTheHandCard() {
         WoodlandChangeling prior = new WoodlandChangeling();
         WoodlandChangeling copy = new WoodlandChangeling();
@@ -172,6 +176,7 @@ class TwinningGlassTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Casting one matching card withdraws the other offers")
     void castsOnlyOneMatchingCardPerActivation() {
         WoodlandChangeling prior = new WoodlandChangeling();
         WoodlandChangeling first = new WoodlandChangeling();
@@ -197,6 +202,7 @@ class TwinningGlassTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the first matching card still offers the next one")
     void canDeclineFirstMatchingCardAndCastAnother() {
         WoodlandChangeling prior = new WoodlandChangeling();
         WoodlandChangeling first = new WoodlandChangeling();
@@ -219,6 +225,7 @@ class TwinningGlassTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Casts a matching creature on an opponent's turn while the original spell is on the stack")
     void canCastMatchingCreatureDuringOpponentsTurnWhileOriginalIsOnStack() {
         WoodlandChangeling prior = new WoodlandChangeling();
         WoodlandChangeling copy = new WoodlandChangeling();
@@ -241,6 +248,7 @@ class TwinningGlassTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Casts nothing when a cost increase on the free spell cannot be paid")
     void cannotCastMatchingSpellWhenManaTaxCannotBePaid() {
         Tarfire prior = new Tarfire();
         Tarfire copy = new Tarfire();
@@ -264,5 +272,47 @@ class TwinningGlassTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(copy);
+    }
+
+    @Test
+    @DisplayName("A hand card with all card names shares a name with any spell cast this turn")
+    void offersACardWithAllCardNames() {
+        WoodlandChangeling prior = new WoodlandChangeling();
+        OmnipresentImpostor impostor = new OmnipresentImpostor();
+        harness.addToBattlefield(player1, new TwinningGlass());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(prior, impostor));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(impostor.getId());
+    }
+
+    @Test
+    @DisplayName("A spell cast face down has no name, so not even a card with all card names shares it")
+    void faceDownSpellSharesNoName() {
+        OmnipresentImpostor impostor = new OmnipresentImpostor();
+        harness.addToBattlefield(player1, new TwinningGlass());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new GreenbeltRadical()));
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player2, 0);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(impostor));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(impostor);
     }
 }

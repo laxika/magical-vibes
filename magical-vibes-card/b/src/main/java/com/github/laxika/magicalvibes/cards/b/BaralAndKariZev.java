@@ -7,8 +7,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayCastLesserSpellWithSharedTypeOrCreateTokenEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.Sum;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
+import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -47,6 +51,9 @@ public class BaralAndKariZev extends Card {
                                 new CardTypePredicate(CardType.INSTANT),
                                 new CardTypePredicate(CardType.SORCERY))))
                         .nthThisTurn(1),
-                new MayCastLesserSpellWithSharedTypeOrCreateTokenEffect(RAGAVAN_TOKEN));
+                new MayCastAnySpellFromHandWithoutPayingManaCostEffect(
+                        new CardSharesCardTypeWithTriggeringSpellPredicate(),
+                        new Sum(new TargetSpellManaValue(), new Fixed(-1)))
+                        .orElse(RAGAVAN_TOKEN));
     }
 }

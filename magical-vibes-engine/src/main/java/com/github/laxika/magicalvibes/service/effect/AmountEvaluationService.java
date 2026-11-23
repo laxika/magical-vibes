@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.effect.PartyAlwaysFullEffect;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -303,6 +304,8 @@ import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithTriggeringP
 import com.github.laxika.magicalvibes.model.filter.CardIsTriggeringCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIdSetPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithTriggeringSpellPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -2656,6 +2659,37 @@ public class AmountEvaluationService {
         };
     }
 
+    /**
+     * {@code filter} with "shares a card type with it" ({@link CardSharesCardTypeWithTriggeringSpellPredicate}) read
+     * from {@code entry}'s triggering spell as the ability resolves: the live spell while it is on the stack, else the
+     * entry's snapshot of it (CR 608.2h), as effects see it ({@code CastingPermissionService.spellAsEffectsSeeIt}). No
+     * triggering spell matches no card. A filter without the predicate is returned as it is. Baral and Kari Zev's
+     * "a spell with lesser mana value that shares a card type with it".
+     */
+    public static CardPredicate bindTriggeringSpellCardTypes(GameData gameData, CardPredicate filter,
+                                                             StackEntry entry) {
+        return switch (filter) {
+            case null -> null;
+            case CardSharesCardTypeWithTriggeringSpellPredicate ignored -> {
+                StackEntry spell = entry == null ? null : triggeringSpell(gameData, entry.getTriggeringCardId(),
+                        entry.getTriggeringSpellSnapshot());
+                Card seen = spell == null ? null : CastingPermissionService.spellAsEffectsSeeIt(spell).getCard();
+                List<CardPredicate> types = seen == null ? List.of() : java.util.Arrays.stream(CardType.values())
+                        .filter(seen::hasType)
+                        .<CardPredicate>map(CardTypePredicate::new)
+                        .toList();
+                yield types.isEmpty() ? new CardNotPredicate(new CardTruePredicate()) : new CardAnyOfPredicate(types);
+            }
+            case CardAllOfPredicate all -> new CardAllOfPredicate(all.predicates().stream()
+                    .map(part -> bindTriggeringSpellCardTypes(gameData, part, entry)).toList());
+            case CardAnyOfPredicate any -> new CardAnyOfPredicate(any.predicates().stream()
+                    .map(part -> bindTriggeringSpellCardTypes(gameData, part, entry)).toList());
+            case CardNotPredicate not -> new CardNotPredicate(bindTriggeringSpellCardTypes(gameData, not.predicate(),
+                    entry));
+            default -> filter;
+        };
+    }
+
     /** {@code parts} each bound by {@link #bindTriggeringSpellName}, or {@code null} when none changed. */
     private static List<CardPredicate> bindTriggeringSpellNames(GameData gameData, List<CardPredicate> parts,
                                                                UUID triggeringCardId,
@@ -2686,16 +2720,26 @@ public class AmountEvaluationService {
 
     private static String triggeringSpellName(GameData gameData, UUID triggeringCardId,
                                               StackEntry triggeringSpellSnapshot) {
+        StackEntry spell = triggeringSpell(gameData, triggeringCardId, triggeringSpellSnapshot);
+        return spell == null || spell.isCastFaceDown() ? null : spell.getCard().getName();
+    }
+
+    /**
+     * The triggering spell: the one whose card is {@code triggeringCardId} while it is on the stack, else
+     * {@code triggeringSpellSnapshot} (its card's id when {@code triggeringCardId} is {@code null}); {@code null} for
+     * neither.
+     */
+    private static StackEntry triggeringSpell(GameData gameData, UUID triggeringCardId,
+                                              StackEntry triggeringSpellSnapshot) {
         UUID spellCardId = triggeringCardId != null ? triggeringCardId
                 : triggeringSpellSnapshot == null ? null : triggeringSpellSnapshot.getTargetableId();
         if (spellCardId == null) {
             return null;
         }
-        StackEntry spell = gameData.stack.stream()
+        return gameData.stack.stream()
                 .filter(se -> se.getTargetableId().equals(spellCardId))
                 .findFirst()
                 .orElse(triggeringSpellSnapshot);
-        return spell == null || spell.isCastFaceDown() ? null : spell.getCard().getName();
     }
 
     /**
@@ -3652,11 +3696,9 @@ public class AmountEvaluationService {
             if (!matches) {
                 continue;
             }
-            // CR 712.8e: a transformed nonmodal DFC's mana value is calculated from its front face's mana cost.
-            Card manaValueSource = permanent.isTransformed() && permanent.getOriginalCard() != null
-                    ? permanent.getOriginalCard()
-                    : permanent.getCard();
-            greatest = Math.max(greatest, permanent.isFaceDown() ? 0 : manaValueSource.getManaValue());
+            // A face-down permanent's is 0 (CR 708.2), a transformed one's its front face's (CR 712.6d), a melded one's
+            // its front faces' combined (CR 202.3c).
+            greatest = Math.max(greatest, gameQueryService.getPermanentManaValue(permanent));
         }
         return greatest;
     }

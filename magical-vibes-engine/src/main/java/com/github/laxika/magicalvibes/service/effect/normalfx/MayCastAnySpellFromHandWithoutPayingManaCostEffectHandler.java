@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
@@ -29,7 +30,8 @@ import org.springframework.stereotype.Component;
  * <p>Reuses the Counterlash may-cast-from-hand routing: one {@link PendingMayAbility} is queued per
  * eligible nonland hand card, and accepting one casts it for free while clearing the remaining
  * offers. A null filter (Maelstrom Archangel) matches every nonland; Wildfire Eternal passes an
- * instant-or-sorcery filter.
+ * instant-or-sorcery filter. An "if you don't" rider ({@code declineEffect}) goes with the offers' choice group, and
+ * resolves next when nothing is offered.
  */
 @Slf4j
 @Component
@@ -57,25 +59,31 @@ public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implement
                 (MayCastAnySpellFromHandWithoutPayingManaCostEffect) effect;
         UUID controllerId = entry.getControllerId();
         List<Card> hand = gameData.playerHands.get(controllerId);
-        if (hand == null || hand.isEmpty()) return;
+        if (hand == null || hand.isEmpty()) {
+            resolveDeclineEffectNext(entry, e);
+            return;
+        }
         if (e.revealDrawnCards()) {
             cardRevealService.revealToAllPlayers(gameData, controllerId,
                     com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.HAND,
                     hand.stream().filter(card -> entry.getDrawnCardIdsThisResolution().contains(card.getId())).toList());
         }
+        AmountContext amountContext = AmountContext.forStackEntry(entry, entry.getSourcePermanentId() == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()));
         int maxManaValue = e.maxManaValue() == null
                 ? Integer.MAX_VALUE
-                : amountEvaluationService.evaluate(gameData, e.maxManaValue(),
-                        AmountContext.forStackEntry(entry, entry.getSourcePermanentId() == null
-                                ? null
-                                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())));
+                : amountEvaluationService.evaluate(gameData, e.maxManaValue(), amountContext);
+        // The filter's amounts and its "that spell" are read once, as the ability resolves (CR 608.2h).
+        CardPredicate spellFilter = amountEvaluationService.bindAmounts(gameData,
+                AmountEvaluationService.bindTriggeringSpellCardTypes(gameData, e.spellFilter(), entry), amountContext);
 
         // "A spell with [characteristics]" considers only the half of a split card being cast
         // (CR 709.3a), so a split card is offered as the halves that qualify.
         // A filter about the source ("equal to the number of charge counters on this artifact") reads it as it is
         // now, or as it last existed (CR 608.2h).
         java.util.function.Predicate<Card> qualifies = spell -> spell.getManaValue() <= maxManaValue
-                && predicateEvaluationService.matchesCardPredicate(spell, e.spellFilter(), entry.getCard().getId(),
+                && predicateEvaluationService.matchesCardPredicate(spell, spellFilter, entry.getCard().getId(),
                         gameData, controllerId, entry.getSourcePermanentId(), null, entry.getXValue(),
                         entry.getSourcePermanentSnapshot());
         Map<Card, List<Integer>> eligible = new LinkedHashMap<>();
@@ -111,13 +119,17 @@ public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implement
                     }
                 });
 
+        if (eligible.isEmpty() && eligibleAdventures.isEmpty()) {
+            resolveDeclineEffectNext(entry, e);
+            return;
+        }
         UUID choiceGroupId = UUID.randomUUID();
         for (int i = eligibleAdventures.size() - 1; i >= 0; i--) {
             Card c = eligibleAdventures.get(i);
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     c, controllerId,
                     List.of(new MayCastFromHandWithoutPayingManaCostEffect(
-                            e.revealDrawnCards(), choiceGroupId, null, false, e.afterSuccessfulCastEffect())
+                            e.revealDrawnCards(), choiceGroupId, e.declineEffect(), false, e.afterSuccessfulCastEffect())
                             .asAdventure()),
                     "Cast " + c.getBackFaceCard().getName() + " without paying its mana cost?",
                     entry.getSourcePermanentId(), (Integer) null
@@ -129,11 +141,21 @@ public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implement
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     c, controllerId,
                     List.of(new MayCastFromHandWithoutPayingManaCostEffect(
-                            e.revealDrawnCards(), choiceGroupId, null, false, e.afterSuccessfulCastEffect())
+                            e.revealDrawnCards(), choiceGroupId, e.declineEffect(), false, e.afterSuccessfulCastEffect())
                             .withCastableSplitModes(eligible.get(c))),
                     "Cast " + c.getName() + " without paying its mana cost?",
                     entry.getSourcePermanentId(), (Integer) null
             ));
+        }
+    }
+
+    /**
+     * "If you don't, [effect]" with nothing offered: it resolves next, as part of this ability. Once offers are made,
+     * their choice group carries it and it resolves after every offer of the group is declined or fails to be cast.
+     */
+    private void resolveDeclineEffectNext(StackEntry entry, MayCastAnySpellFromHandWithoutPayingManaCostEffect e) {
+        if (e.declineEffect() != null) {
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(e.declineEffect()));
         }
     }
 

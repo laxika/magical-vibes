@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.CorruptedConviction;
 import com.github.laxika.magicalvibes.cards.e.EssenceScatter;
 import com.github.laxika.magicalvibes.cards.l.LightningStrike;
@@ -20,7 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BaralAndKariZev.class, DarkRitual.class, LightningStrike.class,
+@CardUsed({BaralAndKariZev.class, DarkRitual.class, GrizzlyBears.class, LightningStrike.class,
         CorruptedConviction.class, EssenceScatter.class, StokeTheFlames.class})
 class BaralAndKariZevTest extends BaseCardTest {
 
@@ -103,6 +104,7 @@ class BaralAndKariZevTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A spell cast before Baral entered counts as the first one")
     void spellCastBeforeBaralEnteredStillCountsAsFirstSpell() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -122,6 +124,7 @@ class BaralAndKariZevTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining one offer and casting another creates no token")
     void decliningOneCandidateAndCastingAnotherDoesNotCreateToken() {
         setupBaral();
         harness.setHand(player1, List.of(new LightningStrike(), new DarkRitual(), new DarkRitual()));
@@ -139,6 +142,7 @@ class BaralAndKariZevTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The free spell still requires its sacrifice cost")
     void freeSpellStillRequiresCreatureSacrificeAdditionalCost() {
         setupBaral();
         harness.setHand(player1, List.of(new LightningStrike(), new CorruptedConviction()));
@@ -155,6 +159,7 @@ class BaralAndKariZevTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An accepted spell with no legal targets stays in hand and the token is created")
     void spellWithNoLegalTargetsStaysInHandAndCreatesToken() {
         setupBaral();
         EssenceScatter essenceScatter = new EssenceScatter();
@@ -168,6 +173,41 @@ class BaralAndKariZevTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(essenceScatter);
+        harness.assertOnBattlefield(player1, "First Mate Ragavan");
+    }
+
+    @Test
+    @CardUsed(BonecrusherGiant.class)
+    @DisplayName("Offers an Adventure whose spell has lesser mana value and shares a card type")
+    void offersAnAdventureThatFits() {
+        setupBaral();
+        BonecrusherGiant adventurer = new BonecrusherGiant();
+        harness.setHand(player1, List.of(new StokeTheFlames(), adventurer));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.MayAbilityChoice offer =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(offer).isNotNull();
+        assertThat(offer.description()).contains("Stomp");
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertOnBattlefield(player1, "First Mate Ragavan");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(adventurer);
+    }
+
+    @Test
+    @DisplayName("A spell of another card type is not offered and the token is created")
+    void spellOfAnotherCardTypeIsNotOffered() {
+        setupBaral();
+        harness.setHand(player1, List.of(new StokeTheFlames(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.assertOnBattlefield(player1, "First Mate Ragavan");
     }
 }
