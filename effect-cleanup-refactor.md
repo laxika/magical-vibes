@@ -24,7 +24,7 @@ bottom.
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. 1,608 rare records have no ledger row. Triage run 1 gave Pay and Reduce (80 rare) and 32 stale step-4/5 blocked rows their verdicts; triage run 2 gave Search and Cant (79 rare) theirs (147 `step-9` rows wait for fold runs). From 2026-11-23 the step runs as **triage runs** (about 80 records each, verdicts only) followed by **fold runs** (see step 9). Open: Perpetually (30 rare) and Conjure's hand and library conjures (Conjure 39 rare) wait for the owner's decisions; run 41 named Destroy (37 rare) as the next family with no owner's question. |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. 1,533 rare records have no ledger row. Triage run 1 gave Pay and Reduce (80 rare) and 32 stale step-4/5 blocked rows their verdicts; triage run 2 gave Search and Cant (79 rare) theirs; triage run 3 gave Sacrifice and Destroy (75 rare) theirs (201 `step-9` rows wait for fold runs). From 2026-11-23 the step runs as **triage runs** (about 80 records each, verdicts only) followed by **fold runs** (see step 9). Open: Perpetually (30 rare) and Conjure's hand and library conjures (Conjure 39 rare) wait for the owner's decisions; the next families with no owner's question are Look (37 rare), Remove (34), Gain (32) and Add (32). |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -281,6 +281,7 @@ Each run ends with its family row in Findings: audited, absorbed, split, blocked
 | Target | 32–41 | closed; `PlayerRestrictionEffect`, the gain-control and choose-permanents choosers, one cast check |
 | Pay, Reduce (+ 32 stale step-4/5 rows) | T1 | triaged, no code changed: 112 rows (`step-9` 88, `blocked-other` 7, `unique` 17); fold batches in T1's Findings |
 | Search, Cant | T2 | triaged, no code changed: 79 rows (`step-9` 52, `blocked-other` 1, `unique` 26); fold batches in T2's Findings, among them a SEARCH step kind |
+| Sacrifice, Destroy | T3 | triaged, no code changed: 75 rows (`step-9` 54, `blocked-other` 10, `blocked-player-loop` 1, `unique` 10); fold batches in T3's Findings, among them a delayed ability about the entry's target |
 
 Cross-cutting results of those runs, now conventions or shared pieces (Standing knowledge): the face-down hiding rules; stay checks
 (CR 400.7, 603.7c) on every return and delayed return; what a put step moves enters through the entry batch (as-enters and Aura host
@@ -1002,6 +1003,101 @@ the Pilot), the cast rules relative to turn state (Ethersworn Canonist, Mana Maz
   component of this run.
 - The unaudited 3+-card records these batches touch: `SearchOutsideGameToHandEffect` (3), `SearchLibraryForOneCardOfEachSubtypeEffect` (4),
   `CantBeBlockedByCreaturesWithLessPowerEffect` (11, onto `CantBeBlockedByCreaturesMatchingPredicateEffect(PermanentPowerLessThanSourcePowerPredicate)`).
+
+### Step 9, triage run 3 (2026-11-23)
+
+Verdicts only: no Java, test or agent-docs file changed; the ratchet did not move (4,046 / 3,300). 75 ledger rows appended (step 9,
+notes `triage 3: …`): the whole of Sacrifice (38 rare) and Destroy (37 rare). Every record was read with its `normalfx` / `mayfx` handler to
+the end and the card classes that use it; for the cost records with no handler, their branches in `AdditionalSpellCostService`
+(`extractAndRemove`, the satisfiability switch, the validators) and `SpellCastingService`'s pay methods, and the two activated-ability cost
+handlers (`AllMatchingPermanentSacrificeCostHandler`, `DistinctNamePermanentSacrificeCostHandler`); for the as-enters records,
+`AsEntersInteractionService`'s prompts and `BattlefieldPlacementService.applySacrificeOtherPermanentsWithSameName`; for Kuldotha Flamefiend,
+`StackedDividedDamageTriggerService.unannouncedDivision`. The completion handlers behind the permanent-choice contexts were not read (a fold
+run reads them). Oracle text checked with `get_card` for every `unique` and `blocked-*` card (Tectonic Split, Transmutation Font, Phyrexian
+Dreadnought, Goblin Welder, Dusk Mangler, Oath of Lim-Dûl, Drop of Honey, Glyph of Reincarnation, Kill-Suit Cultist, Dead Ringers, Artificer's
+Hex, Steel Hellkite, Giant Albatross, Erosion, Harsh Mercy, Cleansing, Flames of Moradin, Essence Vortex, Vona de Iedo, Territorial Strike,
+Fatal Lore) and for Venom, Lethal Protector, The Dining Car, Prototype X-8, Vaevictis Asmadi, Mandate of Abaddon, Old Hob, Doom Foretold, Bringer
+of the Last Gift, Red Sun's Twilight, Saw in Half, Broken Visage, Lich and Retribution; the other cards were judged from their card classes and
+the records' Javadoc. Rulings with `get_rulings` for Barrin's Spite, Incriminate, Vaevictis Asmadi, Haphazard Bombardment (indestructible
+permanents are left out of the random pick: the handler agrees), Dead Ringers, Territorial Strike (none) and Fatal Lore. CR 101.3, 101.4,
+118.12a, 400.7, 601.2b, 601.2c, 603.7c, 608.2b, 608.2e, 700.2a, 701.21a and 708.2a checked with `get_rule` (2026-11-23).
+
+| Family | Triaged | `step-9` | `blocked-other` | `blocked-player-loop` | `unique` | Left unaudited |
+|---|---|---|---|---|---|---|
+| Sacrifice | 38 rare | 32 | 2 | 0 | 4 | 0 rare, 13 in all |
+| Destroy | 37 rare | 22 (1 of them `dead: delete`) | 8 | 1 | 6 | 0 rare, 6 in all |
+
+All families: 1,533 rare records without a row (before: 1,608). `step-9` rows waiting for fold runs: 201 (147 + 54).
+
+**A delayed ability about the entry's target.** `RegisterDelayedStepTriggerEffect.aboutAtNext` takes a permanent subject but refuses one that
+declares a target, so "destroy / sacrifice it at the beginning of the next end step" after a targeted step has no form. Four records here need
+it (Angrath's −3, Norritt and Nettling Imp, Berserk; Basalt Golem's is about the triggering blocker and fits `aboutAtNext(triggering())` as it
+stands), and three older blocked rows wait for the same thing: `SacrificeTargetPermanentAtEndStepEffect`, `DestroyTargetPermanentAtEndStepEffect`
+(5a, "unify the delayed mechanism") and Spinal Embrace's `SacrificeTargetPermanentAtEndStepAndGainLifeEqualToToughnessEffect` (8). A fold run
+gives `aboutAtNext` a non-declaring reference to the entry's target and re-triages those three.
+
+**Fold batches** (survivor or shared component → records, cards):
+
+| Batch | Survivor / component | Records (cards) |
+|---|---|---|
+| sacrifice-gated steps | `SacrificePermanentsEffect` + `ConditionalEffect(sacrificed(), X)` (inside the card's `MayEffect`) | Venom, Lethal Protector (draw and put, bounded by `AmountThisWay.sacrificedManaValue()`), Kuldotha Flamefiend (divided damage; the division service must look into the sequence), Garruk, the Veil-Cursed (search), Feed the Pack (tokens = sacrificed toughness), Scapeshift (`anyNumber` + search that many), Kethek (reveal until a lower mana value: a card bound by an amount) and Descendants' Fury (reveal until sharing a creature type: triage 2's same-quality filter over `thisWay(SACRIFICE)`): 7 (7) |
+| sacrifice or else | the sacrifice step + `ConditionalEffect(NotCondition(sacrificed()), Y)` | Xathrid Demon, Doom Foretold, Cruel Reality, Lich (`HappenedThisWay.atLeast` with a dynamic count): 4 (4) |
+| one of two targets | `ChoosePermanentsEffect.chosenBy(controllerOf(target()))` exactly one among `allTargets()`, then the sacrifice and a step over `except(allTargets(), thisWay(CHOOSE))` | Incriminate, Retribution (-1/-1 counter), Barrin's Spite (return): 3 (3) |
+| delayed about the target | `aboutAtNext` over the entry's target (above) | Angrath, Norritt + Nettling Imp, Berserk; Basalt Golem over `triggering()`: 4 (5), plus the three blocked rows |
+| delayed about created | `RegisterDelayedStepTriggerEffect.aboutCreated` | Kav Landseeker (your next turn's end step, `afterThisTurn`), Old Hob (replaces `DelayedPermanentActions`): 2 (2) |
+| sacrifice-all cost | `SacrificeAllMatchingPermanentsCost(filter)` read on the spell path too, with a total-power-as-X option; cost-shape | Tomb of Urami (survivor), Soulblast, Kaervek's Spite: 3 (3) |
+| cost aliases | the existing twin; cost-shape | `SacrificeCreatureOrPayManaCost` onto `SacrificePermanentOrPayManaCost` (Bayou Groff, Spark Harvest), `SacrificePermanentOrDiscardCardCost` onto `DiscardCardOrSacrificePermanentCost` (Demand Answers; its free-cast and AI readers move to the survivor): 2 (3) |
+| as-enters sacrifice any number | `SacrificePermanentsAsEntersForCountersEffect` (Shimatsu, 5 cards, unaudited) with a payoff (counters per permanent, base P/T = count, base P/T = total power and toughness) | Dracoplasm, Wood Elemental: 2 (2) |
+| as-enters sacrifice all | `SacrificeAllPermanentsAsEntersEffect(filter)` | Overlaid Terrain (survivor), Sheltered Valley (`PermanentHasSameNameAsSourcePredicate`): 2 (2) |
+| random pick | `ChoosePermanentsEffect.atRandom` + `DestroyTargetPermanentEffect(thisWay(CHOOSE))` | Capricious Efreet + Wild Swing (among the targets), Metzali (creatures that attacked this turn), Haphazard Bombardment (aim counter, not indestructible): 3 (4) |
+| power bound | `DestroyAllPermanentsEffect` with a power comparison against an amount locked at resolution | Fell the Mighty (`TargetPower` + 1), Mandate of Abaddon (`TargetPower` − 1), Expel the Interlopers (`ChooseNumberAtResolutionEffect` + X): 3 (3) |
+| departed copies | token copies over a DESTROY step's departures (copiable values as they last existed) | Red Sun's Twilight, Saw in Half; the token-copy riders left in `DestroyTargetPermanentThenEffect`'s blocked row could join: 2 (2) |
+| sacrifice singles | existing records | Dispense Justice + Odds // Ends (`FixedIfCondition(Metalcraft, 2, 1)`), Drake Familiar (`MayEffect(ReturnChosenPermanentsToHandEffect, prompt, SacrificeSelfEffect())`, with run 20's stale `SacrificeUnlessReturnOwnPermanentTypeToHandEffect` row, 4 cards), Bringer of the Last Gift (`except(cardsInGraveyards, cardsThisWay(SACRIFICE))`), Vaevictis Asmadi (`RevealTopCardPermanentToBattlefieldEffect` over `playersThisWay(SACRIFICE)`), Prototype X-8 (`ConjureDuplicateOntoBattlefieldEffect` with perpetual added types), The Dining Car (a least-toughness predicate with a scope; with the unaudited `DealDamageToCreatureWithLeastToughnessEffect`): 6 (7) |
+| destroy singles | existing records | Extinction + Kindred Dominance (`ChooseCreatureTypeAtResolutionEffect`), Root Greevil (`ChooseColorAtResolutionEffect`, as Wash Out), Saproling Burst + Tombstone Stairwell (`PermanentCreatedBySourcePredicate`), Heliod's Punishment (a counters condition on `granter()`), Light of Judgment (`attachmentsOf(target(), Equipment)`), Krenko's Buzzcrusher (`oneForEach` + `EachPlayerSearchesLibraryEffect`), Chain of Acid (`CopyThisSpellForTargetControllerEffect`, as Chain of Smog), Shifting Shadow (an attach step with an attachment and a host subject, with triage 1's choose-and-attach batch), Broken Visage (token P/T from the destroyed target), Endemic Plague (triage 2's same-quality filter, cost-sacrificed subject): 10 (12) |
+| dead | delete | `DestroyTargetCreatureThenCreateTokenCopiesWithHalfPowerToughnessEffect` (only an unused import in `SawInHalf.java`): 1 (0) |
+
+Unique (10): Tectonic Split (half rounded up), Transmutation Font (different names), Phyrexian Dreadnought (an unless-cost chosen by total
+power), Goblin Welder (simultaneous sacrifice and return), Drop of Honey + Porphyry Nodes (already one record, with its tie ruling), Glyph of
+Reincarnation, Kill-Suit Cultist (a damage-to-destruction replacement), Dead Ringers, Artificer's Hex (the attachment's attachment), Steel
+Hellkite. Blocked (11): the ransoms Giant Albatross, Erosion (an A-or-B ransom), Cleansing (any player may pay) and Essence Vortex wait for step
+10's ransom design with `DestroyTargetPermanentUnlessControllerTakesDamageEffect`; Dusk Mangler's three-way cost for step 10's A-or-B cost
+combinators; Oath of Lim-Dûl for a repeat-N-times wrapper (it keeps Torment of Hailfire's plumbing); Flames of Moradin, Vona de Iedo and
+Territorial Strike for the owner's hidden-zone logging question (hand conjures, a perpetual change to a beheld card in hand); Fatal Lore's
+engine-built record for an opponent mode chooser at cast; Harsh Mercy (`blocked-player-loop`: each player chooses a creature type).
+
+**Seen, not changed** (confirmed by reading, not run):
+
+- Territorial Strike: "If a Dragon creature was beheld, it perpetually gets +2/+2." `DestroyTargetPermanentThenPerpetuallyBoostEffectHandler`
+  gives the +2/+2 to the destroyed permanent's card, not to the beheld Dragon. No ruling exists; "it" names the Dragon (the boost to an
+  opponent's destroyed card would be pointless). Fairly sure.
+- Fatal Lore's destroy mode (`FatalLoreEffectHandler` → `DestroyUpToNCreaturesOpponentControlsEffect`) chooses the two creatures as it
+  resolves, with only hexproof filtered: they are not targets, so protection and the legality recheck (CR 608.2b) don't apply. The ruling says
+  the caster chooses the targets after the opponent's mode choice, as the spell is cast (CR 601.2b, 601.2c). Sure of the code; whether
+  `FatalLoreEffect`'s answer is asked at cast wasn't traced.
+- Face-down reads (CR 708.2a): Venom and Kethek read the sacrificed permanent's card mana value; Sheltered Valley compares
+  `getCard().getName()`, so a face-down permanent whose card is a Sheltered Valley is sacrificed. Sure of the code; rare.
+- The Dining Car leaves creatures that can't be sacrificed out before finding the least toughness, so it sacrifices a creature with more
+  toughness when the least-toughness one can't be sacrificed; that part should be ignored instead (CR 101.3). Fairly sure.
+- One at a time where the text is one event (CR 101.4, 608.2e): `DestroyTokensCreatedWithSourceEffectHandler` (Saproling Burst, Tombstone
+  Stairwell) destroys in a `tryDestroyAndLog` loop; Giant Albatross destroys each creature right after its controller answers, before the next
+  controller chooses. Sure of the code.
+- Drake Familiar offers enchantments by the card's printed type (`getCard().hasType`), not the permanent's type. Sure; low impact.
+- Basalt Golem's record declares a harmful permanent target for "that creature", which the text doesn't target (triage 2's Wall of Dust
+  kind). Unverified whether protection then stops it.
+- Scapeshift, Feed the Pack and Phyrexian Dreadnought offer permanents that can't be chosen to sacrifice (no `cantBeChosenToSacrifice`
+  filter). Sure of the code; low impact.
+- Capricious Efreet and Wild Swing pick at random among targets still on the battlefield, not among legal ones (CR 608.2b). Unverified
+  whether the resolution drops illegal targets first.
+
+**For the next run.**
+
+- Triage run 4: Look (37 rare), then Remove (34), Gain (32) and Add (32); Become (30), Draw (28), Set (27) and Double (27) next. Conjure (39)
+  and Perpetually (30) still wait for the owner.
+- Fold runs: the delayed-about-the-target component (4 records here and 3 blocked rows) and the sacrifice-gated and sacrifice-or-else splits
+  (11 records, no new component but the dynamic `atLeast` for Lich) are the cheapest; the one-of-two-targets and random-pick batches need only
+  existing pieces.
+- The unaudited 3+-card records these batches touch: `SacrificePermanentsAsEntersForCountersEffect` (5), `ExileTokensCreatedWithSourceEffect`
+  (5); and run 20's `SacrificeUnlessReturnOwnPermanentTypeToHandEffect` row is stale.
 
 ## Prompt
 
