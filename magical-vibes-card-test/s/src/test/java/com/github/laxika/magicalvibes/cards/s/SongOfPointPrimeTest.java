@@ -33,6 +33,7 @@ class SongOfPointPrimeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The opponent chooses which creature to sacrifice")
     void opponentChoosesWhichCreatureToSacrifice() {
         Permanent first = harness.addToBattlefieldAndReturn(player2, new CantorOfTheRefrain());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new CantorOfTheRefrain());
@@ -47,6 +48,7 @@ class SongOfPointPrimeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The caster's own creature is not sacrificed")
     void doesNotSacrificeControllersCreature() {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new CantorOfTheRefrain());
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new CantorOfTheRefrain());
@@ -65,6 +67,7 @@ class SongOfPointPrimeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The card is conjured only after the sacrifice choice")
     void conjuresOnlyAfterOpponentCompletesSacrificeChoice() {
         Permanent first = harness.addToBattlefieldAndReturn(player2, new CantorOfTheRefrain());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new CantorOfTheRefrain());
@@ -93,6 +96,7 @@ class SongOfPointPrimeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Conjuring the card triggers conjure abilities")
     void conjuringCantorIntoTheGraveyardTriggersConjureAbilities() {
         Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
         harness.addToBattlefieldAndReturn(player2, new CantorOfTheRefrain());
@@ -101,5 +105,20 @@ class SongOfPointPrimeTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Cantor of the Refrain");
         assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The conjured card is Cantor of the Refrain's printing, and the conjure is logged")
+    void conjuredCardHasItsPrintingAndIsLogged() {
+        castSong();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof CantorOfTheRefrain)
+                .singleElement()
+                .satisfies(card -> {
+                    assertThat(card.getSetCode()).isEqualTo("YEOE");
+                    assertThat(card.getCollectorNumber()).isEqualTo("9");
+                });
+        assertThat(gameLogContains("conjures a Cantor of the Refrain card into their graveyard.")).isTrue();
     }
 }

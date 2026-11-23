@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 28: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent and May closed (May's 11 cost combinators listed for step 10); 1,894 rare records left, Perpetually open (47 rare)) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 29: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent and May closed (May's 11 cost combinators listed for step 10); 1,876 rare records left, Perpetually open (30 rare, waiting for the human's logging and "it" decisions), Conjure started (48 rare)) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -634,6 +634,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 26 | Run 25's small defects (the exclusive withdrawal, Twinning Glass's names, display names), the hand free-cast step's "if you don't" with its three cards, then the copy-cast and alternative-cost prompt markers | done for those, May open (10 rows: 4 absorbed, 2 survivors, 4 unique; 4 records and 6 handlers deleted; 3 card files rewritten, 1 handler fixed; `MayCastAnySpellFromHandWithoutPayingManaCostEffect.orElse`, `CardSharesCardTypeWithTriggeringSpellPredicate`, `GreatestManaValueAmongControlled` reads melded permanents; the exclusive withdrawal not reachable; 29 rare May records left) |
 | 27 | Run 26's hand-content log line, May's 18 engine-built prompt markers (May closed), then Perpetually's rare records | done for the log line and May, Perpetually started (20 rows: 2 absorbed, 4 survivors, 13 unique, 1 dead; 3 records, 2 may / normal handlers and 1 cost-modification handler deleted; 1 card file rewritten; `GameLog.putsNoCardOntoBattlefield`, `MayCastMilledSpellWithoutPayingManaCostEffect.exileInsteadOfGraveyard`, `GameData.perpetualEnterEffectsByCardId` gone; 54 rare Perpetually records left) |
 | 28 | Run 27's two perpetual stores, Perpetually's rare records outside a hand or library, the Spawnsire cost check | Perpetually open (8 rows: 5 absorbed, 1 survivor (Forgeborn's record renamed), 2 unique; 6 records and 6 handlers deleted, 1 of each added; 5 card files rewritten; `GameData.perpetualAbilityGrants` holds every perpetual ability kind, `perpetualActivatedAbilities` and `perpetualTriggeredAbilities` gone, `PerpetuallyGrantAbilityToTriggeringCardEffect`; Spawnsire's free casts pay cost increases; 47 rare Perpetually records left, Conjure not started) |
+| 29 | Perpetually's rare records outside a hand or library, Brittle Blast's face-down defect, then Conjure | Perpetually open, Conjure started (18 rows: 2 absorbed, 2 blocked-other (the human's "it" decision), 14 unique; 2 records and 2 handlers deleted; 3 card files rewritten; a face-down permanent no longer has Brittle Blast's perpetual replacement; Song of Point Prime's and Voidcalled Devotee's conjured card has its printing and a log line; 30 rare Perpetually records left (hand, library, graveyard-ability store), 48 rare Conjure) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -9020,6 +9021,100 @@ full suites, the AI fuzz and stress tests, the frontend. Not verified: more than
   ability store), Monoist Gravliner (the stationing creature), Resourceful Collector, Richlau Headmaster, Reezug, and the engine-built
   `PerpetuallyMakeSelectedSpellbookCardArtifactCreatureEffect` / `PerpetuallyRemoveKeywordEffect`.
 - The next shared store: `perpetualGraveyardAbilities` (Sibsig's Artisan and the step-5m graveyard-ability rows) beside the one store.
+
+### Step 9, run 29 (2026-11-23, Perpetually open, Conjure started)
+
+Perpetually's rare records that change cards outside a hand or library, Brittle Blast's face-down defect, then the start of Conjure.
+Ratchet 4,113 / 3,367 → 4,111 / 3,365 records / handlers (2 records and 2 handlers deleted). 3 card files rewritten (Wizened Githzerai,
+Song of Point Prime, Voidcalled Devotee); Oracle text checked with `get_card` for those 3 and Cantor of the Refrain, Undersimplify, Mace of
+Disruption, Kavaron Consumed, Brittle Blast, High Fae Prankster, Second Little Pig, Mischievous Lookout, Highway Reaver, Rasaad, Rothga,
+Mutable Pupa, Monoist Gravliner, Resourceful Collector, Richlau and Reezug. CR 708.2, 708.2a, 613.1f and 400.7 checked with `get_rule`
+(2026-11-23).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | Left unaudited |
+|---|---|---|---|---|---|---|---|
+| Perpetually | 17 rare records | 1 | 0 | 0 | 2 (the human's "it" decision) | 14 | 30 rare, 39 in all |
+| Conjure | 1 rare record | 1 | 0 | 0 | 0 | 0 | 48 rare, 59 in all |
+
+All families: 1,876 rare records without a row (run 28: 1,894).
+
+- **Wizened Githzerai** is `PerpetuallyBoostTargetCreatureEffect(-2, 0, null)` on its `EACH_BLOCKER` trigger, the pattern of the other
+  becomes-blocked cards (Catacomb Dragon's boost, Acolyte of the Inferno's damage): the blocker is the entry's non-targeting target, and
+  the survivor reads it from `targetId` and writes the same card modifier. The old record's harmful spec and the survivor's benign one
+  are never offered (the target is filled as the ability triggers); the AI classifies the survivor's negative boost as harmful. The old
+  handler also skipped a blocker that was no longer a creature; the survivor changes its card's P/T anyway (a P/T change of a
+  noncreature does nothing until it is a creature), as every other `EACH_BLOCKER` boost does.
+- **Song of Point Prime and Voidcalled Devotee** conjure with `ConjureCardToGraveyardEffect("YEOE", "9")`. The absorbed
+  `ConjureCardInGraveyardEffect` built `new CantorOfTheRefrain()` with no printing: no set code or collector number (the client fetches a
+  card's art by them), no conjured mark and no log line. The survivor creates the printing's card and logs "<source> conjures a Cantor of
+  the Refrain card into their graveyard." (a public zone; the survivor's line wins).
+- **Brittle Blast and face-down permanents.** `PermanentRemovalService` exiled a dying permanent whose card had the perpetual "If this
+  permanent would die, exile it instead" even while it was face down. A perpetual change is made to the card, and a face-down permanent has
+  none of its card's text (CR 708.2, 708.2a), the rule the one ability store's seeding already follows; the read now skips a face-down
+  permanent. When it is turned face up the replacement applies again.
+- **Unique (14).** Five records rewrite a card's printed characteristics on an exchanged runtime card, which copies copy and which follows
+  the card: Prankster's and Second Little Pig's source base P/T, Mischievous Lookout's 2/1 Rat, Kavaron Consumed's 4/4 artifact creature,
+  Rasaad's exiled vanilla 1/1, Resourceful Collector's Food, Reezug's only-artifact. The stores the survivors write apply in other layers
+  (the base P/T store in layer 7b, the card-type store as seeded characteristics), so a fold would move the change to another layer; and
+  no record shares more than P/T with another. Reezug's target and subtype rule also differ from Housemeld's exile step (ledger). The
+  others: Prankster's two-target exchange, Highway Reaver's mana-cost unearth, Mace of Disruption's shared-name condition, Undersimplify's
+  target spell, Brittle Blast's death store, Monoist Gravliner's stationing creature, Richlau's three-part graveyard target, the
+  engine-built double team loss. Ledger notes name each reason.
+- **Blocked (2).** Rothga's and Mutable Pupa's records read a card in any zone (the triggering spell's card; the source's card): the
+  human's "it" decision (CR 400.7). Kept as they are.
+- **Not audited, waiting for the hand / library logging decision.** Boareskyr Tollkeeper (a chosen card of a revealed hand), Vigorous
+  Farming (the top land of the library, an exchanged card), `PerpetuallyMakeSelectedSpellbookCardArtifactCreatureEffect` (the drafted
+  card in hand; its log names it). Sibsig's Artisan is left for the graveyard-ability store move (below).
+- **AI.** It reads neither deleted record.
+
+**Behaviour changes.** "Failed before" means the new test failed with the engine of HEAD.
+
+1. A face-down permanent whose card has Brittle Blast's perpetual replacement dies to the graveyard (CR 708.2a):
+   `BrittleBlastTest.faceDownPermanentDiesNormally` (failed before: the card was exiled).
+2. Song of Point Prime's and Voidcalled Devotee's Cantor of the Refrain is the YEOE 9 printing's card and its conjure is logged:
+   `SongOfPointPrimeTest.conjuredCardHasItsPrintingAndIsLogged` (new; not run on HEAD, the old handler set neither).
+3. Wizened Githzerai: none intended. `WizenedGithzeraiTest.hexproofBlockerIsNotTargeted` (a hexproof blocker still gets -2/-0) guards
+   that the blocker is not targeted; not run on HEAD.
+
+**What a player sees.** The conjure line above is new; no prompt or zone view changes.
+
+**Seen, not changed.**
+
+- Undersimplify's "if it's a creature spell" reads the spell's card, not `CastingPermissionService.spellAsEffectsSeeIt(entry)`: a face-down
+  Gift of Doom (an Aura with morph) is a creature spell (CR 708.2) the handler skips. Not reproduced: whether a perpetual P/T change shows
+  on a face-down permanent is itself unsettled (the P/T reader adds the card's modifier with no face-down check).
+- The other `Supplier`-built conjures (`ConjureCardOntoBattlefieldEffect`, `ConjureCardOntoBattlefieldForTriggeringPermanentControllerEffect`,
+  `ConjureCardIntoLibraryAtPositionEffect`, `ConjureCardIntoGraveyardThenDoubleAndShuffleEffect`, `ConjureCardIntoTopCardsOfLibraryEffect`)
+  create cards with no printing identity either.
+- The battlefield conjures differ beyond their card source: `ConjureCardToBattlefieldEffect` logs, records created ids and enters tapped
+  and attacking; `ConjureCardNamedOntoBattlefieldEffect` runs the legend rule; the `Supplier` ones run land enter effects and don't mark
+  the card conjured. One survivor needs those read side by side first.
+- Two perpetual keyword stores (`perpetualKeywords`, written by the `CardSubject` keyword grant, and `perpetualCardKeywords`, by the
+  triggering, target and stationing grants).
+- `PerpetuallyMakeSelectedSpellbookCardArtifactCreatureEffect` mutates the selected card and freezes it in the handler (cards freeze once
+  live); not reproduced.
+
+**Tests edited.** The three new cases above. Display names on every method of `WizenedGithzeraiTest`, `BrittleBlastTest`,
+`SongOfPointPrimeTest` and `VoidcalledDevoteeTest`. `EffectCountRatchetTest`'s baselines.
+
+**Tests run.** One Gradle run on the final sources, one `--tests` list per task, counted from that run's XML by timestamp: 31 XML files,
+224 cases, 0 failures, 0 skipped: every class referencing a changed card (Wizened Githzerai, Song of Point Prime, Voidcalled Devotee:
+their own and `CantorOfTheRefrainTest`), `BrittleBlastTest`, `EtherealEscortTest`, the `--tests-for` classes of
+`PerpetuallyBoostTargetCreatureEffect` and `ConjureCardToGraveyardEffect`, `PermanentRemovalServiceTest`, `EffectCountRatchetTest` (at
+4,111 / 3,365), the AI's `TargetPolarityGuardTest`. Before the fix, `BrittleBlastTest` ran 10 cases, 1 failed (the new one). Compiled: domain,
+engine, the changed card modules, the webservice, application and AI test sources and the test sources of every card-test letter module.
+No deleted handler is marked `AsksDeathReplacementsFirst` or calls `LifeSupport.askBefore*`. Not run: the full suites, the AI fuzz and
+stress tests, the frontend. Not verified: more than two players.
+
+**For the next run (run 30: Conjure's rare records outside a hand or library; Perpetually's waiting rows).**
+
+- The human's decisions: what a perpetual change or a conjure to a hidden-zone card logs, and the perpetual "it" (CR 400.7). They hold
+  Perpetually's 30 rare records left (hand, library, the drafted card) and Rothga's and Mutable Pupa's rows.
+- The graveyard-ability store: `perpetualGraveyardAbilities` (Sibsig's Artisan, the two step-5m rows
+  `PerpetuallyGrantGraveyardAbilityToTargetCardEffect` / `…ToSourceCardEffect`, Conjure's unearth duplicate) beside the one ability store,
+  which seeds only battlefield abilities: it needs a zone on the stored grant.
+- Conjure: read the battlefield conjures side by side (above), then the graveyard and exile duplicates (`ConjureDuplicateOfTarget…`,
+  `ConjureDuplicateOfTriggering…`); the hand and library conjures wait for the logging decision.
 
 ## Prompt
 

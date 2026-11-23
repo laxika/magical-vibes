@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.a.AinokTracker;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GarrukPrimalHunter;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BrittleBlast.class, DoomBlade.class, GrizzlyBears.class,
+@CardUsed({AinokTracker.class, BrittleBlast.class, DoomBlade.class, GrizzlyBears.class,
         GarrukPrimalHunter.class, TurnToFrog.class, Unsummon.class})
 class BrittleBlastTest extends BaseCardTest {
 
@@ -78,6 +79,7 @@ class BrittleBlastTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Deals exactly 5 damage to a planeswalker")
     void dealsExactlyFiveDamageToPlaneswalker() {
         Permanent target = harness.enterBattlefieldAndReturn(player2, new GarrukPrimalHunter());
         target.setCounterCount(CounterType.LOYALTY, 6);
@@ -92,6 +94,7 @@ class BrittleBlastTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Exiles a planeswalker it deals lethal damage to")
     void exilesPlaneswalkerWithLethalDamage() {
         Permanent target = harness.enterBattlefieldAndReturn(player2, new GarrukPrimalHunter());
         target.setCounterCount(CounterType.LOYALTY, 3);
@@ -107,6 +110,7 @@ class BrittleBlastTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Grants the replacement to an untargeted opposing planeswalker")
     void grantsReplacementToUntargetedOpposingPlaneswalker() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent other = harness.enterBattlefieldAndReturn(player2, new GarrukPrimalHunter());
@@ -124,6 +128,7 @@ class BrittleBlastTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An illegal target stops the grant to the other creatures")
     void illegalTargetPreventsPerpetualGrantToOtherCreatures() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -147,6 +152,7 @@ class BrittleBlastTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The grant stays with the card after it returns to hand and is cast again")
     void perpetualGrantSurvivesReturningToHandAndBeingRecast() {
         harness.setHand(player2, List.of());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -173,6 +179,7 @@ class BrittleBlastTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Losing all abilities removes the granted replacement")
     void losingAbilitiesRemovesGrantedExileReplacementUntilEndOfTurn() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -189,5 +196,33 @@ class BrittleBlastTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(card -> card.getId().equals(other.getCard().getId()));
         assertThat(gd.exiledCards).noneMatch(entry -> entry.card().getId().equals(other.getCard().getId()));
+    }
+
+    @Test
+    @DisplayName("A card with the grant cast face down dies normally: a face-down permanent has none of its card's abilities")
+    void faceDownPermanentDiesNormally() {
+        harness.setHand(player2, List.of());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent tracker = harness.addToBattlefieldAndReturn(player2, new AinokTracker());
+        harness.setHand(player1, List.of(new BrittleBlast(), new Unsummon(), new DoomBlade()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, tracker.getId());
+        harness.assertInHand(player2, "Ainok Tracker");
+
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player2);
+        harness.castCreatureWithMorph(player2, 0);
+        harness.passBothPriorities();
+        Permanent faceDown = gd.playerBattlefields.get(player2.getId()).getFirst();
+        assertThat(faceDown.isFaceDown()).isTrue();
+        harness.castAndResolveInstant(player1, 0, faceDown.getId());
+
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card.getId().equals(tracker.getCard().getId()));
+        assertThat(gd.exiledCards).noneMatch(entry -> entry.card().getId().equals(tracker.getCard().getId()));
     }
 }

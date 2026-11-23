@@ -185,7 +185,7 @@
 | combat-damage trigger that perpetually gives a random nonland card in the damaged player's hand a lose-2-life-on-cast trigger | `w/WagonWrecker.java` + `PerpetuallyGiveSpellCastLifeLossToRandomNonlandCardInDamagedHandEffect` |
 | perpetually grant a death-to-exile replacement to opposing creatures and planeswalkers | `b/BrittleBlast.java` and EFFECTS_QUICK_REFERENCE.md |
 | damage each creature, then choose an instant or sorcery in hand for a perpetual noncombat-damage bonus | `c/ConductiveCurrent.java` and EFFECTS_QUICK_REFERENCE.md |
-| becomes blocked by a creature and perpetually reduces that blocker's power | `w/WizenedGithzerai.java` + `PerpetuallyBoostCombatOpponentEffect` |
+| becomes blocked by a creature and perpetually reduces that blocker's power | `w/WizenedGithzerai.java` + `PerpetuallyBoostTargetCreatureEffect(-2, 0, null)` on `TriggerOptions.EACH_BLOCKER` (the blocker is the non-targeting target) |
 | target creature power damage, then perpetually boost a creature card by excess damage | `r/RavenousPursuit.java` and `TargetCreatureDealsPowerDamageToTargetCreatureThenApplyPerpetualPowerToughnessEffect` |
 | ETB exiles one instant or sorcery from each eligible graveyard and casts one random copy if at least two were exiled | `m/MysteriousStranger.java` + `ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect.forRandomSingleCopy()` |
 | ETB offers a free instant or sorcery from your graveyard with mana value at most the number of Spirits you control, exiling it if it would go to a graveyard | `s/SpectralArcanist.java` + `CastCardFromGraveyardEffect` + `CardManaValueAtMostControlledCountPredicate` (VOC 15) |

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.t.TrollAscetic;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.CircleOfTheMoonDruid;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -7,16 +8,18 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WizenedGithzerai.class, GrizzlyBears.class, CircleOfTheMoonDruid.class})
+@CardUsed({WizenedGithzerai.class, GrizzlyBears.class, CircleOfTheMoonDruid.class, TrollAscetic.class})
 class WizenedGithzeraiTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Each creature blocking it perpetually gets -2/-0")
     void becomingBlockedPerpetuallyReducesEachBlockersPower() {
         addCreatureReady(player1, new WizenedGithzerai());
         Permanent firstBlocker = addCreatureReady(player2, new GrizzlyBears());
@@ -34,6 +37,7 @@ class WizenedGithzeraiTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The reduction stays after the turn ends")
     void perpetualReductionRemainsAfterTheTurnEnds() {
         addCreatureReady(player1, new WizenedGithzerai());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
@@ -50,6 +54,7 @@ class WizenedGithzeraiTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Blocking it with Wizened Githzerai does not trigger the ability")
     void blockingWizenedGithzeraiDoesNotTriggerItsAbility() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player2, new WizenedGithzerai());
@@ -63,6 +68,7 @@ class WizenedGithzeraiTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The reduction applies on top of a later base power change")
     void perpetualReductionAppliesAfterTheBlockersBasePowerChanges() {
         addCreatureReady(player1, new WizenedGithzerai());
         Permanent blocker = addCreatureReady(player2, new CircleOfTheMoonDruid());
@@ -84,6 +90,7 @@ class WizenedGithzeraiTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Creatures that do not block are unaffected")
     void creaturesThatDoNotBlockAreUnaffected() {
         addCreatureReady(player1, new WizenedGithzerai());
         Permanent blocker = addCreatureReady(player2, new CircleOfTheMoonDruid());
@@ -97,5 +104,19 @@ class WizenedGithzeraiTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, blocker)).isZero();
         assertThat(gqs.getEffectivePower(gd, nonblocker)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A hexproof blocker still gets -2/-0: \"that creature\" is not a target")
+    void hexproofBlockerIsNotTargeted() {
+        addCreatureReady(player1, new WizenedGithzerai());
+        Permanent blocker = addCreatureReady(player2, new TrollAscetic());
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(1);
     }
 }

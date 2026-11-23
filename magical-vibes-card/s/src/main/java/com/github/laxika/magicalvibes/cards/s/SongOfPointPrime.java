@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.cards.c.CantorOfTheRefrain;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardInGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -14,6 +13,6 @@ public class SongOfPointPrime extends Card {
     public SongOfPointPrime() {
         addSpellEffect(new SacrificePermanentsEffect(
                 1, new PermanentIsCreaturePredicate(), Subjects.eachOpponent()));
-        addSpellEffect(new ConjureCardInGraveyardEffect(CantorOfTheRefrain::new));
+        addSpellEffect(new ConjureCardToGraveyardEffect("YEOE", "9"));
     }
 }

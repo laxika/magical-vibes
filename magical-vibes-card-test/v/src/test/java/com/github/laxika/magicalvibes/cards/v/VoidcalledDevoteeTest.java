@@ -29,6 +29,7 @@ class VoidcalledDevoteeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cast normally, it can attack at once and stays at the end step")
     void normalCastCanAttackImmediatelyAndRemainsAtEndStep() {
         harness.castFromHand(player1, new VoidcalledDevotee(), "{1}{B}{B}");
         resolveAllTriggers();
@@ -44,6 +45,7 @@ class VoidcalledDevoteeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cast for its warp cost, it attacks and conjures before it is exiled")
     void warpCastCanAttackAndConjureBeforeBeingExiled() {
         VoidcalledDevotee devotee = new VoidcalledDevotee();
         harness.setHand(player1, List.of(devotee));
@@ -64,6 +66,7 @@ class VoidcalledDevoteeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each attacking Devotee conjures its own card")
     void eachAttackerConjuresADistinctOwnedCard() {
         addCreatureReady(player1, new VoidcalledDevotee());
         addCreatureReady(player1, new VoidcalledDevotee());
@@ -83,6 +86,7 @@ class VoidcalledDevoteeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The card is conjured for the Devotee's controller, not its owner")
     void attackConjuresForControllerRatherThanDevoteesOwner() {
         VoidcalledDevotee devotee = new VoidcalledDevotee();
         devotee.setOwnerId(player1.getId());

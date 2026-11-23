@@ -2187,8 +2187,10 @@ public class PermanentRemovalService {
                 && !gameQueryService.hasLostPrintedAbilities(gameData, target)
                 && (GraveyardService.hasExilePermanentsInsteadOfGraveyardReplacementEffect(target.getCard())
                         || GraveyardService.hasExileInsteadOfGraveyardReplacementEffect(target.getCard()));
+        // A perpetual change is made to the card; a face-down permanent has none of its card's text (CR 708.2a).
         boolean perpetualGraveyardReplacement = !gameQueryService.hasLostAllAbilities(gameData, target)
                 && checkExileInsteadOfDie
+                && !target.isFaceDown()
                 && target.getOriginalCard() != null
                 && gameData.perpetualExileInsteadOfDyingCardIds.contains(target.getOriginalCard().getId());
         return (target.isExileIfLeavesBattlefield() && !gameQueryService.hasLostAllAbilities(gameData, target))

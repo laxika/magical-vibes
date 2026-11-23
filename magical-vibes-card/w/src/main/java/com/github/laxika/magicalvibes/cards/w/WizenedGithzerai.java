@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCombatOpponentEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -12,6 +12,6 @@ public class WizenedGithzerai extends Card {
     public WizenedGithzerai() {
         addTrigger(Triggers.becomesBlocked(),
                 TriggerOptions.EACH_BLOCKER,
-                new PerpetuallyBoostCombatOpponentEffect(-2, 0));
+                new PerpetuallyBoostTargetCreatureEffect(-2, 0, null));
     }
 }
