@@ -5,10 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GoadEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnSourceAuraToCreatureOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,6 +26,9 @@ public class GhoulishImpetus extends Card {
                 .addStaticEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.attachedCreature()))
                 .addStaticEffect(new GoadEquippedCreatureEffect())
                 .addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
-                        new RegisterDelayedReturnSourceAuraToCreatureOnDeathEffect());
+                        RegisterDelayedStepTriggerEffect.aboutCardAtNext(Triggers.endStep(ActivePlayer.ANY),
+                                Subjects.sourceCard(),
+                                new PutCardsOntoBattlefieldEffect(Subjects.sourceCard())
+                                        .underControlOf(Subjects.you())));
     }
 }

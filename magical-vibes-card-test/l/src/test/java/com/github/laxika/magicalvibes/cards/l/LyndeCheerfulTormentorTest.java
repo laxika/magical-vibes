@@ -43,6 +43,7 @@ class LyndeCheerfulTormentorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Triggers for a Curse you own that an opponent controlled")
     void triggersForOwnedCurseControlledByOpponent() {
         harness.addToBattlefield(player1, new LyndeCheerfulTormentor());
         CurseOfClingingWebs card = new CurseOfClingingWebs();
@@ -57,6 +58,7 @@ class LyndeCheerfulTormentorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Doesn't trigger for an opponent's Curse you controlled")
     void doesNotTriggerForOpponentOwnedCurseUnderYourControl() {
         harness.addToBattlefield(player1, new LyndeCheerfulTormentor());
         CurseOfClingingWebs card = new CurseOfClingingWebs();
@@ -71,6 +73,7 @@ class LyndeCheerfulTormentorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The delayed return doesn't follow a Curse that left its graveyard and came back")
     void delayedReturnDoesNotFollowCurseThatLeftAndReenteredGraveyard() {
         Permanent lynde = harness.addToBattlefieldAndReturn(player1, new LyndeCheerfulTormentor());
         CurseOfClingingWebs card = new CurseOfClingingWebs();
@@ -97,6 +100,7 @@ class LyndeCheerfulTormentorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the upkeep ability leaves the Curse attached and draws nothing")
     void decliningUpkeepLeavesCurseAttachedAndDoesNotDraw() {
         harness.addToBattlefield(player1, new LyndeCheerfulTormentor());
         Permanent curse = harness.addToBattlefieldAndReturn(player1, new CurseOfClingingWebs());
@@ -113,6 +117,7 @@ class LyndeCheerfulTormentorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Moves only the chosen Curse, one an opponent controls included")
     void movesOnlyChosenCurseIncludingOneControlledByOpponent() {
         harness.addToBattlefield(player1, new LyndeCheerfulTormentor());
         Permanent first = harness.addToBattlefieldAndReturn(player1, new CurseOfClingingWebs());
@@ -134,6 +139,7 @@ class LyndeCheerfulTormentorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Draws nothing when no Curse is attached to you")
     void doesNotDrawWhenNoCurseIsAttachedToYou() {
         harness.addToBattlefield(player1, new LyndeCheerfulTormentor());
         Permanent curse = harness.addToBattlefieldAndReturn(player1, new CurseOfClingingWebs());

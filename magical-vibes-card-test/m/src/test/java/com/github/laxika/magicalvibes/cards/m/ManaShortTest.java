@@ -45,6 +45,16 @@ class ManaShortTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The log names the player who lost unspent mana")
+    void logNamesThePlayerWhoLostMana() {
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        castAndResolve(player2.getId());
+
+        assertThat(gameLogContains(player2.getUsername() + " loses all unspent mana (Mana Short).")).isTrue();
+    }
+
+    @Test
     @DisplayName("Does not tap non-land permanents")
     void doesNotTapNonLands() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());

@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 31: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent and May closed (May's 11 cost combinators listed for step 10); 1,858 rare records left, Perpetually open (30 rare, waiting for the human's logging and "it" decisions), Conjure open (39 rare), Register open (39 rare)) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 32: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent and May closed (May's 11 cost combinators listed for step 10); 1,839 rare records left, Perpetually open (30 rare, waiting for the human's logging and "it" decisions), Conjure open (39 rare), Register open (23 rare), Target started (45 rare)) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -637,6 +637,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 29 | Perpetually's rare records outside a hand or library, Brittle Blast's face-down defect, then Conjure | Perpetually open, Conjure started (18 rows: 2 absorbed, 2 blocked-other (the human's "it" decision), 14 unique; 2 records and 2 handlers deleted; 3 card files rewritten; a face-down permanent no longer has Brittle Blast's perpetual replacement; Song of Point Prime's and Voidcalled Devotee's conjured card has its printing and a log line; 30 rare Perpetually records left (hand, library, graveyard-ability store), 48 rare Conjure) |
 | 30 | Conjure's rare battlefield records, Undersimplify's face-down defect, then Register | Conjure open, Register started (10 rows: 5 absorbed, 1 survivor, 4 unique; 5 records and 5 handlers deleted; 7 card files rewritten; `RegisterDelayedStepTriggerEffect.atNext`; Squadron Carrier's and Thendar's conjured cards have their printing; Perforator Crocodile's Stab Wounds enter attached, none for a creature they can't enchant; a face-down spell is Undersimplify's creature spell; 44 rare Conjure and 43 rare Register records left) |
 | 31 | Run 30's three small defects, Conjure's battlefield duplicates and its graveyard and exile duplicates, Register's "about the source" registrations, then the next-main-phase records | Conjure and Register open (11 rows: 7 absorbed, 1 survivor (new), 1 survivor gaining two options, 2 unique; 7 records and 7 handlers deleted, 1 of each added; 9 card files rewritten; `ConjureDuplicateOntoBattlefieldEffect`, `SubjectResolutionService.cardsToDuplicate`, `RegisterDelayedStepTriggerEffect.aboutSourceAtNext` / `.atNextMainPhaseThisTurn`; Dragonsoul Prodigy's haste is gained, Vvviza's planet is conjured, Smog Smasher's duplicate of a face-down creature is faceless; the gift opponent not a Whorl defect; 39 rare Conjure and 39 rare Register records left) |
+| 32 | Register's delayed returns from a graveyard, its next-draw replacements and one-shot boons, then Target | Register and Target open (21 rows: 7 absorbed, 1 split, 2 survivors (one gaining an option, one a subject), 2 unique, 9 blocked-other (the next-draw payloads); 8 records and 8 handlers deleted; 9 card files rewritten; `RegisterDelayedStepTriggerEffect.aboutCardAtNext`, `TargetPlayerLosesAllUnspentManaEffect(PlayerSubject)`; Loyal Cathar and Biolume Egg no longer return a card that left its graveyard and came back before the trigger resolved; the boons left for a noted-amount part; 23 rare Register and 45 rare Target records left) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -9325,6 +9326,104 @@ record is named by any test, AI or other card source (grepped). No deleted handl
 - Conjure's rest: the graveyard-ability store (the unearth duplicate), the random-spellbook battlefield records, the hand and library
   conjures (waiting).
 - The gift opponent (above) is a gift-cost change for every gift card, outside a family sweep.
+
+### Step 9, run 32 (2026-11-23, Register open, Target started)
+
+Register's delayed returns from a graveyard onto one option of the step record, its next-draw replacements and one-shot boons
+audited, then Target's first rare records. Ratchet 4,098 / 3,352 → 4,090 / 3,344 records / handlers (8 records and 8 handlers deleted).
+9 card files rewritten (Desert Warfare, Brood of Cockroaches, Lynde, Cheerful Tormentor, Loyal Cathar, Biolume Egg, Ghoulish Impetus,
+Skullknocker Ogre, Worldpurge, Ruthless Negotiation); Oracle text checked with `get_card` for those 9 and Golden Guardian, Mana Short,
+Power Sink, Dragonborn Immolator, Mephit's Enthusiasm and Molten Impact; rulings with `get_rulings` for Brood of Cockroaches and Loyal
+Cathar. CR 110.2a, 400.7, 603.7a, 603.7b, 603.7c and 608.2b checked with `get_rule` (2026-11-23).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | Left unaudited |
+|---|---|---|---|---|---|---|---|
+| Register | 16 rare records and the survivor | 5 | 0 | 1 (`RegisterDelayedStepTriggerEffect`, one option) | 9 (blocked-other: the next-draw payloads) | 2 | 23 rare, 33 in all |
+| Target | 3 rare records | 1 (and `EachPlayerLosesUnspentManaEffect`) | 1 | 1 (`TargetPlayerLosesAllUnspentManaEffect`, a subject) | 0 | 0 | 45 rare, 55 in all |
+
+All families: 1,839 rare records without a row (run 31: 1,858). Perpetually 30 rare and Conjure 39 rare, unchanged.
+
+- **`RegisterDelayedStepTriggerEffect.aboutCardAtNext(step, card, effects)`** (component `card`, a `CardSubject`): "at the beginning of
+  [step], [effects]" about the source card or the triggering card in its graveyard stay (`Subjects.sourceCard()` /
+  `Subjects.triggeringCards()`, which already check the stay, CR 400.7). The handler registers it bound to that stay
+  (`DelayedReferents.graveyardCard`, the delayed entry's triggering card), so its effects do nothing once the card left (CR 603.7c); it is
+  not made when the subject names no card, unless it does more (`evenIfNothingHappened`), and then the source card is bound to the stay its
+  entry expected, so a card that came back is still not returned. It absorbs the five registrars whose handlers did only that, each card
+  keeping its step, controller and body: Desert Warfare (`endStep(YOU)`, "your next end step", the triggering card under your control),
+  Brood of Cockroaches (`endStep(ANY)`, life loss and the return as one ability, made even when the card left, as its rulings say), Lynde
+  (`endStep(ANY)`, the triggering Curse attached to you), Loyal Cathar / Biolume Egg (`endStep(ANY)`, transformed, under your / its owner's
+  control) and Ghoulish Impetus (`endStep(ANY)`, the Aura under your control). The registrars' own log lines ("will return …", "delayed
+  return fizzles") are gone: the survivor logs nothing as it registers; the delayed effects still log what they do.
+- **Golden Guardian** (unique): "When this creature dies this turn, return it transformed" is the only "when this dies this turn" delayed
+  ability; an event option on `RegisterDelayedEventTriggerEffect` would have this card only.
+- **The next-draw replacements** (9 records, blocked-other): each record is the payload of a floating effect that `DrawService` applies
+  inline in its replacement pass, with its own fields (Words of War's target and last-known source, Aladdin's Lamp's X, Mangara's Tome's
+  pile) and prompts inside the draw (Words of Wind, Words of Waste, Ring of Ma'ruf, the pile choice). A generic "instead of your next draw,
+  [effects]" needs arbitrary effects and their prompts run inside a draw: a redesign of DrawService's replacement pass onto the step model,
+  outside this plan. Plots That Span Centuries' scheme replacement (read by `ActionEvents`) is unique.
+- **The one-shot boons** (Dragonborn Immolator and Mephit's Enthusiasm's perpetual boost, Molten Impact's damage) were read and left
+  unaudited: each notes a number as the boon is made (the dying creature's power, the excess damage) and the boon's effect uses it later.
+  The same need, "an amount fixed as the delayed ability is made", holds Ochre Jelly's record, Mana Sculpt and
+  `RegisterDelayedManaEqualToTargetSpellManaValueEffect` (`DelayedManaSupport`, run 31), `RegisterDelayedManaEqualToTargetSpellManaSpentEffect`
+  and `RegisterDelayedSelfReturnFromGraveyardEffect`'s counter amount: four or more rare records, so the part should be built, not
+  ledgered blocked. Design: a noted amount on `DelayedReferents`, stamped by `EventAbilitySupport.DelayedRecord` onto the delayed entry,
+  read by a `NotedAmount` `DynamicAmount`; `PerpetuallyBoostTriggeringCardEffect` would need a `DynamicAmount` form.
+- **Skullknocker Ogre** (split): "that player discards a card at random. If the player does, they draw a card." is `DiscardEffect(1,
+  targetPlayer(), true)` + `ConditionalEffect(HappenedThisWay.discarded(), DrawCardEffect(1, targetPlayer()))`, "that player" being the
+  damaged player the collector records as the entry's non-targeting target (Hypnotic Specter's form). The DISCARD step counts a discard
+  replaced into another zone too, as the old `cardsDiscardedThisTurn` delta did.
+- **`TargetPlayerLosesAllUnspentManaEffect(PlayerSubject)`**: Mana Short and Power Sink keep the no-argument form (the target player; it
+  now declares the benign player target its subject names, as `TapPermanentsEffect` beside it does, so it left
+  `CardEffectTargetingConsistencyTest`'s allowlist). Worldpurge's `EachPlayerLosesUnspentManaEffect` is `eachPlayer()`; run 8's unique row
+  for it missed this sibling. Log: "<player> loses all unspent mana (<source>)." for each player who had mana, the source by
+  `FaceDownVisibility.sourceName`; Mana Short's old line named no player.
+- **Ruthless Negotiation**: `ExileCardFromHandEffect(targetPlayer(), null, false)`, the same `ExileFromHandChoice` over the whole hand for the
+  target opponent (nobody else sees it), which now also records the EXILE step as it is answered. Empty-hand line: "has no card to exile from
+  hand." (was "no cards").
+- **Gift** (the owner's question, not changed): no Target record this run touches a gift. `TargetOpponentCreatesTokenEffect` (gift form) and
+  `TargetOpponentMayDrawCardEffect` derive the sole opponent with `getOpponentId` (`CardEffectTargetingConsistencyTest`'s allowlist says so).
+- **AI.** It reads none of the deleted records; none implemented a capability interface. `TargetPolarityGuardTest` passes.
+
+**Behaviour changes.**
+
+1. Loyal Cathar and Biolume Egg register no return for a card that left its graveyard and came back before the trigger resolved (CR 400.7,
+   603.7c): `LoyalCatharUnhallowedCatharTest.registersNoReturnForACardThatReenteredTheGraveyardBeforeResolution` (new; not run on HEAD: the
+   old handler checked only that the card was in a graveyard and bound it at its new stay, so it would have returned the new object).
+2. Mana Short / Power Sink / Worldpurge log the player who lost mana: `ManaShortTest.logNamesThePlayerWhoLostMana` (new).
+3. The five registrars' registration log lines are gone (no test asserted them); Ruthless Negotiation's empty-hand line reads "no card".
+4. The other rewritten cards: none intended.
+
+**What a player sees.** The log lines above. No prompt or zone view changes; nothing names a hidden card.
+
+**Seen, not changed.**
+
+- The one-shot boons and the other "noted amount" records (above): next run's first part.
+- `RegisterDelayedSelfReturnFromGraveyardEffect` (7 cards) and `RegisterDelayedReturnCardFromGraveyardToHandEffect` (9) could become
+  `aboutCardAtNext` cards; three or more cards each, so they need the owner's sign-off.
+- Ghoulish Impetus returns "this card to the battlefield" under the ability's controller's control (`underControlOf(you())`): checked,
+  not a defect (CR 110.2a, the instructed player puts it onto the battlefield).
+
+**Tests edited.** The two new cases above. Display names on the methods that had none in `LyndeCheerfulTormentorTest` and
+`LoyalCatharUnhallowedCatharTest`. `CardEffectTargetingConsistencyTest`'s allowlist (two entries removed: one record deleted, one now
+declares its target). `EffectCountRatchetTest`'s baselines.
+
+**Tests run.** Three Gradle runs, one `--tests` list per task, counted from each run's XML by timestamp, 0 failures, 0 skipped in all:
+25 XML files, 208 cases (the 7 classes referencing a Register card changed, Invasion of Pyrulea among them, Golden Guardian, Harvest Hand,
+the `--tests-for` sample (12 per class) of `RegisterDelayedStepTriggerEffect`, the run-30/31 `atNext` and `aboutSourceAtNext` cards,
+`EffectCountRatchetTest`); 13 files, 115 cases (the 10 classes referencing Skullknocker Ogre, Mana Short, Power Sink, Worldpurge, Ruthless
+Negotiation, `CardEffectTargetingConsistencyTest`, the AI's `TargetPolarityGuardTest`, `EffectCountRatchetTest` at 4,090 / 3,344); 4 files,
+28 cases after the last edits (Brood, Loyal Cathar, Mana Short, the ratchet). Compiled: domain, engine, AI and application test sources,
+card modules and card-test sources of letters b, d, g, i, l, m, p, r, s, w. No deleted record is named by any test, AI or other card source
+(grepped). No deleted handler is marked `AsksDeathReplacementsFirst` or calls `LifeSupport.askBefore*`. Not run: the full suites, the AI
+fuzz and stress tests, the frontend. Not verified: more than two players.
+
+**For the next run (run 33: the noted amount, then Register's and Target's rare records).**
+
+- Build the noted amount (above) and fold the boons, Ochre Jelly's record, `RegisterDelayedManaEqualToTargetSpellManaSpentEffect` and Mana
+  Sculpt's helper where they fit; then Register's 23 rare records (the "when the source leaves / untaps" registrations: War Barge, Merieke
+  Ri Berit, Coffin Queen; the block and combat registrations).
+- Target's 45 rare records: the player-choice records (`TargetPlayerChooses*`), the "must attack" records, the control-exchange records.
+- Still the owner's: the gift opponent (CR 702.174a), the hidden-zone conjure and perpetual logging, the perpetual "it" (CR 400.7).
 
 ## Prompt
 

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.y.YoungWolf;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -77,6 +78,7 @@ class LoyalCatharUnhallowedCatharTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The delayed return doesn't follow a card that left its graveyard and came back")
     void delayedReturnDoesNotFollowCardThatLeavesAndReentersGraveyard() {
         LoyalCatharUnhallowedCathar cathar = new LoyalCatharUnhallowedCathar();
         harness.addToBattlefield(player1, cathar);
@@ -111,6 +113,7 @@ class LoyalCatharUnhallowedCatharTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Loyal Cathar attacks without tapping")
     void frontFaceAttacksWithoutTapping() {
         Permanent cathar = addCreatureReady(player1, new LoyalCatharUnhallowedCathar());
         harness.addToBattlefield(player2, new YoungWolf());
@@ -121,6 +124,7 @@ class LoyalCatharUnhallowedCatharTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Returns under the dying creature's controller's control, not its owner's")
     void returnsUnderDyingCreaturesControllerRatherThanOwner() {
         LoyalCatharUnhallowedCathar card = new LoyalCatharUnhallowedCathar();
         card.setOwnerId(player1.getId());
@@ -140,6 +144,7 @@ class LoyalCatharUnhallowedCatharTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Unhallowed Cathar doesn't return when it dies")
     void backFaceDoesNotReturnAfterDying() {
         Permanent cathar = harness.addToBattlefieldAndReturn(player1, new LoyalCatharUnhallowedCathar());
         cathar.setCard(cathar.getOriginalCard().getBackFaceCard());
@@ -155,5 +160,22 @@ class LoyalCatharUnhallowedCatharTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Unhallowed Cathar");
         harness.assertInGraveyard(player1, "Loyal Cathar");
+    }
+
+    @Test
+    @DisplayName("Registers no return for a card that left its graveyard and came back before the ability resolved")
+    void registersNoReturnForACardThatReenteredTheGraveyardBeforeResolution() {
+        LoyalCatharUnhallowedCathar card = new LoyalCatharUnhallowedCathar();
+        harness.addToBattlefield(player1, card);
+        harness.setHand(player2, List.of(new FiresOfUndeath()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Loyal Cathar"));
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Loyal Cathar"));
+
+        // The card leaves the graveyard and is put into it again: a new object (CR 400.7).
+        gd.markGraveyardEntry(card);
+        harness.passBothPriorities();
+
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
     }
 }

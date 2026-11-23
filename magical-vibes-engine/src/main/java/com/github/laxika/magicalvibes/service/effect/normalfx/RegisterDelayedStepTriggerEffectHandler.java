@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CardsStillInZone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CardSubject;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -30,7 +31,8 @@ import java.util.stream.Collectors;
 /**
  * Registers the delayed triggered ability with what the step it is about did, as that is now: each card bound to its
  * stay (CR 603.7c), so the ability's effects read that step as the steps of the resolution that made it do. One about
- * a permanent is registered about it, one about no step and no permanent about nothing.
+ * a permanent is registered about it, one about a card in a graveyard about that card in that stay, one about no step
+ * and no permanent about nothing.
  */
 @Component
 @RequiredArgsConstructor
@@ -49,6 +51,10 @@ public class RegisterDelayedStepTriggerEffectHandler implements NormalEffectHand
         UUID playerId = register.player() == null ? null
                 : subjectResolutionService.player(gameData, entry, effect, register.player());
         if (register.player() != null && playerId == null) {
+            return;
+        }
+        if (register.card() != null) {
+            registerAboutCard(gameData, entry, register);
             return;
         }
         if (register.permanent() != null) {
@@ -126,6 +132,34 @@ public class RegisterDelayedStepTriggerEffectHandler implements NormalEffectHand
                 entry.getControllerId(), entry.getCard(),
                 new TriggeredAbility(register.step(), options, effects.toArray(CardEffect[]::new)),
                 entry.getSourcePermanentId(), permanentId, playerId, referents));
+    }
+
+    /**
+     * The ability about the card its subject names in a graveyard, bound to that stay (CR 603.7c, 400.7): the delayed
+     * entry records it as its triggering card in that stay. With no such card it is made only when it does more, and
+     * then about this card in the stay its entry expected, so it still returns no card that left and came back.
+     */
+    private void registerAboutCard(GameData gameData, StackEntry entry, RegisterDelayedStepTriggerEffect register) {
+        UUID cardId = subjectResolutionService.locatedCards(gameData, entry, register, register.card()).stream()
+                .filter(located -> located.zone() == Zone.GRAVEYARD)
+                .map(located -> located.card().getId())
+                .findFirst().orElse(null);
+        DelayedReferents referents;
+        if (cardId != null) {
+            referents = DelayedReferents.graveyardCard(cardId, gameData.graveyardEntryVersion(cardId));
+        } else if (!register.alsoIfNothingHappened()) {
+            return;
+        } else if (register.card() instanceof CardSubject.SourceCard) {
+            referents = DelayedReferents.graveyardCard(entry.getCard().getId(), entry.sourceCardGraveyardEntryVersion());
+        } else {
+            // "That card" of an entry with no triggering card in its graveyard stay names none.
+            referents = DelayedReferents.NONE;
+        }
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                entry.getControllerId(), entry.getCard(),
+                new TriggeredAbility(register.step(), TriggerOptions.DEFAULT,
+                        register.effects().toArray(CardEffect[]::new)),
+                entry.getSourcePermanentId(), null, null, referents));
     }
 
     /** The permanents the step made that are still there; one that left is a new object (CR 400.7). */

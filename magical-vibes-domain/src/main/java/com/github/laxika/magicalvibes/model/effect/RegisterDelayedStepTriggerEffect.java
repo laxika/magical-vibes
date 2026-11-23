@@ -18,7 +18,8 @@ import java.util.Objects;
  * is one. An object that left its zone since is a new object and isn't affected (CR 603.7c, 400.7). An ability that does
  * nothing but act on those objects is not created when there are none, as it could affect nothing; one that does more
  * ("return those cards to your hand, then draw a card") always is ({@code alsoIfNothingHappened}, CR 603.7a). One about
- * no earlier step ("discard three cards at the beginning of the next end step") is {@link #atNext}.
+ * no earlier step ("discard three cards at the beginning of the next end step") is {@link #atNext}. One about a card in
+ * a graveyard ("return that card to the battlefield at the beginning of the next end step") is {@link #aboutCardAtNext}.
  *
  * @param about            the step it is about: the most recent one of that kind, or, for
  *                         {@link StepKind#CREATE_TOKEN}, every permanent this resolution created; {@code null} for
@@ -40,18 +41,29 @@ import java.util.Objects;
  *                         the postcombat main phase); {@code null} for none
  * @param thisTurn         whether it has the stated duration "this turn" ("at the beginning of your next main phase
  *                         this turn"): it ends with the turn if it hasn't triggered (CR 603.7b)
+ * @param card             the card in a graveyard it is about when it is about no step ({@link #aboutCardAtNext}):
+ *                         {@code Subjects.sourceCard()} or {@code Subjects.triggeringCards()}, bound to the graveyard
+ *                         stay that subject names it in, so the ability doesn't affect that card once it has left that
+ *                         graveyard (CR 603.7c, 400.7); not created when the subject names none, unless it does more
+ *                         ({@code alsoIfNothingHappened}); {@code null} for none
  */
 public record RegisterDelayedStepTriggerEffect(StepKind about, StepTrigger step, List<CardEffect> effects,
                                                PlayerSubject player, boolean afterThisTurn,
                                                boolean ifAnyStillExiled, boolean alsoIfNothingHappened,
-                                               PermanentSubject permanent, StepTrigger orStep, boolean thisTurn)
+                                               PermanentSubject permanent, StepTrigger orStep, boolean thisTurn,
+                                               CardSubject card)
         implements CardEffect {
 
     public RegisterDelayedStepTriggerEffect {
         Objects.requireNonNull(step, "step");
         effects = List.copyOf(effects);
-        if (about == null && (ifAnyStillExiled || !alsoIfNothingHappened)) {
+        if (about == null && ifAnyStillExiled || about == null && card == null && !alsoIfNothingHappened) {
             throw new IllegalArgumentException("An ability about no step is always created and has no cards to check");
+        }
+        if (card != null && (about != null || permanent != null || player != null || afterThisTurn
+                || !(card instanceof CardSubject.SourceCard || card instanceof CardSubject.TriggeringCards))) {
+            throw new IllegalArgumentException("An ability about a card is about no step and no permanent, and about "
+                    + "the source card or the triggering card in its graveyard: " + card);
         }
         if (about != null && about != StepKind.EXILE && about != StepKind.CREATE_TOKEN && about != StepKind.SEEK
                 && about != StepKind.RETURN) {
@@ -65,7 +77,8 @@ public record RegisterDelayedStepTriggerEffect(StepKind about, StepTrigger step,
             throw new IllegalArgumentException("An ability about a permanent is about no step, and is made about it, "
                     + "not targeting it: " + permanent);
         }
-        if ((thisTurn || orStep != null) && (about != null || permanent != null || player != null || afterThisTurn)) {
+        if ((thisTurn || orStep != null)
+                && (about != null || permanent != null || player != null || afterThisTurn || card != null)) {
             throw new IllegalArgumentException(
                     "Only an ability about nothing waits for either of two steps or this turn");
         }
@@ -80,7 +93,7 @@ public record RegisterDelayedStepTriggerEffect(StepKind about, StepTrigger step,
     /** At the next {@code step}, {@code effects}, about no earlier step ("at the beginning of the next end step, …"). */
     public static RegisterDelayedStepTriggerEffect atNext(StepTrigger step, CardEffect... effects) {
         return new RegisterDelayedStepTriggerEffect(null, step, List.of(effects), null, false, false, true, null, null,
-                false);
+                false, null);
     }
 
     /**
@@ -90,7 +103,7 @@ public record RegisterDelayedStepTriggerEffect(StepKind about, StepTrigger step,
      */
     public static RegisterDelayedStepTriggerEffect atNextMainPhaseThisTurn(ActivePlayer player, CardEffect... effects) {
         return new RegisterDelayedStepTriggerEffect(null, Triggers.precombatMainPhase(player), List.of(effects), null,
-                false, false, true, null, Triggers.postcombatMainPhase(player), true);
+                false, false, true, null, Triggers.postcombatMainPhase(player), true, null);
     }
 
     /**
@@ -99,49 +112,62 @@ public record RegisterDelayedStepTriggerEffect(StepKind about, StepTrigger step,
      */
     public static RegisterDelayedStepTriggerEffect aboutSourceAtNext(StepTrigger step, CardEffect... effects) {
         return new RegisterDelayedStepTriggerEffect(null, step, List.of(effects), null, false, false, true,
-                Subjects.source(), null, false);
+                Subjects.source(), null, false, null);
+    }
+
+    /**
+     * At the next {@code step}, {@code effects} about the card {@code card} names in a graveyard ("at the beginning of
+     * the next end step, return that card to the battlefield"): {@code Subjects.sourceCard()} ("this card") or
+     * {@code Subjects.triggeringCards()} ("that card", "it"). It is not created when that card is no longer in that
+     * graveyard stay, as it could affect nothing (CR 603.7c, 400.7); {@link #evenIfNothingHappened} for one that does more
+     * ("you lose 1 life and return this card to your hand").
+     */
+    public static RegisterDelayedStepTriggerEffect aboutCardAtNext(StepTrigger step, CardSubject card,
+                                                                   CardEffect... effects) {
+        return new RegisterDelayedStepTriggerEffect(null, step, List.of(effects), null, false, false, false, null,
+                null, false, Objects.requireNonNull(card, "card"));
     }
 
     /** At {@code step}, {@code effects} about the cards the last exile step exiled. */
     public static RegisterDelayedStepTriggerEffect aboutExiled(StepTrigger step, CardEffect... effects) {
         return new RegisterDelayedStepTriggerEffect(StepKind.EXILE, step, List.of(effects), null, false, false, false,
-                null, null, false);
+                null, null, false, null);
     }
 
     /** At {@code step}, {@code effects} about the permanents created this way. */
     public static RegisterDelayedStepTriggerEffect aboutCreated(StepTrigger step, CardEffect... effects) {
         return new RegisterDelayedStepTriggerEffect(StepKind.CREATE_TOKEN, step, List.of(effects), null, false, false,
-                false, null, null, false);
+                false, null, null, false, null);
     }
 
     /** At {@code step}, {@code effects} about the cards the last seek put into a hand. */
     public static RegisterDelayedStepTriggerEffect aboutSought(StepTrigger step, CardEffect... effects) {
         return new RegisterDelayedStepTriggerEffect(StepKind.SEEK, step, List.of(effects), null, false, false, false,
-                null, null, false);
+                null, null, false, null);
     }
 
     /** At {@code step}, {@code effects} about the permanents the last put or return onto the battlefield made. */
     public static RegisterDelayedStepTriggerEffect aboutPutOntoBattlefield(StepTrigger step, CardEffect... effects) {
         return new RegisterDelayedStepTriggerEffect(StepKind.RETURN, step, List.of(effects), null, false, false,
-                false, null, null, false);
+                false, null, null, false, null);
     }
 
     /** This ability, waiting for a turn after this one ("at the beginning of your next turn's end step"). */
     public RegisterDelayedStepTriggerEffect waitingForALaterTurn() {
         return new RegisterDelayedStepTriggerEffect(about, step, effects, player, true, ifAnyStillExiled,
-                alsoIfNothingHappened, permanent, orStep, thisTurn);
+                alsoIfNothingHappened, permanent, orStep, thisTurn, card);
     }
 
     /** This ability, about {@code thatPlayer} as well, waiting for a turn after this one. */
     public RegisterDelayedStepTriggerEffect ofThatPlayersNextTurn(PlayerSubject thatPlayer) {
         return new RegisterDelayedStepTriggerEffect(about, step, effects, Objects.requireNonNull(thatPlayer, "player"),
-                true, ifAnyStillExiled, alsoIfNothingHappened, permanent, orStep, thisTurn);
+                true, ifAnyStillExiled, alsoIfNothingHappened, permanent, orStep, thisTurn, card);
     }
 
     /** This ability with "if any of those cards remain exiled". */
     public RegisterDelayedStepTriggerEffect onlyIfAnyStillExiled() {
         return new RegisterDelayedStepTriggerEffect(about, step, effects, player, afterThisTurn, true,
-                alsoIfNothingHappened, permanent, orStep, thisTurn);
+                alsoIfNothingHappened, permanent, orStep, thisTurn, card);
     }
 
     /** This ability with "if that card is in your hand", of one about sought cards. */
@@ -150,12 +176,12 @@ public record RegisterDelayedStepTriggerEffect(StepKind about, StepTrigger step,
             throw new IllegalArgumentException("Only sought cards went to a hand: " + about);
         }
         return new RegisterDelayedStepTriggerEffect(about, step, effects, player, afterThisTurn, true,
-                alsoIfNothingHappened, permanent, orStep, thisTurn);
+                alsoIfNothingHappened, permanent, orStep, thisTurn, card);
     }
 
     /** This ability, which does more than act on those objects ("..., then draw a card"). */
     public RegisterDelayedStepTriggerEffect evenIfNothingHappened() {
         return new RegisterDelayedStepTriggerEffect(about, step, effects, player, afterThisTurn, ifAnyStillExiled,
-                true, permanent, orStep, thisTurn);
+                true, permanent, orStep, thisTurn, card);
     }
 }

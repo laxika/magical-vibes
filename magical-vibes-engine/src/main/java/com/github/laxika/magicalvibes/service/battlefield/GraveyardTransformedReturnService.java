@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
  * Returns a card from a graveyard to the battlefield transformed (back face up).
  *
  * <p>Shared by the immediate "return it to the battlefield transformed" effects and the
- * delayed end-step returns queued by {@code RegisterDelayedReturnSourceTransformedEffect},
+ * delayed end-step returns of {@code ReturnSourceTransformedFromGraveyardEffect},
  * so both honour the same graveyard lookup, back-face requirement and
  * can't-enter-from-graveyard replacement checks.
  */

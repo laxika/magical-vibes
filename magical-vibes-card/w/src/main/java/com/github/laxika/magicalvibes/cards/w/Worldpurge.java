@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerKeepsCardsShufflesRestIntoLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesUnspentManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesAllUnspentManaEffect;
 
 @CardRegistration(set = "SHM", collectorNumber = "156")
 public class Worldpurge extends Card {
@@ -15,6 +16,6 @@ public class Worldpurge extends Card {
         // Each player chooses up to seven cards in their hand, then shuffles the rest into their library.
         addSpellEffect(new EachPlayerKeepsCardsShufflesRestIntoLibraryEffect(7));
         // Each player loses all unspent mana.
-        addSpellEffect(new EachPlayerLosesUnspentManaEffect());
+        addSpellEffect(new TargetPlayerLosesAllUnspentManaEffect(Subjects.eachPlayer()));
     }
 }

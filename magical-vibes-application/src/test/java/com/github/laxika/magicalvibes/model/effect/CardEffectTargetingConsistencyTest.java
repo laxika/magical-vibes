@@ -64,13 +64,6 @@ class CardEffectTargetingConsistencyTest {
             // Marker: declares a target-group position consumed by a sibling effect and never
             // resolves or chooses a target itself.
             "TargetGroupMarkerEffect",
-            // Piggyback: rides on the spell-level player target declared via the card's
-            // target(PlayerPredicateTargetFilter) (Mana Short) — the handler reads the stack
-            // entry's targetId and never enters trigger-target collection.
-            "TargetPlayerLosesAllUnspentManaEffect",
-            // Piggyback: rides on Ruthless Negotiation's spell-level opponent target declared via
-            // target(PlayerPredicateTargetFilter); the handler reads the stack entry's targetId.
-            "TargetPlayerExilesCardFromHandEffect",
             // Pre-resolved: the affected player is carried as the stack entry's target — the
             // spell-level player target (Moonhold) or the trigger's damaged player (Stigma Lasher) —
             // and the handler reads entry.getTargetId(); never enters trigger-target collection.

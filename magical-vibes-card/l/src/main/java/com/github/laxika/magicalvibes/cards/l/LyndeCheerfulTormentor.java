@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AttachCurseToOpponentAndDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCurseAttachedToPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -24,7 +26,11 @@ public class LyndeCheerfulTormentor extends Card {
                                 Triggers.NONTOKEN,
                                 new PermanentHasSubtypePredicate(CardSubtype.CURSE))),
                         ObjectRelation.YOU_OWN),
-                new RegisterDelayedReturnCurseAttachedToPlayerEffect());
+                RegisterDelayedStepTriggerEffect.aboutCardAtNext(Triggers.endStep(ActivePlayer.ANY),
+                        Subjects.triggeringCards(),
+                        new PutCardsOntoBattlefieldEffect(Subjects.triggeringCards())
+                                .underControlOf(Subjects.you())
+                                .attachedTo(Subjects.you())));
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new MayEffect(

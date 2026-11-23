@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesCardFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -20,7 +21,7 @@ public class RuthlessNegotiation extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addSpellEffect(new TargetPlayerExilesCardFromHandEffect());
+        )).addSpellEffect(new ExileCardFromHandEffect(Subjects.targetPlayer(), null, false));
         addSpellEffect(new ConditionalEffect(new CastFromZone(Zone.GRAVEYARD), new DrawCardEffect()));
         addCastingOption(new FlashbackCast("{4}{B}"));
     }

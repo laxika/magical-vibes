@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -28,8 +30,9 @@ import java.util.Set;
 public class DesertWarfare extends Card {
 
     public DesertWarfare() {
-        RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect returnDesert =
-                new RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect();
+        RegisterDelayedStepTriggerEffect returnDesert = RegisterDelayedStepTriggerEffect.aboutCardAtNext(
+                Triggers.endStep(ActivePlayer.YOU), Subjects.triggeringCards(),
+                new ReturnTriggeringCardFromGraveyardToBattlefieldEffect(false, true));
 
         // Whenever you sacrifice a Desert and whenever a Desert card is put into your graveyard from your
         // hand or library, put that card onto the battlefield under your control at the beginning of your
