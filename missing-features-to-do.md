@@ -335,6 +335,61 @@ protocol and the frontend. Then start with a failing test. Don't commit until I 
 
 ---
 
+## 80. The gift goes to "the" opponent, not to the opponent chosen as the gift cost
+
+**Status:** open · **Found:** 2026-11-23, effect cleanup step 9, by reading the code
+
+**Failing tests:**
+- None yet. Add, in a three-player game: cast a "gift a card" spell (e.g. Dewdrop Cure) and a "gift a tapped Fish" spell
+  (e.g. Into the Flood Maw) promising the gift to one opponent; only that opponent draws or gets the Fish, and the other
+  opponent gets nothing.
+- Two-player, failing today: Jolly Gerbils ("Whenever you give a gift, draw a card") doesn't trigger when the gift of
+  Cruelclaw's Heist, Consumed by Greed or Perch Protection is given, since only the gift handlers named below raise
+  `ActionEvent.GiftGiven`.
+
+**What the rules require.** CR 702.174a: gift's first ability is "As an additional cost to cast this spell, you may
+choose an opponent", and CR 702.174d–i give each gift's effect to "the chosen player". The rulings say the opponent is
+chosen as part of that additional cost, a copy of the spell has the gift promised to the same opponent, and for an
+instant or sorcery the gift is given before the spell's other effects (CR 702.174j). CR 702.174c: a player gives a gift
+whenever an instant or sorcery they control whose gift cost was paid resolves, or the gift trigger of a permanent they
+control resolves. Choosing the opponent isn't targeting, so hexproof or protection doesn't stop it.
+
+The engine records only that the gift was promised (`StackEntry.giftPromised`, copied to `Permanent.giftPromised`),
+never which opponent. The 27 gift cards then hand the gift out in four ways:
+- `TargetOpponentCreatesTokenEffect` (Fish, Food, Treasure, Octopus; 13 cards) and
+  `ConjureCardToOpponentBattlefieldEffect` (Archival Whorl) give it to `GameQueryService.getOpponentId`, one opponent
+  picked by the engine, not chosen by the caster.
+- `EachOtherPlayerDrawsCardEffect` ("gift a card"; 10 cards) makes every other player draw.
+- Cruelclaw's Heist and Consumed by Greed give the card to the spell's target opponent, which the caster may choose
+  differently from the gift opponent; if that target becomes illegal, the gift isn't given though it should be.
+- Perch Protection targets the opponent who gets the extra turn, so an opponent with hexproof can't be chosen.
+Only the first three handlers raise `GiftGiven`, so the last two groups miss CR 702.174c. In a two-player game the
+first two groups already pick the right player.
+
+**Why it's large.** The gift choice becomes a real additional-cost choice: the cast protocol and the client's cast flow
+gain an opponent choice (today a boolean), the AI has to pick one, and `StackEntry` / `Permanent` carry the chosen
+player through copies (the same opponent), the permanent's enters trigger and the opponent leaving the game (CR 800.4a).
+Every gift card then needs one shared "the chosen player" subject for its gift effect, raising `GiftGiven` in one place,
+and the cards on targets or on `getOpponentId` move to it. That touches all 27 gift cards and their tests.
+
+**Prompt to start it:**
+
+```
+Do missing-features-to-do.md entry 80: record the opponent chosen as a gift cost and give each gift to that player.
+First read agent-docs/ARCHITECTURE.md and agent-docs/architecture/casting-stack.md, verify CR 702.174a–k and 800.4a
+with get_rule, and read the gift rulings of one gift card per kind with get_rulings. Then trace how a gift is promised
+today (SpellCastingService.playCardWithGift, StackEntry.giftPromised, Permanent.giftPromised, GiftPromised, GiftEffect)
+and every way the 27 gift cards hand out a gift (TargetOpponentCreatesTokenEffect, ConjureCardToOpponentBattlefieldEffect,
+EachOtherPlayerDrawsCardEffect, target-opponent draws on Cruelclaw's Heist and Consumed by Greed, Perch Protection's
+targeted extra turn), and where ActionEvent.GiftGiven is raised. Propose a design: the chosen opponent stored next to
+giftPromised and carried to copies and the permanent, one "chosen gift player" subject that the gift effects use and
+that raises GiftGiven, the cast-protocol and AI changes, and what happens if that opponent has left the game. Show me
+the design and wait for my approval before changing the protocol or the frontend. Start with failing tests (a
+three-player gift of a card and of a Fish; Jolly Gerbils with Cruelclaw's Heist). Don't commit until I say so.
+```
+
+---
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 
