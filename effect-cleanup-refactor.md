@@ -2971,6 +2971,76 @@ Rulings were read for Ezuri's Predation, Dawnbreak Reclaimer and Jaya Ballard. T
 
 For the next run: the vote step is the largest batch. Build it once, then fold the 8 records here and the unaudited vote records in other chunks.
 
+### Step 9, parallel triage chunk 15 (2026-11-23)
+
+Verdicts only: no repo file changed. 26 ledger rows (notes `triage P15: …`), read against `7f58dc485c`. Chunk 15 holds the rare records whose first word runs from Unexpected to Zyym.
+
+Every record was read with its handler to the end, along with every card class that uses it. For records with no handler, their readers were read:
+- `DrawService` (Cyclone, Zur's Weirding).
+- `GameQueryService.cantBeTargetedByWallOnlySources` and its callers.
+- `CastingPermissionService` (Ward of Bones).
+- `CastingCostService` / `SpellCastingService` (web-slinging).
+- `WerewhatSupport`, `UpgradeSupport`, `StackStaticEffectHandler`.
+- The manafx handler (Yuna).
+
+Also read: the mayfx and continuation handlers of Unexpected Results, Worms of the Earth and Zyym; `GoblinGameEffectHandler`; the dice roll services; the other three Endeavor handlers.
+
+Oracle text was checked with `get_card` for Wave of Vitriol, Void, Villainous Wealth, Wall of Shadows, Worlds Within Worlds, Winter's Chill, Wheel of Misfortune, Whims of the Fates, Unleash the Flux, Lukamina, Unpredictable Cyclone, Unexpected Results, Ward of Bones, Word of Command, Zur's Weirding, Verdant Mastery, Valiant Endeavor, Wild Endeavor, both Ghostly cards, Yuna, Peter Parker // Amazing Spider-Man, Worms of the Earth, Barbarian Class and Pixie Guide. Weaponized Scrap and Zyym are MB1 playtest cards in no feed, so their text was read from the card-data cache; Werewhat's text is registered in its class. Rulings were read for Worms of the Earth, Wave of Vitriol and From the Ashes (the last two have none). CR 101.4, 113.6, 118.12, 603.7b, 608.2e, 613.1f, 701.23a and 706.6 were checked with `get_rule`.
+
+| Family | Triaged | `step-9` | `blocked-other` | `blocked-player-loop` | `unique` |
+|---|---|---|---|---|---|
+| Unexpected … Upgrade | 6 | 3 | 1 | 0 | 2 |
+| Valiant … Void | 4 | 3 | 0 | 0 | 1 |
+| Wall … Wrapped | 14 | 6 | 0 | 1 | 7 |
+| Zur's, Zyym | 2 | 0 | 1 | 0 | 1 |
+| All | 26 | 12 | 2 | 1 | 11 |
+
+**Fold batches** (survivor or shared component → records of this chunk, cards):
+
+| Batch | Survivor / component | Records (cards) |
+|---|---|---|
+| two-dice (new) | `RollTwoDiceChooseOneEffect(sides)`: the roll, dice events and spell-number choice, chosen result as X and the other as the event value. The cards' own steps read `XValue` / `EventValue`; `MassDamageEffect` and `ReturnCardFromGraveyardEffect.plusOneCounterCount` need dynamic amounts, Valiant needs triage 3's power-at-least-X predicate | `ValiantEndeavorEffect`, `WildEndeavorEffect`: 2 (2); joins unaudited `RecklessEndeavorEffect`, `GraveEndeavorEffect` and P10's `ArcaneEndeavorEffect` (5 records, 5 cards) |
+| room door | `UnlockControlledRoomDoorEffect` + a Room `PermanentSubject` (target() / controlledBy(you(), Room)) + a lock-allowed mode | itself: 1 (2); joins unaudited `LockOrUnlockTargetRoomDoorEffect` (2 cards) |
+| P02 specialize | one `SpecializeEffect(color)` handler with the card-side face hook | `UnspecializeLukaminaEffect` (engine-built): 1 (0) |
+| T7 next-time delayed | `RegisterGlobalTriggeredAbilityEffect` next-time form (`TemporaryGlobalTriggeredAbility.nextThisTurn`) + manafx handler | `WhenYouNextCastCreatureSpellThisTurnEffect`: 1 (1) |
+| P04 punisher (cost-shape) | `MayPayManaEffect`'s ANY_PLAYER payer with an either-payment (sacrifice two lands / be dealt 5), reward destroy source() | `WormsOfTheEarthEffect`: 1 (1); the either-payment is set by this card alone, so the fold run weighs it |
+| P11 alternative cost (cost-shape) | `AlternativeCostForSpellsEffect` + a non-mana cost component (`ReturnPermanentsCost(1, tapped creature)`), keeping the returned mana value | `WebSlingingEffect`: 1 (1); with `SharedColorDiscardAlternativeCostEffect` |
+| by parameters | `ExileTopCardsAndMayCastSpellsEffect(XValue, targetPlayer(), manaValueLimit XValue)` | `VillainousWealthEffect`: 1 (1) |
+| splits | existing steps | Void (`ChooseNumberAtResolutionEffect` + `DestroyAllPermanentsEffect` with `PermanentManaValueEqualsXPredicate` + `RevealCardsFromHandEffect` + `DiscardCardsEffect(cardsInHands(…, CardManaValueEqualsXPredicate))`); Unexpected Results (`ShuffleLibraryEffect` + `RevealTopCardOfLibraryEffect` + REVEAL-gated free cast / `MayEffect`(put land + `ReturnToHandEffect(source())`)); Worlds Within Worlds (`ExileAllPermanentsEffect` + `EachPlayerMayPutCardFromHandToBattlefieldEffect` anyNumber + `PutCardsIntoHandEffect(cardsThisWay(EXILE))`): 3 (3) |
+| dead | delete | `WheelOfMisfortuneEffect`: the card only imports it and uses `GoblinGameEffect.wheelOfMisfortune()`. `WheelOfMisfortuneState` and `GameData.wheelOfMisfortune` go with it: 1 (0) |
+
+**Blocked (3):**
+- Draw replacements whose payload `DrawService` runs inline (run 32's DrawService replacement-pass redesign): Unpredictable Cyclone and Zur's Weirding. They join P11's five.
+- One may-search per object, the cause of From the Ashes's run 9 row: Wave of Vitriol. With Winds of Abandon's seen defect, three classes now share it, so a run could build a per-object may-search on `EachPlayerSearchesLibraryEffect`.
+
+**Unique (11):**
+- Unleash the Flux: its "repeat this process" loop marker.
+- Weaponized Scrap: the upgrade overlay.
+- Verdant Mastery: the three-way land split.
+- Wall of Shadows: the Walls-only targeting restriction.
+- Ward of Bones: the per-type count comparisons.
+- Werewhat: a back face built as it enters.
+- Whims of the Fates: three random piles per player.
+- Winter's Chill: a {1}/{2} payment with three outcomes (cost-shape).
+- Word of Command.
+- Torrent of Lava's `WrappedStackStaticEffect`: already the generic CR 113.6 wrapper.
+- Zyym.
+
+**Seen, not changed** (confirmed by reading, not run):
+- Valiant, Arcane and Grave Endeavor roll through `DiceRollService.roll(sides)`, which ignores `RollWithAdvantageEffect`. Barbarian Class and Pixie Guide both say "if you would roll one or more dice, roll that many plus one". Wild Endeavor calls `D4RollService.roll` once per die, giving each d4 its own extra die instead of one extra die for the roll. Reckless Endeavor's `D12RollService.rollDice` does it right. Sure of the code.
+- Void discards with its own loop: no `isDiscardPrevented` check (Tamiyo) and no discard-to-library replacement. `PlayerInteractionSupport.discardCards` has both. Sure.
+- Unexpected Results' land branch (`MayMiscHandlerService.handleUnexpectedResultsLandChoice`) skips `isCardBlockedFromEnteringFromZone`, so a land enters under Worms of the Earth (its ruling: the land stays where it is). It also skips the entry batch. Sure of the code.
+- Zur's Weirding offers the 2-life payment only to `getOpponentId`; the text says any other player. Verdant Mastery likewise takes `getOpponentId` for "an opponent". Both are wrong only with more than two players. Sure.
+- `DrawService.findCyclingDrawReplacementSource` (Unpredictable Cyclone) and `CastingCostService.findWebSlingingEffectFromBattlefield` (Amazing Spider-Man) read `getCard().getStaticEffects()` with no lost-abilities check (CR 613.1f). Sure of the code.
+- Wave of Vitriol gives one search for up to N (`BasicLandsPick(count, true)`), where the text has one may-search per land sacrificed. That changes how many search events happen (CR 701.23a). Medium; no ruling settles it.
+- P10's `ArcaneEndeavorEffect` row says "no other roll assigns two results to two instructions". That is false: four other Endeavor handlers share its skeleton line for line.
+
+**Anything left.** Nothing in this chunk. The batches reach records outside it:
+- Unaudited: `RecklessEndeavorEffect`, `GraveEndeavorEffect`, `LockOrUnlockTargetRoomDoorEffect`.
+- Rows to update: `ArcaneEndeavorEffect` (P10 unique → two-dice batch); `EachDestroyedPermanentControllerMaySearchBasicLandToBattlefieldEffect` (run 9, now the third class of its cause).
+
+Cheapest fold-run starts: Villainous Wealth (parameters only), `WheelOfMisfortuneEffect` (dead), Worlds Within Worlds and Void (existing steps), and the room-door pair.
+
 ## Prompt
 
 Replace `<N>` with the step number. For step 9, add the run kind and its scope (`step 9, triage run: Destroy, Search`;
