@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,7 +17,7 @@ public class SelesnyaLoftGardens extends Card {
         addStaticEffect(new MultiplyTokenCreationEffect(2));
         addStaticEffect(new DoubleCountersOnAllPermanentsEffect());
         addTrigger(Triggers.chaosEnsues(),
-                new GrantStaticEffectToPlayerUntilEndOfTurnEffect(
+                GrantStaticEffectToPlayerEffect.untilEndOfTurn(
                         new AddOneOfEachManaTypeProducedByLandEffect()));
     }
 }

@@ -281,8 +281,13 @@ public class CastingPermissionService {
     }
 
     /**
-     * Returns true if the player is prevented from casting spells (e.g. Angelic Arbiter:
-     * "Each opponent who attacked with a creature this turn can't cast spells").
+     * Whether something stops {@code playerId} casting any spell now, whatever the spell and the zone it is cast from:
+     * a resolved "can't cast spells" restriction (Silence, "you can't cast additional spells this turn"), a turn lock
+     * (Grand Abolisher, City of Solitude, Dosan the Falling Leaf), Sen Triplets, or an attack lock (Angelic Arbiter).
+     * This is the one player-level check of the casting paths: the hand, command zone, graveyard, exile, library-top and
+     * library-search paths ask it through {@link #isSpellCastingAllowed} or their playability context, suspend asks it
+     * directly (CR 702.62a: "if you could begin to cast this card"), and a cast during a resolution asks it through
+     * {@link #isSpellCastingAllowed} or {@link #canCastDuringResolution} (not every such cast does yet).
      */
     public boolean isPlayerPreventedFromCasting(GameData gameData, UUID playerId) {
         if (gameData.hasFloatingEffectOnPlayer(playerId, SenTripletsUpkeepEffect.class)) return true;
@@ -372,19 +377,15 @@ public class CastingPermissionService {
         return planeswalker == null ? null : gameData.findControllerOf(planeswalker);
     }
 
-    /** The card types a spell can have: every type but land, which is never a spell, and the planar types. */
-    private static final Set<CardType> EVERY_SPELL_TYPE = java.util.Collections.unmodifiableSet(EnumSet.complementOf(
-            EnumSet.of(CardType.LAND, CardType.PLANE, CardType.PHENOMENON)));
-
+    /**
+     * The card types of the spells {@code playerId} can't cast now. A restriction on every spell (Silence) is not a type
+     * set: {@link #isPlayerPreventedFromCasting} answers it, and every reader of this set asks that too.
+     */
     public Set<CardType> getRestrictedSpellTypes(GameData gameData, UUID playerId) {
         Set<CardType> restricted = EnumSet.noneOf(CardType.class);
-        // Cease-Fire, Abeyance, Single Combat: a resolved "can't cast [type] spells" restriction on the player. One on
-        // every spell (Silence) also bars every spell type, so the casting paths that read only this set (a library's
-        // top card, a graveyard) refuse its spells as well as isPlayerPreventedFromCasting does.
+        // Cease-Fire, Abeyance, Single Combat: a resolved "can't cast [type] spells" restriction on the player.
         for (PlayerRestriction restriction : gameData.restrictionsOnPlayer(playerId)) {
-            if (restriction.stopsEverySpell()) {
-                restricted.addAll(EVERY_SPELL_TYPE);
-            } else if (restriction.kind() == PlayerRestriction.Kind.CAST_SPELLS) {
+            if (restriction.kind() == PlayerRestriction.Kind.CAST_SPELLS) {
                 restricted.addAll(restriction.spellTypes());
             }
         }

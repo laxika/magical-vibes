@@ -7721,15 +7721,15 @@ public class GameData {
     }
 
     /**
-     * Prevents {@code playerId} from casting any further spells this turn: a floating effect that bars every
-     * spell type but land (CR 611.2a), made by the spell or ability named {@code sourceName}.
+     * Prevents {@code playerId} from casting any further spells this turn ("you can't cast additional spells this
+     * turn"): a floating "can't cast spells" restriction (CR 611.2a), made by the spell or ability named
+     * {@code sourceName}. It stops every casting path, suspend and casts during a resolution included.
      */
     public void preventAdditionalSpellCastsThisTurn(String sourceName, UUID playerId) {
         if (playerId == null) return;
 
-        CardType[] allSpellTypes = EnumSet.complementOf(EnumSet.of(CardType.LAND)).toArray(CardType[]::new);
         addFloatingEffect(FloatingContinuousEffect.onPlayer(sourceName, null, playerId,
-                PlayerRestrictionEffect.thisTurn(Subjects.you(), PlayerRestriction.castingSpellsOf(allSpellTypes)),
+                PlayerRestrictionEffect.thisTurn(Subjects.you(), PlayerRestriction.castingSpells()),
                 playerId, Duration.UNTIL_END_OF_TURN));
     }
 

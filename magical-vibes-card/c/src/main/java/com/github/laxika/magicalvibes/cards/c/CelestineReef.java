@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerUntilPlaneswalkEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,6 +22,6 @@ public class CelestineReef extends Card {
                         new PermanentHasKeywordPredicate(Keyword.ISLANDWALK)
                 ))));
         addTrigger(Triggers.chaosEnsues(),
-                new GrantStaticEffectToPlayerUntilPlaneswalkEffect(new CantLoseGameEffect()));
+                GrantStaticEffectToPlayerEffect.untilPlaneswalk(new CantLoseGameEffect()));
     }
 }

@@ -13867,13 +13867,13 @@ public class SpellCastingService {
                         EffectResolution.needsTarget(card), effectiveXValue);
             }
         }
-        if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
+        // The restrictions every casting path asks (a "can't cast spells" lock on the player, split second, the spell
+        // limits, the type and noncreature restrictions), then those that read the chosen X.
+        if (!castingPermissionService.isSpellCastingAllowed(gameData, playerId, card)
                 || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(
                 gameData, playerId, card, effectiveXValue)
-                || castingPermissionService.isSpellTypeRestricted(gameData, playerId, card)
                 || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(
                 gameData, card, effectiveXValue)
-                || castingPermissionService.isSpellCastingRestrictedByTopLibraryCard(gameData, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
             throw new IllegalStateException("Card is not playable");
         }
@@ -14112,12 +14112,7 @@ public class SpellCastingService {
         if (!gameQueryService.canCastSpellFromZone(gameData, card, Zone.LIBRARY, playerId)) {
             throw new IllegalStateException("Card can't be cast from the library");
         }
-        if (castingPermissionService.isPlayerPreventedFromCasting(gameData, playerId)) {
-            throw new IllegalStateException("Player can't cast spells");
-        }
-        if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
-                || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
-                || castingPermissionService.isSpellCastingRestrictedByTopLibraryCard(gameData, card)
+        if (!castingPermissionService.isSpellCastingAllowed(gameData, playerId, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, 0)) {
             throw new IllegalStateException("Card is not playable");
         }

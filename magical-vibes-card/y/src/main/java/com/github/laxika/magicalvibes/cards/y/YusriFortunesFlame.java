@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseNumberAtResolutionEffec
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinsWithResultEffectsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,7 +21,7 @@ public class YusriFortunesFlame extends Card {
                 new XValue(),
                 new DrawCardEffect(1),
                 new DealDamageToPlayersEffect(2, Subjects.you()),
-                new GrantStaticEffectToPlayerUntilEndOfTurnEffect(
+                GrantStaticEffectToPlayerEffect.untilEndOfTurn(
                         new AlternativeCostForSpellsEffect("{0}", null, null, false, true))));
     }
 }

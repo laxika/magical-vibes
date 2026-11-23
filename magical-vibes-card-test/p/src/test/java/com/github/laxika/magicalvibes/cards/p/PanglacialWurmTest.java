@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.d.DiabolicTutor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.r.RampantGrowth;
+import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
 import com.github.laxika.magicalvibes.cards.s.Silence;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -17,10 +19,11 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PanglacialWurm.class, Forest.class, RampantGrowth.class, DiabolicTutor.class, Silence.class})
+@CardUsed({PanglacialWurm.class, Forest.class, RampantGrowth.class, DiabolicTutor.class, Silence.class, RuleOfLaw.class})
 class PanglacialWurmTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Can be cast from the library while searching, before the searched card is found")
     void canCastFromLibraryBeforeFindingSearchCard() {
         PanglacialWurm wurm = new PanglacialWurm();
         Forest forest = new Forest();
@@ -44,6 +47,7 @@ class PanglacialWurmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can't be cast once the search has found its card")
     void cannotCastAfterFindingSearchCard() {
         PanglacialWurm wurm = new PanglacialWurm();
         Forest forest = new Forest();
@@ -59,6 +63,7 @@ class PanglacialWurmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can't be cast while searching without the mana to pay for it")
     void cannotCastWithoutMana() {
         PanglacialWurm wurm = new PanglacialWurm();
         Forest forest = new Forest();
@@ -75,6 +80,7 @@ class PanglacialWurmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can be cast during a search that finds nothing")
     void canCastWhileSearchingWithNoMatchingLand() {
         PanglacialWurm wurm = new PanglacialWurm();
         harness.setHand(player1, List.of(new RampantGrowth()));
@@ -92,6 +98,7 @@ class PanglacialWurmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A tutor can find it without casting it")
     void canFindWurmWithTutorWithoutCastingIt() {
         PanglacialWurm wurm = new PanglacialWurm();
         harness.setHand(player1, List.of(new DiabolicTutor()));
@@ -109,6 +116,7 @@ class PanglacialWurmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Several can be cast during one search")
     void canCastMultipleWurmsDuringOneSearch() {
         PanglacialWurm first = new PanglacialWurm();
         PanglacialWurm second = new PanglacialWurm();
@@ -137,6 +145,7 @@ class PanglacialWurmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The search can end without a land after casting it")
     void canFinishSearchWithoutFindingLandAfterCastingWurm() {
         PanglacialWurm wurm = new PanglacialWurm();
         Forest forest = new Forest();
@@ -154,6 +163,7 @@ class PanglacialWurmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can't be cast after the land is found, even with enough mana")
     void cannotCastAfterFindingLandEvenWithEnoughMana() {
         PanglacialWurm wurm = new PanglacialWurm();
         Forest forest = new Forest();
@@ -168,6 +178,7 @@ class PanglacialWurmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can't be cast without both green mana")
     void cannotCastWithoutBothRequiredGreenMana() {
         PanglacialWurm wurm = new PanglacialWurm();
         Forest forest = new Forest();
@@ -186,6 +197,7 @@ class PanglacialWurmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can't be cast during the search after an opponent resolves Silence")
     void cannotCastDuringSearchAfterOpponentResolvesSilence() {
         PanglacialWurm wurm = new PanglacialWurm();
         Forest forest = new Forest();
@@ -199,6 +211,23 @@ class PanglacialWurmTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0);
         assertThat(silencedPlayers()).contains(player1.getId());
         harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        int wurmIndex = indexOfCard(search.params().cards(), wurm);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, wurmIndex))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).anyMatch(card -> card.getId().equals(wurm.getId()));
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(wurm.getId()));
+    }
+
+    @Test
+    @DisplayName("Can't be cast during the search when a spell limit has been reached")
+    void cannotCastDuringSearchAtSpellLimit() {
+        harness.addToBattlefield(player1, new RuleOfLaw());
+        PanglacialWurm wurm = new PanglacialWurm();
+        Forest forest = new Forest();
+        castRampantGrowth(wurm, forest, 9);
 
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();

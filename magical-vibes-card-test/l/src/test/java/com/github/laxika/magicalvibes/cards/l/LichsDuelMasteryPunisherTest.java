@@ -51,7 +51,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCreatureThenOwnerFacesVillainousChoiceEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetOpponentFacesGenesisVillainousChoiceEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
@@ -71,6 +70,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @CardUsed({LichsDuelMastery.class, WheelOfSunAndMoon.class, LeylineOfTheVoid.class})
 class LichsDuelMasteryPunisherTest extends BaseCardTest {
+
+    private static final String GENESIS_DESTROY_DALEKS =
+            "Destroy all Dalek creatures and each of your opponents loses life equal to the total power of Daleks that died this turn";
 
     @Test
     @CardUsed(EntropicBattlecruiser.class)
@@ -467,7 +469,7 @@ class LichsDuelMasteryPunisherTest extends BaseCardTest {
         advanceToNextChapter();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        harness.handleListChoice(player2, TargetOpponentFacesGenesisVillainousChoiceEffect.DESTROY_DALEKS);
+        harness.handleListChoice(player2, GENESIS_DESTROY_DALEKS);
 
         assertMasteryAskedLibraryOrExile();
         harness.assertLife(player2, 20);

@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.TargetOpponentFacesGenesisVillainousChoiceEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,7 +15,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({GenesisOfTheDaleks.class, Cybermat.class})
 class GenesisOfTheDaleksTest extends BaseCardTest {
 
+    private static final String DESTROY_DALEKS =
+            "Destroy all Dalek creatures and each of your opponents loses life equal to the total power of Daleks that died this turn";
+    private static final String DESTROY_NON_DALEKS = "Destroy all non-Dalek creatures";
+
     @Test
+    @DisplayName("Chapters I to III create a Dalek for each lore counter")
     void chaptersCreateDaleksForEachLoreCounter() {
         Permanent saga = addSagaWithLore(0);
 
@@ -35,6 +40,7 @@ class GenesisOfTheDaleksTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The target opponent can choose the Daleks' destruction and the life loss")
     void opponentCanChooseDalekDestructionAndLifeLoss() {
         Permanent saga = addSagaWithLore(0);
         advanceToNextChapter();
@@ -51,7 +57,7 @@ class GenesisOfTheDaleksTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
-        harness.handleListChoice(player2, TargetOpponentFacesGenesisVillainousChoiceEffect.DESTROY_DALEKS);
+        harness.handleListChoice(player2, DESTROY_DALEKS);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(dalek);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(nonDalek);
@@ -59,6 +65,7 @@ class GenesisOfTheDaleksTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The target opponent can choose the non-Daleks' destruction")
     void opponentCanChooseNonDalekDestruction() {
         Permanent saga = addSagaWithLore(0);
         advanceToNextChapter();
@@ -72,7 +79,7 @@ class GenesisOfTheDaleksTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        harness.handleListChoice(player2, TargetOpponentFacesGenesisVillainousChoiceEffect.DESTROY_NON_DALEKS);
+        harness.handleListChoice(player2, DESTROY_NON_DALEKS);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(dalek);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(nonDalek);
@@ -80,6 +87,7 @@ class GenesisOfTheDaleksTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A chapter counts the lore counters as it resolves")
     void chapterCountsLoreCountersWhenItResolves() {
         Permanent saga = addSagaWithLore(0);
         advanceToNextChapter();
@@ -91,6 +99,7 @@ class GenesisOfTheDaleksTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A chapter uses the last-known lore counters after the Saga leaves")
     void chapterUsesLastKnownLoreCountersAfterSagaLeaves() {
         Permanent saga = addSagaWithLore(1);
         advanceToNextChapter();
@@ -104,6 +113,7 @@ class GenesisOfTheDaleksTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Dalek choice counts earlier deaths with their power as they died")
     void dalekChoiceIncludesEarlierDeathsAndPowerAtDeath() {
         Permanent saga = addSagaWithLore(1);
         advanceToNextChapter();
@@ -117,7 +127,7 @@ class GenesisOfTheDaleksTest extends BaseCardTest {
         advanceToNextChapter();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        harness.handleListChoice(player2, TargetOpponentFacesGenesisVillainousChoiceEffect.DESTROY_DALEKS);
+        harness.handleListChoice(player2, DESTROY_DALEKS);
 
         assertThat(findDaleks()).isEmpty();
         harness.assertLife(player2, 12);
@@ -126,6 +136,7 @@ class GenesisOfTheDaleksTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The non-Dalek choice destroys creatures on both battlefields and spares Daleks")
     void nonDalekChoiceDestroysCreaturesOnBothBattlefieldsAndSparesDaleks() {
         Permanent saga = addSagaWithLore(0);
         advanceToNextChapter();
@@ -138,7 +149,7 @@ class GenesisOfTheDaleksTest extends BaseCardTest {
         advanceToNextChapter();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        harness.handleListChoice(player2, TargetOpponentFacesGenesisVillainousChoiceEffect.DESTROY_NON_DALEKS);
+        harness.handleListChoice(player2, DESTROY_NON_DALEKS);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ownCreature);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opposingCreature)
@@ -148,6 +159,7 @@ class GenesisOfTheDaleksTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Dalek choice counts Daleks controlled by either player")
     void dalekChoiceCountsDaleksControlledByEitherPlayer() {
         Permanent saga = addSagaWithLore(0);
         advanceToNextChapter();
@@ -158,7 +170,7 @@ class GenesisOfTheDaleksTest extends BaseCardTest {
         advanceToNextChapter();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        harness.handleListChoice(player2, TargetOpponentFacesGenesisVillainousChoiceEffect.DESTROY_DALEKS);
+        harness.handleListChoice(player2, DESTROY_DALEKS);
 
         assertThat(findDaleks()).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingSaga)
@@ -168,6 +180,7 @@ class GenesisOfTheDaleksTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Dalek choice can be chosen with no Daleks")
     void opponentCanChooseDalekDestructionWithNoDaleks() {
         addSagaWithLore(3);
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new Cybermat());
@@ -175,7 +188,7 @@ class GenesisOfTheDaleksTest extends BaseCardTest {
         advanceToNextChapter();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        harness.handleListChoice(player2, TargetOpponentFacesGenesisVillainousChoiceEffect.DESTROY_DALEKS);
+        harness.handleListChoice(player2, DESTROY_DALEKS);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
         harness.assertLife(player2, 20);

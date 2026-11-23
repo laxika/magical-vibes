@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.n.NissaAscendedAnimist;
+import com.github.laxika.magicalvibes.cards.r.RiftBolt;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ConduitOfWorlds.class, Cankerbloom.class, Forest.class, NissaAscendedAnimist.class})
+@CardUsed({ConduitOfWorlds.class, Cankerbloom.class, Forest.class, NissaAscendedAnimist.class, RiftBolt.class})
 class ConduitOfWorldsTest extends BaseCardTest {
 
     @Test
@@ -98,6 +99,27 @@ class ConduitOfWorldsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("After a cast this way the player can't suspend a card either")
+    void successfulCastPreventsSuspend() {
+        harness.addToBattlefield(player1, new ConduitOfWorlds());
+        Cankerbloom bears = new Cankerbloom();
+        harness.setGraveyard(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        prepareMainPhase();
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(bears.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new RiftBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Rift Bolt");
+    }
+
+    @Test
     @DisplayName("Cannot target a land with the cast ability")
     void cannotTargetLand() {
         harness.addToBattlefield(player1, new ConduitOfWorlds());
@@ -111,6 +133,7 @@ class ConduitOfWorldsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the cast doesn't restrict later spells")
     void decliningCastDoesNotRestrictLaterSpells() {
         harness.addToBattlefield(player1, new ConduitOfWorlds());
         Cankerbloom target = new Cankerbloom();
@@ -130,6 +153,7 @@ class ConduitOfWorldsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A cast that can't be paid leaves the card in the graveyard and restricts nothing")
     void insufficientManaLeavesCardInGraveyardAndDoesNotRestrictSpells() {
         harness.addToBattlefield(player1, new ConduitOfWorlds());
         Cankerbloom target = new Cankerbloom();
@@ -150,6 +174,7 @@ class ConduitOfWorldsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can't target a card in an opponent's graveyard")
     void cannotTargetOpponentsGraveyard() {
         harness.addToBattlefield(player1, new ConduitOfWorlds());
         Cankerbloom target = new Cankerbloom();
@@ -162,6 +187,7 @@ class ConduitOfWorldsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can't activate outside a main phase")
     void cannotActivateOutsideMainPhase() {
         harness.addToBattlefield(player1, new ConduitOfWorlds());
         Cankerbloom target = new Cankerbloom();
@@ -175,6 +201,7 @@ class ConduitOfWorldsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Playing lands from the graveyard doesn't allow a second land play")
     void landPermissionDoesNotAllowASecondLandPlay() {
         harness.addToBattlefield(player1, new ConduitOfWorlds());
         harness.setGraveyard(player1, List.of(new Forest(), new Forest()));
@@ -189,6 +216,7 @@ class ConduitOfWorldsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A target that left the graveyard can't be cast")
     void targetLeavingGraveyardPreventsCast() {
         harness.addToBattlefield(player1, new ConduitOfWorlds());
         Cankerbloom target = new Cankerbloom();
@@ -207,6 +235,7 @@ class ConduitOfWorldsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can't activate while another spell is on the stack")
     void cannotActivateWhileAnotherSpellIsOnStack() {
         harness.addToBattlefield(player1, new ConduitOfWorlds());
         Cankerbloom target = new Cankerbloom();
@@ -222,6 +251,7 @@ class ConduitOfWorldsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Casting an artifact from the graveyard pays its mana cost")
     void castArtifactFromGraveyardPaysItsManaCost() {
         harness.addToBattlefield(player1, new ConduitOfWorlds());
         ConduitOfWorlds target = new ConduitOfWorlds();
@@ -240,6 +270,7 @@ class ConduitOfWorldsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A compleated card cast from the graveyard can pay life for its Phyrexian mana")
     void compleatedUsesLifePaymentsWhenCastFromGraveyard() {
         harness.addToBattlefield(player1, new ConduitOfWorlds());
         NissaAscendedAnimist nissa = new NissaAscendedAnimist();

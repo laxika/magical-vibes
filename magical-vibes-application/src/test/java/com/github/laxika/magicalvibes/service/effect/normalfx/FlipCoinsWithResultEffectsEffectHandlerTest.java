@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinsWithResultEffectsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -29,7 +29,7 @@ class FlipCoinsWithResultEffectsEffectHandlerTest extends AbstractPlayerInteract
         Card card = createCard("Yusri, Fortune's Flame");
         CardEffect win = new DrawCardEffect(1);
         CardEffect loss = new DealDamageToPlayersEffect(2, Subjects.you());
-        CardEffect allWins = new GrantStaticEffectToPlayerUntilEndOfTurnEffect(
+        CardEffect allWins = GrantStaticEffectToPlayerEffect.untilEndOfTurn(
                 new AlternativeCostForSpellsEffect("{0}", null, null, false, true));
         EffectHandler winHandler = registerMockHandler(win);
         EffectHandler lossHandler = registerMockHandler(loss);
@@ -52,7 +52,7 @@ class FlipCoinsWithResultEffectsEffectHandlerTest extends AbstractPlayerInteract
         Card card = createCard("Yusri, Fortune's Flame");
         CardEffect win = new DrawCardEffect(1);
         CardEffect loss = new DealDamageToPlayersEffect(2, Subjects.you());
-        CardEffect allWins = new GrantStaticEffectToPlayerUntilEndOfTurnEffect(
+        CardEffect allWins = GrantStaticEffectToPlayerEffect.untilEndOfTurn(
                 new AlternativeCostForSpellsEffect("{0}", null, null, false, true));
         EffectHandler winHandler = registerMockHandler(win);
         EffectHandler lossHandler = registerMockHandler(loss);

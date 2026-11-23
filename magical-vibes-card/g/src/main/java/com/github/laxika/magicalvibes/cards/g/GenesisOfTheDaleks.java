@@ -7,9 +7,19 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.amount.CreatureSubtypeDeathPowerThisTurn;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetOpponentFacesGenesisVillainousChoiceEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerChoosesOneEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -31,7 +41,20 @@ public class GenesisOfTheDaleks extends Card {
         addTrigger(Triggers.chapter(2), DALEKS);
         addTrigger(Triggers.chapter(3), DALEKS);
 
-        addTrigger(Triggers.chapter(4), new TargetOpponentFacesGenesisVillainousChoiceEffect());
+        // The life loss is a step after the destruction, so it counts the Daleks that died to it.
+        addTrigger(Triggers.chapter(4), TargetPlayerChoosesOneEffect.forTargetedPlayerVillainousChoice(List.of(
+                new ChooseOneEffect.ChooseOneOption(
+                        "Destroy all Dalek creatures and each of your opponents loses life equal to the total power"
+                                + " of Daleks that died this turn",
+                        List.of(new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentHasSubtypePredicate(CardSubtype.DALEK)))),
+                                new LoseLifeEffect(new CreatureSubtypeDeathPowerThisTurn(
+                                        CardSubtype.DALEK, CountScope.ANY_PLAYER), Subjects.eachOpponent()))),
+                new ChooseOneEffect.ChooseOneOption("Destroy all non-Dalek creatures",
+                        new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.DALEK)))))))));
         setSagaChapterTargetFilter(4, Set.of(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent")));
     }

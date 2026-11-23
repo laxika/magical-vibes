@@ -106,6 +106,7 @@ public sealed interface DynamicAmount permits
         CreaturesAttackedThisTurn,
         NontokenCreatureDeathsThisTurn,
         CreatureSubtypeDeathsThisTurn,
+        CreatureSubtypeDeathPowerThisTurn,
         CreaturesThatCrewedSourceThisTurn,
         CreaturesEnteredBattlefieldThisTurn,
         CreaturesLeftBattlefieldThisTurn,

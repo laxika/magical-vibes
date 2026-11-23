@@ -93,6 +93,7 @@ import com.github.laxika.magicalvibes.model.amount.TokensCreatedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TurnsTakenByController;
 import com.github.laxika.magicalvibes.model.amount.TurnsBegunSinceForetell;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CreatureSubtypeDeathPowerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureSubtypeDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureTypesAmongControlledCreatures;
 import com.github.laxika.magicalvibes.model.amount.CreaturesAttackedThisTurn;
@@ -890,6 +891,8 @@ public class AmountEvaluationService {
                     countNontokenCreatureDeathsThisTurn(gameData, c, ctx);
             case CreatureSubtypeDeathsThisTurn c ->
                     countCreatureSubtypeDeathsThisTurn(gameData, c, ctx);
+            case CreatureSubtypeDeathPowerThisTurn c ->
+                    sumCreatureSubtypeDeathPowerThisTurn(gameData, c, ctx);
             case CreaturesExiledThisTurn c ->
                     countCreaturesExiledThisTurn(gameData, c, ctx);
             case CreaturesEnteredBattlefieldThisTurn c ->
@@ -3868,6 +3871,19 @@ public class AmountEvaluationService {
             total += gameData.creatureSubtypeDeathCountThisTurn
                     .getOrDefault(playerId, Map.of())
                     .getOrDefault(count.subtype(), 0);
+        }
+        return total;
+    }
+
+    private int sumCreatureSubtypeDeathPowerThisTurn(GameData gameData,
+                                                     CreatureSubtypeDeathPowerThisTurn sum,
+                                                     AmountContext ctx) {
+        int total = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(gameData, playerId, sum.scope(), ctx)) continue;
+            total = SaturatingMath.add(total, gameData.creatureSubtypeDeathPowerThisTurn
+                    .getOrDefault(playerId, Map.of())
+                    .getOrDefault(sum.subtype(), 0));
         }
         return total;
     }

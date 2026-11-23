@@ -3,9 +3,11 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.a.AdantoVanguard;
 import com.github.laxika.magicalvibes.cards.a.ArguelsBloodFast;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.FutureSight;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Manalith;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -22,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GrandAbolisher.class, Shock.class, AdantoVanguard.class, LlanowarElves.class,
-        Forest.class, Manalith.class, TurnToFrog.class, ArguelsBloodFast.class})
+        Forest.class, Manalith.class, TurnToFrog.class, ArguelsBloodFast.class, FutureSight.class, ThinkTwice.class})
 class GrandAbolisherTest extends BaseCardTest {
 
     @Test
@@ -217,5 +219,36 @@ class GrandAbolisherTest extends BaseCardTest {
 
         assertThat(elves.isTapped()).isTrue();
         harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Opponent can't cast the top card of their library during the controller's turn")
+    void opponentCantCastFromLibraryTop() {
+        harness.addToBattlefield(player1, new GrandAbolisher());
+        harness.addToBattlefield(player2, new FutureSight());
+        harness.setLibrary(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player2, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(card -> card.getName()).containsExactly("Shock");
+    }
+
+    @Test
+    @DisplayName("Opponent can't cast a flashback spell from their graveyard during the controller's turn")
+    void opponentCantCastFromGraveyard() {
+        harness.addToBattlefield(player1, new GrandAbolisher());
+        harness.setGraveyard(player2, List.of(new ThinkTwice()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player2, "Think Twice");
     }
 }

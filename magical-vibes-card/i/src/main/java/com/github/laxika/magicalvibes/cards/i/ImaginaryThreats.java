@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayersCreaturesMustAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -21,7 +21,7 @@ public class ImaginaryThreats extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addSpellEffect(new TargetPlayersCreaturesMustAttackThisTurnEffect())
+        )).addSpellEffect(MatchingCreaturesMustAttackThisTurnEffect.controlledBy(Subjects.targetPlayer()))
                 .addSpellEffect(new SkipNextUntapEffect(
                         Subjects.controlledBy(Subjects.targetPlayer(), new PermanentIsCreaturePredicate()),
                         1,

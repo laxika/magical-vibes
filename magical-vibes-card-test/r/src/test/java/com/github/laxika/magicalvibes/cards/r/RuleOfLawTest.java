@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.c.Cancel;
+import com.github.laxika.magicalvibes.cards.f.FutureSight;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RuleOfLaw.class, GrizzlyBears.class, Plains.class, Shock.class, Cancel.class})
+@CardUsed({RuleOfLaw.class, GrizzlyBears.class, Plains.class, Shock.class, Cancel.class, FutureSight.class})
 class RuleOfLawTest extends BaseCardTest {
 
     @Test
@@ -277,5 +278,25 @@ class RuleOfLawTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
-}
 
+    @Test
+    @DisplayName("A second spell can't be cast from the top of the library either")
+    void preventsSecondSpellFromLibraryTop() {
+        harness.addToBattlefield(player1, new RuleOfLaw());
+        harness.addToBattlefield(player1, new FutureSight());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+}

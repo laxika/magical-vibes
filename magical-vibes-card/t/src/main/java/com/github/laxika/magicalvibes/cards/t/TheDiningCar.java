@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureWithLeastToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -27,7 +27,7 @@ public class TheDiningCar extends Card {
                 new SacrificeCreatureWithLeastToughnessEffect(),
                 CreateTokenEffect.ofClueToken(1)));
 
-        addTrigger(Triggers.chaosEnsues(), new GrantStaticEffectToPlayerUntilEndOfTurnEffect(
+        addTrigger(Triggers.chaosEnsues(), GrantStaticEffectToPlayerEffect.untilEndOfTurn(
                 new ReduceActivatedAbilityCostEffect(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),

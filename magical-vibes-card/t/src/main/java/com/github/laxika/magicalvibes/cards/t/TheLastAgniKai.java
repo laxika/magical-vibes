@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.AwardPersistentManaEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -19,7 +19,7 @@ public class TheLastAgniKai extends Card {
 
         addSpellEffect(new FightTargetsEffect());
         addSpellEffect(new AwardPersistentManaEffect(ManaColor.RED, new EventValue()));
-        addSpellEffect(new GrantStaticEffectToPlayerUntilEndOfTurnEffect(
+        addSpellEffect(GrantStaticEffectToPlayerEffect.untilEndOfTurn(
                 new PreventManaDrainEffect(ManaColor.RED)));
     }
 }

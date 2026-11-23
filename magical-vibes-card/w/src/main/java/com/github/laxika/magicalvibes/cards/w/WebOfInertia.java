@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.ActivePlayerExilesCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class WebOfInertia extends Card {
 
     public WebOfInertia() {
-        CardEffect attackRestriction = new GrantStaticEffectToPlayerUntilEndOfTurnEffect(
+        CardEffect attackRestriction = GrantStaticEffectToPlayerEffect.untilEndOfTurn(
                 new CreaturesCantAttackControllerUnlessPredicateEffect(
                         new PermanentNotPredicate(new PermanentTruePredicate())));
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.OPPONENT),
