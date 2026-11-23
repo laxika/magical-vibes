@@ -24,7 +24,7 @@ bottom.
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. 1,687 rare records have no ledger row. Triage run 1 gave Pay and Reduce (80 rare) and 32 stale step-4/5 blocked rows their verdicts (95 `step-9` rows wait for fold runs). From 2026-11-23 the step runs as **triage runs** (about 80 records each, verdicts only) followed by **fold runs** (see step 9). Open: Perpetually (30 rare) and Conjure's hand and library conjures (Conjure 39 rare) wait for the owner's decisions; run 41 named Destroy (37 rare) as the next family with no owner's question. |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. 1,608 rare records have no ledger row. Triage run 1 gave Pay and Reduce (80 rare) and 32 stale step-4/5 blocked rows their verdicts; triage run 2 gave Search and Cant (79 rare) theirs (147 `step-9` rows wait for fold runs). From 2026-11-23 the step runs as **triage runs** (about 80 records each, verdicts only) followed by **fold runs** (see step 9). Open: Perpetually (30 rare) and Conjure's hand and library conjures (Conjure 39 rare) wait for the owner's decisions; run 41 named Destroy (37 rare) as the next family with no owner's question. |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -280,6 +280,7 @@ Each run ends with its family row in Findings: audited, absorbed, split, blocked
 | Register | 30–34 | closed; the delayed step and event registrations, `NoteAmountEffect` |
 | Target | 32–41 | closed; `PlayerRestrictionEffect`, the gain-control and choose-permanents choosers, one cast check |
 | Pay, Reduce (+ 32 stale step-4/5 rows) | T1 | triaged, no code changed: 112 rows (`step-9` 88, `blocked-other` 7, `unique` 17); fold batches in T1's Findings |
+| Search, Cant | T2 | triaged, no code changed: 79 rows (`step-9` 52, `blocked-other` 1, `unique` 26); fold batches in T2's Findings, among them a SEARCH step kind |
 
 Cross-cutting results of those runs, now conventions or shared pieces (Standing knowledge): the face-down hiding rules; stay checks
 (CR 400.7, 603.7c) on every return and delayed return; what a put step moves enters through the entry batch (as-enters and Aura host
@@ -917,6 +918,90 @@ cost combinators) and `PayXManaConjureRandomCreatureWithManaValueAndCloakEffect`
   for the owner. Re-triage the three stale Mill blocked-step-model rows above with the Mill split.
 - Fold runs can start with the singles and the counters-on-a-subject batch (no new component); the TAP step and the pay-any-amount step are
   the two new components with the most records (8 and 24).
+
+### Step 9, triage run 2 (2026-11-23)
+
+Verdicts only: no Java, test or agent-docs file changed; the ratchet did not move (4,046 / 3,300). 79 ledger rows appended (step 9,
+notes `triage 2: …`): the whole of Search (40 rare) and Cant (39 rare). Every record was read with its `normalfx` / `staticfx` handler to
+the end and the card classes that use it; for the static Cant records with no handler, their readers were read in `AttackLegalityService`,
+`CombatAttackService`, `GameQueryService` (counters, suspect, untap) and `CastingPermissionService`, and the capability interfaces
+(`BlockabilityRestrictionEffect`, `BlockingRestrictionEffect`, `AttackCostEffect`, `BlockCostEffect`, `SpellCastingRestrictionEffect`)
+with their implementers; the `LibrarySearchSupport` paths the search handlers call were read up to the prompt (`sendLibrarySearchToPlayer`,
+`isSearchPrevented`), the `LibraryChoiceHandlerService` completions were not. Oracle text checked with `get_card` for Courier of
+Comestibles, Last Light of Durin's Day, Beseech the Mirror, Auratouched Mage, Grim Reminder, Evolving Door, Wild Pair, Dwarven Recruiter,
+Capricopian, Incite Hysteria, Ood Sphere, Flummoxed Cyclops, Canoptek Wraith, Skybreen, Graxiplon, Hollow Warrior and Tidal Influence; the
+other cards were judged from their card classes and the records' Javadoc. No rulings were needed. CR 608.2h, 701.23a and 708.2a checked
+with `get_rule` (2026-11-23).
+
+| Family | Triaged | `step-9` | `blocked-other` | `unique` | Left unaudited |
+|---|---|---|---|---|---|
+| Search | 40 rare | 31 | 1 | 8 | 0 rare, 9 in all |
+| Cant | 39 rare | 21 | 0 | 18 | 0 rare, 21 in all |
+
+All families: 1,608 rare records without a row (before: 1,687). `step-9` rows waiting for fold runs: 147 (95 + 52).
+
+**A SEARCH step.** Run 29 (step 8) gave the search-then-X records `blocked-step-model` ("no SEARCH step kind"):
+`SearchLibraryAndConditionalEffect` (7 cards), `SearchLibraryForCardTypeToExileAndImprintEffect`, `SearchLibraryForEquipmentToBattlefieldAndAttachEffect`.
+The library search parks the resolution at its prompt and its completion writes the parked entry before the epilogue resumes the next
+step: that is how `searched()` reads what a search put onto the battlefield (Savage Order). So the search ends before the next step
+starts; what is missing is a `StepKind.SEARCH` (found cards, their destination) recorded by that completion. Four more records need it
+(Courier, Myr Incubator, Scion of the Ur-Dragon, Hide // Seek), seven with run 29's three, so they are `step-9` here with that component;
+a fold run builds it and re-triages run 29's rows. The orchestrator should confirm this reading of "an earlier step" first.
+
+**Fold batches** (survivor or shared component → records, cards):
+
+| Batch | Survivor / component | Records (cards) |
+|---|---|---|
+| same-quality filter | a card predicate "shares [`SharedQuality`] with [subject]" bound to the entry, generalizing `CardSharesNameWithTriggeringPermanentPredicate`; subjects target(), revealedThisWay(), thisWay(CHOOSE), source(), other creatures you control, a cost-sacrificed permanent | Pack Hunt, Mimeofacture (on `SearchTargetLibraryEffect`), Pattern Matcher, Infernal Tutor and Assembly Hall (`RevealCardsFromHandEffect` first), Canoptek Wraith (`ChoosePermanentsEffect` first), Kasmina (colour), Pyre of Heroes (creature type, with Birthing Pod's `SacrificeCreatureCost(true)` + `ManaValueBound(true, 1)`): 8 (8) |
+| SEARCH step | `StepKind.SEARCH` recorded by the search completion; payloads gated or counted on it | `SearchLibraryForCardToHandOrCreateTokenEffect` (Courier), `SearchLibraryForCardsToExileAndCreateTokensEffect` (Myr Incubator), `SearchLibraryForDragonToGraveyardAndBecomeCopyUntilEndOfTurnEffect` (Scion), `SearchTargetLibraryAndConditionalEffect` (Hide // Seek), plus run 29's three: 4 (4) |
+| attach host | `SearchLibraryEffect` with an attach-host subject (permanent: triggering() / source(); player: targetPlayer() / enchantedPlayer()) and the could-enchant filter | Sovereigns of Lost Alara + Light-Paws (one record), Auratouched Mage, Curse of Misfortunes, Bitterheart Witch: 4 (5); run 29's Equipment search-and-attach row joins |
+| multi-zone search | a zone set on the two library-and/or-graveyard survivors (as `SearchZonesForCardNamedToBattlefieldEffect.selectedZones`) | Last Light of Durin's Day (hand, library), Coax from the Blind Eternities + Karn, the Great Creator (outside the game, face-up exile), Invasion of Arcavios (library, graveyard, outside the game): 3 (4) |
+| one pick per predicate | `SearchLibraryForOneCardOfEachSubtypeEffect` (4, unaudited) with a list of card predicates and a destination | Conflux, Lotuslight Dancers (graveyard), Firemind's Foresight (mana values 3, 2, 1): 3 (3) |
+| conditional destination | `SearchLibraryEffect` "onto the battlefield [tapped] if the found card matches P", folding `battlefieldIfChosenBeholdType` | Archdruid's Charm, Guidelight Pathmaker: 2 (2) |
+| outside the game | `SearchOutsideGameForCardToHandEffect` (7) with a reveal flag and a destination | Vivien, Arkbow Ranger, The Raven's Warning (top of library), and the unaudited `SearchOutsideGameToHandEffect` (3): 2 (2) |
+| search singles | existing records | Recruiters onto `SearchLibraryForCardsToTopEffect(subtype)`, Remembrance onto `SearchLibraryEffect(CardSharesNameWithTriggeringPermanentPredicate)`, Vivien on the Hunt onto a sacrifice step + `ManaValueBound(AmountThisWay.sacrificedManaValue(), true, 1)`, Scheming Symmetry + Varragoth onto `EachPlayerSearchesLibraryEffect` with `TOP_OF_LIBRARY`, Knowledge Exploitation onto `SearchTargetLibraryEffect(CAST_WITHOUT_PAYING)`: 5 (7) |
+| combat cost | `CantAttackOrBlockUnlessPaysEffect` (2) with a side (attack / block / both), an attacker filter, and for cost-shape a non-mana cost | Phyrexian Marauder, Myr Prototype, Hipparion; Floodtide Serpent (return) and Hollow Warrior (tap), both `cost-shape`: 5 (5) |
+| one-shot combat restriction | `CantBlockThisTurnEffect` / `CantAttackThisTurnEffect` with source(), triggering() and radiance subjects and the until-end-of-combat / affected player's next turn durations | Forgestoker Dragon + Flummoxed Cyclops (one record), Wall of Dust, Incite Hysteria: 3 (4) |
+| companion | `CantAttackOrBlockAloneEffect` (14) with a count and a companion predicate | Orcish Conscripts, Okk, Scarred Puma: 3 (3) |
+| defender condition | `CantBeBlockedIfDefenderControlsMatchingPermanentEffect` (19) with a defending-player condition | Hooded Horror, Nightkin Ambusher, Graxiplon (negated): 3 (3) |
+| attack target | `CantAttackCardOwnerEffect` with a restricted `PlayerSubject` (owner, controller) | Xantcha + Alexios (survivor), Capricopian: 2 (3); 5m's two unique Enchanted attack-restriction rows could join |
+| counters | `CantHaveCountersEffect` with a counter type | Melira (-1/-1), Blightbeetle (+1/+1): 2 (2) |
+| Cant singles | existing records | Relic Runner onto `ConditionalEffect(ControllerCastSpellThisTurn(historic), CantBeBlockedEffect)`, Kraken of the Straits onto `CantBeBlockedByCreaturesMatchingPredicateEffect` (needs a strict count predicate), Tidal Influence onto `setCastCondition` (Blizzard's shape): 3 (3) |
+
+Unique (26): Search: Jace, Architect of Thought's −8, Beseech the Mirror, Evolving Door, Wild Pair, Protean Hulk, Grim Reminder, Myriad
+Landscape, Druid of the Emerald Grove. Cant: the one-card prohibitions with their own reader (Airtight Alibi's suspect, Glimpse's chosen,
+Guardian Beast's control, Goblin Brawler's equip, Unable to Scream's face up, Angel of Eternal Dawn's night, Ood Sphere's tapping, Ogre
+Enforcer's lethal damage), the combat rules of one card each (Ironclaw Curse, Rule with an Even Hand, The Aetherspark, Tromokratis, Become
+the Pilot), the cast rules relative to turn state (Ethersworn Canonist, Mana Maze, Skybreen), and the two-card records already one record
+(Leonin Arbiter + Mindlock Orb, Bloodthirster + Port Razer). Blocked (1): Doubling Chant, with Clarion Ultimatum's run-17 cause.
+
+**Seen, not changed** (confirmed by reading, not run):
+
+- Search handlers that never call `LibrarySearchTriggerHelper.recordSearchAndQueueTriggers` when nothing matches or the library is empty, so
+  "whenever a player searches" triggers miss a search that found nothing (CR 701.23a): Sovereigns / Light-Paws, Auratouched Mage, Curse of
+  Misfortunes, Bitterheart Witch, Guidelight Pathmaker, Archdruid's Charm, Firemind's Foresight (empty library), Myr Incubator (no match).
+  Several empty-library branches also log "Library is shuffled." without shuffling. Sure of the code.
+- `SearchLibraryForCardsToTopEffectHandler` (Congregation at Dawn, Insidious Dreams, Scouting Trek) neither records the search nor applies
+  Aven Mindcensor's top-N limit; the Recruiters' handler does both. Fairly sure (its interaction handler doesn't either).
+- Pattern Matcher and Doubling Chant read `getCard().getName()` of a face-down creature, which has no name (CR 708.2a). Sure of the code.
+- Pyre of Heroes and Vivien on the Hunt read the sacrificed permanent's card mana value, not a face-down permanent's (CR 708.2a). Sure of
+  the code; a rare case.
+- Tidal Influence is a static ability of the permanent ("can't cast spells with this name"), skipped when that permanent is face down or
+  has lost its abilities; Oracle is the spell's own cast condition about any permanent named Tidal Influence. Sure; low impact.
+- Last Light of Durin's Day with no Dragon in hand or library searches nothing (no shuffle, no search record), where the player may search
+  the library and find nothing (CR 701.23b). Fairly sure; low impact.
+- Wall of Dust's record declares a harmful permanent `TargetSpec` for "that creature", which the text doesn't target. Unverified (how
+  `Triggers.blocks()` fills the target wasn't traced).
+- `SearchTargetLibraryEffectHandler` matches its filter without game state (`matchesCardPredicate(card, filter, null)`). Unverified impact.
+
+**For the next run.**
+
+- Triage run 3: Sacrifice (38 rare), then Destroy (37) and Look (37); Remove (34), Add (32), Gain (32), Become (30) next. Conjure (39) and
+  Perpetually (30) still wait for the owner.
+- A fold run for the SEARCH step (7 records with run 29's) once its reading is confirmed; the same-quality filter (8) is the largest new
+  component of this run.
+- The unaudited 3+-card records these batches touch: `SearchOutsideGameToHandEffect` (3), `SearchLibraryForOneCardOfEachSubtypeEffect` (4),
+  `CantBeBlockedByCreaturesWithLessPowerEffect` (11, onto `CantBeBlockedByCreaturesMatchingPredicateEffect(PermanentPowerLessThanSourcePowerPredicate)`).
 
 ## Prompt
 
