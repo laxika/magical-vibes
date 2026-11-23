@@ -2301,6 +2301,97 @@ Only verdicts this time. No repo file changed; the plan and ledger were read at 
   6. Spend batches.
   7. Mana-value animation.
 
+### Step 9, parallel triage chunk 05 (2026-11-23)
+
+Verdicts only: no repo file changed. 84 ledger rows (notes `triage P05: …`), read against `e3c5d02ca8`: chunk 05's rare Increase (16), Make (15), Opponents (14), Players (14), Controlled (13) and All (12) records.
+
+Every record was read with its handler to the end, along with every card class that uses it. For the records with no handler, their readers were read:
+- `CastingCostService`: the cost-modifier snapshot, the targeting taxes, the per-target and own-target costs, and the loyalty tax.
+- The costmod handlers.
+- `CastingPermissionService`: the mana-value, chosen-colour, sorcery-timing and land-from-graveyard checks.
+- `GameQueryService`: the life and sacrifice cost checks, turning face up, the own-turn and combat locks, player keywords, and the controlled combat-damage prevention.
+- `LibrarySearchSupport.checkSearchRestriction`.
+- `BattlefieldPlacementService`: riot, the entry counters and characteristics, enter-untapped, and Biomancer.
+- `CombatAttackService`'s opponent attack requirement.
+- `CombatBlockService`'s global must-block.
+- `StepTriggerService`'s upkeep skip.
+- `UntapStepService`'s planar untap.
+- `LayerSystemService`'s subtype and land-type cases.
+- `DurationClock`'s next-matching-spell ends.
+- `GameData.applyNextSpellRiders`.
+
+Oracle text was checked with `get_card` for every `unique` and `blocked-*` card: Kaervek's Torch, Altar of the Pantheon, Carth the Lion, Terror of the Peaks, Biblioplex Tomekeeper, Vexing Shusher, Ashiok, Tomik, Keen-Eared Sentry, Ashes of the Abhorrent, Stabilizer, Two Streams Facility, Masako, Deepchannel Mentor, Tetsuko, Displaced Dinosaurs, Blue, Loyal Raptor, Swirl the Mists, Everlasting Torment, Make an Example, Celestial Dawn, Mycosynth Lattice and Painter's Servant. The playtest cards (Noble Ox, You're in Command, Intangible Vibes, Revel in Silence, Priority Avenger, Terry Pin) are in no feed, so their text was read from the card-data cache or their classes.
+
+Oracle text was also checked for both Teferis, Seeker of Slaanesh, Thunderous Velocipede, Coin of Mastery, Kalain, Desolation, Karlov Watchdog, Living Breakthrough, Avatar's Wrath, Memory Vessel, Horizon Boughs, Archelos, Gibbering Descent and Stalwart Realmwarden (from the cache).
+
+Rulings were read for Make an Example, Seeker of Slaanesh, Hinata and Master Biomancer. CR 101.4, 118.9d, 508.1d, 608.2h, 613.1f and 708.2a were checked with `get_rule` (2026-11-23).
+
+| Family | Triaged | `step-9` | `blocked-other` | `blocked-player-loop` | `unique` |
+|---|---|---|---|---|---|
+| Increase | 16 | 11 | 0 | 0 | 5 |
+| Make | 15 | 10 | 0 | 1 | 4 |
+| Opponents | 14 | 10 | 0 | 0 | 4 |
+| Players | 14 | 11 | 0 | 0 | 3 |
+| Controlled | 13 | 8 | 1 | 0 | 4 |
+| All | 12 | 7 | 2 | 0 | 3 |
+| All families | 84 | 57 | 3 | 1 | 23 |
+
+**Fold batches** (survivor or shared component → records of this chunk, cards):
+
+| Batch | Survivor / component | Records (cards) |
+|---|---|---|
+| cost scope as a player subject | `IncreaseSpellCostEffect`'s `CostModificationScope` becomes a static `PlayerSubject` judged by `SubjectResolutionService.namesPlayer` (`you()`, `eachOpponent()`, `eachPlayer()`, `enchantedPlayer()`, `except(eachPlayer(), activePlayer())`). A player float made by `GrantStaticEffectToPlayerEffect` judges `you()` as its affected player; the cost collector passes `floating.controllerId()` today. `UNTIL_TARGET_PLAYER_MATCHING_SPELL_CAST` is added to the player grant. | Curse of Silence, Defense Grid, Academy Loremaster, Stalwart Realmwarden; Elspeth Conquers Death + Tax Collector already work by parameters (`GrantStaticEffectToPlayerEffect.untilYourNextTurn(IncreaseSpellCostEffect(…, OPPONENT))`): 5 (6) |
+| Increase, by parameters | existing records | Chromatic Armor + Skeleton Scavengers (`IncreaseActivationCostEffect(Scaled(CountersOnSource))`), Damping Sphere (`IncreaseSpellCostEffect(any, SpellsCastThisTurn(CONTROLLER), ALL)`): 2 (3) |
+| own-spell cost sign | `ReduceOwnCastCostEffect` / `ReduceOwnCastCostIfTargetingPermanentEffect` gain an increase direction; the `TargetBasedCastCostIncreaseEffect` reads for playability and the AI are kept | Hurkyl's Final Meditation + Risen Executioner, Dragon's Prey + Vanish into Eternity: 2 (4) |
+| triage 1's per-target batch | one per-target cost change | Hinata (the opponents' half): 1 (1) |
+| triage 7's hand-size batch | one hand-size record with a `PlayerSubject` and a `DynamicAmount` | Minamo Scrollkeeper + Trusted Advisor: 1 (2) |
+| become blocked | `MakeTargetAttackingCreatureBlockedEffect` (4 cards) with a `PermanentSubject` | Fog Patch: 1 (1) |
+| next-spell riders | `EmpowerNextCreatureSpellThisTurnEffect` (2 cards, unaudited) with a `CardPredicate` | Overmaster, Mistrise Village: 2 (2) |
+| triage 6's copier subject | `BecomeCopyOfSubjectEffect` + a copier `PermanentSubject` (+ `UNTIL_YOUR_NEXT_TURN`); Cytoshape and Polymorphous Rush add `ChoosePermanentsEffect` + `thisWay(CHOOSE)` | Fleeting Reflection, Shapesharer, True Polymorph + Prime Minister's Cabinet Room, Cytoshape + Polymorphous Rush: 4 (6) |
+| prepared | `BecomePreparedEffect` (49 cards) with a `PermanentSubject` (the granting-permanent flag becomes the subject) | Biblioplex Tomekeeper + Skycoach Waypoint: 1 (2) |
+| Make singles | existing parts | Stromgald Spy (`GrantStaticEffectToPlayerEffect(PlayWithOwnHandRevealedEffect, defendingPlayer(), WHILE_SOURCE_REMAINS)` + the projection reading it), The Black Gate (split: `ChoosePlayerEffect` over a most-life `PlayerPredicate` + a this-turn can't-be-blocked bound to `playersThisWay(CHOOSE)`, triage 7's chosen-value binding): 2 (2) |
+| static cast restrictions | `OpponentsCantCastSpellsMatchingPredicateEffect` (4 cards) | Iona (`CardHasSourceChosenColorPredicate`, by parameters), Brisela (`CardMaxManaValuePredicate(3)`, keeping the X playability rule), Angel of Eternal Dawn + Lavinia (a static mana-value-over-amount predicate whose amount reads the casting player): 3 (4) |
+| player-restriction filter | `PlayerRestrictionEffect`: `PlayerRestriction`'s spell kinds take a `CardPredicate` and source zones (generalising `spellTypes` and noncreature) | Avatar's Wrath (outside the hand), Memory Vessel (play from the hand), Living Breakthrough (a mana value bound at resolution): 3 (3) |
+| static zone play | `PlayersCantCastSpellsFromZonesEffect` (5 cards) with a static `PlayerSubject` and an action (cast spells / play lands) | Tomik's lands from graveyards; the unaudited `ControllerCantCastSpellsFromHandEffect` and `ControllerCantPlayLandsFromHandEffect` join: 1 (1) |
+| search prohibition | `CantSearchLibrariesEffect` (triage 2 unique row) with a static `PlayerSubject`, also read as a player float | Stranglehold, Shadow of Doubt: 2 (2) |
+| conditional cast lock | `OpponentsCantCastOrActivateDuringYourTurnEffect` (9 cards) with a static `PlayerSubject`, a spell filter, an ability filter (none / non-mana / all) and a `Condition` judged for the restricted player | Teferi ×2 (sorcery timing), City of Solitude (own turn, mana abilities too), Hand to Hand (combat), Priority Avenger (stack empty); `OpponentsCantCastSpellsDuringCombatEffect` and `PlayersCanCastSpellsOnlyDuringOwnTurnEffect` (5m survivors) join: 4 (5) |
+| attack requirement | merge with `OpponentsMustAttackControllerEffect` (5m unique), adding a required-target option | Seeker of Slaanesh: 1 (1) |
+| face-up prohibition | `CantBeTurnedFaceUpEffect` (triage 2 unique) with a static `PermanentSubject` and a your-turn `Condition` | Karlov Watchdog: 1 (1) |
+| cost prohibition | one static "can't pay life [or sacrifice matching permanents]" record with a mana-ability exemption and a sacrifice predicate | Karn's Sylex, Angel of Jubilation, Yasharn: 3 (3) |
+| player keyword | `GrantControllerKeywordUntilEndOfTurnEffect` (6 cards) with a `PlayerSubject` | Everybody Lives; Sarah's Wings' engine-built flying float joins: 1 (1) |
+| skip step | `SkipDrawStepEffect` (13 cards, unaudited) with a step kind, a static `PlayerSubject` and a `Condition` | Eon Hub + Gibbering Descent; `PlayersSkipUntapStepEffect` (3) joins: 1 (2) |
+| Desolation split | `SacrificePermanentsEffect` over a tapped-a-land-for-mana `PlayerPredicate` + `DealDamageToPlayersEffect(playersThisWay(SACRIFICE))` narrowed to a Plains by last-known subtypes | Desolation: 1 (1) |
+| damage can't be prevented | `DamageCantBePreventedEffect` (4 cards) with a static source `PermanentSubject` and a combat-only flag | Questing Beast + Questing Cosplayer; the unaudited `CombatDamageCantBePreventedEffect` and `SourceDamageCantBePreventedEffect` join: 1 (2) |
+| entering counters | `ControlledPermanentsEnterWithAdditionalCountersByAmountEffect` with an amount evaluated against the entering permanent | Thunderous Velocipede, Coin of Mastery, Kalain, Master Biomancer (split: plus the Mutant grant on entry): 4 (4) |
+| enter untapped | one enter-untapped record with a scope | The Wandering Minstrel (by parameters onto the unaudited `ControlledLandsEnterUntappedEffect`), Archelos: 2 (2) |
+| Controlled and All by parameters | existing records | Rhythm of the Wild + Uncivil Unrest (`GrantKeywordEffect(RIOT, creaturesYouControl(), nontoken)`), Celestial Dawn's lands (`GrantSubtypeEffect(PLAINS, landsYouControl(), true)`): 2 (3) |
+| All singles | existing heads + one part | Terry Pin (merge with `EquipAbilitiesCanBeActivatedAtInstantSpeedEffect`), Grand Melee + Invasion Plans (`MustBlockEachCombatEffect` with a static subject, as a rule), Nightcreep (`GrantSubtypeUntilEndOfTurnEffect` with overriding), Hall of Gemstone (triage P04's land-mana batch), Shifting Sky (`GrantColorEffect` with a chosen-colour spec; `EnchantedPermanentBecomesChosenColorEffect` joins), Horizon Boughs (`UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect` over all permanents, with a planar scan): 6 (7) |
+
+**Blocked (4):**
+- Celestial Dawn's colours, Mycosynth Lattice and Painter's Servant: their colours reach spells and cards outside the battlefield. This is run 18's all-zones cause (the out-of-battlefield query redesign, outside this plan).
+- Make an Example (`blocked-player-loop`): every opponent separates, you choose a pile of each, then all sacrifice together.
+
+**Unique (23):**
+- Increase: the engine-built speed trigger, Kaervek's Torch, Altar of the Pantheon, Carth the Lion, Terror of the Peaks.
+- Make: Noble Ox, You're in Command, Biblioplex Tomekeeper's unprepare, Vexing Shusher.
+- Opponents: Revel in Silence's loyalty half, Ashiok, Tomik's targeting, Keen-Eared Sentry.
+- Players: Ashes' graveyard abilities, Stabilizer, Two Streams Facility.
+- Controlled: Masako, Deepchannel Mentor + Tetsuko (already one record), Displaced Dinosaurs, Blue, Loyal Raptor.
+- All: Swirl the Mists, Intangible Vibes, Everlasting Torment's wither.
+
+**Seen, not changed** (confirmed by reading, not run):
+- Seeker of Slaanesh: `CombatAttackService.getOpponentRequiredAttackTargetIds` treats it as Trove of Temptation. Its controller and their planeswalkers become the required targets, but "must attack with at least one creature" is met by any attack (another opponent, a battle). Sure of the code; matters only in multiplayer or with battles.
+- Make an Example sacrifices each opponent's pile, then asks the next opponent to separate. CR 101.4 has every separation made first and the sacrifices happen at once. Sure of the code (its Javadoc says so).
+- `CastingCostService.getLoyaltyAbilityCostIncrease` (Carth) and `getOpponentCastCostPerTarget` (Hinata) read `getCard().getStaticEffects()` with no face-down or lost-abilities check (CR 613.1f, 708.2a). So does the battlefield branch of `ReduceOwnCastCostIfTargetingPermanentEffect`. Sure of the code.
+- `IncreaseOwnCastCostEffect` lacks the `staticAbilityZones()` STACK override that `ReduceOwnCastCostEffect` has. Impact not traced.
+- `MakeTargetCopyOfTargetPermanentEffectHandler` (True Polymorph) records no `ResolvedCopyEffect` float, unlike the timed copy handlers. Unverified whether anything reads it for a permanent copy.
+
+**Anything left.** Nothing in this chunk. The batches reach records outside it:
+- Unaudited: `EmpowerNextCreatureSpellThisTurnEffect`, `ControlledLandsEnterUntappedEffect`, `SkipDrawStepEffect`, `PlayersSkipUntapStepEffect`, `CombatDamageCantBePreventedEffect`, `SourceDamageCantBePreventedEffect`, `EquipAbilitiesCanBeActivatedAtInstantSpeedEffect`, `EnchantedPermanentBecomesChosenColorEffect`, `ControllerCantCastSpellsFromHandEffect`, `ControllerCantPlayLandsFromHandEffect`, `BecomeCopyOfTargetPermanentUntilYourNextTurnEffect`.
+- Unique rows that now gain a second user: `CantSearchLibrariesEffect` and `CantBeTurnedFaceUpEffect` (triage 2), `OpponentsMustAttackControllerEffect` (5m).
+
+Cheapest fold-run starts, by parameters only: Chromatic Armor / Skeleton Scavengers, Damping Sphere, Elspeth Conquers Death / Tax Collector, Iona, riot, Celestial Dawn's lands, The Wandering Minstrel.
+
 ## Prompt
 
 Replace `<N>` with the step number. For step 9, add the run kind and its scope (`step 9, triage run: Destroy, Search`;
