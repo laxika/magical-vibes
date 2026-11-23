@@ -3,11 +3,15 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.f.FinalShowdown;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.r.RealityRipple;
 import com.github.laxika.magicalvibes.cards.z.ZephidsEmbrace;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ErietteTheBeguiler.class, ZephidsEmbrace.class, GrizzlyBears.class, AirElemental.class,
-        FinalShowdown.class})
+        FinalShowdown.class, Pacifism.class, RealityRipple.class})
 class ErietteTheBeguilerTest extends BaseCardTest {
 
     @Test
@@ -165,6 +169,30 @@ class ErietteTheBeguilerTest extends BaseCardTest {
 
         harness.assertLife(player1, 24);
         harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("The control ends for good as the stolen permanent phases out")
+    void controlEndsAsStolenPermanentPhasesOut() {
+        addCreatureReady(player1, new ErietteTheBeguiler());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Pacifism()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new RealityRipple()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.performUntapStep(player1);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
     }
 
     private void castZephidsEmbrace(Permanent target) {

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.replacement.ReplacementCandidateSource;
 import org.springframework.context.annotation.Lazy;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -28,6 +30,11 @@ import java.util.List;
  */
 @Component
 public class JinnieFayTokenReplacements implements ReplacementCandidateSource<TokenCreationEvent> {
+
+    /** Asks whether a permanent has lost its static abilities, a static "loses all abilities" included (CR 613.1f). */
+    @Autowired
+    @Lazy
+    private GameQueryService gameQueryService;
 
     private static final String KEY_PREFIX = "JinnieFay:";
 
@@ -78,7 +85,7 @@ public class JinnieFayTokenReplacements implements ReplacementCandidateSource<To
         }
         List<Instance> instances = new ArrayList<>();
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(event.controllerId(), List.of())) {
-            if (permanent.isFaceDown() || gameData.losesAllAbilitiesByEffect(permanent)
+            if (permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)
                     || gameData.removesOwnStaticAbility(permanent.getId(), JinnieFayTokenReplacementEffect.class)) {
                 continue;
             }

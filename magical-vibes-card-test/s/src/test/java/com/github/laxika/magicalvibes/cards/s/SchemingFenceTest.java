@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.o.OgreMenial;
 import com.github.laxika.magicalvibes.cards.o.ObNixilisTheAdversary;
 import com.github.laxika.magicalvibes.cards.d.DragonMantle;
 import com.github.laxika.magicalvibes.cards.w.WitnessProtection;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -11,9 +12,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.cards.g.GlimpseTheUnthinkablePlaytest;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -156,6 +159,20 @@ class SchemingFenceTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
                 .containsExactly(ogre.getId());
+    }
+
+    @Test
+    @DisplayName("A chosen face-down permanent has no abilities, so its card's hidden abilities aren't gained")
+    void gainsNothingFromAFaceDownPermanent() {
+        Permanent faceDown = addCreatureReady(player1, new OgreMenial());
+        faceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        castFence();
+        harness.handlePermanentChosen(player1, faceDown.getId());
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private Permanent castFence() {

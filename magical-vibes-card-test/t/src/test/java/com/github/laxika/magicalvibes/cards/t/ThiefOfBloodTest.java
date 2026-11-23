@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RavagingRiftwurm;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ThiefOfBlood.class, GrizzlyBears.class, DarksteelIngot.class})
+@CardUsed({ThiefOfBlood.class, GrizzlyBears.class, DarksteelIngot.class, RavagingRiftwurm.class})
 class ThiefOfBloodTest extends BaseCardTest {
 
     @Test
@@ -84,6 +85,22 @@ class ThiefOfBloodTest extends BaseCardTest {
         assertThat(artifact.getTotalCounterCount()).isZero();
         assertThat(thief.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removing the last time counter from a permanent with vanishing triggers its sacrifice")
+    void removingLastTimeCounterTriggersVanishing() {
+        Permanent riftwurm = harness.addToBattlefieldAndReturn(player2, new RavagingRiftwurm());
+        riftwurm.setCounterCount(CounterType.TIME, 2);
+
+        castThiefOfBlood();
+
+        assertThat(riftwurm.getCounterCount(CounterType.TIME)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(riftwurm);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(riftwurm.getCard());
     }
 
     private void castThiefOfBlood() {

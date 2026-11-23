@@ -48,7 +48,8 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
             }
         } else if (subject instanceof PermanentSubject.Target) {
             if ((Duration.WHILE_SOURCE_REMAINS.equals(e.duration())
-                    || Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(e.duration()))
+                    || Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(e.duration())
+                    || Duration.UNTIL_SOURCE_LEAVES.equals(e.duration()))
                     && (entry.getSourcePermanentId() == null
                     || gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) == null)) {
                 return;
@@ -81,6 +82,7 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
                 ? "until the source card is cast from exile"
                 : Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(duration) || Duration.WHILE_SOURCE_REMAINS.equals(duration)
                 ? "for as long as the source remains on the battlefield"
+                : Duration.UNTIL_SOURCE_LEAVES.equals(duration) ? "until the source leaves the battlefield"
                 : Duration.PERMANENT.equals(duration) || Duration.STATIC.equals(duration) ? "indefinitely"
                 : "until end of turn";
         String recipientText = subject instanceof PermanentSubject.Source ? "permanent(s)" :
@@ -97,6 +99,7 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
         Duration duration = grant.duration();
         if (Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(duration)
                 || Duration.WHILE_SOURCE_REMAINS.equals(duration)
+                || Duration.UNTIL_SOURCE_LEAVES.equals(duration)
                 || Duration.PERMANENT.equals(duration)
                 || Duration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE.equals(duration)
                 // "Until your next turn" ends on the turn of the effect's controller, even if the
@@ -130,7 +133,9 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
     }
 
     private static ActivatedAbility grantedAbility(ActivatedAbility ability, StackEntry entry) {
-        ActivatedAbility granted = ability.withGrantingPlayer(entry.getControllerId());
+        // An ability that already names the one player who may activate it keeps that player (Squidnapper's ransom).
+        ActivatedAbility granted = ability.getGrantingPlayerId() != null
+                ? ability : ability.withGrantingPlayer(entry.getControllerId());
         // CR 602.5c: a whole-game "activate only once" cap belongs to the ability as acquired from this
         // object, not to other identically worded abilities (a later casting grants a fresh one).
         return granted.getMaxActivationsPerGame() != null ? granted.withAcquisitionId(UUID.randomUUID()) : granted;

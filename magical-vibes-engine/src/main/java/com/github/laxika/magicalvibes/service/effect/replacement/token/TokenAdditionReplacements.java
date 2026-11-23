@@ -19,6 +19,9 @@ import com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCreationReplacementSupport;
 import com.github.laxika.magicalvibes.service.replacement.ReplacementCandidateSource;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -38,6 +41,11 @@ import java.util.function.Function;
  */
 @Component
 public class TokenAdditionReplacements implements ReplacementCandidateSource<TokenCreationEvent> {
+
+    /** Asks whether a permanent has lost its static abilities, a static "loses all abilities" included (CR 613.1f). */
+    @Autowired
+    @Lazy
+    private GameQueryService gameQueryService;
 
     private static final String KEY_PREFIX = "TokenAddition:";
 
@@ -148,7 +156,7 @@ public class TokenAdditionReplacements implements ReplacementCandidateSource<Tok
         }
         List<Instance> instances = new ArrayList<>();
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(event.controllerId(), List.of())) {
-            if (permanent.isFaceDown() || gameData.losesAllAbilitiesByEffect(permanent)) {
+            if (permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
                 continue;
             }
             List<CardEffect> statics = permanent.getCard().getStaticEffects();

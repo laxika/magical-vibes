@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.a.AcademyManufactor;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HardEvidence;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.cards.r.RaiseTheAlarm;
 import com.github.laxika.magicalvibes.cards.s.SparkDouble;
@@ -30,6 +31,21 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({ChatterfangSquirrelGeneral.class, RaiseTheAlarm.class, GrizzlyBears.class, Forest.class,
         HardEvidence.class, AcademyManufactor.class, CacklingCounterpart.class, SparkDouble.class})
 class ChatterfangSquirrelGeneralTest extends BaseCardTest {
+
+    @Test
+    @CardUsed(Humility.class)
+    @DisplayName("Adds no Squirrels while a static ability (Humility) has made it lose all abilities")
+    void addsNothingWhileHumilityRemovesItsAbilities() {
+        harness.addToBattlefield(player1, new ChatterfangSquirrelGeneral());
+        harness.addToBattlefield(player2, new Humility());
+        harness.setHand(player1, List.of(new RaiseTheAlarm()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(findPermanents(player1, "Soldier")).hasSize(2);
+        assertThat(findPermanents(player1, "Squirrel")).isEmpty();
+    }
 
     @Test
     @CardUsed({OjerTaqDeepestFoundation.class, ThrabenInspector.class})

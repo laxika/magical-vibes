@@ -13,7 +13,11 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
 
-/** Handles variable counter costs paid from matching permanents the activating player controls. */
+/**
+ * Handles variable counter costs paid from matching permanents the activating player controls: X counters from among
+ * them, or, with {@link RemoveOneOrMoreCountersFromControlledPermanentsCost#fromOnePermanent()}, all X from the one
+ * permanent chosen. X = 0 is a cost paid by removing nothing when the cost allows it.
+ */
 public class RemoveCounterFromControlledPermanentsCostHandler implements PermanentChoiceCostHandler {
 
     private final RemoveOneOrMoreCountersFromControlledPermanentsCost cost;
@@ -47,11 +51,17 @@ public class RemoveCounterFromControlledPermanentsCostHandler implements Permane
 
     @Override
     public void validateCanPay(GameData gameData, UUID playerId) {
-        if (requiredCount < 1) {
+        if (requiredCount < 1 && !cost.allowsZero()) {
             throw new IllegalStateException("Must remove at least one " + counterLabel() + " counter");
         }
-        if (totalCounters(gameData, playerId) < requiredCount) {
-            throw new IllegalStateException("Not enough " + counterLabel() + " counters on matching permanents");
+        if (requiredCount < 1) {
+            return;
+        }
+        if (cost.fromOnePermanent() ? getValidChoiceIds(gameData, playerId).isEmpty()
+                : totalCounters(gameData, playerId) < requiredCount) {
+            throw new IllegalStateException(cost.fromOnePermanent()
+                    ? "No matching permanent has " + requiredCount + " " + counterLabel() + " counters"
+                    : "Not enough " + counterLabel() + " counters on matching permanents");
         }
     }
 
@@ -61,9 +71,10 @@ public class RemoveCounterFromControlledPermanentsCostHandler implements Permane
         if (battlefield == null) {
             return List.of();
         }
+        int minimum = cost.fromOnePermanent() ? Math.max(1, requiredCount) : 1;
         return battlefield.stream()
                 .filter(p -> matchesFilter(gameData, p))
-                .filter(p -> counterCount(p) > 0)
+                .filter(p -> counterCount(p) >= minimum)
                 .map(Permanent::getId)
                 .toList();
     }
@@ -79,7 +90,8 @@ public class RemoveCounterFromControlledPermanentsCostHandler implements Permane
         }
 
         int available = counterCount(chosen);
-        int toRemove = pendingBulkRemoval > 0 ? pendingBulkRemoval
+        int toRemove = cost.fromOnePermanent() ? requiredCount
+                : pendingBulkRemoval > 0 ? pendingBulkRemoval
                 : payAllCountersOnChosenPermanent ? available : 1;
         pendingBulkRemoval = 0;
         if (available < toRemove) {
@@ -97,6 +109,9 @@ public class RemoveCounterFromControlledPermanentsCostHandler implements Permane
 
     @Override
     public String getPromptMessage(int remaining) {
+        if (cost.fromOnePermanent()) {
+            return "Choose a permanent to remove " + remaining + " " + counterLabel() + " counters from.";
+        }
         return "Choose a permanent to remove a " + counterLabel() + " counter from ("
                 + remaining + " remaining).";
     }
@@ -108,12 +123,18 @@ public class RemoveCounterFromControlledPermanentsCostHandler implements Permane
 
     @Override
     public boolean canPayRemaining(GameData gameData, UUID playerId, int remaining) {
+        if (cost.fromOnePermanent()) {
+            return !getValidChoiceIds(gameData, playerId).isEmpty();
+        }
         return totalCounters(gameData, playerId) >= remaining;
     }
 
     @Override
     public boolean shouldAutoPayAll(GameData gameData, UUID playerId, int remaining) {
         List<UUID> validIds = getValidChoiceIds(gameData, playerId);
+        if (cost.fromOnePermanent()) {
+            return validIds.size() == 1;
+        }
         if (validIds.size() == 1) {
             Permanent only = findPermanent(gameData, validIds.getFirst());
             if (only != null && counterCount(only) >= remaining) {

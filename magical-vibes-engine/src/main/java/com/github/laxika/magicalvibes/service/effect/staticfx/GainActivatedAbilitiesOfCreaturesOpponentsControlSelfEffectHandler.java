@@ -57,13 +57,19 @@ public class GainActivatedAbilitiesOfCreaturesOpponentsControlSelfEffectHandler 
         effectiveActivatedAbilities(gameData, permanent, gameQueryService).forEach(accumulator::addActivatedAbility);
     }
 
-    /** The activated abilities a creature currently supplies to an opponent's ability borrower. */
+    /**
+     * The activated abilities a permanent currently supplies to an ability borrower (Drana and Linvala, Scheming
+     * Fence, Robaran Mercenaries): its card's abilities and the ones granted to it, without the card's when it is face
+     * down (CR 708.2a) or has lost them (all abilities, or a land's printed abilities as it became a basic land type),
+     * and only the card's mana abilities when it lost all other abilities (Blood Sun).
+     */
     public static List<ActivatedAbility> effectiveActivatedAbilities(GameData gameData, Permanent permanent,
                                                                     GameQueryService gameQueryService) {
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
         List<ActivatedAbility> abilities = new ArrayList<>();
         if (staticBonus.losesAllAbilities() || gameData.losesAllAbilitiesByEffect(permanent)
-                || permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
+                || permanent.isFaceDown() || !staticBonus.losesAllNonManaAbilities()
+                && gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
             abilities.addAll(staticBonus.grantedActivatedAbilities());
         } else if (staticBonus.losesAllNonManaAbilities()) {
             abilities.addAll(permanent.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()

@@ -17,7 +17,11 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves the playtest ransom control pattern used by Squidnapper. */
+/**
+ * Resolves the playtest ransom control pattern used by Squidnapper: control of the target until the source leaves the
+ * battlefield (not as it phases out, CR 702.26d), and a ransom ability on the creature that only the player it was
+ * taken from may activate ("or that player pays the ransom").
+ */
 @Component
 @RequiredArgsConstructor
 public class GainControlOfTargetUntilRansomEffectHandler implements NormalEffectHandlerBean {
@@ -48,9 +52,10 @@ public class GainControlOfTargetUntilRansomEffectHandler implements NormalEffect
             if (gameQueryService.findPermanentById(gameData, targetId) == null) {
                 continue;
             }
+            UUID takenFromPlayerId = gameQueryService.findPermanentController(gameData, targetId);
 
             gainControlOfTargetEffectHandler.resolve(gameData, entry,
-                    new GainControlOfTargetEffect(Duration.WHILE_SOURCE_REMAINS));
+                    new GainControlOfTargetEffect(ransom.controlDuration()));
 
             ActivatedAbility ransomAbility = new ActivatedAbility(
                     false,
@@ -59,14 +64,14 @@ public class GainControlOfTargetUntilRansomEffectHandler implements NormalEffect
                             new PayRansomEffect(sourcePermanentId)),
                     "{" + ransom.manaCost() + "} and " + ransom.lifeCost()
                             + " life: Pay this creature's ransom.")
-                    .withActivatableByAnyPlayer()
-                    .withActivatableOnlyByOwner();
+                    .withActivatableOnlyByGrantingPlayer()
+                    .withGrantingPlayer(takenFromPlayerId);
             grantActivatedAbilityEffectHandler.resolve(gameData, entry,
                     new GrantActivatedAbilityEffect(
                             ransomAbility,
                             Subjects.target(),
                             null,
-                            Duration.WHILE_SOURCE_REMAINS));
+                            ransom.controlDuration()));
         }
     }
 }

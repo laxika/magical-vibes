@@ -213,7 +213,8 @@ public class DurationClock {
     /**
      * Whether the "for as long as" condition of {@code effect} still holds on the board (CR 611.2b): its source is on
      * the battlefield, under its creator's control when the effect needs that, tapped when it needs that, and
-     * attached to the affected permanent when it lasts while attached. A duration that ends at an event holds.
+     * attached to the affected permanent when it lasts while attached. A duration that ends at an event holds, and so
+     * do "until it leaves" and "until you lose control of it" while their source is phased out (CR 702.26d).
      */
     public boolean holds(GameData gameData, FloatingContinuousEffect effect) {
         Duration.AsLongAs asLongAs = asLongAs(effect);
@@ -223,7 +224,12 @@ public class DurationClock {
         Permanent source = effect.sourcePermanentId() == null ? null
                 : gameQueryService.findPermanentById(gameData, effect.sourcePermanentId());
         if (source == null) {
-            return false;
+            // "Until it leaves the battlefield" and "until you lose control of it" go on while it is phased out:
+            // phasing out is neither (CR 702.26d).
+            return effect.sourcePermanentId() != null
+                    && (asLongAs == Duration.AsLongAs.SOURCE_UNTIL_LEAVES
+                    || asLongAs == Duration.AsLongAs.SOURCE_UNTIL_CONTROL_LOST)
+                    && phasingService.findPhasedOutPermanent(gameData, effect.sourcePermanentId()) != null;
         }
         if (needsCreatorToControlSource(effect) && !effect.controllerId().equals(gameData.findControllerOf(source))) {
             return false;

@@ -1,12 +1,18 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
+import com.github.laxika.magicalvibes.cards.r.RealityRipple;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Squidnapper.class, RuneclawBear.class, DoomBlade.class, TurnToFrog.class})
+@CardUsed({Squidnapper.class, RuneclawBear.class, DoomBlade.class, TurnToFrog.class, RealityRipple.class})
 class SquidnapperTest extends BaseCardTest {
 
     @Test
@@ -56,8 +62,7 @@ class SquidnapperTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.COLORLESS, 6);
         assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, bear), 0, null, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("owner");
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -133,6 +138,44 @@ class SquidnapperTest extends BaseCardTest {
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);
+    }
+
+    @Test
+    @DisplayName("Squidnapper phasing out doesn't end the control: phasing isn't leaving the battlefield")
+    void controlSurvivesSquidnapperPhasingOut() {
+        Permanent bear = castSquidnapper();
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new RealityRipple()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Squidnapper"));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bear);
+    }
+
+    @Test
+    @DisplayName("the player the creature was taken from pays the ransom, even when they don't own it")
+    void playerItWasTakenFromPaysRansom() {
+        RuneclawBear card = new RuneclawBear();
+        card.setOwnerId(player1.getId());
+        Permanent bear = addCreatureReady(player1, card);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player2.getId(), bear, new GainControlOfTargetEffect(Duration.PERMANENT),
+                        Duration.PERMANENT, null, "Control effect"));
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bear);
+        prepareCast();
+        harness.castCreature(player1, 0, bear.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);
+
+        harness.addMana(player2, ManaColor.COLORLESS, 6);
+        harness.activateAbility(player2, indexOf(player1, bear), 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bear);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bear);
     }
 
     private Permanent castSquidnapper() {

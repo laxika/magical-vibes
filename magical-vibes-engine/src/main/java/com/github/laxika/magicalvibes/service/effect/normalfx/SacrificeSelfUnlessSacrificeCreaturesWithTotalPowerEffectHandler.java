@@ -51,7 +51,9 @@ public class SacrificeSelfUnlessSacrificeCreaturesWithTotalPowerEffectHandler im
         int availablePower = 0;
         if (battlefield != null) {
             for (Permanent perm : battlefield) {
-                if (!gameQueryService.isCreature(gameData, perm)) {
+                // A creature that can't be sacrificed is neither offered nor counted (CR 608.2d).
+                if (!gameQueryService.isCreature(gameData, perm)
+                        || gameQueryService.cantBeChosenToSacrifice(gameData, perm)) {
                     continue;
                 }
                 eligibleIds.add(perm.getId());

@@ -24,7 +24,7 @@ bottom.
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. 1,398 rare records have no ledger row. Triage run 1 gave Pay and Reduce (80 rare) and 32 stale step-4/5 blocked rows their verdicts; triage run 2 gave Search and Cant (79 rare) theirs; triage run 3 gave Sacrifice and Destroy (75 rare) theirs; triage run 4 gave Look and Remove (71 rare) theirs; triage run 5 gave Add and Gain (64 rare) theirs (302 `step-9` rows wait for fold runs). Defect run 1 fixed most of the defects the triage runs saw (its Findings). From 2026-11-23 the step runs as **triage runs** (about 80 records each, verdicts only) followed by **fold runs** (see step 9). Open: Perpetually (30 rare) and Conjure's hand and library conjures (Conjure 39 rare) wait for the owner's decisions; the next families with no owner's question are Become (30 rare), Draw (28), Set (27) and Double (27). |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. 1,398 rare records have no ledger row. Triage run 1 gave Pay and Reduce (80 rare) and 32 stale step-4/5 blocked rows their verdicts; triage run 2 gave Search and Cant (79 rare) theirs; triage run 3 gave Sacrifice and Destroy (75 rare) theirs; triage run 4 gave Look and Remove (71 rare) theirs; triage run 5 gave Add and Gain (64 rare) theirs (302 `step-9` rows wait for fold runs). Defect runs 1 and 2 fixed most of the defects the triage runs saw (their Findings). From 2026-11-23 the step runs as **triage runs** (about 80 records each, verdicts only) followed by **fold runs** (see step 9). Open: Perpetually (30 rare) and Conjure's hand and library conjures (Conjure 39 rare) wait for the owner's decisions; the next families with no owner's question are Become (30 rare), Draw (28), Set (27) and Double (27). |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -348,6 +348,11 @@ step 8's run N); its full text is in the git history named at the top.
   snapshot too), `getEffectiveName` (null while face down) / `permanentHasName`, `hasEffectiveCardType`, `activeStaticEffects`
   for a static ability; a spell being cast face down has no subtypes or abilities (`CostModificationContext.castFaceDown`)
   (defect run 1).
+- An ability borrower reads a permanent's activated abilities through one method,
+  `GainActivatedAbilitiesOfCreaturesOpponentsControlSelfEffectHandler.effectiveActivatedAbilities` (none of the card's while face
+  down or after losing them; only its mana abilities under Blood Sun); a graveyard borrower asks
+  `graveyardCardsHaveLostAllAbilities` first; a static replacement source asks `hasLostPrintedAbilities`, not only the floating
+  `losesAllAbilitiesByEffect` (CR 613.1f) (defect run 2).
 - A hand choice is shown to its chooser alone and its log names no card; a prompt over exiled cards masks a face-down card from a
   player who may not look at it; a name prompt offers only the catalog's names and names of cards the chooser can know
   (`PlayerInputService.cardNamesOfferedTo`, checked by `ChoiceHandlerService.isCardNameAllowed`); the AI answers from what it can know
@@ -371,6 +376,12 @@ step 8's run N); its full text is in the git history named at the top.
   `canCastDuringResolution(gameData, player, card)` / `mayBeginCastDuringResolution` (a land is played, not cast; a split card is
   judged half by half, CR 709.3a) before any cast during a resolution (CR 601.3, 608.2g). Refused, the flow ends as a decline does
   (runs 40, 41). Known gaps: Scrycast, Knowledge Pool's "cast only during", `SplitCardCastSupport.beginFromExile` (open defects below).
+- "Until [source] leaves the battlefield" is `UNTIL_SOURCE_LEAVES`, and a control effect with it (or "until you lose control")
+  holds while its source is phased out (`DurationClock.holds`; CR 702.26d); a resolution's "for as long as that Aura is attached"
+  is `WHILE_REMAINS_ATTACHED` (CR 702.26f) (defect run 2).
+- Targets chosen after an opponent's mode choice (Fatal Lore) are recorded on the spell on the stack through
+  `MultiPermanentChoiceContext.TargetsAfterOpponentModeChoice`: declared targets, a target filter, the controllers at choice,
+  then the "becomes the target" and crime events (CR 601.2c) (defect run 2).
 - A prevention prevents in the damage pools so the affected player orders it (CR 616.1), and every prevention sends the
   damage-prevented event (Selfless Squire; runs 22 to 24).
 - The log line of the survivor wins.
@@ -651,18 +662,37 @@ Collected from every "Seen, not changed" list; items a later run fixed are dropp
   them (step 7). Unverified.
 - `DiscardCardThenEffect`'s reflexive cards inside a `MayEffect` are asked with no matching card (8.22). Unverified.
 - Soundwave's "from their graveyard" is the damaged player's; the opponent-graveyard scope admits any opponent's (8.24). Unverified.
-- Fatal Lore's destroy mode chooses its two creatures at resolution without targeting; its ruling has the caster choose targets
-  after the opponent's mode choice, as the spell is cast (CR 601.2c). Needs a target prompt after the opponent's answer, which
-  arrives after the spell is on the stack (triage 3, defect run 1). Code.
 - Giant Albatross destroys each creature right after its controller answers, before the next controller chooses (CR 101.4, 608.2e);
   needs the unpaid creatures collected across the pay-life prompts (GameData state copied for simulations) and one
-  `DestructionSupport.destroyBatchWithOutcome` when the queue empties (triage 3, defect run 1). Code.
+  `DestructionSupport.destroyBatchWithOutcome` when the queue empties, its death-replacement asks moved from each decline to the
+  batch (triage 3, defect runs 1 and 2). Code.
 - Last Light of Durin's Day with no Dragon in hand or library searches nothing, where the player may search and find nothing
-  (CR 701.23b); kin of the queue's may-searches above (triage 2, defect run 1). Code.
+  (CR 701.23b); its hand-and-library prompt also takes "choose nothing" as "searched the library" only when the library had a
+  match. Needs a separate "do you search your library?" answer, kin of the queue's may-searches above (triage 2, defect runs 1
+  and 2). Code.
 - The pay-{X} handlers treat X = 0 as declining (Relentless Dead, Squealing Devil, Vigil for the Lost, Azor, Roalesk, Hollow
   Specter, Depala) while Isareth and Fire Lord Sozin queue at 0; paying {0} is paying (CR 118.12) (triage 1). Code, low impact.
-- Rakdos Charm's third mode deals each creature's damage one at a time (kin of the bite's defect) (triage 1). Code.
-- Phyrexian Dreadnought offers permanents that can't be chosen to sacrifice (its as-enters prompt) (triage 3). Unverified.
+- Rakdos Charm's third mode deals each creature's damage one at a time (kin of the bite's defect): needs the multi-dealer damage
+  held in the open simultaneous damage event (`DamageSupport.beginDamageEvent`) (triage 1, defect run 2). Code.
+- Moxite Refinery's `CounterType.ANY` cost removes the chosen permanent's counter kinds in enum order; the player should choose
+  which counters (the controlled-counter kind prompt exists only for a single counter, `ControlledCounterCostTypeChoice`)
+  (triage 4, defect run 2). Code.
+- Make Your Own Luck puts all three looked-at cards into hand, then plots the chosen one from hand; the text exiles it from among
+  them and puts only the rest into hand. Needs a library pick that exiles and plots (`LibrarySearchDestination` has no plot
+  destination) (triage 4, defect run 2). Code, low impact.
+- Nicol Bolas, Dragon-God borrows printed loyalty abilities only and asks only the floating "loses all abilities"; no planeswalker
+  losing its abilities to a static effect could be set up without a layer-dependency case (Humility on an animated Gideon
+  Blackblade) (triage 5, defect run 2). Code.
+- `TokenCreationReplacementSupport`'s static counts (Bilbo's Treasure count, the Academy Manufactor and Map counts, the subtype
+  replacements, `staticEffectCount`, `countActiveStaticEffects`) still ask only the floating "loses all abilities"; a static
+  utility with no query service (triage 5, defect run 2). Code.
+- Aven Riftwatcher, Calciderm, Chronozoa and Regenerations Restored carry both the Scryfall Vanishing keyword and their own
+  "last time counter removed" trigger, so a removal that calls `PermanentCounterSupport.checkLastTimeCounterRemoved` (Aether
+  Snap, Thief of Blood) may put two sacrifice triggers on the stack (defect run 2). Unverified.
+- Charmed Pendant offers a monocoloured hybrid symbol's generic half; Animation Module offers only poison and energy player
+  counters; Thran Portal's added life cost applies to its non-mana activated abilities too; Tevesh Szat's -10 puts commanders
+  outside the entry batch (triage 5). Code, low impact.
+- `ErietteTheBeguilerTest`'s older test methods have no `@DisplayName` (defect run 2). Code.
 - `SearchTargetLibraryEffectHandler` matches its filter without game state (`matchesCardPredicate(card, filter, null)`); no card
   found whose filter needs it (triage 2). Code.
 - Die Young declares a benign target for its -X/-X; only the AI reads the polarity (protection is checked for every target,
@@ -1373,6 +1403,58 @@ Midnight Crusader Shuttle (a stolen creature put into the attack), Chef's Kiss (
   `AddOneOfEachManaTypeProducedByLandEffect` (17, the same "one mana of a type it produced" with another fallback), `AwardPersistentManaEffect`
   (19), `AwardPersistentAnyColorManaEffect` (3), `GainActivatedAbilitiesOfExiledCardsEffect` (5), `GainKeywordsOfCreatureCardsExiledWithSourceEffect`
   (3), `AttachTargetAuraToAnotherPermanentOfSameTypeEffect` (3).
+
+### Step 9, defect run 2 (2026-11-23)
+
+Fixes for the defects triage runs 4 and 5 saw and defect run 1 left, no folding. Ratchet 4,045 / 3,300 → 4,044 / 3,299 (one record went
+away: `DestroyUpToNCreaturesOpponentControlsEffect`, engine-built for Fatal Lore, with its handler and
+`MultiPermanentChoiceContext.DestroyCreaturesOpponentControls`; ledger row `absorbed`). One card file rewritten (Moxite Refinery). Oracle
+text checked with `get_card` for Fatal Lore, Moxite Refinery, Make Your Own Luck, Thief of Blood, Eriette, the Beguiler, Squidnapper
+(`CMB1`) and Last Light of Durin's Day; rulings with `get_rulings` for Fatal Lore, Moxite Refinery (none), Make Your Own Luck, Eriette and
+Nicol Bolas, Dragon-God. CR 101.3, 101.4, 118.3, 601.2c, 608.2b, 608.2d, 608.2e, 609.3, 613.1f, 701.23a, 701.23b, 701.23d, 702.26d,
+702.26f, 702.63a and 708.2a checked with `get_rule` (2026-11-23).
+
+| Defect | Verdict | Test (failed first?) |
+|---|---|---|
+| Fatal Lore's destroy mode chose its creatures at resolution without targeting (its ruling, CR 601.2c, 608.2b) | fixed: the caster chooses up to two target creatures that player controls right after the opponent's choice (`MayPenaltyChoiceHandlerService`, completed by `MultiPermanentChoiceHandlerService` through `TargetsAfterOpponentModeChoice`); the mode destroys the spell's legal targets together; all targets gone, the spell doesn't resolve | three new `FatalLoreTest` cases (yes, all); five older cases now answer the target prompt before priority |
+| Moxite Refinery split X across permanents, refused X = 0, targeted only your own permanents | fixed: `RemoveOneOrMoreCountersFromControlledPermanentsCost.xFromOnePermanent` (`allowsZero`, `fromOnePermanent`), targets any artifact / creature | four new `MoxiteRefineryTest` cases (yes, all); its opponent-target assertion replaced (it contradicted the Oracle text) |
+| Thief of Blood removed a vanishing permanent's last time counter without the sacrifice trigger (CR 702.63a) | fixed: its entry handler runs the last-time-counter and battle-defense checks Aether Snap's handler runs | `ThiefOfBloodTest.removingLastTimeCounterTriggersVanishing` (yes, with Ravaging Riftwurm; a card with its own trigger, Aven Riftwatcher, was already caught by `CounterTriggers`) |
+| Squidnapper's control and ransom ended as it phased out; only the owner could pay | fixed: `UNTIL_SOURCE_LEAVES` (new branch in `GainControlOfTargetEffectHandler`, the grant handler and the ransom layer read), `DurationClock.holds` keeps "until it leaves" / "until you lose control" while the source is phased out (CR 702.26d), the ransom is activatable only by the player it was taken from (a preset granting player kept by `GrantActivatedAbilityEffectHandler`) | two new `SquidnapperTest` cases (yes, both) |
+| Eriette's control used `WHILE_ATTACHED` | not a defect in behaviour: the control sweep (`expireStaleControlEffects`) already ended it as the Aura phased out with the permanent; the duration is now the resolution form `WHILE_REMAINS_ATTACHED` | `ErietteTheBeguilerTest.controlEndsAsStolenPermanentPhasesOut` (no; kept as a guard) |
+| Scheming Fence gained a face-down chosen permanent's hidden abilities (CR 708.2a); the borrowers' reads drifted | fixed: Scheming Fence and Robaran / Marvin / Experiment Kraj read Drana and Linvala's one `effectiveActivatedAbilities`, which now keeps a Blood Sun creature's mana abilities | `SchemingFenceTest.gainsNothingFromAFaceDownPermanent` (yes); the Blood Sun branch is untested (read only) |
+| Trazyn, Thranduil ignored "cards in graveyards lose all abilities" | fixed: `graveyardCardsHaveLostAllAbilities`, as Necrotic Ooze | `TrazynTheInfiniteTest.gainsNothingWhileGraveyardCardsLoseAbilities` (yes) |
+| Token additions ignored a static "loses all abilities" (Humility on Chatterfang, CR 613.1f) | fixed in the three replacement sources (`TokenAdditionReplacements`, `TokenKindReplacements`, `JinnieFayTokenReplacements`): `hasLostPrintedAbilities` | `ChatterfangSquirrelGeneralTest.addsNothingWhileHumilityRemovesItsAbilities` (yes) |
+| Phyrexian Dreadnought offered and counted creatures that can't be sacrificed (CR 608.2d) | fixed: `cantBeChosenToSacrifice` | `PhyrexianDreadnoughtTest.creatureThatCantBeSacrificedIsNotOffered` (yes) |
+| Runo Stromkirk transformed without the prevention check | not a defect: `AnimationSupport.transformToBackFace` asks `isTransformPrevented` for every transform | `RunoStromkirkTest.doesNotTransformWhileTransformingIsPrevented` (no; kept as a guard) |
+| Hammerheim ended floating predicate-landwalk grants for good | not a defect: every such grant lasts until end of turn, and ending it keeps an earlier grant from coming back when a later snow-landwalk grant expires Hammerheim's "ignore landwalk" (the grant handler expires it) | none |
+| Tolarian Entrancer's harmful target spec | not a defect: the trigger and its delayed ability don't target; the spec is read by the AI only | `TolarianEntrancerTest.gainsControlOfHexproofBlocker` (no; kept as a guard) |
+| Make Your Own Luck, Bolas, the token support's static counts, Giant Albatross, Last Light of Durin's Day, Rakdos Charm, pay-{X} at 0, `SearchTargetLibraryEffectHandler`'s game state, Charmed Pendant, Animation Module, Thran Portal, Tevesh Szat, Moxite's counter-kind order | left: see "Open defects seen and not fixed" (each entry says what it needs) | none |
+
+**Behaviour changes.** Each row marked fixed. Log lines: Fatal Lore logs "[player] targets A, B." or "[player] chooses no targets." as
+the targets are chosen; its old "chooses not to destroy any creatures" line is gone; the Squidnapper grant logs "until the source leaves
+the battlefield".
+
+**What a player sees.** One new prompt: Fatal Lore's caster gets "Choose up to N target creatures to destroy." over the targetable
+creatures the choosing opponent controls, right after the opponent's mode answer (the AI answers it with its default opposing pick,
+`MultiPermanentChoiceAiStrategy`). The target log names a face-down creature by `FaceDownVisibility.publicName`.
+
+**Shared-engine changes.** `DurationClock.holds` (phased-out source of an "until" duration), `GrantActivatedAbilityEffectHandler` (keeps a
+preset granting player; `UNTIL_SOURCE_LEAVES` grants), `GainControlOfTargetEffectHandler` (`UNTIL_SOURCE_LEAVES`),
+`LayerSystemService.removeAbilitiesGrantedByLaterAbilityLoss` (the ransom grant's new duration), `MultiPermanentChoiceHandlerService`
+(the new context, the old one gone), `MayPenaltyChoiceHandlerService` (Fatal Lore's target prompt), the three token replacement sources,
+the borrower read.
+
+**Seen, not changed.** Added to "Open defects seen and not fixed": Moxite's counter-kind order, Make Your Own Luck, Bolas, the token
+support's static counts, the possible double vanishing trigger, the triage-5 low-impact four, `ErietteTheBeguilerTest`'s missing display
+names.
+
+**Tests edited.** `FatalLoreTest` (five cases answer the target prompt before priority: the target choice moved to casting),
+`MoxiteRefineryTest` (the opponent-target assertion contradicted the Oracle text; display names added), `SquidnapperTest.thiefCannotPayRansom`
+(no longer asserts the "owner" message), `MultiPermanentChoiceAiStrategyTest` (builds the new context), `EffectCountRatchetTest`'s
+baselines. New cases in 12 card test classes. No assertion was loosened.
+
+**For the next run.** Fold runs as triage runs 3 to 5 recommend. Giant Albatross and Last Light of Durin's Day each need a piece named in
+the open defects; Rakdos Charm waits with the bite's simultaneous damage.
 
 ## Prompt
 

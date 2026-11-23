@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.c.ChokingVines;
+import com.github.laxika.magicalvibes.cards.g.GladecoverScout;
 import com.github.laxika.magicalvibes.cards.w.WordOfUndoing;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TolarianEntrancer.class, BenalishKnight.class, ChokingVines.class, WordOfUndoing.class})
+@CardUsed({TolarianEntrancer.class, BenalishKnight.class, ChokingVines.class, WordOfUndoing.class,
+        GladecoverScout.class})
 class TolarianEntrancerTest extends BaseCardTest {
 
     @Test
@@ -37,6 +39,20 @@ class TolarianEntrancerTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(knight1, knight2);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(knight1, knight2);
+    }
+
+    @Test
+    @DisplayName("The ability doesn't target: it gains control of a hexproof blocker")
+    void gainsControlOfHexproofBlocker() {
+        Permanent entrancer = addCreatureReady(player1, new TolarianEntrancer());
+        entrancer.setAttacking(true);
+        Permanent scout = addCreatureReady(player2, new GladecoverScout());
+
+        declareBlockers(new BlockerAssignment(0, 0));
+        leaveEndOfCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(scout);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(scout);
     }
 
     @Test

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCardsInControllerGraveyardEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -14,12 +15,18 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * "This has all activated abilities of [matching] cards in your graveyard" (Trazyn the Infinite, Thranduil the
+ * Elvenking). A card in a graveyard that has lost all its abilities (Yixlid Jailer) has none to give, as for the
+ * all-graveyards borrower.
+ */
 @Component
 @RequiredArgsConstructor
 public class GainActivatedAbilitiesOfCardsInControllerGraveyardSelfEffectHandler
         implements StaticEffectHandlerBean {
 
     private final PredicateEvaluationService predicateEvaluationService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,7 +45,7 @@ public class GainActivatedAbilitiesOfCardsInControllerGraveyardSelfEffectHandler
 
         GameData gameData = context.gameData();
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
-        if (graveyard == null) return;
+        if (graveyard == null || gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) return;
 
         GainActivatedAbilitiesOfCardsInControllerGraveyardEffect gainEffect =
                 (GainActivatedAbilitiesOfCardsInControllerGraveyardEffect) effect;

@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadChosenCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -38,6 +39,7 @@ import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
@@ -934,8 +936,8 @@ public class MultiPermanentChoiceHandlerService {
             handlePutAttackingCreaturesOnLibrary(gameData, permanentIds, multiPermanentChoice.validIds(), ctx);
         } else if (context instanceof MultiPermanentChoiceContext.PutPermanentsOnTopOfOwnersLibraries ctx) {
             putMatchingPermanentsOnTopOfOwnersLibrariesEffectHandler.completeChoice(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.DestroyCreaturesOpponentControls) {
-            completeAskingDeathReplacementsFirst(gameData, multiPermanentChoice, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.TargetsAfterOpponentModeChoice ctx) {
+            handleTargetsAfterOpponentModeChoice(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapChosenPermanents ctx) {
             handleTapChosenPermanents(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapPermanentsForAmount ctx) {
@@ -1653,23 +1655,36 @@ public class MultiPermanentChoiceHandlerService {
         return ownerId;
     }
 
-    private void handleDestroyCreaturesOpponentControls(GameData gameData, UUID playerId, List<UUID> permanentIds,
-                                                        MultiPermanentChoiceContext.DestroyCreaturesOpponentControls ctx) {
-        if (permanentIds.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(
-                    gameData.playerIdToName.get(playerId) + " chooses not to destroy any creatures."));
-        } else {
-            // The chosen creatures are destroyed at the same time, as one event.
-            List<Permanent> creatures = permanentIds.stream()
+    /**
+     * Records the targets a spell's controller chose after an opponent chose the spell's mode (Fatal Lore; CR 601.2c):
+     * they become the spell's targets, each a creature that player controls, checked again as it resolves (CR 608.2b).
+     * The "becomes the target" and crime events happen now, as the spell's casting completes.
+     */
+    private void handleTargetsAfterOpponentModeChoice(GameData gameData, UUID playerId, List<UUID> permanentIds,
+                                                      MultiPermanentChoiceContext.TargetsAfterOpponentModeChoice ctx) {
+        StackEntry spell = gameData.stack.stream()
+                .filter(entry -> entry.getTargetableId().equals(ctx.stackEntryId()))
+                .findFirst()
+                .orElse(null);
+        if (spell != null) {
+            spell.setDeclaredTargetIds(permanentIds);
+            spell.setTargetFilter(TargetFilters.creature());
+            permanentIds.forEach(id -> spell.getTargetControllersAtCast().put(id, ctx.targetControllerId()));
+            String playerName = gameData.playerIdToName.get(playerId);
+            String targets = permanentIds.stream()
                     .map(id -> gameQueryService.findPermanentById(gameData, id))
                     .filter(java.util.Objects::nonNull)
-                    .toList();
-            destructionSupport.destroyBatch(gameData, creatures, ctx.sourceName(), ctx.cannotBeRegenerated());
-            permanentRemovalService.removeOrphanedAuras(gameData);
+                    .map(permanent -> FaceDownVisibility.publicName(gameData, permanent))
+                    .collect(java.util.stream.Collectors.joining(", "));
+            gameLogService.append(gameData, GameLog.text(permanentIds.isEmpty()
+                    ? playerName + " chooses no targets."
+                    : playerName + " targets " + targets + "."));
+            if (!permanentIds.isEmpty()) {
+                ActionEvents.crimeCommitted(gameData, spell);
+                targetTriggers.checkTargetChoiceTriggers(gameData, spell);
+            }
         }
-
-        // Resume resolving remaining effects on the same entry (the chooser's "draws up to three cards")
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleTapChosenPermanents(GameData gameData, UUID playerId, List<UUID> permanentIds,
@@ -1922,8 +1937,7 @@ public class MultiPermanentChoiceHandlerService {
      * replay doesn't record it again) and finished, firing "finish voting" triggers, only after the
      * batch's death replacements have been asked.
      * The "choose, then remove the chosen" contexts only read their picks before one batch:
-     * {@link MultiPermanentChoiceContext.DestroyCreaturesOpponentControls} and
-     * {@link MultiPermanentChoiceContext.ForcedDestroy} destroy, and
+     * {@link MultiPermanentChoiceContext.ForcedDestroy} destroys, and
      * {@link MultiPermanentChoiceContext.SacrificeLandsSearchLandsToBattlefieldTapped},
      * {@link MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount} and
      * {@link MultiPermanentChoiceContext.SacrificeCreaturesWithTotalPowerOrSacrificeSource} sacrifice, with their
@@ -1970,7 +1984,6 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands
                 || context instanceof MultiPermanentChoiceContext.VoteForCreatureThenDestroyMostVotedChoice
                 || context instanceof MultiPermanentChoiceContext.DestroyUpToOneAttachedPermanent
-                || context instanceof MultiPermanentChoiceContext.DestroyCreaturesOpponentControls
                 || context instanceof MultiPermanentChoiceContext.ForcedDestroy
                 || context instanceof MultiPermanentChoiceContext.SacrificeLandsSearchLandsToBattlefieldTapped
                 || context instanceof MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount
@@ -2163,10 +2176,6 @@ public class MultiPermanentChoiceHandlerService {
                     destroyUpToOneAttachedPermanentHandler.completeChoice(gameData, permanentIds, ctx);
             case MultiPermanentChoiceContext.FreeCastTapCost ctx -> {
                 exileFreeCastQueueSupport.completeTapCost(gameData, permanentIds, ctx);
-                return;
-            }
-            case MultiPermanentChoiceContext.DestroyCreaturesOpponentControls ctx -> {
-                handleDestroyCreaturesOpponentControls(gameData, playerId, permanentIds, ctx);
                 return;
             }
             case MultiPermanentChoiceContext.ForcedDestroy ctx -> {

@@ -89,6 +89,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -136,6 +137,7 @@ public class MayPenaltyChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ForcedCostOrElseEffectHandler forcedCostOrElseEffectHandler;
     private final LifeSupport lifeSupport;
     private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
+    private final ObjectProvider<ValidTargetService> validTargetServiceProvider;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CoinFlipService coinFlipService;
 
     /**
@@ -1504,9 +1506,41 @@ public class MayPenaltyChoiceHandlerService {
                     + " draws up to three cards.")));
             log.info("Game {} - {} chooses mode {} for {} (Fatal Lore)", gameData.id, opponentName,
                     accepted ? "draw-three" : "destroy", controllerName);
+            if (!accepted && beginFatalLoreTargetChoice(gameData, spell, opponentId)) {
+                return;
+            }
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Fatal Lore's destroy mode: its controller chooses up to two target creatures the choosing opponent controls
+     * right after the opponent's mode choice, while the spell is still being cast (its ruling; CR 601.2c). Only
+     * creatures the spell could target are offered (shroud, hexproof, protection). The answer is completed by
+     * {@code MultiPermanentChoiceHandlerService} through
+     * {@link com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.TargetsAfterOpponentModeChoice}.
+     *
+     * @return whether a choice is now awaiting the controller's answer (none when nothing can be targeted)
+     */
+    private boolean beginFatalLoreTargetChoice(GameData gameData, StackEntry spell, UUID opponentId) {
+        UUID controllerId = spell.getControllerId();
+        ValidTargetService validTargetService = validTargetServiceProvider.getObject();
+        List<UUID> candidates = gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream()
+                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .filter(permanent -> validTargetService.canPermanentBeTargetedBySpell(
+                        gameData, permanent, spell.getCard(), controllerId))
+                .map(Permanent::getId)
+                .toList();
+        if (candidates.isEmpty()) {
+            return false;
+        }
+        int maxCount = Math.min(2, candidates.size());
+        playerInputService.beginMultiPermanentChoice(gameData, controllerId, candidates, maxCount,
+                new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.TargetsAfterOpponentModeChoice(
+                        spell.getTargetableId(), opponentId),
+                "Choose up to " + maxCount + " target creature" + (maxCount == 1 ? "" : "s") + " to destroy.");
+        return true;
     }
 
     /**

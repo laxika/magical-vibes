@@ -11,7 +11,12 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves the non-targeting control effect created by an Aura-attachment trigger. */
+/**
+ * Resolves the non-targeting control effect created by an Aura-attachment trigger: "gain control of that permanent
+ * for as long as that Aura is attached to it" (Eriette, the Beguiler). A resolution's "for as long as" duration that
+ * tracks the Aura and the permanent ends as either phases out (CR 702.26f), so it is
+ * {@code Duration.WHILE_REMAINS_ATTACHED}, not the rule-kept attachment of a static ability.
+ */
 @Component
 @RequiredArgsConstructor
 public class GainControlOfAuraAttachedPermanentEffectHandler implements NormalEffectHandlerBean {
@@ -33,6 +38,6 @@ public class GainControlOfAuraAttachedPermanentEffectHandler implements NormalEf
         }
 
         creatureControlService.applyControlEffect(gameData, entry.getControllerId(), enchanted,
-                effect, Duration.WHILE_ATTACHED, aura.getId(), entry.getCard().getName());
+                effect, Duration.WHILE_REMAINS_ATTACHED, aura.getId(), entry.getCard().getName());
     }
 }

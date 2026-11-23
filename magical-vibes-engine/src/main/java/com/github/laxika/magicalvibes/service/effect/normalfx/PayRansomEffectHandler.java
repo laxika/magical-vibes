@@ -12,7 +12,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Ends a ransom control effect when the targeted creature's owner pays its ransom. */
+/** Ends a ransom control effect when the player the creature was taken from pays its ransom. */
 @Component
 @RequiredArgsConstructor
 public class PayRansomEffectHandler implements NormalEffectHandlerBean {

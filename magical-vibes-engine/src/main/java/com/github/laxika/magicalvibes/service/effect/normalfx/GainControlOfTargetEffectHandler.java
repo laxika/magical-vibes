@@ -70,7 +70,7 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             resolveWhileSource(gameData, entry, e, gain, true, false);
         } else if (Duration.WHILE_SOURCE_TAPPED.equals(duration)) {
             resolveWhileSource(gameData, entry, e, gain, true, true);
-        } else if (Duration.WHILE_SOURCE_REMAINS.equals(duration)) {
+        } else if (Duration.WHILE_SOURCE_REMAINS.equals(duration) || Duration.UNTIL_SOURCE_LEAVES.equals(duration)) {
             resolveWhileSource(gameData, entry, e, gain, false, false);
         } else if (Duration.WHILE_SOURCE_REMAINS_TAPPED.equals(duration)) {
             resolveWhileSource(gameData, entry, e, gain, false, true);

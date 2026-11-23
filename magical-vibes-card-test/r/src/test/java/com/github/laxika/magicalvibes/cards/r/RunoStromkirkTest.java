@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.b.BoundByMoonsilver;
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HullbreakerHorror;
@@ -21,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({RunoStromkirk.class, KrothussLordOfTheDeep.class, GrizzlyBears.class,
-        ColossalDreadmaw.class, HullbreakerHorror.class, MarneusCalgar.class})
+        ColossalDreadmaw.class, HullbreakerHorror.class, MarneusCalgar.class, BoundByMoonsilver.class})
 class RunoStromkirkTest extends BaseCardTest {
 
     @Test
@@ -40,6 +41,21 @@ class RunoStromkirkTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(creature);
+    }
+
+    @Test
+    @DisplayName("Doesn't transform while an effect says it can't transform")
+    void doesNotTransformWhileTransformingIsPrevented() {
+        Permanent runo = addCreatureReady(player1, new RunoStromkirk());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new BoundByMoonsilver());
+        aura.setAttachedTo(runo.getId());
+        harness.setLibrary(player1, List.of(new ColossalDreadmaw()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(runo.isTransformed()).isFalse();
     }
 
     @Test

@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.cards.z.ZhalfirinKnight;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ControllerCantSacrificeTargetThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
@@ -33,6 +36,20 @@ class PhyrexianDreadnoughtTest extends BaseCardTest {
         harness.castFromHand(player1, new PhyrexianDreadnought(), "{1}");
         harness.passBothPriorities(); // resolve creature spell → ETB on stack
         harness.passBothPriorities(); // resolve ETB
+    }
+
+    @Test
+    @DisplayName("A creature that can't be sacrificed is neither offered nor counted toward the total power")
+    void creatureThatCantBeSacrificedIsNotOffered() {
+        Permanent wurm = harness.addToBattlefieldAndReturn(player1, new JungleWurm());
+        Permanent dragon = harness.addToBattlefieldAndReturn(player1, new TeekasDragon());
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("Test", null, player1.getId(),
+                new ControllerCantSacrificeTargetThisTurnEffect(), wurm.getId(), Duration.UNTIL_END_OF_TURN));
+        castDreadnought();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).contains(dragon.getId()).doesNotContain(wurm.getId());
     }
 
     @Test

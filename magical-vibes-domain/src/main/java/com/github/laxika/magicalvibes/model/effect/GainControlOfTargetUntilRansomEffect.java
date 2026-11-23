@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Gains control of the target creature until the source leaves the battlefield or that
- * creature's controller pays the configured ransom.
+ * Gains control of the target creature until the source leaves the battlefield or the player it was taken from pays
+ * the configured ransom. "Until it leaves" doesn't end as the source phases out, which isn't leaving (CR 702.26d).
  */
 public record GainControlOfTargetUntilRansomEffect(int manaCost, int lifeCost)
         implements ControlStealingEffect {
@@ -15,7 +15,7 @@ public record GainControlOfTargetUntilRansomEffect(int manaCost, int lifeCost)
 
     @Override
     public Duration controlDuration() {
-        return Duration.WHILE_SOURCE_REMAINS;
+        return Duration.UNTIL_SOURCE_LEAVES;
     }
 
     @Override

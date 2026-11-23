@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.d.DeadlyInsect;
 import com.github.laxika.magicalvibes.cards.e.ElvishRanger;
 import com.github.laxika.magicalvibes.cards.g.GorillaChieftain;
+import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FatalLore.class, ElvishRanger.class, GorillaChieftain.class, DeadlyInsect.class})
+@CardUsed({FatalLore.class, ElvishRanger.class, GorillaChieftain.class, DeadlyInsect.class, WhiteKnight.class})
 class FatalLoreTest extends BaseCardTest {
 
     @Test
@@ -61,8 +62,8 @@ class FatalLoreTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         harness.handleMayAbilityChosen(player2, false);
-        harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of(rangerA.getId(), rangerB.getId()));
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(rangerC);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
@@ -87,8 +88,8 @@ class FatalLoreTest extends BaseCardTest {
         setupAndCast();
         GameData gd = harness.getGameData();
         harness.handleMayAbilityChosen(player2, false);
-        harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of(chieftain.getId()));
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
@@ -103,8 +104,8 @@ class FatalLoreTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         harness.handleMayAbilityChosen(player2, false);
-        harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(ranger);
 
@@ -138,7 +139,6 @@ class FatalLoreTest extends BaseCardTest {
         setupAndCast();
 
         harness.handleMayAbilityChosen(player2, false);
-        harness.passBothPriorities();
 
         PendingInteraction.MultiPermanentChoice choice = harness.getGameData().interaction
                 .activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -153,8 +153,8 @@ class FatalLoreTest extends BaseCardTest {
         setupAndCast();
 
         harness.handleMayAbilityChosen(player2, false);
-        harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of(ranger.getId()));
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         int handBefore = gd.playerHands.get(player2.getId()).size();
@@ -165,6 +165,55 @@ class FatalLoreTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(ranger.getCard());
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 2);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore - 2);
+    }
+
+    @Test
+    @DisplayName("Decline mode: the caster chooses the targets right after the mode, before anyone gets priority")
+    void declineAsksForTargetsBeforePriority() {
+        Permanent ranger = harness.addToBattlefieldAndReturn(player2, new ElvishRanger());
+        setupAndCast();
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        PendingInteraction.MultiPermanentChoice choice = harness.getGameData().interaction
+                .activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validIds()).containsExactly(ranger.getId());
+        assertThat(harness.getGameData().stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Decline mode: a creature with protection from black can't be chosen as a target")
+    void declineCannotTargetProtectionFromBlack() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player2, new WhiteKnight());
+        Permanent ranger = harness.addToBattlefieldAndReturn(player2, new ElvishRanger());
+        setupAndCast();
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        PendingInteraction.MultiPermanentChoice choice = harness.getGameData().interaction
+                .activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).contains(ranger.getId()).doesNotContain(knight.getId());
+    }
+
+    @Test
+    @DisplayName("Decline mode: when every chosen target is gone, the spell doesn't resolve and that player draws nothing")
+    void declineWithEveryTargetGoneDoesNothing() {
+        Permanent ranger = harness.addToBattlefieldAndReturn(player2, new ElvishRanger());
+        stockLibrary(player2);
+        setupAndCast();
+        GameData gd = harness.getGameData();
+
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMultiplePermanentsChosen(player1, List.of(ranger.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(ranger);
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore);
+        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(card -> card.getName().equals("Fatal Lore"));
     }
 
     private void setupAndCast() {

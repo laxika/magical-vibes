@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
+import com.github.laxika.magicalvibes.cards.y.YixlidJailer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TrazynTheInfinite.class, RodOfRuin.class, ProdigalPyromancer.class, MindStone.class, SolRing.class})
+@CardUsed({TrazynTheInfinite.class, RodOfRuin.class, ProdigalPyromancer.class, MindStone.class, SolRing.class,
+        YixlidJailer.class})
 class TrazynTheInfiniteTest extends BaseCardTest {
 
     @Test
@@ -36,6 +38,19 @@ class TrazynTheInfiniteTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertLife(player2, 19);
         assertThat(trazyn.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Gains nothing while cards in graveyards have lost all abilities")
+    void gainsNothingWhileGraveyardCardsLoseAbilities() {
+        addReadyTrazyn();
+        harness.addToBattlefieldAndReturn(player2, new YixlidJailer());
+        harness.setGraveyard(player1, List.of(new RodOfRuin()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player2, 20);
     }
 
     @Test

@@ -3449,11 +3449,14 @@ public class LayerSystemService {
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect floating : gameData.floatingEffects) {
                 if (!(floating.effect() instanceof GrantActivatedAbilityEffect grant)
-                        || floating.sourcePermanentId() == null
-                        || !Duration.WHILE_SOURCE_REMAINS.equals(grant.duration())) {
+                        || floating.sourcePermanentId() == null) {
                     continue;
                 }
                 boolean ransom = grant.ability().getEffects().stream().anyMatch(PayRansomEffect.class::isInstance);
+                if (!Duration.WHILE_SOURCE_REMAINS.equals(grant.duration())
+                        && !(ransom && Duration.UNTIL_SOURCE_LEAVES.equals(grant.duration()))) {
+                    continue;
+                }
                 if (floating.affectedPermanentId() != null && !ransom) {
                     continue;
                 }

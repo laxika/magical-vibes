@@ -294,11 +294,12 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
-     * The controller destroys the chosen creatures an opponent controls (Fatal Lore's second mode).
-     * {@code sourceName} names the destroying source in the game log and {@code cannotBeRegenerated}
-     * carries the "they can't be regenerated" clause.
+     * The spell's controller chooses the targets of the mode an opponent chose for the spell (Fatal Lore: "you
+     * choose the zero, one, or two targets after that", its ruling; CR 601.2c). The chosen permanents become the
+     * targets of the spell on the stack ({@code stackEntryId}), each recorded as controlled by
+     * {@code targetControllerId} ("target creatures that player controls").
      */
-    record DestroyCreaturesOpponentControls(String sourceName, boolean cannotBeRegenerated)
+    record TargetsAfterOpponentModeChoice(UUID stackEntryId, UUID targetControllerId)
             implements MultiPermanentChoiceContext {
     }
 
