@@ -154,7 +154,7 @@ class GrantedAbilitiesTest {
         assertThat(gameData.perpetualTriggerEffects(cardId, GAINS_CONTROL, Zone.BATTLEFIELD)).containsExactly(DRAW_ONE);
 
         gameData.removePerpetualAbilitiesIf(cardId, GAINS_CONTROL, DrawCardEffect.class::isInstance);
-        assertThat(gameData.perpetualTriggeredAbilityGrants).doesNotContainKey(cardId);
+        assertThat(gameData.perpetualAbilityGrants).doesNotContainKey(cardId);
     }
 
     @Test

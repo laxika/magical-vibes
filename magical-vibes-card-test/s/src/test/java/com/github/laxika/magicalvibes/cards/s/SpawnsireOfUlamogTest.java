@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HandOfEmrakul;
 import com.github.laxika.magicalvibes.cards.p.PathrazerOfUlamog;
 import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
+import com.github.laxika.magicalvibes.cards.s.SphereOfResistance;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -21,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SpawnsireOfUlamog.class, Forest.class, GrizzlyBears.class,
-        HandOfEmrakul.class, PathrazerOfUlamog.class})
+        HandOfEmrakul.class, PathrazerOfUlamog.class, SphereOfResistance.class})
 class SpawnsireOfUlamogTest extends BaseCardTest {
 
     @Test
@@ -145,5 +146,42 @@ class SpawnsireOfUlamogTest extends BaseCardTest {
         }
 
         assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(pathrazer);
+    }
+
+    @Test
+    @DisplayName("A free cast from outside the game still pays a cost increase")
+    void freeCastPaysCostIncrease() {
+        harness.addToBattlefield(player1, new SpawnsireOfUlamog());
+        harness.addToBattlefield(player2, new SphereOfResistance());
+        HandOfEmrakul hand = new HandOfEmrakul();
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(hand)));
+        harness.addMana(player1, ManaColor.COLORLESS, 21);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerSideboards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Hand of Emrakul");
+    }
+
+    @Test
+    @DisplayName("A free cast from outside the game whose cost increase can't be paid stays outside the game")
+    void freeCastWithUnpayableCostIncreaseStaysOutside() {
+        harness.addToBattlefield(player1, new SpawnsireOfUlamog());
+        harness.addToBattlefield(player2, new SphereOfResistance());
+        HandOfEmrakul hand = new HandOfEmrakul();
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(hand)));
+        harness.addMana(player1, ManaColor.COLORLESS, 20);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(hand);
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() == hand);
+        harness.assertNotOnBattlefield(player1, "Hand of Emrakul");
     }
 }

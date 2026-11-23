@@ -159,7 +159,7 @@ class PepRaucousRaiderTest extends BaseCardTest {
         Permanent forest = findPermanent(player1, "Forest");
         assertThat(gqs.isArtifact(gd, forest)).isFalse();
         assertThat(gd.perpetualCardTypes).doesNotContainKey(land.getId());
-        assertThat(gd.perpetualActivatedAbilities).doesNotContainKey(land.getId());
+        assertThat(gd.perpetualAbilities(land.getId())).isEmpty();
     }
 
     @Test
@@ -179,7 +179,7 @@ class PepRaucousRaiderTest extends BaseCardTest {
         harness.assertLife(player2, 16);
         harness.assertInGraveyard(player2, "Shock");
         assertThat(gd.perpetualCardTypes).doesNotContainKey(instant.getId());
-        assertThat(gd.perpetualActivatedAbilities).doesNotContainKey(instant.getId());
+        assertThat(gd.perpetualAbilities(instant.getId())).isEmpty();
     }
 
     @Test

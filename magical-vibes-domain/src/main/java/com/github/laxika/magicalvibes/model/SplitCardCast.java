@@ -172,7 +172,7 @@ public record SplitCardCast(UUID controllerId, Card physicalCard, Zone sourceZon
      * A card set aside from outside the game while its half and targets are chosen.
      *
      * @param paySideboardCastTax whether a free cast still pays the cast's generic cost increases and
-     *                            reveals, as a free cast from a sideboard does
+     *                            reveals, as every free cast from outside the game does
      */
     public record OutsideGameCast(boolean paySideboardCastTax) implements Origin {
     }

@@ -2791,3 +2791,11 @@ MayPayKickerForFreeCastEffect,unique,9,"run 27: the kicker payment inside an exi
 MayPlaySourceExiledCardWithoutPayingManaCostEffect,unique,9,"run 27: Evercoat Ursine: play (lands too) an imprinted card, siblings withdrawn by source permanent"
 MayPayLifeForBlackManaEffect,dead,9,"run 27: no card and no engine code built it (K'rrik uses PayBlackManaWithLifeEffect); record and its cost-modification handler deleted"
 PerpetuallyGrantEnterAbilityToPermanentCardsInGraveyardEffect,absorbed,9,"run 27: PerpetuallyGrantAbilitiesEffect(cardsInYourGraveyard(CardIsPermanentPredicate), enters(THIS), ...) (Distracted Botanist); GameData.perpetualEnterEffectsByCardId deleted"
+PerpetuallyGrantTriggeredAbilityEffect,absorbed,9,"run 28: PerpetuallyGrantAbilityToTriggeringCardEffect(leaves-graveyard TriggeredAbility) (Oglor); GameData.perpetualTriggeredAbilities and GraveyardService's own firing deleted, the ability triggers through the pipeline"
+PerpetuallyGrantActivatedAbilityToTriggeringCardEffect,absorbed,9,"run 28: PerpetuallyGrantAbilityToTriggeringCardEffect(activated ability) (Gitrog); GameData.perpetualActivatedAbilities merged into perpetualAbilityGrants"
+PerpetuallyGrantTriggeredAbilityToSourceCardEffect,absorbed,9,run 28: renamed PerpetuallyGrantAbilityToTriggeringCardEffect (Forgeborn Phoenix)
+PerpetuallyGrantAbilityToTriggeringCardEffect,survivor,9,"run 28: Forgeborn's record renamed: any Ability to the triggering card wherever it is, else the ability's own card; absorbs Gitrog's and Oglor's"
+PerpetuallyBoostControlledCreaturesEffect,absorbed,9,"run 28: PerpetuallyBoostTargetCreatureEffect(creaturesYouControl(), p, t) (Legion of Clay)"
+PerpetuallyBoostSourceAndEnteringCreatureEffect,absorbed,9,"run 28: PerpetuallyBoostTargetCreatureEffect(allOf(source(), triggering()), p, t) (Leaf-Leap Guide); its static-ability boost on an exchanged card was lost with the card's abilities"
+PerpetuallyGrantActivatedAbilityToTargetPermanentEffect,unique,9,"run 28: the one perpetual grant to a target noncreature permanent (Kemba's Outfitter's Equipment); the permanent survivors target creatures; writes the one ability store"
+PerpetuallyGrantTriggeredAbilityToTargetCreatureOrGraveyardCardEffect,unique,9,run 28: one target that is a creature you control or a creature card in your graveyard (Kami of Mourning)

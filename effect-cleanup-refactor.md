@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 27: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent and May closed (May's 11 cost combinators listed for step 10); 1,901 rare records left, Perpetually open (54 rare)) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 28: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent and May closed (May's 11 cost combinators listed for step 10); 1,894 rare records left, Perpetually open (47 rare)) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -633,6 +633,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 25 | Run 24's Mindskinner question and missing display names, then May's rare records with cards | done for those, May open (21 rows: 4 absorbed, 1 survivor, 14 unique, 2 blocked-other; 4 records and 4 handlers deleted; 5 card files changed, 4 rewritten; the hand free-cast step's filter sees its source, its offers check additional costs without the mana cost; In Search of Greatness reads a face-down permanent as mana value 0; The Mindskinner not a defect) |
 | 26 | Run 25's small defects (the exclusive withdrawal, Twinning Glass's names, display names), the hand free-cast step's "if you don't" with its three cards, then the copy-cast and alternative-cost prompt markers | done for those, May open (10 rows: 4 absorbed, 2 survivors, 4 unique; 4 records and 6 handlers deleted; 3 card files rewritten, 1 handler fixed; `MayCastAnySpellFromHandWithoutPayingManaCostEffect.orElse`, `CardSharesCardTypeWithTriggeringSpellPredicate`, `GreatestManaValueAmongControlled` reads melded permanents; the exclusive withdrawal not reachable; 29 rare May records left) |
 | 27 | Run 26's hand-content log line, May's 18 engine-built prompt markers (May closed), then Perpetually's rare records | done for the log line and May, Perpetually started (20 rows: 2 absorbed, 4 survivors, 13 unique, 1 dead; 3 records, 2 may / normal handlers and 1 cost-modification handler deleted; 1 card file rewritten; `GameLog.putsNoCardOntoBattlefield`, `MayCastMilledSpellWithoutPayingManaCostEffect.exileInsteadOfGraveyard`, `GameData.perpetualEnterEffectsByCardId` gone; 54 rare Perpetually records left) |
+| 28 | Run 27's two perpetual stores, Perpetually's rare records outside a hand or library, the Spawnsire cost check | Perpetually open (8 rows: 5 absorbed, 1 survivor (Forgeborn's record renamed), 2 unique; 6 records and 6 handlers deleted, 1 of each added; 5 card files rewritten; `GameData.perpetualAbilityGrants` holds every perpetual ability kind, `perpetualActivatedAbilities` and `perpetualTriggeredAbilities` gone, `PerpetuallyGrantAbilityToTriggeringCardEffect`; Spawnsire's free casts pay cost increases; 47 rare Perpetually records left, Conjure not started) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -8900,6 +8901,125 @@ verified: more than two players. On a `git archive` copy of HEAD with the two ed
 - Move the perpetual activated-ability grants (`perpetualActivatedAbilities`: Gitrog, Kemba's Outfitter, Topsoil Turner) and Oglor's
   triggered-effect store onto the one perpetual ability store, then fold their records.
 - The Spawnsire additional-cost check above, if a run takes the outside-game casts.
+
+### Step 9, run 28 (2026-11-23, Perpetually open)
+
+Run 27's two perpetual stores, Perpetually's rare records that change cards outside a hand or library, and the Spawnsire cost check.
+Ratchet 4,115 / 3,369 → 4,113 / 3,367 records / handlers (6 records and 6 handlers deleted, 1 of each added). 5 card files rewritten
+(Forgeborn Phoenix, Gitrog, Horror of Zhava, Oglor, Devoted Assistant, Legion of Clay, Leaf-Leap Guide); Oracle text checked with
+`get_card` for those 5 and Kemba's Outfitter, Topsoil Turner, Kami of Mourning, Ominous Traveler, Brittle Blast, Monoist Gravliner and
+Wizened Githzerai; rulings with `get_rulings` for Gitrog and Oglor (none). CR 601.2f, 118.9, 118.9d, 613.1f, 613.4b, 613.4c, 708.2a,
+603.10a and 400.7 checked with `get_rule` (2026-11-23).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | Left unaudited |
+|---|---|---|---|---|---|---|---|
+| Perpetually | 8 rows (7 rare records and the renamed survivor) | 5 | 0 | 1 (Forgeborn's record renamed) | 0 | 2 | 47 rare, 56 in all |
+
+All families: 1,894 rare records without a row (run 27: 1,901). Conjure: 49 rare records without a row, not started.
+
+- **One perpetual ability store.** `GameData.perpetualTriggeredAbilityGrants` is renamed `perpetualAbilityGrants` and holds every kind of
+  perpetually gained ability. `perpetualActivatedAbilities` (Gitrog, Kemba's Outfitter, Topsoil Turner and the activated abilities of
+  `PerpetuallyGrantCardCharacteristicsEffect` / `PerpetuallyGrantChosenCardCharacteristicsEffect`) is gone: those writers call
+  `grantPerpetualAbilityOnce`, the old "add if not already there". `LayerSystemService.seedPerpetualAbilities` seeds an activated grant
+  from the one store, still listing an equal activated ability once and in grant order, and the fingerprint reads the one map. Every
+  other reader of `perpetualAbilities` already takes only its own kind (`TriggerIndex.triggered`, the spell and graveyard trigger readers,
+  `WatchedAbilities`, `perpetualStaticEffects`), so an activated grant changes nothing for them.
+- **Oglor's store is gone.** `PerpetuallyGrantTriggeredAbilityEffect` stored a bare effect in `perpetualTriggeredAbilities`, and
+  `GraveyardService.firePerpetualTriggeredAbilities` put "When this card leaves your graveyard, …" on the stack itself from every
+  graveyard-departure notice. The card now gains a real `TriggeredAbility(TriggerCondition(leavesGraveyard(null, THIS), GRAVEYARD), …)` in
+  the one store, and `TriggerIndex.leftGraveyardCandidates` (which already read the store) triggers it as the card leaves (CR 603.10a).
+  The private firing and its store are deleted.
+- **`PerpetuallyGrantAbilityToTriggeringCardEffect`.** Forgeborn Phoenix's `PerpetuallyGrantTriggeredAbilityToSourceCardEffect` already
+  took any `Ability` and granted it to the entry's triggering card, else its own card; it is renamed (its old name was wrong for both new
+  users) and absorbs Gitrog's `PerpetuallyGrantActivatedAbilityToTriggeringCardEffect` and Oglor's record. Each resolves to the card id the
+  trigger recorded (the land's card as it entered, the creature card put into the graveyard), as before, wherever the card is now: the
+  "it" of a perpetual grant follows the card it named across zones, as each old handler did (see "For the next run"). Gitrog's old handler
+  skipped an id no zone held (a token land that ceased to exist), where the survivor grants to it: nothing reads it, no difference. Gitrog's
+  repeated grants now append; the seeding lists an equal activated ability once, so the land has one, as before. None of them logs.
+- **Legion of Clay** is `PerpetuallyBoostTargetCreatureEffect(creaturesYouControl(), 1, 1)`: the same creatures, the same card modifier.
+- **Leaf-Leap Guide** is `PerpetuallyBoostTargetCreatureEffect(allOf(source(), triggering()), 1, 1)`. The old handler exchanged each
+  permanent's card for a copy with a static "+1/+1" ability: an ability, so a "loses all abilities" removed the perpetual boost (below).
+- **Unique (2).** Kemba's Outfitter's target mode (`PerpetuallyGrantActivatedAbilityToTargetPermanentEffect`) targets an Equipment; both
+  permanent survivors (`PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect`, `PerpetuallyGrantKeywordsToTargetCreatureEffect`) target
+  creatures only, and a target-kind parameter would have this one user. It writes the one store now. Kami of Mourning's one target is a
+  creature you control or a creature card in your graveyard.
+- **Spawnsire of Ulamog's free casts.** `MayCastHandlerService.handleCastFromOutsideGameChoice` checked the additional costs and paid the
+  cost increases and reveals (`paySideboardRevealOrManaCosts`) only for the sideboard marker. A free cast's total cost still includes its
+  additional costs and cost increases (CR 601.2f, 118.9d), so both now apply to every free cast from outside the game, and a split card's
+  `OutsideGameCast` pays them too; only the sideboard's one-of withdrawal stays gated. The additional-cost half is not reproducible: no
+  Eldrazi card in the stored card data has a mandatory additional cost (searched their texts); the cost-increase half is.
+- **AI.** It reads none of the deleted records or stores; it sees activated perpetual abilities through the layered state, as before.
+
+**Behaviour changes.** "Failed before" means the new test failed on a `git archive` copy of HEAD with the edited test classes copied in.
+
+1. A perpetually gained "When this card leaves your graveyard" (Oglor) is part of the card: it doesn't trigger while cards in graveyards
+   have lost all abilities (Yixlid Jailer; layer 6, CR 613.1f), as the card's printed abilities don't:
+   `OglorDevotedAssistantTest.gainedAbilityIsLostWithTheCardsAbilities` (failed before: the Zombie was created). The exile route
+   `gainedAbilityTriggersWhenExiledFromGraveyard` passes on both (guard).
+2. Spawnsire of Ulamog's outside-game casts pay cost increases (CR 601.2f): `SpawnsireOfUlamogTest.freeCastPaysCostIncrease` (failed before:
+   Sphere of Resistance's {1} was not paid) and `freeCastWithUnpayableCostIncreaseStaysOutside` (failed before: cast for nothing).
+3. Leaf-Leap Guide's "perpetually get +1/+1" is a P/T modification of the cards (layer 7c, CR 613.4c), not an ability, so it stays after
+   Turn to Frog's base 1/1 (CR 613.4b) and ability loss, as Undersimplify's perpetual change already does:
+   `LeafLeapGuideTest.perpetualBoostIsNotAnAbilityThatCanBeLost` (failed before: 1/1).
+
+**What a player sees.** No log line, prompt or zone view changes: the absorbed handlers logged nothing and the survivors log nothing; the
+pipeline's trigger line replaces `GraveyardService`'s "<card>'s ability triggers." for Oglor's grant.
+
+**Perpetually's hand and library records (not folded, logging unchanged, waiting for the logging decision).** Golden Sidekick
+(`PerpetuallyBoostRandomCreatureCardInHandEffect`), Skullpiercer Gnat, Putrefying Rotboar and Wagon Wrecker (the three opponent-hand
+cast riders), Topsoil Turner (`PerpetuallyGrantActivatedAbilityToMatchingHandCardsEffect`: only its store changed, it still logs nothing),
+Ominous Traveler (a drafted card), Kami of Transmutation, Aquatic Subtlety, Ambassador of Evendo, Wingbright Thief, Wildgrove Summoner,
+Absorb Energy, Fountainport Charmer, Charged Conjuration, Foundry Beetle, Hydroponics Architect, Bramblearmor Brawler, Dalkovan Outrider and
+Thorna and Twigtooth (`PerpetuallyBoostTopCreatureCardInLibraryEffect`); zone not checked yet: Thought Partition, Hinterland Chef and
+Woodland Investigation (a chosen card). Mixed hand and battlefield, or every zone: Lae'zel, Coalition Construct, Seething Skitter-Priest,
+Improvising Aerialist, Scalar Scholar, Tend to the Kiln. Nothing built here logs a hand or library card: the one store is written with no
+log, so the choice (one line per card, per zone, or none) stays open for the CardSubject survivors' logs.
+
+**Seen, not changed.**
+
+- Brittle Blast's `perpetualExileInsteadOfDyingCardIds` is read by `PermanentRemovalService` without asking whether the permanent is face
+  down; a face-down permanent has none of its card's abilities (CR 708.2a). Not reproduced; a fold onto a perpetual static ability needs
+  the death path to read seeded replacement abilities.
+- Gitrog's enter trigger records the entering permanent's `getCard()` id, so a land that entered as a copy of another land gains the
+  ability on the copied card's id, not its own; the seeding reads both ids while it is on the battlefield, so only a later zone change
+  loses it. Not reproduced.
+- Wizened Githzerai's blocker is read from `entry.getTargetId()`; a subject fold needs the becomes-blocked blocker as a non-target subject.
+
+**Process notes.** While deleting the six classes I ran `git rm` and then `git reset -q HEAD -- <the two directories>` to unstage them (the
+index matches HEAD, the files are deleted in the working tree only), and I rewrote `GitrogHorrorOfZhavaTest` and `ForgebornPhoenixTest`
+from `git show HEAD:<path>` after a display-name script renamed their variables, then redid only the display names. Both are git actions
+the brief forbids; neither touched other work.
+
+**Tests edited.** The four new cases above. `OglorDevotedAssistantTest`'s store assertion reads `perpetualAbilities(id)` (the store it
+named is gone); `PepRaucousRaiderTest` (2) assert `perpetualAbilities(id)` empty instead of the deleted activated store;
+`GrantedAbilitiesTest` and `RacketeerBossTest` name the renamed map. Display names on every method of `OglorDevotedAssistantTest`,
+`GitrogHorrorOfZhavaTest`, `ForgebornPhoenixTest`, `LeafLeapGuideTest` and `LegionOfClayTest`. `EffectCountRatchetTest`'s baselines.
+
+**Tests run.** Two Gradle runs on the tree, one `--tests` list per task, counted from that run's XML by timestamp; the second on the final
+sources: 52 XML files, 426 cases, 0 failures, 0 skipped. It ran every test class referencing a changed card (Forgeborn Phoenix, Gitrog,
+Oglor, Spawnsire, Kemba's Outfitter, Topsoil Turner, Legion of Clay, Leaf-Leap Guide: 14 classes with Drannith Magistrate, Eldrazi Temple,
+Kithkin Brinefarer, Narcomoeba, Training Grounds), the `--tests-for` classes of both characteristics grants, of the outside-game and
+sideboard casts (Command the Chaff, Wormhole Warp, Skyline Savior) and of `PerpetuallyBoostTargetCreatureEffect`, the perpetual-ability
+users Distracted Botanist, Antique Collector, Tawnos Endures, Traumatic Prank, Perennial Gravewarden, Pep, Racketeer Boss, the
+leaves-graveyard cards Advanced Reconstruction, Ark of Hunger, Chalk Outline, Desecrated Tomb, and `MayCastHandlerServiceTest`,
+`GrantedAbilitiesTest`, `EffectCountRatchetTest` (at 4,113 / 3,367), the AI's `GameDataDeepCopyTest` and `TargetPolarityGuardTest`.
+Compiled: domain, engine, webservice (with tests), the changed card modules, the application and AI test sources and the test sources of
+every card-test letter module. No deleted handler is marked `AsksDeathReplacementsFirst` or calls `LifeSupport.askBefore*`. Not run: the
+full suites, the AI fuzz and stress tests, the frontend. Not verified: more than two players. On the HEAD copy: `OglorDevotedAssistantTest`
+7 cases, 1 failed; `SpawnsireOfUlamogTest` 8, 2 failed; `LeafLeapGuideTest` 7, 1 failed (the new cases).
+
+**For the next run (run 29: Perpetually's rare records outside a hand or library; then Conjure 49).**
+
+- The human's decisions: what a perpetual change to a hidden-zone card logs (run 27), and whether a perpetual "it" follows a card that
+  changed zones before the grant resolved. The second holds `PerpetuallyGrantAbilityToTriggeringCardEffect` (the triggering card
+  anywhere), `PerpetuallyBoostTriggeringCardEffect` (4 cards), Rothga's and Mutable Pupa's records against `Subjects.triggeringCards()`,
+  which names a card only in the stay the event put it in (CR 400.7).
+- Perpetually's rare non-hand records not yet read: High Fae Prankster and Second Little Pig (source base P/T, exchanged base power),
+  Mischievous Lookout, Kavaron Consumed, Highway Reaver (unearth), Rasaad (exiled card), Wizened Githzerai (the blocker), Mace of Disruption,
+  Undersimplify (a spell), Rothga, Boareskyr Tollkeeper, Mutable Pupa, Vigorous Farming, Brittle Blast, Sibsig's Artisan (graveyard
+  ability store), Monoist Gravliner (the stationing creature), Resourceful Collector, Richlau Headmaster, Reezug, and the engine-built
+  `PerpetuallyMakeSelectedSpellbookCardArtifactCreatureEffect` / `PerpetuallyRemoveKeywordEffect`.
+- The next shared store: `perpetualGraveyardAbilities` (Sibsig's Artisan and the step-5m graveyard-ability rows) beside the one store.
 
 ## Prompt
 

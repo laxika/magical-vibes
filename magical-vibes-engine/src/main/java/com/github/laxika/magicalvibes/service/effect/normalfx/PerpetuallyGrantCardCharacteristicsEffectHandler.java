@@ -14,9 +14,7 @@ import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSuppor
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -64,16 +62,7 @@ public class PerpetuallyGrantCardCharacteristicsEffectHandler implements NormalE
             });
         }
         mergeSubtypes(gameData, cardId, perpetual.subtypes());
-        gameData.perpetualActivatedAbilities.compute(cardId, (ignored, existing) -> {
-            List<com.github.laxika.magicalvibes.model.ActivatedAbility> updated =
-                    new ArrayList<>(existing == null ? List.of() : existing);
-            for (var ability : perpetual.activatedAbilities()) {
-                if (!updated.contains(ability)) {
-                    updated.add(ability);
-                }
-            }
-            return List.copyOf(updated);
-        });
+        perpetual.activatedAbilities().forEach(ability -> gameData.grantPerpetualAbilityOnce(cardId, ability));
     }
 
     private void mergeCardTypes(GameData gameData, UUID cardId, Set<CardType> types) {

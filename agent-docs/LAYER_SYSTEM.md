@@ -523,7 +523,7 @@ is a `LoseThisActivatedAbilityEffect` naming the ability object, with no end (`G
 departed permanent's last-known copy records whether it had lost its printed abilities
 (`Permanent.lastKnownLostPrintedAbilities`) and the departure the abilities granted it as the layers left them. Cipher's grant
 lasts while the encoded card stays exiled (`WHILE_SOURCE_CARD_EXILED`, CR 702.99c). Perpetual abilities and keywords
-(`GameData.perpetualAbilities`, `perpetualActivatedAbilities`, `perpetualKeywords`) are part of the card: the pass seeds
+(`GameData.perpetualAbilities`, one store of every ability kind, and `perpetualKeywords`) are part of the card: the pass seeds
 them, so any "loses all abilities" removes them, and seeds none while the permanent is face down (CR 708.2a). Tests give and read these through `testutil.PermanentGrants`
 (`abilityUntilEndOfTurn`, `ability`, `loseAllAbilitiesUntilEndOfTurn`, `grantedTriggerEffects`,
 `grantedActivatedAbilities`).

@@ -1026,8 +1026,7 @@ public class LayerSystemService {
         h = mix(h, gameData.perpetualCardTypes.hashCode());
         h = mix(h, gameData.perpetualCardSubtypes.hashCode());
         h = mix(h, gameData.perpetualCreatureTypeReplacedCardIds.hashCode());
-        h = mix(h, gameData.perpetualTriggeredAbilityGrants.hashCode());
-        h = mix(h, gameData.perpetualActivatedAbilities.hashCode());
+        h = mix(h, gameData.perpetualAbilityGrants.hashCode());
         synchronized (gameData.exiledCards) {
             for (ExiledCardEntry entry : gameData.exiledCards) {
                 h = mix(h, System.identityHashCode(entry.card()));
@@ -3160,15 +3159,15 @@ public class LayerSystemService {
                         statik.effects().forEach(state::addStaticEffect);
                         seeded = true;
                     }
+                    case ActivatedAbility activatedAbility -> {
+                        if (!activated.contains(activatedAbility)) {
+                            activated.add(activatedAbility);
+                            state.addActivatedAbility(activatedAbility);
+                            seeded = true;
+                        }
+                    }
                     default -> {
                     }
-                }
-            }
-            for (ActivatedAbility ability : gameData.perpetualActivatedAbilities.getOrDefault(cardId, List.of())) {
-                if (!activated.contains(ability)) {
-                    activated.add(ability);
-                    state.addActivatedAbility(ability);
-                    seeded = true;
                 }
             }
         }

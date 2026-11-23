@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -9,9 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantChosenCardCharacteristicsEffect;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -34,15 +31,7 @@ public class PerpetuallyGrantChosenCardCharacteristicsEffectHandler implements N
         UUID cardId = entry.getChosenObjectCard().getId();
         mergeCardTypes(gameData, cardId, grant.cardTypes());
         mergeSubtypes(gameData, cardId, grant.subtypes());
-        gameData.perpetualActivatedAbilities.compute(cardId, (ignored, existing) -> {
-            List<ActivatedAbility> updated = new ArrayList<>(existing == null ? List.of() : existing);
-            grant.activatedAbilities().forEach(ability -> {
-                if (!updated.contains(ability)) {
-                    updated.add(ability);
-                }
-            });
-            return List.copyOf(updated);
-        });
+        grant.activatedAbilities().forEach(ability -> gameData.grantPerpetualAbilityOnce(cardId, ability));
     }
 
     private void mergeCardTypes(GameData gameData, UUID cardId, Set<CardType> types) {

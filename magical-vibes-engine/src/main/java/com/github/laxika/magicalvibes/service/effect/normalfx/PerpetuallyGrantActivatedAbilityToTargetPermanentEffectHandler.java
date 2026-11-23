@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -10,7 +9,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,15 +39,7 @@ public class PerpetuallyGrantActivatedAbilityToTargetPermanentEffectHandler
                 continue;
             }
 
-            ActivatedAbility ability = grant.ability();
-            UUID cardId = target.getCard().getId();
-            gameData.perpetualActivatedAbilities.compute(cardId, (ignored, existing) -> {
-                List<ActivatedAbility> updated = new ArrayList<>(existing == null ? List.of() : existing);
-                if (!updated.contains(ability)) {
-                    updated.add(ability);
-                }
-                return List.copyOf(updated);
-            });
+            gameData.grantPerpetualAbilityOnce(target.getCard().getId(), grant.ability());
         }
     }
 }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -29,6 +30,7 @@ class GitrogHorrorOfZhavaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Opponent may sacrifice nontoken creature to tap Gitrog and seek land")
     void opponentMaySacrificeNontokenCreatureToTapGitrogAndSeekLand() {
         Permanent gitrog = harness.addToBattlefieldAndReturn(player1, new GitrogHorrorOfZhava());
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -47,6 +49,7 @@ class GitrogHorrorOfZhavaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Tapped Gitrog does not offer combat choice")
     void tappedGitrogDoesNotOfferCombatChoice() {
         Permanent gitrog = harness.addToBattlefieldAndReturn(player1, new GitrogHorrorOfZhava());
         gitrog.tap();
@@ -59,6 +62,7 @@ class GitrogHorrorOfZhavaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Landfall perpetually grants the sacrifice draw ability")
     void landfallPerpetuallyGrantsTheSacrificeDrawAbility() {
         harness.addToBattlefield(player1, new GitrogHorrorOfZhava());
         harness.setHand(player1, List.of());
@@ -80,6 +84,7 @@ class GitrogHorrorOfZhavaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining leaves Gitrog untapped and does not seek")
     void decliningLeavesGitrogUntappedAndDoesNotSeek() {
         Permanent gitrog = harness.addToBattlefieldAndReturn(player1, new GitrogHorrorOfZhava());
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -96,6 +101,7 @@ class GitrogHorrorOfZhavaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Triggers during an opponent's combat and seeks for Gitrog's controller")
     void triggersDuringOpponentsCombatAndSeeksForGitrogsController() {
         Permanent gitrog = harness.addToBattlefieldAndReturn(player1, new GitrogHorrorOfZhava());
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -113,6 +119,7 @@ class GitrogHorrorOfZhavaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Tapping Gitrog before resolution prevents the sacrifice choice")
     void tappingGitrogBeforeResolutionPreventsTheSacrificeChoice() {
         Permanent gitrog = harness.addToBattlefieldAndReturn(player1, new GitrogHorrorOfZhava());
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -129,6 +136,7 @@ class GitrogHorrorOfZhavaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrifice still taps Gitrog when no land can be sought")
     void sacrificeStillTapsGitrogWhenNoLandCanBeSought() {
         Permanent gitrog = harness.addToBattlefieldAndReturn(player1, new GitrogHorrorOfZhava());
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -144,6 +152,7 @@ class GitrogHorrorOfZhavaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrificing taps Gitrog and seeks before any further priority window")
     void sacrificingTapsGitrogAndSeeksBeforeAnyFurtherPriorityWindow() {
         Permanent gitrog = harness.addToBattlefieldAndReturn(player1, new GitrogHorrorOfZhava());
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -160,6 +169,7 @@ class GitrogHorrorOfZhavaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Land retains sacrifice draw ability after Gitrog leaves")
     void landRetainsSacrificeDrawAbilityAfterGitrogLeaves() {
         Permanent gitrog = harness.addToBattlefieldAndReturn(player1, new GitrogHorrorOfZhava());
         Permanent forest = harness.enterBattlefieldAndReturn(player1, new Forest());
@@ -179,6 +189,7 @@ class GitrogHorrorOfZhavaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Opponent chooses which nontoken creature to sacrifice")
     void opponentChoosesWhichNontokenCreatureToSacrifice() {
         Permanent gitrog = harness.addToBattlefieldAndReturn(player1, new GitrogHorrorOfZhava());
         Permanent firstBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -197,6 +208,7 @@ class GitrogHorrorOfZhavaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("No opponent creature leaves Gitrog untapped without seeking")
     void noOpponentCreatureLeavesGitrogUntappedWithoutSeeking() {
         Permanent gitrog = harness.addToBattlefieldAndReturn(player1, new GitrogHorrorOfZhava());
         harness.setLibrary(player1, List.of(new Forest()));
@@ -209,6 +221,7 @@ class GitrogHorrorOfZhavaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrificed land retains its ability when it enters again without Gitrog")
     void sacrificedLandRetainsItsAbilityWhenItEntersAgainWithoutGitrog() {
         Permanent gitrog = harness.addToBattlefieldAndReturn(player1, new GitrogHorrorOfZhava());
         Forest forestCard = new Forest();

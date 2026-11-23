@@ -2225,7 +2225,6 @@ public class GraveyardService {
                 surveilled.remove(leavingCard.getId());
             }
             gameData.keyedOncePerTurnTriggersFiredThisTurn.remove(leavingCard.getId());
-            firePerpetualTriggeredAbilities(gameData, ownerId, List.of(leavingCard));
         }
         notifyCardsLeftGraveyard(gameData, ownerId, 1,
                 leavingCard == null ? List.of() : List.of(leavingCard));
@@ -2251,7 +2250,6 @@ public class GraveyardService {
             leavingCards.forEach(card -> surveilled.remove(card.getId()));
         }
         leavingCards.forEach(card -> gameData.keyedOncePerTurnTriggersFiredThisTurn.remove(card.getId()));
-        firePerpetualTriggeredAbilities(gameData, ownerId, leavingCards);
         notifyCardsLeftGraveyard(gameData, ownerId, leavingCards.size(), leavingCards);
         if (leavingCards.stream().anyMatch(card -> !isToken(gameData, card) && card.hasType(CardType.CREATURE))) {
             gameData.playersWhoseCreatureCardsLeftGraveyardThisTurn.add(ownerId);
@@ -2276,26 +2274,6 @@ public class GraveyardService {
                 .map(Card::getId)
                 .forEach(gameData.cardsExiledFromGraveyardThisTurn::add);
         notifyCardsLeftGraveyard(gameData, ownerId, exiledCards);
-    }
-
-    private void firePerpetualTriggeredAbilities(GameData gameData, UUID ownerId, List<Card> leavingCards) {
-        for (Card card : leavingCards) {
-            List<CardEffect> effects = gameData.perpetualTriggeredAbilities.get(card.getId());
-            if (effects == null) continue;
-            for (CardEffect effect : effects) {
-                // "When this card leaves your graveyard, ...", an ability the card perpetually gained: the card's own
-                // ability, through the stack door (CR 603.10a: it looks back at the card in the graveyard).
-                if (!triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
-                        new TriggeredAbility(Triggers.leavesGraveyard(null, ObjectRelation.THIS), effect),
-                        card, null, ownerId, card.getName() + "'s ability", ConditionContext.forCard(card, ownerId),
-                        TriggeredAbilityRequest.TriggerRecord.NONE))) {
-                    continue;
-                }
-                gameLogService.append(gameData, GameLog.abilityTriggers(card));
-                log.info("Game {} - {} triggers on leaving its owner's graveyard",
-                        gameData.id, card.getName());
-            }
-        }
     }
 
     /**

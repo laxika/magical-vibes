@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceAndEnteringCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,7 +22,8 @@ public class LeafLeapGuide extends Card {
 
     public LeafLeapGuide() {
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new PerpetuallyBoostSourceAndEnteringCreatureEffect(1, 1));
+                new PerpetuallyBoostTargetCreatureEffect(
+                        Subjects.allOf(Subjects.source(), Subjects.triggering()), 1, 1));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

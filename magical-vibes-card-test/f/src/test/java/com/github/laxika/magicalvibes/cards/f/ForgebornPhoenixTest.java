@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -23,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ForgebornPhoenixTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Equipped creature gains flying and Phoenix stops being a creature")
     void equippedCreatureGainsFlyingAndPhoenixStopsBeingACreature() {
         Permanent phoenix = addReadyPhoenix();
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
@@ -45,6 +47,7 @@ class ForgebornPhoenixTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Reconfigure cannot target an opponent's creature")
     void reconfigureCannotTargetAnOpponentsCreature() {
         Permanent phoenix = addReadyPhoenix();
         Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
@@ -56,6 +59,7 @@ class ForgebornPhoenixTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Phoenix returns tapped after its own death when an equipped creature deals combat damage")
     void phoenixReturnsTappedAfterItsOwnDeathWhenAnEquippedCreatureDealsCombatDamage() {
         Permanent phoenix = addReadyPhoenix();
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
@@ -72,6 +76,7 @@ class ForgebornPhoenixTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Dying equipped creature gains the return ability instead of Phoenix")
     void dyingEquippedCreatureGainsTheReturnAbilityInsteadOfPhoenix() {
         Permanent phoenix = addReadyPhoenix();
         Permanent dyingCreature = addCreatureReady(player1, new GrizzlyBears());
@@ -97,6 +102,7 @@ class ForgebornPhoenixTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Phoenix returns after an equipped creature deals combat damage to a planeswalker")
     void phoenixReturnsAfterAnEquippedCreatureDealsCombatDamageToAPlaneswalker() {
         Permanent phoenix = addReadyPhoenix();
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
@@ -120,6 +126,7 @@ class ForgebornPhoenixTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each death adds another independent return ability")
     void eachDeathAddsAnotherIndependentReturnAbility() {
         Permanent phoenix = addReadyPhoenix();
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
@@ -145,6 +152,7 @@ class ForgebornPhoenixTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Old return trigger cannot return Phoenix after it returns and dies again")
     void oldReturnTriggerCannotReturnPhoenixAfterItReturnsAndDiesAgain() {
         Permanent phoenix = addReadyPhoenix();
         Permanent firstAttacker = addCreatureReady(player1, new GrizzlyBears());
@@ -172,6 +180,7 @@ class ForgebornPhoenixTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Unequipped creature combat damage does not return Phoenix")
     void unequippedCreatureCombatDamageDoesNotReturnPhoenix() {
         Permanent phoenix = addReadyPhoenix();
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
@@ -187,6 +196,7 @@ class ForgebornPhoenixTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's equipped creature combat damage does not return Phoenix")
     void opponentsEquippedCreatureCombatDamageDoesNotReturnPhoenix() {
         Permanent phoenix = addReadyPhoenix();
         Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
@@ -204,6 +214,7 @@ class ForgebornPhoenixTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Reconfigure cannot be activated during combat")
     void reconfigureCannotBeActivatedDuringCombat() {
         Permanent phoenix = addReadyPhoenix();
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());

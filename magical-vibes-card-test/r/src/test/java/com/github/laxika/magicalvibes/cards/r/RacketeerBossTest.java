@@ -34,15 +34,15 @@ class RacketeerBossTest extends BaseCardTest {
         assertThat(choice.validCardIds()).containsExactly(first.getId(), second.getId());
 
         harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
-        assertThat(gd.perpetualTriggeredAbilityGrants).containsKeys(first.getId(), second.getId());
+        assertThat(gd.perpetualAbilityGrants).containsKeys(first.getId(), second.getId());
 
         castBears(first);
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
-        assertThat(gd.perpetualTriggeredAbilityGrants).containsKey(second.getId());
+        assertThat(gd.perpetualAbilityGrants).containsKey(second.getId());
 
         castBears(second);
         assertThat(findPermanents(player1, "Treasure")).hasSize(2);
-        assertThat(gd.perpetualTriggeredAbilityGrants).doesNotContainKeys(first.getId(), second.getId());
+        assertThat(gd.perpetualAbilityGrants).doesNotContainKeys(first.getId(), second.getId());
     }
 
     private void castBears(GrizzlyBears bears) {

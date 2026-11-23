@@ -2311,9 +2311,9 @@ public class MayCastHandlerService {
             return;
         }
 
-        if (pendingEffectType != null && (!additionalSpellCostService.satisfiableWithoutManaCost(
-                gameData, player.getId(), cardToCast)
-                || !paySideboardRevealOrManaCosts(gameData, player.getId(), cardToCast, false))) {
+        // A free cast still pays the spell's additional costs and cost increases (CR 601.2f).
+        if (!additionalSpellCostService.satisfiableWithoutManaCost(gameData, player.getId(), cardToCast)
+                || !paySideboardRevealOrManaCosts(gameData, player.getId(), cardToCast, false)) {
             gameLogService.append(gameData, GameLog.cardThen(cardToCast,
                     " cannot be cast because its additional cost cannot be paid."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -2324,7 +2324,7 @@ public class MayCastHandlerService {
             sideboard.remove(cardIndex);
             if (splitCardCastSupport.begin(gameData, new SplitCardCast(player.getId(), cardToCast,
                     Zone.OUTSIDE_GAME, cardIndex, sideboardOwnerId, false, Integer.MAX_VALUE, null, null)
-                    .from(new SplitCardCast.OutsideGameCast(pendingEffectType != null)))) {
+                    .from(new SplitCardCast.OutsideGameCast(true)))) {
                 if (pendingEffectType != null) {
                     gameData.pendingMayAbilities.removeIf(pma ->
                             pma.effects().stream().anyMatch(pendingEffectType::isInstance));
@@ -2364,8 +2364,8 @@ public class MayCastHandlerService {
                 return;
             }
 
+            paySideboardRevealOrManaCosts(gameData, player.getId(), cardToCast, true);
             if (pendingEffectType != null) {
-                paySideboardRevealOrManaCosts(gameData, player.getId(), cardToCast, true);
                 gameData.pendingMayAbilities.removeIf(pma ->
                         pma.effects().stream().anyMatch(pendingEffectType::isInstance));
             }
@@ -2382,8 +2382,8 @@ public class MayCastHandlerService {
             return;
         }
 
+        paySideboardRevealOrManaCosts(gameData, player.getId(), cardToCast, true);
         if (pendingEffectType != null) {
-            paySideboardRevealOrManaCosts(gameData, player.getId(), cardToCast, true);
             gameData.pendingMayAbilities.removeIf(pma ->
                     pma.effects().stream().anyMatch(pendingEffectType::isInstance));
         }
@@ -2403,7 +2403,7 @@ public class MayCastHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    /** Checks or pays the additional reveal-or-mana costs on a sideboard spell. */
+    /** Checks or pays the cost increases and reveal-or-pay costs of a free cast from outside the game (CR 601.2f). */
     public boolean paySideboardRevealOrManaCosts(GameData gameData, UUID playerId, Card card, boolean pay) {
         List<Card> reveals = new ArrayList<>();
         int genericCost = Math.max(0, castingCostService.getCastCostModifier(

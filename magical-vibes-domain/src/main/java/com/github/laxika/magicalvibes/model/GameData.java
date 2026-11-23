@@ -584,16 +584,15 @@ public class GameData {
     public final Set<UUID> perpetualEnterTappedCardIds = ConcurrentHashMap.newKeySet();
     /** Cards that perpetually exile themselves instead of dying, keyed by card identity. */
     public final Set<UUID> perpetualExileInsteadOfDyingCardIds = ConcurrentHashMap.newKeySet();
-    /** Perpetual triggered abilities keyed by the affected card's identity. */
-    public final Map<UUID, List<CardEffect>> perpetualTriggeredAbilities = new ConcurrentHashMap<>();
     /** Perpetually removed printed triggered abilities keyed by the affected card's identity. */
     public final Map<UUID, Set<CardEffect>> perpetuallyRemovedTriggeredAbilities = new ConcurrentHashMap<>();
     /**
-     * Perpetually granted abilities keyed by the affected card's identity, each an immutable list
-     * in grant order; reapplied when the card enters the battlefield. Change them through
-     * {@link #grantPerpetualAbility} and {@link #removePerpetualAbilitiesIf}.
+     * Perpetually granted abilities of every kind (triggered, static, activated) keyed by the affected card's identity,
+     * each an immutable list in grant order: part of the card in every zone, seeded by the layered pass while it is a
+     * face-up permanent. Change them through {@link #grantPerpetualAbility}, {@link #grantPerpetualAbilityOnce} and
+     * {@link #removePerpetualAbilitiesIf}; read them through {@link #perpetualAbilities}.
      */
-    public final Map<UUID, List<Ability>> perpetualTriggeredAbilityGrants = new ConcurrentHashMap<>();
+    public final Map<UUID, List<Ability>> perpetualAbilityGrants = new ConcurrentHashMap<>();
     /** Perpetual graveyard-activated abilities keyed by the affected card's identity. */
     public final Map<UUID, List<ActivatedAbility>> perpetualGraveyardAbilities = new ConcurrentHashMap<>();
     /** Perpetual card types keyed by the affected card's identity. */
@@ -602,8 +601,6 @@ public class GameData {
     public final Map<UUID, Set<CardSubtype>> perpetualCardSubtypes = new ConcurrentHashMap<>();
     /** Cards that perpetually became a creature type, so their printed creature types no longer apply. */
     public final Set<UUID> perpetualCreatureTypeReplacedCardIds = ConcurrentHashMap.newKeySet();
-    /** Perpetual activated abilities keyed by the affected card's identity. */
-    public final Map<UUID, List<ActivatedAbility>> perpetualActivatedAbilities = new ConcurrentHashMap<>();
     /** Perpetual Evoke alternate costs keyed by the affected card's identity. */
     public final Map<UUID, List<AlternateHandCast>> perpetualEvokeAlternateCasts = new ConcurrentHashMap<>();
     /** Perpetual power bonuses attached to individual card identities, keyed by card id. */
@@ -10189,11 +10186,9 @@ public class GameData {
         copy.perpetualAnyColorManaForCastCardIds.addAll(this.perpetualAnyColorManaForCastCardIds);
         copy.perpetualEnterTappedCardIds.addAll(this.perpetualEnterTappedCardIds);
         copy.perpetualExileInsteadOfDyingCardIds.addAll(this.perpetualExileInsteadOfDyingCardIds);
-        this.perpetualTriggeredAbilities.forEach((cardId, effects) ->
-                copy.perpetualTriggeredAbilities.put(cardId, List.copyOf(effects)));
         this.perpetuallyRemovedTriggeredAbilities.forEach((cardId, effects) ->
                 copy.perpetuallyRemovedTriggeredAbilities.put(cardId, Set.copyOf(effects)));
-        copy.perpetualTriggeredAbilityGrants.putAll(this.perpetualTriggeredAbilityGrants);
+        copy.perpetualAbilityGrants.putAll(this.perpetualAbilityGrants);
         this.perpetualGraveyardAbilities.forEach((cardId, abilities) ->
                 copy.perpetualGraveyardAbilities.put(cardId, List.copyOf(abilities)));
         this.perpetualCardTypes.forEach((cardId, types) ->
@@ -10201,8 +10196,6 @@ public class GameData {
         this.perpetualCardSubtypes.forEach((cardId, subtypes) ->
                 copy.perpetualCardSubtypes.put(cardId, Set.copyOf(subtypes)));
         copy.perpetualCreatureTypeReplacedCardIds.addAll(this.perpetualCreatureTypeReplacedCardIds);
-        this.perpetualActivatedAbilities.forEach((cardId, abilities) ->
-                copy.perpetualActivatedAbilities.put(cardId, List.copyOf(abilities)));
         this.perpetualEvokeAlternateCasts.forEach((cardId, alternateCasts) ->
                 copy.perpetualEvokeAlternateCasts.put(cardId, List.copyOf(alternateCasts)));
         copy.perpetualCardCastCostReductions.putAll(this.perpetualCardCastCostReductions);
@@ -11366,12 +11359,12 @@ public class GameData {
 
     /** Perpetually grants the card {@code cardId} {@code ability}; a repeated grant stacks (CR 113.2c). */
     public void grantPerpetualAbility(UUID cardId, Ability ability) {
-        perpetualTriggeredAbilityGrants.merge(cardId, List.of(ability), GameData::concatAbilities);
+        perpetualAbilityGrants.merge(cardId, List.of(ability), GameData::concatAbilities);
     }
 
     /** Like {@link #grantPerpetualAbility(UUID, Ability)}, but does nothing when the card already has an equal grant. */
     public void grantPerpetualAbilityOnce(UUID cardId, Ability ability) {
-        perpetualTriggeredAbilityGrants.merge(cardId, List.of(ability),
+        perpetualAbilityGrants.merge(cardId, List.of(ability),
                 (existing, added) -> existing.contains(ability) ? existing : concatAbilities(existing, added));
     }
 
@@ -11380,7 +11373,7 @@ public class GameData {
      * have an effect that matches {@code filter}.
      */
     public void removePerpetualAbilitiesIf(UUID cardId, Trigger trigger, Predicate<CardEffect> filter) {
-        perpetualTriggeredAbilityGrants.computeIfPresent(cardId, (ignored, existing) -> {
+        perpetualAbilityGrants.computeIfPresent(cardId, (ignored, existing) -> {
             List<Ability> kept = existing.stream()
                     .filter(ability -> !(ability instanceof TriggeredAbility triggered && triggered.hasTrigger(trigger))
                             || AbilityEffects.effectsOf(ability).stream().noneMatch(filter))
@@ -11391,7 +11384,7 @@ public class GameData {
 
     /** The perpetual grants of the card {@code cardId}, in grant order. */
     public List<Ability> perpetualAbilities(UUID cardId) {
-        return perpetualTriggeredAbilityGrants.getOrDefault(cardId, List.of());
+        return perpetualAbilityGrants.getOrDefault(cardId, List.of());
     }
 
     /**

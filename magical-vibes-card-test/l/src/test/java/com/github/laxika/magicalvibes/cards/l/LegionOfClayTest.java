@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -14,6 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class LegionOfClayTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Gives trample to creatures you control")
     void givesTrampleToCreaturesYouControl() {
         harness.addToBattlefieldAndReturn(player1, new LegionOfClay());
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -24,6 +26,7 @@ class LegionOfClayTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Perpetually boosts current creatures when nontoken artifact enters")
     void perpetuallyBoostsCurrentCreaturesWhenNontokenArtifactEnters() {
         harness.addToBattlefieldAndReturn(player1, new LegionOfClay());
         Permanent firstCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -42,6 +45,7 @@ class LegionOfClayTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not trigger for a nonartifact")
     void doesNotTriggerForANonArtifact() {
         harness.addToBattlefieldAndReturn(player1, new LegionOfClay());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());

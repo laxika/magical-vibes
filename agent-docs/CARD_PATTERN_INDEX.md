@@ -277,7 +277,7 @@
 | replicate spell that perpetually boosts creature cards in your graveyard, then returns a low-mana-value creature card | `f/FeedTheBog.java` + `PerpetuallyBoostCreatureCardsInGraveyardEffect` + `ReturnCardFromGraveyardEffect` + replicate (`RepeatedAdditionalCostPaid` / `RepeatedAdditionalCostCount`) |
 | death trigger that perpetually grants an ETB draw-and-life ability to permanent cards in your graveyard | `d/DistractedBotanist.java` + `PerpetuallyGrantAbilitiesEffect(cardsInYourGraveyard(permanent), enters(THIS), …)` |
 | enrage perpetual boost to other controlled creatures and matching cards in hand and library | `s/StalwartSpeartail.java` + `PerpetuallyBoostOtherControlledCreaturesAndCardsInHandAndLibraryEffect` |
-| perpetual +1/+1 grant to an enter-trigger source and the entering creature | `l/LeafLeapGuide.java` + `PerpetuallyBoostSourceAndEnteringCreatureEffect` |
+| perpetual +1/+1 grant to an enter-trigger source and the entering creature | `l/LeafLeapGuide.java` + `PerpetuallyBoostTargetCreatureEffect(Subjects.allOf(source(), triggering()), 1, 1)` |
 | perpetual keyword grant to an enter-trigger source | `m/MarshlandHordemaster.java` + `PerpetuallyGrantKeywordToSourceEffect` |
 | once-per-turn non-flying creature cast duplicate with perpetual flying | `a/AceFlockbringer.java` + `ConjureDuplicateOfTriggeringCreatureToHandEffect` |
 | one-time boon that makes the next non-flying creature spell perpetually gain flying | `l/LuluForgetfulHollyphant.java` + `RegisterDelayedControllerSpellCastTriggerEffect.boon` + `PerpetuallyGrantKeywordsToTriggeringCardEffect` |

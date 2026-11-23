@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -10,7 +9,6 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /** Records a perpetual activated-ability grant for each matching card currently in hand. */
@@ -34,14 +32,7 @@ public class PerpetuallyGrantActivatedAbilityToMatchingHandCardsEffectHandler
                     card, grant.cardFilter(), null, gameData, entry.getControllerId())) {
                 continue;
             }
-            ActivatedAbility ability = grant.ability();
-            gameData.perpetualActivatedAbilities.compute(card.getId(), (ignored, existing) -> {
-                List<ActivatedAbility> updated = new ArrayList<>(existing == null ? List.of() : existing);
-                if (!updated.contains(ability)) {
-                    updated.add(ability);
-                }
-                return List.copyOf(updated);
-            });
+            gameData.grantPerpetualAbilityOnce(card.getId(), grant.ability());
         }
     }
 }
