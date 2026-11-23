@@ -536,8 +536,6 @@ public class GameData {
      * (e.g. Hoarding Dragon's death trigger, Clone Shell's sacrifice ability).
      */
     public final Map<UUID, Card> imprintedCards = new ConcurrentHashMap<>();
-    /** Perpetual ETB abilities granted to cards, keyed by the card's stable id. */
-    public final Map<UUID, List<CardEffect>> perpetualEnterEffectsByCardId = new ConcurrentHashMap<>();
     /** Perpetual power/toughness modifiers granted to physical cards, keyed by stable card id. */
     public final Map<UUID, CardPowerToughnessModifier> perpetualCardPowerToughnessModifiers =
             new ConcurrentHashMap<>();
@@ -10173,9 +10171,6 @@ public class GameData {
         // --- Map<UUID, String/Integer> ---
         copy.playerIdToName.putAll(this.playerIdToName);
         copy.imprintedCards.putAll(this.imprintedCards);
-        this.perpetualEnterEffectsByCardId.forEach((cardId, effects) ->
-                copy.perpetualEnterEffectsByCardId.put(cardId,
-                        Collections.synchronizedList(new ArrayList<>(effects))));
         copy.perpetualCardPowerToughnessModifiers.putAll(this.perpetualCardPowerToughnessModifiers);
         copy.perpetualCardBasePowerToughness.putAll(this.perpetualCardBasePowerToughness);
         this.perpetualCardBattlefieldEffectGrants.forEach((cardId, effects) ->

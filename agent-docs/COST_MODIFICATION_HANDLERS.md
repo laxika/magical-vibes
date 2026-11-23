@@ -152,9 +152,8 @@ spell-cost modifiers do not affect Room-door unlocks. `CastingCostService.getRoo
 the shared path for previews and payment.
 
 Payment replacements that change how a mana cost may be paid, without changing its mana value,
-use `CostModificationHandlerBean.applyManaCostPaymentAlternatives`. `MayPayLifeForBlackManaEffect`
-is the reusable model for K'rrik, Son of Yawgmoth; its handler converts black mana symbols to the
-existing Phyrexian-payment path for that source's controller.
+use `CostModificationHandlerBean.applyManaCostPaymentAlternatives` (no handler implements it at present). K'rrik,
+Son of Yawgmoth's `PayBlackManaWithLifeEffect` is read by `GameQueryService.canPayBlackManaWithLife` instead.
 ## Alternate-cost reductions
 
 Effects that reduce a named alternate cost, rather than a spell's normal mana cost, use the

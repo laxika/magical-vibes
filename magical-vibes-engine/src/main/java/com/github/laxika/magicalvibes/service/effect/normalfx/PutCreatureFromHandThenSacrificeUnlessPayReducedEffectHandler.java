@@ -51,7 +51,7 @@ public class PutCreatureFromHandThenSacrificeUnlessPayReducedEffectHandler imple
 
         if (creatureIndices.isEmpty()) {
             String playerName = gameData.playerIdToName.get(playerId);
-            gameLogService.append(gameData, GameLog.text(playerName + " has no creature cards in hand."));
+            gameLogService.append(gameData, GameLog.putsNoCardOntoBattlefield(playerName));
             log.info("Game {} - {} has no creatures in hand for {}", gameData.id, playerName, entry.getCard().getName());
             return;
         }

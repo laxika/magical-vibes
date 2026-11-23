@@ -14,9 +14,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Cast one of the just-milled instant or sorcery cards for free (Jace's Mindseeker). Reuses the
- * cast-from-graveyard routine; accepting one offer clears the sibling offers so only a single spell
- * is cast, while declining leaves the remaining milled cards on offer.
+ * Cast one of the offered graveyard instant or sorcery cards for free (Jace's Mindseeker, Summons of
+ * Saruman, Sorcerous Squall). Reuses the cast-from-graveyard routine; accepting one offer clears the
+ * sibling offers so only a single spell is cast, while declining leaves the remaining cards on offer.
  */
 @Component
 @RequiredArgsConstructor
@@ -51,6 +51,6 @@ public class MayCastMilledSpellWithoutPayingHandler implements MayEffectHandlerB
         }
         mayCastHandlerService.handleCastFromGraveyardChoice(gameData, player, accepted, ability,
                 new CastTargetInstantOrSorceryFromGraveyardEffect(
-                        marker.graveyardScope(), true, false, filter), maxSpellManaValue);
+                        marker.graveyardScope(), true, marker.exileInsteadOfGraveyard(), filter), maxSpellManaValue);
     }
 }

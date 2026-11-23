@@ -275,7 +275,7 @@
 | ETB perpetually turns matching Forest cards in hand and library into 3/4 Treefolk creatures with reach and haste, then death seeks two Forests to the battlefield | `w/WildgroveSummoner.java` + `PerpetuallyMakeMatchingHandAndLibraryCardsCreatureEffect` + `SeekLibraryEffect` |
 | perpetual +1/+1 grant to creature cards in your library | `b/BramblearmorBrawler.java` + `PerpetuallyBoostCreatureCardsInLibraryEffect` |
 | replicate spell that perpetually boosts creature cards in your graveyard, then returns a low-mana-value creature card | `f/FeedTheBog.java` + `PerpetuallyBoostCreatureCardsInGraveyardEffect` + `ReturnCardFromGraveyardEffect` + replicate (`RepeatedAdditionalCostPaid` / `RepeatedAdditionalCostCount`) |
-| death trigger that perpetually grants an ETB draw-and-life ability to permanent cards in your graveyard | `d/DistractedBotanist.java` + `PerpetuallyGrantEnterAbilityToPermanentCardsInGraveyardEffect` |
+| death trigger that perpetually grants an ETB draw-and-life ability to permanent cards in your graveyard | `d/DistractedBotanist.java` + `PerpetuallyGrantAbilitiesEffect(cardsInYourGraveyard(permanent), enters(THIS), …)` |
 | enrage perpetual boost to other controlled creatures and matching cards in hand and library | `s/StalwartSpeartail.java` + `PerpetuallyBoostOtherControlledCreaturesAndCardsInHandAndLibraryEffect` |
 | perpetual +1/+1 grant to an enter-trigger source and the entering creature | `l/LeafLeapGuide.java` + `PerpetuallyBoostSourceAndEnteringCreatureEffect` |
 | perpetual keyword grant to an enter-trigger source | `m/MarshlandHordemaster.java` + `PerpetuallyGrantKeywordToSourceEffect` |

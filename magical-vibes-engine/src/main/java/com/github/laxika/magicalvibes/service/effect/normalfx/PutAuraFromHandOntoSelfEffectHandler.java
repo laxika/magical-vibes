@@ -61,8 +61,7 @@ public class PutAuraFromHandOntoSelfEffectHandler implements NormalEffectHandler
 
         if (auraIndices.isEmpty()) {
             String playerName = gameData.playerIdToName.get(controllerId);
-            String logEntry = playerName + " has no Aura cards in hand.";
-            gameLogService.append(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.putsNoCardOntoBattlefield(playerName));
             log.info("Game {} - {} has no Auras in hand for {} ETB", gameData.id, playerName, entry.getCard().getName());
             return;
         }

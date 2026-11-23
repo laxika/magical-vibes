@@ -3,8 +3,6 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggerCause;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
-import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.model.Card;
@@ -365,12 +363,6 @@ public class EtbTriggerService {
                                       boolean printedAbilitiesRemoved, EtbEffectContext entryFacts,
                                       List<UUID> convokeCreatureIds) {
         List<TriggeredAbility> abilities = new ArrayList<>();
-        if (!printedAbilitiesRemoved) {
-            // A perpetual "when this enters" grant is an ability of its own.
-            for (CardEffect effect : gameData.perpetualEnterEffectsByCardId.getOrDefault(card.getId(), List.of())) {
-                abilities.add(new TriggeredAbility(Triggers.enters(ObjectRelation.THIS), effect));
-            }
-        }
         if (enteringPermanent != null && gameData.playerBattlefields.getOrDefault(controllerId, List.of())
                 .contains(enteringPermanent)) {
             abilities.addAll(grantedTriggeredAbilitySupport.grantedOwnEntryAbilities(gameData, enteringPermanent));

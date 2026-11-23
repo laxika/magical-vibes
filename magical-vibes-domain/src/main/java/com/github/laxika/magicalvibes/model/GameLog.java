@@ -43,6 +43,14 @@ public final class GameLog {
         return builder().text(playerName + " taps ").card(card).text(suffix).build();
     }
 
+    /**
+     * "{player} puts no card onto the battlefield." for a put from a hidden zone that puts nothing, whether nothing
+     * matched or the player declined: the line tells the other players nothing about the hand or library (CR 400.2).
+     */
+    public static GameLogEntry putsNoCardOntoBattlefield(String playerName) {
+        return text(playerName + " puts no card onto the battlefield.");
+    }
+
     public static GameLogEntry isDestroyed(Card card) {
         return builder().card(card).text(" is destroyed.").build();
     }

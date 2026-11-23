@@ -164,7 +164,37 @@ class ElvishPiperTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNull();
-        assertThat(gameLogContains("has no creature cards in hand")).isTrue();
+        assertThat(gameLogContains("puts no card onto the battlefield")).isTrue();
+    }
+
+    @Test
+    @DisplayName("The log tells the other players nothing about the hand, the same line whether nothing matched or the choice was declined")
+    void logRevealsNothingOfTheHand() {
+        addReadyPiper();
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        List<String> nothingMatched = gd.gameLog.stream().map(entry -> entry.plainText())
+                .filter(line -> line.contains("onto the battlefield") || line.contains("in hand")).toList();
+
+        gd.gameLog.clear();
+        Permanent second = addReadyPiper();
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(second), null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+        List<String> declined = gd.gameLog.stream().map(entry -> entry.plainText())
+                .filter(line -> line.contains("onto the battlefield") || line.contains("in hand")).toList();
+
+        assertThat(nothingMatched).containsExactly(player1.getUsername() + " puts no card onto the battlefield.");
+        assertThat(declined).isEqualTo(nothingMatched);
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     @Test
@@ -262,7 +292,7 @@ class ElvishPiperTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNull();
-        assertThat(gameLogContains("has no creature cards in hand")).isTrue();
+        assertThat(gameLogContains("puts no card onto the battlefield")).isTrue();
     }
 
     @Test

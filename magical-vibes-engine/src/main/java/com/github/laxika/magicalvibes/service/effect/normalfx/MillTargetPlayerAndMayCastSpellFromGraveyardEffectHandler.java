@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayCastSpellFromTargetGraveyardWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.effect.MayCastMilledSpellWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerAndMayCastSpellFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.RequiredArgsConstructor;
@@ -50,7 +51,8 @@ public class MillTargetPlayerAndMayCastSpellFromGraveyardEffectHandler implement
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     card,
                     entry.getControllerId(),
-                    List.of(new MayCastSpellFromTargetGraveyardWithoutPayingManaCostEffect()),
+                    List.of(new MayCastMilledSpellWithoutPayingManaCostEffect(
+                            GraveyardSearchScope.OPPONENT_GRAVEYARD, null, true)),
                     "Cast " + card.getName() + " without paying its mana cost?"
             ));
         }

@@ -537,8 +537,7 @@ public class CardChoiceHandlerService {
         }
 
         if (cardIndex == -1) {
-            String logEntry = player.getUsername() + " chooses not to put a card onto the battlefield.";
-            gameLogService.append(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.putsNoCardOntoBattlefield(player.getUsername()));
             log.info("Game {} - {} declines to put a card onto the battlefield", gameData.id, player.getUsername());
 
             // "If you don't, ..." (Origin of the Avengers): declining the choice resolves the else effect.

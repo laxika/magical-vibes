@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 26: Exile, Each, Return, Put, Reveal, Choose, Grant, Create and Prevent closed; 1,920 rare records left, May open (29 rare: 11 cost combinators for step 10, 18 engine-built prompt markers)) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 27: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent and May closed (May's 11 cost combinators listed for step 10); 1,901 rare records left, Perpetually open (54 rare)) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -632,6 +632,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 24 | Prevent's by-side and plane statics, the Selfless Squire gaps, then May | done, Prevent closed, May not started (6 rows: 6 absorbed; 6 records and 2 marker interfaces deleted; 9 card files rewritten; `dealtBy(filter)`, "dealt by" preventions moved into the recipients' pools, face-up planes read by the static reader, a filter judges the card an ability names as the source; Angel of Suffering, The Mindskinner and the Cleric choice tell Selfless Squire) |
 | 25 | Run 24's Mindskinner question and missing display names, then May's rare records with cards | done for those, May open (21 rows: 4 absorbed, 1 survivor, 14 unique, 2 blocked-other; 4 records and 4 handlers deleted; 5 card files changed, 4 rewritten; the hand free-cast step's filter sees its source, its offers check additional costs without the mana cost; In Search of Greatness reads a face-down permanent as mana value 0; The Mindskinner not a defect) |
 | 26 | Run 25's small defects (the exclusive withdrawal, Twinning Glass's names, display names), the hand free-cast step's "if you don't" with its three cards, then the copy-cast and alternative-cost prompt markers | done for those, May open (10 rows: 4 absorbed, 2 survivors, 4 unique; 4 records and 6 handlers deleted; 3 card files rewritten, 1 handler fixed; `MayCastAnySpellFromHandWithoutPayingManaCostEffect.orElse`, `CardSharesCardTypeWithTriggeringSpellPredicate`, `GreatestManaValueAmongControlled` reads melded permanents; the exclusive withdrawal not reachable; 29 rare May records left) |
+| 27 | Run 26's hand-content log line, May's 18 engine-built prompt markers (May closed), then Perpetually's rare records | done for the log line and May, Perpetually started (20 rows: 2 absorbed, 4 survivors, 13 unique, 1 dead; 3 records, 2 may / normal handlers and 1 cost-modification handler deleted; 1 card file rewritten; `GameLog.putsNoCardOntoBattlefield`, `MayCastMilledSpellWithoutPayingManaCostEffect.exileInsteadOfGraveyard`, `GameData.perpetualEnterEffectsByCardId` gone; 54 rare Perpetually records left) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -8793,6 +8794,112 @@ suites, the AI fuzz and stress tests, the frontend. Not verified: more than two 
   `MayCastMilledSpellWithoutPayingManaCostEffect`). Keep each prompt's chooser, face-down wording, AI answer and decline.
 - Then close May (the cost combinators stay listed for step 10) and start Perpetually's rare records.
 - The hand-content log line above, if a run takes `PutCardToBattlefieldEffect`.
+
+### Step 9, run 27 (2026-11-23, May closed, Perpetually started)
+
+Run 26's hand-content log line, May's 18 engine-built prompt markers, then the start of Perpetually. Ratchet 4,118 / 3,371 → 4,115 /
+3,369 records / handlers (3 records deleted; 2 counted handlers and 1 cost-modification handler deleted). 1 card file rewritten (Distracted
+Botanist); Oracle text checked with `get_card` for Distracted Botanist, Sorcerous Squall, Jace's Mindseeker and Forgeborn Phoenix. CR 400.2,
+400.7, 601.2f, 701.20a, 708.2 and 118.9 checked with `get_rule` (2026-11-23).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | Dead | Left unaudited |
+|---|---|---|---|---|---|---|---|---|
+| May | 18 rows (the 18 markers) | 1 | 0 | 4 (one extended) | 0 | 12 | 1 | 11 rare (the step-10 cost combinators), 17 in all |
+| Perpetually | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 54 rare, 63 in all |
+
+All families: 1,901 rare records without a row (run 26: 1,920). May is closed for this step: its 11 rare records left are run 25's cost
+combinators, held for step 10.
+
+- **The hand put's log line told every player about a hidden hand.** A hand is a hidden zone (CR 400.2) and a card in it is shown to the
+  other players only when an effect or cost reveals it (CR 701.20a); "put a … card from your hand onto the battlefield" reveals nothing.
+  "<player> has no <label> cards in hand." told them the hand held no such card, and the decline line ("chooses not to put a card onto the
+  battlefield.") told them it held one. Both now log `GameLog.putsNoCardOntoBattlefield`: "<player> puts no card onto the battlefield.",
+  the line the library put already logs. Fixed at the shared points: `PlayerInteractionSupport` (the put step and both opponent-may-play
+  paths), the three dedicated hand handlers (`PutAuraFromHandOntoSelf`, the two creature puts) and `CardChoiceHandlerService`'s decline.
+  The game log is public and has no per-player entry, so the owner reads the same line; it keeps the meaning that matters to them (nothing
+  was put), their own hand shows the rest. The server log line still names the label.
+- **May's 18 markers.** Each one's may handler was read to its end with the service path it routes to (chooser, withdrawal, decline line,
+  zone checks). The AI reads none of them; it answers the generic `MayAbilityChoice`.
+  - *Absorbed (1).* Sorcerous Squall's `MayCastSpellFromTargetGraveyardWithoutPayingManaCostEffect` into
+    `MayCastMilledSpellWithoutPayingManaCostEffect(OPPONENT_GRAVEYARD, null, true)`: both handlers withdrew every offer of their marker on
+    accept and called `handleCastFromGraveyardChoice` with a free `CastTargetInstantOrSorceryFromGraveyardEffect`, differing only in its
+    `exileInsteadOfGraveyard` ("If that spell would be put into a graveyard, exile it instead"), now the survivor's component (the cast
+    effect's own rider, not a new flag). Squall's filter is null, so the survivor's split-card mana-value branch doesn't apply. Prompt,
+    decline line and withdrawal are unchanged.
+  - *Survivors (4).* `MayPlayExiledCardWithoutPayingManaCostEffect`, `MayCastFromHandWithoutPayingManaCostEffect`,
+    `MayCastExiledCardWithNormalCostEffect` (the three heads, 21, 14 and 6 engine builders) and the extended milled marker.
+  - *Unique (12).* The outside-game pair and the sideboard marker (normal cost with its own X resume; Spawnsire's any-number casts without
+    withdrawal; one-of sideboard casts with the additional-cost check: one marker would need a flag one builder sets), Jetsam's per-owner
+    play path, the bottom-rest cast, Uvilda's reduced cast (also the X-choice carrier of every reduced exile cast), the cast-or-put-into-hand
+    offer, the any-number hand casts, the revealed and ripple held groups, the free-cast kicker payment, Evercoat Ursine's source-grouped
+    play. Ledger notes name each reason.
+  - *Dead (1).* `MayPayLifeForBlackManaEffect`: nothing built it; K'rrik, Son of Yawgmoth has `PayBlackManaWithLifeEffect`, read by
+    `GameQueryService.canPayBlackManaWithLife`. Record and its cost-modification handler deleted;
+    `CostModificationHandlerBean.applyManaCostPaymentAlternatives` now has no implementer and stays as a hook.
+- **Perpetually started: Distracted Botanist.** `PerpetuallyGrantEnterAbilityToPermanentCardsInGraveyardEffect` is
+  `PerpetuallyGrantAbilitiesEffect(cardsInYourGraveyard(CardIsPermanentPredicate), Triggers.enters(THIS), draw + gain)`: the grant goes into
+  the perpetual ability store, which the layered pass seeds onto the permanent the card becomes (`seedPerpetualAbilities`), so
+  `EtbTriggerService` puts it on the stack as a granted own-entry ability. Its private store `GameData.perpetualEnterEffectsByCardId`
+  (and its simulation copy and `EtbTriggerService` reader) had no other writer and is deleted. Two deaths grant two independent abilities, as
+  before.
+- **Why the rest of Perpetually waits.** Most of its rare records act on a hand or library set ("each creature card in your hand
+  perpetually …", "a random … card in your hand"). The CardSubject survivors (`PerpetuallyChangeCastCostEffect`,
+  `PerpetuallyGrantAbilitiesEffect`, `PerpetuallyBoostCardEffect`) log one "A card in <player>'s hand …" line per card, so a fold would tell
+  the opponents how many matching cards the hand holds (CR 400.2), which the old handlers (no log) did not; and `ChooseCardEffect.atRandom`
+  logs a choice only when a matching card exists. The grants of activated abilities (Gitrog, Kemba's Outfitter, Topsoil Turner) and of
+  Oglor's triggered effect live in two more stores (`perpetualActivatedAbilities`, `perpetualTriggeredAbilities`) the survivor doesn't
+  write. Both are shared parts for the next run.
+
+**Behaviour changes.**
+
+1. Every hand put to the battlefield (every `PutCardToBattlefieldEffect` from hand, the opponent-may-play paths, the Aura-onto-self put, the
+   two creature puts) logs "<player> puts no card onto the battlefield." both when nothing matched and when the choice was declined, instead
+   of "has no <label> cards in hand." / "chooses not to put a card onto the battlefield." (CR 400.2, 701.20a):
+   `ElvishPiperTest.logRevealsNothingOfTheHand` (failed on a HEAD copy: "Alice has no creature cards in hand.").
+2. Distracted Botanist's grant logs "<card> perpetually gains an ability." for each graveyard card (the survivor's line; the graveyard is
+   public). A card that gained it and is cast face down doesn't trigger it (CR 708.2), as before (the old store's reader skipped a permanent
+   whose printed abilities were removed as it entered): `DistractedBotanistTest.faceDownCastDoesNotTriggerTheGrantedAbility` and the
+   face-up control `faceUpCastTriggersTheGrantedAbility` pass on HEAD too (guards).
+
+**What a player sees.** The hand put's lines name no card and say nothing of what a hand holds. The Squall offers are the same prompts to
+the caster. Botanist's lines name cards in a public graveyard.
+
+**Seen, not changed.**
+
+- The perpetual CardSubject survivors' one-line-per-hidden-card logs (above): they already tell the opponents how many cards of a hand set
+  changed for the records folded in runs 7, 10 and 15 (`PerpetuallyGrantAbilitiesEffect(cardsInYourHand(filter))`). Needs a decision on what
+  a hidden-zone perpetual change logs (one line per zone or none) before Perpetually's hand records fold; close to the masked-prompt question.
+- Opponents may still learn from a hand put whether a prompt was opened (the masked-prompt question; not touched).
+- `MayCastHandlerService.handleCastFromOutsideGameChoice` skips the additional-cost check for Spawnsire of Ulamog's casts (only the sideboard
+  path checks `satisfiableWithoutManaCost`); a free cast still pays additional costs (CR 601.2f). Not reproduced.
+- Forgeborn Phoenix's grant targets the dying creature's card by `triggeringCardId`, else its own card, in any zone; a `CardSubject` fold
+  would only grant while the card is in the graveyard stay (CR 400.7), a behaviour question for perpetual (digital-only) effects.
+
+**Tests edited.** `ElvishPiperTest.logRevealsNothingOfTheHand` (new). The old line was asserted, and now the new line is, by
+`ElvishPiperTest` (2), `AcademyResearchersTest` (2), `HuntedWumpusTest`, `QuicksilverAmuletTest`, `ThranTemporalGatewayTest`,
+`OpponentMayPlayCreatureEffectHandlerTest` and `PutCardToBattlefieldEffectHandlerTest` (2): a log line this run changes for a rules reason.
+Display names on every method of `DistractedBotanistTest`, and its two new cases above. `EffectCountRatchetTest`'s baselines.
+
+**Tests run.** Two Gradle runs on the final sources of each part, one `--tests` list per task, counted from that run's XML by timestamp:
+69 XML files, 628 cases, 0 failures, 0 skipped. The first: the 9 classes asserting the changed line, the `--tests-for` classes of every
+changed hand handler and of the three graveyard free-cast records, a 25-class sample of `PutCardToBattlefieldEffect`'s cards, Kellan, the
+Kid, K'rrik, `MayCastHandlerServiceTest`, `MayAbilityHandlerServiceTest`, `EffectCountRatchetTest`, the AI's `TargetPolarityGuardTest`. The
+second: `DistractedBotanistTest` (the only class naming it), every user of `PerpetuallyGrantAbilitiesEffect`, Forgeborn Phoenix, Perennial
+Gravewarden, Flames of Moradin, Sanguine Soothsayer, `EtbTriggerServiceTest`, the AI's `GameDataDeepCopyTest` and `TargetPolarityGuardTest`,
+`EffectCountRatchetTest` (at 4,115 / 3,369). Compiled: domain, engine, webservice, `magical-vibes-card:shared`, every letter test module
+(those not run compiled by `compileTestJava`), the application and AI test sources. No deleted handler is marked
+`AsksDeathReplacementsFirst` or calls `LifeSupport.askBefore*`. Not run: the full suites, the AI fuzz and stress tests, the frontend. Not
+verified: more than two players. On a `git archive` copy of HEAD with the two edited test classes: `ElvishPiperTest` 19 cases, 3 failed
+(the new case and the two cases asserting the new line), `DistractedBotanistTest` 8 cases, 0 failed.
+
+**For the next run (run 28: Perpetually's rare records; then Conjure 51, Register 54, Target 79).**
+
+- Decide what a perpetual change to a card in a hidden zone logs (the survivors' per-card line, above), then fold the hand and library
+  records onto `PerpetuallyChangeCastCostEffect`, `PerpetuallyGrantAbilitiesEffect` and `PerpetuallyBoostCardEffect` (Fountainport Charmer,
+  Charged Conjuration, Foundry Beetle, Topsoil Turner, the random hand boosts, the library boosts).
+- Move the perpetual activated-ability grants (`perpetualActivatedAbilities`: Gitrog, Kemba's Outfitter, Topsoil Turner) and Oglor's
+  triggered-effect store onto the one perpetual ability store, then fold their records.
+- The Spawnsire additional-cost check above, if a run takes the outside-game casts.
 
 ## Prompt
 

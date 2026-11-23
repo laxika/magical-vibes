@@ -50,7 +50,7 @@ public class PutCreatureFromHandOntoBattlefieldWithCountersIfManaCostHasXEffectH
 
         if (validIndices.isEmpty()) {
             String playerName = gameData.playerIdToName.get(playerId);
-            gameLogService.append(gameData, GameLog.text(playerName + " has no creature cards in hand."));
+            gameLogService.append(gameData, GameLog.putsNoCardOntoBattlefield(playerName));
             log.info("Game {} - {} has no creature cards in hand for hand-to-battlefield effect", gameData.id,
                     playerName);
             return;

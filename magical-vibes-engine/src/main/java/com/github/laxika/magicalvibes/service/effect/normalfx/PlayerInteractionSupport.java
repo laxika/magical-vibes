@@ -182,8 +182,7 @@ public class PlayerInteractionSupport {
 
         if (validIndices.isEmpty()) {
             String playerName = gameData.playerIdToName.get(playerId);
-            String logEntry = playerName + " has no " + effect.label() + " cards in hand.";
-            gameLogService.append(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.putsNoCardOntoBattlefield(playerName));
             log.info("Game {} - {} has no {} cards in hand for hand-to-battlefield effect", gameData.id, playerName, effect.label());
             return;
         }
@@ -253,8 +252,7 @@ public class PlayerInteractionSupport {
 
         if (creatureIndices.isEmpty()) {
             String playerName = gameData.playerIdToName.get(playerId);
-            String logEntry = playerName + " has no creature cards in hand.";
-            gameLogService.append(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.putsNoCardOntoBattlefield(playerName));
             log.info("Game {} - {} has no creatures in hand for creature-choice effect", gameData.id, playerName);
             return;
         }
@@ -280,8 +278,7 @@ public class PlayerInteractionSupport {
 
         if (validIndices.isEmpty()) {
             String playerName = gameData.playerIdToName.get(playerId);
-            String logEntry = playerName + " has no " + label + " cards in hand.";
-            gameLogService.append(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.putsNoCardOntoBattlefield(playerName));
             log.info("Game {} - {} has no {} cards in hand for creature-choice effect", gameData.id, playerName, label);
             return;
         }

@@ -212,7 +212,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
 
         verifyNoInteractions(playerInputService);
         verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
-                logEntry.plainText().contains("no creature cards in hand")));
+                logEntry.plainText().contains("puts no card onto the battlefield")));
     }
 
     @Test
@@ -227,6 +227,6 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
 
         verifyNoInteractions(playerInputService);
         verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
-                logEntry.plainText().contains("no creature cards in hand")));
+                logEntry.plainText().contains("puts no card onto the battlefield")));
     }
 }
