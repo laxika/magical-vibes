@@ -1984,6 +1984,97 @@ The free-cast choice batch moves the "cast any number / up to N from among" reco
   - `BoostTargetCreaturePerChosenTypeCountEffect` (1)
   - `SacrificeCreatureWithLeastToughnessEffect` (1)
 
+### Step 9, parallel triage chunk 03 (2026-11-23)
+
+Verdicts only: no repo file changed and the ratchet did not move. 69 ledger rows (notes `triage P03: …`) cover all of Shuffle (18 rare), Enchanted (17), Protection (17) and Redirect (17).
+
+Every record was read with its handler to the end, plus the card classes that use it. For records with no handler, these readers were read:
+- `BattlefieldPlacementService`: the exile-entry shuffle and the enters-tapped helper.
+- `GraveyardService`: the dying-library replacements.
+- `GraveyardChoiceHandlerService`: The Three Seasons and Stream of Thought.
+- `AttackLegalityService` and `CombatAttackService`.
+- `GameQueryService`: transform, the {T}-ability lock, targeting, loyalty, protection and attached restrictions.
+- `CastingPermissionService`, `AuraCopyService`, and the type-setting cases of `LayerSystemService`.
+- `DamagePreventionService` and `DamageSupport`: the redirect shields.
+- `DrawService`.
+- The Blood of the Martyr and Protection Racket may handlers.
+
+Oracle text was checked with `get_card` for every `unique` and `blocked-*` card: Don't Blink, Bad Wolf Bay, Emrakul, Mirror Golem, Brand of Ill Omen, Overwhelming Splendor, Protection Racket, Guff Rewrites History, Blood of the Martyr, Treacherous Link and Plagiarize. Planeswalkerificate is a playtest card Scryfall doesn't list, so it was judged from its class. Oracle text was also checked for Saiba Syphoner, Assemble from Parts, Credit Voucher, Lord of the Nazgûl, Commander's Plate, Weathered Bodyguards, Kjeldoran Royal Guard, Soltari Guerrillas, Goblin Psychopath, Harsh Judgment, Shield Dancer and Shimian Night Stalker. The other cards were judged from their classes.
+
+Rulings read: Bad Wolf Bay, Commander's Plate. CR 111.7, 205.1a, 400.7, 400.7j, 603.10a, 608.2d, 613.1f, 614.9, 614.12, 701.24a, 701.24d, 702.16b and 708.2a were checked with `get_rule` (2026-11-23).
+
+| Family | Triaged | `step-9` | `blocked-other` | `blocked-player-loop` | `unique` |
+|---|---|---|---|---|---|
+| Shuffle | 18 rare | 16 | 0 | 1 | 1 |
+| Enchanted | 17 rare | 15 | 1 | 0 | 1 |
+| Protection | 17 rare | 14 | 1 | 0 | 2 |
+| Redirect | 17 rare | 14 | 0 | 0 | 3 |
+| All | 69 | 59 | 2 | 1 | 7 |
+
+No record is dead. `ProtectionFromColorlessEffect` has no card, but `ChoiceHandlerService`'s protection colour choice builds it.
+
+**Fold batches** (survivor or shared component → records of this chunk, cards):
+
+| Batch | Survivor / component | Records (cards) |
+|---|---|---|
+| card shuffle | `PutCardsIntoLibraryEffect` + a shuffle placement, `shuffledIn(cards)`: each owner's library is shuffled once, also when nothing moved (CR 701.24d), and the step records SHUFFLE_INTO_LIBRARY. Uses `ChooseCardEffect` where the cards are chosen | Credit Voucher (+ draw `AmountThisWay(SHUFFLE_INTO_LIBRARY)`), Stream of Thought, Assemble from Parts, Riftsweeper, Serene Remembrance + Turn the Earth (one record), The Three Seasons. Run 12's blocked `ShuffleCardsFromHandIntoLibraryThenEffect` joins: 6 (7) |
+| per-graveyard choice | `ChooseCardEffect` with a for-each-graveyard count | The Three Seasons (above). Re-triage run 1's unique `ExileUpToOneMatchingCardFromEachGraveyardWithSourceEffect` with it |
+| permanent shuffle | `ShuffleReferencedPermanentIntoLibraryEffect` / `ShuffleTargetPermanentIntoLibraryEffect` record SHUFFLE_INTO_LIBRARY (owners as players) and take set subjects: one leave event, one shuffle per library | Mirror-Mad Phantasm, This Is How It Ends (`villainousChoiceFacedBy(playersThisWay(...))`), Teferi, Temporal Pilgrim, Elixir of Immortality (deferred shared shuffle): 4 (4). Step 8's blocked-step-model rows for `ShuffleSelfIntoOwnerLibraryEffect` and `ShuffleTargetPermanentIntoLibraryEffect` say "no StepKind". They are stale: SHUFFLE_INTO_LIBRARY exists since run 9. The rows waiting on that parent (`ExileTopCardPutLandOntoBattlefieldOrMayCastFreeEffect`, `RevealTopCardPermanentToBattlefieldEffect`) go with them |
+| Shuffle, by parameters | existing records | Psychic Spiral (`EachPlayerShufflesZonesIntoLibraryEffect(you(), {GRAVEYARD})` + `MillEffect(shuffledAwayByYou(), targetPlayer())`), Elvish Soultiller (`ChooseCreatureTypeAtResolutionEffect` + `ShuffleGraveyardIntoLibraryEffect` with `CardHasTypeChosenThisResolutionPredicate`), Jace, the Mind Sculptor (`handsOf(targetPlayerDeclaredElsewhere())`), Zoyowa's Justice (`NoteAmountEffect(TargetManaValue)` + the then-wrapper with `DiscoverEffect(noted())`, `TARGET_OWNER`): 4 (4) |
+| dying-library position | `PutOnTopOfLibraryInsteadOfDyingEffect` + a position (top, bottom, shuffled) | Saiba Syphoner: 1 (1). Re-triage run 12's unique `PutOnBottomOfLibraryInsteadOfDyingEffect` with it |
+| outside the game | triage 2's `SearchOutsideGameForCardToHandEffect` + a destination + a count | Research // Development (shuffled in, up to four): 1 (1) |
+| pay any amount | triage 1's pay batch (`EachPlayerPaysAnyManaEffect`, the payer is the carried upkeep player) + a "prevent X of that damage" read of PAY_MANA; cost-shape | Errant Minion + Power Leak (one record): 1 (2) |
+| attached restrictions | `AttachedPermanentRestrictionEffect` wrapping the self record; each self record's query reads the attached restrictions. These are the attachment's own abilities, so the host losing its abilities doesn't remove them (CR 613.1f) | Instill Energy (Chaos Lord's as-though-haste record, with its unless-entered part as an option), Errantry (`CanOnlyAttackAloneEffect`), Sightless Brawler (`CantAttackOrBlockAloneEffect(false, true)`), Avacyn's Collar + Bound by Moonsilver (can't transform), Canopy Cover + Shielding Plax (`TargetingRestrictionEffect`, opponents of the attachment's controller): 5 (7) |
+| {T}-ability lock | `MatchingPermanentsCantActivateTapAbilitiesEffect` + a static `PermanentSubject` | Serra Bestiary: 1 (1) |
+| copier subject (triage 6) | `BecomeCopyOfSubjectEffect` + a copier subject (+ copy exceptions, `WHILE_ATTACHED`) | Metamorphic Alteration (with `ChoosePermanentOnEnterEffect`), Loose in the Park: 2 (2) |
+| colour (triage 6) | the static chosen-colour batch; the resolution colour batch | Shimmerwilds Growth; Dream Coat: 2 (2) |
+| chosen type | `EnchantedPermanentBecomesTypeEffect` (9 cards) + the source's chosen subtype + a `PermanentSubject` | Convincing Mirage + Phantasmal Terrain (one record): 1 (2). `SourceBecomesChosenBasicLandTypeEffect` (2 cards, unaudited) joins |
+| set card types | `SetCardTypesEffect(Set.of(LAND), attached())`, once its layer case drops enchantment subtypes | Imprisoned in the Moon + Song of the Dryads (one record): 1 (2) |
+| static cast restriction | `OpponentsCantCastSpellsMatchingPredicateEffect` taking `controllerOf(attached())` and `you()` | Brand of Ill Omen: 1 (1). `CantCastSpellTypeEffect` (4 cards, unaudited) joins |
+| enters tapped | `EnterPermanentsOfTypesTappedEffect` (23 cards) + a `PlayerSubject` in place of `opponentsOnly` | Radiant Restraints: 1 (1). `CreaturesOfUnchosenParityEnterTappedEffect` (unaudited) joins |
+| mana-value protection | `ProtectionFromManaValueEffect` + a mana-value quality (at least, at most, parity, other than a number) | Mistmeadow Skulk (survivor), Reaver Titan, Lavabrink Venturer, Haktos: 4 (4) |
+| colour-count protection | `ProtectionFromMulticoloredEffect` (6 cards) + a colour-count quality | Guardian of the Guildpact + Providence of Night (one record), Frenemy of the Guildpact, the engine-built colorless grant: 3 (3) |
+| permanent-quality protection | `ProtectionFromPermanentsMatchingEffect` + predicates (modified creature, counter of a type, Ring-bearer, non-[subtype] creature) | Ronom Hulk + Tsabo Tavoc (survivor), Louvaq, Geyadrone Dihada, Lord of the Nazgûl, Harbinger of Spring + Spare from Evil: 5 (7) |
+| dynamic protection colours | `ProtectionFromColorsEffect` (170 cards) + a colour set judged as asked | Empty-Shrine Kannushi + Pledge of Loyalty (one record), Commander's Plate: 2 (3). `ProtectionFromChosenColorEffect` (8 cards, unaudited) joins |
+| your-damage redirects | `RedirectYourDamageToTargetCreatureThisTurnEffect` (5m unique, re-triage) + a destination subject, a protected set, a source subject, combat-only and a `Duration`, on `TurnDamageRedirectToCreatureShield` | Gideon's Sacrifice, Turn the Tables, Shimian Night Stalker, Ascent of the Worthy: 4 (4). 5m's unique Saving Grace row joins |
+| creature redirects | `RedirectNextDamageEffect` (16 cards) + an all-this-turn amount, a source filter and combat-only | Karona's Zealot, Sivvi's Valor, Shield Dancer: 3 (3) |
+| source-keyed redirects | `RedirectNextDamageFromChosenSourceToSelfEffect` (5m unique, Opal-Eye; re-triage) + a source subject or filter, a recipient filter, a destination (the source's controller, you, a permanent), an amount, combat-only, and a `Duration` or a static form | Reverberation, Mirror Strike, Aegis of Honor, Harsh Judgment (static), Goblin Psychopath, Soltari Guerrillas: 6 (6) |
+| unblocked absorbers | `RedirectPlayerDamageToSelfEffect` (8 cards) + combat-only + a floated this-turn form | Kjeldoran Royal Guard + Weathered Bodyguards (one record): 1 (2) |
+
+**Blocked (3):**
+- Overwhelming Splendor, `blocked-other`. There is no static form of the player restriction and no activating kind that leaves loyalty abilities usable. One card.
+- Protection Racket, `blocked-other`. Its text repeats a process for each opponent in turn order, and no step repeats a sequence for each player. Cost-shape.
+- Guff Rewrites History, `blocked-player-loop`. Each player who controlled a shuffled permanent may cast the card they exiled. The rest of the card folds.
+
+**Unique (7):**
+- Don't Blink: the shuffle-instead-of-entering replacement.
+- Planeswalkerificate: toughness used as loyalty.
+- Emrakul, the Aeons Torn: protection from coloured spells only.
+- Mirror Golem: protection from the card types of the cards it exiled.
+- Blood of the Martyr: an optional redirect asked for each creature damage event.
+- Treacherous Link: a static redirect to the enchanted creature's controller.
+- Plagiarize: a draw redirect for the turn.
+
+**Seen, not changed** (confirmed by reading, not run):
+
+- **Bad Wolf Bay.** Its chaos ability ("cards can't enter from exile this turn") is `ShuffleCreaturesEnteringFromExileEffect`, Don't Blink's replacement. A creature card entering from exile is shuffled into its owner's library, and a noncreature card still enters, where the text keeps every card in exile. `CardsCantEnterBattlefieldFromZonesEffect` would say it, but it enforces only graveyard and library (its Javadoc). Sure of the code; it only matters in Planechase.
+- **`SetCardTypesEffect`'s layer-4 case.** It drops the creature, artifact, planeswalker and land subtypes of the card types it removes, but keeps enchantment and battle subtypes (CR 205.1a). Minimus Containment, Sugar Coat, In Too Deep and Swift Reconfiguration on an Aura, Saga, Class or Shrine leave it with its enchantment subtype. `EnchantedPermanentBecomesOnlyLandEffect`'s case drops them. Sure of the code; the Saga consequence wasn't traced.
+- **Dying-library replacements in `GraveyardService`** (Saiba Syphoner, Gravebane Zombie, the put-on-bottom card). They check only the floating `losesAllAbilitiesByEffect`, never `hasLostPrintedAbilities` (CR 613.1f). A creature that lost its abilities to a static effect (Humility, Overwhelming Splendor) still uses its replacement. The shuffle branch also logs "is revealed and", which Saiba's text doesn't say. Fairly sure; same kind as defect run 2's fixes.
+- **The Three Seasons (III).** `GraveyardChoiceHandlerService` moves the chosen cards outside a graveyard-leave batch and shuffles with `Collections.shuffle` instead of `LibraryShuffleHelper.shuffleLibrary`. No shuffle event is sent, so "whenever a player shuffles" triggers miss it, and the Bombardment restore and the top-card free-play end are skipped. Sure of the code.
+- **Radiant Restraints and Overwhelming Splendor.** Their readers (`EnchantedPlayerCreaturesEnterTappedEffectHandler` and `GameQueryService.playerCantActivateNonManaOrLoyaltyAbilities`) don't check whether the Aura lost its abilities or is ignored (Volrath's Curse). Sure of the code; low impact.
+- **Choices without the can't-be-chosen check** (CR 608.2d convention): `AuraCopyService.beginChooseCreatureOnEnter` (Metamorphic Alteration) and Ascent of the Worthy's creature choice. Sure of the code. Gideon's Sacrifice's multi-permanent choice wasn't checked.
+- **Mirror-Mad Phantasm and Teferi, Temporal Pilgrim.** Mirror-Mad puts the found card onto the battlefield with `putPermanentOntoBattlefield`, outside the entry batch. Teferi's -12 removes the permanents one at a time. Low impact; the folds above fix both.
+
+**Left.** Nothing in chunk 03. Re-triage these rows when their batch is folded:
+- `PutOnBottomOfLibraryInsteadOfDyingEffect`
+- `ExileUpToOneMatchingCardFromEachGraveyardWithSourceEffect`
+- `ChooseCreatureOnEnterEffect`
+- `RedirectYourDamageToTargetCreatureThisTurnEffect`
+- `RedirectYourDamageToEnchantedCreatureThisTurnEffect`
+- `RedirectNextDamageFromChosenSourceToSelfEffect`
+- the two stale shuffle blocked-step-model rows
+- `ShuffleCardsFromHandIntoLibraryThenEffect`
+
 ## Prompt
 
 Replace `<N>` with the step number. For step 9, add the run kind and its scope (`step 9, triage run: Destroy, Search`;
