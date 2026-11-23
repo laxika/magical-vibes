@@ -1081,7 +1081,8 @@ public class InteractionPromptProjectionRegistry {
     private InteractionPromptMessage projectIllicitAuctionBidChoice(
             GameData gameData, PendingInteraction.IllicitAuctionBidChoice interaction) {
         Permanent target = findPermanent(gameData, interaction.targetPermanentId());
-        String targetName = target != null ? FaceDownVisibility.publicName(gameData, target) : "the creature";
+        String targetName = target != null
+                ? FaceDownVisibility.nameShownTo(gameData, target, interaction.decidingPlayerId()) : "the creature";
         String highBidderName =
                 gameData.playerIdToName.getOrDefault(interaction.highBidderId(), "the high bidder");
         String prompt = "Bid life for control of " + targetName + " (current high bid: "
@@ -1916,12 +1917,17 @@ public class InteractionPromptProjectionRegistry {
                 interaction.choosingForOpponent());
     }
 
+    /**
+     * The assignment as its player reads it: a face-down creature they control is named, so they can tell it from
+     * their others (CR 708.6); the interaction carries the names everybody may read.
+     */
     private CombatDamageAssignmentNotification projectCombatDamageAssignment(
             GameData gameData, PendingInteraction.CombatDamageAssignment interaction) {
+        UUID viewerId = interaction.decidingPlayerId();
         List<CombatDamageTargetView> targetViews = interaction.validTargets().stream()
                 .map(target -> new CombatDamageTargetView(
                         target.id().toString(),
-                        target.name(),
+                        nameShownTo(gameData, target.id(), target.name(), viewerId),
                         target.lethalDamageThreshold(),
                         target.currentDamage(),
                         target.isPlayer()))
@@ -1929,7 +1935,7 @@ public class InteractionPromptProjectionRegistry {
         return new CombatDamageAssignmentNotification(
                 interaction.attackerIndex(),
                 interaction.attackerPermanentId().toString(),
-                interaction.attackerName(),
+                nameShownTo(gameData, interaction.attackerPermanentId(), interaction.attackerName(), viewerId),
                 interaction.totalDamage(),
                 targetViews,
                 interaction.isTrample(),
@@ -1981,6 +1987,12 @@ public class InteractionPromptProjectionRegistry {
             return "empty";
         }
         return cards.stream().map(Card::getName).collect(Collectors.joining(", "));
+    }
+
+    /** The name of the permanent {@code permanentId} as {@code viewerId} may read it, else {@code publicName}. */
+    private String nameShownTo(GameData gameData, UUID permanentId, String publicName, UUID viewerId) {
+        Permanent permanent = findPermanent(gameData, permanentId);
+        return permanent == null ? publicName : FaceDownVisibility.nameShownTo(gameData, permanent, viewerId);
     }
 
     private Permanent findPermanent(GameData gameData, UUID permanentId) {

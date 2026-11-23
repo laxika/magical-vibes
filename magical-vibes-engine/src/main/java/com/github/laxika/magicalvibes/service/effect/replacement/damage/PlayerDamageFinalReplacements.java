@@ -260,7 +260,7 @@ class PlayerDamageFinalReplacements extends PlayerDamageCandidateSource {
         return new Rule<PlayerDamageContext>("PreventAndPutCounterOnSelf", PREVENTION, false,
                 ctx -> preventionReplacementSupport.damageToControllerCounterOnSelfSources(ctx.gameData(), ctx.playerId())
                         .stream().map(permanent -> permanent.getId().toString()).toList(),
-                (ctx, instance) -> FaceDownVisibility.publicName(ctx.gameData(), permanent(ctx, instance))
+                (ctx, instance) -> ctx.nameShownToChooser(permanent(ctx, instance))
                         + ": prevent the damage and put a counter on it",
                 (ctx, instance) -> ctx.event(),
                 (ctx, instance) -> new ApplyResult.Applied<>(ctx.event().withAmount(ctx.amount()

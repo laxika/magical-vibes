@@ -69,10 +69,19 @@ abstract class DamageCandidateSource<C extends DamageCandidateSource.DamageConte
         GameData gameData();
 
         /**
-         * The damage source's name as every player may read it in an option label: no card for a face-down source
-         * (CR 708.5), {@link Permanent#displayName} for a nameless one.
+         * The damage source's name as the event's chooser, the only player who reads an option label, may read it:
+         * no card for a face-down source another player controls (CR 708.5), {@link Permanent#displayName} for a
+         * nameless one.
          */
         String sourceName();
+
+        /**
+         * {@code permanent}'s name in an option label, as the event's chooser may read it: a face-down permanent they
+         * control is named so they can tell it from their others (CR 708.6).
+         */
+        default String nameShownToChooser(Permanent permanent) {
+            return FaceDownVisibility.nameShownTo(gameData(), permanent, event().chooserId());
+        }
     }
 
     /** Whether a rule is about each source's damage or about all the damage the recipient is dealt. */
@@ -283,7 +292,7 @@ abstract class DamageCandidateSource<C extends DamageCandidateSource.DamageConte
                 }
                 String label = rule.label().apply(ctx, instance);
                 options.add(new ReplacementOption(rule.key(instance) + suffix,
-                        suffix.isEmpty() ? label : label + " (" + sourceName(view) + ")", rule.kind(), rule.pure()));
+                        suffix.isEmpty() ? label : label + " (" + sourceName(gameData, view) + ")", rule.kind(), rule.pure()));
             }
             return null;
         });
@@ -392,14 +401,18 @@ abstract class DamageCandidateSource<C extends DamageCandidateSource.DamageConte
                 event.redirected());
     }
 
-    private static String sourceName(DamageEvent view) {
+    /** The name of the source of {@code view}, one portion of combat damage, as the event's chooser may read it. */
+    private static String sourceName(GameData gameData, DamageEvent view) {
         StackEntry entry = view.entry();
         if (entry.getCard() == null) {
             return "a source";
         }
         Permanent source = entry.getSourcePermanentSnapshot();
-        return source != null && source.isFaceDown() ? FaceDownVisibility.publicName(source)
-                : Permanent.displayName(entry.getCard());
+        if (source == null || !source.isFaceDown()) {
+            return Permanent.displayName(entry.getCard());
+        }
+        return FaceDownVisibility.maySee(gameData, source, view.chooserId()) ? Permanent.displayName(entry.getCard())
+                : FaceDownVisibility.publicName(source);
     }
 
     private static <T> T withUnpreventable(GameData gameData, DamageEvent view, Supplier<T> body) {

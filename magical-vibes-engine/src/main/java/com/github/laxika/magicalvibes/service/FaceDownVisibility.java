@@ -66,6 +66,23 @@ public final class FaceDownVisibility {
                 && maySeeAs(gameData, entry, gameData.mindControlledPlayerId());
     }
 
+    /**
+     * Whether {@code viewerId}, or nobody in particular when null, may look at {@code permanent}'s card: everybody
+     * while it is face up, else the player who controls it now, phased out or not (CR 708.5), and whoever controls that
+     * player (CR 724.4).
+     */
+    public static boolean maySee(GameData gameData, Permanent permanent, UUID viewerId) {
+        if (!permanent.isFaceDown()) {
+            return true;
+        }
+        if (viewerId == null) {
+            return false;
+        }
+        return controls(gameData, viewerId, permanent)
+                || viewerId.equals(gameData.mindControllerPlayerId()) && gameData.mindControlledPlayerId() != null
+                && controls(gameData, gameData.mindControlledPlayerId(), permanent);
+    }
+
     private static boolean maySeeAs(GameData gameData, StackEntry entry, UUID playerId) {
         if (entry.isCastFaceDown()) {
             return playerId.equals(entry.getControllerId());
@@ -75,8 +92,15 @@ public final class FaceDownVisibility {
             return gameData.mayLookAtExiledCard(cardId, playerId);
         }
         Permanent source = faceDownSource(gameData, entry);
-        return source != null && gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
-                .anyMatch(permanent -> permanent.getId().equals(source.getId()));
+        return source != null && controls(gameData, playerId, source);
+    }
+
+    /** Whether {@code playerId} controls {@code permanent}, on the battlefield or phased out. */
+    private static boolean controls(GameData gameData, UUID playerId, Permanent permanent) {
+        return Stream.of(gameData.playerBattlefields.get(playerId), gameData.phasedOutPermanents.get(playerId))
+                .filter(Objects::nonNull)
+                .flatMap(List::stream)
+                .anyMatch(candidate -> candidate.getId().equals(permanent.getId()));
     }
 
     /**
@@ -112,6 +136,16 @@ public final class FaceDownVisibility {
             return Permanent.displayName(entry.getCard());
         }
         return entry.isCastFaceDown() ? StackEntry.FACE_DOWN_SPELL : FACE_DOWN_CARD;
+    }
+
+    /**
+     * {@code permanent}'s name as {@code viewerId}, or everybody when null, may be told it: its card's to a player who
+     * may look at it, so that player can tell their face-down permanents apart (CR 708.6), else
+     * {@link #publicName(GameData, Permanent)}. Only for a text that player alone reads, such as their prompt.
+     */
+    public static String nameShownTo(GameData gameData, Permanent permanent, UUID viewerId) {
+        return maySee(gameData, permanent, viewerId) ? Permanent.displayName(permanent.getCard())
+                : publicName(gameData, permanent);
     }
 
     /** {@code entry}'s description as {@code viewerId}, or everybody when null, may be told it. */

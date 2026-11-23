@@ -34,7 +34,7 @@ public record PlayerDamageContext(GameData gameData, DamageEvent event, Card sou
 
     @Override
     public String sourceName() {
-        return sourcePermanent != null ? FaceDownVisibility.publicName(gameData, sourcePermanent)
+        return sourcePermanent != null ? nameShownToChooser(sourcePermanent)
                 : FaceDownVisibility.publicName(gameData, source);
     }
 

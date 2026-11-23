@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.replacement.damage;
 
 import com.github.laxika.magicalvibes.model.TurnDamageRedirectToCreatureShield;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
-import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -89,7 +87,7 @@ class PlayerDamageRedirects extends PlayerDamageCandidateSource {
                                         ctx.gameData(), ctx.damageSourceId())
                                 : List.<String>of(),
                         (ctx, instance) -> "Soltari Guerrillas: " + ctx.sourceName()
-                                + "'s damage is dealt to " + redirectDestinationName(ctx.gameData(), instance),
+                                + "'s damage is dealt to " + redirectDestinationName(ctx, instance),
                         (ctx, instance) -> ctx.event(),
                         (ctx, instance) -> new ApplyResult.Applied<>(redirected(ctx,
                                 prevention.applySourceNextCombatDamageToOpponentRedirectTo(ctx.gameData(),
@@ -115,7 +113,7 @@ class PlayerDamageRedirects extends PlayerDamageCandidateSource {
                                         ctx.playerId(), null, ctx.damageSourceId(), ctx.combat())
                                 .stream().map(String::valueOf).toList(),
                         (ctx, instance) -> "Redirect the damage to "
-                                + turnRedirectDestinationName(ctx.gameData(), instance),
+                                + turnRedirectDestinationName(ctx, instance),
                         (ctx, instance) -> ctx.event(),
                         (ctx, instance) -> new ApplyResult.Applied<>(redirected(ctx,
                                 prevention.applyTurnDamageRedirectToCreatureShield(ctx.gameData(),
@@ -173,9 +171,9 @@ class PlayerDamageRedirects extends PlayerDamageCandidateSource {
         if (absorber == null) {
             return "A permanent";
         }
-        String name = FaceDownVisibility.publicName(ctx.gameData(), absorber);
+        String name = ctx.nameShownToChooser(absorber);
         List<Permanent> sameName = absorbers(ctx).stream()
-                .filter(candidate -> FaceDownVisibility.publicName(ctx.gameData(), candidate).equals(name))
+                .filter(candidate -> ctx.nameShownToChooser(candidate).equals(name))
                 .toList();
         if (sameName.size() < 2) {
             return name;
@@ -204,16 +202,16 @@ class PlayerDamageRedirects extends PlayerDamageCandidateSource {
         return controllerId == null || controllerId.equals(ctx.playerId()) ? null : controllerId;
     }
 
-    private String turnRedirectDestinationName(GameData gameData, String shieldIndex) {
-        UUID destinationId = gameData.shields(TurnDamageRedirectToCreatureShield.class)
+    private String turnRedirectDestinationName(PlayerDamageContext ctx, String shieldIndex) {
+        UUID destinationId = ctx.gameData().shields(TurnDamageRedirectToCreatureShield.class)
                 .get(Integer.parseInt(shieldIndex)).redirectTargetCreatureId();
-        Permanent destination = gameQueryService.findPermanentById(gameData, destinationId);
-        return destination == null ? "a creature" : FaceDownVisibility.publicName(gameData, destination);
+        Permanent destination = gameQueryService.findPermanentById(ctx.gameData(), destinationId);
+        return destination == null ? "a creature" : ctx.nameShownToChooser(destination);
     }
 
-    private String redirectDestinationName(GameData gameData, String destinationId) {
-        Permanent destination = gameQueryService.findPermanentById(gameData, UUID.fromString(destinationId));
-        return destination == null ? "a creature" : FaceDownVisibility.publicName(gameData, destination);
+    private String redirectDestinationName(PlayerDamageContext ctx, String destinationId) {
+        Permanent destination = gameQueryService.findPermanentById(ctx.gameData(), UUID.fromString(destinationId));
+        return destination == null ? "a creature" : ctx.nameShownToChooser(destination);
     }
 
     private DamageEvent redirected(PlayerDamageContext ctx, int remaining) {

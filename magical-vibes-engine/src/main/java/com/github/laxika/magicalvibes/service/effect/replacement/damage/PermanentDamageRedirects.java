@@ -103,7 +103,7 @@ class PermanentDamageRedirects extends PermanentDamageCandidateSource {
                                 ctx.targetControllerId(), ctx.target().getId()).stream()
                                 .map(permanent -> permanent.getId().toString()).toList()
                                 : List.of(),
-                        (ctx, instance) -> FaceDownVisibility.publicName(ctx.gameData(), absorber(ctx, instance)) + ": deal the damage to it instead",
+                        (ctx, instance) -> ctx.nameShownToChooser(absorber(ctx, instance)) + ": deal the damage to it instead",
                         (ctx, instance) -> ctx.event(),
                         (ctx, instance) -> new ApplyResult.Applied<>(redirected(ctx,
                                 prevention.applyStaticPermanentDamageRedirectToSelf(ctx.gameData(),
@@ -196,7 +196,7 @@ class PermanentDamageRedirects extends PermanentDamageCandidateSource {
         UUID destinationId = ctx.gameData().shields(TurnDamageRedirectToCreatureShield.class)
                 .get(Integer.parseInt(shieldIndex)).redirectTargetCreatureId();
         Permanent destination = gameQueryService.findPermanentById(ctx.gameData(), destinationId);
-        return destination == null ? "a creature" : FaceDownVisibility.publicName(ctx.gameData(), destination);
+        return destination == null ? "a creature" : ctx.nameShownToChooser(destination);
     }
 
     private Permanent absorber(PermanentDamageContext ctx, String instance) {

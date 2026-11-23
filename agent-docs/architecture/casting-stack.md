@@ -63,6 +63,11 @@ Why: two abilities of one source are separately targetable.
 Owner: `FaceDownVisibility`; applied by `GameViewProjectionFactory` (stack views) and `GameLogService.append` (card segments; `appendRevealing` for a reveal).
 Why: the card's name, or its printing alone, tells an opponent what was cast face down.
 
+### A player's prompt names the face-down objects that player may look at (CR 708.5, 708.6)
+Text only one player reads (their prompt, option labels, error) names a face-down spell or permanent they control, or control the controller of, through `FaceDownVisibility.nameShownTo(gameData, entry or permanent, viewerId)`; the log, events, views and any text several players read keep `publicName`/`sourceName`. A permanent is seen by its current controller, not its owner.
+Owner: `FaceDownVisibility.maySee`; applied by `InteractionPromptProjectionRegistry` (combat damage assignment) and `DamageContext.nameShownToChooser` (replacement-order labels, which answers match, so both sides use the event's chooser).
+Why: a player must be able to tell their own face-down objects apart.
+
 ### A face-down spell is judged by its face-down characteristics (CR 708.2, 708.4)
 Anything judging a spell on the stack by color, type, subtype, name, mana value, power or text reads `CastingPermissionService.spellAsEffectsSeeIt(entry)`; both stack-entry predicate matchers do, and `getSpellManaValue()` is 0.
 Owner: `CastingPermissionService.spellAsEffectsSeeIt`.

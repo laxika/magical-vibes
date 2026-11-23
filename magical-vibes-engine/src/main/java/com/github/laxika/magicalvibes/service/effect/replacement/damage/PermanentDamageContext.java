@@ -37,7 +37,7 @@ public record PermanentDamageContext(GameData gameData, DamageEvent event, Perma
 
     @Override
     public String sourceName() {
-        return damageSource != null ? FaceDownVisibility.publicName(gameData, damageSource)
+        return damageSource != null ? nameShownToChooser(damageSource)
                 : FaceDownVisibility.publicName(gameData, sourceCard);
     }
 
