@@ -96,7 +96,7 @@ import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCountered
 import com.github.laxika.magicalvibes.model.effect.SpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllDamageDealtByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromEverythingEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromManaValueParityEffect;
@@ -3516,7 +3516,7 @@ class GameQueryServiceTest {
         @DisplayName("returns true when aura is attached")
         void returnsTrueWithAura() {
             Permanent creature = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            Permanent aura = addPermanent(player1Id, createAura("Heart of Light", new PreventAllDamageToAndByEnchantedCreatureEffect()));
+            Permanent aura = addPermanent(player1Id, createAura("Heart of Light", new PreventAllDamageDealtByEnchantedCreatureEffect(false)));
             aura.setAttachedTo(creature.getId());
 
             assertThat(gqs.isEnchanted(gd, creature)).isTrue();
@@ -3592,10 +3592,10 @@ class GameQueryServiceTest {
         @DisplayName("returns true when aura with matching effect is attached")
         void returnsTrueWithMatchingEffect() {
             Permanent creature = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            Permanent aura = addPermanent(player1Id, createAura("Heart of Light", new PreventAllDamageToAndByEnchantedCreatureEffect()));
+            Permanent aura = addPermanent(player1Id, createAura("Heart of Light", new PreventAllDamageDealtByEnchantedCreatureEffect(false)));
             aura.setAttachedTo(creature.getId());
 
-            assertThat(gqs.hasAuraWithEffect(gd, creature, PreventAllDamageToAndByEnchantedCreatureEffect.class)).isTrue();
+            assertThat(gqs.hasAuraWithEffect(gd, creature, PreventAllDamageDealtByEnchantedCreatureEffect.class)).isTrue();
         }
 
         @Test
@@ -3603,14 +3603,14 @@ class GameQueryServiceTest {
         void returnsFalseWhenNoAttachment() {
             Permanent creature = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
 
-            assertThat(gqs.hasAuraWithEffect(gd, creature, PreventAllDamageToAndByEnchantedCreatureEffect.class)).isFalse();
+            assertThat(gqs.hasAuraWithEffect(gd, creature, PreventAllDamageDealtByEnchantedCreatureEffect.class)).isFalse();
         }
 
         @Test
         @DisplayName("returns false when attached permanent has different effect")
         void returnsFalseWithDifferentEffect() {
             Permanent creature = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            Permanent aura = addPermanent(player1Id, createAura("Heart of Light", new PreventAllDamageToAndByEnchantedCreatureEffect()));
+            Permanent aura = addPermanent(player1Id, createAura("Heart of Light", new PreventAllDamageDealtByEnchantedCreatureEffect(false)));
             aura.setAttachedTo(creature.getId());
 
             assertThat(gqs.hasAuraWithEffect(gd, creature, CantBeBlockedEffect.class)).isFalse();
@@ -3623,11 +3623,11 @@ class GameQueryServiceTest {
             Permanent aura = addPermanent(player1Id, createAura("Bonds of Faith",
                     new EnchantedPermanentConditionalEffect(
                             new PermanentHasSubtypePredicate(CardSubtype.HUMAN),
-                            new PreventAllDamageToAndByEnchantedCreatureEffect(),
+                            new PreventAllDamageDealtByEnchantedCreatureEffect(false),
                             new EnchantedCreatureCantAttackOrBlockEffect())));
             aura.setAttachedTo(creature.getId());
 
-            assertThat(gqs.hasAuraWithEffect(gd, creature, PreventAllDamageToAndByEnchantedCreatureEffect.class)).isTrue();
+            assertThat(gqs.hasAuraWithEffect(gd, creature, PreventAllDamageDealtByEnchantedCreatureEffect.class)).isTrue();
             assertThat(gqs.hasAuraWithEffect(gd, creature, EnchantedCreatureCantAttackOrBlockEffect.class)).isFalse();
         }
 
@@ -3638,11 +3638,11 @@ class GameQueryServiceTest {
             Permanent aura = addPermanent(player1Id, createAura("Bonds of Faith",
                     new EnchantedPermanentConditionalEffect(
                             new PermanentHasSubtypePredicate(CardSubtype.HUMAN),
-                            new PreventAllDamageToAndByEnchantedCreatureEffect(),
+                            new PreventAllDamageDealtByEnchantedCreatureEffect(false),
                             new EnchantedCreatureCantAttackOrBlockEffect())));
             aura.setAttachedTo(creature.getId());
 
-            assertThat(gqs.hasAuraWithEffect(gd, creature, PreventAllDamageToAndByEnchantedCreatureEffect.class)).isFalse();
+            assertThat(gqs.hasAuraWithEffect(gd, creature, PreventAllDamageDealtByEnchantedCreatureEffect.class)).isFalse();
             assertThat(gqs.hasAuraWithEffect(gd, creature, EnchantedCreatureCantAttackOrBlockEffect.class)).isTrue();
         }
 
@@ -3669,7 +3669,7 @@ class GameQueryServiceTest {
             Permanent aura = addPermanent(player1Id, createAura("Bonds of Faith",
                     new EnchantedPermanentConditionalEffect(
                             new PermanentHasSubtypePredicate(CardSubtype.HUMAN),
-                            new PreventAllDamageToAndByEnchantedCreatureEffect(),
+                            new PreventAllDamageDealtByEnchantedCreatureEffect(false),
                             new EnchantedCreatureCantAttackOrBlockEffect())));
             aura.setAttachedTo(creature.getId());
 

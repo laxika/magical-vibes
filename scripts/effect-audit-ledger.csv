@@ -2735,3 +2735,9 @@ PreventDamageFromChosenNameEffect,absorbed,9,run 23: PreventDamageToRecipientsEf
 PreventXDamagePerSourceToControllerAndCreaturesEffect,unique,9,"run 23: one X shared by all of a creature's combat recipients (you and/or your creatures), divided by its controller's choice (Cover of Winter)"
 PreventDamageToCreaturesByCreaturesOfSharedColorEffect,unique,9,run 23: a relation between the damage source and the damaged creature (sharing a color) that no other card has (Well-Laid Plans)
 PreventHalfDamageToControllerAndTheirPermanentsEffect,unique,9,"run 23: prevents half the damage, rounded up; the only static halving prevention (Gisela, Blade of Goldnight)"
+PreventAllDamageToAndByEnchantedCreatureEffect,absorbed,9,run 24: PreventDamageToRecipientsEffect.to(attachedCreature()) + dealtBy(PermanentIsHostOfSourceAuraPredicate) (Heart of Light)
+PreventAllCombatDamageToAndByCreaturesYouControlEffect,absorbed,9,run 24: PreventDamageToRecipientsEffect.to(creaturesYouControl()).combatOnly() + dealtBy(creature).fromSourcesYouControl().combatOnly() (Statecraft)
+PreventAllCombatDamageBySelfEffect,absorbed,9,run 24: PreventDamageToRecipientsEffect.dealtBy(PermanentIsSourcePermanentPredicate).combatOnly() (Woolly Razorback)
+PreventDamageBySelfToCreaturesEffect,absorbed,9,"run 24: PreventDamageToRecipientsEffect.to(controlledBy(eachPlayer(), allOf(creature, snow / red))).from(PermanentIsSourcePermanentPredicate) (Goblin Furrier, Indentured Oaf)"
+PreventAllCombatDamageByCreaturesExceptEffect,absorbed,9,"run 24: PreventDamageToRecipientsEffect.dealtBy(filter).combatOnly(), a face-up plane read as the planar controller's (New Master of Arms, Kessig)"
+PreventFixedDamageToPlaneswalkersYouControlEffect,absorbed,9,"run 24: PreventDamageToRecipientsEffect.to(controlledBy(you(), planeswalker)), .preventing(1) for Djeru; The Western Cloud is a plane"

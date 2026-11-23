@@ -6,9 +6,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
  * Static prevention effect (CR 615): "prevent all [combat | noncombat] damage that would be dealt to [recipients] [by
- * sources]", or "if a source would deal damage to [recipients], prevent N of that damage". Built through the factories
- * and the {@code with…} methods, e.g. Light of Sanction's {@code to(Subjects.creaturesYouControl()).fromSourcesYouControl()}
- * or Shield of the Realm's {@code to(Subjects.attachedCreature()).preventing(2)}.
+ * sources]", "prevent all damage that would be dealt by [sources]", or "if a source would deal damage to [recipients],
+ * prevent N of that damage". Built through the factories and the {@code with…} methods, e.g. Light of Sanction's
+ * {@code to(Subjects.creaturesYouControl()).fromSourcesYouControl()}, Shield of the Realm's
+ * {@code to(Subjects.attachedCreature()).preventing(2)} or Woolly Razorback's
+ * {@code dealtBy(new PermanentIsSourcePermanentPredicate()).combatOnly()}.
  *
  * <p>Nothing is locked in: the recipients and the source are judged as each damage event would happen (CR 615.1), so a
  * permanent that enters, changes control or starts blocking later is covered once it matches. Read by
@@ -16,13 +18,16 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * the CR 616.1 damage pools: one option for every prevention of all the damage, and one option per effect that prevents
  * an amount, so the affected player orders each against the other replacement and prevention effects. An amount is
  * prevented from each source's damage separately (combat damage from several sources is one event with a portion per
- * source). A static ability of a face-up plane isn't read.
+ * source). The prevention of damage dealt by a source is an option of each recipient's pool too, so it is the
+ * recipient's controller (or the player) who orders it (CR 616.1). A face-up plane's static ability is read as the
+ * planar controller's.
  *
  * @param permanents        the permanents shielded (a static subject: {@code source()}, {@code attachedCreature()},
  *                          {@code controlledBy(...)}), or {@code null} for none
  * @param players           the players shielded ({@code you()}, {@code eachPlayer()}), or {@code null} for none
  * @param sources           the damage sources whose damage is prevented, judged on the source as it is, else as it last
- *                          existed, else (a spell) on its card, with the effect's permanent as the filter's source; or
+ *                          existed, else (a spell, or a card an ability names as the source, such as an Equipment
+ *                          granting it) on its card, with the effect's permanent as the filter's source; or
  *                          {@code null} for any source
  * @param sourceControllers whose sources ("sources you control"), or {@code null} for anyone's
  * @param damage            which damage: all of it, only combat damage or only noncombat damage
@@ -96,6 +101,15 @@ public record PreventDamageToRecipientsEffect(PermanentSubject permanents, Playe
     public static PreventDamageToRecipientsEffect toEveryone() {
         return new PreventDamageToRecipientsEffect(Subjects.allPermanents(), Subjects.eachPlayer(), null, null,
                 DamageKind.ALL, SourceKind.ANY, false, null);
+    }
+
+    /**
+     * "Prevent all damage that would be dealt by {@code dealers}", to every player and every permanent ("by enchanted
+     * creature", "by non-Werewolf creatures"). When the text names the recipients too ("that this creature would deal to
+     * snow creatures"), use {@code to(recipients).from(dealers)}.
+     */
+    public static PreventDamageToRecipientsEffect dealtBy(PermanentPredicate dealers) {
+        return toEveryone().from(dealers);
     }
 
     /** Only damage from sources matching {@code filter} ("by Deserts", "by creatures it's blocking"). */

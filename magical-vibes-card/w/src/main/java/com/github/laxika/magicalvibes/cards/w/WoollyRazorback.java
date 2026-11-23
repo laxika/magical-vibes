@@ -9,9 +9,10 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageBySelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageToRecipientsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,7 +25,8 @@ public class WoollyRazorback extends Card {
         SourceCounterThreshold hasIceCounter = new SourceCounterThreshold(1, CounterType.ICE);
         addStaticEffect(new ConditionalEffect(hasIceCounter,
                         new GrantKeywordEffect(Keyword.DEFENDER, Subjects.source())));
-        addStaticEffect(new ConditionalEffect(hasIceCounter, new PreventAllCombatDamageBySelfEffect()));
+        addStaticEffect(new ConditionalEffect(hasIceCounter,
+                PreventDamageToRecipientsEffect.dealtBy(new PermanentIsSourcePermanentPredicate()).combatOnly()));
 
         addTrigger(Triggers.blocks(),
                 TriggerOptions.ONE_OR_MORE,

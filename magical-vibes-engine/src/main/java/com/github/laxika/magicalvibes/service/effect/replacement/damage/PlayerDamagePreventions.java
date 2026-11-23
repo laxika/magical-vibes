@@ -236,7 +236,7 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                         ctx -> staticPreventions(ctx).stream().filter(found -> !found.preventsAll())
                                 .map(DamagePreventionService.StaticPrevention::instance).toList(),
                         (ctx, instance) -> "Prevent " + partialAmount(ctx, instance) + " of the damage ("
-                                + FaceDownVisibility.publicName(ctx.gameData(), partialPrevention(ctx, instance).source())
+                                + partialPrevention(ctx, instance).sourceName()
                                 + ")",
                         (ctx, instance) -> ctx.event().withAmount(Math.max(0, ctx.amount() - partialAmount(ctx, instance))),
                         (ctx, instance) -> {
@@ -287,7 +287,7 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
 
     private DamagePreventionService.StaticPrevention partialPrevention(PlayerDamageContext ctx, String instance) {
         return staticPreventions(ctx).stream().filter(found -> found.instance().equals(instance)).findFirst()
-                .orElse(new DamagePreventionService.StaticPrevention(instance, null, 0));
+                .orElse(new DamagePreventionService.StaticPrevention(instance, "", 0));
     }
 
     private int partialAmount(PlayerDamageContext ctx, String instance) {

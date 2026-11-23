@@ -33,8 +33,12 @@ public class ClericDamagePreventionHandler implements MayEffectHandlerBean {
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         var effect = (PreventDamageToControllerPerClericEffect) ability.effects().getFirst();
         int amount = ability.eventValue();
-        if (accepted) amount = Math.max(0, amount
-                - damagePreventionService.clericPreventionAmount(gameData, ability.controllerId()));
+        if (accepted) {
+            amount = Math.max(0, amount
+                    - damagePreventionService.clericPreventionAmount(gameData, ability.controllerId()));
+            damagePreventionService.notifyControllerDamagePrevented(gameData, effect.damagedPlayerId(),
+                    ability.eventValue() - amount);
+        }
         if (effect.combatDamage()) {
             combatDamageService.getObject().completeClericPreventionChoice(gameData, ability, amount);
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

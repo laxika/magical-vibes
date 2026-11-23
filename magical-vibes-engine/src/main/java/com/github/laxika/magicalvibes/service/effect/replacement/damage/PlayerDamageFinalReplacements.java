@@ -97,6 +97,7 @@ class PlayerDamageFinalReplacements extends PlayerDamageCandidateSource {
                             gameLogService.append(ctx.gameData(), GameLog.cardThen(ctx.source(),
                                     "'s " + ctx.amount() + " damage to " + ctx.playerName()
                                             + " is prevented and replaced with milling."));
+                            prevention.notifyControllerDamagePrevented(ctx.gameData(), ctx.playerId(), ctx.amount());
                             millOpponentsOfSource(ctx);
                             return prevented(ctx);
                         }),
@@ -162,6 +163,7 @@ class PlayerDamageFinalReplacements extends PlayerDamageCandidateSource {
                                 gameLogService.append(ctx.gameData(), GameLog.cardThen(ctx.source(),
                                         "'s " + prevented + " damage to " + ctx.playerName()
                                                 + " is prevented by Angel of Suffering."));
+                                prevention.notifyControllerDamagePrevented(ctx.gameData(), ctx.playerId(), prevented);
                             }
                             return ctx.event().withAmount(ctx.amount() - prevented);
                         }).whole(),

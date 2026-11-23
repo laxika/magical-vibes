@@ -1754,7 +1754,9 @@ bottom-ordered and bottom-random as distinct enum values. (c) Absorbing
 `PreventAllNoncombatDamageToAttachedCreatureEffect`.
 
 Partly done by `effect-cleanup-refactor.md` step 9, run 22: `PreventAllNoncombatDamageToAttachedCreatureEffect` is
-absorbed into `PreventDamageToRecipientsEffect` (`to(attachedCreature()).noncombatOnly()`). Partly done by step 5, run 5m: `PreventAllCombatDamageToSelfEffect` and
+absorbed into `PreventDamageToRecipientsEffect` (`to(attachedCreature()).noncombatOnly()`); by run 24,
+`PreventAllDamageToAndByEnchantedCreatureEffect` (Heart of Light) too (`to(attachedCreature())` plus
+`dealtBy(PermanentIsHostOfSourceAuraPredicate)`). Partly done by step 5, run 5m: `PreventAllCombatDamageToSelfEffect` and
 `PreventAllCombatDamageToAndByEnchantedCreatureEffect` carry a host subject (`source()` / `attachedCreature()`), and
 `PreventAllCombatDamageToAndBySelfEffect` and the attached combat-only record are deleted.
 

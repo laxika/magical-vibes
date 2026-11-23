@@ -22,7 +22,7 @@ import java.util.function.Predicate;
 /**
  * Prevention effects (CR 615) for damage to a permanent: the source- and spell-based preventions,
  * protection-like color and name effects, the static {@code PreventDamageToRecipientsEffect}s, Swans of Bryn
- * Argoll, Gloom Surgeon, Comeuppance and Djeru for planeswalkers, Dralnu's sacrifice replacement, and every step of
+ * Argoll, Gloom Surgeon, Comeuppance for planeswalkers, Dralnu's sacrifice replacement, and every step of
  * {@link DamagePreventionService#creatureDamageSteps()} (counters, shields, Temper, …). Steps that
  * don't care about the source are asked once about all the combat damage the permanent is dealt.
  */
@@ -38,7 +38,7 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
 
     /** Steps about the source of the damage; every other step is about all the damage the permanent is dealt. */
     private static final Set<String> PER_SOURCE_STEPS = Set.of("CombatDamageToPlusOneCounter",
-            "ControllerAndCreaturesPerSource", "AllButOneToHero", "PermanentSourceToCreature",
+            "ControllerAndCreaturesPerSource", "AllButOneToHero",
             "ArtifactToEnchantedCreature", "ArtifactToSelf", "CreatureSourceToSelf", "DesertsToCamelOrBanded",
             "SelfDamagePrevention", "ControlledCreaturesReduction", "HalfDamage",
             "ControlledCreatureDamageLimit");
@@ -193,7 +193,7 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
                         .filter(found -> !found.preventsAll())
                         .map(DamagePreventionService.StaticPrevention::instance).toList(),
                 (ctx, instance) -> "Prevent " + partialAmount(ctx, instance) + " of the damage ("
-                        + FaceDownVisibility.publicName(ctx.gameData(), partialPrevention(ctx, instance).source()) + ")",
+                        + partialPrevention(ctx, instance).sourceName() + ")",
                 (ctx, instance) -> ctx.event().withAmount(Math.max(0, ctx.amount() - partialAmount(ctx, instance))),
                 (ctx, instance) -> {
                     int prevented = Math.min(ctx.amount(), partialAmount(ctx, instance));
@@ -252,14 +252,6 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
         for (CreatureDamageStep step : prevention.creatureDamageSteps()) {
             all.add(stepRule(step));
         }
-        all.add(pure("PlaneswalkerPerSourcePrevention", PREVENTION,
-                ctx -> !ctx.targetProtectedFromPrevention() && gameQueryService.isPlaneswalker(ctx.gameData(), ctx.target())
-                        && prevention.applyPlaneswalkerFixedPerSourceDamagePrevention(
-                        ctx.gameData(), ctx.targetControllerId(), ctx.amount(), ctx.combat()) > 0,
-                ctx -> "Prevent some of the damage to your planeswalker",
-                ctx -> ctx.event().withAmount(ctx.amount() - prevention.applyPlaneswalkerFixedPerSourceDamagePrevention(
-                        ctx.gameData(), ctx.targetControllerId(), ctx.amount(), ctx.combat())),
-                PermanentDamageCandidateSource::noLog));
         all.add(pure("AllButOneToPlaneswalker", PREVENTION,
                 ctx -> !ctx.targetProtectedFromPrevention() && gameQueryService.isPlaneswalker(ctx.gameData(), ctx.target())
                         && prevention.applyAllButOneDamageToPermanentPrevention(
@@ -288,7 +280,7 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
 
     private DamagePreventionService.StaticPrevention partialPrevention(PermanentDamageContext ctx, String instance) {
         return staticPreventions(ctx).stream().filter(found -> found.instance().equals(instance)).findFirst()
-                .orElse(new DamagePreventionService.StaticPrevention(instance, ctx.target(), 0));
+                .orElse(new DamagePreventionService.StaticPrevention(instance, "", 0));
     }
 
     private int partialAmount(PermanentDamageContext ctx, String instance) {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.b.BlazingTorch;
 import com.github.laxika.magicalvibes.cards.f.Frostling;
 import com.github.laxika.magicalvibes.cards.g.GnarledMass;
 import com.github.laxika.magicalvibes.cards.i.IshiIshiAkkiCrackshot;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HeartOfLight.class, Frostling.class, GnarledMass.class, IshiIshiAkkiCrackshot.class, Shuko.class, TerashisGrasp.class})
+@CardUsed({HeartOfLight.class, BlazingTorch.class, Frostling.class, GnarledMass.class, IshiIshiAkkiCrackshot.class, Shuko.class, TerashisGrasp.class})
 class HeartOfLightTest extends BaseCardTest {
 
     @Test
@@ -149,6 +150,21 @@ class HeartOfLightTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveCombat(player1);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 3);
+    }
+
+    @Test
+    @DisplayName("Does not prevent the damage of an Equipment's granted ability that names the Equipment as the source")
+    void doesNotPreventDamageDealtByTheGrantingEquipment() {
+        Permanent creature = addCreatureReady(player1, new GnarledMass());
+        Permanent torch = harness.addToBattlefieldAndReturn(player1, new BlazingTorch());
+        torch.setAttachedTo(creature.getId());
+        castHeartOfLight(creature);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
     }
 
     private void castHeartOfLight(Permanent enchantedCreature) {

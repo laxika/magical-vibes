@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageByCreaturesExceptEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageToRecipientsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredic
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
@@ -22,12 +21,10 @@ public class NewMasterOfArms extends Card {
 
     public NewMasterOfArms() {
         // Prevent all combat damage that would be dealt by blocking creatures that are tapped.
-        addStaticEffect(new PreventAllCombatDamageByCreaturesExceptEffect(
-                new PermanentNotPredicate(new PermanentAllOfPredicate(List.of(
-                        new PermanentIsBlockingPredicate(),
-                        new PermanentIsTappedPredicate()
-                )))
-        ));
+        addStaticEffect(PreventDamageToRecipientsEffect.dealtBy(new PermanentAllOfPredicate(List.of(
+                new PermanentIsBlockingPredicate(),
+                new PermanentIsTappedPredicate()
+        ))).combatOnly());
 
         // {1}{W}: Tap target creature blocking New Master of Arms.
         addActivatedAbility(new ActivatedAbility(

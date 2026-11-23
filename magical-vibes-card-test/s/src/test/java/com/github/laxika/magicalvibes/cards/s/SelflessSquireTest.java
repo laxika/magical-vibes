@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AngelOfSuffering;
+import com.github.laxika.magicalvibes.cards.b.BattletideAlchemist;
 import com.github.laxika.magicalvibes.cards.e.EnergyStorm;
 import com.github.laxika.magicalvibes.cards.p.PlatedPegasus;
+import com.github.laxika.magicalvibes.cards.t.TheMindskinner;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SelflessSquire.class, Shock.class, EnergyStorm.class, PlatedPegasus.class})
+@CardUsed({SelflessSquire.class, Shock.class, EnergyStorm.class, PlatedPegasus.class, AngelOfSuffering.class,
+        TheMindskinner.class, BattletideAlchemist.class})
 class SelflessSquireTest extends BaseCardTest {
 
     @Test
@@ -63,6 +67,46 @@ class SelflessSquireTest extends BaseCardTest {
         harness.addToBattlefield(player2, new PlatedPegasus());
 
         castShockAtPlayer();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        assertThat(squire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Damage to you that Angel of Suffering prevents and replaces with milling puts counters on it")
+    void angelOfSufferingPreventionTriggersIt() {
+        Permanent squire = harness.addToBattlefieldAndReturn(player1, new SelflessSquire());
+        harness.addToBattlefield(player1, new AngelOfSuffering());
+
+        castShockAtPlayer();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(squire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Damage to you that an opponent's Mindskinner prevents puts counters on it")
+    void mindskinnerPreventionTriggersIt() {
+        Permanent squire = harness.addToBattlefieldAndReturn(player1, new SelflessSquire());
+        harness.addToBattlefield(player2, new TheMindskinner());
+
+        castShockAtPlayer();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(squire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Damage to you that Battletide Alchemist's controller chooses to prevent puts counters on it")
+    void optionalClericPreventionTriggersIt() {
+        Permanent squire = harness.addToBattlefieldAndReturn(player1, new SelflessSquire());
+        harness.addToBattlefield(player1, new BattletideAlchemist());
+
+        castShockAtPlayer();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         harness.assertLife(player1, 19);

@@ -43,7 +43,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageDealtByEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerAndExileFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerAndMillEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerEffect;
@@ -888,13 +887,12 @@ public class DamageSupport {
                 || gameQueryService.isDamageFromPermanentSourcePrevented(gameData, source)
                 || (includeGlobalCreaturePrevention && gameQueryService.isDamageByCreaturePrevented(gameData, source))
                 || gameData.isPreventedFromDealingDamage(entry.getSourcePermanentId()))) return true;
-        // Defang / Heart of Light: an aura can blank all damage dealt by the enchanted permanent,
-        // including damage from its own activated and triggered abilities.
+        // Defang: an aura can blank all damage dealt by the enchanted permanent, including damage from its own
+        // activated and triggered abilities.
         return source != null
-                && (gameQueryService.hasAuraWithEffect(gameData, source,
+                && gameQueryService.hasAuraWithEffect(gameData, source,
                         effect -> effect instanceof PreventAllDamageDealtByEnchantedCreatureEffect prevented
-                                && !prevented.combatOnly())
-                    || gameQueryService.hasAuraWithEffect(gameData, source, PreventAllDamageToAndByEnchantedCreatureEffect.class));
+                                && !prevented.combatOnly());
     }
 
     public boolean isGlobalCreaturePreventionForEntry(GameData gameData, StackEntry entry) {

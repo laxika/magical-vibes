@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 23: Exile, Each, Return, Put, Reveal, Choose, Grant and Create closed, Prevent partly done; 1,955 rare records left, Prevent's six by-side and plane statics next) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 24: Exile, Each, Return, Put, Reveal, Choose, Grant, Create and Prevent closed; 1,949 rare records left, May (59 rare) next) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -629,6 +629,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 21 | Run 20's Mercenaries log, the Prevent shields with subjects (redirect, source-to-recipient, filtered target, tokens), then Prevent's rare records | done for the shields, Prevent open (25 rows: 3 absorbed, 1 survivor (new), 1 dead, 20 unique; 5 records and 5 handlers deleted, 1 of each added; 3 card files rewritten; `PreventNextDamageAndRedirectEffect`; the static prevention record designed, not built; 23 rare Prevent records left) |
 | 22 | Run 21's face-down pool labels, then the static prevention record and Prevent's rare statics | done for the labels and six statics, Prevent open (7 rows: 6 absorbed, 1 survivor (new); 6 records and 2 marker interfaces deleted, 1 record added; 8 card files rewritten; `PreventDamageToRecipientsEffect`, `DamageContext.sourceName()`; 17 rare Prevent records left) |
 | 23 | Prevent's remaining statics: spell sources, the chosen colour, amounts, Gideon's Intervention; the damage-prevented event | done for 11 statics, Prevent open (11 rows: 8 absorbed, 3 unique; 8 records and 3 marker interfaces deleted; 10 card files rewritten; `fromSpells()`, `fromInstantAndSorcerySpells()`, `fromSourcesOfChosenColor()`, `preventing(amount)`, `toEveryone()`; every player-pool prevention tells Selfless Squire; 6 rare Prevent records left, all by-side or plane statics) |
+| 24 | Prevent's by-side and plane statics, the Selfless Squire gaps, then May | done, Prevent closed, May not started (6 rows: 6 absorbed; 6 records and 2 marker interfaces deleted; 9 card files rewritten; `dealtBy(filter)`, "dealt by" preventions moved into the recipients' pools, face-up planes read by the static reader, a filter judges the card an ability names as the source; Angel of Suffering, The Mindskinner and the Cleric choice tell Selfless Squire) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -8463,6 +8464,108 @@ No deleted handler. Not run: the full suites, the AI fuzz and stress tests, the 
   (the recipient's controller); fold Heart of Light, Statecraft, Woolly Razorback, Goblin Furrier / Indentured Oaf, New Master of Arms.
 - Read face-up planes in the static reader (the planar controller's subjects), then fold Djeru / The Western Cloud and Kessig.
 - The Selfless Squire gaps above (Angel of Suffering, the Cleric completion).
+
+### Step 9, run 24 (2026-11-23, Prevent closed)
+
+Prevent's last six rare statics, by the "For the next run" list of run 23, then the Selfless Squire gaps run 23 saw. May not started. Ratchet
+4,132 / 3,381 → 4,126 / 3,381 records / handlers (6 records deleted, and the marker interfaces `CombatDamageSourceExemptionEffect` and
+`PlaneswalkerDamagePreventionEffect`; the statics had no handlers). 9 card files rewritten by hand; Oracle text checked with `get_card` for
+all 9 and for Angel of Suffering and The Mindskinner; rulings with `get_rulings` for Heart of Light, Woolly Razorback, Kessig, Djeru, The
+Western Cloud, Angel of Suffering and Selfless Squire. CR 114.3, 510.1c, 615.1, 616.1, 708.5 and 901.6 checked with `get_rule` (2026-11-23).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | Left unaudited |
+|---|---|---|---|---|---|---|---|
+| Prevent | 6 rows (6 rare records) | 6 | 0 | 0 (survivor extended) | 0 | 0 | 0 rare records (13 records in all, each used by three cards or more) |
+| May | 0 | 0 | 0 | 0 | 0 | 0 | 59 rare records (64 in all) |
+
+All families: 1,949 rare records without a row (run 23: 1,955).
+
+- **"Dealt by" is a pool option now.** `PreventDamageToRecipientsEffect.dealtBy(filter)` is `toEveryone().from(filter)`: "prevent all damage that
+  would be dealt by [sources]" needs no new component. The by-side branches left `GameQueryService.isPreventedFromDealingDamage` (Heart of
+  Light's Aura, Woolly Razorback, the Kessig / New Master of Arms exemption scan `isPreventedByCombatDamageSourceExemption`, Statecraft's
+  `isAllCombatDamageByControlledCreaturePrevented`), `isDamageFromPermanentSourcePrevented` and `DamageSupport.isSourcePermanentPreventedFromDealingDamage`
+  (Heart of Light's branches), so the creature's damage is assigned and dealt and each recipient's pool prevents it: its controller (or the
+  player) orders it against the other effects (CR 616.1). `isDamageFromPermanentSourceToCreaturePrevented` (Goblin Furrier, Indentured Oaf)
+  and its creature step `PermanentSourceToCreature`, the steps `EnchantedToAndBy` and `AllCombatToControlledCreature`, `isAllCombatDamageToControlledCreaturePrevented`,
+  the pool rule `PlaneswalkerPerSourcePrevention` and `applyPlaneswalkerFixedPerSourceDamagePrevention` (Djeru) are deleted.
+  `DamagePreventionBySelfEffect` stays for Weeping Angel's shuffle (`shufflesTargetIntoOwnersLibraryAfterCombatDamagePrevention`). The
+  pre-checks of the ~25 "creature deals damage" handlers (fight, bite, `FightSupport`) still read `isPreventedFromDealingDamage` for the
+  branches left there; the folded cards reach those handlers' damage through the pools, whose source is the carrier entry's permanent.
+- **Folded.** Heart of Light (`to(attachedCreature())` + `dealtBy(PermanentIsHostOfSourceAuraPredicate)`), Statecraft
+  (`to(creaturesYouControl()).combatOnly()` + `dealtBy(creature).fromSourcesYouControl().combatOnly()`), Woolly Razorback
+  (`dealtBy(PermanentIsSourcePermanentPredicate).combatOnly()` in its `ConditionalEffect`), Goblin Furrier and Indentured Oaf
+  (`to(controlledBy(eachPlayer(), allOf(creature, snow / red))).from(PermanentIsSourcePermanentPredicate)`), New Master of Arms
+  (`dealtBy(allOf(blocking, tapped)).combatOnly()`), Kessig (`dealtBy(allOf(creature, not Werewolf)).combatOnly()`), Djeru
+  (`to(controlledBy(you(), planeswalker)).preventing(1)`), The Western Cloud's planeswalker half (`to(controlledBy(you(), planeswalker))`; its
+  creature half stays on `PreventAllDamageToCreaturesYouControlEffect`, a record of four cards).
+- **Planes.** `DamagePreventionService.staticPreventionHolders` lists the battlefield's active `PreventDamageToRecipientsEffect`s and those
+  of each face-up plane, whose controller is the planar controller (CR 901.6); the subjects and `namesPlayer` take a null source permanent
+  for a plane (no synthetic permanent, `PLANECHASE.md`). `StaticPrevention` carries the public source name instead of the permanent.
+- **The source a filter judges.** `preventsFromSource` judges the card an ability names as the source (`StackEntry.getDamageSourceCard`,
+  Blazing Torch granted to a creature) rather than the entry's permanent, as the permanent pool's context and the old Heart of Light check
+  did; `matchesDamageSourcePredicate` itself is unchanged.
+- **Selfless Squire.** Its ruling: "Any effect that uses the word 'prevent' will cause it to trigger." Angel of Suffering ("prevent that
+  damage and mill twice that many cards") and The Mindskinner ("prevent that damage and each opponent mills that many cards") are
+  `REPLACEMENT`-kind rules (their kind decides how unpreventable damage is handled, so it stays) and now call
+  `DamagePreventionService.notifyControllerDamagePrevented`; so does Battletide Alchemist's accepted "you may prevent X" in
+  `ClericDamagePreventionHandler`, which prevents outside the pool. The base `PlayerDamageCandidateSource.apply` still sends it for every
+  `PREVENTION` option, so nothing is sent twice. Angel of Suffering's current Oracle text has no "you may".
+- **AI.** The AI's combat math (`CombatMath`, `CombatSimulator`) read none of these statics or `isPreventedFromDealingDamage`, before or
+  after; its simulations run the engine.
+
+**Behaviour changes.** "Failed before" means the new test failed on a `git archive` copy of HEAD with the new tests copied in.
+
+1. A creature whose damage Statecraft, Woolly Razorback, Kessig or New Master of Arms prevents in combat assigns its combat damage (CR 510.1c:
+   its controller divides it among two blockers) and the recipient's pool prevents it: `StatecraftTest.preventedAttackerStillAssignsItsDamage`
+   (failed before: no assignment prompt).
+2. The damaged player orders that prevention against their own effects (CR 616.1): `StatecraftTest.damagedPlayerOrdersItAgainstTheirShield`
+   (Healing Salve's shield kept; failed before: no prompt).
+3. Selfless Squire sees combat damage to its controller prevented by a "dealt by" static
+   (`StatecraftTest.preventedCombatDamageToAPlayerIsSeenAsPrevented`, failed before: 0 counters), and damage prevented by Angel of Suffering, The
+   Mindskinner and an accepted Battletide Alchemist choice (`SelflessSquireTest.angelOfSufferingPreventionTriggersIt`,
+   `mindskinnerPreventionTriggersIt`, `optionalClericPreventionTriggersIt`, each failed before: 0 counters).
+4. Djeru's prevention logs "1 damage to <planeswalker> is prevented." and is one option per Djeru ("Prevent 1 of the damage (Djeru, With
+   Eyes Open)") instead of one summed unlogged option: `DjeruWithEyesOpenTest.logsThePreventedDamage` (failed before). A face-down Djeru
+   prevents nothing (CR 708.2; the old scan read the card's statics): `DjeruWithEyesOpenTest.preventsNothingWhileFaceDown` (failed before).
+5. The run-22 / run-23 source filters (Desert Nomads, the Walls, Armored Transport, Gideon's Intervention) judge Blazing Torch-style named
+   sources by their card. Guard test: `HeartOfLightTest.doesNotPreventDamageDealtByTheGrantingEquipment` (passes on HEAD too).
+
+**What a player sees.** The new order options read "Prevent the damage to it" / "Prevent the damage to you" / "Prevent N of the damage
+(<name>)", the name a plane's or `FaceDownVisibility.publicName` of the permanent.
+
+**Seen, not changed.**
+
+- The Mindskinner's rule applies whenever damage can be prevented this turn but prevents the whole view's amount, which in a combat event
+  with an unpreventable portion includes that portion (CR 615.12); not reproduced.
+- The ~25 handler pre-checks of `isPreventedFromDealingDamage` (fight, bite, "each creature deals damage") still skip the damage event for
+  the branches left there (Defang, floating "can't deal damage", global creature prevention), so Selfless Squire misses those and their
+  order is fixed; moving them is the same move as this run's for floating effects.
+- Several test methods without `@DisplayName` in `SelflessSquireTest`, `DjeruWithEyesOpenTest`, `KessigTest` and `TheWesternCloudTest`
+  (AGENTS.md); left.
+- May: 25 of its 59 rare records have no card at all (engine-built prompt records: the free-cast offers, the copy casts, miracle and madness
+  costs); the casting-permission statics (`MayCast…FromHand…`, `MayCast…Exiled…`) belong with the cast permission work; `MayPayLandDropEffect`,
+  `MayPayTapAndSacrificePermanentEffect` and the `MayPayLife…` records are cost combinators, which the step 8 closing summary leaves for step 10.
+
+**Tests edited.** The new cases above. `GameQueryServiceTest` (`hasAuraWithEffect`, `isEnchanted`) and `PredicateEvaluationServiceTest`
+build their synthetic Heart of Light Aura with `PreventAllDamageDealtByEnchantedCreatureEffect` instead of the deleted record (generic Aura
+helpers; no assertion changed). `EffectCountRatchetTest`'s baseline.
+
+**Tests run.** The final sources in one Gradle run, every test task `--rerun`, one `--tests` list per task, counted from that run's XML by
+the timestamps: 94 classes (203 XML files with the nested suites, 1,487 cases, 0 failures, 0 skipped): the test classes naming one of the 9
+rewritten cards, every card using `PreventDamageToRecipientsEffect`, Angel of Suffering, The Mindskinner, Battletide Alchemist, Weeping
+Angel, Blazing Torch, Selfless Squire; the 12 application classes naming `DamagePreventionService`, the damage pools or the record
+(`DamagePreventionSpecTest`, `CombatDamageServiceTest`, `SimultaneousDamageMechanicTest`, `GameQueryServiceTest`, `PredicateEvaluationServiceTest`
+among them), `EffectCountRatchetTest` and the AI's `TargetPolarityGuardTest`. On HEAD (a `git archive` copy with the four edited test classes)
+the 7 new cases above failed and the Blazing Torch guard passed. `DjeruWithEyesOpenTest.preventsNothingWhileFaceDown`, added after that run, was run alone with its class (10 cases, 0 failures) and failed on HEAD (5 loyalty, not 4). Compiled: domain, engine, the letter card modules d, g, h, i, k, n, s, t,
+w, the application and AI test sources; the letter test modules compiled in the run. No deleted handler. Not run: the full suites, the AI
+fuzz and stress tests, the frontend. Not verified: more than two players, a phenomenon, two face-up planes.
+
+**For the next run (run 25: May 59 rare; then Perpetually 60, Conjure 51, Register 54, Target 79).**
+
+- May's rare records, starting with the ones that have cards: `MayPutSelectedCardOntoBattlefieldEffect` (2), `MayVoteAdditionalTimeEffect` (2),
+  then the one-card casting permissions (read `agent-docs/architecture/casting-stack.md` first); the cost combinators wait for step 10.
+- The handler pre-checks of `isPreventedFromDealingDamage` above, if a run takes the floating "can't deal damage" effects.
+- The Mindskinner's unpreventable portion above.
 
 ## Prompt
 

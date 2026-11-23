@@ -25,7 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllDamageDealtByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
@@ -986,7 +986,7 @@ class PredicateEvaluationServiceTest {
         @Test
         @DisplayName("CardIsAuraPredicate matches aura cards")
         void cardIsAuraPredicateMatches() {
-            Card aura = createAura("Heart of Light", new PreventAllDamageToAndByEnchantedCreatureEffect());
+            Card aura = createAura("Heart of Light", new PreventAllDamageDealtByEnchantedCreatureEffect(false));
             Card nonAura = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR));
 
             assertThat(evaluator.matchesCardPredicate(aura, new CardIsAuraPredicate(), null)).isTrue();
@@ -3033,7 +3033,7 @@ class PredicateEvaluationServiceTest {
             Permanent bare = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
             Permanent enchanted = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
             Permanent aura = addPermanent(player1Id,
-                    createAura("Heart of Light", new PreventAllDamageToAndByEnchantedCreatureEffect()));
+                    createAura("Heart of Light", new PreventAllDamageDealtByEnchantedCreatureEffect(false)));
             aura.setAttachedTo(enchanted.getId());
 
             PermanentIsEnchantedPredicate isEnchanted = new PermanentIsEnchantedPredicate();
@@ -3047,7 +3047,7 @@ class PredicateEvaluationServiceTest {
             Permanent host = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
             Permanent other = addPermanent(player1Id, createCreature("Runeclaw Bear", 2, 2, CardColor.GREEN));
             Permanent aura = addPermanent(player1Id,
-                    createAura("Heart of Light", new PreventAllDamageToAndByEnchantedCreatureEffect()));
+                    createAura("Heart of Light", new PreventAllDamageDealtByEnchantedCreatureEffect(false)));
             aura.setAttachedTo(host.getId());
 
             FilterContext withAura = ctx().withSourcePermanentSnapshot(aura);

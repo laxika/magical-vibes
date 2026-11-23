@@ -4,9 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventFixedDamageToPlaneswalkersYouControlEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageToRecipientsEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,6 +23,7 @@ public class DjeruWithEyesOpen extends Card {
                         "Search your library for a planeswalker card?"));
 
         // "If a source would deal damage to a planeswalker you control, prevent 1 of that damage."
-        addStaticEffect(new PreventFixedDamageToPlaneswalkersYouControlEffect(1));
+        addStaticEffect(PreventDamageToRecipientsEffect.to(
+                Subjects.controlledBy(Subjects.you(), new PermanentIsPlaneswalkerPredicate())).preventing(1));
     }
 }
