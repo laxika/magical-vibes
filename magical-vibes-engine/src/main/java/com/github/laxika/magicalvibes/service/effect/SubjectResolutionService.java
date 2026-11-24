@@ -269,6 +269,14 @@ public class SubjectResolutionService {
                 Card card = permanent != null ? PermanentCopierService.cardToCopy(permanent)
                         : PermanentCopierService.lastKnownCardToCopy(gameData, entry, id,
                         entry.lastKnownPermanentCard(id));
+                if (card == null && permanent == null) {
+                    // The trigger event's permanent that has died since ("whenever a creature dies, conjure a
+                    // duplicate of it"), as the entry's snapshot of it last showed it.
+                    Permanent snapshot = entry.getTriggeringPermanentSnapshot();
+                    if (snapshot != null && id.equals(snapshot.getId())) {
+                        card = PermanentCopierService.cardToCopy(snapshot);
+                    }
+                }
                 if (card != null) {
                     cards.add(card);
                 }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -20,37 +21,38 @@ import static org.assertj.core.api.Assertions.assertThat;
 class EffluenceDevourerTest extends BaseCardTest {
 
     @Test
-    void sacrificingAnotherCreatureGrantsTheGraveyardOozeAbility() {
+    @DisplayName("Sacrificing another creature gives that creature's card the graveyard Ooze ability, not this one")
+    void sacrificingAnotherCreatureGrantsTheGraveyardOozeAbilityToIt() {
         Card devourer = new EffluenceDevourer();
         harness.setGraveyard(player1, List.of());
         addCreatureReady(player1, devourer);
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new DiabolicEdict(), new DiabolicEdict()));
+        Card bearsCard = bears.getCard();
+        harness.setHand(player1, List.of(new DiabolicEdict()));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castInstant(player1, 0, player1.getId());
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, bears.getId());
         resolveAllTriggers();
 
-        harness.castInstant(player1, 0, player1.getId());
-        resolveAllTriggers();
-
+        // "Whenever you sacrifice this creature or another creature, it perpetually gains ...": "it" is the
+        // sacrificed creature.
+        assertThat(gd.perpetualAbilities(devourer.getId())).isEmpty();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.activateGraveyardAbility(player1, gd.playerGraveyards.get(player1.getId()).indexOf(devourer));
+        harness.activateGraveyardAbility(player1, gd.playerGraveyards.get(player1.getId()).indexOf(bearsCard));
         harness.passBothPriorities();
 
         Permanent ooze = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(gqs.getEffectivePower(gd, ooze)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(4);
-        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(devourer);
+        assertThat(gqs.getEffectivePower(gd, ooze)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(bearsCard);
     }
 
     @Test

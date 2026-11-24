@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -54,6 +55,25 @@ class SibsigsArtisanTest extends BaseCardTest {
         assertThat(secondTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(targetCard.getId()));
+    }
+
+    @Test
+    @DisplayName("The renew the creature perpetually gains works from the graveyard only, not from the battlefield")
+    void grantedRenewIsNotAnAbilityOfThePermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new SibsigsArtisan()));
+        readyRenew();
+
+        harness.activateGraveyardAbility(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(target);
+        assertThatThrownBy(() -> harness.activateAbility(player1, index, null, other.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.perpetualAbilities(target.getCard().getId())).hasSize(1);
     }
 
     @Test

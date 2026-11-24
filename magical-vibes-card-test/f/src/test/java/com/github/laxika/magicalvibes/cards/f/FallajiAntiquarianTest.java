@@ -5,13 +5,16 @@ import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,6 +35,24 @@ class FallajiAntiquarianTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getOriginalCard().getId().equals(duplicate.getId()));
+    }
+
+    @Test
+    @DisplayName("A duplicate of a face-down creature has only its face-down values, and the log names no card")
+    void duplicateOfAFaceDownCreatureIsANamelessTwoTwo() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        enterAndChoose(target);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).singleElement().satisfies(duplicate -> {
+            assertThat(duplicate.getName()).isEmpty();
+            assertThat(duplicate.getPower()).isEqualTo(2);
+            assertThat(duplicate.getToughness()).isEqualTo(2);
+            assertThat(duplicate.isConjured()).isTrue();
+        });
+        assertThat(gameLogContains("Grizzly Bears")).isFalse();
+        assertThat(gameLogContains(player1.getUsername()
+                + " conjures a duplicate of a face-down permanent into their graveyard.")).isTrue();
     }
 
     @Test

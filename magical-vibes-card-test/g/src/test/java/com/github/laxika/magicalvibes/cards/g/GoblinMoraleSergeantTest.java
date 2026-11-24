@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -40,6 +41,23 @@ class GoblinMoraleSergeantTest extends BaseCardTest {
                         && updatedLibrary.get(index).isConjured())
                 .findFirst().orElseThrow();
         assertThat(duplicateIndex).isLessThan(5);
+    }
+
+    @Test
+    @DisplayName("The log names the duplicate of the public creature but not where in the library it went")
+    void logNamesTheDuplicateButNotItsLibraryPosition() {
+        addCreatureReady(player1, new GoblinMoraleSergeant());
+        Permanent supporter = addCreatureReady(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+
+        declareAttackers(List.of(0));
+        harness.handleMultiplePermanentsChosen(player1, List.of(supporter.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gameLogContains(player1.getUsername()
+                + " conjures a duplicate of Grizzly Bears into their library.")).isTrue();
+        assertThat(gameLogContains("top five")).isFalse();
     }
 
     @Test

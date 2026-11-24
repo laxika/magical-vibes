@@ -55,7 +55,9 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
      * hand), while they are still the objects that were chosen; for {@link StepKind#REVEAL} the cards revealed from the
      * top of libraries or from hands, while each is still in that library or hand (CR 701.20b); for {@link StepKind#RETURN} the cards
      * returned to a hand, followed into that hand as a sought card is, for "it perpetually gets +3/+3" (digital only:
-     * otherwise a card put into a hidden zone is no longer found, CR 400.7j).
+     * otherwise a card put into a hidden zone is no longer found, CR 400.7j); for {@link StepKind#CONJURE} the conjured
+     * cards, in the graveyard, exile or library they were put into (digital only: "you may cast that card", "the
+     * duplicate perpetually gets +1/+1").
      * The rest of the effect can find a card it moved to a public zone (CR 400.7j); a card that has
      * left that zone since is a new object and is not named.
      *
@@ -74,7 +76,7 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
         public CardsThisWay {
             Objects.requireNonNull(kind, "kind");
             switch (kind) {
-                case EXILE, DESTROY, SACRIFICE, DISCARD, COUNTER_SPELL, SEEK, MILL, CHOOSE, REVEAL, RETURN -> {
+                case EXILE, DESTROY, SACRIFICE, DISCARD, COUNTER_SPELL, SEEK, MILL, CHOOSE, REVEAL, RETURN, CONJURE -> {
                 }
                 default -> throw new IllegalArgumentException("A " + kind + " step leaves no card for a card "
                         + "subject to name");

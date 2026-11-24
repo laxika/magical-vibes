@@ -67,6 +67,10 @@ package com.github.laxika.magicalvibes.model;
  *       the voters in the order they voted, and each vote, who cast it and for what
  *       ({@link StepOutcome#votes()}): "for each [option] vote" ({@code VotesFor}), "if [option] gets more votes"
  *       ({@code VoteResult}).</li>
+ *   <li>{@link #CONJURE}: the number of cards conjured into a hand, a library, a graveyard or exile
+ *       ({@code ConjureCardsEffect}), those cards, the player whose zone they went to, each one's
+ *       {@link StepOutcome#movedCards()} entry naming the zone it is in after the step (a replacement's zone, when one
+ *       sent it elsewhere), so "you may cast it" and "it perpetually gets" find it there (digital only).</li>
  * </ul>
  *
  * <p>A later step may read a step only if that step finishes before the next one starts (CR 608.2c): its handler never
@@ -75,7 +79,7 @@ package com.github.laxika.magicalvibes.model;
  * ({@code ExileAllPermanentsEffect}), exile the source's or
  * the triggering card or target cards from a graveyard ({@code ExileGraveyardCardsEffect} except where its player
  * chooses at a prompt), exile the top card of a library, a hand or a spell ({@code ExileTargetPlayerHandEffect},
- * {@code ExileTargetSpellEffect}), seek cards to a hand, put exiled cards into a graveyard, note a number, destroy, copy, create a token (also attached to a permanent, {@code CreateTokenAttachedToTargetEffect}, whose choice among triggering creatures adds the token as it is answered), manifest, mill and exile the
+ * {@code ExileTargetSpellEffect}), seek cards to a hand, conjure cards ({@code ConjureCardsEffect}), put exiled cards into a graveyard, note a number, destroy, copy, create a token (also attached to a permanent, {@code CreateTokenAttachedToTargetEffect}, whose choice among triggering creatures adds the token as it is answered), manifest, mill and exile the
  * source and return it transformed ({@code ExileSelfAndReturnTransformedEffect}), transform the source
  * ({@code TransformSelfEffect}) (never prompt, or
  * rerun before any change); the self sacrifice ({@code departAsStep}), discard and
@@ -127,5 +131,6 @@ public enum StepKind {
     PUT_INTO_LIBRARY,
     GAIN_CONTROL,
     NOTE,
-    VOTE
+    VOTE,
+    CONJURE
 }

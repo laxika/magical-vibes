@@ -3146,7 +3146,9 @@ public class LayerSystemService {
                         seeded = true;
                     }
                     case ActivatedAbility activatedAbility -> {
-                        if (!activated.contains(activatedAbility)) {
+                        // A graveyard ability ("it perpetually gains unearth") isn't one of the permanent's.
+                        if (activatedAbility.functionsIn(Zone.BATTLEFIELD)
+                                && !activated.contains(activatedAbility)) {
                             activated.add(activatedAbility);
                             state.addActivatedAbility(activatedAbility);
                             seeded = true;

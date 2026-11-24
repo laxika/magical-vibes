@@ -1614,6 +1614,19 @@ class SubjectResolutionServiceTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("A trigger event's permanent that has died since is read from the entry's snapshot of it")
+        void diedTriggeringPermanentIsReadFromItsSnapshot() {
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            StackEntry entry = entry(player1, null, null);
+            entry.setTriggeringPermanentId(bears.getId());
+            entry.setTriggeringPermanent(bears);
+            gd.playerBattlefields.get(player1.getId()).remove(bears);
+
+            assertThat(subjects.cardsToDuplicate(gd, entry, EFFECT, triggering())).singleElement()
+                    .satisfies(card -> assertThat(card.getName()).isEqualTo("Grizzly Bears"));
+        }
+
+        @Test
         @DisplayName("A face-down permanent's card has only its face-down values")
         void faceDownPermanentHasItsFaceDownValues() {
             Permanent bears = addCreatureReady(player1, new GrizzlyBears());

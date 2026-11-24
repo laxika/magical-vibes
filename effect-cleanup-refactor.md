@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b (each in Findings; the fold queue marks its rows). Fold runs 8 to 12 run in parallel worktrees from 2026-11-24. Next: fold runs 11b and 12 (running), 10b (`opp-card`), 8b (Desolation, Creeping Dread, Kroxa). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).      |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12 (each in Findings; the fold queue marks its rows). Fold runs 8 to 12 ran in parallel worktrees from 2026-11-24. Next: fold runs 10b and 11b (running), 12a, then `drafted-step`, 8b. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).       |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,861 / 3,123 (after fold run 9b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,850 / 3,111 (after fold run 12) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,239 rows over 4,409 classes (after fold run 9b). Latest verdict per class: `step-9` 1,060, unique 1,167, absorbed 600, split 538, blocked-other 473, survivor 273, blocked-step-model 140, blocked-player-loop 97, dead 61. Waiting: 1,060 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,257 rows over 4,410 classes (after fold run 12). Latest verdict per class: `step-9` 1,045, unique 1,166, absorbed 606, split 545, blocked-other 474, survivor 276, blocked-step-model 140, blocked-player-loop 97, dead 61. Waiting: 1,045 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -559,6 +559,16 @@ Delayed and global triggers:
 - "Look at target player's hand. You may choose a card from it. If you do, …": `ChooseCardsFromTargetHandEffect(... KEEP_IN_HAND,
   upTo, look)` + `ConditionalEffect(HappenedThisWay(CHOOSE), …)` over `cardsThisWay(CHOOSE)` (Oildeep Gearhulk, Vendilion Clique;
   fold run 9b).
+
+- `ConjureCardsEffect` + `ConjureDestination`: the CONJURE step. `atRandomFrom(printings)` / `duplicateOf(PermanentSubject |
+  CardSubject)` / `duplicateOfTarget(filter)` into a graveyard, exile, exile with the source, top of library or top N at random;
+  `.times(amount)`. Records `StepKind.CONJURE` for `cardsThisWay(CONJURE)`; the log names a card only where it was or goes public
+  (fold run 12).
+- A perpetually granted graveyard ability is `PerpetuallyGrantAbilitiesEffect(cards, ability.withZones(AbilityZones.GRAVEYARD))`, or
+  `PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect` for a target permanent's card, in the one store `perpetualAbilityGrants`,
+  never seeded onto a permanent (fold run 12).
+- `PerpetuallySetSourceBasePowerToughnessEffect(p, t, PermanentSubject)` over `createdThisResolution()`;
+  `ConjureRandomCardFromSpellbookWithManaValueToBattlefieldEffect(spellbook)` takes any mana value (Blood Age Muster; fold run 12).
 
 ### Blocked causes still open
 
@@ -1588,6 +1598,39 @@ Scholar obeys CR 701.27g and transform prevention. A lone legal option is chosen
 chooses in APNAP order and discards at once, CR 101.4); Creeping Dread also names only the controller's own discarded card for
 `CardSharesCardTypeWithCardsPredicate`; Desolation needs the permanent-filter form over `SACRIFICE` departures and a "tapped a land
 for mana this turn" `PlayerPredicate`. Take all three in one run.
+
+### Step 9, fold run 12 (2026-11-24, parallel worktree)
+
+Rows: `conjure-exile` (3), `conjure-dup` (8), `gy-ability-store` (3), `spellbook-bf` (2); `drafted-step` (7) not taken. Ratchet in its
+worktree 3,883 / 3,145 → 3,872 / 3,133. Ledger 18 rows (absorbed 6, split 8, blocked-other 1, re-batched 1, survivor 3). 14 card files
+rewritten, Oracle text checked for all and for Darigaaz, Prototype X-8, Brazen Boarding, Tajic and the seven YECL pool cards. CR
+400.2, 400.7j, 603.10a, 607.2a, 608.2d, 608.2h, 701.24b/c, 707.2, 708.2a, 113.2c checked. Merged with fold run 11 (`StepKind` gained
+both VOTE and CONJURE).
+
+**The CONJURE step.** `ConjureCardsEffect(cards, count, ConjureDestination)`. What it conjures: `atRandomFrom(printings)`,
+`duplicateOf(PermanentSubject)` (through `cardsToDuplicate`, copiable values, CR 707.2, 708.2a), `duplicateOfTarget(filter)`, or
+`duplicateOf(CardSubject)` (tokens skipped); `.times(amount)`. Where: `intoGraveyard()`, `intoExile()`, `intoExileWithSource()` (CR
+607.2a), `ontoTopOfLibrary()`, `intoTopCardsOfLibraryAtRandom(n)`; the owner is the controller. It records `StepKind.CONJURE` with each
+card in the zone it ended in (a replacement's zone followed), read by `cardsThisWay(CONJURE)`; one conjure event, no prompt. Log: a card
+is named where it goes to a public zone or was public; a random pick into a library is "a card"; no library position is logged; a
+nameless duplicate is "a face-down permanent". Battlefield conjures stay on `ConjureDuplicateOntoBattlefieldEffect` /
+`ConjureCardToBattlefieldEffect`. For 12a and 20: add a hand destination (`GameLog.conjuresIntoHand`) and a recipient `PlayerSubject`.
+
+| Batch | Result |
+|---|---|
+| `conjure-exile` | Limitless Rekindling and Dazzling Flameweaver split onto the step + `AllowPlayCardsFromExileEffect`. Darigaaz re-batched to `exiled-store` (run 16): egg counters on exiled cards, a perpetual exile trigger |
+| `conjure-dup` | 7 folded (Fallaji Antiquarian, Gyox, Chitinous Crawler, Smog Smasher, Goblin Morale Sergeant, Sheoldred's Assimilator, Pampered Loamfrill). Prototype X-8 `blocked-other`: a battlefield duplicate that "perpetually becomes a Robot artifact" needs a perpetual type grant over a created permanent |
+| `gy-ability-store` | Store merge as in run 28: `perpetualGraveyardAbilities` folded into `perpetualAbilityGrants` as `ActivatedAbility.withZones(GRAVEYARD)`; the graveyard reader takes those, the layered pass seeds only battlefield ones; `GameDataDeepCopyTest` covers it. 3 folded |
+| `spellbook-bf` | The WithManaValue record's mana value is optional; `PerpetuallySetSourceBasePowerToughnessEffect` takes a non-target subject. Blood Age Muster split |
+
+**Behaviour changes.** Effluence Devourer grants the sacrificed creature's card, as its text's "it" says (a token gets nothing; its
+first test asserted the old, wrong card and was rewritten). Gyox conjures into exile, changes the cards, then shuffles them in, and
+always shuffles (CR 701.24c). Fallaji copies a face-down target's face-down values. Goblin Morale Sergeant's haste is perpetual. No log
+gives a library position. Graveyard grants stack (CR 113.2c). `cardsToDuplicate` reads a died triggering permanent from the entry's
+snapshot.
+
+**For the next run.** 12a on `ConjureCardsEffect` (hand destination, recipient player), then `drafted-step` (the draft choice records
+its card).
 
 ## Prompt
 

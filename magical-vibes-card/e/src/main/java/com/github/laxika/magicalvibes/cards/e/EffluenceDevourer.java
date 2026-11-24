@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
@@ -10,7 +11,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.SourceCardPower;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantGraveyardAbilityToSourceCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -37,6 +39,7 @@ public class EffluenceDevourer extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED);
 
         addTrigger(Triggers.sacrificed(new PermanentIsCreaturePredicate(), ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
-                new PerpetuallyGrantGraveyardAbilityToSourceCardEffect(oozeAbility));
+                new PerpetuallyGrantAbilitiesEffect(Subjects.triggeringCards(),
+                        List.of(oozeAbility.withZones(AbilityZones.GRAVEYARD))));
     }
 }

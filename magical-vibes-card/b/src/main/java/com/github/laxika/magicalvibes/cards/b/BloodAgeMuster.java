@@ -2,7 +2,10 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromSpellbookToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromSpellbookWithManaValueToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallySetSourceBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -33,6 +36,8 @@ public class BloodAgeMuster extends Card {
         // become 2/2. This ability triggers only once each turn.
         addTrigger(new TriggerCondition(Triggers.leavesGraveyard(null, ObjectRelation.YOU_OWN)),
                 TriggerOptions.ONE_OR_MORE.withLimit(TriggerLimit.ONCE_EACH_TURN),
-                new ConjureRandomCardFromSpellbookToBattlefieldEffect(SPELLBOOK, 2, 2));
+                SequenceEffect.of(
+                        new ConjureRandomCardFromSpellbookWithManaValueToBattlefieldEffect(SPELLBOOK),
+                        new PerpetuallySetSourceBasePowerToughnessEffect(2, 2, Subjects.createdThisResolution())));
     }
 }

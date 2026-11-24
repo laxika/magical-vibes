@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -10,7 +11,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantGraveyardAbilityToTargetCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ShuffleSourceFromExileIntoOwnersLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
@@ -24,8 +26,10 @@ public class AssembleFromParts extends Card {
         target(new GraveyardCardPredicateTargetFilter(
                 new CardTypePredicate(CardType.CREATURE),
                 GraveyardSearchScope.CONTROLLERS_GRAVEYARD));
-        addSpellEffect(new PerpetuallyGrantGraveyardAbilityToTargetCardEffect(
-                new ActivatedAbility(
+        addSpellEffect(new PerpetuallyGrantAbilitiesEffect(
+                Subjects.targetCard(new CardTypePredicate(CardType.CREATURE),
+                        GraveyardSearchScope.CONTROLLERS_GRAVEYARD),
+                List.of(new ActivatedAbility(
                         false,
                         "{1}{B}{B}",
                         List.of(
@@ -35,6 +39,6 @@ public class AssembleFromParts extends Card {
                                         false, 1, CardColor.BLACK, CardSubtype.ZOMBIE, false, 4, 4)),
                         "{1}{B}{B}, Exile this card from your graveyard: Create a token that's a copy of it, "
                                 + "except it's a 4/4 black Zombie in addition to its other types. Activate only as a sorcery.",
-                        ActivationTimingRestriction.SORCERY_SPEED)));
+                        ActivationTimingRestriction.SORCERY_SPEED).withZones(AbilityZones.GRAVEYARD))));
     }
 }

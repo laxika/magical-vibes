@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.AlternativeCostKind;
 import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
+import com.github.laxika.magicalvibes.model.AbilityZones;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -385,6 +387,21 @@ class GameDataDeepCopyTest {
                 .containsExactly(new DrawCardEffect(1), new DrawCardEffect(2));
         assertThat(gd.perpetualTriggerEffects(card.getId(), Triggers.youLoseControlOfThis(), Zone.BATTLEFIELD))
                 .containsExactly(new DrawCardEffect(1));
+    }
+
+    @Test
+    @DisplayName("Deep copy keeps perpetually granted graveyard abilities, and the copy's grants stay its own")
+    void deepCopyPreservesPerpetualGraveyardAbilityGrantsIndependently() {
+        Card card = new GrizzlyBears();
+        ActivatedAbility unearth = Card.unearthAbility("{5}").withZones(AbilityZones.GRAVEYARD);
+        gd.grantPerpetualAbility(card.getId(), unearth);
+
+        GameData copy = gd.simulationCopy();
+        ActivatedAbility second = Card.unearthAbility("{2}").withZones(AbilityZones.GRAVEYARD);
+        copy.grantPerpetualAbility(card.getId(), second);
+
+        assertThat(copy.perpetualAbilities(card.getId())).containsExactly(unearth, second);
+        assertThat(gd.perpetualAbilities(card.getId())).containsExactly(unearth);
     }
 
     @Test

@@ -70,6 +70,29 @@ class GyoxBrutalCarnivoraTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The duplicates are conjured into exile, then shuffled into the library")
+    void duplicatesAreConjuredIntoExileThenShuffledIntoTheLibrary() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new GyoxBrutalCarnivora());
+        Permanent dying = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        dying.setCounterCount(CounterType.OIL, 2);
+        harness.setLibrary(player1, List.of(new Island()));
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, dying.getId());
+        harness.passBothPriorities();
+
+        // "Conjure X duplicates of it into exile ... Then shuffle those duplicates into your library."
+        assertThat(gameLogContains(player1.getUsername()
+                + " conjures 2 duplicates of Grizzly Bears into exile.")).isTrue();
+        assertThat(gameLogContains(player1.getUsername() + " shuffles their library.")).isTrue();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
     @DisplayName("A token creature with oil counters dying does not trigger the ability")
     void tokenCreatureDeathDoesNotTrigger() {
         harness.forceActivePlayer(player1);

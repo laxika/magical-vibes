@@ -13,7 +13,12 @@ import java.util.Objects;
  * A choice, random or the player's, is the {@code ChooseCardEffect} before it, over
  * {@code Subjects.cardsThisWay(StepKind.CHOOSE)}.
  *
- * @param cards     the cards that gain them; a hand's or library's are named in no log (CR 400.2)
+ * <p>An activated ability that functions from a graveyard ("this card perpetually gains "{2}, Exile this card from
+ * your graveyard: ..."", "it perpetually gains unearth {5}") is granted with {@code withZones(AbilityZones.GRAVEYARD)};
+ * it is activated from the graveyard only, never from the battlefield.</p>
+ *
+ * @param cards     the cards that gain them ("target creature card in your graveyard" declares the target); a hand's
+ *                  or library's are named in no log (CR 400.2)
  * @param abilities what each gains
  */
 public record PerpetuallyGrantAbilitiesEffect(CardSubject cards, List<Ability> abilities) implements CardEffect {
@@ -29,5 +34,10 @@ public record PerpetuallyGrantAbilitiesEffect(CardSubject cards, List<Ability> a
     /** One triggered ability with {@code trigger} and {@code effect}. */
     public PerpetuallyGrantAbilitiesEffect(CardSubject cards, Trigger trigger, CardEffect effect) {
         this(cards, List.of(new TriggeredAbility(trigger, effect)));
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return cards.targetSpec();
     }
 }

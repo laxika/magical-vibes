@@ -202,6 +202,6 @@ class ChitinousCrawlerTest extends BaseCardTest {
 
         assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("your graveyard"));
         assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals(
-                "A duplicate of Grizzly Bears is conjured into " + player1.getUsername() + "'s graveyard."));
+                player1.getUsername() + " conjures a duplicate of Grizzly Bears into their graveyard."));
     }
 }

@@ -590,12 +590,12 @@ public class GameData {
     /**
      * Perpetually granted abilities of every kind (triggered, static, activated) keyed by the affected card's identity,
      * each an immutable list in grant order: part of the card in every zone, seeded by the layered pass while it is a
-     * face-up permanent. Change them through {@link #grantPerpetualAbility}, {@link #grantPerpetualAbilityOnce} and
-     * {@link #removePerpetualAbilitiesIf}; read them through {@link #perpetualAbilities}.
+     * face-up permanent; an activated ability that functions from a graveyard ({@code ActivatedAbility.functionsIn})
+     * is activated there and never seeded. Change them through {@link #grantPerpetualAbility},
+     * {@link #grantPerpetualAbilityOnce} and {@link #removePerpetualAbilitiesIf}; read them through
+     * {@link #perpetualAbilities}.
      */
     public final Map<UUID, List<Ability>> perpetualAbilityGrants = new ConcurrentHashMap<>();
-    /** Perpetual graveyard-activated abilities keyed by the affected card's identity. */
-    public final Map<UUID, List<ActivatedAbility>> perpetualGraveyardAbilities = new ConcurrentHashMap<>();
     /** Perpetual card types keyed by the affected card's identity. */
     public final Map<UUID, Set<CardType>> perpetualCardTypes = new ConcurrentHashMap<>();
     /** Perpetual card subtypes keyed by the affected card's identity. */
@@ -10180,8 +10180,6 @@ public class GameData {
         this.perpetuallyRemovedTriggeredAbilities.forEach((cardId, effects) ->
                 copy.perpetuallyRemovedTriggeredAbilities.put(cardId, Set.copyOf(effects)));
         copy.perpetualAbilityGrants.putAll(this.perpetualAbilityGrants);
-        this.perpetualGraveyardAbilities.forEach((cardId, abilities) ->
-                copy.perpetualGraveyardAbilities.put(cardId, List.copyOf(abilities)));
         this.perpetualCardTypes.forEach((cardId, types) ->
                 copy.perpetualCardTypes.put(cardId, Set.copyOf(types)));
         this.perpetualCardSubtypes.forEach((cardId, subtypes) ->

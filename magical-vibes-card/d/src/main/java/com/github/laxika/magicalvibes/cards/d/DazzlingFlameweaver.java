@@ -2,9 +2,15 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromSpellbookToExileMayPlayUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromExileEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect.SpellbookCard;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -14,6 +20,19 @@ import java.util.List;
 @CardRegistration(set = "YBLB", collectorNumber = "23")
 public class DazzlingFlameweaver extends Card {
 
+    private static final List<SpellbookCard> SPELLBOOK = List.of(
+            new SpellbookCard("RVR", "67"),
+            new SpellbookCard("NCC", "34"),
+            new SpellbookCard("RNA", "71"),
+            new SpellbookCard("RNA", "73"),
+            new SpellbookCard("RNA", "181"),
+            new SpellbookCard("RVR", "117"),
+            new SpellbookCard("RNA", "196"),
+            new SpellbookCard("RNA", "109"),
+            new SpellbookCard("OTP", "26"),
+            new SpellbookCard("RNA", "85"),
+            new SpellbookCard("RNA", "118"));
+
     public DazzlingFlameweaver() {
         // Ward—Pay 3 life.
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
@@ -22,19 +41,9 @@ public class DazzlingFlameweaver extends Card {
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
                         .withFilter(new PermanentIsCreaturePredicate()),
                 TriggerOptions.ONE_OR_MORE,
-                new ConjureRandomCardFromSpellbookToExileMayPlayUntilNextTurnEffect(
-                        List.of(
-                                new ConjureRandomCardFromSpellbookToExileMayPlayUntilNextTurnEffect.CardPrintingReference("RVR", "67"),
-                                new ConjureRandomCardFromSpellbookToExileMayPlayUntilNextTurnEffect.CardPrintingReference("NCC", "34"),
-                                new ConjureRandomCardFromSpellbookToExileMayPlayUntilNextTurnEffect.CardPrintingReference("RNA", "71"),
-                                new ConjureRandomCardFromSpellbookToExileMayPlayUntilNextTurnEffect.CardPrintingReference("RNA", "73"),
-                                new ConjureRandomCardFromSpellbookToExileMayPlayUntilNextTurnEffect.CardPrintingReference("RNA", "181"),
-                                new ConjureRandomCardFromSpellbookToExileMayPlayUntilNextTurnEffect.CardPrintingReference("RVR", "117"),
-                                new ConjureRandomCardFromSpellbookToExileMayPlayUntilNextTurnEffect.CardPrintingReference("RNA", "196"),
-                                new ConjureRandomCardFromSpellbookToExileMayPlayUntilNextTurnEffect.CardPrintingReference("RNA", "109"),
-                                new ConjureRandomCardFromSpellbookToExileMayPlayUntilNextTurnEffect.CardPrintingReference("OTP", "26"),
-                                new ConjureRandomCardFromSpellbookToExileMayPlayUntilNextTurnEffect.CardPrintingReference("RNA", "85"),
-                                new ConjureRandomCardFromSpellbookToExileMayPlayUntilNextTurnEffect.CardPrintingReference("RNA", "118")
-                        )));
+                SequenceEffect.of(
+                        ConjureCardsEffect.atRandomFrom(SPELLBOOK, ConjureDestination.intoExile()),
+                        AllowPlayCardsFromExileEffect.untilEndOfYourNextTurn(
+                                Subjects.cardsThisWay(StepKind.CONJURE))));
     }
 }

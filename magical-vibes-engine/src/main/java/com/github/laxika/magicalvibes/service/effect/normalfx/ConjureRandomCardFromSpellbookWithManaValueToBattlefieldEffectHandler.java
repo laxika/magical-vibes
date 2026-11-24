@@ -36,18 +36,21 @@ public class ConjureRandomCardFromSpellbookWithManaValueToBattlefieldEffectHandl
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var conjure = (ConjureRandomCardFromSpellbookWithManaValueToBattlefieldEffect) effect;
-        var source = entry.getSourcePermanentId() == null
-                ? null
-                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (source == null) {
-            source = entry.getSourcePermanentSnapshot();
+        Integer manaValue = null;
+        if (conjure.manaValue() != null) {
+            var source = entry.getSourcePermanentId() == null
+                    ? null
+                    : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (source == null) {
+                source = entry.getSourcePermanentSnapshot();
+            }
+            manaValue = amountEvaluationService.evaluate(
+                    gameData, conjure.manaValue(), AmountContext.forStackEntry(entry, source));
         }
-        int manaValue = amountEvaluationService.evaluate(
-                gameData, conjure.manaValue(), AmountContext.forStackEntry(entry, source));
         List<DraftFromSpellbookEffect.SpellbookCard> matching = new ArrayList<>();
         for (DraftFromSpellbookEffect.SpellbookCard reference : conjure.spellbook()) {
             Card card = cardCatalog.createCardIfImplemented(reference.setCode(), reference.collectorNumber());
-            if (card != null && card.getManaValue() == manaValue) {
+            if (card != null && (manaValue == null || card.getManaValue() == manaValue)) {
                 matching.add(reference);
             }
         }

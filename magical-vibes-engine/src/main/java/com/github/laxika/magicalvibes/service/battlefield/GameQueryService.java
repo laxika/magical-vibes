@@ -1846,9 +1846,10 @@ public class GameQueryService {
                 }
             }
         }
-        List<ActivatedAbility> perpetualAbilities = gameData.perpetualGraveyardAbilities.get(card.getId());
-        if (perpetualAbilities != null) {
-            result.addAll(perpetualAbilities);
+        for (Ability perpetual : gameData.perpetualAbilities(card.getId())) {
+            if (perpetual instanceof ActivatedAbility activated && activated.functionsIn(Zone.GRAVEYARD)) {
+                result.add(activated);
+            }
         }
         if (card != null && gameData.hasGrantedCardAbility(card.getId(), GrantedCardAbilityEffect.Ability.EMBALM)
                 && card.getManaCost() != null && !card.getManaCost().isBlank()) {

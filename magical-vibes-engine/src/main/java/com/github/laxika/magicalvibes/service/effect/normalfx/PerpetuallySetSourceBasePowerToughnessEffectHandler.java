@@ -6,16 +6,16 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallySetSourceBasePowerToughnessEffect;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Applies a perpetual base-power and base-toughness change to the source card. */
+/** Applies a perpetual base-power and base-toughness change to the card of each permanent the subject names. */
 @Component
 @RequiredArgsConstructor
 public class PerpetuallySetSourceBasePowerToughnessEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -24,18 +24,13 @@ public class PerpetuallySetSourceBasePowerToughnessEffectHandler implements Norm
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        PerpetuallySetSourceBasePowerToughnessEffect set =
-                (PerpetuallySetSourceBasePowerToughnessEffect) effect;
-        Permanent source = entry.getSourcePermanentId() == null
-                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (source == null) {
-            return;
+        var set = (PerpetuallySetSourceBasePowerToughnessEffect) effect;
+        for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect, set.subject())) {
+            Card copy = permanent.getCard().createRuntimeCopy();
+            copy.setPower(set.power());
+            copy.setToughness(set.toughness());
+            copy.freeze();
+            permanent.exchangeCard(copy);
         }
-
-        Card copy = source.getCard().createRuntimeCopy();
-        copy.setPower(set.power());
-        copy.setToughness(set.toughness());
-        copy.freeze();
-        source.exchangeCard(copy);
     }
 }
