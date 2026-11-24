@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SerraParagon;
 import com.github.laxika.magicalvibes.cards.s.SkyshipStalker;
 import com.github.laxika.magicalvibes.cards.s.StarCrownedStag;
+import com.github.laxika.magicalvibes.cards.s.SteelPlumeMarshal;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -31,15 +32,15 @@ import static org.assertj.core.api.Assertions.assertThat;
         DuelcraftTrainer.class, FalconerAdept.class, SeraphOfDawn.class,
         StarCrownedStag.class, BenalishMarshal.class, SerraParagon.class,
         BladeHistorian.class, CaptivatingCrew.class, ManaformHellkite.class,
-        MoonveilRegent.class, SkyshipStalker.class, OgreBattledriver.class})
+        MoonveilRegent.class, SkyshipStalker.class, OgreBattledriver.class, SteelPlumeMarshal.class})
 class ProteanWarEngineTest extends BaseCardTest {
 
     @Test
     void draftsThreeSpellbookCardsAndExilesTheChosenCard() {
         Permanent engine = harness.enterBattlefieldAndReturn(player1, new ProteanWarEngine());
 
-        PendingInteraction.ProteanWarEngineSpellbookDraftChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.ProteanWarEngineSpellbookDraftChoice.class);
+        PendingInteraction.SpellbookDraftToExileChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftToExileChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.cards()).hasSize(3);
 
@@ -81,8 +82,8 @@ class ProteanWarEngineTest extends BaseCardTest {
         harness.castFromHand(player1, new ProteanWarEngine(), "{R}{W}");
         harness.passBothPriorities();
 
-        PendingInteraction.ProteanWarEngineSpellbookDraftChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.ProteanWarEngineSpellbookDraftChoice.class);
+        PendingInteraction.SpellbookDraftToExileChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftToExileChoice.class);
         assertThat(choice).isNotNull();
         harness.handleMultipleCardsChosen(player1, List.of(choice.cards().getFirst().getId()));
 

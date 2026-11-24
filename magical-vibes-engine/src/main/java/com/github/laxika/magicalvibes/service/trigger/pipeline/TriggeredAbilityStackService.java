@@ -511,6 +511,44 @@ public class TriggeredAbilityStackService extends StackDoor {
             // trigger" (Elesh Norn, Mother of Machines).
             return false;
         }
+        Written first = write(gameData, request, interveningIf);
+        if (first == null) {
+            return false;
+        }
+        int copies = options.limit() == TriggerLimit.ONCE_EACH_TURN ? 1
+                : request.sourcePermanent() == null ? 1 + emblemAdditionalTriggers(gameData, request)
+                : 1 + gameQueryService.countAdditionalTriggeredAbilityTriggers(gameData, request.controllerId(),
+                        request.sourcePermanent(), request.attackCaused(), request.cause())
+                + eventAdditionalTriggers(gameData, request);
+        if (first.randomMode() == null) {
+            router.route(first.effects(), copies, null);
+        } else {
+            // Each time the ability triggers is an ability of its own (CR 603.2d), whose mode is chosen at random as
+            // it is put on the stack (CR 603.3c): an additional time chooses its mode again.
+            router.route(first.effects(), 1, first.randomMode());
+            for (int copy = 1; copy < copies; copy++) {
+                Written next = write(gameData, request, interveningIf);
+                if (next != null) {
+                    router.route(next.effects(), 1, next.randomMode());
+                }
+            }
+        }
+        markLimit(gameData, options.limit(), limitSourceId, ability.limitKey(), request.limitCreatureId());
+        return true;
+    }
+
+    /** The effects one instance of a triggered ability is put on the stack with, and its mode chosen at random. */
+    private record Written(List<CardEffect> effects, ChooseOneEffect.ChooseOneOption randomMode) {
+    }
+
+    /**
+     * The effects {@code request}'s ability is put on the stack with as it triggers: a "choose one at random" replaced
+     * by the mode chosen now (CR 603.3c), an entering permanent's facts judged ({@link #asItTriggersOnEntering}), and
+     * the intervening "if" carried by each effect it is checked again for (CR 603.4). {@code null} when the ability
+     * doesn't trigger or is removed: no mode can be chosen, or an "if" fixed as the permanent entered isn't met.
+     */
+    private Written write(GameData gameData, TriggeredAbilityRequest request, Condition interveningIf) {
+        TriggeredAbility ability = request.ability();
         List<CardEffect> written = new ArrayList<>(ability.effects().size());
         ChooseOneEffect.ChooseOneOption randomMode = null;
         for (EffectRegistration registration : ability.effects()) {
@@ -522,7 +560,7 @@ public class TriggeredAbilityStackService extends StackDoor {
             ChooseOneEffect.ChooseOneOption mode = chooseRandomModeAsItTriggers(gameData, request, randomModes);
             if (mode == null) {
                 // No mode can be chosen: the ability is removed from the stack (CR 603.3c).
-                return false;
+                return null;
             }
             randomMode = mode;
             written.addAll(mode.effectsForSelection());
@@ -531,7 +569,7 @@ public class TriggeredAbilityStackService extends StackDoor {
             written = asItTriggersOnEntering(gameData, request, written);
             if (written.isEmpty() && !ability.effects().isEmpty()) {
                 // An "if" fixed as the permanent entered that isn't met: the ability doesn't trigger (CR 603.4).
-                return false;
+                return null;
             }
         }
         List<CardEffect> effects = new ArrayList<>(written.size());
@@ -544,14 +582,7 @@ public class TriggeredAbilityStackService extends StackDoor {
                     || effect.modesChosenAsItTriggers() != null;
             effects.add(judgedOnce ? effect : new ConditionalEffect(interveningIf, effect));
         }
-        int copies = options.limit() == TriggerLimit.ONCE_EACH_TURN ? 1
-                : request.sourcePermanent() == null ? 1 + emblemAdditionalTriggers(gameData, request)
-                : 1 + gameQueryService.countAdditionalTriggeredAbilityTriggers(gameData, request.controllerId(),
-                        request.sourcePermanent(), request.attackCaused(), request.cause())
-                + eventAdditionalTriggers(gameData, request);
-        router.route(effects, copies, randomMode);
-        markLimit(gameData, options.limit(), limitSourceId, ability.limitKey(), request.limitCreatureId());
-        return true;
+        return new Written(effects, randomMode);
     }
 
     /**

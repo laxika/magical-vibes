@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.effect.GreatIntelligencesPlanVillainousChoiceEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -32,10 +32,10 @@ class GreatIntelligencesPlanTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice.playerId()).isEqualTo(player2.getId());
         assertThat(choice.options()).containsExactly(
-                GreatIntelligencesPlanVillainousChoiceEffect.DISCARD_OPTION,
-                GreatIntelligencesPlanVillainousChoiceEffect.CAST_OPTION);
+                GreatIntelligencesPlan.DISCARD_OPTION,
+                GreatIntelligencesPlan.CAST_OPTION);
 
-        harness.handleListChoice(player2, GreatIntelligencesPlanVillainousChoiceEffect.DISCARD_OPTION);
+        harness.handleListChoice(player2, GreatIntelligencesPlan.DISCARD_OPTION);
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
@@ -53,7 +53,7 @@ class GreatIntelligencesPlanTest extends BaseCardTest {
         harness.setHand(player2, List.of(new K9MarkI(), new K9MarkI(), new K9MarkI()));
         cast(freeSpell);
 
-        harness.handleListChoice(player2, GreatIntelligencesPlanVillainousChoiceEffect.CAST_OPTION);
+        harness.handleListChoice(player2, GreatIntelligencesPlan.CAST_OPTION);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
@@ -83,13 +83,30 @@ class GreatIntelligencesPlanTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.options()).containsExactly(
-                GreatIntelligencesPlanVillainousChoiceEffect.DISCARD_OPTION,
-                GreatIntelligencesPlanVillainousChoiceEffect.CAST_OPTION);
-        harness.handleListChoice(player2, GreatIntelligencesPlanVillainousChoiceEffect.DISCARD_OPTION);
+                GreatIntelligencesPlan.DISCARD_OPTION,
+                GreatIntelligencesPlan.CAST_OPTION);
+        harness.handleListChoice(player2, GreatIntelligencesPlan.DISCARD_OPTION);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(freeSpell);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The opponent faces the villainous choice even when neither option can do anything")
+    void opponentFacesTheChoiceWhenNeitherOptionCanDoAnything() {
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        cast();
+
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        harness.handleListChoice(player2, GreatIntelligencesPlan.CAST_OPTION);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
     }
 
     @Test
@@ -102,7 +119,7 @@ class GreatIntelligencesPlanTest extends BaseCardTest {
         PendingInteraction.ColorChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
-        harness.handleListChoice(player2, GreatIntelligencesPlanVillainousChoiceEffect.CAST_OPTION);
+        harness.handleListChoice(player2, GreatIntelligencesPlan.CAST_OPTION);
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactlyElementsOf(opponentHand);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
@@ -116,7 +133,7 @@ class GreatIntelligencesPlanTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         cast(new K9MarkI());
 
-        harness.handleListChoice(player2, GreatIntelligencesPlanVillainousChoiceEffect.DISCARD_OPTION);
+        harness.handleListChoice(player2, GreatIntelligencesPlan.DISCARD_OPTION);
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
@@ -130,7 +147,7 @@ class GreatIntelligencesPlanTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Forest()));
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         cast(freeSpell);
-        harness.handleListChoice(player2, GreatIntelligencesPlanVillainousChoiceEffect.CAST_OPTION);
+        harness.handleListChoice(player2, GreatIntelligencesPlan.CAST_OPTION);
         int logSize = gd.gameLog.size();
 
         harness.handleMayAbilityChosen(player1, false);
@@ -150,7 +167,7 @@ class GreatIntelligencesPlanTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(firstSpell, secondSpell, new Forest()));
         cast();
 
-        harness.handleListChoice(player2, GreatIntelligencesPlanVillainousChoiceEffect.CAST_OPTION);
+        harness.handleListChoice(player2, GreatIntelligencesPlan.CAST_OPTION);
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 

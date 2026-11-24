@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,21 +18,21 @@ import java.util.Set;
 public class RecruitInstructor extends Card {
 
     public RecruitInstructor() {
-        addTrigger(Triggers.attacks(), new DraftCardFromSpellbookToHandEffect(List.of(
-                new DraftCardFromSpellbookToHandEffect.CardPrintingReference("INR", "229"),
-                new DraftCardFromSpellbookToHandEffect.CardPrintingReference("ELD", "112"),
-                new DraftCardFromSpellbookToHandEffect.CardPrintingReference("WOE", "317"),
-                new DraftCardFromSpellbookToHandEffect.CardPrintingReference("SNC", "4"),
-                new DraftCardFromSpellbookToHandEffect.CardPrintingReference("WOE", "7"),
-                new DraftCardFromSpellbookToHandEffect.CardPrintingReference("BLB", "8"),
-                new DraftCardFromSpellbookToHandEffect.CardPrintingReference("KTK", "7"),
-                new DraftCardFromSpellbookToHandEffect.CardPrintingReference("ELD", "120"),
-                new DraftCardFromSpellbookToHandEffect.CardPrintingReference("BLB", "13"),
-                new DraftCardFromSpellbookToHandEffect.CardPrintingReference("BLB", "21"),
-                new DraftCardFromSpellbookToHandEffect.CardPrintingReference("BLB", "144"),
-                new DraftCardFromSpellbookToHandEffect.CardPrintingReference("ISD", "24"),
-                new DraftCardFromSpellbookToHandEffect.CardPrintingReference("M21", "170"),
-                new DraftCardFromSpellbookToHandEffect.CardPrintingReference("BLB", "160")
+        addTrigger(Triggers.attacks(), new DraftCardFromSpellbookEffect(List.of(
+                new DraftFromSpellbookEffect.SpellbookCard("INR", "229"),
+                new DraftFromSpellbookEffect.SpellbookCard("ELD", "112"),
+                new DraftFromSpellbookEffect.SpellbookCard("WOE", "317"),
+                new DraftFromSpellbookEffect.SpellbookCard("SNC", "4"),
+                new DraftFromSpellbookEffect.SpellbookCard("WOE", "7"),
+                new DraftFromSpellbookEffect.SpellbookCard("BLB", "8"),
+                new DraftFromSpellbookEffect.SpellbookCard("KTK", "7"),
+                new DraftFromSpellbookEffect.SpellbookCard("ELD", "120"),
+                new DraftFromSpellbookEffect.SpellbookCard("BLB", "13"),
+                new DraftFromSpellbookEffect.SpellbookCard("BLB", "21"),
+                new DraftFromSpellbookEffect.SpellbookCard("BLB", "144"),
+                new DraftFromSpellbookEffect.SpellbookCard("ISD", "24"),
+                new DraftFromSpellbookEffect.SpellbookCard("M21", "170"),
+                new DraftFromSpellbookEffect.SpellbookCard("BLB", "160")
         )));
 
         addTrigger(Triggers.becomesTargetOfYourSpellOrAbility(),

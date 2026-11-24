@@ -31,27 +31,33 @@ public class DraftCardFromSpellbookToExileEffectHandler implements NormalEffectH
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         beginDraft(gameData, entry.getControllerId(), entry.getSourcePermanentId(), entry.getCard().getName(),
-                (DraftCardFromSpellbookToExileEffect) effect);
+                (DraftCardFromSpellbookToExileEffect) effect, PendingInteraction.SpellbookDraftToExileChoice.AsEnters.NONE);
     }
 
     /**
-     * Offers the controller up to three distinct spellbook cards; the chosen one is exiled with the source.
-     * Shared by the stack resolution and the as-enters draft of a land ({@code EtbTriggerService}).
+     * Offers the controller up to three distinct spellbook cards, which the controller owns; the chosen one is exiled
+     * with the source. Shared by the stack resolution and the as-enters draft of a land or another permanent
+     * ({@code EtbTriggerService}, {@code asEnters} saying which entry the answer continues).
+     *
+     * @return whether a choice was begun (a spellbook with no implemented card offers none)
      */
-    public void beginDraft(GameData gameData, UUID controllerId, UUID sourcePermanentId, String sourceName,
-                           DraftCardFromSpellbookToExileEffect draft) {
+    public boolean beginDraft(GameData gameData, UUID controllerId, UUID sourcePermanentId, String sourceName,
+                              DraftCardFromSpellbookToExileEffect draft,
+                              PendingInteraction.SpellbookDraftToExileChoice.AsEnters asEnters) {
         List<Card> spellbook = draft.spellbook().stream()
                 .map(reference -> cardCatalog.createCardIfImplemented(
                         reference.setCode(), reference.collectorNumber()))
                 .filter(card -> card != null)
                 .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
         if (spellbook.isEmpty()) {
-            return;
+            return false;
         }
 
         Collections.shuffle(spellbook);
         List<Card> offeredCards = new ArrayList<>(spellbook.subList(0, Math.min(3, spellbook.size())));
+        offeredCards.forEach(card -> card.setOwnerId(controllerId));
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.SpellbookDraftToExileChoice(
-                controllerId, sourcePermanentId, offeredCards, sourceName, draft.faceDown()));
+                controllerId, sourcePermanentId, offeredCards, sourceName, draft.faceDown(), asEnters));
+        return true;
     }
 }

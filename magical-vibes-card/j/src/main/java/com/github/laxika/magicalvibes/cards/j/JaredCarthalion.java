@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -12,10 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnEachTargetCreatureEqualToColorCountEffect;
-import com.github.laxika.magicalvibes.model.effect.RecordReturnedGraveyardCardMatchEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.filter.CardHasExactlyNColorsPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -57,8 +57,8 @@ public class JaredCarthalion extends Card {
                                 .filter(new CardIsMulticoloredPredicate())
                                 .targetGraveyard(true)
                                 .build(),
-                        new RecordReturnedGraveyardCardMatchEffect(new CardHasExactlyNColorsPredicate(5)),
-                        new ConditionalEffect(new EventValueAtLeast(1),
+                        new ConditionalEffect(
+                                HappenedThisWay.toACard(StepKind.RETURN, new CardHasExactlyNColorsPredicate(5)),
                                 SequenceEffect.of(new DrawCardEffect(), CreateTokenEffect.ofTreasureToken(2)))
                 ),
                 "\u22126: Return target multicolored card from your graveyard to your hand. If that card was "

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.a.AncestralMask;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
+import com.github.laxika.magicalvibes.cards.s.SpreadingAlgae;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KnickknackOuphe.class, HolyStrength.class, AncestralMask.class})
+@CardUsed({KnickknackOuphe.class, HolyStrength.class, AncestralMask.class, SpreadingAlgae.class})
 class KnickknackOupheTest extends BaseCardTest {
 
     @Test
@@ -46,6 +47,27 @@ class KnickknackOupheTest extends BaseCardTest {
         assertThat(ouphePermanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(auraPermanent.getAttachedTo()).isEqualTo(ouphePermanent.getId());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(tooExpensiveAura);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+    @Test
+    @DisplayName("An Aura with nothing it could enchant stays in the library and goes to the bottom with the rest")
+    void auraWithNoLegalHostStaysInLibrary() {
+        KnickknackOuphe ouphe = new KnickknackOuphe();
+        Card algae = new SpreadingAlgae();
+        Card other = new AncestralMask();
+        harness.setHand(player1, List.of(ouphe));
+        harness.setLibrary(player1, List.of(algae, other));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        gs.playCard(gd, player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        harness.handleMultipleCardsChosen(player1, List.of(algae.getId()));
+
+        // Spreading Algae enchants a Swamp, and there is none (CR 303.4g).
+        harness.assertNotOnBattlefield(player1, "Spreading Algae");
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(algae);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(algae, other);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

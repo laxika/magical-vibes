@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DiceRollService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.RollDiceEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.RollD6EffectHandler;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -24,19 +24,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({ClownCar.class})
 class ClownCarTest extends BaseCardTest {
 
-    private RollDiceEffectHandler rollDiceEffectHandler;
+    private RollD6EffectHandler rollD6EffectHandler;
     private DiceRollService originalDiceRollService;
 
     @BeforeEach
     void captureDiceRollService() {
-        rollDiceEffectHandler = GameTestEngineContext.get().getBean(RollDiceEffectHandler.class);
+        rollD6EffectHandler = GameTestEngineContext.get().getBean(RollD6EffectHandler.class);
         originalDiceRollService = (DiceRollService) ReflectionTestUtils.getField(
-                rollDiceEffectHandler, "diceRollService");
+                rollD6EffectHandler, "diceRollService");
     }
 
     @AfterEach
     void restoreDiceRollService() {
-        ReflectionTestUtils.setField(rollDiceEffectHandler, "diceRollService", originalDiceRollService);
+        ReflectionTestUtils.setField(rollD6EffectHandler, "diceRollService", originalDiceRollService);
     }
 
     @Test
@@ -84,7 +84,7 @@ class ClownCarTest extends BaseCardTest {
 
     @Test
     void enteringWithoutBeingCastRollsNoDice() {
-        ReflectionTestUtils.setField(rollDiceEffectHandler, "diceRollService", new FixedDiceRollService());
+        ReflectionTestUtils.setField(rollD6EffectHandler, "diceRollService", new FixedDiceRollService());
         Permanent car = harness.enterBattlefieldAndReturn(player1, new ClownCar());
         resolveAllTriggers();
 
@@ -115,7 +115,7 @@ class ClownCarTest extends BaseCardTest {
     }
 
     private Permanent castClownCar(int... rolls) {
-        ReflectionTestUtils.setField(rollDiceEffectHandler, "diceRollService", new FixedDiceRollService(rolls));
+        ReflectionTestUtils.setField(rollD6EffectHandler, "diceRollService", new FixedDiceRollService(rolls));
         ClownCar clownCar = new ClownCar();
         harness.setHand(player1, List.of(clownCar));
         harness.addMana(player1, ManaColor.COLORLESS, rolls.length);

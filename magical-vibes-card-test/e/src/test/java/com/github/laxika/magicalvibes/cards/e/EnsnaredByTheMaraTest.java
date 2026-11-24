@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.EnsnaredByTheMaraVillainousChoiceEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -29,7 +28,7 @@ class EnsnaredByTheMaraTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
                 .isEqualTo(player2.getId());
-        harness.handleListChoice(player2, EnsnaredByTheMaraVillainousChoiceEffect.CAST_OPTION);
+        harness.handleListChoice(player2, EnsnaredByTheMara.CAST_OPTION);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
 
@@ -46,7 +45,7 @@ class EnsnaredByTheMaraTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(exiledSpell));
 
         cast();
-        harness.handleListChoice(player2, EnsnaredByTheMaraVillainousChoiceEffect.CAST_OPTION);
+        harness.handleListChoice(player2, EnsnaredByTheMara.CAST_OPTION);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(exiledSpell);
@@ -60,7 +59,7 @@ class EnsnaredByTheMaraTest extends BaseCardTest {
         harness.setLibrary(player2, exiledCards);
 
         cast();
-        harness.handleListChoice(player2, EnsnaredByTheMaraVillainousChoiceEffect.DAMAGE_OPTION);
+        harness.handleListChoice(player2, EnsnaredByTheMara.DAMAGE_OPTION);
 
         harness.assertLife(player2, 16);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
@@ -72,7 +71,7 @@ class EnsnaredByTheMaraTest extends BaseCardTest {
         harness.setLibrary(player2, List.of());
 
         cast();
-        harness.handleListChoice(player2, EnsnaredByTheMaraVillainousChoiceEffect.CAST_OPTION);
+        harness.handleListChoice(player2, EnsnaredByTheMara.CAST_OPTION);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
@@ -85,7 +84,7 @@ class EnsnaredByTheMaraTest extends BaseCardTest {
         harness.setLibrary(player2, lands);
 
         cast();
-        harness.handleListChoice(player2, EnsnaredByTheMaraVillainousChoiceEffect.CAST_OPTION);
+        harness.handleListChoice(player2, EnsnaredByTheMara.CAST_OPTION);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
@@ -101,7 +100,7 @@ class EnsnaredByTheMaraTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(land, spell, remainingCard));
 
         cast();
-        harness.handleListChoice(player2, EnsnaredByTheMaraVillainousChoiceEffect.CAST_OPTION);
+        harness.handleListChoice(player2, EnsnaredByTheMara.CAST_OPTION);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(land, spell);
@@ -114,7 +113,7 @@ class EnsnaredByTheMaraTest extends BaseCardTest {
         harness.setLibrary(player2, List.of());
 
         cast();
-        harness.handleListChoice(player2, EnsnaredByTheMaraVillainousChoiceEffect.DAMAGE_OPTION);
+        harness.handleListChoice(player2, EnsnaredByTheMara.DAMAGE_OPTION);
 
         harness.assertLife(player2, 20);
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
@@ -128,7 +127,7 @@ class EnsnaredByTheMaraTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(land, spell));
 
         cast();
-        harness.handleListChoice(player2, EnsnaredByTheMaraVillainousChoiceEffect.DAMAGE_OPTION);
+        harness.handleListChoice(player2, EnsnaredByTheMara.DAMAGE_OPTION);
 
         harness.assertLife(player2, 16);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
@@ -144,7 +143,7 @@ class EnsnaredByTheMaraTest extends BaseCardTest {
                 exiledCards.get(2), exiledCards.get(3), remainingCard));
 
         cast();
-        harness.handleListChoice(player2, EnsnaredByTheMaraVillainousChoiceEffect.DAMAGE_OPTION);
+        harness.handleListChoice(player2, EnsnaredByTheMara.DAMAGE_OPTION);
         resolveAllTriggers();
 
         harness.assertLife(player2, 20);
@@ -162,7 +161,7 @@ class EnsnaredByTheMaraTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(firstLand, secondLand, spell));
 
         cast();
-        harness.handleListChoice(player2, EnsnaredByTheMaraVillainousChoiceEffect.CAST_OPTION);
+        harness.handleListChoice(player2, EnsnaredByTheMara.CAST_OPTION);
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 

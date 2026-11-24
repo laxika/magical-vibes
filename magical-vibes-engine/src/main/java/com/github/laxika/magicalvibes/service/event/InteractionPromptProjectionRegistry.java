@@ -119,10 +119,6 @@ public class InteractionPromptProjectionRegistry {
                 this::projectExiledCreatureCopyChoice);
         register(PendingInteraction.EspersToMagiciteCreatureChoice.class,
                 this::projectEspersToMagiciteCreatureChoice);
-        register(PendingInteraction.ProteanWarEngineSpellbookDraftChoice.class,
-                this::projectProteanWarEngineSpellbookDraftChoice);
-        register(PendingInteraction.SlimefootThallidTransplantSpellbookDraftChoice.class,
-                this::projectSlimefootThallidTransplantSpellbookDraftChoice);
         register(PendingInteraction.TargetHandSpellCopyChoice.class,
                 this::projectTargetHandSpellCopyChoice);
         register(PendingInteraction.ExiledCardMayPlayChoice.class, this::projectExiledCardMayPlayChoice);
@@ -620,25 +616,6 @@ public class InteractionPromptProjectionRegistry {
                 exiledCardViews(gameData, interaction.decidingPlayerId(), interaction.validCardIds()),
                 1,
                 "Choose up to one creature card exiled this way to copy.");
-    }
-
-    private InteractionPromptMessage projectProteanWarEngineSpellbookDraftChoice(
-            GameData gameData, PendingInteraction.ProteanWarEngineSpellbookDraftChoice interaction) {
-        return InteractionPromptMessage.multiCardPick(
-                new ArrayList<>(interaction.validCardIds()),
-                cardViews(interaction.cards()),
-                1,
-                "Choose a card from Protean War Engine's spellbook to exile.");
-    }
-
-    private InteractionPromptMessage projectSlimefootThallidTransplantSpellbookDraftChoice(
-            GameData gameData,
-            PendingInteraction.SlimefootThallidTransplantSpellbookDraftChoice interaction) {
-        return InteractionPromptMessage.multiCardPick(
-                new ArrayList<>(interaction.validCardIds()),
-                cardViews(interaction.cards()),
-                1,
-                "Choose a card from Slimefoot, Thallid Transplant's spellbook.");
     }
 
     private InteractionPromptMessage projectTargetHandSpellCopyChoice(

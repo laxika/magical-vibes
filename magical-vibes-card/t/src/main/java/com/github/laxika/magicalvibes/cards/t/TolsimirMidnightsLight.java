@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisCombat;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MustBlockTriggeringAttackerEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -33,6 +34,6 @@ public class TolsimirMidnightsLight extends Card {
                 .addTrigger(Triggers.creatureYouControlAttacks()
                                 .withFilter(new PermanentHasSubtypePredicate(CardSubtype.WOLF)),
                         TriggerOptions.DEFAULT.withInterveningIf(new SourceAttackedThisCombat()),
-                        new MustBlockTriggeringAttackerEffect());
+                        new MustBlockSourceEffect(null, null, true, Subjects.triggering()));
     }
 }

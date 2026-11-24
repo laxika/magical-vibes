@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.AttachSelectedAurasToLegalTargetsFollowUp;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
@@ -24,6 +23,6 @@ public class KnickknackOuphe extends Card {
                 LookDestination.BOTTOM_OF_LIBRARY_RANDOM, true,
                 LibrarySearchDestination.BATTLEFIELD, true, false, new XValue(),
                 null, false, 0, false, false, false, false, 0,
-                new AttachSelectedAurasToLegalTargetsFollowUp()));
+                null));
     }
 }

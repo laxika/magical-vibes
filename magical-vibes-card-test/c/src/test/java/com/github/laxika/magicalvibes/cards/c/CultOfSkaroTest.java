@@ -1,15 +1,19 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AdricMathematicalGenius;
+import com.github.laxika.magicalvibes.cards.i.IsshinTwoHeavensAsOne;
 import com.github.laxika.magicalvibes.cards.s.SontaranGeneral;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.RandomChoiceEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtRandomEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.RepeatedTest;
 
@@ -17,7 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CultOfSkaro.class, SontaranGeneral.class, AdricMathematicalGenius.class})
+@CardUsed({CultOfSkaro.class, SontaranGeneral.class, AdricMathematicalGenius.class, IsshinTwoHeavensAsOne.class})
 class CultOfSkaroTest extends BaseCardTest {
 
     @Test
@@ -111,7 +115,7 @@ class CultOfSkaroTest extends BaseCardTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getEffectsToResolve())
                     .hasSize(1)
-                    .noneMatch(RandomChoiceEffect.class::isInstance);
+                    .noneMatch(ChooseOneAtRandomEffect.class::isInstance);
         });
     }
 
@@ -130,5 +134,39 @@ class CultOfSkaroTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(initialHandSize);
         assertThat(countPermanents(player1, "Dalek")).isZero();
         harness.assertLife(player2, 20);
+    }
+    @Test
+    @DisplayName("An additional time the attack trigger triggers chooses its own random mode")
+    void additionalTriggerChoosesItsOwnRandomMode() {
+        boolean modesDiffered = false;
+        for (int attempt = 0; attempt < 40 && !modesDiffered; attempt++) {
+            if (attempt > 0) {
+                freshGame();
+            }
+            addCreatureReady(player1, new CultOfSkaro());
+            harness.addToBattlefield(player1, new IsshinTwoHeavensAsOne());
+            List<List<CardEffect>> modes = new java.util.ArrayList<>();
+            harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+                declareAttackers(List.of(0));
+                assertThat(gd.stack).hasSize(2);
+                gd.stack.forEach(entry -> modes.add(List.copyOf(entry.getEffectsToResolve())));
+            });
+            modesDiffered = !modes.get(0).equals(modes.get(1));
+        }
+
+        // With four modes, the two abilities choose the same mode on every one of 40 attempts with probability 4^-40.
+        assertThat(modesDiffered).isTrue();
+    }
+
+    private void freshGame() {
+        harness = new GameTestHarness();
+        player1 = harness.getPlayer1();
+        player2 = harness.getPlayer2();
+        gs = harness.getGameService();
+        gqs = harness.getGameQueryService();
+        gd = harness.getGameData();
+        harness.skipMulligan();
+        harness.clearMessages();
+        gd.alwaysOfferPriorityWindows = true;
     }
 }

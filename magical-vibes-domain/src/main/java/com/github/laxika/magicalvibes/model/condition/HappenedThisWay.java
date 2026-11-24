@@ -31,7 +31,8 @@ import java.util.Objects;
  * went (a card keeps its characteristics in a graveyard or exile; CR 608.2h); a permanent an exile step exiled as the
  * card it became in exile ("if the exiled card is a God card", Deicide). A milled or chosen card is judged the same
  * way ("if a creature card was milled this way"), and so is a revealed card ("if no creature cards were revealed this
- * way").
+ * way") and a card a {@link StepKind#RETURN} step returned to a hand ("if it's a Zombie card", Cemetery Recruitment); a
+ * permanent a return step put onto the battlefield is judged as a permanent ({@link #toA}).
  *
  * @param kind       the kind of step read
  * @param minimum    the least amount the step must have recorded; at least 1
@@ -53,9 +54,10 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
             throw new IllegalArgumentException("A step result is filtered as permanents or as cards, not both");
         }
         if (cardFilter != null && kind != StepKind.EXILE && kind != StepKind.DISCARD && kind != StepKind.MILL
-                && kind != StepKind.CHOOSE && kind != StepKind.REVEAL) {
+                && kind != StepKind.CHOOSE && kind != StepKind.REVEAL && kind != StepKind.RETURN) {
             throw new IllegalArgumentException(
-                    "Only an exile, discard, mill, choose or reveal step's cards are judged by a card filter: " + kind);
+                    "Only an exile, discard, mill, choose, reveal or return step's cards are judged by a card filter: "
+                            + kind);
         }
     }
 

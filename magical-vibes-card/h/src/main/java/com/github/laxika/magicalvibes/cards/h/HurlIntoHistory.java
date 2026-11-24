@@ -4,10 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscoverEffect;
-import com.github.laxika.magicalvibes.model.effect.RecordTargetSpellManaValueAsXEffect;
+import com.github.laxika.magicalvibes.model.effect.NoteAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
@@ -29,9 +30,9 @@ public class HurlIntoHistory extends Card {
                 )),
                 "Target must be an artifact or creature spell."
         ))
-                // Record the target's mana value before countering it, then discover X.
-                .addSpellEffect(new RecordTargetSpellManaValueAsXEffect())
+                // Note the target's mana value before countering it, then discover X.
+                .addSpellEffect(new NoteAmountEffect(new TargetSpellManaValue()))
                 .addSpellEffect(new CounterSpellEffect())
-                .addSpellEffect(new DiscoverEffect(new XValue()));
+                .addSpellEffect(new DiscoverEffect(AmountThisWay.noted()));
     }
 }

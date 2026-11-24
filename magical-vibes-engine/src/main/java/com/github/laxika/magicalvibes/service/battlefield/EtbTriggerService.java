@@ -14,16 +14,15 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookToExileEffect;
-import com.github.laxika.magicalvibes.model.effect.DraftProteanWarEngineSpellbookEffect;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.rules.EntryCausedTriggerEvent;
 import com.github.laxika.magicalvibes.service.effect.entryfx.FlipCoinOnEnterEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DraftCardFromSpellbookToExileEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.DraftProteanWarEngineSpellbookEffectHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
@@ -56,7 +55,6 @@ public class EtbTriggerService {
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final EtbEffectResolver etbEffectResolver;
     private LegendRuleService legendRuleService;
-    private DraftProteanWarEngineSpellbookEffectHandler proteanWarEngineSpellbookDraft;
     private DraftCardFromSpellbookToExileEffectHandler spellbookDraft;
     private FlipCoinOnEnterEffectHandler flipCoinOnEnterEffectHandler;
     private RulesEventPipeline rulesEventPipeline;
@@ -82,11 +80,6 @@ public class EtbTriggerService {
     @Autowired
     void setLegendRuleService(@Lazy LegendRuleService legendRuleService) {
         this.legendRuleService = legendRuleService;
-    }
-
-    @Autowired
-    void setProteanWarEngineSpellbookDraft(@Lazy DraftProteanWarEngineSpellbookEffectHandler draft) {
-        this.proteanWarEngineSpellbookDraft = draft;
     }
 
     @Autowired
@@ -197,9 +190,9 @@ public class EtbTriggerService {
                 .map(DraftCardFromSpellbookToExileEffect.class::cast)
                 .findFirst().orElse(null);
         if (enteringPermanent != null && spellbookDraftEffect != null
-                && gameData.getCardsExiledByPermanent(enteringPermanent.getId()).isEmpty()) {
-            spellbookDraft.beginDraft(gameData, controllerId, enteringPermanent.getId(), card.getName(),
-                    spellbookDraftEffect);
+                && gameData.getCardsExiledByPermanent(enteringPermanent.getId()).isEmpty()
+                && spellbookDraft.beginDraft(gameData, controllerId, enteringPermanent.getId(), card.getName(),
+                spellbookDraftEffect, PendingInteraction.SpellbookDraftToExileChoice.AsEnters.LAND)) {
             return;
         }
         processCreatureETBEffects(gameData, controllerId, card, null, false);
@@ -313,11 +306,15 @@ public class EtbTriggerService {
 
         // "As this enters, draft a card from its spellbook and exile it" is made while the permanent enters
         // (CR 614.12), not as a triggered ability, so it waits for the draft before any entry trigger.
-        if (enteringPermanent != null && !printedAbilitiesRemoved
-                && card.getStaticEffects().stream()
-                .anyMatch(DraftProteanWarEngineSpellbookEffect.class::isInstance)
-                && gameData.getCardsExiledByPermanent(enteringPermanent.getId()).isEmpty()) {
-            proteanWarEngineSpellbookDraft.beginDraft(gameData, controllerId, enteringPermanent.getId());
+        DraftCardFromSpellbookToExileEffect asEntersDraft = printedAbilitiesRemoved ? null
+                : card.getStaticEffects().stream()
+                .filter(DraftCardFromSpellbookToExileEffect.class::isInstance)
+                .map(DraftCardFromSpellbookToExileEffect.class::cast)
+                .findFirst().orElse(null);
+        if (enteringPermanent != null && asEntersDraft != null
+                && gameData.getCardsExiledByPermanent(enteringPermanent.getId()).isEmpty()
+                && spellbookDraft.beginDraft(gameData, controllerId, enteringPermanent.getId(), card.getName(),
+                asEntersDraft, PendingInteraction.SpellbookDraftToExileChoice.AsEnters.PERMANENT)) {
             return;
         }
 

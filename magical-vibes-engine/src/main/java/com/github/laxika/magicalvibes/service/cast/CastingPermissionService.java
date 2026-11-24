@@ -71,7 +71,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantMayhemToGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardPlayPermission;
-import com.github.laxika.magicalvibes.model.effect.LimitNonPhyrexianSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastEffect;
@@ -197,7 +196,6 @@ public class CastingPermissionService {
         if (isOpponentsSpellMatchingPredicateRestricted(gameData, playerId, card)) return false;
         if (isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) return false;
         if (isAdditionalNonartifactSpellRestricted(gameData, playerId, card)) return false;
-        if (isAdditionalNonPhyrexianSpellRestricted(gameData, playerId, card)) return false;
         if (isSpellCastingRestrictedByMostRecentSpell(gameData, card)) return false;
         if (isSpellCastingRestrictedByTopLibraryCard(gameData, card)) return false;
         // CR 205.4e: legendary sorceries require controlling a legendary creature or planeswalker
@@ -769,28 +767,6 @@ public class CastingPermissionService {
         return gameData.getSpellsCastThisTurn(playerId).stream()
                 .anyMatch(cast -> !cast.hasType(CardType.ARTIFACT)
                         && !gameData.wasArtifactSpellWhenCastThisTurn(cast.getId()));
-    }
-
-    public boolean isAdditionalNonPhyrexianSpellRestricted(GameData gameData, UUID playerId, Card card) {
-        if (card.hasType(CardType.LAND)) return false;
-        if (gameQueryService.cardHasSubtype(card, CardSubtype.PHYREXIAN, gameData, playerId)) return false;
-        if (!anyPlayerControlsPhyrexianCensor(gameData)) return false;
-        return gameData.getSpellsCastThisTurn(playerId).stream()
-                .anyMatch(cast -> !gameQueryService.cardHasSubtype(
-                        cast, CardSubtype.PHYREXIAN, gameData, playerId));
-    }
-
-    private boolean anyPlayerControlsPhyrexianCensor(GameData gameData) {
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-            if (battlefield == null) continue;
-            for (Permanent permanent : battlefield) {
-                if (!gameQueryService.hasLostAllAbilities(gameData, permanent)
-                        && permanent.getCard().getStaticEffects().stream()
-                        .anyMatch(LimitNonPhyrexianSpellsPerTurnEffect.class::isInstance)) return true;
-            }
-        }
-        return false;
     }
 
     public boolean isSpellCastingRestrictedByMostRecentSpell(GameData gameData, Card card) {

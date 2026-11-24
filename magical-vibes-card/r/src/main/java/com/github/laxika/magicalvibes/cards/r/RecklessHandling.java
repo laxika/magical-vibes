@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.RecordLastDiscardedCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -21,8 +21,8 @@ public class RecklessHandling extends Card {
     public RecklessHandling() {
         addSpellEffect(new SearchLibraryEffect(new CardTypePredicate(CardType.ARTIFACT)));
         addSpellEffect(new DiscardEffect(1, Subjects.you(), true));
-        addSpellEffect(new RecordLastDiscardedCardTypeEffect(CardType.ARTIFACT));
-        addSpellEffect(new ConditionalEffect(new EventValueAtLeast(1),
+        addSpellEffect(new ConditionalEffect(
+                HappenedThisWay.toACard(StepKind.DISCARD, new CardTypePredicate(CardType.ARTIFACT)),
                 new DealDamageToPlayersEffect(2, Subjects.eachOpponent())));
     }
 }

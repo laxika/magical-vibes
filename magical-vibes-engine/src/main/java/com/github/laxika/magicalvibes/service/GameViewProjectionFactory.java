@@ -918,7 +918,6 @@ public class GameViewProjectionFactory {
             if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, playerId, card)) continue;
             if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) continue;
             if (castingPermissionService.isAdditionalNonartifactSpellRestricted(gameData, playerId, card)) continue;
-            if (castingPermissionService.isAdditionalNonPhyrexianSpellRestricted(gameData, playerId, card)) continue;
 
             boolean canAffordManaValueLifeAlternative =
                     castingPermissionService.hasExilePlayForLifeEqualToManaValuePermission(
@@ -1174,7 +1173,6 @@ public class GameViewProjectionFactory {
         if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, playerId, topCard)) return null;
         if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, topCard)) return null;
         if (castingPermissionService.isAdditionalNonartifactSpellRestricted(gameData, playerId, topCard)) return null;
-        if (castingPermissionService.isAdditionalNonPhyrexianSpellRestricted(gameData, playerId, topCard)) return null;
 
         if (!castingPermissionService.canCastWithTimingFromLibraryTop(
                 gameData, playerId, topCard, isActivePlayer, isMainPhase, stackEmpty)) return null;

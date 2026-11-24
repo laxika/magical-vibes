@@ -45,8 +45,8 @@ class RaddicTalZealotTest extends BaseCardTest {
             declareAttackers(List.of(1));
             resolveAllTriggers();
 
-            PendingInteraction.SpellbookCardChoice choice =
-                    gd.interaction.activeInteraction(PendingInteraction.SpellbookCardChoice.class);
+            PendingInteraction.SpellbookDraftChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
             assertThat(choice.cards()).hasSize(3);
             assertThat(choice.cards()).extracting(Card::getName).allMatch(Set.of(
                     "Midnight Reaper", "Guardian of Faith", "Knight of the Ebon Legion", "Cavalier of Dawn",

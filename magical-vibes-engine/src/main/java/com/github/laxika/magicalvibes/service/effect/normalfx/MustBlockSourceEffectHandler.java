@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -47,7 +48,10 @@ public class MustBlockSourceEffectHandler implements NormalEffectHandlerBean {
         }
 
         Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
-        String sourceName = source != null ? FaceDownVisibility.publicName(gameData, source) : FaceDownVisibility.sourceName(gameData, entry);
+        // A triggering permanent that has left is named by the event, not by the ability's source.
+        String sourceName = source != null ? FaceDownVisibility.publicName(gameData, source)
+                : e.blocked() instanceof PermanentSubject.Triggering ? "that creature"
+                : FaceDownVisibility.sourceName(gameData, entry);
 
         gameData.addEffectOnPermanent(entry, new MustBlockSourceEffect(sourceId, null, e.untilEndOfCombat()),
                 target.getId(), e.untilEndOfCombat() ? Duration.UNTIL_END_OF_COMBAT : Duration.UNTIL_END_OF_TURN);

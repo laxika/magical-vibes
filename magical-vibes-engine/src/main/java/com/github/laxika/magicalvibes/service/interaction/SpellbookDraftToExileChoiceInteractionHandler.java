@@ -55,25 +55,30 @@ public class SpellbookDraftToExileChoiceInteractionHandler
                 .filter(card -> card.getId().equals(chosenId))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Chosen spellbook card is no longer available"));
-        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-        Permanent enteringLand = pendingEntry != null ? null
-                : gameQueryService.findPermanentById(gameData, interaction.sourcePermanentId());
-        if (pendingEntry == null && enteringLand == null) {
-            throw new IllegalStateException("No pending spellbook effect");
-        }
-
-        gameData.addToExile(player.getId(), chosen, interaction.sourcePermanentId(), interaction.faceDown());
-        gameData.interaction.clearAwaitingInput();
-        if (pendingEntry == null) {
-            // "As this land enters, draft ..." was made while the land entered, not by a resolving ability,
-            // so the rest of its entry (landfall and other entry triggers) carries on from here.
-            battlefieldEntryService.processLandETBEffects(
-                    gameData, player.getId(), enteringLand.getCard());
+        if (interaction.asEnters() != PendingInteraction.SpellbookDraftToExileChoice.AsEnters.NONE) {
+            gameData.addToExile(player.getId(), chosen, interaction.sourcePermanentId(), interaction.faceDown());
+            gameData.interaction.clearAwaitingInput();
+            // "As this enters, draft ..." was made while the permanent entered, not by a resolving ability, so the
+            // rest of its entry (landfall and the other entry abilities) carries on from here.
+            Permanent entering = gameQueryService.findPermanentById(gameData, interaction.sourcePermanentId());
+            if (entering != null && interaction.asEnters() == PendingInteraction.SpellbookDraftToExileChoice.AsEnters.LAND) {
+                battlefieldEntryService.processLandETBEffects(gameData, player.getId(), entering.getCard());
+            } else if (entering != null) {
+                battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), entering.getCard(),
+                        null, false);
+            }
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
             }
             return;
         }
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        if (pendingEntry == null) {
+            throw new IllegalStateException("No pending spellbook effect");
+        }
+
+        gameData.addToExile(player.getId(), chosen, interaction.sourcePermanentId(), interaction.faceDown());
+        gameData.interaction.clearAwaitingInput();
         pendingEntry.setTargetId(chosenId);
         gameData.rerunCurrentEffectAfterInteraction = false;
         effectResolutionService.resolveEffectsFrom(gameData, pendingEntry,

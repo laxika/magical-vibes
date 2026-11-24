@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.condition.CreatureDeathsThisTurnAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TurnFaceDownCommandZoneCardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -28,6 +28,6 @@ public class DarkWingsBringYourDownfall extends Card {
 
         addTrigger(new TriggerCondition(Triggers.endStep(ActivePlayer.ANY), AbilityZones.COMMAND),
                 TriggerOptions.DEFAULT.withInterveningIf(new CreatureDeathsThisTurnAtLeast(2, CountScope.CONTROLLER)),
-                new TurnFaceDownCommandZoneCardEffect());
+                new SacrificeSelfEffect());
     }
 }

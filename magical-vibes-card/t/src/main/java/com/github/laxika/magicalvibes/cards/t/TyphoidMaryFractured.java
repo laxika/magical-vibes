@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.RandomChoiceEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtRandomEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -35,13 +35,7 @@ public class TyphoidMaryFractured extends Card {
                         new GainLifeEffect(2)))
         ));
 
-        CardEffect randomChoice = new RandomChoiceEffect(List.of(
-                List.of(CreateTokenEffect.ofTreasureToken(1)),
-                List.of(new DrawCardEffect()),
-                List.of(
-                        new LoseLifeEffect(2, Subjects.eachOpponent()),
-                        new GainLifeEffect(2))
-        ));
+        CardEffect randomChoice = new ChooseOneAtRandomEffect(controllerChoice.options());
 
         // "Choose one at random. If you discarded a card this turn, you choose one instead": the mode is chosen as the
         // ability is put on the stack (CR 700.2b), so which choice is made is part of the trigger event, an ability of

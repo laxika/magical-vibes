@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,6 +56,26 @@ class DarkWingsBringYourDownfallTest extends BaseCardTest {
 
         assertThat(gd.faceDownCommandZoneCards).contains(scheme.getId());
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(scheme);
+    }
+
+    @Test
+    @DisplayName("Abandoning puts the scheme face down on the bottom of its owner's scheme deck and logs it")
+    void abandonedSchemeGoesToBottomOfSchemeDeck() {
+        DarkWingsBringYourDownfall scheme = new DarkWingsBringYourDownfall();
+        DarkWingsBringYourDownfall otherScheme = new DarkWingsBringYourDownfall();
+        gd.playerCommandZones.get(player1.getId()).addAll(List.of(scheme, otherScheme));
+        gd.faceDownCommandZoneCards.add(otherScheme.getId());
+        gd.playerSchemeDecks.put(player1.getId(), new ArrayList<>(List.of(otherScheme)));
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        destroyCreaturesWithDamnation();
+        advanceToEndStep();
+        resolveAllTriggers();
+
+        assertThat(gd.faceDownCommandZoneCards).contains(scheme.getId());
+        assertThat(gd.playerSchemeDecks.get(player1.getId())).containsExactly(otherScheme, scheme);
+        assertThat(gameLogContains("is abandoned")).isTrue();
     }
 
     @Test

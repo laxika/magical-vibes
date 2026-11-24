@@ -39,7 +39,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.RollD6Effect;
-import com.github.laxika.magicalvibes.model.effect.RollDiceEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -1067,10 +1066,6 @@ public class Card {
             }
             case RollD6Effect e -> e.branches().forEach(branch ->
                     bindEffectToTargetGroup(branch, targetIndex));
-            case RollDiceEffect e -> {
-                if (e.oddResult() != null) bindEffectToTargetGroup(e.oddResult(), targetIndex);
-                if (e.evenResult() != null) bindEffectToTargetGroup(e.evenResult(), targetIndex);
-            }
             // SequenceEffect splices its steps into the resolution list; each step must keep the
             // sequence's target group (fuse halves that bundle multi-step one-target instructions).
             case SequenceEffect e -> {

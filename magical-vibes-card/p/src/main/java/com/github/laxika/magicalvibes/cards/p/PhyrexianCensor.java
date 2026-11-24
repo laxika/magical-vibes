@@ -4,7 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.LimitNonPhyrexianSpellsPerTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellLimitScope;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -16,7 +19,8 @@ import java.util.List;
 public class PhyrexianCensor extends Card {
 
     public PhyrexianCensor() {
-        addStaticEffect(new LimitNonPhyrexianSpellsPerTurnEffect());
+        addStaticEffect(new LimitSpellsPerTurnEffect(1, SpellLimitScope.EACH_PLAYER,
+                new CardNotPredicate(new CardSubtypePredicate(CardSubtype.PHYREXIAN))));
         addStaticEffect(EnterPermanentsOfTypesTappedEffect.matching(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

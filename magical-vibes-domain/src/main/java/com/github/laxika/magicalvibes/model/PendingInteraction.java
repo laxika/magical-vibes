@@ -166,8 +166,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.AssimilationAegisCopyChoice,
         PendingInteraction.ExiledCreatureCopyChoice,
         PendingInteraction.EspersToMagiciteCreatureChoice,
-        PendingInteraction.ProteanWarEngineSpellbookDraftChoice,
-        PendingInteraction.SlimefootThallidTransplantSpellbookDraftChoice,
         PendingInteraction.FaceUpExiledCardChoice,
         PendingInteraction.SuspendedCardTimeCounterChoice,
         PendingInteraction.OpponentOwnedExiledCardToGraveyardChoice,
@@ -752,19 +750,27 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
-    /** The controller chooses one spellbook card to exile with a source permanent. */
+    /**
+     * The controller chooses one spellbook card to exile with a source permanent. {@code asEnters} says whether the
+     * draft is the source's "as this enters" choice (CR 614.12), and which entry the answer then continues, or a
+     * resolving ability's step.
+     */
     record SpellbookDraftToExileChoice(UUID playerId, UUID sourcePermanentId,
                                        java.util.List<Card> cards, String sourceCardName,
-                                       boolean faceDown)
+                                       boolean faceDown, AsEnters asEnters)
             implements PendingInteraction {
+
+        /** Which entry an as-enters draft belongs to, or {@link #NONE} for a resolving ability's draft. */
+        public enum AsEnters { NONE, LAND, PERMANENT }
 
         public SpellbookDraftToExileChoice(UUID playerId, UUID sourcePermanentId,
                                            java.util.List<Card> cards, String sourceCardName) {
-            this(playerId, sourcePermanentId, cards, sourceCardName, true);
+            this(playerId, sourcePermanentId, cards, sourceCardName, true, AsEnters.NONE);
         }
 
         public SpellbookDraftToExileChoice {
             cards = java.util.List.copyOf(cards);
+            java.util.Objects.requireNonNull(asEnters, "asEnters");
         }
 
         public java.util.List<UUID> validCardIds() {
@@ -6102,52 +6108,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0, 1);
-        }
-    }
-
-    /** Chooses one of the three cards drafted from Protean War Engine's spellbook. */
-    record ProteanWarEngineSpellbookDraftChoice(UUID playerId, UUID sourcePermanentId,
-                                                 java.util.List<Card> cards)
-            implements PendingInteraction {
-        public ProteanWarEngineSpellbookDraftChoice {
-            cards = java.util.List.copyOf(cards);
-        }
-
-        public java.util.List<UUID> validCardIds() {
-            return cards.stream().map(Card::getId).toList();
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
-        }
-    }
-
-    /** Chooses one of the three cards drafted from Slimefoot, Thallid Transplant's spellbook. */
-    record SlimefootThallidTransplantSpellbookDraftChoice(UUID playerId, UUID sourcePermanentId,
-                                                           java.util.List<Card> cards)
-            implements PendingInteraction {
-        public SlimefootThallidTransplantSpellbookDraftChoice {
-            cards = java.util.List.copyOf(cards);
-        }
-
-        public java.util.List<UUID> validCardIds() {
-            return cards.stream().map(Card::getId).toList();
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
         }
     }
 

@@ -42,8 +42,8 @@ class RecruitInstructorTest extends BaseCardTest {
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(instructor)));
         resolveAllTriggers();
 
-        PendingInteraction.SpellbookCardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.SpellbookCardChoice.class);
+        PendingInteraction.SpellbookDraftChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
         assertThat(choice.cards()).hasSize(3);
         assertThat(choice.cards())
                 .extracting(Card::getName)
@@ -129,8 +129,8 @@ class RecruitInstructorTest extends BaseCardTest {
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(instructor)));
         resolveAllTriggers();
-        PendingInteraction.SpellbookCardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.SpellbookCardChoice.class);
+        PendingInteraction.SpellbookDraftChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(choice.validCardIds().getFirst()));
         resolveAllTriggers();
 

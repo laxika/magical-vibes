@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold run 1 (2026-11-23): `dead`, `p-cost`, `p-lib`: 10 dead, 9 absorbed, 2 re-batched into `targets-x`, 7 `blocked-other`. Fold run 2 (2026-11-23): `p-dmg`: 14 absorbed, 9 split, 4 unique, 5 `blocked-other`. Fold run 3 (2026-11-23): `p-perm`, `sac-singles`, `destroy-singles`: 10 absorbed, 9 split, 1 survivor, 6 `blocked-other`, 3 re-batched. Fold run 4 (2026-11-23): `gc-singles`, `search-singles`, `cant-singles`, `shuffle-params`, `copy-params`, `base-pt`, `seek-params`: 17 absorbed, 3 split, 8 `blocked-other`. Fold run 5 (2026-11-23): `player-floated`, `life-lock`, `may-draw`, `random-player`, `exile-cast`, `lukka`, `look-top-n`: 9 absorbed, 6 split, 3 survivor, 7 `blocked-other`, 2 re-batched into `same-quality`. Fold run 6 (2026-11-23): `delayed-created`, `asenters-sac-all`, `random-pick`, `returned-animation`, `set-exchange`, `ignore-source`, part of `coin-params`: 6 absorbed, 5 split, 3 survivor, 2 `blocked-other`, Mondo Gecko re-noted as a C batch; `chosen-animation`, `any-colour`, `prot-perm`, `colour-grants` and two `coin-params` rows not taken (14 rows, queue notes). Fold run 6b (2026-11-23): those rows: 7 absorbed, 3 survivor, 5 `blocked-other`, 1 unique; `colour-grants` (Mondo Gecko) still not taken (an engine step of its own). Next: fold run 7. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold run 1 (2026-11-23): `dead`, `p-cost`, `p-lib`: 10 dead, 9 absorbed, 2 re-batched into `targets-x`, 7 `blocked-other`. Fold run 2 (2026-11-23): `p-dmg`: 14 absorbed, 9 split, 4 unique, 5 `blocked-other`. Fold run 3 (2026-11-23): `p-perm`, `sac-singles`, `destroy-singles`: 10 absorbed, 9 split, 1 survivor, 6 `blocked-other`, 3 re-batched. Fold run 4 (2026-11-23): `gc-singles`, `search-singles`, `cant-singles`, `shuffle-params`, `copy-params`, `base-pt`, `seek-params`: 17 absorbed, 3 split, 8 `blocked-other`. Fold run 5 (2026-11-23): `player-floated`, `life-lock`, `may-draw`, `random-player`, `exile-cast`, `lukka`, `look-top-n`: 9 absorbed, 6 split, 3 survivor, 7 `blocked-other`, 2 re-batched into `same-quality`. Fold run 6 (2026-11-23): `delayed-created`, `asenters-sac-all`, `random-pick`, `returned-animation`, `set-exchange`, `ignore-source`, part of `coin-params`: 6 absorbed, 5 split, 3 survivor, 2 `blocked-other`, Mondo Gecko re-noted as a C batch; `chosen-animation`, `any-colour`, `prot-perm`, `colour-grants` and two `coin-params` rows not taken (14 rows, queue notes). Fold run 6b (2026-11-23): those rows: 7 absorbed, 3 survivor, 5 `blocked-other`, 1 unique; `colour-grants` (Mondo Gecko) still not taken (an engine step of its own). Fold run 7 (2026-11-23): `scheme-abandon`, `drafts`, `choose-random`, `villainous`, `parley`, `repeat`, `step-reads`, `aura-host`, `must-attack`, `roll`, `spell-limits`: 15 absorbed, 3 split, 2 survivor, 3 unique, 1 `blocked-other` (Arcum's Whistle, cost-shape); 3 `must-attack` rows and `delayed-leads` not taken (queue notes). Next: fold run 8. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,933 / 3,196 (fold run 6b; 3,940 / 3,201 after fold run 6; 3,951 / 3,211 after fold run 5; 3,964 / 3,227 after fold run 4; 3,984 / 3,246 after fold run 3; 4,003 / 3,263 after fold run 2, 4,025 / 3,286 after fold run 1, 4,044 / 3,299 before) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,915 / 3,180 (fold run 7; 3,933 / 3,196 after fold run 6b; 3,940 / 3,201 after fold run 6; 3,951 / 3,211 after fold run 5; 3,964 / 3,227 after fold run 4; 3,984 / 3,246 after fold run 3; 4,003 / 3,263 after fold run 2, 4,025 / 3,286 after fold run 1, 4,044 / 3,299 before) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -65,8 +65,8 @@ Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | a
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
 `scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,052 rows over 4,404 classes, the consolidation's 102, defect run
-D10's 73 and fold runs 1 to 6b's 28, 32, 29, 28, 27, 17 and 16 included (5,112 rows over 4,405 classes). Latest verdict per class: `step-9` 1,155, unique 1,165, absorbed 578, split 486,
-blocked-other 455, survivor 269, blocked-step-model 140, blocked-player-loop 97, dead 60. Waiting: 1,155 `step-9` rows for fold runs after fold run 6b (1,169 after fold run 6, 1,185 after fold run 5, 1,210 after fold run 4, 1,238 after fold run 3, 1,264 after fold run 2, 1,322 before fold run 1); 5 rows on the owner's open
+D10's 73 and fold runs 1 to 7's 28, 32, 29, 28, 27, 17, 16 and 27 included (5,139 rows over 4,405 classes). Latest verdict per class: `step-9` 1,131, unique 1,168, absorbed 593, split 489,
+blocked-other 456, survivor 271, blocked-step-model 140, blocked-player-loop 97, dead 60. Waiting: 1,131 `step-9` rows for fold runs after fold run 7 (1,155 after fold run 6b, 1,169 after fold run 6, 1,185 after fold run 5, 1,210 after fold run 4, 1,238 after fold run 3, 1,264 after fold run 2, 1,322 before fold run 1); 5 rows on the owner's open
 questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
@@ -492,6 +492,16 @@ Step and choice records:
   `FlipCoinWinEffect` over `QueueReflexiveAbilityEffect` branches (Breeches); "add N mana of any one color" with a counted or conditional N is
   `AwardAnyColorManaEffect(DynamicAmount)` (`DistinctPowersAmongControlledCreatures`, a `PermanentCount`, `FixedIfCondition`, whose estimate
   is its smaller number); "protection from permanents with [kind] counters" is `ProtectionFromPermanentsMatchingEffect(PermanentHasCountersPredicate)`.
+- Drafts, random modes, villainous options, parley, step reads (fold run 7): a static `DraftCardFromSpellbookToExileEffect` is the "as this enters,
+  draft ... and exile it" of any permanent (`SpellbookDraftToExileChoice.AsEnters` says which entry the answer continues); a hand draft is
+  `DraftCardFromSpellbookEffect(printings)`; a "choose one at random" is `ChooseOneAtRandomEffect` (each additional trigger chooses its own mode);
+  "each opponent faces a villainous choice" options compose from steps over `targetPlayerDeclaredElsewhere()`; "each player reveals the top card
+  ... for each [kind] revealed this way ... then each player draws" is `RevealTopCardOfLibraryEffect(eachPlayer())` + the verb over
+  `AmountThisWay.revealedCards(filter)` + `DrawCardEffect(1, eachPlayer())`; "if it's a [kind] card" after a return to hand is
+  `HappenedThisWay.toACard(RETURN, filter)`; "that spell's mana value" after countering it is `NoteAmountEffect(TargetSpellManaValue)` +
+  `AmountThisWay.noted()`; "populate X times" is `RepeatEffect(X, PopulateEffect)`; a d6 odd/even split is `RollD6Effect` with six branches; a
+  filtered per-turn spell limit is `LimitSpellsPerTurnEffect(n, scope, filter)` (Phyrexian Censor); a library put of Auras enters them through the entry
+  batch when it has no follow-up (Knickknack Ouphe).
 
 Permissions, restrictions and grants:
 
@@ -1328,6 +1338,63 @@ at amount 0 (CR 106.7); Louvaq's "modified" is not CR 700.9's (unsure: the playt
 
 **For the next run.** Fold run 7. `colour-grants` wants its own run (a colour CHOOSE step with three readers); Wrath of Sod waits for a
 `SOURCE_PERMANENT_COLORS` potential-mana model.
+
+### Step 9, fold run 7 (2026-11-23)
+
+The run-7 rows (`scheme-abandon`, `drafts`, `choose-random`, `villainous`, `parley`, `repeat`, `step-reads`, `aura-host`, `must-attack`, `roll`,
+`spell-limits`, `delayed-leads`) and the one "Fold:" defect line (Dark Wings). Ratchet 3,933 / 3,196 → 3,915 / 3,180 (18 records, 16 handlers;
+the Aura follow-up and Censor's record had none). Ledger: 27 rows (absorbed 15, split 3, survivor 2, unique 3, `blocked-other` 1, 3 re-noted
+`step-9`). 22 card files rewritten, Oracle text checked with `get_card` for all 22; rulings for Ensnared by the Mara and Great Intelligence's
+Plan. CR 101.4, 303.4f, 303.4g, 603.2d, 603.3c, 608.2d, 614.12, 700.2b, 701.33b, 701.55a, 701.55c, 702.37c, 708.2 checked with `get_rule`.
+
+| Batch | Result |
+|---|---|
+| `scheme-abandon`, `repeat`, `roll` | Dark Wings onto `SacrificeSelfEffect` (its scheme branch); Full Flowering onto `RepeatEffect(X, PopulateEffect)`; Clown Car onto `RollD6Effect` with six branches. Left: Berserker's Frenzy `unique` (a keep-higher count only it sets) |
+| `drafts` (3) | Raddic, Recruit Instructor, Slimefoot onto `DraftCardFromSpellbookEffect(printings)`; Protean War Engine onto a static `DraftCardFromSpellbookToExileEffect(printings, false)`: `EtbTriggerService` asks it as any permanent enters, `SpellbookDraftToExileChoice.AsEnters` says which entry the answer continues. The Protean and Slimefoot choice records, handlers, projections and AI strategies are gone |
+| `choose-random` (2) | Cult of Skaro, Typhoid Mary onto `ChooseOneAtRandomEffect`; `StackedModalTriggerService`'s random branch gone |
+| `villainous` (2) | Ensnared split into `villainousChoiceFacedBy(eachOpponent(), …)` over exile-until + free cast and exile-four + `AmountThisWay.exiledManaValue()` damage; Great Intelligence's Plan onto `forTargetedPlayerVillainousChoice([DiscardEffect, MayCastAnySpellFromHand…])` |
+| `parley` (2) | Storm Fleet Negotiator, Phabine split: `RevealTopCardOfLibraryEffect(eachPlayer())` + the verb over `AmountThisWay.revealedCards(filter)` + `DrawCardEffect(1, eachPlayer())` (not `ParleyEffect`'s token form: Defect queue 3) |
+| `step-reads` (3) | Reckless Handling `toACard(DISCARD, artifact)`; Cemetery Recruitment, Jared `toACard(RETURN, filter)`; Hurl into History, Overwhelming Intellect `NoteAmountEffect(TargetSpellManaValue)` + `noted()` |
+| `aura-host` (2) | Knickknack Ouphe's put has no follow-up, so `LibraryChoiceHandlerService` enters its Auras through the entry batch; both records, the handler and `AttachSelectedAuraToLegalTarget` gone |
+| `must-attack` (5) | Tolsimir, Fighter Class onto `MustBlockSourceEffect(null, null, true, triggering())`. Arcum's Whistle `blocked-other` (cost-shape: step 10's merge makes it `MayPayManaEffect.dynamic` paid by the active player, else the two penalty steps). Not taken: Taunt / Gideon and My Crushing Masterstroke (an attacked-object component, and a next-turn duration only Taunt's record sets), Slayer's Cleaver / Ace's Bat (merge two `CombatBlockService` paths, teach three AI readers) |
+| `spell-limits` (3) | Phyrexian Censor onto `LimitSpellsPerTurnEffect(1, EACH_PLAYER, not Phyrexian)`. Left `unique`: Irencrag Feat (a number fixed at resolution), Ethersworn Canonist (artifact as cast) |
+| `delayed-leads` | not taken (16 cards, three timings): its own run |
+
+**Where the triage was wrong.** `HappenedThisWay.toACard` refused RETURN: it now judges a card a return step put into a hand. Parley folds as
+steps, not onto `ParleyEffect`. Arcum's Whistle has no `MayPayPayer` for the active player. Irencrag's limit is not a parameter.
+
+**Shared pieces widened** (Standing knowledge): `DraftCardFromSpellbookToExileEffect` as any permanent's as-enters draft (`AsEnters`; owner set on
+the offered cards; no prompt when nothing is offered); `ChooseOneAtRandomEffect` chooses per instance (`TriggeredAbilityStackService.write`);
+`HappenedThisWay.toACard(RETURN, …)`; agent-docs rows for each record gone.
+
+**Behaviour changes.**
+- Dark Wings: the abandoned scheme goes face down to the bottom of its scheme deck and is logged (CR 701.33b): new `abandonedSchemeGoesToBottomOfSchemeDeck` (by reading, fails on the old code).
+- Great Intelligence's Plan: the opponent faces the choice when neither option can do anything (ruling): new test, failed on the old code. One free-cast offer (the survivor's).
+- Cult of Skaro under Isshin: each instance chooses its mode (CR 603.2d, 603.3c): new `additionalTriggerChoosesItsOwnRandomMode` (passes on the old Cult, fails on the old survivor by reading). Umaro, Outlaws' Merriment, Magus Sisters gain the same.
+- Hurl into History, Overwhelming Intellect: a face-down spell's mana value is 0 (CR 702.37c, 708.2): new `faceDownCreatureSpellDrawsNothing` (by reading, the old handler read the card's 6).
+- Knickknack Ouphe: an Aura with nothing to enchant stays in the library and goes to the bottom (CR 303.4g), where it entered and died: new `auraWithNoLegalHostStaysInLibrary`.
+- Storm Fleet Negotiator, Phabine: draws in APNAP order (CR 101.4); after a token-creation prompt the boost and draws still happen (no test: no such prompt at hand).
+- Protean War Engine: real printings (Steel-Plume Marshal's included); prompt "Choose a card from Protean War Engine's spellbook."; the offered cards are owned by the drafter (The Mystical Archive too). A land's as-enters draft entering during a parked resolution now continues the land's entry instead of resuming the parked entry (no test).
+- Raddic, Recruit, Slimefoot: the survivor's draft prompt and its "drafts a card from X's spellbook" line; an unimplemented printing is left out.
+- Clown Car: one roll's robots are created together.
+
+**Tests changed.** Named a deleted record or prompt type: `CultOfSkaroTest` (`ChooseOneAtRandomEffect`), `EnsnaredByTheMaraTest` and
+`GreatIntelligencesPlanTest` (the option labels moved to the cards), `ProteanWarEngineTest` (`SpellbookDraftToExileChoice`, Steel-Plume Marshal in
+`@CardUsed`), `SlimefootThallidTransplantTest`, `RaddicTalZealotTest`, `RecruitInstructorTest` (`SpellbookDraftChoice`), `ClownCarTest`
+(`RollD6EffectHandler`'s dice service), `EffectCountRatchetTest` (baselines). New: the five tests above.
+
+**Tests run.** 160 classes: every test class naming a rewritten or survivor card (`git grep -lwF 'X.class'`: 27 for the rewritten cards, 145 with the
+survivors' cards), the scheme cards, Isshin, `CastingPermissionServiceTest`, `ParleyEffectHandlerTest`, `TriggeredAbilityStackServiceTest`,
+`CombatDamageCollectorAbilityStackObjectTest`, `GameDataDeepCopyTest`, `PlanarAndInvokeCalamityAiStrategyTest`, `EffectCountRatchetTest`: 168 XML
+files, 1,622 cases, 0 failures (the first run's 23 were `toACard(RETURN)` refused and a must-block guard I had added, then removed: Turntimber
+Basilisk asserts the requirement after its source left), then `OverwhelmingIntellectTest`, `HurlIntoHistoryTest`: 14 cases, 0 failures. No deleted
+handler asked death replacements first.
+
+**Seen, not changed** (Defect queue 3): additional triggers copy the first instance's targets and announced modes; `ParleyEffect`'s token form
+creates tokens inside its handler.
+
+**For the next run.** Fold run 8 (`splits`). The three `must-attack` rows want an attacked-object component with the `*MustAttack*UntilNextTurn`
+siblings; `delayed-leads` and `colour-grants` want runs of their own.
 
 ## Prompt
 

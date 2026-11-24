@@ -1073,9 +1073,6 @@ public class GameActionAvailabilityService {
         if (!playerId.equals(gameData.commandCastPlayerId) && castingPermissionService.isSpellCastingFromHandRestricted(gameData, playerId)) {
             return false;
         }
-        if (castingPermissionService.isAdditionalNonPhyrexianSpellRestricted(gameData, playerId, card)) {
-            return false;
-        }
         if (card.getManaCost() == null) {
             // Card with no mana cost but has alternate cost (e.g. some future cards)
             return (castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)

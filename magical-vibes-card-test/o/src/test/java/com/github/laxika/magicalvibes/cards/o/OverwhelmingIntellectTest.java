@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.a.AbominationOfGudul;
 import com.github.laxika.magicalvibes.cards.i.IdeasUnbound;
 import com.github.laxika.magicalvibes.cards.i.InnerChamberGuard;
 import com.github.laxika.magicalvibes.cards.t.TomorrowAzamisFamiliar;
@@ -7,15 +8,17 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({OverwhelmingIntellect.class, InnerChamberGuard.class, IdeasUnbound.class,
-        TomorrowAzamisFamiliar.class})
+        TomorrowAzamisFamiliar.class, AbominationOfGudul.class})
 class OverwhelmingIntellectTest extends BaseCardTest {
 
     @Test
@@ -106,5 +109,24 @@ class OverwhelmingIntellectTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Inner-Chamber Guard");
+    }
+    @Test
+    @DisplayName("A face-down creature spell has mana value 0, so countering it draws no cards")
+    void faceDownCreatureSpellDrawsNothing() {
+        harness.setHand(player1, List.of(new AbominationOfGudul()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        UUID faceDownSpell = gd.stack.getLast().getTargetableId();
+
+        harness.setHand(player2, List.of(new OverwhelmingIntellect()));
+        harness.setLibrary(player2, List.of(new InnerChamberGuard(), new InnerChamberGuard(), new InnerChamberGuard()));
+        harness.addMana(player2, ManaColor.BLUE, 6);
+
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, faceDownSpell);
+
+        // A face-down spell has no mana cost (CR 702.37c, 708.2).
+        harness.assertInGraveyard(player1, "Abomination of Gudul");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
 }

@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ConjureDuplicateOf
 import com.github.laxika.magicalvibes.service.effect.normalfx.ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CelestialJudgmentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachCurseToOpponentAndDrawEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.AttachSelectedAurasToLegalTargetsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AllureOfTheUnknownEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnimalMagnetismEffectHandler;
@@ -150,7 +149,6 @@ public class PermanentChoiceHandlerService {
             targetOpponentChoosesPlayerForRestrictionEffectHandler;
     private final CelestialJudgmentEffectHandler celestialJudgmentEffectHandler;
     private final AttachCurseToOpponentAndDrawEffectHandler attachCurseToOpponentAndDrawEffectHandler;
-    private final AttachSelectedAurasToLegalTargetsEffectHandler attachSelectedAurasHandler;
     private final EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffectHandler
             benthicAnomalyEffectHandler;
     private final EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamageEffectHandler
@@ -681,8 +679,6 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleReattachSourceAuraAfterSacrifice(gameData, permanentId, reattach);
         } else if (context instanceof PermanentChoiceContext.AttachSourceAuraToChosenPermanent attachAura) {
             battlefieldHandler.handleAttachSourceAuraToChosenPermanent(gameData, permanentId, attachAura);
-        } else if (context instanceof PermanentChoiceContext.AttachSelectedAuraToLegalTarget attachAura) {
-            attachSelectedAurasHandler.completeChoice(gameData, permanentId, attachAura);
         } else if (context instanceof PermanentChoiceContext.LyndeCurseChoice lyndeCurseChoice) {
             attachCurseToOpponentAndDrawEffectHandler.completeCurseChoice(
                     gameData, permanentId, lyndeCurseChoice);

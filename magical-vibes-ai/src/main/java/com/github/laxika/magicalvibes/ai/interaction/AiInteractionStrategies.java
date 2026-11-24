@@ -42,8 +42,6 @@ public final class AiInteractionStrategies {
         register(new PlanarDieChoiceAiStrategy());
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.SpellbookDraftChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.SpellbookDraftToExileChoice.class, 1));
-        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ProteanWarEngineSpellbookDraftChoice.class, 1));
-        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.SlimefootThallidTransplantSpellbookDraftChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ApplejackToyChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.StingingStudyCommanderChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.SpellbookCardChoice.class, 1));

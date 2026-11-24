@@ -156,9 +156,9 @@
 | ETB draw and face-up spellbook exile; activated Aura ability copies the exiled card onto the enchanted land with haste | `l/LooseInThePark.java` + `DraftCardFromSpellbookToExileEffect(..., false)` + `EnchantedPermanentBecomesCopyOfExiledCardUntilEndOfTurnEffect` + `GrantKeywordEffect(HASTE, Subjects.attached())` |
 | planeswalker with a perpetual hand-card choice, spellbook battlefield draft, and mass trample pump | `g/GarrukWrathOfTheWilds.java` + `ChooseCardEffect.announced(cardsInYourHand(filter)) + PerpetuallyBoostCardEffect.toCards(cardsThisWay(CHOOSE), p, t) + PerpetuallyChangeCastCostEffect(cardsThisWay(CHOOSE), -amount)` + `DraftCardFromSpellbookEffect(..., false, true)` |
 | random opponent gains control of source permanent | EFFECTS_QUICK_REFERENCE.md and EFFECTS_INDEX.md |
-| each opponent chooses between a free cast from their library and four-card total-mana-value damage | `e/EnsnaredByTheMara.java` + `EnsnaredByTheMaraVillainousChoiceEffect` |
+| each opponent chooses between a free cast from their library and four-card total-mana-value damage | `e/EnsnaredByTheMara.java` + `TargetPlayerChoosesOneEffect.villainousChoiceFacedBy` |
 | villainous-choice replacement plus optional additional vote | `t/TheValeyard.java` + `TheValeyardEffect` + `MayVoteAdditionalTimeEffect` |
-| draw three, then target opponent chooses between discarding three and a controller free-cast from hand | `g/GreatIntelligencesPlan.java` + `GreatIntelligencesPlanVillainousChoiceEffect` |
+| draw three, then target opponent chooses between discarding three and a controller free-cast from hand | `g/GreatIntelligencesPlan.java` + `TargetPlayerChoosesOneEffect.forTargetedPlayerVillainousChoice` |
 | randomly choose a creature, steal it until end of turn, untap and haste it, then destroy the other creatures | `t/TheNiptonLottery.java` + `ChoosePermanentsEffect.atRandom` and the verbs over `thisWay(CHOOSE)` |
 | command-zone Secret Mission: pregame secret choice, end-step reveal special action, reward trigger | `m/MarchesasSurpriseParty.java` + `addStaticEffect(AbilityZones.COMMAND, new SecretMissionEffect(List<Mission(label, Condition)>, reward))` |
 | command-zone conspiracy restricting attacks to an even number and doubling a target creature's power | `r/RuleWithAnEvenHand.java` + `addStaticEffect(AbilityZones.COMMAND, CombatAttackCountRestrictionEffect)` + `Triggers.youAttack() from the command zone` |
@@ -293,7 +293,7 @@
 | activated spellbook choice that conjures one named card into hand | `c/ChargedConjuration.java` + `ConjureCardFromSpellbookToHandEffect` |
 | conditional spellbook choice that conjures the whole spellbook or two choices into hand and puts one onto the battlefield | `s/SwineRebellion.java` + `ConjureCardsFromSpellbookToHandEffect` + `PutChosenCardFromHandOntoBattlefieldEffect` |
 | draft twice from a spellbook, then choose one drafted card to enter the battlefield tapped | `r/RelicsOfTheRubblebelt.java` + `DraftTwiceFromSpellbookEffect` + `PutChosenCardFromHandOntoBattlefieldEffect(true)` |
-| attack-triggered draft of three random spellbook cards into hand | `r/RecruitInstructor.java` + `DraftCardFromSpellbookToHandEffect` |
+| attack-triggered draft of three random spellbook cards into hand | `r/RecruitInstructor.java` + `DraftCardFromSpellbookEffect` |
 | batched combat-damage trigger that randomly conjures a spellbook card into playable exile | `d/DazzlingFlameweaver.java` + `ConjureRandomCardFromSpellbookToExileMayPlayUntilNextTurnEffect` |
 | random instant or sorcery from a set conjured into exile for a free cast until end of turn | `l/LimitlessRekindling.java` + `ConjureRandomCardFromSpellbookToExileMayCastFreeUntilEndOfTurnEffect` |
 | ally creature enters if it was cast; sacrifice it and conjure a perpetually modified duplicate | `p/PrototypeX8.java` | `Triggers.enters(PermanentAllOfPredicate(Triggers.CREATURE, PermanentCastBySourceControllerThisTurnPredicate), ObjectRelation.ANOTHER_YOU_CONTROL) SacrificeTriggeringPermanentThenConjureDuplicateEffect(...)` |
@@ -370,12 +370,12 @@ This index has been split into smaller files for faster lookup. Each file is und
 | trigger from the card actually drawn without revealing it | `Triggers.youDrawCard().withFilter(CardPredicate)` (the drawn card is the entry's triggering card) |
 | "reveal the first card you draw" / "whenever you reveal a [card] this way" | `RevealDrawnCardsEffect` + `Triggers.youRevealCardThisWay().withFilter(CardPredicate)` |
 | random card from a fixed spellbook into hand | `ConjureGoblinInfluxArraySpellbookEffect` or `ConjureSkywriterDjinnSpellbookEffect` |
-| landfall draft of three cards from a fixed spellbook into hand | `DraftSlimefootThallidTransplantSpellbookEffect` |
+| landfall draft of three cards from a fixed spellbook into hand | `s/SlimefootThallidTransplant.java` + `DraftCardFromSpellbookEffect` |
 | reveal target player's nonland cards only, exile a chosen one, then conjure a named card into that player's hand (Juggernaut Peddler) | `ChooseCardsFromTargetHandEffect(..., HandChoiceDestination.EXILE).withRevealMatchingOnly()` + `ConditionalEffect(HappenedThisWay.exiled(), new ConjureCardIntoTargetPlayerHandEffect(card))` |
 | reveal target opponent's hand, exile a chosen nonland card, then conjure a named card into that player's hand | `ChooseCardsFromTargetHandEffect(..., HandChoiceDestination.EXILE)` + `ConditionalEffect(HappenedThisWay.exiled(), new ConjureCardIntoTargetPlayerHandEffect(card))` |
 | target opponent exiles a card from their own hand (no reveal to the caster), with a flashback draw | `r/RuthlessNegotiation.java` | `ExileCardFromHandEffect(Subjects.targetPlayer(), null, false)` on a target-opponent spell; the targeted player picks via the exile-from-hand choice (use `ChooseCardsFromTargetHandEffect` only when the caster chooses after a reveal) |
 | random Dragon card from a fixed spellbook into face-down exile with egg counters | `ConjureDarigaazShivanChampionSpellbookEffect` |
-| draft three random cards from a fixed spellbook and exile the chosen card tracked to the source | `DraftProteanWarEngineSpellbookEffect` |
+| draft three random cards from a fixed spellbook as it enters and exile the chosen card with the source | `p/ProteanWarEngine.java` + static `DraftCardFromSpellbookToExileEffect` |
 | optional enlist trigger that conjures a perpetual duplicate into the top five | `Triggers.enlists().withFilter(…)` + `MayEffect(ConjureDuplicateOfEnlistedCreatureIntoTopFiveEffect())` |
 | optional ETB/attack graveyard exile followed by a duplicate conjured into the top five | `s/SheoldredsAssimilator.java` + `ExileGraveyardCardsEffect.upToOneTargetFromAnyGraveyard()` + `ConditionalEffect(HappenedThisWay.exiled(), …)` + `ConjureDuplicateOfExiledCardIntoTopFiveEffect` |
 | next instant/sorcery cast conjures a duplicate into hand, with an un-kicked delayed discard | `RegisterDelayedControllerSpellCastTriggerEffect` + `ConjureDuplicateOfTriggeringCardIntoHandEffect(true/false)` + `DiscardSpecificCardEffect` |
@@ -465,7 +465,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | end-step goad of creatures enchanted by your Auras, then counters on the source for each creature goaded this way | `GoadCreaturesAndPutCountersOnSourceEffect` with `PermanentIsEnchantedBySourceControllerAuraPredicate`; see `k/KaimaTheFracturedCalm.java` |
 | ward-like spell/ability counter plus target opponent copies a copied spell | `p/ParnesseTheSubtleBrush.java` |
 | beginning-of-combat random counter trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
-| attack-triggered uniformly random choice among several effects | `c/CultOfSkaro.java` + `RandomChoiceEffect` |
+| attack-triggered uniformly random choice among several effects | `c/CultOfSkaro.java` + `ChooseOneAtRandomEffect` |
 | beginning-of-combat random-opponent attack trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | face-down permanent turns face up | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | creature that damages a target opponent on entry and when turned face up based on noncreature spells cast since the beginning of the controller's last turn | `c/ConcertKaboomist.java` + `SpellsCastSinceBeginningOfLastTurn` + opponent player target |

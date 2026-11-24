@@ -53,9 +53,9 @@ class SlimefootThallidTransplantTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        PendingInteraction.SlimefootThallidTransplantSpellbookDraftChoice choice =
+        PendingInteraction.SpellbookDraftChoice choice =
                 gd.interaction.activeInteraction(
-                        PendingInteraction.SlimefootThallidTransplantSpellbookDraftChoice.class);
+                        PendingInteraction.SpellbookDraftChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.cards()).hasSize(3).doesNotHaveDuplicates();
         assertThat(choice.cards()).allMatch(card -> !card.isTokenCard())
@@ -81,7 +81,7 @@ class SlimefootThallidTransplantTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(
-                PendingInteraction.SlimefootThallidTransplantSpellbookDraftChoice.class)).isNull();
+                PendingInteraction.SpellbookDraftChoice.class)).isNull();
     }
 
     @Test
@@ -93,7 +93,7 @@ class SlimefootThallidTransplantTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(
-                PendingInteraction.SlimefootThallidTransplantSpellbookDraftChoice.class)).isNotNull();
+                PendingInteraction.SpellbookDraftChoice.class)).isNotNull();
     }
 
     @Test
@@ -105,13 +105,13 @@ class SlimefootThallidTransplantTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
         var choice = gd.interaction.activeInteraction(
-                PendingInteraction.SlimefootThallidTransplantSpellbookDraftChoice.class);
+                PendingInteraction.SpellbookDraftChoice.class);
         assertThat(choice).isNotNull();
         harness.handleMultipleCardsChosen(player1, List.of(choice.cards().getFirst().getId()));
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.interaction.activeInteraction(
-                PendingInteraction.SlimefootThallidTransplantSpellbookDraftChoice.class)).isNull();
+                PendingInteraction.SpellbookDraftChoice.class)).isNull();
     }
 
     @Test
@@ -122,7 +122,7 @@ class SlimefootThallidTransplantTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(
-                PendingInteraction.SlimefootThallidTransplantSpellbookDraftChoice.class)).isNull();
+                PendingInteraction.SpellbookDraftChoice.class)).isNull();
     }
 
     @Test
@@ -136,7 +136,7 @@ class SlimefootThallidTransplantTest extends BaseCardTest {
 
         harness.passBothPriorities();
         var choice = gd.interaction.activeInteraction(
-                PendingInteraction.SlimefootThallidTransplantSpellbookDraftChoice.class);
+                PendingInteraction.SpellbookDraftChoice.class);
         assertThat(choice).isNotNull();
         Card chosen = choice.cards().getFirst();
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
@@ -154,6 +154,6 @@ class SlimefootThallidTransplantTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(
-                PendingInteraction.SlimefootThallidTransplantSpellbookDraftChoice.class)).isNotNull();
+                PendingInteraction.SpellbookDraftChoice.class)).isNotNull();
     }
 }
