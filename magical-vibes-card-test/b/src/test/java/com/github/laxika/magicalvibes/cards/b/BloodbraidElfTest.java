@@ -9,9 +9,13 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.p.ProsperTomeBound;
+import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
+import com.github.laxika.magicalvibes.cards.t.ThaliaGuardianOfThraben;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -179,6 +183,84 @@ class BloodbraidElfTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Angelic Chorus");
         harness.assertOnBattlefield(player2, "Fountain of Youth");
+    }
+
+    @Test
+    @CardUsed({ThaliaGuardianOfThraben.class, Pyroclasm.class})
+    @DisplayName("A cascade hit pays its cost increase from the mana pool as it is cast")
+    void cascadeHitPaysCostIncrease() {
+        setupCasterTurn();
+        harness.addToBattlefield(player2, new ThaliaGuardianOfThraben());
+        Pyroclasm hit = new Pyroclasm();
+        harness.setLibrary(player1, List.of(hit));
+
+        castBloodbraidElf();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        assertThat(gd.stack).anyMatch(se -> se.getCard() == hit);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @CardUsed({ThaliaGuardianOfThraben.class, Pyroclasm.class})
+    @DisplayName("A cascade hit whose cost increase can't be paid isn't cast and goes to the bottom")
+    void cascadeHitWithUnpayableCostIncreaseIsBottomed() {
+        setupCasterTurn();
+        harness.addToBattlefield(player2, new ThaliaGuardianOfThraben());
+        Pyroclasm hit = new Pyroclasm();
+        harness.setLibrary(player1, List.of(hit));
+
+        castBloodbraidElf();
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        assertThat(gd.stack).noneMatch(se -> se.getCard() == hit);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(hit);
+    }
+
+    @Test
+    @CardUsed({ThaliaGuardianOfThraben.class, Pyroclasm.class})
+    @DisplayName("A cascade hit's cost increase may be paid by tapping a land while the payment is asked")
+    void cascadeHitCostIncreaseIsPaidWithAnUntappedLand() {
+        setupCasterTurn();
+        harness.addToBattlefield(player2, new ThaliaGuardianOfThraben());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Pyroclasm hit = new Pyroclasm();
+        harness.setLibrary(player1, List.of(hit));
+
+        castBloodbraidElf();
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(mountain));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).anyMatch(se -> se.getCard() == hit);
+        assertThat(mountain.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @CardUsed({ThaliaGuardianOfThraben.class, Pyroclasm.class})
+    @DisplayName("Declining to pay a cascade hit's cost increase leaves it uncast and puts it on the bottom")
+    void decliningTheCostIncreaseBottomsTheHit() {
+        setupCasterTurn();
+        harness.addToBattlefield(player2, new ThaliaGuardianOfThraben());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Pyroclasm hit = new Pyroclasm();
+        harness.setLibrary(player1, List.of(hit));
+
+        castBloodbraidElf();
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.stack).noneMatch(se -> se.getCard() == hit);
+        assertThat(mountain.isTapped()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(hit);
     }
 
     private void setupCasterTurn() {

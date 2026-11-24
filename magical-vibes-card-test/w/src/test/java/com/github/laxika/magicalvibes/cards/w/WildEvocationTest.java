@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.d.Disentomb;
 import com.github.laxika.magicalvibes.cards.f.Fling;
 import com.github.laxika.magicalvibes.cards.p.Plummet;
@@ -24,6 +25,10 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import com.github.laxika.magicalvibes.cards.t.TeferiTimeRaveler;
+import com.github.laxika.magicalvibes.cards.t.ThaliaGuardianOfThraben;
+import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
+import com.github.laxika.magicalvibes.cards.v.VillageRites;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 import java.util.List;
@@ -401,5 +406,81 @@ class WildEvocationTest extends BaseCardTest {
 
         assertThat(gd.stack).noneMatch(entry -> entry.getCard() == bear);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(bear);
+    }
+
+    @Test
+    @CardUsed({ThaliaGuardianOfThraben.class, Pyroclasm.class})
+    @DisplayName("A cost increase is paid from the mana pool and the revealed spell is cast")
+    void costIncreaseIsPaidFromThePool() {
+        harness.addToBattlefield(player1, new WildEvocation());
+        harness.addToBattlefield(player2, new ThaliaGuardianOfThraben());
+        Card pyroclasm = new Pyroclasm();
+        harness.setHand(player1, List.of(pyroclasm));
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == pyroclasm);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @CardUsed({ThaliaGuardianOfThraben.class, Pyroclasm.class})
+    @DisplayName("A revealed spell whose cost increase can't be paid stays in hand")
+    void unpayableCostIncreaseLeavesCardInHand() {
+        harness.addToBattlefield(player1, new WildEvocation());
+        harness.addToBattlefield(player2, new ThaliaGuardianOfThraben());
+        Card pyroclasm = new Pyroclasm();
+        harness.setHand(player1, List.of(pyroclasm));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() == pyroclasm);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(pyroclasm);
+        assertThat(gd.getSpellsCastThisTurnCount(player1.getId())).isZero();
+    }
+
+    @Test
+    @CardUsed({VillageRites.class})
+    @DisplayName("A revealed spell's mandatory sacrifice is paid as it is cast")
+    void mandatorySacrificeIsPaid() {
+        harness.addToBattlefield(player1, new WildEvocation());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
+        Card rites = new VillageRites();
+        harness.setHand(player1, List.of(rites));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bear.getId());
+
+        harness.assertInGraveyard(player1, "Runeclaw Bear");
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == rites);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @CardUsed({ThaliaGuardianOfThraben.class, Pyroclasm.class, Mountain.class})
+    @DisplayName("A cost increase may be paid by tapping a land while the payment is asked")
+    void costIncreaseIsPaidWithAnUntappedLand() {
+        harness.addToBattlefield(player1, new WildEvocation());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.addToBattlefield(player2, new ThaliaGuardianOfThraben());
+        Card pyroclasm = new Pyroclasm();
+        harness.setHand(player1, List.of(pyroclasm));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(mountain));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == pyroclasm);
+        assertThat(mountain.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
     }
 }

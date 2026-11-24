@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
@@ -1093,20 +1092,6 @@ public class PlayerInteractionSupport {
             if (second.getAdditionalTypes().contains(additionalType)) return true;
         }
         return false;
-    
-    }
-    public StackEntryType mapCardTypeToSpellType(Card card) {
-
-        return switch (card.getType()) {
-            case CREATURE -> StackEntryType.CREATURE_SPELL;
-            case ARTIFACT -> StackEntryType.ARTIFACT_SPELL;
-            case ENCHANTMENT -> StackEntryType.ENCHANTMENT_SPELL;
-            case PLANESWALKER -> StackEntryType.PLANESWALKER_SPELL;
-            case BATTLE -> StackEntryType.BATTLE_SPELL;
-            case INSTANT -> StackEntryType.INSTANT_SPELL;
-            case SORCERY -> StackEntryType.SORCERY_SPELL;
-            default -> StackEntryType.SORCERY_SPELL;
-        };
     
     }
     public DiscardFollowUp startNextEachPlayerDiscard(GameData gameData, DiscardFollowUp followUp) {

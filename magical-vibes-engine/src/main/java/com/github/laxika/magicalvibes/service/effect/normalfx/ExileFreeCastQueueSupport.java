@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.PayFreeCastCostIncreaseEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
@@ -92,6 +93,9 @@ public class ExileFreeCastQueueSupport {
     @org.springframework.beans.factory.annotation.Autowired
     @Lazy
     private com.github.laxika.magicalvibes.service.battlefield.DepartureService departureService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private FreeCastCostIncreaseSupport freeCastCostIncreaseSupport;
 
     // @Lazy mirrors ExileFreeCastSupport: breaks the cycle back through the input services.
     public ExileFreeCastQueueSupport(GameLogService gameLogService,
@@ -248,6 +252,9 @@ public class ExileFreeCastQueueSupport {
             return;
         }
 
+        if (asksForCostIncreaseMana(gameData, playerId, gameData.pendingFreeCastQueue.getFirst())) {
+            return;
+        }
         UUID cardId = gameData.pendingFreeCastQueue.removeFirst();
         boolean asCopy = gameData.pendingFreeCastAsCopyIds.remove(cardId);
         int announcedXValue = gameData.pendingFreeCastXValues.getOrDefault(cardId, 0);
@@ -383,6 +390,9 @@ public class ExileFreeCastQueueSupport {
                 if (!asCopy) {
                     pendingCast.setSourceZone(Zone.EXILE);
                     pendingCast.setOwnerIdOverride(exiledEntry.ownerId());
+                }
+                if (!payCostIncreasesOrSkip(gameData, playerId, card, cardToCast, asCopy)) {
+                    return;
                 }
                 playerInputService.beginDiscardChoice(gameData, playerId, validIndices,
                         "Choose a card to discard to cast " + cardToCast.getName() + ".",
@@ -628,6 +638,9 @@ public class ExileFreeCastQueueSupport {
                 return;
             }
 
+            if (!payCostIncreasesOrSkip(gameData, playerId, physicalCard, cardToCast, asCopy)) {
+                return;
+            }
             if (asCopy) {
                 // A copy exists only as the spell being cast, so it leaves exile as casting begins; it is
                 // carried by the target-choice context from here on.
@@ -659,6 +672,9 @@ public class ExileFreeCastQueueSupport {
         if (!asCopy) {
             entry.setSourceZone(Zone.EXILE);
             entry.setOwnerIdOverride(ownerId);
+        }
+        if (!payCostIncreasesOrSkip(gameData, playerId, physicalCard, cardToCast, asCopy)) {
+            return;
         }
         if (beginSacrificeCostIfNeeded(gameData, entry)) return;
         if (gameData.removeFromExile(physicalCard.getId()) && !asCopy) {
@@ -1150,6 +1166,82 @@ public class ExileFreeCastQueueSupport {
         return EffectResolution.needsSpellCastTarget(spellEffects,
                 card.isAuraThatRequiresAttachment(), card.isEnchantPlayer())
                 || EffectResolution.needsSpellTarget(spellEffects);
+    }
+
+    /**
+     * Before the next queued spell is cast: when the pool can't cover its cost increases (CR 601.2f) but the mana its
+     * caster's untapped sources could make can, the queue pauses with the card still first on the payment question,
+     * during which mana abilities may be activated (CR 601.2g, 608.2g). Its answer is
+     * {@link #resumeAfterCostIncreaseDecision}.
+     */
+    private boolean asksForCostIncreaseMana(GameData gameData, UUID playerId, UUID cardId) {
+        ExiledCardEntry exiled = gameData.findExiledCard(cardId);
+        if (exiled == null || exiled.card().hasType(CardType.LAND)
+                || spellCastingService.canPayFreeCastCostIncreases(gameData, playerId, queuedFace(gameData, exiled),
+                Zone.EXILE)
+                || !castableFromExile(gameData, playerId, exiled.card())) {
+            return false;
+        }
+        return freeCastCostIncreaseSupport.payOrAsk(gameData, playerId, queuedFace(gameData, exiled), cardId,
+                Zone.EXILE, PayFreeCastCostIncreaseEffect.Resume.FREE_CAST_QUEUE, null)
+                == FreeCastCostIncreaseSupport.Payment.ASKED;
+    }
+
+    /** The face the queued card will be cast as: its Adventure when the queue says so, else the card. */
+    private static Card queuedFace(GameData gameData, ExiledCardEntry exiled) {
+        Card card = exiled.card();
+        return gameData.pendingFreeCastAdventureIds.contains(card.getId()) && card.getBackFaceCard() != null
+                && card.getCastingOption(AdventureCast.class).isPresent()
+                ? card.createRuntimeCopyWithFace(card.getBackFaceCard()) : card;
+    }
+
+    /**
+     * Answers the payment question of the queue's first spell: paid, the queue goes on and casts it with the mana now
+     * in the pool; otherwise that card is skipped as an uncast one and the queue goes on.
+     */
+    public void resumeAfterCostIncreaseDecision(GameData gameData, UUID playerId, UUID cardId, boolean paid) {
+        if (!paid && !gameData.pendingFreeCastQueue.isEmpty()
+                && gameData.pendingFreeCastQueue.getFirst().equals(cardId)) {
+            gameData.pendingFreeCastQueue.removeFirst();
+            boolean asCopy = gameData.pendingFreeCastAsCopyIds.remove(cardId);
+            gameData.pendingFreeCastXValues.remove(cardId);
+            gameData.pendingFreeCastAdventureIds.remove(cardId);
+            ExiledCardEntry exiled = gameData.findExiledCard(cardId);
+            if (exiled != null) {
+                logUnpaidCostIncrease(gameData, exiled.card(), asCopy);
+            }
+        }
+        castNextFromQueue(gameData, playerId);
+    }
+
+    /**
+     * Pays the spell's cost increases (CR 601.2f) through the one free-cast payment once nothing else can stop the
+     * cast. When the pool can't cover them the card is skipped as an uncast one (a copy ceases to exist) and the
+     * queue goes on.
+     */
+    private boolean payCostIncreasesOrSkip(GameData gameData, UUID playerId, Card physicalCard, Card cardToCast,
+                                           boolean asCopy) {
+        if (spellCastingService.payFreeCastCostIncreases(gameData, playerId, cardToCast, Zone.EXILE)) {
+            return true;
+        }
+        logUnpaidCostIncrease(gameData, physicalCard, asCopy);
+        castNextFromQueue(gameData, playerId);
+        return false;
+    }
+
+    private void logUnpaidCostIncrease(GameData gameData, Card physicalCard, boolean asCopy) {
+        if (asCopy) {
+            gameData.removeFromExile(physicalCard.getId());
+        }
+        boolean willGoToGraveyard = gameData.pendingExileFreeCastRemainderToGraveyard.contains(physicalCard.getId());
+        boolean willGoToBottom = gameData.pendingExileFreeCastRemainderToLibraryBottom.contains(physicalCard.getId());
+        boolean willGoToHand = gameData.pendingExileFreeCastRemainderToHand.contains(physicalCard.getId());
+        gameLogService.append(gameData, GameLog.cardThen(physicalCard, asCopy
+                ? " can't be cast: its cost increase can't be paid. It ceases to exist."
+                : willGoToGraveyard ? " can't be cast: its cost increase can't be paid. It will be put into the graveyard."
+                : willGoToBottom ? " can't be cast: its cost increase can't be paid. It will be put on the bottom of its owner's library."
+                : willGoToHand ? " can't be cast: its cost increase can't be paid. It will be put into its owner's hand."
+                : " can't be cast: its cost increase can't be paid. It stays exiled."));
     }
 
     private void skipCardWithUnsupportedCost(GameData gameData, UUID playerId, Card card, boolean asCopy) {

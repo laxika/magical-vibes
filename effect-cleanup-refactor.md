@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b (each in Findings; the fold queue marks its rows). Fold run 29d is reported and waits to merge; 38, 36b and 35c are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                      |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d (each in Findings; the fold queue marks its rows). Fold runs 38 and 36b are reported and wait to merge; 35c, 39 and 40 are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                       |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,318 / 2,672 (after fold run 35b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,318 / 2,672 (after fold run 29d) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,151 rows over 4,493 classes (after fold run 35b). Latest verdict per class: `step-9` 416, unique 1,173, absorbed 1,055, split 652, blocked-other 524, survivor 372, blocked-step-model 140, blocked-player-loop 96, dead 65. Waiting: 416 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,155 rows over 4,495 classes (after fold run 29d). Latest verdict per class: `step-9` 414, unique 1,174, absorbed 1,055, split 654, blocked-other 524, survivor 373, blocked-step-model 140, blocked-player-loop 96, dead 65. Waiting: 414 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -926,6 +926,9 @@ Delayed and global triggers:
 - `EnterPermanentsOfTypesTappedEffect(types, PlayerSubject players, filter, castOnly)` / `.matching(filter, players)`: static "[permanents] enter tapped" for `eachPlayer()`, `eachOpponent()` or `enchantedPlayer()`, with filters judged against the source; floated on a player for "this turn" (Due Respect, Nahiri's Lithoforming) (fold run 35b).
 - `PermanentHasSourceChosenParityPredicate(chosenQuality)`: "with / without mana value of the chosen quality", the source's as-enters odd or even, in static and dynamic evaluation (fold run 35b).
 - `SkipDrawStepEffect(UNTAP_STEP, players)`: static "players skip their untap steps", planes included, read by `UntapStepService.playersSkipUntapStepApplies` (fold run 35b).
+
+- `CastCardWithoutPayingManaCostIfAbleEffect(CardSubject)`: "[the player] casts it without paying its mana cost if able", the mandatory cast of one exiled or hand card by the player whose zone it is in. After `PutCardsOntoBattlefieldEffect(cardsThisWay(kind, land))` for "if it's a land card … Otherwise" (Omen Machine, Wild Evocation; fold run 29d).
+- `SpellCastingService.payFreeCastCostIncreases` / `canPayFreeCastCostIncreases(gd, player, card, zone)`: the one cost-increase payment of a free cast (CR 601.2f), used by the exile, queue and library free casts (fold run 29d).
 
 ### Blocked causes still open
 
@@ -3995,6 +3998,41 @@ Five members done, plus Ashling's haste grant. Ratchet 3,355 / 2,699 → 3,349 /
 
 **For the next run.**
 - Runed Halo and Absolute Virtue onto one player-protection reader (6 TargetLegalityService sites, damage preventions, Aura attach), with the `playerHasProtectionFromOpponents` owned-but-uncontrolled defect (CR 702.16k).
+
+### Step 9, fold run 29d (2026-11-24, parallel worktree)
+`land-or-cast` done: 2 split, 1 survivor (new). Ratchet 3,376 / 2,710 → 3,375 / 2,709. 2 card files rewritten; Oracle text and rulings checked for both. CR 118.9, 305.1, 305.9, 601.2c, 601.2f, 601.3, 608.2g, 702.11b, 702.85a, 707.12, 716.3 checked.
+
+| Batch | Result |
+|---|---|
+| land-or-cast | 2 folded (split). Omen Machine: `SequenceEffect.of(ExileTopCardOfOwnLibraryEffect.of(triggeringPlayer()), PutCardsOntoBattlefieldEffect(cardsThisWay(EXILE, land)), CastCardWithoutPayingManaCostIfAbleEffect(cardsThisWay(EXILE)))`. Wild Evocation: the same over `RevealCardsFromHandEffect.atRandom(triggeringPlayer(), 1)` and `revealedThisWay(...)`. The land step puts the card in through the entry batch under its owner's control, and doesn't play it as a land (CR 305.1). |
+
+**New step.** `CastCardWithoutPayingManaCostIfAbleEffect(CardSubject)`: the mandatory cast-now step. The player whose zone holds the card casts it, with no "may" (CR 608.2g; both rulings say casting is not optional). An exiled card goes through `ExileFreeCastSupport` (Adventure and modal faces, split halves, targets, additional costs). A hand card is checked by `canCastRevealedFromHandWithoutPaying`, then cast through `HandCastSpellTarget` or `beginSacrificeCostIfNeeded`. A land, or a card that can't be cast, stays where it is. The step ends on any prompt it begins, so it is the last step. I chose a new record over a mandatory option on `CastCardsWithoutPayingManaCostEffect`, because that one is a "may" choice over exile and graveyard and has no hand path.
+
+**Free-cast cost increases (defect).** There is now one payment, `SpellCastingService.payFreeCastCostIncreases` / `canPayFreeCastCostIncreases`. It pays {0} plus increases minus reductions from the pool, with the spell's mana restrictions (CR 601.2f). It is used by `ExileFreeCastSupport.castSelectedFace`, `ExileFreeCastQueueSupport` (cascade, Improvisation Capstone and the other queued casts, copies included, CR 707.12), `LibraryChoiceHandlerService.canCastWithoutPaying` / `castCardWithoutPaying`, and the new step. A cost increase that can't be paid makes the cast impossible: the card stays where it is or follows the flow's uncast path (a cascade hit is bottomed).
+
+**Behaviour changes.**
+- Omen Machine and Wild Evocation pay cost increases instead of refusing (Omen) or ignoring them (Wild). Tested with Thalia: paid from floating mana; unpaid, the card stays in hand.
+- Omen Machine and Wild Evocation pay a non-targeted spell's mandatory sacrifice (Village Rites). This fixes the "Fold:" defect.
+- Omen Machine offers an Adventure (CR 716.3). Tested with Lovestruck Beast.
+- A cascade hit pays the increase or is bottomed (two Bloodbraid Elf tests).
+- `ExileFreeCastSupport` judges each target candidate as a target of the spell. Before, a single-target card used the unchecked flat candidates and was offered a hexproof creature (CR 702.11b; the existing Omen Troll Ascetic test).
+- `ExileFreeCastSupport.completeFaceChoice` ends through the input epilogue. Before, a face choice begun with `completeInput=false` (suspend, Omen) left its resolution parked.
+- Log lines are the shared steps' lines.
+
+**Tests changed.** I deleted the two handler unit tests and added 8 card tests. No assertion changed.
+
+**Seen, not changed.**
+- Free-cast cost increases are paid only from the pool. No mana abilities can be activated during the cast (CR 608.2g allows them through 601.2g). This matches every other free-cast path. Sure of the code.
+- Kicker isn't offered on a mandatory exile cast (`completeInput=false`), though the ruling allows optional additional costs. Sure.
+- If a kicker is paid and then the cost increase can't be paid, the kicker mana is lost. Low, sure of the code.
+- `ExileCastTargetSupport.flatSingleTargetCandidates` doesn't check hexproof or protection for permanents. It is still used through the 3-argument `firstSlotCandidates` (Chandra, Vaan, Paradigm, `ExileReducedCastSupport`, `OutsideGameNormalCostCastSupport`, `CopyDrawnInstantOrSorcery…`). Sure of the code; whether their completions reject the target is unverified.
+- Free casts that still pay no cost increase: `MayCastHandlerService.castRevealedCardWithoutPaying` and `SplitCardCastSupport` with `payManaCost=false` (except the sideboard flow). Sure. Other per-card free-cast handlers are unaudited.
+
+**For the next run.**
+- A defect run moving the remaining free-cast paths onto `payFreeCastCostIncreases`, and switching the 3-argument candidate users to legality-checked candidates.
+- `ExileTopCardPutLandOntoBattlefieldOrMayCastFreeEffect` looks like the "may" twin of this batch (`PutCardsOntoBattlefieldEffect` + a may cast step). Not checked.
+
+**Follow-up (same run, after review).** The first version paid free-cast cost increases from the pool only, so a cascade hit under Thalia was bottomed even with untapped lands (CR 601.2g, 608.2g). Now a free cast whose increase the pool doesn't cover, but the pool plus untapped sources would, pauses on the existing mid-resolution mana window (`PendingMayAbility` with a mana cost, `GameService.isMayCostManaPayment`): "Pay {N} to cast X (its cost increase)?". Accepted with enough mana, the cast continues; declined, the card follows its flow's uncast path (cascade: bottom; Omen: stays in exile; Wild Evocation: stays in hand). New `PayFreeCastCostIncreaseEffect` (engine-made, `unique`) + `FreeCastCostIncreaseSupport`, asked by `ExileFreeCastSupport`, `ExileFreeCastQueueSupport` (before taking the next card) and the hand cast. `LibraryChoiceHandlerService` is back to HEAD: its search casts (Knowledge Exploitation, Sunbird-style, cascade's non-queue branch) still cast free, because each caller needs its own uncast destination. Ratchet after the follow-up 3,376 / 2,710 (the new record and handler offset the two removed). 5 new tests (Bloodbraid Elf ×2, Omen Machine ×2, Wild Evocation). Seen: the Hard AI likely scores the payment "may" at 0 and declines; the queue asks for mana before modes and targets, so a spell left with no legal target leaves the mana in the pool.
 
 ## Prompt
 

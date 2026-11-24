@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.t.TrollAscetic;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GitaxianProbe;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
@@ -24,6 +25,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import com.github.laxika.magicalvibes.cards.t.TeferiTimeRaveler;
+import com.github.laxika.magicalvibes.cards.t.ThaliaGuardianOfThraben;
+import com.github.laxika.magicalvibes.cards.v.VillageRites;
+import com.github.laxika.magicalvibes.cards.h.HeartsDesire;
+import com.github.laxika.magicalvibes.cards.l.LovestruckBeast;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 import java.util.UUID;
@@ -410,5 +416,103 @@ class OmenMachineTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(se -> se.getCard() == pyroclasm);
         assertThat(gd.findExiledCard(pyroclasm.getId())).isNotNull();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @CardUsed({ThaliaGuardianOfThraben.class})
+    @DisplayName("A cost increase is paid from the mana pool and the spell is cast")
+    void costIncreaseIsPaidFromThePool() {
+        harness.addToBattlefield(player1, new OmenMachine());
+        harness.addToBattlefield(player2, new ThaliaGuardianOfThraben());
+        Card pyroclasm = new Pyroclasm();
+        harness.setLibrary(player1, List.of(pyroclasm));
+
+        advanceToDraw(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).anyMatch(se -> se.getCard() == pyroclasm);
+        assertThat(gd.findExiledCard(pyroclasm.getId())).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @CardUsed({VillageRites.class})
+    @DisplayName("A spell's mandatory sacrifice is paid as it is cast")
+    void mandatorySacrificeIsPaid() {
+        harness.addToBattlefield(player1, new OmenMachine());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card rites = new VillageRites();
+        harness.setLibrary(player1, List.of(rites));
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.stack).anyMatch(se -> se.getCard() == rites);
+    }
+
+    @Test
+    @CardUsed({LovestruckBeast.class, HeartsDesire.class})
+    @DisplayName("An adventurer card may be cast as its Adventure, and the trigger then finishes resolving")
+    void adventurerCardMayBeCastAsItsAdventure() {
+        harness.addToBattlefield(player1, new OmenMachine());
+        Card beast = new LovestruckBeast();
+        harness.setLibrary(player1, List.of(beast));
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Cast Lovestruck Beast", "Cast Heart's Desire");
+        harness.handleListChoice(player1, "Cast Heart's Desire");
+
+        assertThat(gd.stack).anyMatch(se -> se.getCard().getName().equals("Heart's Desire"));
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({ThaliaGuardianOfThraben.class, Mountain.class})
+    @DisplayName("A cost increase may be paid by tapping a land while the payment is asked, and the spell is cast")
+    void costIncreaseIsPaidWithAnUntappedLand() {
+        harness.addToBattlefield(player1, new OmenMachine());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.addToBattlefield(player2, new ThaliaGuardianOfThraben());
+        Card pyroclasm = new Pyroclasm();
+        harness.setLibrary(player1, List.of(pyroclasm));
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(mountain));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).anyMatch(se -> se.getCard() == pyroclasm);
+        assertThat(mountain.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+    }
+
+    @Test
+    @CardUsed({ThaliaGuardianOfThraben.class, Mountain.class})
+    @DisplayName("A cost increase its caster won't pay leaves the card in exile")
+    void declinedCostIncreaseLeavesCardInExile() {
+        harness.addToBattlefield(player1, new OmenMachine());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.addToBattlefield(player2, new ThaliaGuardianOfThraben());
+        Card pyroclasm = new Pyroclasm();
+        harness.setLibrary(player1, List.of(pyroclasm));
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.findExiledCard(pyroclasm.getId())).isNotNull();
+        assertThat(gd.stack).noneMatch(se -> se.getCard() == pyroclasm);
+        assertThat(mountain.isTapped()).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

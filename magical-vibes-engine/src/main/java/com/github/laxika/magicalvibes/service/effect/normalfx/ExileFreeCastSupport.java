@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayKickerForFreeCastEffect;
+import com.github.laxika.magicalvibes.model.effect.PayFreeCastCostIncreaseEffect;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -64,6 +65,8 @@ public class ExileFreeCastSupport {
     private ExileFreeCastQueueSupport exileFreeCastQueueSupport;
     @org.springframework.beans.factory.annotation.Autowired @Lazy
     private SplitCardCastSupport splitCardCastSupport;
+    @org.springframework.beans.factory.annotation.Autowired @Lazy
+    private FreeCastCostIncreaseSupport freeCastCostIncreaseSupport;
 
     // @Lazy mirrors ParadigmCastSupport: breaks cycles through InputCompletionService/PlayerInputService.
     public ExileFreeCastSupport(GameLogService gameLogService,
@@ -170,8 +173,10 @@ public class ExileFreeCastSupport {
         Integer face = context.faces().get(choice);
         if (face == null) throw new IllegalStateException("Invalid spell face choice");
         gameData.interaction.clearAwaitingInput();
+        // An answered prompt is no longer inside the resolution that began it, so the cast ends through the
+        // input epilogue, which resumes that parked resolution.
         castSelectedFace(gameData, player, context.exileCardId(), context.grantHaste(),
-                context.returnToHandIfUnable(), context.suspendHaste(), context.completeInput(), face);
+                context.returnToHandIfUnable(), context.suspendHaste(), true, face);
     }
 
     private void castSelectedFace(GameData gameData, Player player, UUID exileCardId,
@@ -276,10 +281,9 @@ public class ExileFreeCastSupport {
                 card.isEnchantPlayer())
                 : EffectResolution.needsTarget(card) || (!card.getTargetGroups().isEmpty()
                 && !EffectResolution.targetsOnlyWithEtbAbilities(card));
+        // Each candidate is judged as a target of the spell (hexproof, protection, its filter; CR 702.11b).
         List<UUID> firstCandidates = !needsTarget ? List.of()
-                : chosenEffects != null
-                ? exileCastTargetSupport.firstSlotCandidates(gameData, card, spellEffects, playerId)
-                : exileCastTargetSupport.firstSlotCandidates(gameData, card, playerId);
+                : exileCastTargetSupport.firstSlotCandidates(gameData, card, spellEffects, playerId);
         if (needsTarget && (card.getMinTargets() > 0 || card.getMaxTargets() == 0
                 || !firstCandidates.isEmpty())) {
             boolean multiTarget = card.getMaxTargets() > 1;
@@ -302,6 +306,10 @@ public class ExileFreeCastSupport {
                 return;
             }
 
+            if (!payCostIncreases(gameData, playerId, card, exileCardId, grantHaste, returnToHandIfUnable, suspendHaste,
+                completeInput, face)) {
+                return;
+            }
             // Remove from exile now that it will be cast; the ExileCastSpellTarget flow puts it on the stack.
             gameData.freeCastKickerDecidedIds.remove(exileCardId);
             gameData.removeFromExile(exileCardId);
@@ -343,6 +351,10 @@ public class ExileFreeCastSupport {
             return;
         }
 
+        if (!payCostIncreases(gameData, playerId, card, exileCardId, grantHaste, returnToHandIfUnable, suspendHaste,
+                completeInput, face)) {
+            return;
+        }
         gameData.removeFromExile(exileCardId);
         StackEntry stackEntry = new StackEntry(
                 spellType, card, playerId, card.getName(),
@@ -372,6 +384,58 @@ public class ExileFreeCastSupport {
 
         spellEvents.cast(
                 gameData, card, playerId, Zone.EXILE, exiledEntry.sourcePermanentId());
+        if (completeInput) inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Pays the spell's cost increases (CR 601.2f) once nothing else can stop the cast, from the pool or after a
+     * payment question during which mana abilities may be activated (CR 601.2g); the question's answer resumes the
+     * cast through {@link #resumeAfterCostIncreaseDecision}. When they can't be paid, the card stays exiled (or goes
+     * to its owner's hand) and the flow ends as an uncast card's does.
+     */
+    private boolean payCostIncreases(GameData gameData, UUID playerId, Card card, UUID exileCardId,
+                                     boolean grantHaste, boolean returnToHandIfUnable, boolean suspendHaste,
+                                     boolean completeInput, int face) {
+        FreeCastCostIncreaseSupport.Payment payment = freeCastCostIncreaseSupport.payOrAsk(gameData, playerId, card,
+                exileCardId, Zone.EXILE, PayFreeCastCostIncreaseEffect.Resume.EXILE_CAST,
+                new FreeCastKickerOffer(grantHaste, returnToHandIfUnable, suspendHaste, true, face));
+        if (payment == FreeCastCostIncreaseSupport.Payment.PAID) {
+            return true;
+        }
+        if (payment == FreeCastCostIncreaseSupport.Payment.UNPAYABLE) {
+            abandonForUnpaidCostIncrease(gameData, card, exileCardId, returnToHandIfUnable, completeInput);
+        }
+        return false;
+    }
+
+    /**
+     * Answers the cost-increase payment question of a paused cast: paid, the cast is made again from its start with
+     * the mana now in the pool; otherwise the card is not cast. Either way it ends through the input epilogue.
+     */
+    public void resumeAfterCostIncreaseDecision(GameData gameData, Player player, UUID exileCardId,
+                                                FreeCastKickerOffer offer, boolean paid) {
+        ExiledCardEntry exiled = gameData.findExiledCard(exileCardId);
+        if (exiled == null) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        if (paid) {
+            castSelectedFace(gameData, player, exileCardId, offer.grantHaste(), offer.returnToHandIfUnable(),
+                    offer.suspendHaste(), true, offer.face());
+            return;
+        }
+        abandonForUnpaidCostIncrease(gameData, exiled.card(), exileCardId, offer.returnToHandIfUnable(), true);
+    }
+
+    private void abandonForUnpaidCostIncrease(GameData gameData, Card card, UUID exileCardId,
+                                              boolean returnToHandIfUnable, boolean completeInput) {
+        gameData.spellsGrantedHasteOnEntry.remove(exileCardId);
+        gameData.spellsGrantedSuspendHasteOnEntry.remove(exileCardId);
+        gameData.freeCastKickerDecidedIds.remove(exileCardId);
+        if (returnToHandIfUnable) {
+            returnExiledCardToHand(gameData, exileCardId);
+        }
+        gameLogService.append(gameData, GameLog.cardThen(card, " can't be cast: its cost increase isn't paid."));
         if (completeInput) inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

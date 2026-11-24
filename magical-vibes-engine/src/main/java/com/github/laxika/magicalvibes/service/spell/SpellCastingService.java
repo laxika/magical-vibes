@@ -13258,6 +13258,33 @@ public class SpellCastingService {
         payFreeCastCostIncrease(gameData, playerId, card, effectiveXValue, Zone.EXILE);
     }
 
+    /**
+     * The pool payment of a spell cast "without paying its mana cost" (CR 118.9): its total cost is {0} plus its cost
+     * increases, less its reductions (CR 601.2f), paid from the caster's mana pool with the spell's own mana
+     * restrictions. Its additional costs are paid by the cast flow itself. Returns {@code false}, paying nothing, when
+     * the pool can't cover the increase. A cast flow goes through {@code FreeCastCostIncreaseSupport.payOrAsk}, which
+     * first lets the caster activate mana abilities (CR 601.2g).
+     */
+    public boolean payFreeCastCostIncreases(GameData gameData, UUID playerId, Card card, Zone sourceZone) {
+        try {
+            payFreeCastCostIncrease(gameData, playerId, card, 0, sourceZone);
+            return true;
+        } catch (IllegalStateException unpayable) {
+            return false;
+        }
+    }
+
+    /** Whether {@link #payFreeCastCostIncreases} could pay the spell's cost increases now; pays nothing. */
+    public boolean canPayFreeCastCostIncreases(GameData gameData, UUID playerId, Card card, Zone sourceZone) {
+        int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card, 0, sourceZone);
+        try {
+            payFreeCastManaPortion(gameData, playerId, card, 0, additionalCost, "", false);
+            return true;
+        } catch (IllegalStateException unpayable) {
+            return false;
+        }
+    }
+
     private void payFreeCastCostIncrease(GameData gameData, UUID playerId, Card card, int effectiveXValue,
                                          Zone sourceZone) {
         int additionalCost = castingCostService.getCastCostModifier(
