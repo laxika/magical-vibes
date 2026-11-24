@@ -2,11 +2,17 @@ package com.github.laxika.magicalvibes.cards.q;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfControllersLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingAndPutCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -23,9 +29,12 @@ import java.util.List;
 public class QuestForUlasTemple extends Card {
 
     public QuestForUlasTemple() {
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
-                new LookAtTopCardMayRevealMatchingAndPutCounterEffect(
-                        new CardTypePredicate(CardType.CREATURE), CounterType.QUEST),
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(SequenceEffect.of(
+                new LookAtTopCardOfControllersLibraryEffect(),
+                new ConditionalEffect(new TopCardOfLibraryType(CardType.CREATURE), new MayEffect(SequenceEffect.of(
+                        new RevealTopCardOfLibraryEffect(Subjects.you()),
+                        new PutCountersOnSelfEffect(CounterType.QUEST)),
+                        "Reveal the creature card and put a quest counter on Quest for Ula's Temple?"))),
                 "Look at the top card of your library?"));
 
         CardAllOfPredicate seaCreature = new CardAllOfPredicate(List.of(

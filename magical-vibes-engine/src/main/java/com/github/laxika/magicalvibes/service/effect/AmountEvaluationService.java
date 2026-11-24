@@ -1139,7 +1139,8 @@ public class AmountEvaluationService {
      * permanent as it last existed on the battlefield and by the controller it had as it left. One that includes what a
      * destroy step didn't destroy reads every departure of that step, a permanent still on the battlefield as it is
      * now; it reads nothing unless the departures are that step's (the permanents among them that were destroyed are
-     * its outcome's). A count of exiled cards matching a card filter judges each card as it is now.
+     * its outcome's). A count of exiled cards matching a card filter judges each card as it is now; a mill step's mana value
+     * totals the cards it recorded, found in the public zone they went to (CR 701.17c).
      */
     private int amountThisWay(GameData gameData, AmountContext ctx, AmountThisWay thisWay) {
         StackEntry entry = ctx.stackEntry();
@@ -1148,13 +1149,15 @@ public class AmountEvaluationService {
                 || thisWay.stat() != AmountThisWay.Stat.AMOUNT)) {
             return revealedStat(gameData, entry, results.outcome(StepKind.REVEAL), thisWay, ctx.controllerId());
         }
-        if (thisWay.cardFilter() != null) {
+        if (thisWay.cardFilter() != null
+                || thisWay.kind() == StepKind.MILL && thisWay.stat() == AmountThisWay.Stat.MANA_VALUE) {
             UUID sourceCardId = entry.getCard() == null ? null : entry.getCard().getId();
             boolean manaValue = thisWay.stat() == AmountThisWay.Stat.MANA_VALUE;
             return results.outcome(thisWay.kind()).objectIds().stream()
                     .map(id -> gameQueryService.findCardById(gameData, id))
-                    .filter(card -> card != null && predicateEvaluationService.matchesCardPredicate(
-                            card, thisWay.cardFilter(), sourceCardId, gameData, gameData.ownerOf(card)))
+                    .filter(card -> card != null && (thisWay.cardFilter() == null
+                            || predicateEvaluationService.matchesCardPredicate(
+                            card, thisWay.cardFilter(), sourceCardId, gameData, gameData.ownerOf(card))))
                     .reduce(0, (total, card) -> SaturatingMath.add(total, manaValue ? card.getManaValue() : 1),
                             SaturatingMath::add);
         }

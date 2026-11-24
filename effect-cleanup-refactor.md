@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8 (each in Findings; the fold queue marks its rows). Fold runs 8 to 10 run in parallel worktrees from 2026-11-24. Next: the rest of `splits` (25 rows), fold run 11. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).  |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9 (each in Findings; the fold queue marks its rows). Fold runs 8 to 11 run in parallel worktrees from 2026-11-24. Next: fold run 9b (`one-of-two`, `hand-choice-draw`, `draw-discard`), the rest of `splits` (25 rows). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).   |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,906 / 3,171 (after fold run 8) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,891 / 3,153 (after fold run 9) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,153 rows over 4,405 classes (after fold run 8). Latest verdict per class: `step-9` 1,117, unique 1,168, absorbed 595, split 496, blocked-other 461, survivor 271, blocked-step-model 140, blocked-player-loop 97, dead 60. Waiting: 1,117 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,184 rows over 4,405 classes (after fold run 9). Latest verdict per class: `step-9` 1,099, unique 1,168, absorbed 595, split 511, blocked-other 464, survivor 271, blocked-step-model 140, blocked-player-loop 97, dead 60. Waiting: 1,099 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -531,6 +531,12 @@ Delayed and global triggers:
   `ConditionalEffect(HappenedThisWay.removedCounters(), …)` (Bounty of the Luxa, fold run 8).
 - "Choose a number … equal to that number": `ChooseNumberAtResolutionEffect(0, MAX_VALUE)` (sets X) + the `…EqualsXPredicate`
   filters (Void, fold run 8).
+
+- `AmountThisWay.milledManaValue()` (no filter): the total mana value of the cards a mill step recorded in the public zone they
+  went to (CR 701.17c); Fateful Tempest, Heed the Mists, Palantír (fold run 9).
+- "You may sacrifice another X. When you do / If you do": `MayEffect(SequenceEffect.of(SacrificePermanentsEffect(1, allOf(X,
+  not(PermanentIsSourceCardPredicate)), you()), ConditionalEffect(sacrificed(), …)))`, offering no "may" when nothing can be
+  sacrificed; "if you can't sacrifice" is `ConditionalEffect(NotCondition(sacrificed()), …)` after the step (fold run 9).
 
 ### Blocked causes still open
 
@@ -1435,6 +1441,33 @@ damage trigger can't tell a creature source from a spell source).
 **For the next run.** Desolation, Creeping Dread and Kroxa share one missing piece: a `playersThisWay(kind, card/permanent
 filter)` subject plus checking `DiscardEffect(eachPlayer())` APNAP; build it in its own run. Ripples of Potential needs proliferate
 to record PUT_COUNTERS. 25 `splits` rows left; the queue lists them.
+
+### Step 9, fold run 9 (2026-11-24, parallel worktree)
+
+Batches `mill-split`, `sac-gated`, `sac-or-else`, `one-of-two`, `look-reveal-then`, `hand-choice-draw`, `draw-discard` (29 rows); no
+"Fold:" defect line named them. Taken: the first three and `look-reveal-then` (19 rows); `one-of-two`, `hand-choice-draw` and
+`draw-discard` (10 rows) not taken (time; fold run 9b). Ratchet in its worktree 3,933 / 3,196 → 3,918 / 3,178 (15 records; 15
+normalfx + 3 mayfx handlers). Ledger: 31 rows (split 15, blocked-other 3, re-batched 1, step-9 kept 10, survivor 2). 17 card files
+rewritten, Oracle text checked for all 17 and the 3 left; CR 400.7, 603.12, 608.2c, 608.2d, 608.2h, 701.17a–c, 701.23a–c checked.
+
+| Batch | Result |
+|---|---|
+| `mill-split` (4) | Fateful Tempest (the vote handler inserts `MillEffect` + `DealDamageToPlayersEffect(milledManaValue(), eachOpponent())`), Heed the Mists, Palantír (decline branch `SequenceEffect(MillEffect, LoseLifeEffect(milledManaValue(), targetPlayer()))`). Left: Heretic's Punishment (`blocked-other`: a max over the milled cards, one user) |
+| `sac-gated` (8) | Heart-Piercer, Surtland Flinger, Tiger-Tribe Hunter, Ziatora (Minsc & Boo's form; Giant doubling = `Sum(sacrificedPower(), sacrificedPower().matching(Giant))`), Venom (`PutCardToBattlefieldEffect.boundedBy(sacrificedManaValue())`), Garruk, Scapeshift (Sylvan Primordial's form), Feed the Pack (`withAmount(sacrificedToughness())`), Kethek (`CardManaValueAtMostAmountPredicate(Sum(sacrificedManaValue(), -1))`). Left: Kuldotha (`blocked-other`: the stacked-division announcer finds the division by class), Descendants' Fury (re-batched into `same-quality`) |
+| `sac-or-else` (4) | Xathrid Demon, Doom Foretold, Cruel Reality: the sacrifice step + `ConditionalEffect(NotCondition(sacrificed()), …)` ("if you can't" = nothing was sacrificed). Left: Lich (`blocked-other`: `atLeast` needs a `DynamicAmount`, one user) |
+| `look-reveal-then` (3) | Quest for Ula's Temple (Plane-Merge Elf's form inside its may), Runo, Delver: look + `ConditionalEffect(CardsInLibraryAtLeast(1), MayEffect(RevealTopCardOfLibraryEffect))` + `HappenedThisWay.toACard(REVEAL, f)` + `TransformSelfEffect` |
+
+**Behaviour changes.** Fateful Tempest and Palantír no longer count a milled card a replacement put into a hidden zone (Wheel of Sun
+and Moon; CR 701.17c); new `FatefulTempestTest` case. The sacrifice-gated cards follow the survivor: no "may" prompt when nothing
+can be sacrificed (CR 608.2d), a lone candidate sacrificed unasked, several by the multi-permanent prompt; the "can't be sacrificed"
+and token-protection guards now apply to Heart-Piercer's family; sacrifices go through the departure step. Cruel Reality respects
+"can't cause sacrifice". Scapeshift with zero lands sacrificed is still a search for up to zero (recorded; no ruling says
+otherwise). Runo respects transform prevention and transforms a transformed copy back. Logs: the survivors' lines.
+
+**For the next run.** Fold run 9b: `one-of-two` (allow `ChoosePermanentsEffect` over `allTargets()` without random, widen
+`SacrificeSelfEffect` to `thisWay(CHOOSE)`, keep the AI's `RemovalEffect` view), `hand-choice-draw` (check that the DISCARD
+destination records a DISCARD step), `draw-discard` (DISCARD mana-value stat, per-player `DiscardEffect` amounts). The re-triage
+note's 25 other stale 4f Mill rows were not checked.
 
 ## Prompt
 

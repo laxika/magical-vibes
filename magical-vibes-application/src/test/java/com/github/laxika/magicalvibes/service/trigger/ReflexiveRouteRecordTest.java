@@ -35,7 +35,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
@@ -48,7 +47,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
@@ -125,7 +126,9 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
         BOUNCE_THEN(effect -> SequenceEffect.of(
                 ReturnPermanentControlledByPlayerToHandEffect.controller(new PermanentIsCreaturePredicate(), "creature"),
                 new ConditionalEffect(HappenedThisWay.returned(), new QueueReflexiveAbilityEffect(effect)))),
-        SACRIFICE_FOR_POWER_DAMAGE(effect -> new SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect()),
+        SACRIFICE_THEN(effect -> SequenceEffect.of(
+                new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.you()),
+                new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(effect)))),
         EXILE_THEN_EXILE_MATCHING(effect -> SequenceEffect.of(
                 ExileChosenPermanentsEffect.youControl(new PermanentIsCreaturePredicate(), "creature"),
                 new ConditionalEffect(HappenedThisWay.exiled(), new QueueReflexiveAbilityEffect(
@@ -193,7 +196,7 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
                 Arguments.of(Continuation.DISCARD_THEN, Route.TARGET),
                 Arguments.of(Continuation.DISCARD_THEN, Route.GRAVEYARD_CARD),
                 Arguments.of(Continuation.BOUNCE_THEN, Route.TARGET),
-                Arguments.of(Continuation.SACRIFICE_FOR_POWER_DAMAGE, Route.TARGET),
+                Arguments.of(Continuation.SACRIFICE_THEN, Route.TARGET),
                 Arguments.of(Continuation.EXILE_THEN_EXILE_MATCHING, Route.PLAIN),
                 Arguments.of(Continuation.CREATE_TOKEN_THEN, Route.PLAIN),
                 Arguments.of(Continuation.CREATE_TOKEN_THEN, Route.TARGET),

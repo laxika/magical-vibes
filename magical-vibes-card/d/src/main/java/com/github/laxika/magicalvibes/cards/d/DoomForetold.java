@@ -11,7 +11,10 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -29,12 +32,11 @@ import java.util.Set;
 public class DoomForetold extends Card {
 
     public DoomForetold() {
-        addTrigger(Triggers.upkeep(ActivePlayer.ANY), new SacrificePermanentOrElseEffect(
-                new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY), SequenceEffect.of(
+                new SacrificePermanentsEffect(1, new PermanentAllOfPredicate(List.of(
                         new PermanentNotPredicate(new PermanentIsLandPredicate()),
-                        new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
-                fallbackEffect(),
-                "a nonland, nontoken permanent"));
+                        new PermanentNotPredicate(new PermanentIsTokenPredicate()))), Subjects.activePlayer()),
+                new ConditionalEffect(new NotCondition(HappenedThisWay.sacrificed()), fallbackEffect())));
     }
 
     private static SequenceEffect fallbackEffect() {

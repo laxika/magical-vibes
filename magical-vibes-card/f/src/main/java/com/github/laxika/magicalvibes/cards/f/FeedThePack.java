@@ -6,7 +6,14 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureToCreateTokensEqualToToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -25,11 +32,13 @@ import java.util.Set;
 public class FeedThePack extends Card {
 
     public FeedThePack() {
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new MayEffect(
-                new SacrificeCreatureToCreateTokensEqualToToughnessEffect(
-                        new CreateTokenEffect("Wolf", 2, 2,
-                                CardColor.GREEN, List.of(CardSubtype.WOLF), Set.of(), Set.of()),
-                        new PermanentNotPredicate(new PermanentIsTokenPredicate())),
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new MayEffect(SequenceEffect.of(
+                new SacrificePermanentsEffect(1, new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentNotPredicate(new PermanentIsTokenPredicate()))), Subjects.you()),
+                new ConditionalEffect(HappenedThisWay.sacrificed(), new CreateTokenEffect("Wolf", 2, 2,
+                        CardColor.GREEN, List.of(CardSubtype.WOLF), Set.of(), Set.of())
+                        .withAmount(AmountThisWay.sacrificedToughness()))),
                 "Sacrifice a nontoken creature to create Wolf tokens?"));
     }
 }

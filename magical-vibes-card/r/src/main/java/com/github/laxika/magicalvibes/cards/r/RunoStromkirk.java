@@ -3,8 +3,17 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.k.KrothussLordOfTheDeep;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfControllersLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
@@ -24,11 +33,14 @@ public class RunoStromkirk extends Card {
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new PutTargetCardsFromGraveyardOnTopOfLibraryEffect(new CardTypePredicate(CardType.CREATURE), 1));
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new LookAtTopCardMayRevealMatchingTransformEffect(new CardAllOfPredicate(List.of(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
+                new LookAtTopCardOfControllersLibraryEffect(),
+                new ConditionalEffect(new CardsInLibraryAtLeast(1),
+                        new MayEffect(new RevealTopCardOfLibraryEffect(Subjects.you()), "Reveal the top card of your library?")),
+                new ConditionalEffect(HappenedThisWay.toACard(StepKind.REVEAL, new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
-                        new CardMinManaValuePredicate(6)
-                ))));
+                        new CardMinManaValuePredicate(6)))),
+                        new TransformSelfEffect())));
     }
 
     @Override

@@ -13,7 +13,13 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureSearchLibraryForCreatureToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -38,7 +44,9 @@ public class GarrukTheVeilCursed extends Card {
         // reveal it, put it into your hand, then shuffle.
         addActivatedAbility(new ActivatedAbility(
                 -1,
-                List.of(new SacrificeCreatureSearchLibraryForCreatureToHandEffect()),
+                List.of(new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.you()),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new SearchLibraryEffect(new Fixed(1),
+                                new CardTypePredicate(CardType.CREATURE), LibrarySearchDestination.HAND))),
                 "\u22121: Sacrifice a creature. If you do, search your library for a creature card, reveal it, put it into your hand, then shuffle."
         ));
 

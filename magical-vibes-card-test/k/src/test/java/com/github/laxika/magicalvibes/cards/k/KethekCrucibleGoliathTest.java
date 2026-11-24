@@ -49,7 +49,7 @@ class KethekCrucibleGoliathTest extends BaseCardTest {
                 .isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrificed.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrificed.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrificedCard);
@@ -83,7 +83,7 @@ class KethekCrucibleGoliathTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting with no other creatures does nothing")
+    @DisplayName("With no other creature the sacrifice isn't offered and nothing happens")
     void acceptWithNoOtherCreaturesDoesNothing() {
         KethekCrucibleGoliath kethek = new KethekCrucibleGoliath();
         LlanowarElves libraryCard = new LlanowarElves();
@@ -94,8 +94,9 @@ class KethekCrucibleGoliathTest extends BaseCardTest {
 
         moveToEndStep();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
+        // The sacrifice is impossible, so it can't be chosen (CR 608.2d).
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .map(Permanent::getCard)).contains(kethek);
         assertThat(library).containsExactly(libraryCard);
@@ -115,8 +116,9 @@ class KethekCrucibleGoliathTest extends BaseCardTest {
 
         moveToEndStep();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
+        // The only other creature can't be sacrificed, so the sacrifice isn't offered (CR 608.2d).
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId()).stream().map(Permanent::getCard))
                 .contains(creature).doesNotContain(libraryCard);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(creature);

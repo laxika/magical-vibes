@@ -2,7 +2,15 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfLandsAndSearchThatManyLandsToBattlefieldTappedEffect;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "MOR", collectorNumber = "136")
 @CardRegistration(set = "M19", collectorNumber = "201")
@@ -10,8 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfLandsAndS
 public class Scapeshift extends Card {
 
     public Scapeshift() {
-        // Sacrifice any number of lands. Search your library for up to that many land cards,
-        // put them onto the battlefield tapped, then shuffle.
-        addSpellEffect(new SacrificeAnyNumberOfLandsAndSearchThatManyLandsToBattlefieldTappedEffect());
+        addSpellEffect(SacrificePermanentsEffect.anyNumber(new PermanentIsLandPredicate(), Subjects.you()));
+        addSpellEffect(new SearchLibraryEffect(new AmountThisWay(StepKind.SACRIFICE),
+                new CardTypePredicate(CardType.LAND), LibrarySearchDestination.BATTLEFIELD_TAPPED));
     }
 }

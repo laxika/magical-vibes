@@ -37,16 +37,18 @@ class TigerTribeHunterTest extends BaseCardTest {
     void offersOnlyOtherControlledCreaturesForSacrifice() {
         Permanent hunter = addCreatureReady(player1, new TigerTribeHunter());
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherBear = addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player2, new HillGiant());
 
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validPermanentIds()).containsExactly(bear.getId());
-        assertThat(choice.validPermanentIds()).doesNotContain(hunter.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(bear.getId(), otherBear.getId());
+        assertThat(choice.validIds()).doesNotContain(hunter.getId());
+        assertThat(choice.maxCount()).isEqualTo(1);
     }
 
     @Test
@@ -75,7 +77,7 @@ class TigerTribeHunterTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrificed.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrificed.getId()));
         harness.handlePermanentChosen(player1, hunter.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sacrificed);
@@ -113,7 +115,7 @@ class TigerTribeHunterTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrificed.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrificed.getId()));
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
@@ -144,7 +146,7 @@ class TigerTribeHunterTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrificed.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrificed.getId()));
 
         PendingInteraction.PermanentChoice choice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();

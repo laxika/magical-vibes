@@ -497,23 +497,6 @@ public class LibrarySearchSupport {
     }
 
     /**
-     * Searches the controller's library for a creature card, reveals it, and puts it into their hand.
-     * Called after the sacrifice portion of SacrificeCreatureSearchLibraryForCreatureToHandEffect completes.
-     */
-    public void searchLibraryForCreatureToHand(GameData gameData, UUID controllerId) {
-        performLibrarySearch(
-                gameData,
-                controllerId,
-                card -> card.hasType(CardType.CREATURE),
-                "creature cards",
-                "Search your library for a creature card to reveal and put into your hand.",
-                true,
-                true,
-                LibrarySearchDestination.HAND
-        );
-    }
-
-    /**
      * Unified library search skeleton: check restriction -> get deck -> filter -> handle no matches ->
      * begin interaction -> send message -> log. Returns true if the search was initiated, false otherwise.
      */

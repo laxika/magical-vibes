@@ -101,7 +101,7 @@ class CruelRealityTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player2, liliana.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(liliana.getId()));
 
         harness.assertOnBattlefield(player2, "Dune Beetle");
         harness.assertNotOnBattlefield(player2, "Liliana, Death's Majesty");

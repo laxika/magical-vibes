@@ -8,7 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.FatefulTempestEffect;
-import com.github.laxika.magicalvibes.model.effect.MillControllerAndDamageOpponentsByManaValueEffect;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.VotingFinishedSupport;
 import lombok.RequiredArgsConstructor;
@@ -67,7 +70,8 @@ public class FatefulTempestEffectHandler implements NormalEffectHandlerBean {
             int presentVotes = votes.getOrDefault(ChoiceContext.FatefulTempestChoice.PRESENT, 0);
             List<CardEffect> results = new ArrayList<>(2);
             if (pastVotes > 0) {
-                results.add(new MillControllerAndDamageOpponentsByManaValueEffect(pastVotes));
+                results.add(new MillEffect(pastVotes, Subjects.you()));
+                results.add(new DealDamageToPlayersEffect(AmountThisWay.milledManaValue(), Subjects.eachOpponent()));
             }
             if (presentVotes > 0) {
                 results.add(new ExileTopCardMayPlayThisTurnEffect(presentVotes, false)

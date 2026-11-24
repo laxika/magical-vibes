@@ -44,13 +44,10 @@ import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
-import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -102,7 +99,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ExileChosenPermane
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSelfAndReturnUnderOpponentControlEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GainControlOfDefendingPlayerCreatureAndAttackEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.MayReturnPermanentToHandAndEnterWithCountersEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesPermanentToExileUntilSourceLeavesEffectHandler;
@@ -113,9 +109,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.PopulateSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PreventCombatDamageByTargetCreatureIfSharesColorWithChosenPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PutCounterOnEitherTargetPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PutSacrificedPermanentCountersAndAttachEquipmentEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeAnotherCreatureDrawAndMayPutPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOtherCreatureThenRevealUntilLowerManaValueEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SearchLibraryForUpToTwoBasicLandsWithSameNameAsChosenLandEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SoulbondSupport;
@@ -255,8 +249,6 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final com.github.laxika.magicalvibes.service.DrawService drawService;
 
-    private final LibrarySearchSupport librarySearchSupport;
-
     private final SoulbondSupport soulbondSupport;
 
     private final CoinFlipService coinFlipService;
@@ -280,12 +272,8 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffectHandler
             targetPlayerSacrificesNontokenCreatureThenConjuresDuplicateHandler;
 
-    private final SacrificeOtherCreatureThenRevealUntilLowerManaValueEffectHandler sacrificeOtherCreatureThenRevealHandler;
-
     private final SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffectHandler
             sacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeHandler;
-
-    private final SacrificeAnotherCreatureDrawAndMayPutPermanentEffectHandler sacrificeAnotherCreatureDrawAndMayPutPermanentHandler;
 
     private final SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler sacrificePermanentAndReturnHandler;
 
@@ -999,19 +987,6 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    public void handleSacrificeOtherCreatureThenRevealUntilLowerManaValue(
-            GameData gameData, UUID permanentId,
-            PermanentChoiceContext.SacrificeOtherCreatureThenRevealUntilLowerManaValue context) {
-        Permanent creature = gameQueryService.findPermanentById(gameData, permanentId);
-        if (creature == null) {
-            throw new IllegalStateException("Chosen creature no longer exists");
-        }
-
-        sacrificeOtherCreatureThenRevealHandler.resolveAfterChoice(
-                gameData, context.sourceCard(), context.controllerId(), creature, context.predicate());
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
     public void handleSacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureType(
             GameData gameData, UUID permanentId,
             PermanentChoiceContext.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureType context) {
@@ -1022,19 +997,6 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         sacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeHandler.resolveAfterChoice(
                 gameData, context.sourceCard(), context.controllerId(), creature);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleSacrificeAnotherCreatureDrawAndMayPutPermanent(
-            GameData gameData, UUID permanentId,
-            PermanentChoiceContext.SacrificeAnotherCreatureDrawAndMayPutPermanent context) {
-        Permanent creature = gameQueryService.findPermanentById(gameData, permanentId);
-        if (creature == null) {
-            throw new IllegalStateException("Chosen creature no longer exists");
-        }
-
-        sacrificeAnotherCreatureDrawAndMayPutPermanentHandler.resolveAfterChoice(
-                gameData, creature, context.effect());
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -1450,47 +1412,6 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleGainControlOfDefendingPlayerCreatureAndAttack(GameData gameData, UUID permanentId,
             PermanentChoiceContext.GainControlOfDefendingPlayerCreatureAndAttack context) {
         gainControlOfDefendingPlayerCreatureAndAttackEffectHandler.completeChoice(gameData, permanentId, context);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleSacrificeCreatureThenSearchLibrary(GameData gameData, UUID permanentId,
-                                                         PermanentChoiceContext.SacrificeCreatureThenSearchLibrary context) {
-        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
-        if (target == null) {
-            throw new IllegalStateException("Target creature no longer exists");
-        }
-
-        UUID sacrificingPlayerId = context.sacrificingPlayerId();
-        if (destructionSupport.sacrificeAndLog(gameData, target, sacrificingPlayerId).sacrificed()) {
-            // "If you do" — sacrifice happened, now search library for a creature card
-            librarySearchSupport.searchLibraryForCreatureToHand(gameData, sacrificingPlayerId);
-        }
-
-        // When the search awaits input, the library-choice completion owns the epilogue.
-        if (!gameData.interaction.isAwaitingInput()) {
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-        }
-    }
-
-    public void handleSacrificeCreatureOpponentsLoseLife(GameData gameData, UUID permanentId,
-                                                         PermanentChoiceContext.SacrificeCreatureOpponentsLoseLife context) {
-        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
-        if (target == null) {
-            throw new IllegalStateException("Target creature no longer exists");
-        }
-
-        UUID sacrificingPlayerId = context.sacrificingPlayerId();
-
-        // Capture effective power before removing from battlefield (static bonuses still apply)
-        int power = gameQueryService.getEffectivePower(gameData, target);
-
-        destructionSupport.sacrificeAndLog(gameData, target, sacrificingPlayerId);
-
-        // Each opponent loses life equal to the sacrificed creature's power, as the step the parked resolution
-        // resumes with, so their Lich's Duel Mastery sacrifices are asked about before any life is lost.
-        destructionSupport.opponentsLoseLifeAsStep(gameData, gameData.pendingEffectResolutionEntry,
-                gameData.pendingEffectResolutionIndex, sacrificingPlayerId, power, context.sourceCardName());
-
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -2390,60 +2311,6 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    public void handleSacrificeAnotherCreatureDealPowerDamage(GameData gameData, UUID permanentId,
-                                                              PermanentChoiceContext.SacrificeAnotherCreatureDealPowerDamage ctx) {
-        Permanent toSacrifice = gameQueryService.findPermanentById(gameData, permanentId);
-        if (toSacrifice == null) {
-            throw new IllegalStateException("Chosen creature no longer exists");
-        }
-
-        // Capture effective power before removing from battlefield so static bonuses still apply.
-        int power = Math.max(0, gameQueryService.getEffectivePower(gameData, toSacrifice));
-        boolean twiceThatMuch = ctx.doubleDamageIfGiant()
-                && gameQueryService.hasEffectiveSubtype(gameData, toSacrifice, CardSubtype.GIANT);
-
-        UUID sourcePermanentId = gameData.playerBattlefields.get(ctx.controllerId()).stream()
-                .filter(permanent -> permanent.getOriginalCard().getId().equals(ctx.sourceCard().getId()))
-                .map(Permanent::getId)
-                .findFirst()
-                .orElse(null);
-
-        Permanent sacrificed = new Permanent(toSacrifice);
-        destructionSupport.sacrificeAndLog(gameData, toSacrifice, ctx.controllerId());
-
-        queuePowerDamageReflexiveTrigger(
-                gameData, ctx.controllerId(), ctx.sourceCard(), sourcePermanentId, sacrificed, power, twiceThatMuch,
-                ctx.reflexiveFollowUps(), ctx.targetPredicate());
-    }
-
-    private void queuePowerDamageReflexiveTrigger(GameData gameData, UUID controllerId,
-                                                   Card sourceCard, UUID sourcePermanentId,
-                                                   Permanent sacrificed, int power, boolean twiceThatMuch,
-                                                   List<CardEffect> reflexiveFollowUps,
-                                                   PermanentPredicate targetRestriction) {
-        // "Damage equal to that creature's power" ("twice that much" for a sacrificed Giant, Surtland Flinger): the
-        // power the creature had as it was sacrificed is on the reflexive ability's entry, which the damage reads.
-        DynamicAmount damage = twiceThatMuch
-                ? new Scaled(new SacrificedPermanentPower(), 2) : new SacrificedPermanentPower();
-        CardEffect damageEffect = targetRestriction == null
-                ? new DealDamageToAnyTargetEffect(damage)
-                : new DealDamageToTargetCreatureEffect(damage, false, targetRestriction);
-        List<CardEffect> reflexiveEffects = new ArrayList<>();
-        reflexiveEffects.add(damageEffect);
-        reflexiveEffects.addAll(reflexiveFollowUps);
-        // "When you do" is an ability of its own (CR 603.12): it records what the resolving entry was about and the
-        // creature sacrificed, and the stack door chooses its target as it goes on the stack (CR 603.3d); with no
-        // legal target it is removed.
-        StackEntry record = ReflexiveAbilitySupport.recordFor(gameData,
-                ReflexiveAbilitySupport.resolvingEntryOf(gameData, sourceCard, sourcePermanentId),
-                sourceCard, controllerId, reflexiveEffects, sourceCard.getName() + "'s reflexive ability",
-                sourcePermanentId);
-        record.setSacrificedPermanentSnapshot(sacrificed);
-        record.setSacrificedPower(power);
-        triggeredAbilityStackService.putMade(gameData, record);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
     public void handleExploitSacrifice(GameData gameData, UUID permanentId,
                                        PermanentChoiceContext.ExploitSacrifice ctx) {
         Permanent toSacrifice = gameQueryService.findPermanentById(gameData, permanentId);
@@ -2635,28 +2502,6 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
         exquisiteArchangelLossReplacer.applyReplacement(gameData, ctx.playerId(), angel,
                 LossReason.valueOf(ctx.lossReason()));
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleSacrificeCreatureCreateTokensEqualToToughness(GameData gameData, UUID permanentId,
-                                                                    PermanentChoiceContext.SacrificeCreatureCreateTokensEqualToToughness ctx) {
-        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
-        if (target == null) {
-            throw new IllegalStateException("Chosen creature no longer exists");
-        }
-
-        // Capture effective toughness before removing from battlefield (static bonuses still apply)
-        int toughness = gameQueryService.getEffectiveToughness(gameData, target);
-
-        destructionSupport.sacrificeAndLog(gameData, target, ctx.controllerId());
-
-        // Create X tokens, where X is the sacrificed creature's toughness; "if you do" is part of the
-        // same resolution, so the tokens are created without a priority window
-        if (toughness > 0) {
-            permanentControlSupport.applyCreateToken(gameData, ctx.controllerId(), ctx.tokenTemplate(),
-                    toughness, ctx.sourceCard().getSetCode());
-        }
-
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

@@ -28,8 +28,7 @@ class ZiatoraTheIncineratorTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player2.getId());
 
         resolveEndStepTrigger(player1);
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.handleMayAbilityChosen(player1, true); // the only other creature is sacrificed unasked
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
@@ -54,13 +53,16 @@ class ZiatoraTheIncineratorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Having no other creature to sacrifice creates no Treasures")
+    @DisplayName("Having no other creature to sacrifice offers no sacrifice and creates no Treasures")
     void noOtherCreatureDoesNothing() {
         harness.addToBattlefield(player1, new ZiatoraTheIncinerator());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
 
-        resolveEndStepTrigger(player1);
-        harness.handleMayAbilityChosen(player1, true);
-
+        // The sacrifice is impossible, so it can't be chosen (CR 608.2d).
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
     }
@@ -74,8 +76,7 @@ class ZiatoraTheIncineratorTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player2.getId());
 
         resolveEndStepTrigger(player1);
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.handleMayAbilityChosen(player1, true); // the only other creature is sacrificed unasked
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
@@ -93,8 +94,7 @@ class ZiatoraTheIncineratorTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player2.getId());
 
         resolveEndStepTrigger(player1);
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.handleMayAbilityChosen(player1, true); // the only other creature is sacrificed unasked
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
@@ -111,8 +111,7 @@ class ZiatoraTheIncineratorTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Murder()));
 
         resolveEndStepTrigger(player1);
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.handleMayAbilityChosen(player1, true); // the only other creature is sacrificed unasked
         harness.handlePermanentChosen(player1, target.getId());
 
         harness.assertInGraveyard(player1, "Grizzly Bears");

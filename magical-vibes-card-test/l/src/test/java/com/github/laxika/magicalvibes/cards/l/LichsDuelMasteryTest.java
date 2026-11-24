@@ -484,7 +484,7 @@ class LichsDuelMasteryTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                 .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Kalitas, Traitor of Ghet");

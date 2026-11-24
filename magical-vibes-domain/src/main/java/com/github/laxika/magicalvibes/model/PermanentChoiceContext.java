@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfNextPlayerNonlan
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MeldWithNamedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayReturnPermanentToHandAndEnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAnotherCreatureDrawAndMayPutPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
@@ -409,19 +408,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    /** Kethek: the controller is choosing another creature to sacrifice before the library reveal. */
-    record SacrificeOtherCreatureThenRevealUntilLowerManaValue(
-            UUID controllerId, Card sourceCard, com.github.laxika.magicalvibes.model.filter.CardPredicate predicate)
-            implements PermanentChoiceContext {}
-
     /** Descendants' Fury: choose a creature from the triggering combat-damage event. */
     record SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureType(
             UUID controllerId, Card sourceCard) implements PermanentChoiceContext {}
-
-    /** Eddie Brock: choose another creature to sacrifice before drawing and putting a permanent. */
-    record SacrificeAnotherCreatureDrawAndMayPutPermanent(
-            UUID controllerId, Card sourceCard, SacrificeAnotherCreatureDrawAndMayPutPermanentEffect effect)
-            implements PermanentChoiceContext {}
 
     /**
      * The losing player chooses which of several Exquisite Archangels replaces their game loss
@@ -829,8 +818,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             String sourceCardName
     ) implements PermanentChoiceContext {}
 
-    record SacrificeCreatureThenSearchLibrary(UUID sacrificingPlayerId) implements PermanentChoiceContext {}
-
     /** Retribution: {@code sacrificingPlayerId} picks which of the two targeted creatures they
      *  sacrifice; the other one gets a -1/-1 counter from {@code sourceCard}. */
     record SacrificeOneOfTwoThenCounterOnOther(UUID sacrificingPlayerId, Card sourceCard, UUID controllerId,
@@ -881,8 +868,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Incriminate: the shared controller picks which of the two targeted creatures to sacrifice. */
     record SacrificeOneOfTwo(UUID sacrificingPlayerId, UUID firstPermanentId, UUID secondPermanentId)
             implements PermanentChoiceContext {}
-
-    record SacrificeCreatureOpponentsLoseLife(UUID sacrificingPlayerId, String sourceCardName) implements PermanentChoiceContext {}
 
     /**
      * A controller accepted an upkeep "you may sacrifice" choice and is picking which permanent;
@@ -1761,35 +1746,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     }
 
     record SacrificeArtifactForDividedDamage(UUID controllerId, Card sourceCard, Map<UUID, Integer> damageAssignments) implements PermanentChoiceContext {}
-
-    /** Choose the creature whose sacrifice creates the reflexive trigger. */
-    record SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard,
-                                                   List<CardEffect> reflexiveFollowUps, PermanentPredicate targetPredicate,
-                                                   boolean doubleDamageIfGiant)
-            implements PermanentChoiceContext {
-        public SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard,
-                                                   List<CardEffect> reflexiveFollowUps) {
-            this(controllerId, sourceCard, reflexiveFollowUps, null, false);
-        }
-
-        public SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard,
-                                                   List<CardEffect> reflexiveFollowUps,
-                                                   boolean doubleDamageIfGiant) {
-            this(controllerId, sourceCard, reflexiveFollowUps, null, doubleDamageIfGiant);
-        }
-
-        public SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard, PermanentPredicate targetPredicate) {
-            this(controllerId, sourceCard, List.of(), targetPredicate, false);
-        }
-
-        public SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard) {
-            this(controllerId, sourceCard, List.of(), null, false);
-        }
-
-        public SacrificeAnotherCreatureDealPowerDamage {
-            reflexiveFollowUps = List.copyOf(reflexiveFollowUps);
-        }
-    }
 
     record ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType,
                                 boolean copy, List<UUID> chosenTargets, int genericCostReduction,
@@ -2829,10 +2785,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             PermanentPredicate sacrificeFilter,
             boolean sacrificeBeforeLifeLoss
     ) implements PermanentChoiceContext {}
-
-    /** "Sacrifice a creature. If you do, create X tokens, where X is its toughness." (e.g. Feed the Pack). */
-    record SacrificeCreatureCreateTokensEqualToToughness(UUID controllerId, Card sourceCard,
-                                                         com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate) implements PermanentChoiceContext {}
 
     /** "Sacrifice a creature. If you do, create one token whose power and toughness are each equal to
      *  the sacrificed creature's power." (e.g. Ooze Garden). */

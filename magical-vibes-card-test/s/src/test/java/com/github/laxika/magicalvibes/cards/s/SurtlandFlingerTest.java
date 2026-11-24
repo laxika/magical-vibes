@@ -20,14 +20,13 @@ class SurtlandFlingerTest extends BaseCardTest {
     @DisplayName("Sacrificing a Giant deals twice its power to a target player")
     void giantDealsTwiceItsPower() {
         addCreatureReady(player1, new SurtlandFlinger());
-        Permanent giant = addCreatureReady(player1, new HillGiant());
+        addCreatureReady(player1, new HillGiant());
         int lifeBefore = gd.getLife(player2.getId());
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(List.of(0));
             harness.passBothPriorities();
-            harness.handleMayAbilityChosen(player1, true);
-            harness.handlePermanentChosen(player1, giant.getId());
+            harness.handleMayAbilityChosen(player1, true); // the only other creature is sacrificed unasked
             harness.handlePermanentChosen(player1, player2.getId());
             harness.passBothPriorities();
         });
@@ -40,14 +39,13 @@ class SurtlandFlingerTest extends BaseCardTest {
     @DisplayName("Sacrificing a non-Giant deals its power to a target player")
     void nonGiantDealsItsPower() {
         addCreatureReady(player1, new SurtlandFlinger());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
         int lifeBefore = gd.getLife(player2.getId());
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(List.of(0));
             harness.passBothPriorities();
-            harness.handleMayAbilityChosen(player1, true);
-            harness.handlePermanentChosen(player1, bears.getId());
+            harness.handleMayAbilityChosen(player1, true); // the only other creature is sacrificed unasked
             harness.handlePermanentChosen(player1, player2.getId());
             harness.passBothPriorities();
         });

@@ -38,8 +38,7 @@ class HeartPiercerManticoreTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player2.getId());
 
         castManticoreToMayPrompt();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.handleMayAbilityChosen(player1, true); // the only other creature is sacrificed unasked
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
@@ -55,8 +54,7 @@ class HeartPiercerManticoreTest extends BaseCardTest {
         harness.addToBattlefield(player2, new HillGiant());     // 3/3 target
 
         castManticoreToMayPrompt();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.handleMayAbilityChosen(player1, true); // the only other creature is sacrificed unasked
         harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Hill Giant"));
         harness.passBothPriorities();
 
@@ -71,8 +69,7 @@ class HeartPiercerManticoreTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());  // 2/2 target
 
         castManticoreToMayPrompt();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Hill Giant"));
+        harness.handleMayAbilityChosen(player1, true); // the only other creature is sacrificed unasked
         harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
         harness.passBothPriorities();
 
@@ -94,13 +91,14 @@ class HeartPiercerManticoreTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("With no other creature to sacrifice, the trigger deals no damage")
+    @DisplayName("With no other creature to sacrifice, the sacrifice isn't offered and no damage is dealt")
     void noOtherCreatureDealsNoDamage() {
         int lifeBefore = gd.getLife(player2.getId());
 
         castManticoreToMayPrompt();
-        harness.handleMayAbilityChosen(player1, true);
 
+        // The sacrifice is impossible, so it can't be chosen (CR 608.2d): no prompt, no reflexive ability.
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
     }
 
@@ -132,10 +130,7 @@ class HeartPiercerManticoreTest extends BaseCardTest {
         assertThat(token.getCard().getManaCost()).isEmpty();
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        Permanent original = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> !p.getCard().isToken()).findFirst().orElseThrow();
-        harness.handlePermanentChosen(player1, original.getId());
+        harness.handleMayAbilityChosen(player1, true); // the original, the only other creature, is sacrificed unasked
         harness.handlePermanentChosen(player1, player2.getId());
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);

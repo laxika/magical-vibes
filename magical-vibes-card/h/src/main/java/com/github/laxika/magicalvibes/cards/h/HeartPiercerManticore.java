@@ -2,11 +2,22 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
+import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "138")
 @CardRegistration(set = "PIO", collectorNumber = "140")
@@ -14,14 +25,15 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class HeartPiercerManticore extends Card {
 
     public HeartPiercerManticore() {
-        // When this creature enters, you may sacrifice another creature. When you do, this creature
-        // deals damage equal to that creature's power to any target.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MayEffect(new SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect(),
+                new MayEffect(SequenceEffect.of(
+                        new SacrificePermanentsEffect(1, new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))), Subjects.you()),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(
+                                new DealDamageToAnyTargetEffect(AmountThisWay.sacrificedPower())))),
                         "Sacrifice another creature?"));
 
-        // Embalm {5}{R} ({5}{R}, Exile this card from your graveyard: Create a token that's a copy
-        // of it, except it's a white Zombie Manticore with no mana cost. Embalm only as a sorcery.)
         addEmbalm("{5}{R}", "Manticore");
     }
 }

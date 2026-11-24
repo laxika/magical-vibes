@@ -1898,10 +1898,9 @@ public class MultiPermanentChoiceHandlerService {
      * batch's death replacements have been asked.
      * The "choose, then remove the chosen" contexts only read their picks before one batch:
      * {@link MultiPermanentChoiceContext.ForcedDestroy} destroys, and
-     * {@link MultiPermanentChoiceContext.SacrificeLandsSearchLandsToBattlefieldTapped},
      * {@link MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount} and
      * {@link MultiPermanentChoiceContext.SacrificeCreaturesWithTotalPowerOrSacrificeSource} sacrifice, with their
-     * search, draws, "if you do" effect, mana or recorded count only after.
+     * draws, "if you do" effect, mana or recorded count only after.
      * {@link MultiPermanentChoiceContext.EachPlayerChoosesCreaturesWithTotalPowerAtMostChoice} keeps the kept
      * creatures so far in the immutable context and only prompts the next player before it sacrifices the rest. The as-enters sacrifices
      * ({@link MultiPermanentChoiceContext.DevourSacrifice},
@@ -1943,7 +1942,6 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands
                 || context instanceof MultiPermanentChoiceContext.VoteForCreatureThenDestroyMostVotedChoice
                 || context instanceof MultiPermanentChoiceContext.ForcedDestroy
-                || context instanceof MultiPermanentChoiceContext.SacrificeLandsSearchLandsToBattlefieldTapped
                 || context instanceof MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount
                 || context instanceof MultiPermanentChoiceContext.SacrificeCreaturesWithTotalPowerOrSacrificeSource
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesCreaturesWithTotalPowerAtMostChoice
@@ -2134,10 +2132,6 @@ public class MultiPermanentChoiceHandlerService {
                 handleForcedDestroy(gameData, permanentIds, ctx);
                 return;
             }
-            case MultiPermanentChoiceContext.SacrificeLandsSearchLandsToBattlefieldTapped ignored -> {
-                handleSacrificeLandsSearchLandsToBattlefieldTapped(gameData, playerId, permanentIds);
-                return;
-            }
             case MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount ctx -> {
                 handleSacrificeAnyNumberAndRecordCount(gameData, playerId, permanentIds, ctx);
                 return;
@@ -2301,51 +2295,6 @@ public class MultiPermanentChoiceHandlerService {
             log.info("Game {} - {} returns {} permanents to hand", gameData.id,
                     gameData.playerIdToName.get(context.returningPlayerId()), bouncedCards.size());
         }
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    private void handleSacrificeLandsSearchLandsToBattlefieldTapped(GameData gameData, UUID playerId,
-                                                                    List<UUID> permanentIds) {
-        List<Permanent> sacrificedPermanents = permanentIds.stream()
-                .map(permId -> gameQueryService.findPermanentById(gameData, permId))
-                .filter(java.util.Objects::nonNull)
-                .toList();
-        int sacrificed = sacrificedPermanents.size();
-        destructionSupport.sacrificeTogether(gameData, sacrificedPermanents, playerId);
-        permanentRemovalService.removeOrphanedAuras(gameData);
-
-        // Search the library for up to that many land cards, put them onto the battlefield tapped.
-        // Scapeshift shuffles its controller's library whether or not a search happens.
-        if (sacrificed > 0 && !librarySearchSupport.isSearchPrevented(gameData, playerId)) {
-            List<Card> deck = gameData.playerDecks.get(playerId);
-            String playerName = gameData.playerIdToName.get(playerId);
-            if (deck == null || deck.isEmpty()) {
-                gameLogService.append(gameData, GameLog.text(playerName + " searches their library but it is empty. Library is shuffled."));
-            } else {
-                List<Card> lands = deck.stream()
-                        .filter(card -> card.hasType(com.github.laxika.magicalvibes.model.CardType.LAND))
-                        .toList();
-                if (lands.isEmpty()) {
-                    gameLogService.append(gameData, GameLog.text(playerName + " searches their library but finds no land cards. Library is shuffled."));
-                } else {
-                    String prompt = "Search your library for up to " + sacrificed + " land card"
-                            + (sacrificed != 1 ? "s" : "")
-                            + " and put them onto the battlefield tapped (" + sacrificed + " remaining).";
-                    librarySearchSupport.sendLibrarySearchToPlayer(gameData, playerId,
-                            com.github.laxika.magicalvibes.model.LibrarySearchParams.builder(playerId, new ArrayList<>(lands))
-                                    .remainingCount(sacrificed)
-                                    .canFailToFind(true)
-                                    .destination(com.github.laxika.magicalvibes.model.LibrarySearchDestination.BATTLEFIELD_TAPPED)
-                                    .build(), prompt, true);
-                    // Library search interaction is now active; it resumes effect resolution on completion.
-                    return;
-                }
-            }
-        }
-
-        com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
-
-        // No search begun — follow standard completion: SBA → may abilities → resume effects
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 

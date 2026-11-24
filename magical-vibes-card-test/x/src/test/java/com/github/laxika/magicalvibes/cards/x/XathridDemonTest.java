@@ -149,11 +149,12 @@ class XathridDemonTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.SacrificeCreatureOpponentsLoseLife.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(bears.getId(), spider.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.maxCount()).isEqualTo(1);
+        assertThat(choice.validIds()).contains(bears.getId(), spider.getId());
     }
 
     @Test
@@ -168,7 +169,7 @@ class XathridDemonTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(demonPerm.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds()).doesNotContain(demonPerm.getId());
     }
 
     @Test
@@ -182,7 +183,7 @@ class XathridDemonTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
         harness.assertNotOnBattlefield(player1, "Runeclaw Bear");
         harness.assertOnBattlefield(player1, "Giant Spider");
@@ -201,7 +202,7 @@ class XathridDemonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
     }
 
     @Test
@@ -279,7 +280,7 @@ class XathridDemonTest extends BaseCardTest {
         harness.castInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
         harness.assertInGraveyard(player1, "Runeclaw Bear");
         harness.assertOnBattlefield(player1, "Giant Spider");
@@ -329,9 +330,9 @@ class XathridDemonTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AlexiosDeimosOfKosmos());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
                 .containsExactlyInAnyOrder(bears.getId(), spider.getId());
-        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
         harness.assertOnBattlefield(player1, "Alexios, Deimos of Kosmos");
         harness.assertOnBattlefield(player1, "Giant Spider");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);

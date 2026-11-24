@@ -131,8 +131,9 @@ class EddieBrockTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
+        // No other creature of Venom's controller can be sacrificed, so the sacrifice isn't offered (CR 608.2d).
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.assertOnBattlefield(player1, "Venom, Lethal Protector");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

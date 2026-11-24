@@ -924,14 +924,6 @@ public sealed interface MultiPermanentChoiceContext {
     record TapPermanentsAndPutCounters(CounterType counterType) implements MultiPermanentChoiceContext {
     }
 
-    /**
-     * Sacrifice the chosen lands, then search the library for up to that many land cards and put
-     * them onto the battlefield tapped, then shuffle (Scapeshift). The number of lands searched
-     * for equals the number of lands sacrificed.
-     */
-    record SacrificeLandsSearchLandsToBattlefieldTapped() implements MultiPermanentChoiceContext {
-    }
-
     /** The controller chooses none or exactly {@code requiredCount} permanents to sacrifice. */
     record SacrificePermanentsOrElse(int requiredCount, CardEffect sacrificedEffect,
                                      CardEffect elseEffect) implements MultiPermanentChoiceContext {

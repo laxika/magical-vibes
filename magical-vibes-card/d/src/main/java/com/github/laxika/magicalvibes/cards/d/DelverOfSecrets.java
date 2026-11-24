@@ -3,12 +3,23 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.i.InsectileAberration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfControllersLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import java.util.List;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealTypeTransformEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.Set;
 
 @CardRegistration(set = "ISD", collectorNumber = "51")
 @CardRegistration(set = "MID", collectorNumber = "47")
@@ -26,8 +37,13 @@ public class DelverOfSecrets extends Card {
         // At the beginning of your upkeep, look at the top card of your library.
         // You may reveal that card. If an instant or sorcery card is revealed this way,
         // transform Delver of Secrets.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new LookAtTopCardMayRevealTypeTransformEffect(Set.of(CardType.INSTANT, CardType.SORCERY)));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
+                new LookAtTopCardOfControllersLibraryEffect(),
+                new ConditionalEffect(new CardsInLibraryAtLeast(1),
+                        new MayEffect(new RevealTopCardOfLibraryEffect(Subjects.you()), "Reveal the top card of your library?")),
+                new ConditionalEffect(HappenedThisWay.toACard(StepKind.REVEAL, new CardAnyOfPredicate(List.of(
+                        new CardTypePredicate(CardType.INSTANT), new CardTypePredicate(CardType.SORCERY)))),
+                        new TransformSelfEffect())));
     }
 
     @Override

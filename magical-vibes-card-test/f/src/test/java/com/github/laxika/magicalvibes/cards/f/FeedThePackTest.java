@@ -24,6 +24,7 @@ class FeedThePackTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FeedThePack());
         Permanent protectedCreature = harness.addToBattlefieldAndReturn(player1, new GavonyIronwright());
         Permanent other = harness.addToBattlefieldAndReturn(player1, new GavonyIronwright());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new GavonyIronwright());
         gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("Test", null, player1.getId(),
                 new ControllerCantSacrificeTargetThisTurnEffect(), protectedCreature.getId(), Duration.UNTIL_END_OF_TURN));
 
@@ -34,8 +35,8 @@ class FeedThePackTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
-                .containsExactly(other.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+                .containsExactlyInAnyOrder(other.getId(), third.getId());
     }
 
     @Test
@@ -56,9 +57,8 @@ class FeedThePackTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
-        // Accept — now must choose a creature to sacrifice
+        // Accept — the only creature is sacrificed unasked
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, creature.getId());
 
         // Gavony Ironwright was sacrificed
         harness.assertNotOnBattlefield(player1, "Gavony Ironwright");
@@ -99,7 +99,7 @@ class FeedThePackTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting with no creatures to sacrifice creates no tokens")
+    @DisplayName("With no creature to sacrifice the sacrifice isn't offered and no tokens are created")
     void acceptWithNoCreaturesDoesNothing() {
         harness.addToBattlefield(player1, new FeedThePack());
 
@@ -108,13 +108,9 @@ class FeedThePackTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.passBothPriorities(); // advance to end step → trigger queued
-        harness.passBothPriorities(); // resolve trigger → may choice
+        harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
-
-        harness.handleMayAbilityChosen(player1, true);
-
-        // No creature to sacrifice — no choice prompt, no Wolf tokens
+        // No creature to sacrifice — the sacrifice can't be chosen (CR 608.2d): no prompt, no Wolf tokens
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertNotOnBattlefield(player1, "Wolf");
     }
@@ -148,7 +144,6 @@ class FeedThePackTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, creature.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Wolf"))).hasSize(6);
@@ -167,7 +162,7 @@ class FeedThePackTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, creature.getId());
+        harness.assertInGraveyard(player1, "Gavony Ironwright");
         if (!gd.stack.isEmpty()) {
             harness.passBothPriorities();
         }
@@ -179,8 +174,8 @@ class FeedThePackTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
+        // Only tokens and an opposing creature are left: no sacrifice can be chosen, so none is offered.
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()

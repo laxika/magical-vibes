@@ -3,19 +3,21 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.ModelOfUnity;
 import com.github.laxika.magicalvibes.cards.r.RestInPeace;
+import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FatefulTempest.class, ModelOfUnity.class, GrizzlyBears.class, RestInPeace.class})
+@CardUsed({FatefulTempest.class, ModelOfUnity.class, GrizzlyBears.class, RestInPeace.class, WheelOfSunAndMoon.class})
 class FatefulTempestTest extends BaseCardTest {
 
     @Test
@@ -77,6 +79,23 @@ class FatefulTempestTest extends BaseCardTest {
         harness.assertLife(player2, 14);
         harness.assertLife(player1, 20);
         assertThat(gd.exilePlayPermissionHolders()).doesNotContainKeys(first.getId(), second.getId());
+    }
+
+    @Test
+    @DisplayName("A milled card a replacement puts on the bottom of the library adds no damage")
+    void milledCardDivertedToLibraryAddsNoDamage() {
+        harness.addToBattlefieldAndReturn(player2, new WheelOfSunAndMoon()).setAttachedTo(player1.getId());
+        GrizzlyBears milled = new GrizzlyBears();
+        GrizzlyBears exiled = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(milled, exiled));
+        cast();
+
+        vote(ChoiceContext.FatefulTempestChoice.PAST, ChoiceContext.FatefulTempestChoice.PRESENT);
+
+        assertThat(gd.playerDecks.get(player1.getId())).contains(milled);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(milled);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(exiled);
+        harness.assertLife(player2, 20);
     }
 
     @Test

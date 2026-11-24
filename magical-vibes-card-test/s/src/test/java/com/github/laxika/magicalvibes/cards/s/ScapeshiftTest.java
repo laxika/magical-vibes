@@ -110,7 +110,7 @@ class ScapeshiftTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Sacrificing no lands runs no search")
+    @DisplayName("Sacrificing no lands offers no land, but is still a search for up to zero cards")
     void sacrificeNoneNoSearch() {
         setupLands(3);
         setupLibraryWithLands();
@@ -120,6 +120,8 @@ class ScapeshiftTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+        // "Up to that many" with zero still searches (as Uncage the Menagerie's ruling for X = 0).
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player1.getId());
         // All three lands remain
         assertThat(landsOnBattlefield()).hasSize(3);
     }

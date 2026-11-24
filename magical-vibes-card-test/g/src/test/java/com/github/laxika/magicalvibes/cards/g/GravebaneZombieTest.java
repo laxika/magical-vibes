@@ -716,8 +716,7 @@ class GravebaneZombieTest extends BaseCardTest {
         harness.passBothPriorities();
         int lifeBefore = gd.getLife(player2.getId());
 
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, zombie.getId());
+        harness.handleMayAbilityChosen(player1, true); // the zombie, the only other creature, is sacrificed unasked
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                 .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
@@ -817,7 +816,7 @@ class GravebaneZombieTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.handlePermanentChosen(player1, zombie.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(zombie.getId()));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                 .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
