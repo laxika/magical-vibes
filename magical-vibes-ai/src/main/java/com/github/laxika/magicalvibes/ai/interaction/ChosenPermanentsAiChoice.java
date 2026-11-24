@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 
@@ -27,7 +28,7 @@ import java.util.UUID;
 
 /**
  * The AI's answer to a {@link ChoosePermanentsEffect}: its own strongest where the steps after the choice keep or
- * improve what is chosen (spare it from a wipe or a can't-block rule, ...), the opponents' strongest otherwise, its own
+ * improve what is chosen (spare it from a wipe or a can't-block rule, tap it for a reward, ...), the opponents' strongest otherwise, its own
  * weakest when it must choose among its own (an edict it is the target of), as many as must be chosen, no two sharing
  * a quality that must differ.
  */
@@ -91,6 +92,8 @@ final class ChosenPermanentsAiChoice {
                         chosen.equals(attach.subject());
                 case BoostTargetCreatureEffect boost -> chosen.equals(boost.subject())
                         && !(boost.powerBoost() instanceof Fixed fixed && fixed.value() < 0);
+                // "Tap any number of untapped creatures you control. [Something] for each creature tapped this way."
+                case TapPermanentsEffect tap -> chosen.equals(tap.subject());
                 default -> false;
             };
             if (favors) {

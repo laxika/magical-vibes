@@ -75,7 +75,6 @@ import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.TapPlayersPermanentsAndDamageEqualToCountEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -1981,7 +1980,7 @@ class StepTriggerServiceTest {
         void endStepPlayerTargetedEffectBakesActivePlayer() {
             Card card = createCardWithName("Monsoon-like Card");
             card.addTrigger(Triggers.endStep(ActivePlayer.ANY),
-                    new TapPlayersPermanentsAndDamageEqualToCountEffect(new PermanentHasSubtypePredicate(CardSubtype.ISLAND)));
+                    new DealDamageToPlayersEffect(1, Subjects.triggeringPlayer()));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
             sut.handleEndStepTriggers(gd);

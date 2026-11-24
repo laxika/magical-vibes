@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
-import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
@@ -33,7 +33,7 @@ public class HotPursuit extends Card {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new SuspectEffect(Subjects.target()),
-                        new GoadTargetCreatureUntilSourceLeavesEffect());
+                        GoadTargetCreatureUntilNextTurnEffect.targetWhileSourceRemains());
 
         PermanentPredicate goadedOrSuspectedCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

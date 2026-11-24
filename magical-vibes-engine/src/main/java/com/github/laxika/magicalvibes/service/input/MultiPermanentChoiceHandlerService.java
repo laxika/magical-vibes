@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChoosePermanentsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PreventionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TapPermanentsEffectHandler;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.Card;
@@ -180,14 +181,10 @@ public class MultiPermanentChoiceHandlerService {
             .ChooseEquipmentToUnattachEffectHandler chooseEquipmentToUnattachEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PutMatchingPermanentsOnTopOfOwnersLibrariesEffectHandler putMatchingPermanentsOnTopOfOwnersLibrariesEffectHandler;
     private final LifeSupport lifeSupport;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport tapUntapSupport;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.QueueReflexiveAbilityEffectHandler
-            queueReflexiveAbilityEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MakeCreatureUnblockableEffectHandler
             makeCreatureUnblockableEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport librarySearchSupport;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.KillingWaveEffectHandler killingWaveEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerChoosesCreaturesWithTotalPowerAtMostThenSacrificeRestEffectHandler
@@ -682,46 +679,6 @@ public class MultiPermanentChoiceHandlerService {
                 throw new IllegalStateException("A selected permanent is no longer untapped");
             }
         }
-        if (context instanceof MultiPermanentChoiceContext.TapPermanentsDrawPerTapped
-                && permanentIds.stream().anyMatch(id -> {
-                    Permanent permanent = gameQueryService.findPermanentById(gameData, id);
-                    return permanent == null || permanent.isTapped();
-                })) {
-            throw new IllegalStateException("A selected permanent is no longer untapped");
-        }
-        if (context instanceof MultiPermanentChoiceContext.TapCreaturesThenQueueReflexiveAbility
-                && permanentIds.stream().anyMatch(id -> {
-                    Permanent permanent = gameQueryService.findPermanentById(gameData, id);
-                    return permanent == null || permanent.isTapped()
-                            || !playerId.equals(gameQueryService.findPermanentController(gameData, id))
-                            || !gameQueryService.isCreature(gameData, permanent);
-                })) {
-            throw new IllegalStateException("A selected creature is no longer untapped and controlled by you");
-        }
-        if (context instanceof MultiPermanentChoiceContext.TapPermanentsThenQueueReflexiveAbility tapCtx) {
-            FilterContext filterContext = FilterContext.of(gameData)
-                    .withSourceCardId(tapCtx.resolvingEntry().getCard().getId())
-                    .withSourceControllerId(tapCtx.resolvingEntry().getControllerId())
-                    .withSourcePermanentSnapshot(tapCtx.resolvingEntry().getSourcePermanentSnapshot())
-                    .withSourcePermanentId(tapCtx.resolvingEntry().getSourcePermanentId())
-                    .withXValue(tapCtx.resolvingEntry().getXValue());
-            if (permanentIds.stream().anyMatch(id -> {
-                Permanent permanent = gameQueryService.findPermanentById(gameData, id);
-                return permanent == null || permanent.isTapped()
-                        || !playerId.equals(gameQueryService.findPermanentController(gameData, id))
-                        || !predicateEvaluationService.matchesPermanentPredicate(
-                        permanent, tapCtx.filter(), filterContext);
-            })) {
-                throw new IllegalStateException("A selected permanent is no longer eligible and untapped under your control");
-            }
-        }
-        if (context instanceof MultiPermanentChoiceContext.TapCreaturesBoostSelf
-                && permanentIds.stream().anyMatch(id -> {
-                    Permanent permanent = gameQueryService.findPermanentById(gameData, id);
-                    return permanent == null || permanent.isTapped() || !gameQueryService.isCreature(gameData, permanent);
-                })) {
-            throw new IllegalStateException("A selected creature is no longer untapped");
-        }
         if (context instanceof MultiPermanentChoiceContext.TapOtherCreaturesForUnblockable tapCtx
                 && !permanentIds.isEmpty()) {
             if (permanentIds.size() != tapCtx.requiredCount()) {
@@ -961,8 +918,6 @@ public class MultiPermanentChoiceHandlerService {
             handleTapSubtypeBoost(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapAnyNumberBoostSelf ctx) {
             handleTapAnyNumberBoostSelf(gameData, playerId, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.TapCreaturesBoostSelf ctx) {
-            handleTapCreaturesBoostSelf(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.Enlistment ctx) {
             CombatResult result = combatAttackService.completeEnlistmentChoice(gameData, permanentIds, ctx);
             if (result != null) {
@@ -1012,14 +967,6 @@ public class MultiPermanentChoiceHandlerService {
             handleChooseCreaturesToAttackNextTurn(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.CulturalExchange ctx) {
             culturalExchangeSupport.completeChoice(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.TapCreaturesGainLife ctx) {
-            handleTapCreaturesGainLife(gameData, playerId, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.TapCreaturesCreateTokens ctx) {
-            handleTapCreaturesCreateTokens(gameData, playerId, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.TapCreaturesThenQueueReflexiveAbility ctx) {
-            handleTapCreaturesThenQueueReflexiveAbility(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.TapPermanentsThenQueueReflexiveAbility ctx) {
-            handleTapPermanentsThenQueueReflexiveAbility(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.NihiloorTapChoice ctx) {
             nihiloorTapAndStealEffectHandler.completeChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.FreeCastTapCost tapCost
@@ -1032,10 +979,6 @@ public class MultiPermanentChoiceHandlerService {
             exileFreeCastQueueSupport.completeTapCost(gameData, permanentIds, tapCost);
         } else if (context instanceof MultiPermanentChoiceContext.MadnessConvoke madnessConvoke) {
             mayCastHandlerService.completeMadnessConvokeChoice(gameData, player, madnessConvoke, permanentIds);
-        } else if (context instanceof MultiPermanentChoiceContext.TapPermanentsDrawPerTapped) {
-            handleTapPermanentsDrawPerTapped(gameData, playerId, permanentIds);
-        } else if (context instanceof MultiPermanentChoiceContext.TapPermanentsAndPutCounters ctx) {
-            handleTapPermanentsAndPutCounters(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesCreaturePutsVowCounterChoice ctx) {
             handleVowCounterCreatureChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseFivePermanentsSearchSameNameToBattlefieldTapped) {
@@ -1617,16 +1560,17 @@ public class MultiPermanentChoiceHandlerService {
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(playerId) + " chooses not to tap any permanents."));
         } else {
-            int tapped = 0;
+            List<Permanent> tapped = new ArrayList<>();
             for (UUID permId : permanentIds) {
                 Permanent perm = gameQueryService.findPermanentById(gameData, permId);
                 if (perm != null && tapUntapSupport.tapPermanent(gameData, perm)) {
-                    tapped++;
+                    tapped.add(perm);
                 }
             }
+            TapPermanentsEffectHandler.record(gameData, gameData.pendingEffectResolutionEntry, tapped);
             gameLogService.append(gameData, GameLog.text(
-                    ctx.sourceName() + " taps " + tapped + " permanent(s)."));
-            log.info("Game {} - {} taps {} chosen permanent(s)", gameData.id, ctx.sourceName(), tapped);
+                    ctx.sourceName() + " taps " + tapped.size() + " permanent(s)."));
+            log.info("Game {} - {} taps {} chosen permanent(s)", gameData.id, ctx.sourceName(), tapped.size());
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
@@ -2844,53 +2788,6 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
-    private void handleTapCreaturesGainLife(GameData gameData, UUID playerId, List<UUID> permanentIds,
-                                            MultiPermanentChoiceContext.TapCreaturesGainLife context) {
-        List<Card> tappedCards = new ArrayList<>();
-        for (UUID permId : permanentIds) {
-            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-            if (perm != null && !perm.isTapped() && !perm.isTapRestrictedUnlessAttacking()) {
-                perm.tap();
-                gameData.rulesEvents.occur(new TapEvent.BecameTapped(perm, playerId, false));
-                tappedCards.add(perm.getCard());
-            }
-        }
-
-        int tappedCount = tappedCards.size();
-        if (tappedCount == 0) {
-            gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId) + " taps no creatures."));
-        } else {
-            gameLogService.append(gameData,
-                    appendCards(GameLog.builder().text(gameData.playerIdToName.get(playerId)
-                            + " taps " + tappedCount + " creature" + (tappedCount == 1 ? "" : "s") + ": "), tappedCards)
-                            .text(".").build());
-            lifeSupport.applyGainLife(gameData, playerId, context.lifePerCreature() * tappedCount);
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    private void handleTapCreaturesBoostSelf(GameData gameData, UUID playerId, List<UUID> permanentIds,
-                                             MultiPermanentChoiceContext.TapCreaturesBoostSelf context) {
-        int tappedCount = 0;
-        for (UUID permanentId : permanentIds) {
-            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
-            if (permanent != null && gameQueryService.isCreature(gameData, permanent)
-                    && tapUntapSupport.tapPermanent(gameData, permanent)) {
-                tappedCount++;
-            }
-        }
-
-        Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
-        if (source != null && tappedCount > 0) {
-            gameData.addPowerToughnessBoost(source, tappedCount, tappedCount);
-            gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
-                    " gets +" + tappedCount + "/+" + tappedCount + " until end of turn."));
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
     private void handleTapOtherCreaturesForUnblockable(
             GameData gameData, UUID playerId, List<UUID> permanentIds,
             MultiPermanentChoiceContext.TapOtherCreaturesForUnblockable context) {
@@ -2910,126 +2807,6 @@ public class MultiPermanentChoiceHandlerService {
                 Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
                 makeCreatureUnblockableEffectHandler.makeUnblockableThisTurn(gameData, source,
                         source == null ? null : FaceDownVisibility.publicName(gameData, source), context.sourcePermanentId(), playerId);
-            }
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    private void handleTapCreaturesCreateTokens(GameData gameData, UUID playerId, List<UUID> permanentIds,
-                                                MultiPermanentChoiceContext.TapCreaturesCreateTokens context) {
-        List<Card> tappedCards = new ArrayList<>();
-        for (UUID permId : permanentIds) {
-            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-            if (perm != null && !perm.isTapped()) {
-                perm.tap();
-                gameData.rulesEvents.occur(new TapEvent.BecameTapped(perm, playerId, false));
-                tappedCards.add(perm.getCard());
-            }
-        }
-
-        int tappedCount = tappedCards.size();
-        if (tappedCount == 0) {
-            gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId) + " taps no creatures."));
-        } else {
-            gameLogService.append(gameData,
-                    appendCards(GameLog.builder().text(gameData.playerIdToName.get(playerId)
-                            + " taps " + tappedCount + " creature" + (tappedCount == 1 ? "" : "s") + ": "), tappedCards)
-                            .text(".").build());
-            permanentControlSupport.applyCreateToken(gameData, playerId, context.tokenTemplate(), tappedCount,
-                    context.sourceSetCode());
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    private void handleTapPermanentsDrawPerTapped(GameData gameData, UUID playerId,
-                                                  List<UUID> permanentIds) {
-        int tapped = 0;
-        for (UUID permanentId : permanentIds) {
-            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
-            if (permanent != null && tapUntapSupport.tapPermanent(gameData, permanent)) {
-                tapped++;
-            }
-        }
-
-        if (tapped > 0) {
-            playerInteractionSupport.applyDrawCards(gameData, playerId, tapped);
-        } else {
-            gameLogService.append(gameData, GameLog.text(
-                    gameData.playerIdToName.get(playerId) + " taps no permanents."));
-        }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    private void handleTapCreaturesThenQueueReflexiveAbility(
-            GameData gameData, List<UUID> permanentIds,
-            MultiPermanentChoiceContext.TapCreaturesThenQueueReflexiveAbility context) {
-        int tapped = 0;
-        for (UUID permanentId : permanentIds) {
-            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
-            if (permanent != null && tapUntapSupport.tapPermanent(gameData, permanent)) {
-                tapped++;
-            }
-        }
-
-        context.resolvingEntry().setEventValue(tapped);
-        context.resolvingEntry().setXValue(tapped);
-        queueReflexiveAbilityEffectHandler.resolve(gameData, context.resolvingEntry(),
-                new com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect(
-                        context.reflexiveEffect()));
-        if (!gameData.interaction.isAwaitingInput()) {
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-        }
-    }
-
-    private void handleTapPermanentsThenQueueReflexiveAbility(
-            GameData gameData, List<UUID> permanentIds,
-            MultiPermanentChoiceContext.TapPermanentsThenQueueReflexiveAbility context) {
-        int tapped = 0;
-        for (UUID permanentId : permanentIds) {
-            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
-            if (permanent != null && tapUntapSupport.tapPermanent(gameData, permanent)) {
-                tapped++;
-            }
-        }
-
-        context.resolvingEntry().setEventValue(tapped);
-        context.resolvingEntry().setXValue(tapped);
-        queueReflexiveAbilityEffectHandler.resolve(gameData, context.resolvingEntry(),
-                new com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect(
-                        context.reflexiveEffect()));
-        if (!gameData.interaction.isAwaitingInput()) {
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-        }
-    }
-
-    private void handleTapPermanentsAndPutCounters(GameData gameData, UUID playerId, List<UUID> permanentIds,
-                                                   MultiPermanentChoiceContext.TapPermanentsAndPutCounters context) {
-        List<Permanent> tappedPermanents = new ArrayList<>();
-        for (UUID permanentId : permanentIds) {
-            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
-            if (permanent != null && !permanent.isTapped()) {
-                permanent.tap();
-                gameData.rulesEvents.occur(new TapEvent.BecameTapped(permanent, playerId, false));
-                tappedPermanents.add(permanent);
-            }
-        }
-
-        if (tappedPermanents.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId) + " taps no permanents."));
-        } else {
-            List<Card> tappedCards = tappedPermanents.stream().map(Permanent::getCard).toList();
-            gameLogService.append(gameData,
-                    appendCards(GameLog.builder().text(gameData.playerIdToName.get(playerId)
-                            + " taps " + tappedPermanents.size() + " permanent"
-                            + (tappedPermanents.size() == 1 ? "" : "s") + ": "), tappedCards)
-                            .text(".").build());
-            StackEntry entry = gameData.pendingEffectResolutionEntry;
-            for (Permanent permanent : tappedPermanents) {
-                permanentCounterSupport.placeCounterOnPermanent(gameData, entry, permanent,
-                        context.counterType(), 1);
             }
         }
 

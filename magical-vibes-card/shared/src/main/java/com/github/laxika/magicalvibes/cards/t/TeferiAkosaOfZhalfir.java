@@ -4,20 +4,26 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardTwoUnlessCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPermanentIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfCreaturesThenReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentCanBecomeTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostXPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostEventValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -53,12 +59,19 @@ public class TeferiAkosaOfZhalfir extends Card {
         PermanentAllOfPredicate targetPredicate = new PermanentAllOfPredicate(List.of(
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
-                new PermanentManaValueAtMostXPredicate()
+                new PermanentManaValueAtMostEventValuePredicate()
         ));
         addActivatedAbility(new ActivatedAbility(
                 -3,
-                List.of(new TapAnyNumberOfCreaturesThenReflexiveAbilityEffect(
-                        new ShuffleTargetPermanentIntoLibraryEffect(targetPredicate))),
+                List.of(ChoosePermanentsEffect.anyNumber(Subjects.controlledBy(Subjects.you(),
+                                        new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                                new PermanentCanBecomeTappedPredicate()))),
+                                "any number of untapped creatures you control to tap"),
+                        new TapPermanentsEffect(Subjects.thisWay(StepKind.CHOOSE)),
+                        // "When you do" triggers even when none were tapped; X is then 0 (the card's ruling).
+                        QueueReflexiveAbilityEffect.withEventValue(
+                                new ShuffleTargetPermanentIntoLibraryEffect(targetPredicate),
+                                new AmountThisWay(StepKind.TAP))),
                 "−3: Tap any number of untapped creatures you control. When you do, shuffle target nonland permanent an opponent controls with mana value X or less into its owner's library, where X is the number of creatures tapped this way."
         ));
     }

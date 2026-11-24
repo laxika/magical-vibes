@@ -71,6 +71,12 @@ package com.github.laxika.magicalvibes.model;
  *       ({@code ConjureCardsEffect}), those cards, the player whose zone they went to, each one's
  *       {@link StepOutcome#movedCards()} entry naming the zone it is in after the step (a replacement's zone, when one
  *       sent it elsewhere), so "you may cast it" and "it perpetually gets" find it there (digital only).</li>
+ *   <li>{@link #TAP}: the number of permanents the step tapped ({@code TapPermanentsEffect}; one already tapped, or
+ *       one that can't become tapped, is not counted), those permanents, their controllers: "for each creature tapped
+ *       this way", "each of those Vampires".</li>
+ *   <li>{@link #GOAD}: the number of creatures the step goaded ({@code GoadTargetCreatureUntilNextTurnEffect}; one the
+ *       same player goaded again counts, CR 701.15d), those creatures, their controllers: "for each creature goaded this
+ *       way".</li>
  * </ul>
  *
  * <p>A later step may read a step only if that step finishes before the next one starts (CR 608.2c): its handler never
@@ -96,7 +102,7 @@ package com.github.laxika.magicalvibes.model;
  * {@code RevealCardsFromTopUntilEffect}, {@code RevealCardsFromHandEffect}, never prompting), the discard of named
  * cards ({@code DiscardCardsEffect}: a replacement's question ends it) and the any-amount payment
  * ({@code EachPlayerPaysAnyManaEffect}: it resolves again at its own index for each answer and records after the last),
- * the shuffle of each player's zones into their library ({@code EachPlayerShufflesZonesIntoLibraryEffect}, never
+ * the tap ({@code TapPermanentsEffect}: its up-to-N choice adds what it taps as it is answered), the goad ({@code GoadTargetCreatureUntilNextTurnEffect}, never prompting), the shuffle of each player's zones into their library ({@code EachPlayerShufflesZonesIntoLibraryEffect}, never
  * prompting), the vote ({@code VoteEffect}: it records as its last vote is cast), the put onto the battlefield ({@code PutCardsOntoBattlefieldEffect}: its entry choices come before
  * anything moves and it records as its batch enters); deal damage, return a card from a graveyard,
  * remove counters and return to hand only on the paths that
@@ -132,5 +138,7 @@ public enum StepKind {
     GAIN_CONTROL,
     NOTE,
     VOTE,
-    CONJURE
+    CONJURE,
+    TAP,
+    GOAD
 }

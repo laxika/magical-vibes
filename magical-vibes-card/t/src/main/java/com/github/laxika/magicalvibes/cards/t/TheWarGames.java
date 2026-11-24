@@ -12,11 +12,13 @@ import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileChosenPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.GoadCreatedPermanentsUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -47,7 +49,8 @@ public class TheWarGames extends Card {
                         3, "Warrior", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.WARRIOR), Set.of(), Set.of()).withTapped(true)
                 ),
-                new GoadCreatedPermanentsUntilSourceLeavesEffect()));
+                GoadTargetCreatureUntilNextTurnEffect.of(Subjects.createdThisResolution(),
+                        Duration.WHILE_SOURCE_REMAINS)));
         PutCounterOnEachMatchingPermanentEffect warriorCounter = new PutCounterOnEachMatchingPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 1, WARRIOR_CREATURE, EachPermanentScope.ALL_PLAYERS);
         addTrigger(Triggers.chapter(2), warriorCounter);

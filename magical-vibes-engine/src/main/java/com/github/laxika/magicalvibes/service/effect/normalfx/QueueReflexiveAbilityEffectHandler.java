@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import java.util.List;
 import java.util.UUID;
@@ -25,6 +27,7 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
 
     private final GameQueryService gameQueryService;
     private final TriggeredAbilityStackService triggeredAbilityStackService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -67,6 +70,11 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
         record.carryResolutionResultsFrom(entry);
         // Not a chapter ability, so it doesn't keep a Saga that has finished its chapters (CR 704.5s).
         record.setReflexiveTrigger(true);
+        if (queueEffect.eventValue() != null) {
+            // "That much" fixed as the ability is made, from what the earlier steps of this resolution did.
+            record.setEventValue(Math.max(0, amountEvaluationService.evaluate(gameData, queueEffect.eventValue(),
+                    AmountContext.forStackEntry(entry, entry.getSourcePermanentSnapshot()))));
+        }
         if (queueEffect.useEntryTargetAsTriggeringPermanent() && entry.getTargetId() != null) {
             record.setTriggeringPermanentId(entry.getTargetId());
         }

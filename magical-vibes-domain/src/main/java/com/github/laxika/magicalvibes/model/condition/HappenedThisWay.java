@@ -192,6 +192,8 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
             case GAIN_CONTROL -> "taken over";
             case VOTE -> "voted";
             case CONJURE -> "conjured";
+            case TAP -> "tapped";
+            case GOAD -> "goaded";
         };
     }
 }

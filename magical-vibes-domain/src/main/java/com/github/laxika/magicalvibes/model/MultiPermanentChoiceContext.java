@@ -822,17 +822,6 @@ public sealed interface MultiPermanentChoiceContext {
 
     }
 
-    /**
-     * Tap each chosen untapped creature the controller controls, then the controller gains
-     * {@code lifePerCreature} life per creature tapped this way (Harmony of Nature).
-     */
-    record TapCreaturesGainLife(int lifePerCreature) implements MultiPermanentChoiceContext {
-    }
-
-    /** Tap each chosen untapped creature, then boost the source by +1/+1 per creature tapped. */
-    record TapCreaturesBoostSelf(UUID sourcePermanentId) implements MultiPermanentChoiceContext {
-    }
-
     /** Enlist support selection during attacker declaration, before attack triggers are stacked. */
     record Enlistment(UUID playerId, List<Integer> attackerIndices, Map<Integer, UUID> resolvedTargets,
                       List<Permanent> declaredAttackers, List<UUID> remainingAttackerIds,
@@ -882,41 +871,10 @@ public sealed interface MultiPermanentChoiceContext {
     record ChooseTwoCreaturesByPowerDifference() implements MultiPermanentChoiceContext {
     }
 
-    /**
-     * Tap each chosen untapped creature the controller controls, then the controller creates one
-     * {@code tokenTemplate} token per creature tapped this way (Devout Invocation). The template's
-     * own amount is ignored; {@code sourceSetCode} is the set code of the spell that created the
-     * tokens, used for the token's art.
-     */
-    record TapCreaturesCreateTokens(com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
-                                    String sourceSetCode) implements MultiPermanentChoiceContext {
-    }
-
-    /** Tap any number of creatures, then queue the target-dependent reflexive ability. */
-    record TapCreaturesThenQueueReflexiveAbility(StackEntry resolvingEntry,
-                                                 CardEffect reflexiveEffect)
-            implements MultiPermanentChoiceContext {
-    }
-
-    /** Tap any number of matching permanents, then queue the target-dependent reflexive ability. */
-      record TapPermanentsThenQueueReflexiveAbility(StackEntry resolvingEntry,
-                                                    PermanentPredicate filter,
-                                                    CardEffect reflexiveEffect)
-              implements MultiPermanentChoiceContext {
-      }
-
       /** Nihiloor's optional choice of one untapped creature to tap for one opponent. */
       record NihiloorTapChoice(StackEntry resolvingEntry, UUID opponentId)
               implements MultiPermanentChoiceContext {
       }
-
-    /** Tap the chosen permanents, then draw a card for each permanent tapped (Guild Summit). */
-    record TapPermanentsDrawPerTapped() implements MultiPermanentChoiceContext {
-    }
-
-    /** Tap each chosen permanent and put one counter of the specified type on it. */
-    record TapPermanentsAndPutCounters(CounterType counterType) implements MultiPermanentChoiceContext {
-    }
 
     /** The controller chooses none or exactly {@code requiredCount} permanents to sacrifice. */
     record SacrificePermanentsOrElse(int requiredCount, CardEffect sacrificedEffect,

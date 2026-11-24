@@ -8,8 +8,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GoadCreatedPermanentsForRestOfGameEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -26,7 +28,7 @@ public class RendmawCreakingNest extends Card {
     public RendmawCreakingNest() {
         SequenceEffect birdTokens = SequenceEffect.of(
                 new EachPlayerCreatesTokenEffect(birdToken()),
-                new GoadCreatedPermanentsForRestOfGameEffect());
+                GoadTargetCreatureUntilNextTurnEffect.of(Subjects.createdThisResolution(), Duration.PERMANENT));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), birdTokens);
         addTrigger(Triggers.youCastSpell().withTwoOrMoreCardTypes(), birdTokens);

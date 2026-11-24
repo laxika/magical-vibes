@@ -51,7 +51,8 @@ import com.github.laxika.magicalvibes.model.effect.ExploitEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GoadSourceCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -1851,9 +1852,11 @@ class TriggerRouteRecordTest extends BaseCardTest {
                         Triggers::goadedCreaturesDealCombatDamageToOpponent, CardType.ENCHANTMENT,
                         (test, cards) -> {
                             test.fixturePermanents(cards);
-                            Card goaded = card("Goaded", CardType.CREATURE);
-                            goaded.addStaticEffect(new GoadSourceCreatureEffect());
-                            test.addCreatureReady(test.player1, goaded).setAttacking(true);
+                            Permanent goaded = test.addCreatureReady(test.player1, card("Goaded", CardType.CREATURE));
+                            goaded.setAttacking(true);
+                            test.gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Goad", null,
+                                    test.player1.getId(), new GoadTargetCreatureUntilNextTurnEffect(), goaded.getId(),
+                                    null, null, Duration.UNTIL_YOUR_NEXT_TURN, 0));
                             test.harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> test.resolveCombat());
                         }),
                 watch("creatures you control deal combat damage to an opponent",

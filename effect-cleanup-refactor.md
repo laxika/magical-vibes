@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a (each in Findings; the fold queue marks its rows). Fold runs 8 to 14 run in parallel worktrees from 2026-11-24. Next: fold runs 13 and 14 (running), 12b (with Reckless Ringleader), 12c (`dup-hand` leftovers), 11c, `drafted-step`, 8b. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).          |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14 (each in Findings; the fold queue marks its rows). Fold runs 8 to 14 run in parallel worktrees from 2026-11-24. Next: fold runs 12b and 13 (running), 14b (`piles`, `auction`), 12c, 11c, `drafted-step`, 8b, 15. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).           |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,827 / 3,088 (after fold run 12a) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,814 / 3,076 (after fold run 14) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,306 rows over 4,414 classes (after fold run 12a). Latest verdict per class: `step-9` 1,019, unique 1,165, absorbed 621, split 555, blocked-other 476, survivor 280, blocked-step-model 140, blocked-player-loop 97, dead 61. Waiting: 1,019 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,324 rows over 4,414 classes (after fold run 14). Latest verdict per class: `step-9` 1,004, unique 1,165, absorbed 633, split 556, blocked-other 477, survivor 281, blocked-step-model 140, blocked-player-loop 97, dead 61. Waiting: 1,004 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -593,6 +593,14 @@ Delayed and global triggers:
   any color to cast this spell", usually over `cardsThisWay(CONJURE)` (fold run 12a).
 - `Subjects.cardsInLibraries(players, filter)`: a random card from another player's library, only for `ChooseCardEffect.atRandom`
   (fold run 12a).
+
+- `TapPermanentsEffect` records `StepKind.TAP` (the permanents it newly tapped); "tap any number of untapped [f] you control" =
+  `ChoosePermanentsEffect.anyNumber(controlledBy(you(), allOf(f, PermanentCanBecomeTappedPredicate)))` + `TapPermanentsEffect(thisWay(
+  CHOOSE))` + the verb over `AmountThisWay(TAP)` / `thisWay(TAP)` (fold run 14).
+- `QueueReflexiveAbilityEffect.withEventValue(effect, amount)`: the reflexive ability's "that much" / X, fixed as it is made and read
+  by its target filter and effect (Yotia, Teferi; fold run 14).
+- `GoadTargetCreatureUntilNextTurnEffect.of(subject, duration)` / `.targetWhileSourceRemains()`: goad any non-target subject for
+  `UNTIL_YOUR_NEXT_TURN`, `PERMANENT` or `WHILE_SOURCE_REMAINS`; records `StepKind.GOAD` (fold run 14).
 
 ### Blocked causes still open
 
@@ -1754,6 +1762,43 @@ survivor's lines.
 
 **For the next run.** A card subject for the triggering cards put into a hand (Kithkin, Veteran, Lurker), then Vodalian/Gutmorn with
 `conjuredBy`, then a destroyed-this-way duplicate subject with an any-type grant step (Flames, Vona).
+
+### Step 9, fold run 14 (2026-11-24, parallel worktree)
+
+Batches `tap` (8) and `goad` (7) taken; `piles` (5) and `auction` (3) not taken (fold run 14b). Ratchet in its worktree 3,845 / 3,106 →
+3,832 / 3,094. Ledger 18 rows (absorbed 13, split 1, survivor 3, unique 1, blocked-other 1). 19 card files rewritten, Oracle checked
+for all; rulings Yotia, Teferi (MOM 239), Kaima, Vislor. CR 701.15a–d, 608.2d, 608.2h, 611.2c, 119.10 checked.
+
+**The TAP step.** `TapPermanentsEffect` records `StepKind.TAP` on every path: the permanents it newly tapped (not one already tapped
+or unable to become tapped) and their controllers. "Tap any number of untapped [f] you control. … for each tapped this way" =
+`ChoosePermanentsEffect.anyNumber(controlledBy(you(), allOf(f, PermanentCanBecomeTappedPredicate)), label)` +
+`TapPermanentsEffect(thisWay(CHOOSE))` + the verb over `AmountThisWay(TAP)` / `thisWay(TAP)` (the new predicate keeps the old offer,
+which left out creatures under a tap restriction). "When you do … that much / X" = `QueueReflexiveAbilityEffect.withEventValue(effect,
+AmountThisWay(TAP))`, fixed as the reflexive ability is made and read by its target filter (Teferi); both rulings say it triggers with
+none tapped. "Tap all [f] that player controls … X damage" = `TapPermanentsEffect(controlledBy(triggeringPlayer(), f))` +
+`DealDamageToPlayersEffect(AmountThisWay(TAP), triggeringPlayer())`.
+
+**The GOAD step.** `GoadTargetCreatureUntilNextTurnEffect(targetRestriction, goaded, Duration)`: `UNTIL_YOUR_NEXT_TURN` by default
+(CR 701.15a), `PERMANENT` for "the rest of the game", `WHILE_SOURCE_REMAINS`; `goaded` is any subject that doesn't target (`of(subject,
+duration)`, `targetWhileSourceRemains()`); a set is locked at resolution (Kaima's ruling, CR 611.2c); records `StepKind.GOAD`; a re-goad
+by the same player is recorded and adds no requirement (CR 701.15d).
+
+| Batch | Result |
+|---|---|
+| `tap` | 8 folded; 7 tap contexts and their handlers left `MultiPermanentChoiceHandlerService` |
+| `goad` | 6 folded (Life of the Party, Rendmaw, The War Games, Hot Pursuit, Kaima split, Nettling Nuisance). Vislor Turlough `blocked-other` ("as long as they control it" needs a duration following another player's control while you stay the goader; one card). `GoadEquippedCreatureEffect` unique (its planned second user was a resolution's goad) |
+
+**Behaviour changes.** Nettling Nuisance's Pirate is goaded by Nettling's controller, as its reminder text says ("a player other than
+you", CR 701.15b), and survives losing abilities; the old static self-goad named the token's own controller. Urge to Feed's and
+Kaima's counters go through the counter verbs. The AI taps all its own for a tap step. Prompts and logs are the survivor's. Ledev
+Champion and Orphans of the Wheat with nothing tapped get a +0/+0 boost.
+
+**For the next run.** `piles`: today's pile machinery is `PendingPileSeparation` + about 20 `CardPileDisposition` values handled in
+`DestructionSupport`, `FightOrFlightSupport`, `StandOrFallSupport` and the multi-permanent and graveyard choice handlers; build one
+`SeparateIntoPilesEffect(permanents | cards, separator, chooser, faceDown)` recording CHOOSE (the other pile is `except(…)`), then the
+verbs over it; Stand or Fall takes each defending player. `auction`: one bid step recording the high bidder (`playersThisWay`) and the
+bid (`AmountThisWay`), keeping the death-replacement asks. Kaima's "goaded this way" counts a creature you already goaded (CR 701.15d;
+unsure, unchanged).
 
 ## Prompt
 

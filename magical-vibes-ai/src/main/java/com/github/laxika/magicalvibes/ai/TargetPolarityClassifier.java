@@ -669,7 +669,6 @@ public class TargetPolarityClassifier {
             entry("MustBlockTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("MustAttackEffect", TargetPolarity.HARMFUL),
             entry("GoadTargetCreatureUntilNextTurnEffect", TargetPolarity.HARMFUL),
-            entry("GoadTargetCreatureUntilSourceLeavesEffect", TargetPolarity.HARMFUL),
             entry("HuntedByTheFamilyEffect", TargetPolarity.HARMFUL),
             entry("PreventTargetCreatureRegenerationThisTurnEffect", TargetPolarity.HARMFUL),
             entry("RemoveKeywordEffect", TargetPolarity.HARMFUL),

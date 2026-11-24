@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+
 import java.util.Objects;
 
 /**
@@ -22,13 +24,31 @@ import java.util.Objects;
  *                             reflexive ability instead of the permanent whose ability queued it, so one such step
  *                             per picked permanent puts one ability on the stack for each, in order. With no pick
  *                             left the ability is not put on the stack
+ * @param eventValue           "that much", "where X is the number of creatures tapped this way": the reflexive
+ *                             ability's event value, evaluated against the resolving entry as the ability is made
+ *                             (an {@code AmountThisWay} reads the steps before it, CR 608.2h), so its target
+ *                             restriction and its effect read it as the event value; {@code null} keeps the resolving
+ *                             entry's
  */
 public record QueueReflexiveAbilityEffect(CardEffect effect, boolean useEntryTargetAsTriggeringPermanent,
-                                           boolean aboutPickedPermanent)
+                                           boolean aboutPickedPermanent, DynamicAmount eventValue)
         implements CardEffect {
 
     public QueueReflexiveAbilityEffect(CardEffect effect) {
         this(effect, false, false);
+    }
+
+    public QueueReflexiveAbilityEffect(CardEffect effect, boolean useEntryTargetAsTriggeringPermanent,
+                                       boolean aboutPickedPermanent) {
+        this(effect, useEntryTargetAsTriggeringPermanent, aboutPickedPermanent, null);
+    }
+
+    /**
+     * The reflexive ability of {@code effect} whose "that much" is {@code amount} ("tap any number of untapped
+     * artifacts you control. When you do, this Saga deals that much damage ...", Yotia Declares War).
+     */
+    public static QueueReflexiveAbilityEffect withEventValue(CardEffect effect, DynamicAmount amount) {
+        return new QueueReflexiveAbilityEffect(effect, false, false, Objects.requireNonNull(amount, "amount"));
     }
 
     /**

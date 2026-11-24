@@ -8,8 +8,10 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GoadCreatedPermanentsForRestOfGameEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,6 +30,6 @@ public class LifeOfTheParty extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new CreateTokenCopyOfSourceForEachOtherPlayerEffect(
                         CreateTokenCopyOfTargetPermanentEffect.withAdditionalEffects(false, List.of())),
-                new GoadCreatedPermanentsForRestOfGameEffect()));
+                GoadTargetCreatureUntilNextTurnEffect.of(Subjects.createdThisResolution(), Duration.PERMANENT)));
     }
 }

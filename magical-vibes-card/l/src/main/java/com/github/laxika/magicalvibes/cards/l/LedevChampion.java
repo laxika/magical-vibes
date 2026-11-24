@@ -6,8 +6,17 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TapCreaturesBoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentCanBecomeTappedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -15,9 +24,14 @@ import java.util.Set;
 
 @CardRegistration(set = "GRN", collectorNumber = "186")
 public class LedevChampion extends Card {
-
     public LedevChampion() {
-        addTrigger(Triggers.attacks(), new TapCreaturesBoostSelfEffect());
+        addTrigger(Triggers.attacks(), SequenceEffect.of(
+                ChoosePermanentsEffect.anyNumber(Subjects.controlledBy(Subjects.you(),
+                                new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                        new PermanentCanBecomeTappedPredicate()))),
+                        "any number of untapped creatures you control to tap"),
+                new TapPermanentsEffect(Subjects.thisWay(StepKind.CHOOSE)),
+                new BoostSelfEffect(new AmountThisWay(StepKind.TAP), new AmountThisWay(StepKind.TAP))));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{G}{W}",

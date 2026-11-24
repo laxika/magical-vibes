@@ -323,6 +323,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPutOntoBattlefieldBy
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentCanBecomeTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTargetCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTransformedPredicate;
@@ -1975,6 +1976,8 @@ public class PredicateEvaluationService {
             }
             case PermanentIsTappedPredicate ignored ->
                     permanent.isTapped();
+            case PermanentCanBecomeTappedPredicate ignored ->
+                    !permanent.isTapped() && (permanent.isAttacking() || !permanent.isTapRestrictedUnlessAttacking());
             case PermanentIsBestowedPredicate ignored ->
                     permanent.isBestow();
             case PermanentIsRenownedPredicate ignored ->
@@ -4097,6 +4100,7 @@ public class PredicateEvaluationService {
             case PermanentIsRenownedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsSuspectedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsTappedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentCanBecomeTappedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsTokenPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsTransformedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentNamedPredicate ignored -> matchesStaticLeaf(permanent, predicate);

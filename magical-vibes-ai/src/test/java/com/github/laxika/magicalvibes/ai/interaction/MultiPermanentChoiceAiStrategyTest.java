@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -169,6 +170,23 @@ class MultiPermanentChoiceAiStrategyTest {
                 new AttachAnyNumberOfControlledEquipmentToTargetCreatureEffect(Subjects.thisWay(StepKind.CHOOSE)));
 
         assertChosen(List.of(strong.getId()));
+    }
+
+    @Test
+    @DisplayName("A choice of creatures to tap for a reward taps all of the AI's own")
+    void tapsAllItsOwnForAReward() throws Exception {
+        Permanent first = creature("First", 1);
+        Permanent second = creature("Second", 3);
+        gameData.playerBattlefields.get(aiPlayerId).addAll(List.of(first, second));
+        when(gameQueryService.getEffectivePower(gameData, first)).thenReturn(1);
+        when(gameQueryService.getEffectivePower(gameData, second)).thenReturn(3);
+
+        ChoosePermanentsEffect choose = ChoosePermanentsEffect.anyNumber(Subjects.creaturesYouControl(),
+                "any number of untapped creatures you control to tap");
+        answerChoice(choose, List.of(first, second), 2,
+                new TapPermanentsEffect(Subjects.thisWay(StepKind.CHOOSE)));
+
+        assertChosen(List.of(second.getId(), first.getId()));
     }
 
     private void answerChoice(ChoosePermanentsEffect choose, List<Permanent> offered, int maximum, CardEffect next)

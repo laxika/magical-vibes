@@ -2,12 +2,15 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,6 +32,27 @@ class NettlingNuisanceTest extends BaseCardTest {
         assertThat(als.getMustAttackRequirementCount(gd, pirate)).isOne();
         assertThat(bls.canBlockAttacker(gd, pirate, nettlingNuisance,
                 gd.playerBattlefields.get(player2.getId()))).isFalse();
+    }
+
+    @Test
+    @DisplayName("The Pirate is goaded by Nettling Nuisance's controller, so it must attack another player if able")
+    void pirateIsGoadedByTheAbilityController() {
+        addCreatureReady(player1, new NettlingNuisance());
+        declareAttackers(List.of(0));
+        resolveCombat();
+        resolveAllTriggers();
+        Permanent pirate = findPermanent(player2, "Pirate");
+        Player thirdPlayer = new Player(UUID.randomUUID(), "Charlie");
+        UUID thirdPlayerId = thirdPlayer.getId();
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerIdToName.put(thirdPlayerId, "Charlie");
+        gd.playerNames.add("Charlie");
+        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
+        gd.playerLifeTotals.put(thirdPlayerId, 20);
+
+        assertThat(als.mustAttackOtherPlayerIfAble(gd, pirate, player1.getId())).isTrue();
+        assertThat(als.mustAttackOtherPlayerIfAble(gd, pirate, thirdPlayerId)).isFalse();
     }
 
     @Test

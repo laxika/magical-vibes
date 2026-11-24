@@ -8,8 +8,10 @@ import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.GoadSourceCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -32,13 +34,14 @@ public class NettlingNuisance extends Card {
                 Set.of(),
                 Set.of(),
                 List.of(
-                        StaticAbility.of(SequenceEffect.of(
-                        new CantBlockEffect(),
-                        new GoadSourceCreatureEffect()))));
+                        StaticAbility.of(new CantBlockEffect())));
 
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
                         .withFilter(new PermanentHasSubtypePredicate(CardSubtype.FAERIE)),
                 TriggerOptions.ONE_OR_MORE,
-                new CreateTokenForTargetPlayerEffect(pirateToken));
+                // The token is goaded by this ability's controller, and goaded is no ability of the token (CR 701.15b).
+                SequenceEffect.of(new CreateTokenForTargetPlayerEffect(pirateToken),
+                        GoadTargetCreatureUntilNextTurnEffect.of(Subjects.createdThisResolution(),
+                                Duration.PERMANENT)));
     }
 }
