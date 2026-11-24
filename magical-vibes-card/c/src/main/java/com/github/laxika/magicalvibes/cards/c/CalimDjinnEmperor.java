@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardIntoLibraryAtPositionEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -59,6 +60,6 @@ public class CalimDjinnEmperor extends Card {
                 1));
 
         addTrigger(Triggers.youDiscardThisCard(),
-                new ConjureCardIntoLibraryAtPositionEffect(CalimDjinnEmperor::new, 6));
+                ConjureCardsEffect.named("HBG", "33", ConjureDestination.intoLibraryFromTop(7)));
     }
 }

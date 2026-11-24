@@ -3,7 +3,12 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
-import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromTargetPlayerLibraryEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAnyColorManaToCastEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -22,7 +27,13 @@ public class UndercityPlunder extends Card {
                 .addSpellEffect(new MayEffect(
                         new DiscardEffect(1, Subjects.targetPlayer()),
                         "Discard an additional card?",
-                        new ConjureRandomCardFromTargetPlayerLibraryEffect(),
+                        SequenceEffect.of(
+                                ChooseCardEffect.atRandom(Subjects.cardsInLibraries(
+                                        Subjects.targetPlayerDeclaredElsewhere(), null), "a card"),
+                                ConjureCardsEffect.duplicateOf(Subjects.cardsThisWay(StepKind.CHOOSE),
+                                        ConjureDestination.intoHand()),
+                                new PerpetuallyGrantAnyColorManaToCastEffect(
+                                        Subjects.cardsThisWay(StepKind.CONJURE))),
                         MayChoicePlayer.TARGET_PLAYER));
     }
 }

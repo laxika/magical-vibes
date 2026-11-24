@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.model.effect;
 import java.util.List;
 
 /**
- * Conjures the listed spellbook printings into the resolving controller's library. A printing that
- * is not implemented yet is skipped.
+ * "Conjure [this]'s spellbook into your library [twice], then shuffle", "conjure the Power Nine into your library,
+ * then shuffle": {@code copies} of each listed printing into the resolving controller's library, then that library is
+ * shuffled. A printing that is not implemented yet is skipped.
  */
 public record ConjureSpellbookIntoLibraryEffect(
         List<DraftFromSpellbookEffect.SpellbookCard> spellbook,

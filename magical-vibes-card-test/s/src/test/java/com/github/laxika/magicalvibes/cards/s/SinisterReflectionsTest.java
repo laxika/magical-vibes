@@ -3,13 +3,16 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -37,6 +40,26 @@ class SinisterReflectionsTest extends BaseCardTest {
         assertThat(duplicates).allMatch(card -> player1.getId().equals(card.getOwnerId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .containsExactly(first, second);
+    }
+
+    @Test
+    @DisplayName("A duplicate of a face-down creature has only its face-down values, and the log names no card")
+    void duplicateOfAFaceDownCreatureIsANamelessTwoTwo() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setHand(player1, List.of(new SinisterReflections()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, List.of(target.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).singleElement().satisfies(duplicate -> {
+            assertThat(duplicate.getName()).isEmpty();
+            assertThat(duplicate.getPower()).isEqualTo(2);
+            assertThat(duplicate.getToughness()).isEqualTo(2);
+            assertThat(duplicate.isConjured()).isTrue();
+        });
+        assertThat(gameLogContains("Grizzly Bears")).isFalse();
     }
 
     @Test

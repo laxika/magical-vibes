@@ -31,26 +31,22 @@ public class ConjureCardNamedIntoHandEffectHandler implements NormalEffectHandle
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ConjureCardNamedIntoHandEffect conjure = (ConjureCardNamedIntoHandEffect) effect;
-        do {
-            Card card = cardCatalog.createCardIfImplemented(conjure.setCode(), conjure.collectorNumber());
-            if (card == null) {
-                return;
-            }
+        Card card = cardCatalog.createCardIfImplemented(conjure.setCode(), conjure.collectorNumber());
+        if (card == null) {
+            return;
+        }
 
-            card.setConjured(true);
-            card.setOwnerId(entry.getControllerId());
-            card.freeze();
-            gameData.addCardToHand(entry.getControllerId(), card);
-            if (conjure.discardAtNextEndStep()) {
-                gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
-                        Triggers.endStep(ActivePlayer.ANY), entry.getControllerId(), entry.getCard(),
-                        entry.getSourcePermanentId(), null, new DiscardSpecificCardEffect(card.getId())));
-            }
-            gameLogService.append(gameData, GameLog.cardThen(card, " is conjured into "
-                    + gameData.playerIdToName.get(entry.getControllerId()) + "'s hand."));
-            ActionEvents.conjured(gameData, entry.getControllerId(), 1);
-        } while (conjure.repeatUntilHandSize() > 0
-                && gameData.playerHands.getOrDefault(entry.getControllerId(), java.util.List.of()).size()
-                < conjure.repeatUntilHandSize());
+        card.setConjured(true);
+        card.setOwnerId(entry.getControllerId());
+        card.freeze();
+        gameData.addCardToHand(entry.getControllerId(), card);
+        if (conjure.discardAtNextEndStep()) {
+            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                    Triggers.endStep(ActivePlayer.ANY), entry.getControllerId(), entry.getCard(),
+                    entry.getSourcePermanentId(), null, new DiscardSpecificCardEffect(card.getId())));
+        }
+        gameLogService.append(gameData, GameLog.cardThen(card, " is conjured into "
+                + gameData.playerIdToName.get(entry.getControllerId()) + "'s hand."));
+        ActionEvents.conjured(gameData, entry.getControllerId(), 1);
     }
 }

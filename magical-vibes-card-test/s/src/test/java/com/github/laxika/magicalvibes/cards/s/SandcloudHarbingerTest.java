@@ -37,6 +37,25 @@ class SandcloudHarbingerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Conjuring the Deserts at random into the top ten cards leaves the other cards in their order")
+    void conjuringKeepsTheOrderOfTheOtherCards() {
+        List<Card> playerOneLibrary = cards(10);
+        List<Card> playerTwoLibrary = cards(10);
+        harness.setLibrary(player1, playerOneLibrary);
+        harness.setLibrary(player2, playerTwoLibrary);
+
+        harness.enterBattlefieldAndReturn(player1, new SandcloudHarbinger());
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .filteredOn(card -> !"Sunscorched Desert".equals(card.getName()))
+                .containsExactlyElementsOf(playerOneLibrary);
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .filteredOn(card -> !"Sunscorched Desert".equals(card.getName()))
+                .containsExactlyElementsOf(playerTwoLibrary);
+    }
+
+    @Test
     @DisplayName("A player who plays a Desert draws and the Harbinger's controller gains life")
     void desertPlayRewardsPlayerAndController() {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));

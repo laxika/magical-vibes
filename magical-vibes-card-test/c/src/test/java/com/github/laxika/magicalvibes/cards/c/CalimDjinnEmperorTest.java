@@ -45,6 +45,28 @@ class CalimDjinnEmperorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Calim conjured into the library is a conjured card its controller owns")
+    void conjuredCalimIsAConjuredCard() {
+        harness.setHand(player1, List.of(new CalimDjinnEmperor()));
+        harness.setLibrary(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .filteredOn(card -> "Calim, Djinn Emperor".equals(card.getName()))
+                .singleElement()
+                .satisfies(card -> {
+                    assertThat(card.isConjured()).isTrue();
+                    assertThat(card.getOwnerId()).isEqualTo(player1.getId());
+                });
+    }
+
+    @Test
     @DisplayName("Calim's Breath exiles two other Calims and returns the discarded source tapped")
     void breathExilesOtherCalimsAndReturnsSource() {
         Card otherOne = new CalimDjinnEmperor();

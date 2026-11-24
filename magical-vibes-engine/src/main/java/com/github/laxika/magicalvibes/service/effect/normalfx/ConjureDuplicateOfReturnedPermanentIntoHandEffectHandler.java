@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfReturnedPermanentIntoHandEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetualAnyManaTypeToCastSelfEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
@@ -33,8 +32,9 @@ public class ConjureDuplicateOfReturnedPermanentIntoHandEffectHandler implements
 
         Card duplicate = returnedCard.createConjuredCopy();
         duplicate.setOwnerId(entry.getControllerId());
-        duplicate.addStaticEffect(new PerpetualAnyManaTypeToCastSelfEffect());
         duplicate.freeze();
+        // "It perpetually gains prismatic": mana spent as though it were mana of any color, not of any type.
+        gameData.perpetualAnyColorManaForCastCardIds.add(duplicate.getId());
 
         gameData.addCardToHand(entry.getControllerId(), duplicate);
         gameLogService.append(gameData, GameLog.textCardText("A duplicate of ", duplicate,

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardIntoHandAndDiscardAtNextEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSpellCastingAbilityToSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -19,8 +19,7 @@ public class MothlightProcessionist extends Card {
         addStaticEffect(new GrantSpellCastingAbilityToSpellsEffect(
                 Keyword.CONVOKE, new CardTypePredicate(CardType.ENCHANTMENT)));
 
-        ConjureCardIntoHandAndDiscardAtNextEndStepEffect eerie =
-                new ConjureCardIntoHandAndDiscardAtNextEndStepEffect("YDSK", "3");
+        ConjureCardNamedIntoHandEffect eerie = new ConjureCardNamedIntoHandEffect("YDSK", "3", true);
         addTrigger(List.of(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
                 Triggers.youFullyUnlockRoom()), eerie);
     }

@@ -430,6 +430,14 @@ public final class Subjects {
         return new CardSubject.InLibrary(you(), filter);
     }
 
+    /**
+     * "A random [filter] card from their library": the cards matching {@code filter} in the libraries of the players
+     * {@code owners} names, only for a choice at random.
+     */
+    public static CardSubject cardsInLibraries(PlayerSubject owners, CardPredicate filter) {
+        return new CardSubject.InLibrary(owners, filter);
+    }
+
     /** "From the command zone": the cards matching {@code filter} in the controller's command zone. */
     public static CardSubject cardsInYourCommandZone(CardPredicate filter) {
         return new CardSubject.InCommandZone(you(), filter);

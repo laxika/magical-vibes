@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentMatches;
-import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfCombatDamageSourceIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
@@ -32,7 +33,8 @@ public class SemblanceScanner extends Card {
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new NotCondition(new TriggeringPermanentMatches(new PermanentIsTokenPredicate()))),
-                new ConjureDuplicateOfCombatDamageSourceIntoHandEffect());
+                // "It": the creature that dealt the damage, the equipped creature or this one.
+                ConjureCardsEffect.duplicateOf(Subjects.triggeringOrSource(), ConjureDestination.intoHand()));
         addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), Subjects.source(),
                 Duration.WHILE_ATTACHED));
 

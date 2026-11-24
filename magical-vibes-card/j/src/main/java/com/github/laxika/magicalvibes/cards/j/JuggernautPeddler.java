@@ -6,9 +6,11 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardIntoTargetPlayerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -30,6 +32,7 @@ public class JuggernautPeddler extends Card {
                                 .withRevealMatchingOnly()
                                 .withUpTo(true),
                         new ConditionalEffect(HappenedThisWay.exiled(),
-                                new ConjureCardIntoTargetPlayerHandEffect(new Juggernaut()))));
+                                ConjureCardsEffect.named("10E", "328", ConjureDestination.intoHand())
+                                        .conjuredBy(Subjects.targetPlayerDeclaredElsewhere()))));
     }
 }

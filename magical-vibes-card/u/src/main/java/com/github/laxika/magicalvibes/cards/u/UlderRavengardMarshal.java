@@ -3,11 +3,13 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfTargetCreatureIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -39,6 +41,10 @@ public class UlderRavengardMarshal extends Card {
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()),
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),
                 "Target must be another nontoken attacking creature"))
-                .addTrigger(Triggers.attacks(), new ConjureDuplicateOfTargetCreatureIntoHandEffect());
+                .addTrigger(Triggers.attacks(), ConjureCardsEffect.duplicateOfTarget(new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentNotPredicate(new PermanentIsTokenPredicate()),
+                                new PermanentControlledBySourceControllerPredicate())),
+                        ConjureDestination.intoHand()));
     }
 }

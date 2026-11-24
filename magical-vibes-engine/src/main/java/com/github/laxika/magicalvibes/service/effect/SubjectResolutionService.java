@@ -260,11 +260,28 @@ public class SubjectResolutionService {
      * while it is or last was face down (CR 708.2a); for {@code triggeringSpell()} the spell's whole card (its Omen,
      * Adventure or split half cast is still that card), as it is on the stack, else as it last existed there, with
      * only the characteristics a spell cast face down has (CR 708.2). A token or a copy of a spell has no
-     * card (CR 111.1, 707.10) and adds none.
+     * card (CR 111.1, 707.10) and adds none. For {@code targetSpell()}, "a duplicate of target spell": the target
+     * spell's card as it is on the stack, its whole card (the Omen, Adventure or split half cast is still that card),
+     * a copy's the card it was copied as, with only the characteristics of a spell cast face down (CR 708.2).
      */
     public List<Card> cardsToDuplicate(GameData gameData, StackEntry entry, CardEffect effect,
                                        PermanentSubject subject) {
         List<Card> cards = new ArrayList<>();
+        if (subject instanceof PermanentSubject.TargetSpell) {
+            UUID spellId = entry.getTargetId();
+            StackEntry spell = gameData.stack.stream()
+                    .filter(onStack -> spellId != null && spellId.equals(onStack.getTargetableId()))
+                    .findFirst()
+                    .orElse(null);
+            if (spell != null) {
+                Card card = spell.isCastFaceDown() ? CastingPermissionService.spellAsEffectsSeeIt(spell).getCard()
+                        : spell.isCopy() || spell.getPhysicalCard() == null ? spell.getCard() : spell.getPhysicalCard();
+                if (card != null) {
+                    cards.add(card);
+                }
+            }
+            return cards;
+        }
         if (subject instanceof PermanentSubject.TriggeringSpell) {
             StackEntry spell = CopySupport.triggeringSpell(gameData, entry);
             if (spell != null && !spell.isCopy() && spell.getPhysicalCard() != null) {

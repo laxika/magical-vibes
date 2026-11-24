@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardsIntoTopOfLibrariesEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -17,7 +18,9 @@ public class SandcloudHarbinger extends Card {
 
     public SandcloudHarbinger() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConjureCardsIntoTopOfLibrariesEffect("AKH", "249", 3, 10));
+                ConjureCardsEffect.named("AKH", "249", ConjureDestination.intoTopCardsOfLibraryAtRandom(10))
+                        .times(3)
+                        .into(Subjects.eachPlayer()));
 
         CardSubtypePredicate desert = new CardSubtypePredicate(CardSubtype.DESERT);
         addTrigger(Triggers.youPlayLand().withFilter(desert),

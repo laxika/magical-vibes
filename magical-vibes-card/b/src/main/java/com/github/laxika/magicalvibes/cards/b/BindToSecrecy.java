@@ -5,10 +5,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.DistinctManaValuesAmongCardsInGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfTargetCreatureCardFromOpponentGraveyardIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAnyColorManaToCastEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
@@ -52,7 +57,14 @@ public class BindToSecrecy extends Card {
                                 "Target must be a noncreature spell.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Conjure a duplicate of target creature card in an opponent's graveyard into your hand",
-                        new ConjureDuplicateOfTargetCreatureCardFromOpponentGraveyardIntoHandEffect(),
+                        SequenceEffect.of(
+                                ConjureCardsEffect.duplicateOf(Subjects.targetCard(
+                                                new CardTypePredicate(CardType.CREATURE),
+                                                GraveyardSearchScope.OPPONENT_GRAVEYARD),
+                                        ConjureDestination.intoHand()),
+                                // "It perpetually gains prismatic": mana spent as though of any color.
+                                new PerpetuallyGrantAnyColorManaToCastEffect(
+                                        Subjects.cardsThisWay(StepKind.CONJURE))),
                         new GraveyardCardPredicateTargetFilter(
                                 new CardTypePredicate(CardType.CREATURE),
                                 GraveyardSearchScope.OPPONENT_GRAVEYARD)))));

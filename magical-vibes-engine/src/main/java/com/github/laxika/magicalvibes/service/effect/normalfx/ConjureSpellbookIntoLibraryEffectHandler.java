@@ -62,7 +62,7 @@ public class ConjureSpellbookIntoLibraryEffectHandler implements NormalEffectHan
         ActionEvents.conjured(gameData, controllerId, conjuredCount);
         LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
-                " conjures " + conjuredCount + " cards from its spellbook into "
+                " conjures " + conjuredCount + " cards into "
                         + gameData.playerIdToName.get(controllerId) + "'s library, then shuffles."));
     }
 }

@@ -8,11 +8,16 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConjureRandomCreatureFromOpponentLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAnyColorManaToCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
@@ -84,7 +89,12 @@ public class LaezelGithyankiWarrior extends Card {
                             new CardNotPredicate(new CardTypePredicate(CardType.LAND)))),
                     LibrarySearchDestination.HAND,
                     new ManaValueBound(new Fixed(3), false, 0));
-            case BLUE -> new ConjureRandomCreatureFromOpponentLibraryEffect();
+            case BLUE -> SequenceEffect.of(
+                    ChooseCardEffect.atRandom(Subjects.cardsInLibraries(Subjects.eachOpponent(),
+                            new CardTypePredicate(CardType.CREATURE)), "a creature card"),
+                    ConjureCardsEffect.duplicateOf(Subjects.cardsThisWay(StepKind.CHOOSE),
+                            ConjureDestination.intoHand()),
+                    new PerpetuallyGrantAnyColorManaToCastEffect(Subjects.cardsThisWay(StepKind.CONJURE)));
             case BLACK -> new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                     new CardTypePredicate(CardType.CREATURE), 2, 3);
             case RED -> CreateTokenEffect.whiteSoldier(2);

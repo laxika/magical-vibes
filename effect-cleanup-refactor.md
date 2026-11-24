@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b (each in Findings; the fold queue marks its rows). Fold runs 8 to 14 run in parallel worktrees from 2026-11-24. Next: fold runs 12a and 14 (running), 13 (SEARCH, with `IntuitionEffect`), 11c, `drafted-step`, 8b. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).         |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a (each in Findings; the fold queue marks its rows). Fold runs 8 to 14 run in parallel worktrees from 2026-11-24. Next: fold runs 13 and 14 (running), 12b (with Reckless Ringleader), 12c (`dup-hand` leftovers), 11c, `drafted-step`, 8b. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).          |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,840 / 3,101 (after fold run 10b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,827 / 3,088 (after fold run 12a) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,273 rows over 4,412 classes (after fold run 10b). Latest verdict per class: `step-9` 1,033, unique 1,165, absorbed 607, split 555, blocked-other 476, survivor 278, blocked-step-model 140, blocked-player-loop 97, dead 61. Waiting: 1,033 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,306 rows over 4,414 classes (after fold run 12a). Latest verdict per class: `step-9` 1,019, unique 1,165, absorbed 621, split 555, blocked-other 476, survivor 280, blocked-step-model 140, blocked-player-loop 97, dead 61. Waiting: 1,019 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -585,6 +585,14 @@ Delayed and global triggers:
 - "An opponent chooses one of the revealed cards": `ChoosePlayerEffect.opponent()` + `ChooseCardEffect.oneOf(revealedThisWay(filter))
   .by(playersThisWay(CHOOSE))`; "the rest" is `revealedThisWay()` once the chosen card has moved (Murmurs from Beyond, Animal
   Magnetism; fold run 10b).
+
+- `ConjureCardsEffect` into a hand or a library position: `ConjureDestination.intoHand()`, `intoLibrary()`, `intoLibraryFromTop(n)`;
+  `named(set, number, dest)`; `.into(players)` (the controller conjures into their zones), `.conjuredBy(players)` (they conjure);
+  `.withAbilities(...)`; `.repeatingWhileHandSmallerThan(amount)`; `duplicateOf(targetSpell(), dest)` (fold run 12a).
+- `PerpetuallyGrantAnyColorManaToCastEffect(CardSubject)`: "it perpetually gains prismatic" / "spend mana as though it were mana of
+  any color to cast this spell", usually over `cardsThisWay(CONJURE)` (fold run 12a).
+- `Subjects.cardsInLibraries(players, filter)`: a random card from another player's library, only for `ChooseCardEffect.atRandom`
+  (fold run 12a).
 
 ### Blocked causes still open
 
@@ -1717,6 +1725,35 @@ answer comes from the deciding player and respects different names. Prompts are 
 **For the next run.** Allure waits for a caster `PlayerSubject` on `MayCastDiscardedCardWithoutPayingManaCostEffect` (with
 Possibility Storm, `exile-until-rel`, run 29) and a "chooser of the last card choice" subject. Grimoire waits for a counted
 `TopOfGraveyard`.
+
+### Step 9, fold run 12a (2026-11-24, parallel worktree)
+
+Rows: `conjure-named` (8), `dup-hand` (21). Ratchet in its worktree 3,850 / 3,111 → 3,837 / 3,098. Ledger 33 rows (absorbed 14, survivor
+4, `step-9` left 15). 18 card files rewritten; Oracle text checked for all and for Warzone Duplicator; CR 115.1, 400.2, 400.7, 402.3,
+601.2c, 608.2d, 608.2h, 707.2, 707.10, 708.2a, 111.1 checked.
+
+**The CONJURE step, widened.** `ConjureDestination.intoHand()`, `intoLibrary()` (anywhere), `intoLibraryFromTop(n)`; random positions
+of one step are distinct among the top N, the other cards keep their order. `ConjureCardsEffect.named(set, number, dest)` (one
+printing; may be named), `.into(players)` (the controller conjures into their zones, each owns theirs), `.conjuredBy(players)` (each
+conjures into their own), `.withAbilities(...)` ("perpetually gain", built into the card), `.repeatingWhileHandSmallerThan(amount)`,
+`.times(int)`, and `duplicateOf(targetSpell())` (declares the spell target; face-down values for a face-down spell). Log: a hand or
+library card is "a card" (`GameLog.conjuresIntoHand`) unless the original was public or the text names it. One conjure event per
+conjuring player per round. New step `PerpetuallyGrantAnyColorManaToCastEffect(CardSubject)`.
+
+| Batch | Result |
+|---|---|
+| `conjure-named` | 8 folded: Indris, Sanguine (`withAbilities`), Calim, Juggernaut Peddler (`conjuredBy`), Sandcloud Harbinger (`into(eachPlayer())`), Goblin Influx Array, Skywriter Djinn (`repeatingWhileHandSmallerThan`, with Suntail Squadron moved off ConjureCardNamedIntoHandEffect), Mothlight onto ConjureCardNamedIntoHandEffect, Power Nine onto ConjureSpellbookIntoLibraryEffect |
+| `dup-hand` | 6 folded (Sinister Reflections/Ulder, Bind to Secrecy, Futurist Spellthief, Undercity Plunder, Clone Crafter/Lae'zel, Semblance Scanner); 15 left: triggering cards put into a hand have no subject (Kithkin, Veteran Ghoulcaller, Lurker: three, build next), a returned-to-hand permanent's last-known copy (Vesuvan Mist/Warzone), a destroyed-this-way subject (Flames of Moradin, Vona), an any-type grant step (Vona, PerpetualAnyManaTypeToCastSelfEffect), a top-of-library subject (Agent of Raffine), bespoke prompts (Vodalian, Gutmorn, Snowborn), tests on printed keywords (Ace), Viconia, Grizzled Huntmaster, the payload ConjureDuplicateOfCardIntoHandEffect |
+
+**Behaviour changes.** Calim's conjured card is a real printing marked conjured. Sandcloud no longer shuffles the cards already in the
+top ten. Prismatic is "as though any colour" (Bind, Vesuvan, Warzone had "any type": coloured mana paid {C}). Sinister/Ulder copy a
+face-down target's face-down values; Futurist a face-down spell's (untested: no face-down cast in the harness). Goblin Influx Array
+and Oracle of the Alpha conjure real printings; Reckless Ringleader (J21 21) isn't implemented, so Goblin Influx Array's spellbook
+lacks it (it was a hand-built 1/1 haste Goblin without its enter ability; implement it in fold run 12b, defect queue). Logs: the
+survivor's lines.
+
+**For the next run.** A card subject for the triggering cards put into a hand (Kithkin, Veteran, Lurker), then Vodalian/Gutmorn with
+`conjuredBy`, then a destroyed-this-way duplicate subject with an any-type grant step (Flames, Vona).
 
 ## Prompt
 

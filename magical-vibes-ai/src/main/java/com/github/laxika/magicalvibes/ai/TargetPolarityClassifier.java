@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
@@ -57,6 +58,8 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestO
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
@@ -152,6 +155,22 @@ public class TargetPolarityClassifier {
         }
         if (effect instanceof MayEffect may) {
             return classify(gameData, may.wrapped(), aiPlayerId);
+        }
+        // "Conjure a duplicate of target nontoken creature you control into your hand" helps its own board; a duplicate
+        // of any permanent stays the name entry's NEUTRAL.
+        if (effect instanceof com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect conjure
+                && conjure.cards() instanceof com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect.DuplicatesOf of
+                && of.targetFilter() instanceof PermanentAllOfPredicate all
+                && all.predicates().stream().anyMatch(PermanentControlledBySourceControllerPredicate.class::isInstance)) {
+            return TargetPolarity.BENEFICIAL;
+        }
+        // "Conjure a duplicate of target nontoken creature you control into your hand" helps its own board; a duplicate
+        // of any permanent stays the name entry's NEUTRAL.
+        if (effect instanceof ConjureCardsEffect conjure
+                && conjure.cards() instanceof ConjureCardsEffect.DuplicatesOf of
+                && of.targetFilter() instanceof PermanentAllOfPredicate all
+                && all.predicates().stream().anyMatch(PermanentControlledBySourceControllerPredicate.class::isInstance)) {
+            return TargetPolarity.BENEFICIAL;
         }
         // A permanent put into a face-down pile comes back to the effect's controller.
         if (effect instanceof ExileFaceDownPileEffect pile
@@ -691,7 +710,6 @@ public class TargetPolarityClassifier {
             entry("DrawDiscardAndConniveEffect", TargetPolarity.BENEFICIAL),
             entry("ConniveEachTargetEffect", TargetPolarity.BENEFICIAL),
             entry("PhaseOutChosenTargetCreaturesEffect", TargetPolarity.BENEFICIAL),
-            entry("ConjureDuplicateOfTargetCreatureIntoHandEffect", TargetPolarity.BENEFICIAL),
             entry("FlickerEffect", TargetPolarity.BENEFICIAL),
             entry("ExileTargetPermanentThenDiscardAndReturnToBattlefieldEffect", TargetPolarity.BENEFICIAL),
             entry("GrantFlyingToTargetCreatureOrPlayerEffect", TargetPolarity.BENEFICIAL),

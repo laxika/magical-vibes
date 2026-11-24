@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.l.LilianasElite;
 import com.github.laxika.magicalvibes.cards.l.LockedInTheCemetery;
+import com.github.laxika.magicalvibes.cards.m.MatterReshaper;
 import com.github.laxika.magicalvibes.cards.n.NagaOracle;
 import com.github.laxika.magicalvibes.cards.n.NecroticWound;
 import com.github.laxika.magicalvibes.cards.o.ObsessiveStitcher;
@@ -28,6 +29,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -35,7 +37,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BindToSecrecy.class, CorpseChurn.class, CorpseHauler.class, CourierBat.class,
+@CardUsed({BindToSecrecy.class, MatterReshaper.class, CorpseChurn.class, CorpseHauler.class, CourierBat.class,
         DurableCoilbug.class, FearOfDeath.class, GorgingVulture.class, LilianasElite.class,
         LockedInTheCemetery.class, NagaOracle.class, NecroticWound.class, ObsessiveStitcher.class,
         ReassemblingSkeleton.class, StrategicPlanning.class, UnmarkedGrave.class, Wonder.class,
@@ -110,6 +112,29 @@ class BindToSecrecyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The prismatic duplicate spends mana as though of any color, which pays no colorless cost")
+    void prismaticDuplicateCannotPayColorlessCostWithColoredMana() {
+        MatterReshaper opponentCard = new MatterReshaper();
+        harness.setGraveyard(player2, List.of(opponentCard));
+        harness.setHand(player1, List.of(new BindToSecrecy()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castModalInstantWithModes(player1, 0, 1, 1, new int[]{1}, opponentCard.getId(),
+                List.of());
+        harness.passBothPriorities();
+
+        Card duplicate = gd.playerHands.get(player1.getId()).stream()
+                .filter(card -> card.getName().equals("Matter Reshaper") && card.isConjured())
+                .findFirst().orElseThrow();
+        int duplicateIndex = gd.playerHands.get(player1.getId()).indexOf(duplicate);
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, duplicateIndex))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

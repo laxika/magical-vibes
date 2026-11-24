@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfTargetCreatureIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -21,6 +23,10 @@ public class SinisterReflections extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
                 "Target must be a nontoken creature you control"), 0, 2)
-                .addSpellEffect(new ConjureDuplicateOfTargetCreatureIntoHandEffect());
+                .addSpellEffect(ConjureCardsEffect.duplicateOfTarget(new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentNotPredicate(new PermanentIsTokenPredicate()),
+                                new PermanentControlledBySourceControllerPredicate())),
+                        ConjureDestination.intoHand()));
     }
 }
