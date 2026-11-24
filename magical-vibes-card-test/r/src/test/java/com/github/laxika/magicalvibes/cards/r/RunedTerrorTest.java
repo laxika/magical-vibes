@@ -96,8 +96,9 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeThisTurnEf
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -988,8 +989,10 @@ class RunedTerrorTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RunedTerror());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        TriggeredAbility copyNext = new CopyNextSpellCastThisTurnEffect().delayedAbility();
-        TriggeredAbility copyEach = new CopyNextInstantOrSorceryCastThisTurnEffect().delayedAbility();
+        TriggeredAbility copyNext = RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(null,
+                List.of(new CopyTriggeringSpellEffect().permanentSpellCopiesAreTokens())).delayedAbility();
+        TriggeredAbility copyEach = RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
+                CardPredicateUtils.instantOrSorcery(), List.of(new CopyTriggeringSpellEffect())).delayedAbility();
         var firstNext = TemporaryGlobalTriggeredAbility.nextThisTurn(player1.getId(), new GrizzlyBears(), copyNext,
                 null);
         var firstEach = new TemporaryGlobalTriggeredAbility(player1.getId(), new GrizzlyBears(), copyEach);

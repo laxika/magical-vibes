@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -26,7 +28,9 @@ public class ChandraTheFirebrand extends Card {
         // You may choose new targets for the copy.
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new CopyNextInstantOrSorceryCastThisTurnEffect()),
+                List.of(
+                        RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
+                                CardPredicateUtils.instantOrSorcery(), List.of(new CopyTriggeringSpellEffect()))),
                 "−2: When you next cast an instant or sorcery spell this turn, copy that spell. "
                         + "You may choose new targets for the copy."
         ));

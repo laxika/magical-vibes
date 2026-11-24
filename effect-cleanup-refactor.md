@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32 (each in Findings; the fold queue marks its rows). Fold runs 28c, 34b, 23d and 35 are reported and wait to merge; 36 and 33b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                            |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c (each in Findings; the fold queue marks its rows). Fold runs 34b, 23d, 35 and 33b are reported and wait to merge; 36, 27b and 29c are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                             |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,384 / 2,712 (after fold run 32) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,382 / 2,710 (after fold run 28c) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,029 rows over 4,469 classes (after fold run 32). Latest verdict per class: `step-9` 486, unique 1,175, absorbed 989, split 644, blocked-other 522, survivor 355, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 486 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,032 rows over 4,471 classes (after fold run 28c). Latest verdict per class: `step-9` 486, unique 1,174, absorbed 991, split 644, blocked-other 522, survivor 356, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 486 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -872,6 +872,9 @@ Delayed and global triggers:
 - `GrantSubtypeEffect.chosenSubtype(subject, overriding, filter)` / `.secondChosenSubtype(...)` (`ChosenSubtype`, `subtypeFor(source)`): "enchanted land is the chosen type", "this land is the chosen type [in addition]", Illusionary Terrain; an overriding basic land type over any subject is the CR 305.7 setter (Celestial Dawn, Conversion) (fold run 32).
 - `GrantBasicLandTypeToTargetEffect.of(lands, fixedSubtype, replacing, Duration)`: a set of lands found once (CR 611.2c) with one choice; `AddBasicLandTypeChoice(landIds, …)` (fold run 32).
 - `LosesAllAbilitiesEffect.exceptManaAbilities(subject)` / `losesEveryAbility()`: "loses all abilities except mana abilities" (Blood Sun, Town-Razer Tyrant) (fold run 32).
+
+- `CardPredicateUtils.instantOrSorcery()` / `.instantOrSorceryWithManaValueAtMost(n)`: "an instant or sorcery spell [with mana value n or less]" (fold run 28c).
+- `RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(filter, List.of(new CopyTriggeringSpellEffect()[.withCopies(…)]))`: "when you next cast a [filter] spell this turn, copy that spell [n times]". It works in a mana ability too (Ether) (fold run 28c).
 
 ### Blocked causes still open
 
@@ -3642,6 +3645,23 @@ Batches `land-mana`, `mana-twist`, `mana-drain`, `cost-paid-land`, `player-mana`
 - `GrantBasicLandTypeToTargetEffect`'s in-addition path grants an explicit mana ability beside the intrinsic one, so a land that already had the type has it twice. Sure of the code, low.
 
 **For the next run.** Take mv-animation alone (merge `marchAnimatedIds` / `starfieldAnimatedIds` / `opalescenceAnimatedIds`, a per-permanent base-P/T amount, Spark Rupture's planeswalker read from the state). Then floated-name with The Irencrag.
+
+### Step 9, fold run 28c (2026-11-24, parallel worktree)
+Both members folded, 0 left. Ratchet 3,430 / 2,748 → 3,428 / 2,746. Ledger 3 rows (absorbed 2, survivor 1). 26 card files rewritten, Oracle text checked for all. CR 603.7a, 603.7b, 603.7d, 603.7e, 608.3f, 702.140a, 707.10 and 707.10c checked.
+
+| Batch | Result |
+|---|---|
+| next-time (28b leftover) | `CopyNextInstantOrSorceryCastThisTurnEffect` (21 cards) and `CopyNextSpellCastThisTurnEffect` (4) are now `RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(filter, List.of(CopyTriggeringSpellEffect…))`. "With mana value N or less" is `CardPredicateUtils.instantOrSorceryWithManaValueAtMost(N)`. "Twice" is `.withCopies(2)`. "For each …" / "X times" is `.withCopies(DynamicAmount)` (Thunderclap Drake, Storm King's Thunder). "Copy it" of any spell is `.permanentSpellCopiesAreTokens()`, and The Clone Saga adds `.withoutSupertypes(LEGENDARY)`. Four records and handlers gone (2 normalfx, 2 manafx). |
+
+**Survivor.** Not `RegisterGlobalTriggeredAbilityEffect.nextThisTurn`, which 28b proposed. The spell-cast survivor builds the same `TemporaryGlobalTriggeredAbility.nextThisTurn` as the deleted handlers and keeps the noted amount. Its mana-ability path is `ActivatedAbilityExecutionService`'s inline branch (Ether). It adds no registration log line and no watched-player or linked-exile fields. So nothing changes, not even the log.
+
+**Behaviour changes.** None.
+
+**Tests changed.** GameDataDeepCopyTest, KarnLiberatedTest and RunedTerrorTest build the same delayed abilities through the survivor's `delayedAbility()`.
+
+**Seen, not changed.** The Clone Saga II says "copy it" with no "you may choose new targets", but the copy still offers new targets (CR 707.10). This is not observable today: the engine casts no creature spell with targets, because mutate is not a casting option. Fairly sure.
+
+**For the next run.** Nothing is left in fold run 28's rows. `RegisterDelayedControllerSpellCastTriggerEffect` and `RegisterGlobalTriggeredAbilityEffect` overlap on "next this turn"; that is a step-10 question.
 
 ## Prompt
 

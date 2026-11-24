@@ -23,7 +23,9 @@ import com.github.laxika.magicalvibes.model.RingState;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -321,7 +323,9 @@ class KarnLiberatedTest extends BaseCardTest {
                             .withKind(AbilityTrigger.AbilityKind.EXHAUST), new CopyTriggeringSpellOrAbilityEffect()),
                     null));
             gd.temporaryGlobalTriggeredAbilities.add(new TemporaryGlobalTriggeredAbility(player2.getId(),
-                    new GrizzlyBears(), new CopyNextInstantOrSorceryCastThisTurnEffect().delayedAbility()));
+                    new GrizzlyBears(), RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
+                            CardPredicateUtils.instantOrSorcery(), List.of(new CopyTriggeringSpellEffect()))
+                            .delayedAbility()));
 
             harness.activateAbility(player1, 0, 2, null, null);
             harness.passBothPriorities();

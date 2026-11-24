@@ -7,13 +7,13 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "TLA", collectorNumber = "142")
 public class JeongJeongTheDeserter extends Card {
@@ -26,8 +26,9 @@ public class JeongJeongTheDeserter extends Card {
                 "{3}",
                 List.of(
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                        new CopyNextSpellCastThisTurnEffect(
-                                new CardSubtypePredicate(CardSubtype.LESSON), Set.of())
+                        RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
+                                new CardSubtypePredicate(CardSubtype.LESSON),
+                                List.of(new CopyTriggeringSpellEffect().permanentSpellCopiesAreTokens()))
                 ),
                 "Exhaust — {3}: Put a +1/+1 counter on Jeong Jeong. When you next cast a Lesson spell this turn, copy it."
                         + " You may choose new targets for the copy. (Activate each exhaust ability only once.)"

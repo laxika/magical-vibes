@@ -43,7 +43,9 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.OnlyLandCreaturesCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -676,7 +678,9 @@ class GameDataDeepCopyTest {
     @DisplayName("Deep copy keeps a \"when you next ...\" delayed ability, which triggers once, in a list of its own")
     void deepCopyKeepsNextDelayedAbilities() {
         TemporaryGlobalTriggeredAbility next = TemporaryGlobalTriggeredAbility.nextThisTurn(player1.getId(),
-                new SerraAngel(), new CopyNextInstantOrSorceryCastThisTurnEffect(2).delayedAbility(), null);
+                new SerraAngel(), RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
+                        CardPredicateUtils.instantOrSorceryWithManaValueAtMost(2),
+                        List.of(new CopyTriggeringSpellEffect())).delayedAbility(), null);
         gd.temporaryGlobalTriggeredAbilities.add(next);
 
         GameData copy = gd.simulationCopy();

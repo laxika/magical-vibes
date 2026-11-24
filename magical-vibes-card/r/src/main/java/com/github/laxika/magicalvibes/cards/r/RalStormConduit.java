@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -38,7 +40,9 @@ public class RalStormConduit extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new CopyNextInstantOrSorceryCastThisTurnEffect()),
+                List.of(
+                        RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
+                                CardPredicateUtils.instantOrSorcery(), List.of(new CopyTriggeringSpellEffect()))),
                 "−2: When you next cast an instant or sorcery spell this turn, copy that spell. "
                         + "You may choose new targets for the copy."
         ));

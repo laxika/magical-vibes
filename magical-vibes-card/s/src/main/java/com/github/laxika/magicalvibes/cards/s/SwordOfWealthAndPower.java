@@ -4,7 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
-import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import java.util.List;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
@@ -23,7 +26,8 @@ public class SwordOfWealthAndPower extends Card {
                 new ProtectionFromCardTypesEffect(Set.of(CardType.INSTANT, CardType.SORCERY)),
                 Subjects.attachedCreature()));
         addTrigger(Triggers.dealsCombatDamageToPlayer(), CreateTokenEffect.ofTreasureToken(1),
-                new CopyNextInstantOrSorceryCastThisTurnEffect());
+                RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
+                        CardPredicateUtils.instantOrSorcery(), List.of(new CopyTriggeringSpellEffect())));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

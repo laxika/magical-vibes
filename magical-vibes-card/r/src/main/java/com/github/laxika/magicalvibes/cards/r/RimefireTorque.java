@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
@@ -28,7 +30,8 @@ public class RimefireTorque extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(3, CounterType.CHARGE),
-                        new CopyNextInstantOrSorceryCastThisTurnEffect()),
+                        RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
+                                CardPredicateUtils.instantOrSorcery(), List.of(new CopyTriggeringSpellEffect()))),
                 "{T}, Remove three charge counters from Rimefire Torque: When you next cast an instant "
                         + "or sorcery spell this turn, copy it. You may choose new targets for the copy."));
     }

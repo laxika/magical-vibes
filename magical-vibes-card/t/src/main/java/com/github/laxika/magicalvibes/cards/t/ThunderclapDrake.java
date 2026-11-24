@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CommanderCastsFromCommandZoneThisGame;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -31,8 +33,10 @@ public class ThunderclapDrake extends Card {
                 "{2}{U}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new CopyNextInstantOrSorceryCastThisTurnEffect(
-                                new CommanderCastsFromCommandZoneThisGame())
+                        RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
+                                CardPredicateUtils.instantOrSorcery(),
+                                List.of(new CopyTriggeringSpellEffect()
+                                        .withCopies(new CommanderCastsFromCommandZoneThisGame())))
                 ),
                 "{2}{U}, Sacrifice this creature: When you next cast an instant or sorcery spell this turn, "
                         + "copy it for each time you've cast your commander from the command zone this game. "

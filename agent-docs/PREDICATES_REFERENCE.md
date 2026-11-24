@@ -508,6 +508,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 
 | Predicate | Constructor | Matches |
 |-----------|-------------|---------|
+| `CardPredicateUtils.instantOrSorcery()` / `.instantOrSorceryWithManaValueAtMost(n)` | factories | `CardAnyOfPredicate(INSTANT, SORCERY)` ("an instant or sorcery spell"), and with `CardMaxManaValuePredicate(n)` ("with mana value n or less"); `.basicLand()` is the basic land card (fold run 28c) |
 | `CardHasManaAbilityPredicate` | `()` | a card with an intrinsic on-tap mana effect or an activated mana ability; compose with `CardTypePredicate(ARTIFACT)` for tutors such as Moonsilver Key |
 | `CardHasNonManaActivatedAbilityPredicate` | `()` | cards with at least one activated ability that isn't a mana ability |
 | `CardHasKickerPredicate` | `()` | a card with a kicker or multikicker ability, detected from `KickerEffect` or a multikicker `RepeatableAdditionalManaCost`; use for filters such as “card with a kicker ability” |

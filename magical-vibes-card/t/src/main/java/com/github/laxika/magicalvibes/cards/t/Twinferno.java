@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -18,7 +20,8 @@ public class Twinferno extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "When you cast your next instant or sorcery spell this turn, copy that spell. You may choose new targets for the copy.",
-                        new CopyNextInstantOrSorceryCastThisTurnEffect()),
+                        RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
+                                CardPredicateUtils.instantOrSorcery(), List.of(new CopyTriggeringSpellEffect()))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature you control gains double strike until end of turn.",
                         new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target()),

@@ -8,14 +8,12 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -29,12 +27,8 @@ public class GadwicksFirstDuel extends Card {
         addTrigger(Triggers.chapter(1),
                 new CreateTokenAttachedToTargetEffect(cursedRoleToken(), PlayerRelation.ANY));
         addTrigger(Triggers.chapter(2), new ScryEffect(2));
-        addTrigger(Triggers.chapter(3), new CopyNextSpellCastThisTurnEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardAnyOfPredicate(List.of(
-                                new CardTypePredicate(CardType.INSTANT),
-                                new CardTypePredicate(CardType.SORCERY))),
-                        new CardMaxManaValuePredicate(3))), Set.of()));
+        addTrigger(Triggers.chapter(3), RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
+                CardPredicateUtils.instantOrSorceryWithManaValueAtMost(3), List.of(new CopyTriggeringSpellEffect())));
     }
 
     private static CreateTokenEffect cursedRoleToken() {

@@ -22,6 +22,21 @@ public final class CardPredicateUtils {
                 new CardTypePredicate(CardType.LAND)));
     }
 
+    /** A predicate matching instant and sorcery cards. Describes as "instant or sorcery card". */
+    public static CardPredicate instantOrSorcery() {
+        return new CardAnyOfPredicate(List.of(
+                new CardTypePredicate(CardType.INSTANT),
+                new CardTypePredicate(CardType.SORCERY)));
+    }
+
+    /**
+     * A predicate matching instant and sorcery cards with mana value {@code maxManaValue} or less ("an instant or
+     * sorcery spell with mana value 2 or less").
+     */
+    public static CardPredicate instantOrSorceryWithManaValueAtMost(int maxManaValue) {
+        return new CardAllOfPredicate(List.of(instantOrSorcery(), new CardMaxManaValuePredicate(maxManaValue)));
+    }
+
     public static String describeFilter(CardPredicate predicate) {
         if (predicate == null) return "card";
         if (predicate instanceof CardTruePredicate) {

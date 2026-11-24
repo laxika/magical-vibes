@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
@@ -35,7 +37,9 @@ public class MercurialSpelldancer extends Card {
                                 new SourceCounterThreshold(2, CounterType.OIL))),
                         SequenceEffect.of(
                                 new RemoveCounterFromSourceEffect(CounterType.OIL, 2),
-                                new CopyNextInstantOrSorceryCastThisTurnEffect())),
+                                RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
+                                        CardPredicateUtils.instantOrSorcery(),
+                                        List.of(new CopyTriggeringSpellEffect())))),
                 "Remove two oil counters from Mercurial Spelldancer?"));
     }
 }
