@@ -195,8 +195,10 @@ class SpecializedInteractionProjectionTest {
         Card second = card("Second");
         List<UUID> ids = List.of(first.getId(), second.getId());
 
-        InteractionPromptMessage optionalPlay = prompt(new PendingInteraction.ExiledCardMayPlayChoice(
-                controllerId, ids, true, false, true, true));
+        InteractionPromptMessage optionalPlay = prompt(new PendingInteraction.ImprovisationCapstoneCastChoice(
+                controllerId, ids, 1, "You may play one of the exiled cards without paying its mana cost."));
+        InteractionPromptMessage choosePlayable = prompt(new PendingInteraction.ExiledCardMayPlayChoice(
+                controllerId, ids, true, false, true));
         InteractionPromptMessage mayCopy = prompt(
                 new PendingInteraction.ExiledSpellCopyChoice(controllerId, ids, 1));
         InteractionPromptMessage searchForTwo = prompt(new PendingInteraction.SearchLibraryAndOrGraveyardChoice(
@@ -207,6 +209,8 @@ class SpecializedInteractionProjectionTest {
 
         assertThat(optionalPlay.maxCount()).isEqualTo(1);
         assertThat(optionalPlay.minCount()).isIn(null, 0);
+        assertThat(choosePlayable.maxCount()).isEqualTo(1);
+        assertThat(choosePlayable.minCount()).isEqualTo(1);
         assertThat(mayCopy.minCount()).isIn(null, 0);
         assertThat(searchForTwo.maxCount()).isEqualTo(2);
         assertThat(mustFindInGraveyard.minCount()).isEqualTo(1);

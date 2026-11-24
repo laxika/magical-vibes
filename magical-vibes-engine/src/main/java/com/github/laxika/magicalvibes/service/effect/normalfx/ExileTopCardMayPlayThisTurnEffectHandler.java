@@ -87,7 +87,7 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
                 // The exile is done and recorded; the step ends on the choice of the one card that may be played.
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExiledCardMayPlayChoice(holderId,
                         exiledIds, exileEffect.duration(), exileEffect.anyManaType(),
-                        exileEffect.withoutPayingManaCost(), false, false));
+                        exileEffect.withoutPayingManaCost()));
             }
         } else if (exileEffect.playLimit() > 0 && !permittedIds.isEmpty()) {
             gameData.registerExilePlayPermissionGroup(UUID.randomUUID(), exileEffect.playLimit(), permittedIds);

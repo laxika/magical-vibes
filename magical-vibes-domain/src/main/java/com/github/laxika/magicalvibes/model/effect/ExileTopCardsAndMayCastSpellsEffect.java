@@ -57,6 +57,14 @@ public record ExileTopCardsAndMayCastSpellsEffect(
                 null, null, Integer.MAX_VALUE, false, false, null, null, false, true);
     }
 
+    /** "Exile [that many] cards from the top [of your library]. You may play up to {@code maxPlayCount} of those cards
+     * without paying [its] mana cost": lands among them are played during resolution, on the controller's turn with a
+     * land play left (CR 305.2, 305.3). */
+    public static ExileTopCardsAndMayCastSpellsEffect controllerMayPlayUpTo(DynamicAmount count, int maxPlayCount) {
+        return new ExileTopCardsAndMayCastSpellsEffect(0, count, Subjects.you(), false, false,
+                null, null, maxPlayCount, false, false, null, null, false, true);
+    }
+
     /** Exiles the top {@code count} cards of the controller's library. */
     public ExileTopCardsAndMayCastSpellsEffect(int count) {
         this(count, null, Subjects.you(), false, false, null, null, Integer.MAX_VALUE,

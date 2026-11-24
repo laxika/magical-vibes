@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 47b, 24b, 30c; merge queue 46c. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 24b, 30c, 49b; merge queue 47b. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                 |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,078 / 2,492 (after fold run 6c) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,077 / 2,491 (after fold run 46c) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,593 rows over 4,559 classes (after fold run 6c). Latest verdict per class: `step-9` 90, unique 1,193, absorbed 1,302, split 670, blocked-other 550, survivor 445, blocked-step-model 139, blocked-player-loop 96, dead 74. Waiting: 90 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,595 rows over 4,559 classes (after fold run 46c). Latest verdict per class: `step-9` 88, unique 1,194, absorbed 1,303, split 670, blocked-other 550, survivor 445, blocked-step-model 139, blocked-player-loop 96, dead 74. Waiting: 88 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1076,6 +1076,8 @@ Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671
 Sources (Torpor Orb rulings search):
 - [Torpor Orb (NPH 162)](https://scryfall.com/card/nph/162)
 - [Torpor Orb (BIG 57)](https://scryfall.com/card/big/57)
+
+- `ExileTopCardsAndMayCastSpellsEffect.controllerMayPlayUpTo(DynamicAmount count, int maxPlayCount)`: "exile [that many] from the top; you may play up to N of those cards without paying [its] mana cost". Lands are played during resolution (your turn, a land play left, CR 305.2, 305.3); the rest stay exiled (Vault 112; fold run 46c).
 
 ### Blocked causes still open
 
@@ -4875,6 +4877,27 @@ Three batches touched: 4 absorbed, 3 survivor, 4 unique, 1 blocked-other; 5 spen
 - Whether Torpor Orb stops Back for More's "when you do" isn't settled by any ruling found.
 
 **For the next run.** Re-triage `GrantProtectionFromChosenColorToPermanentsEffect` (Ward Sliver) against the new subject on `GrantControllerAndPermanentsHexproofFromColorsEffect`. The returned-reflexive rows wait for a third user of an "enters during this resolution" trigger.
+
+### Step 9, fold run 46c (2026-11-24, parallel worktree)
+`pay-any` (last two): 1 absorbed, 1 unique. Ratchet 3,094 / 2,501 → 3,093 / 2,500. 1 card file rewritten; Oracle text checked for all 3 batch cards, rulings for 3 (Errant Minion and Power Leak have none). CR 107.14, 118.12, 305.1, 305.2, 305.3, 608.2g, 615.1, 615.1a, 616.1 checked.
+
+| Batch | Result |
+|---|---|
+| Vault 112 | Absorbed into `byYou(ENERGY)` + `ConditionalEffect(HappenedThisWay(PAY_ENERGY), SequenceEffect.of(ShuffleLibraryEffect(you()), ExileTopCardsAndMayCastSpellsEffect.controllerMayPlayUpTo(energyPaid(), 1)))`. The triage note's play-now option on `ExileTopCardMayPlayThisTurnEffect.chooseOne` wasn't needed: the survivor's `playLands` + `maxCastCount` (Gix's path) plays the chosen card during resolution, or none. Lands are played only on your turn with a land play left (CR 305.2, 305.3); spells are cast without priority (CR 608.2g). It is the same free-cast queue the old handler used. |
+| Errant Minion / Power Leak | `unique`. They are the only one-shot "deals N damage. Prevent X of that damage" text in the card data. Every other "prevent N of that damage" is a static shield (`PreventDamageToRecipientsEffect`). A floated shield would outlive the event and sit on the Aura's controller (CR 615.1). With no second user, the damage-step rider stays out. |
+
+**Removed.** `ExiledCardMayPlayChoice.allowNoChoice` / `castChosenImmediately`. Only Vault set them, and its 6-argument constructor set the second one implicitly for free until-end-of-turn choices. The prompt now always requires one pick, and its interaction handler loses the decline and cast-now branches.
+
+**Behaviour changes.** None in rules behaviour. Vault's prompt is the survivor's ("You may play one of the exiled cards without paying its mana cost."; it was "play until the end of this turn"), and the log lines are the survivors'.
+
+**Tests.** Vault: prompt class updated, `@DisplayName` on all tests, +2 tests (one play only; a land stays exiled without a land play), coverage not failing-first. `SpecializedInteractionProjectionTest`: the optional-play bounds use the new prompt, plus a must-pick check. Ran 21 classes, 268 cases, 0 failures.
+
+**Seen, not changed.**
+- Errant Minion / Power Leak deal `2 - X` instead of preventing X. No damage-prevented event is sent, and the affected player can't order it among other prevention or replacement effects (CR 615.1, 616.1). Sure of the code; low impact.
+- Their payment drains the pool with `ManaCost("{0}").pay` instead of `ManaCost.payResolutionCost`, so restricted mana (Powerstone) may be judged differently from the survivor. Unsure.
+- `ExiledCardMayPlayChoiceInteractionHandler` injects an unused `ExileSupport`. Sure; cosmetic.
+
+**For the next run.** `pay-any` is closed. Errant Minion / Power Leak fold only if a second one-shot "prevent N of that damage" card appears.
 
 ## Prompt
 

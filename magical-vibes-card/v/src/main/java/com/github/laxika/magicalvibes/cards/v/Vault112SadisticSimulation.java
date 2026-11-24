@@ -4,9 +4,17 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaEffect.Resource;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfEnergyThenExileTopCardsAndMayPlayOneWithoutPayingEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardsAndMayCastSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -33,7 +41,10 @@ public class Vault112SadisticSimulation extends Card {
         setSagaChapterTargetGroups(2,
                 List.of(new SagaChapterTargetGroup(TargetFilters.creature(), 0, 1)));
 
-        addTrigger(Triggers.chapter(3),
-                new PayAnyAmountOfEnergyThenExileTopCardsAndMayPlayOneWithoutPayingEffect());
+        addTrigger(Triggers.chapter(3), SequenceEffect.of(
+                EachPlayerPaysAnyManaEffect.byYou(Resource.ENERGY),
+                new ConditionalEffect(new HappenedThisWay(StepKind.PAY_ENERGY), SequenceEffect.of(
+                        new ShuffleLibraryEffect(Subjects.you()),
+                        ExileTopCardsAndMayCastSpellsEffect.controllerMayPlayUpTo(AmountThisWay.energyPaid(), 1)))));
     }
 }

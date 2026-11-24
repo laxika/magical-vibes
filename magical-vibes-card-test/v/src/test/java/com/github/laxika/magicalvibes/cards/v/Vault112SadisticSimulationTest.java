@@ -6,23 +6,27 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.InteractionOptions;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Vault112SadisticSimulation.class, GrizzlyBears.class, Shock.class, Mountain.class, BlasterHulk.class})
 class Vault112SadisticSimulationTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Chapters I and II tap and stun up to one target creature and give two energy")
     void chaptersIAndIITapStunAndGrantEnergy() {
         Permanent saga = addSaga(0);
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -45,6 +49,7 @@ class Vault112SadisticSimulationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter III exiles as many cards as energy paid and plays the chosen land during resolution")
     void chapterIIIPaysEnergyExilesThatManyAndOffersOneForFree() {
         addSaga(2);
         Card first = new Mountain();
@@ -59,10 +64,12 @@ class Vault112SadisticSimulationTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
         harness.handleXValueChosen(player1, 2);
 
-        PendingInteraction.ExiledCardMayPlayChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.ExiledCardMayPlayChoice.class);
+        PendingInteraction.ImprovisationCapstoneCastChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ImprovisationCapstoneCastChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validCardIds()).hasSize(2);
+        assertThat(choice.maxCount()).isEqualTo(1);
+        assertThat(gameLogContains("shuffles their library")).isTrue();
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
 
@@ -76,6 +83,7 @@ class Vault112SadisticSimulationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter III paying no energy neither shuffles nor exiles")
     void chapterIIIPayingZeroDoesNotShuffleOrExile() {
         addSaga(2);
         Card top = new Shock();
@@ -92,6 +100,7 @@ class Vault112SadisticSimulationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter III lets the player play none of the exiled cards")
     void chapterIIIMayDeclineToPlayAnExiledCard() {
         addSaga(2);
         Card first = new Shock();
@@ -103,17 +112,19 @@ class Vault112SadisticSimulationTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleXValueChosen(player1, 1);
 
-        PendingInteraction.ExiledCardMayPlayChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.ExiledCardMayPlayChoice.class);
+        PendingInteraction.ImprovisationCapstoneCastChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ImprovisationCapstoneCastChoice.class);
         assertThat(choice).isNotNull();
         harness.handleMultipleCardsChosen(player1, List.of());
 
-        assertThat(choice.allowNoChoice()).isTrue();
+        assertThat(choice.legalOptions()).isEqualTo(new InteractionOptions.MultiCardPick(choice.validCardIds(), 0, 1));
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.exilePlayPermissionHolders()).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
     }
 
     @Test
+    @DisplayName("Chapters I and II give energy with no creature to target")
     void chaptersGrantEnergyWhenNoCreaturesExist() {
         addSaga(0);
 
@@ -127,6 +138,7 @@ class Vault112SadisticSimulationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter I may choose no target while a creature exists")
     void chapterICanChooseNoTargetEvenWhenACreatureExists() {
         addSaga(0);
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -141,6 +153,7 @@ class Vault112SadisticSimulationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter I gives no energy when its only target leaves")
     void chapterIDoesNotGrantEnergyWhenItsOnlyTargetLeaves() {
         addSaga(0);
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -154,6 +167,7 @@ class Vault112SadisticSimulationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter III casts the chosen creature during resolution without paying its mana cost")
     void chapterIIICastsChosenCreatureDuringResolutionWithoutMana() {
         addSaga(2);
         Card creature = new GrizzlyBears();
@@ -175,6 +189,7 @@ class Vault112SadisticSimulationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter III with no energy asks nothing and exiles nothing")
     void chapterIIIWithNoEnergyDoesNotExileOrOfferAPlay() {
         addSaga(2);
         Card top = new Mountain();
@@ -190,6 +205,7 @@ class Vault112SadisticSimulationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter III may pay more energy than cards left in the library")
     void chapterIIICanPayMoreEnergyThanCardsRemaining() {
         addSaga(2);
         Card top = new Mountain();
@@ -207,6 +223,7 @@ class Vault112SadisticSimulationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Energy paid for chapter III counts for Blaster Hulk")
     void energyPaidForChapterIIIReducesBlasterHulksCost() {
         addSaga(2);
         harness.setLibrary(player1, List.of(new Mountain()));
@@ -224,6 +241,43 @@ class Vault112SadisticSimulationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Blaster Hulk");
+    }
+
+    @Test
+    @DisplayName("Chapter III plays only one of the exiled cards")
+    void chapterIIIPlaysOnlyOneOfTheExiledCards() {
+        addSaga(2);
+        Card first = new Shock();
+        Card second = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(first, second));
+        gd.playerEnergyCounters.put(player1.getId(), 2);
+
+        triggerChapter();
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 2);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(first, second);
+    }
+
+    @Test
+    @DisplayName("Chapter III's land stays exiled when its controller has no land play left (CR 305.2)")
+    void chapterIIILandStaysExiledWithoutALandPlay() {
+        addSaga(2);
+        Card land = new Mountain();
+        harness.setLibrary(player1, List.of(land));
+        gd.playerEnergyCounters.put(player1.getId(), 1);
+
+        triggerChapter();
+        gd.landsPlayedThisTurn.put(player1.getId(), 1);
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 1);
+        harness.handleMultipleCardsChosen(player1, List.of(land.getId()));
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(land);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(land.getId()));
     }
 
     private Permanent addSaga(int loreCounters) {

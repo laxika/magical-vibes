@@ -603,7 +603,7 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
                 exiledCardViews(gameData, interaction.decidingPlayerId(), interaction.validCardIds()),
-                interaction.allowNoChoice() ? 0 : 1,
+                1,
                 "Choose a card exiled this way to play " + duration + ".");
     }
 

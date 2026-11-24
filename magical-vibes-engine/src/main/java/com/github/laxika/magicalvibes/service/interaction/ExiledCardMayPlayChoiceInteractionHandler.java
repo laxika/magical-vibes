@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
@@ -9,7 +8,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +24,6 @@ public class ExiledCardMayPlayChoiceInteractionHandler
     private final ExileSupport exileSupport;
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
-    private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
 
     @Override
     public Class<PendingInteraction.ExiledCardMayPlayChoice> handledType() {
@@ -47,13 +44,6 @@ public class ExiledCardMayPlayChoiceInteractionHandler
         }
 
         List<UUID> chosenIds = ((InteractionAnswer.CardsChosen) answer).cardIds();
-        if (chosenIds.isEmpty() && interaction.allowNoChoice()) {
-            gameData.interaction.clearAwaitingInput();
-            gameLogService.append(gameData,
-                    GameLog.text(player.getUsername() + " declines to play a card exiled this way."));
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
         if (chosenIds.size() != 1 || !interaction.validCardIds().contains(chosenIds.getFirst())) {
             throw new IllegalStateException("Choose exactly one card exiled this way");
         }
@@ -62,14 +52,6 @@ public class ExiledCardMayPlayChoiceInteractionHandler
         ExiledCardEntry chosen = gameData.findExiledCard(chosenId);
         if (chosen == null) {
             throw new IllegalStateException("Chosen card is no longer exiled");
-        }
-
-        if (interaction.castChosenImmediately()) {
-            if (chosen.card().hasType(CardType.LAND)) {
-                gameData.pendingFreeCastLandPlayIds.add(chosenId);
-            }
-            exileFreeCastQueueSupport.castChosenSpellsWithoutPaying(gameData, player, List.of(chosenId));
-            return;
         }
 
         gameData.interaction.clearAwaitingInput();

@@ -173,8 +173,13 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
             interactionHandlerRegistry.begin(gameData,
                     new PendingInteraction.ImprovisationCapstoneCastChoice(
                             controllerId, castableSpellIds, maxCastCount,
-                            "You may play lands and cast spells from among the exiled cards without "
-                                    + "paying their mana costs."));
+                            e.maxCastCount() == Integer.MAX_VALUE
+                                    ? "You may play lands and cast spells from among the exiled cards without "
+                                            + "paying their mana costs."
+                                    : maxCastCount == 1
+                                    ? "You may play one of the exiled cards without paying its mana cost."
+                                    : "You may play up to " + maxCastCount
+                                            + " of the exiled cards without paying their mana costs."));
             return;
         }
         interactionHandlerRegistry.begin(gameData,
