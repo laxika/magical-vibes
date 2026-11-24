@@ -266,10 +266,6 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .VoteEffectHandler voteEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
-            .ElrondOfTheWhiteCouncilEffectHandler elrondOfTheWhiteCouncilEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx
-            .ExpropriateEffectHandler expropriateEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerChoosesLandsThenDestroyRestEffectHandler eachPlayerChoosesLandsThenDestroyRestHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerChoosesLandsThenSacrificeRestEffectHandler eachPlayerChoosesLandsThenSacrificeRestHandler;
@@ -279,9 +275,6 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MakeAnExampleEffectHandler makeAnExampleEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.WhimsOfTheFatesEffectHandler
             whimsOfTheFatesEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx
-            .PlayersWhoTappedLandForManaSacrificeLandDamageIfSubtypeEffectHandler
-            tappedLandSacrificeDamageIfSubtypeHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CulturalExchangeSupport
             culturalExchangeSupport;
     private final AmountEvaluationService amountEvaluationService;
@@ -442,8 +435,6 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandAndPutCounterChoice
                 || context instanceof MultiPermanentChoiceContext.TurfWarLandChoice
                 || context instanceof MultiPermanentChoiceContext.ObjectVoteChoice vote && !vote.upToOne()
-                || context instanceof MultiPermanentChoiceContext.ElrondFellowshipChoice
-                || context instanceof MultiPermanentChoiceContext.ExpropriatePermanentChoice
                 || context instanceof MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesDifferentOpponentPermanentThenDestroyRest)
                 && permanentIds.size() != 1) {
@@ -926,8 +917,6 @@ public class MultiPermanentChoiceHandlerService {
             completeAskingDeathReplacementsFirst(gameData, multiPermanentChoice, permanentIds);
         } else if (killsBeforeChangingAnything(context)) {
             completeAskingDeathReplacementsFirst(gameData, multiPermanentChoice, permanentIds);
-        } else if (context instanceof MultiPermanentChoiceContext.ForcedSacrificeThenDamageIfSubtype ctx) {
-            handleForcedSacrificeThenDamageIfSubtype(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext
                 .EachPlayerChoosesOneOrTwoCreaturesCreatesTokenCopyChoice ctx) {
             humanTimeLordMetaCrisisHandler.completeChoice(gameData, permanentIds, ctx);
@@ -947,10 +936,6 @@ public class MultiPermanentChoiceHandlerService {
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
             }
-        } else if (context instanceof MultiPermanentChoiceContext.ElrondFellowshipChoice ctx) {
-            handleElrondFellowshipChoice(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.ExpropriatePermanentChoice ctx) {
-            handleExpropriatePermanentChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseUpToThreeNonlandPermanentsThenOpponentChoosesOne ctx) {
             chooseUpToThreeNonlandPermanentsThenOpponentChoosesOneEffectHandler.completeChoice(
                     gameData, permanentIds, ctx);
@@ -2138,22 +2123,6 @@ public class MultiPermanentChoiceHandlerService {
         }
     }
 
-    private void handleForcedSacrificeThenDamageIfSubtype(GameData gameData, List<UUID> permanentIds,
-            MultiPermanentChoiceContext.ForcedSacrificeThenDamageIfSubtype context) {
-        List<UUID> allIds = new ArrayList<>(context.accumulatedSacrificeIds());
-        allIds.addAll(permanentIds);
-
-        tappedLandSacrificeDamageIfSubtypeHandler.beginNextChooser(gameData,
-                context.remainingChoosers(), allIds, context.subtype(), context.damageAmount(),
-                context.damageEntry());
-        if (!context.remainingChoosers().isEmpty()) {
-            return;
-        }
-
-        permanentRemovalService.removeOrphanedAuras(gameData);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
     private void handleForcedDestroy(GameData gameData, List<UUID> permanentIds,
                                      MultiPermanentChoiceContext.ForcedDestroy context) {
         // Chosen permanents are destroyed simultaneously (regeneration/indestructible apply).
@@ -3170,30 +3139,10 @@ public class MultiPermanentChoiceHandlerService {
 
 
 
-    private void handleElrondFellowshipChoice(GameData gameData, List<UUID> permanentIds,
-            MultiPermanentChoiceContext.ElrondFellowshipChoice context) {
-        elrondOfTheWhiteCouncilEffectHandler.completeFellowshipChoice(gameData, permanentIds, context);
-
-        if (gameData.interaction.isAwaitingInput()) {
-            return;
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
 
 
 
 
-    private void handleExpropriatePermanentChoice(GameData gameData, List<UUID> permanentIds,
-            MultiPermanentChoiceContext.ExpropriatePermanentChoice context) {
-        expropriateEffectHandler.completePermanentChoice(gameData, permanentIds, context);
-
-        if (gameData.interaction.isAwaitingInput()) {
-            return;
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
 
     private void handleDestroyUpToOneNonbasicLandPerPlayerChoice(GameData gameData,
             List<UUID> permanentIds,

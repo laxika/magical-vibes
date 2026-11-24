@@ -26,6 +26,7 @@ import java.util.Objects;
  */
 public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubject.TargetCard,
         CardSubject.TriggeringCards, CardSubject.TriggeringCardsInHand, CardSubject.SourceCard, CardSubject.InYourGraveyard,
+        CardSubject.OwnedBy,
         CardSubject.InGraveyards, CardSubject.InExile, CardSubject.ExiledWithSource, CardSubject.Except,
         CardSubject.TargetExiledCard, CardSubject.TopOfGraveyard, CardSubject.InHand, CardSubject.InLibrary,
         CardSubject.TopmostInLibrary, CardSubject.InCommandZone, CardSubject.ExiledAsCost, CardSubject.Voted,
@@ -147,6 +148,26 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
             Objects.requireNonNull(cards, "cards");
             if (cards.declaresTarget()) {
                 throw new IllegalArgumentException("A target card's graveyard is the target's scope: " + cards);
+            }
+        }
+    }
+
+    /**
+     * "The card you discarded" among the cards each player discarded (Creeping Dread): those of the cards {@code cards}
+     * names that a player {@code owners} names owns, in whatever zone {@code cards} finds them (a discarded card a
+     * replacement exiled instead too, which {@link InYourGraveyard} leaves out).
+     *
+     * @param cards  among which cards
+     * @param owners whose cards
+     */
+    record OwnedBy(CardSubject cards, PlayerSubject owners) implements CardSubject {
+
+        public OwnedBy {
+            Objects.requireNonNull(cards, "cards");
+            Objects.requireNonNull(owners, "owners");
+            if (cards.declaresTarget() || owners.declaresTarget()) {
+                throw new IllegalArgumentException("Cards narrowed by owner declare no target: " + cards + ", "
+                        + owners);
             }
         }
     }

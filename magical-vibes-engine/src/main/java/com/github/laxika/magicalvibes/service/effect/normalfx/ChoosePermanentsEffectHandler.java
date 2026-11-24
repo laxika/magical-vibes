@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext.RecordChosenPermanents.Offer;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
@@ -74,17 +75,23 @@ public class ChoosePermanentsEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         if (choose.oneForEach() != null) {
-            List<List<UUID>> choices = new ArrayList<>();
+            String sourceName = FaceDownVisibility.sourceName(gameData, entry);
+            List<Offer> choices = new ArrayList<>();
             for (UUID playerId : subjectResolutionService.players(gameData, entry, effect, choose.oneForEach())) {
                 List<UUID> theirs = candidates.stream()
                         .map(Permanent::getId)
                         .filter(id -> playerId.equals(gameQueryService.findPermanentController(gameData, id)))
                         .toList();
                 if (!theirs.isEmpty()) {
-                    choices.add(theirs);
+                    choices.add(new Offer(entry.getControllerId(), theirs, sourceName + " — choose " + choose.label()
+                            + " " + gameData.playerIdToName.get(playerId) + " controls."));
                 }
             }
             askForEach(gameData, entry, choose, List.of(), choices);
+            return;
+        }
+        if (choose.forEachVote() != null) {
+            askForEach(gameData, entry, choose, List.of(), voteOffers(gameData, entry, choose, candidates));
             return;
         }
         int minimum = Math.min(maximum,
@@ -106,25 +113,58 @@ public class ChoosePermanentsEffectHandler implements NormalEffectHandlerBean {
     }
 
     /**
-     * One choice after another, a lone candidate taken unasked; returns whether the controller is asked. What is
-     * chosen is recorded once the last choice is made.
+     * {@link ChoosePermanentsEffect.ForEachVote}: one offer per vote for its option in the resolution's last vote, in
+     * the order the votes were cast, of the candidates that vote's voter controls or owns; a voter with none gets none.
+     */
+    private List<Offer> voteOffers(GameData gameData, StackEntry entry, ChoosePermanentsEffect choose,
+                                   List<Permanent> candidates) {
+        ChoosePermanentsEffect.ForEachVote perVote = choose.forEachVote();
+        String sourceName = FaceDownVisibility.sourceName(gameData, entry);
+        List<Offer> offers = new ArrayList<>();
+        for (StepOutcome.Vote vote : entry.getResolutionResults().outcome(StepKind.VOTE).votes()) {
+            UUID voterId = vote.voterId();
+            if (vote.candidateId() != null || !perVote.option().equals(vote.choice())
+                    || !gameData.playerIds.contains(voterId)) {
+                continue;
+            }
+            List<UUID> theirs = candidates.stream()
+                    .map(Permanent::getId)
+                    .filter(id -> voterId.equals(perVote.relation() == ChoosePermanentsEffect.VoterRelation.OWNS
+                            ? gameData.defaultControllerOf(id) : gameQueryService.findPermanentController(gameData, id)))
+                    .toList();
+            if (theirs.isEmpty()) {
+                continue;
+            }
+            String whose = perVote.relation() == ChoosePermanentsEffect.VoterRelation.OWNS
+                    ? " owned by " + (perVote.byVoter() ? "you" : gameData.playerIdToName.get(voterId))
+                    : " " + (perVote.byVoter() ? "you control" : gameData.playerIdToName.get(voterId) + " controls");
+            offers.add(new Offer(perVote.byVoter() ? voterId : entry.getControllerId(), theirs,
+                    sourceName + " — choose " + choose.label() + whose + " (" + perVote.option().toLowerCase()
+                            + " vote)."));
+        }
+        return offers;
+    }
+
+    /**
+     * One choice after another, a lone candidate taken unasked; returns whether a player is asked. What is chosen is
+     * recorded once the last choice is made.
      */
     private boolean askForEach(GameData gameData, StackEntry entry, ChoosePermanentsEffect choose,
-                               List<UUID> chosenBefore, List<List<UUID>> choices) {
+                               List<UUID> chosenBefore, List<Offer> choices) {
         List<UUID> chosen = new ArrayList<>(chosenBefore);
         for (int i = 0; i < choices.size(); i++) {
-            List<UUID> offered = choices.get(i);
-            if (offered.size() == 1) {
-                chosen.add(offered.getFirst());
+            Offer offer = choices.get(i);
+            List<UUID> offered = offer.permanentIds().stream()
+                    .filter(id -> gameQueryService.findPermanentById(gameData, id) != null)
+                    .toList();
+            if (offered.size() <= 1) {
+                chosen.addAll(offered);
                 continue;
             }
             var next = new PermanentChoiceContext.RecordChosenPermanents(
                     choose, List.copyOf(chosen), List.copyOf(choices.subList(i + 1, choices.size())));
             gameData.interaction.setPermanentChoiceContext(next);
-            UUID controllerId = gameQueryService.findPermanentController(gameData, offered.getFirst());
-            playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), offered, next,
-                    FaceDownVisibility.sourceName(gameData, entry) + " — choose " + choose.label() + " "
-                            + gameData.playerIdToName.get(controllerId) + " controls.");
+            playerInputService.beginPermanentChoice(gameData, offer.chooserId(), offered, next, offer.prompt());
             return true;
         }
         record(gameData, entry, choose, present(gameData, chosen));
@@ -134,7 +174,7 @@ public class ChoosePermanentsEffectHandler implements NormalEffectHandlerBean {
     /** The answer to a choice of one; returns whether the choice for the next player follows. */
     public boolean completeSingleChoice(GameData gameData, UUID chosenId,
                                         PermanentChoiceContext.RecordChosenPermanents context) {
-        if (context.effect().oneForEach() == null) {
+        if (context.effect().oneForEach() == null && context.effect().forEachVote() == null) {
             completeChoice(gameData, List.of(chosenId), context.effect());
             return false;
         }
@@ -175,9 +215,10 @@ public class ChoosePermanentsEffectHandler implements NormalEffectHandlerBean {
         record(gameData, gameData.pendingEffectResolutionEntry, choose, present(gameData, chosenIds));
     }
 
+    /** The permanents of {@code ids} still on the battlefield, each once (one chosen for two votes is chosen once). */
     private List<Permanent> present(GameData gameData, List<UUID> ids) {
         List<Permanent> present = new ArrayList<>();
-        for (UUID id : ids) {
+        for (UUID id : new java.util.LinkedHashSet<>(ids)) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, id);
             if (permanent != null) {
                 present.add(permanent);
@@ -202,7 +243,9 @@ public class ChoosePermanentsEffectHandler implements NormalEffectHandlerBean {
             gameLogService.append(gameData, GameLog.text(chooser + " chooses nothing."));
             return;
         }
-        String chooses = choose.random() ? "Chosen at random: " : chooser + " chooses ";
+        String chooses = choose.random() ? "Chosen at random: "
+                : choose.forEachVote() != null && choose.forEachVote().byVoter() ? "Chosen by the voters: "
+                : chooser + " chooses ";
         List<UUID> controllers = new ArrayList<>();
         var log = GameLog.builder().text(chooses);
         for (int i = 0; i < chosen.size(); i++) {
@@ -223,7 +266,7 @@ public class ChoosePermanentsEffectHandler implements NormalEffectHandlerBean {
         gameLogService.append(gameData, log.text(".").build());
         entry.recordStep(StepKind.CHOOSE, StepOutcome.ofObjects(
                 chosen.stream().map(Permanent::getId).toList(), controllers));
-        if (choose.oneForEach() == null && new Fixed(1).equals(choose.maximum())) {
+        if (choose.oneForEach() == null && choose.forEachVote() == null && new Fixed(1).equals(choose.maximum())) {
             Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
             if (source != null) {
                 source.setChosenPermanentId(chosen.getFirst().getId());

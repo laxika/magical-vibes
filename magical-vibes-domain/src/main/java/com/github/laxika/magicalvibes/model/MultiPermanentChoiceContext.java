@@ -503,21 +503,6 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
-    /**
-     * Desolation-style forced sacrifice: same APNAP simultaneous pick as {@link ForcedSacrifice},
-     * then after all sacrifices the source deals {@code damageAmount} to each player who
-     * sacrificed a permanent matching {@code subtype} this way. {@code damageEntry} is the
-     * resolving stack entry (snapshotted for attribution after the interaction parks).
-     */
-    record ForcedSacrificeThenDamageIfSubtype(UUID sacrificingPlayerId,
-                                              java.util.List<PendingForcedSacrifice> remainingChoosers,
-                                              java.util.List<UUID> accumulatedSacrificeIds,
-                                              CardSubtype subtype,
-                                              int damageAmount,
-                                              StackEntry damageEntry)
-            implements MultiPermanentChoiceContext {
-    }
-
     /** Each player chooses a creature; all chosen creatures are then sacrificed together. */
     record EachPlayerSacrificesCreatureCreateTokenEqualToTotalPower(
             java.util.List<PendingForcedSacrifice> remainingChoosers,
@@ -1309,29 +1294,6 @@ public sealed interface MultiPermanentChoiceContext {
         public ObjectVoteChoice withRemainingVoterIds(List<UUID> remainingVoterIds) {
             return new ObjectVoteChoice(effectControllerId, remainingVoterIds, votes, kindPrefix, candidateIds,
                     otherThanVoter, upToOne, secret, sourceName);
-        }
-    }
-
-    /** Elrond of the White Council: a fellowship voter chose a creature they control. */
-    record ElrondFellowshipChoice(UUID effectControllerId,
-                                  java.util.List<UUID> remainingVoterIds,
-                                  java.util.List<UUID> chosenCreatureIds,
-                                  int aidVotes,
-                                  String sourceName)
-            implements MultiPermanentChoiceContext {
-        public ElrondFellowshipChoice {
-            remainingVoterIds = java.util.List.copyOf(remainingVoterIds);
-            chosenCreatureIds = java.util.List.copyOf(chosenCreatureIds);
-        }
-    }
-
-    /** Expropriate: the controller chooses a permanent owned by the current money voter. */
-    record ExpropriatePermanentChoice(UUID effectControllerId, UUID voterId,
-                                      java.util.List<UUID> remainingMoneyVoterIds,
-                                      int timeVotes, String sourceName)
-            implements MultiPermanentChoiceContext {
-        public ExpropriatePermanentChoice {
-            remainingMoneyVoterIds = java.util.List.copyOf(remainingMoneyVoterIds);
         }
     }
 

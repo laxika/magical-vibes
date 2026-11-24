@@ -2,7 +2,10 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.n.NyxbornCourser;
+import com.github.laxika.magicalvibes.cards.o.ObstinateBaloth;
+import com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -10,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -24,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class KroxaTitanOfDeathsHungerTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Cast from hand, Kroxa is sacrificed and an opponent with no cards loses 3 life")
     void castFromHandSacrificesKroxa() {
         castFromHandWithOpponentHand(List.of());
 
@@ -35,6 +40,7 @@ class KroxaTitanOfDeathsHungerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent who discards a land card loses 3 life")
     void opponentLosesLifeAfterDiscardingALand() {
         castFromHandWithOpponentHand(List.of(new Island()));
 
@@ -42,6 +48,7 @@ class KroxaTitanOfDeathsHungerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent who discards a nonland card loses no life")
     void opponentDoesNotLoseLifeAfterDiscardingANonland() {
         castFromHandWithOpponentHand(List.of(new NyxbornCourser()));
 
@@ -49,6 +56,7 @@ class KroxaTitanOfDeathsHungerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An escaped Kroxa stays on the battlefield")
     void escapedKroxaStaysOnTheBattlefield() {
         KroxaTitanOfDeathsHunger kroxa = new KroxaTitanOfDeathsHunger();
         List<Card> graveyard = new ArrayList<>();
@@ -67,6 +75,7 @@ class KroxaTitanOfDeathsHungerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Attacking makes the opponent discard, then lose 3 life when it was no nonland card")
     void attackingKroxaMakesOpponentDiscard() {
         addCreatureReady(player1, new KroxaTitanOfDeathsHunger());
         harness.setHand(player2, new ArrayList<>(List.of(new NyxbornCourser())));
@@ -82,6 +91,7 @@ class KroxaTitanOfDeathsHungerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Entering puts two separate triggered abilities on the stack")
     void entersWithTwoSeparateTriggeredAbilities() {
         harness.setHand(player1, List.of(new KroxaTitanOfDeathsHunger()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -96,6 +106,7 @@ class KroxaTitanOfDeathsHungerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The opponent chooses which card to discard")
     void opponentChoosesWhichCardToDiscard() {
         NyxbornCourser creature = new NyxbornCourser();
         harness.setHand(player1, List.of(new KroxaTitanOfDeathsHunger()));
@@ -116,6 +127,7 @@ class KroxaTitanOfDeathsHungerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Escape exiles five other cards and the discard ability still resolves")
     void escapePaysFiveOtherCardsAndStillTriggersLifeLoss() {
         prepareEscapeGraveyard(5);
         harness.setHand(player2, List.of());
@@ -131,6 +143,7 @@ class KroxaTitanOfDeathsHungerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can't escape with only four other cards in the graveyard")
     void cannotEscapeWithOnlyFourOtherCards() {
         prepareEscapeGraveyard(4);
 
@@ -141,6 +154,7 @@ class KroxaTitanOfDeathsHungerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can't exile Kroxa itself to pay its escape cost")
     void cannotExileKroxaToPayItsOwnEscapeCost() {
         prepareEscapeGraveyard(5);
 
@@ -151,6 +165,7 @@ class KroxaTitanOfDeathsHungerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can't escape by paying only its normal mana cost")
     void cannotEscapeByPayingOnlyItsNormalManaCost() {
         List<Card> graveyard = new ArrayList<>();
         graveyard.add(new KroxaTitanOfDeathsHunger());
@@ -166,6 +181,7 @@ class KroxaTitanOfDeathsHungerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent with no cards to discard loses 3 life when Kroxa attacks")
     void attackCausesLifeLossWhenOpponentHasNoCards() {
         addCreatureReady(player1, new KroxaTitanOfDeathsHunger());
         harness.setHand(player2, List.of());
@@ -178,6 +194,7 @@ class KroxaTitanOfDeathsHungerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent who discards a land as Kroxa attacks loses 3 life")
     void attackCausesLifeLossWhenOpponentDiscardsLand() {
         addCreatureReady(player1, new KroxaTitanOfDeathsHunger());
         harness.setHand(player2, List.of(new Island()));
@@ -193,6 +210,7 @@ class KroxaTitanOfDeathsHungerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Opponents choose in turn order before any chosen card is discarded")
     void opponentsChooseBeforeAnyChosenCardIsDiscarded() {
         Player thirdPlayer = addOpponent();
         NyxbornCourser firstChoice = new NyxbornCourser();
@@ -218,6 +236,29 @@ class KroxaTitanOfDeathsHungerTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(thirdPlayer.getId())).contains(secondChoice);
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
         assertThat(gd.getLife(thirdPlayer.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @CardUsed(ObstinateBaloth.class)
+    @DisplayName("An opponent whose discarded creature card enters the battlefield instead still discarded a nonland card")
+    void discardReplacedOntoTheBattlefieldCountsAsNonland() {
+        castFromHandWithOpponentHand(List.of(new ObstinateBaloth()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof ObstinateBaloth);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(24);
+    }
+
+    @Test
+    @CardUsed(TamiyoCollectorOfTales.class)
+    @DisplayName("An opponent Kroxa can't make discard keeps the card and loses 3 life")
+    void opponentProtectedFromDiscardLosesLife() {
+        harness.addToBattlefieldAndReturn(player2, new TamiyoCollectorOfTales())
+                .setCounterCount(CounterType.LOYALTY, 5);
+        castFromHandWithOpponentHand(List.of(new NyxbornCourser()));
+
+        assertThat(gd.playerHands.get(player2.getId())).singleElement().isInstanceOf(NyxbornCourser.class);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
     }
 
     private void prepareEscapeGraveyard(int otherCardCount) {

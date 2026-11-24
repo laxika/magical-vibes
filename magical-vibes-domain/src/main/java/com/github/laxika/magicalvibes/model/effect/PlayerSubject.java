@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -193,8 +196,25 @@ public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.T
      * it acted, CR 608.2h; see {@link StepKind}). Not for {@link StepKind#DEAL_DAMAGE} ({@link PlayersDealtDamage}),
      * {@link StepKind#COUNTER_SPELL} ({@code controllerOf(targetSpell())}) or {@link StepKind#COPY_SPELL}. A step
      * result.
+     *
+     * <p>With a {@code cardFilter}, only the players of the recorded cards that match it, each card judged where it is
+     * now (wherever the step or a replacement put it) and naming the player whose zone holds it: its owner, whose hand,
+     * library, graveyard or exile it can only be in (CR 400.3), or its controller where a replacement put it onto the
+     * battlefield. "Each opponent who didn't discard a nonland card this way" is
+     * {@code except(eachOpponent(), playersThisWay(DISCARD, nonland))} (Kroxa, Titan of Death's Hunger). With a
+     * {@code permanentFilter}, only the controllers of the recorded permanents that match it, each as it is on the
+     * battlefield or as it last existed there (CR 608.2h): "each player who sacrificed a Plains this way" (Desolation).
+     *
+     * @param kind            the step kind whose most recent step is read
+     * @param cardFilter      which recorded cards name their owner; {@code null} for no card filter
+     * @param permanentFilter which recorded permanents name their controller; {@code null} for no permanent filter
      */
-    record PlayersThisWay(StepKind kind) implements PlayerSubject {
+    record PlayersThisWay(StepKind kind, CardPredicate cardFilter, PermanentPredicate permanentFilter)
+            implements PlayerSubject {
+
+        public PlayersThisWay(StepKind kind) {
+            this(kind, null, null);
+        }
 
         public PlayersThisWay {
             Objects.requireNonNull(kind, "kind");
@@ -206,6 +226,14 @@ public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.T
                 case COPY_SPELL -> throw new IllegalArgumentException("A copy step records no player");
                 default -> {
                 }
+            }
+            if (cardFilter != null && permanentFilter != null) {
+                throw new IllegalArgumentException("A step's players are filtered by their cards or by their "
+                        + "permanents, not both");
+            }
+            if (cardFilter != null && !EnumSet.of(StepKind.DISCARD, StepKind.MILL, StepKind.DRAW, StepKind.REVEAL)
+                    .contains(kind)) {
+                throw new IllegalArgumentException("A " + kind + " step's players are not the owners of cards");
             }
         }
 

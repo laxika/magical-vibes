@@ -731,8 +731,8 @@ class GlimpseTheUnthinkablePlaytestTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 7);
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        harness.handleListChoice(player1, ChoiceContext.ExpropriateChoice.TIME);
-        harness.handleListChoice(player2, ChoiceContext.ExpropriateChoice.MONEY);
+        harness.handleListChoice(player1, Expropriate.TIME);
+        harness.handleListChoice(player2, Expropriate.MONEY);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);

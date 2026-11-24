@@ -1278,8 +1278,6 @@ public class GameData {
     /** Progress state for each player's optional graveyard exile and remaining-card life loss. */
     public final EachPlayerMayExileGraveyardCardsState eachPlayerMayExileGraveyardCards =
             new EachPlayerMayExileGraveyardCardsState();
-    /** Progress state for Creeping Dread's each-player discard comparison. */
-    public final CreepingDreadState creepingDread = new CreepingDreadState();
     /**
      * Player whose next discard choice is only recorded in {@link #deferredDiscardSelections} instead
      * of discarding the card. Each-player discard effects set it for the current chooser so that every
@@ -9875,13 +9873,6 @@ public class GameData {
         copy.deferredDiscardChooserId = this.deferredDiscardChooserId;
         copy.deferredDiscardSelections.addAll(this.deferredDiscardSelections);
         copy.stagedHandExiles.addAll(this.stagedHandExiles);
-        copy.creepingDread.active = this.creepingDread.active;
-        copy.creepingDread.controllerId = this.creepingDread.controllerId;
-        copy.creepingDread.currentPlayerId = this.creepingDread.currentPlayerId;
-        copy.creepingDread.remaining.addAll(this.creepingDread.remaining);
-        copy.creepingDread.selectedDiscards.addAll(this.creepingDread.selectedDiscards);
-        this.creepingDread.discardedCardTypes.forEach((playerId, types) ->
-                copy.creepingDread.discardedCardTypes.put(playerId, Set.copyOf(types)));
         copy.eachPlayerMayDiscardOneThenApplyEffects.active =
                 this.eachPlayerMayDiscardOneThenApplyEffects.active;
         copy.eachPlayerMayDiscardOneThenApplyEffects.controllerId =

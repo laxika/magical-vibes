@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.LastKnownCardStats;
 import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.DepartureResult;
 import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardSubject;
@@ -192,6 +193,12 @@ public class SubjectResolutionService {
                     .filter(located -> located.zone() == Zone.GRAVEYARD
                             && entry.getControllerId().equals(located.ownerId()))
                     .toList();
+            case CardSubject.OwnedBy owned -> {
+                List<UUID> owners = players(gameData, entry, effect, owned.owners());
+                yield locatedCards(gameData, entry, effect, owned.cards()).stream()
+                        .filter(located -> owners.contains(located.ownerId()))
+                        .toList();
+            }
         };
     }
 
@@ -1682,8 +1689,7 @@ public class SubjectResolutionService {
             case PlayerSubject.PlayersDealtDamage ignored -> ctx.entry().getPlayersDealtDamageThisResolution().stream()
                     .filter(gameData.playerIds::contains)
                     .toList();
-            case PlayerSubject.PlayersThisWay thisWay -> ctx.entry().getResolutionResults().outcome(thisWay.kind())
-                    .playerIds().stream()
+            case PlayerSubject.PlayersThisWay thisWay -> playersThisWay(ctx, thisWay).stream()
                     .filter(gameData.playerIds::contains)
                     .toList();
             case PlayerSubject.SubgameWinners ignored -> {
@@ -1728,6 +1734,85 @@ public class SubjectResolutionService {
                     .toList();
         };
         return inApnapOrder(gameData, players);
+    }
+
+    /**
+     * {@link PlayerSubject.PlayersThisWay}: the players the step recorded; with a card filter the owners of the recorded
+     * cards matching it where they are now, found in any zone (a discarded card a replacement put onto the battlefield
+     * or into a library too); with a permanent filter the controllers, current or last-known (CR 608.2h), of the
+     * recorded permanents matching it as they are, or as they last existed on the battlefield.
+     */
+    private List<UUID> playersThisWay(Context ctx, PlayerSubject.PlayersThisWay thisWay) {
+        GameData gameData = ctx.gameData();
+        StepOutcome outcome = ctx.entry().getResolutionResults().outcome(thisWay.kind());
+        if (thisWay.cardFilter() != null) {
+            CardPredicate filter = bindCardSubjects(gameData, ctx.entry(), ctx.effect(), thisWay.cardFilter());
+            List<UUID> owners = new ArrayList<>();
+            for (UUID cardId : new LinkedHashSet<>(outcome.objectIds())) {
+                LocatedCard located = anywhere(gameData, cardId);
+                if (located != null && cardMatches(gameData, ctx.entry(), located.card(), located.ownerId(), filter)) {
+                    owners.add(located.ownerId());
+                }
+            }
+            return owners;
+        }
+        if (thisWay.permanentFilter() != null) {
+            FilterContext filterContext = filterContext(ctx);
+            List<UUID> controllers = new ArrayList<>();
+            for (UUID permanentId : new LinkedHashSet<>(outcome.objectIds())) {
+                Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+                if (permanent == null) {
+                    permanent = ConditionEvaluationService.lastKnownPermanent(gameData, permanentId);
+                }
+                if (permanent != null && predicateEvaluationService.matchesPermanentPredicate(permanent,
+                        thisWay.permanentFilter(), filterContext)) {
+                    UUID controllerId = controllerOf(ctx, permanentId);
+                    if (controllerId == null) {
+                        controllerId = ctx.entry().getResolutionResults().departures().stream()
+                                .filter(departure -> permanentId.equals(departure.permanentId()))
+                                .map(DepartureResult::lastKnownControllerId)
+                                .filter(Objects::nonNull)
+                                .findFirst().orElse(null);
+                    }
+                    if (controllerId != null) {
+                        controllers.add(controllerId);
+                    }
+                }
+            }
+            return controllers;
+        }
+        return outcome.playerIds();
+    }
+
+    /**
+     * The card {@code cardId} in whatever zone it is in now, with the player whose zone that is: its owner for a hand,
+     * library, graveyard or exile (CR 400.3), its controller on the battlefield; {@code null} when no zone holds it.
+     */
+    private LocatedCard anywhere(GameData gameData, UUID cardId) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                if (cardId.equals(permanent.getCard().getId())) {
+                    return new LocatedCard(permanent.getCard(), Zone.BATTLEFIELD, playerId);
+                }
+            }
+            for (Zone zone : List.of(Zone.HAND, Zone.LIBRARY, Zone.GRAVEYARD, Zone.EXILE)) {
+                List<Card> cards = switch (zone) {
+                    case HAND -> gameData.playerHands.get(playerId);
+                    case LIBRARY -> gameData.playerDecks.get(playerId);
+                    case GRAVEYARD -> gameData.playerGraveyards.get(playerId);
+                    default -> gameData.getPlayerExiledCards(playerId);
+                };
+                if (cards == null) {
+                    continue;
+                }
+                for (Card card : cards) {
+                    if (cardId.equals(card.getId())) {
+                        return new LocatedCard(card, zone, playerId);
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     /** "Its controller": current controller, else last-known (CR 608.2h). */

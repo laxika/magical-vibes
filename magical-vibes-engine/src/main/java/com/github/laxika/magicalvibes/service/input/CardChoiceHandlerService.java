@@ -766,21 +766,6 @@ public class CardChoiceHandlerService {
             throw new IllegalStateException("Not your turn to choose");
         }
 
-        if (gameData.creepingDread.active
-                && player.getId().equals(gameData.creepingDread.currentPlayerId)) {
-            if (!discardChoice.validIndices().contains(cardIndex)) {
-                throw new IllegalStateException("Invalid card index: " + cardIndex);
-            }
-            Card chosen = gameData.playerHands.get(player.getId()).get(cardIndex);
-            gameData.creepingDread.selectedDiscards.add(new EachPlayerRummageState.SelectedDiscard(
-                    player.getId(), chosen.getId()));
-            gameData.creepingDread.discardedCardTypes.put(player.getId(), java.util.Arrays.stream(CardType.values()).filter(chosen::hasType)
-                    .collect(java.util.stream.Collectors.toSet()));
-            gameData.creepingDread.currentPlayerId = null;
-            gameData.interaction.clearAwaitingInput();
-            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-            return;
-        }
         if (discardChoice.followUp().plaguecrafter()) {
             handlePlaguecrafterDiscardCardChosen(gameData, player, cardIndex, discardChoice);
             return;

@@ -3103,7 +3103,6 @@ public class PlayerInputService {
                 && !followUp.targetOpponentsDiscardThenDraw()
                 && !followUp.eachPlayerQueue()
                 && !followUp.plaguecrafter()
-                && !gameData.creepingDread.active
                 && !playerId.equals(gameData.deferredDiscardChooserId)
                 && !(gameData.eachPlayerRummage.active && gameData.eachPlayerRummage.deferDiscards)) {
             gameData.beginDiscardEvent(playerId);

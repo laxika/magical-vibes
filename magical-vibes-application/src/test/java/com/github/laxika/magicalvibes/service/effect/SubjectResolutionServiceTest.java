@@ -1518,6 +1518,74 @@ class SubjectResolutionServiceTest extends BaseCardTest {
     }
 
     @Nested
+    @DisplayName("playersThisWay(kind, filter)")
+    class FilteredPlayersThisWay {
+
+        @Test
+        @DisplayName("A card filter names the players whose recorded cards match it, wherever the cards went")
+        void cardFilterNamesPlayersOfMatchingCards() {
+            Card forest = new Forest();
+            Card bears = new GrizzlyBears();
+            harness.setGraveyard(player1, List.of(forest));
+            Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+            StackEntry entry = entry(player1, null, null);
+            entry.recordStep(StepKind.DISCARD, StepOutcome.ofObjects(
+                    List.of(forest.getId(), giant.getCard().getId(), bears.getId()),
+                    List.of(player1.getId(), player2.getId())));
+            CardPredicate nonland = new com.github.laxika.magicalvibes.model.filter.CardNotPredicate(
+                    new CardTypePredicate(CardType.LAND));
+
+            assertThat(players(entry, Subjects.playersThisWay(StepKind.DISCARD, nonland)))
+                    .containsExactly(player2.getId());
+            assertThat(players(entry, except(eachPlayer(), Subjects.playersThisWay(StepKind.DISCARD, nonland))))
+                    .containsExactly(player1.getId());
+        }
+
+        @Test
+        @DisplayName("A permanent filter names the controllers of the recorded permanents that match it")
+        void permanentFilterNamesControllersOfMatchingPermanents() {
+            Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            StackEntry entry = entry(player1, null, null);
+            entry.recordStep(StepKind.TAP, StepOutcome.ofObjects(List.of(forest.getId(), bears.getId()),
+                    List.of(player1.getId(), player2.getId())));
+
+            assertThat(players(entry, Subjects.playersThisWay(StepKind.TAP, new PermanentIsLandPredicate())))
+                    .containsExactly(player1.getId());
+            assertThat(players(entry, Subjects.playersThisWay(StepKind.TAP)))
+                    .containsExactly(player1.getId(), player2.getId());
+        }
+
+        @Test
+        @DisplayName("A card filter is refused for a step whose players don't own its objects")
+        void cardFilterRefusedForPermanentSteps() {
+            assertThatThrownBy(() -> Subjects.playersThisWay(StepKind.SACRIFICE, new CardTypePredicate(CardType.LAND)))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+
+        @Test
+        @DisplayName("ownedBy names only the cards of the players it names, a card exiled instead of discarded too")
+        void ownedByNarrowsToOwners() {
+            Card bears = new GrizzlyBears();
+            Card giant = new HillGiant();
+            Card forest = new Forest();
+            harness.setGraveyard(player1, List.of(bears));
+            gd.addToExile(player1.getId(), giant);
+            harness.setGraveyard(player2, List.of(forest));
+            StackEntry entry = entry(player1, null, null);
+            entry.recordStep(StepKind.DISCARD, StepOutcome.ofObjects(
+                    List.of(bears.getId(), giant.getId(), forest.getId()), List.of(player1.getId(), player2.getId())));
+
+            assertThat(subjects.cards(gd, entry, EFFECT,
+                    Subjects.ownedBy(Subjects.cardsThisWay(StepKind.DISCARD), you())))
+                    .containsExactly(bears, giant);
+            assertThat(subjects.cards(gd, entry, EFFECT,
+                    Subjects.ownedBy(Subjects.cardsThisWay(StepKind.DISCARD), eachOpponent())))
+                    .containsExactly(forest);
+        }
+    }
+
+    @Nested
     @DisplayName("Card subjects")
     class CardSubjects {
 

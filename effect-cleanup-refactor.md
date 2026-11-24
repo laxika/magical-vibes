@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c (each in Findings; the fold queue marks its rows). Fold runs 8 to 16 run in parallel worktrees from 2026-11-24. Next: fold runs 15, 16 and 8b (running), 12d (Flames, Aquatic, Vona, Vesuvan, Gutmorn), `drafted-step`, 17. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                 |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b (each in Findings; the fold queue marks its rows). Fold runs 8 to 16 run in parallel worktrees from 2026-11-24. Next: fold runs 15 and 16 (running), 12d, `drafted-step`, 17. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                  |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,764 / 3,027 (after fold run 12c) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,759 / 3,022 (after fold run 8b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,409 rows over 4,418 classes (after fold run 12c). Latest verdict per class: `step-9` 942, unique 1,165, absorbed 664, split 577, blocked-other 487, survivor 285, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 942 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,415 rows over 4,418 classes (after fold run 8b). Latest verdict per class: `step-9` 939, unique 1,165, absorbed 664, split 582, blocked-other 485, survivor 285, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 939 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -647,6 +647,13 @@ Delayed and global triggers:
   card) and the stack; only for the perpetual verbs; one log line per owner (fold run 12c).
 - `PerpetualCardCastCostSupport.change/changeFor`: the one signed perpetual cast-cost store `perpetualGenericCastCostIncreases`
   (fold run 12c).
+
+- `Subjects.playersThisWay(kind, CardPredicate)` (DISCARD, MILL, DRAW, REVEAL) and `playersThisWay(kind, PermanentPredicate)`: the
+  players whose recorded cards, or the controllers whose recorded permanents, match (Kroxa, Creeping Dread, Desolation; fold run 8b).
+- `Subjects.ownedBy(cards, owners)` (`CardSubject.OwnedBy`): "the card you discarded", found in exile too; `PlayerTappedLandForMana
+  ThisTurnPredicate` (fold run 8b).
+- `ChoosePermanentsEffect.forEachVote(option, candidates, CONTROLS | OWNS, byVoter, label)`: one choice per vote of the last
+  `VoteEffect`, in voting order, then the verb over `thisWay(CHOOSE)` (Elrond of the White Council, Expropriate; fold run 8b).
 
 ### Blocked causes still open
 
@@ -2037,6 +2044,40 @@ across zone changes (CR 400.7) keeps today's reading.
 **For the next run.** Flames of Moradin and Aquatic Subtlety together: one perpetual alternate-cast grant step and store (the evoke
 store folded in) plus a departed-this-way subject for Flames. Then Vona with a non-declaring "that permanent" reading. Then Vesuvan
 Mist / Warzone Duplicator, and Gutmorn (a chooser on `ChoosePlayerEffect`, with Choose Your Champion).
+
+### Step 9, fold run 8b (2026-11-24, parallel worktree)
+
+Two leftover sets: Desolation, Creeping Dread and Kroxa from `splits` (fold runs 8 and 9b), and Elrond and Expropriate from `vote` (fold
+runs 11 and 11b). All 5 folded (split onto existing steps). Ratchet in its worktree 3,774 / 3,037 → 3,769 / 3,032. Ledger 6 rows (5
+split, 1 survivor). 5 card files rewritten; Oracle text and rulings checked for all. CR 101.4, 400.3, 608.2c, 608.2d, 608.2h, 603.7c,
+701.9a, 701.38a, 701.38d checked. Merged with fold run 12c (`CardSubject` permits both `TriggeringCardsInHand` and `OwnedBy`).
+
+**The pieces.** `playersThisWay(kind, CardPredicate)` (DISCARD, MILL, DRAW, REVEAL): the players whose zone now holds a recorded card
+that matches (its owner, CR 400.3, or its controller when a replacement put it onto the battlefield), a share-type filter bound as the
+subject resolves. `playersThisWay(kind, PermanentPredicate)`: the controllers of the recorded permanents that match, as they are or last
+were. `CardSubject.OwnedBy(cards, owners)` / `Subjects.ownedBy`: "the card you discarded", found in exile too (Leyline of the Void).
+`PlayerTappedLandForManaThisTurnPredicate`. `ChoosePermanentsEffect.forEachVote(option, candidates, CONTROLS | OWNS, byVoter, label)`:
+one choice per vote for `option` in the last vote, in voting order (extra votes together, CR 701.38d), the voter or you choosing, a lone
+candidate taken unasked (CR 608.2d), a permanent chosen twice recorded once; `RecordChosenPermanents.laterChoices` is a list of
+`Offer(chooserId, permanentIds, prompt)`, shared with `oneForEach`.
+
+| Member | Result |
+|---|---|
+| Kroxa | `DiscardEffect(1, eachOpponent())` + `LoseLifeEffect(3, except(eachOpponent(), playersThisWay(DISCARD, nonland)))` |
+| Creeping Dread | `DiscardEffect(1, eachPlayer())` + `LoseLifeEffect(3, except(playersThisWay(DISCARD, shares(ownedBy(cardsThisWay(DISCARD), you()))), you()))` |
+| Desolation | `SacrificePermanentsEffect(1, land, matching(eachPlayer(), tapped-land))` + `DealDamageToPlayersEffect(2, playersThisWay(SACRIFICE, Plains))` |
+| Elrond of the White Council | `secretly(FELLOWSHIP, AID)` + `forEachVote(FELLOWSHIP, allCreatures(), CONTROLS, true)` + `GainControlOfTargetEffect.of(thisWay(CHOOSE), PERMANENT)` + the can't-attack-its-owner grant + `anyVotes(AID)` counters |
+| Expropriate | `startingWithYou(TIME, MONEY)` + `anyVotes(TIME)` extra turns + `forEachVote(MONEY, allPermanents(), OWNS, false)` + gain control + exile |
+
+**Deleted.** The 5 records and handlers, `CreepingDreadState` / `GameData.creepingDread`, `ForcedSacrificeThenDamageIfSubtype`, four vote
+and choice contexts, `ChoiceHandlerService.recordVotingChoiceIfApplicable`.
+
+**Behaviour changes.** Creeping Dread: an opponent with Tamiyo no longer discards (the old handler ignored the prevention; new test).
+Expropriate: the time step comes before the money choices (Oracle order). Elrond's secret vote starts with the active player and is
+revealed after the last vote. The fellowship and money choices are single-permanent prompts. Logs: the survivors' lines.
+
+**For the next run.** `splits` has 22 rows left, each with its own missing piece (ledger notes). Erestor stays `blocked-other` (it reads
+the triggering vote).
 
 ## Prompt
 

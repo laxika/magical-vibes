@@ -119,7 +119,6 @@ import com.github.laxika.magicalvibes.service.effect.replacement.mana.LandManaRe
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TapTriggers;
-import com.github.laxika.magicalvibes.service.trigger.VotingFinishedSupport;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -196,7 +195,6 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService etbTokenTargetService;
     private final com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final TapTriggers tapTriggers;
-    private final VotingFinishedSupport votingFinishedSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.VotingSupport votingSupport;
     private final org.springframework.beans.factory.ObjectProvider<MultiPermanentChoiceHandlerService>
             multiPermanentChoiceHandlerServiceProvider;
@@ -233,8 +231,6 @@ public class ChoiceHandlerService {
             eachOpponentChoosesMasterOfCeremoniesEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PrisonersDilemmaEffectHandler
             prisonersDilemmaEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.ExpropriateEffectHandler
-            expropriateEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ZndrsplatsJudgmentEffectHandler
             zndrsplatsJudgmentEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.SeizeTheSpotlightEffectHandler
@@ -242,8 +238,6 @@ public class ChoiceHandlerService {
     private final EachPlayerChoosesTokenEffectHandler eachPlayerChoosesTokenEffectHandler;
     private final EachPlayerChoosesPlanarModeEffectHandler eachPlayerChoosesPlanarModeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.VoteEffectHandler voteEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.ElrondOfTheWhiteCouncilEffectHandler
-            elrondOfTheWhiteCouncilEffectHandler;
     private final ManaSourceColorSupport manaSourceColorSupport;
 
     @Autowired @Lazy
@@ -552,8 +546,6 @@ public class ChoiceHandlerService {
                 && votingSupport.offerAdditionalVote(gameData, player.getId(), colorChoice, colorName, List.of())) {
             return;
         }
-
-        recordVotingChoiceIfApplicable(gameData, player.getId(), colorName, colorChoice.context());
 
         if (colorChoice.context() instanceof ChoiceContext.TriggerOrder order) {
             int index = colorChoice.options().indexOf(colorName);
@@ -1345,17 +1337,6 @@ public class ChoiceHandlerService {
             }
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.ExpropriateChoice ctx) {
-            if (!ctx.OPTIONS.contains(colorName)) {
-                throw new IllegalArgumentException("Invalid Expropriate vote: " + colorName);
-            }
-            gameData.interaction.clearAwaitingInput();
-            expropriateEffectHandler.completeVote(gameData, colorName, player.getId(), ctx);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
-            return;
-        }
         if (colorChoice.context() instanceof ChoiceContext.ZndrsplatsJudgmentChoice ctx) {
             if (!ctx.OPTIONS.contains(colorName)) {
                 throw new IllegalArgumentException("Invalid Zndrsplt's Judgment choice: " + colorName);
@@ -1395,17 +1376,6 @@ public class ChoiceHandlerService {
             }
             gameData.interaction.clearAwaitingInput();
             eachPlayerChoosesPlanarModeEffectHandler.completeChoice(gameData, colorName, ctx, player.getId());
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.ElrondOfTheWhiteCouncilChoice ctx) {
-            if (!ctx.OPTIONS.contains(colorName)) {
-                throw new IllegalArgumentException("Invalid Elrond of the White Council vote: " + colorName);
-            }
-            gameData.interaction.clearAwaitingInput();
-            elrondOfTheWhiteCouncilEffectHandler.completeVote(gameData, colorName, player.getId(), ctx);
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             }
@@ -1601,17 +1571,6 @@ public class ChoiceHandlerService {
                     .handleMultiplePermanentsChosen(gameData, player, offer.selectedIds());
         } else {
             handleListChoice(gameData, player, offer.answer());
-        }
-    }
-
-    private void recordVotingChoiceIfApplicable(GameData gameData, UUID voterId, String choice,
-                                                ChoiceContext context) {
-        if (context instanceof ChoiceContext.ExpropriateChoice vote
-                && vote.OPTIONS.contains(choice)) {
-            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
-        } else if (context instanceof ChoiceContext.ElrondOfTheWhiteCouncilChoice vote
-                && vote.OPTIONS.contains(choice)) {
-            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
         }
     }
 

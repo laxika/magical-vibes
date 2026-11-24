@@ -76,13 +76,28 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /**
      * {@code ChoosePermanentsEffect} of exactly one: the chosen permanent becomes the resolving entry's CHOOSE step.
-     * Of one for each of several players, {@code chosenBefore} is what the choices before this one chose and
-     * {@code laterChoices} what each choice after it offers.
+     * Of one for each of several players or votes, {@code chosenBefore} is what the choices before this one chose and
+     * {@code laterChoices} who makes each choice after it and what it offers.
      */
     record RecordChosenPermanents(com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect effect,
                                   java.util.List<UUID> chosenBefore,
-                                  java.util.List<java.util.List<UUID>> laterChoices)
+                                  java.util.List<Offer> laterChoices)
             implements PermanentChoiceContext {
+
+        /**
+         * One choice of one of {@code permanentIds}, made by {@code chooserId}, asked with {@code prompt}.
+         */
+        public record Offer(UUID chooserId, java.util.List<UUID> permanentIds, String prompt) {
+
+            public Offer {
+                permanentIds = java.util.List.copyOf(permanentIds);
+            }
+        }
+
+        public RecordChosenPermanents {
+            chosenBefore = java.util.List.copyOf(chosenBefore);
+            laterChoices = java.util.List.copyOf(laterChoices);
+        }
 
         public RecordChosenPermanents(com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect effect) {
             this(effect, java.util.List.of(), java.util.List.of());

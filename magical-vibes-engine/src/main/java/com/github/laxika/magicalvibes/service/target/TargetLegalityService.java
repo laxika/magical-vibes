@@ -76,6 +76,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerDealtDamageThisTurnPred
 import com.github.laxika.magicalvibes.model.filter.PlayerCastSorceryThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerHasPoisonCountersAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerLostLifeThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerTappedLandForManaThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerControlsMoreCreaturesThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerControlsMoreLandsThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerControlsMostLandsPredicate;
@@ -6279,6 +6280,8 @@ public class TargetLegalityService {
                     targetPlayerId != null
                             && gameData.getSpellsCastThisTurn(targetPlayerId).stream()
                             .anyMatch(card -> card.hasType(CardType.SORCERY));
+            case PlayerTappedLandForManaThisTurnPredicate ignored ->
+                    targetPlayerId != null && gameData.playersWhoTappedLandForManaThisTurn.contains(targetPlayerId);
             case PlayerLostLifeThisTurnPredicate lostLife ->
                     gameData.lifeLostThisTurn.getOrDefault(targetPlayerId, 0) >= lostLife.minimum();
             case PlayerHasPoisonCountersAtLeastPredicate poison ->

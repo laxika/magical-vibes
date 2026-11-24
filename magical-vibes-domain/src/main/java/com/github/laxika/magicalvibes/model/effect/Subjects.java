@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -402,6 +403,11 @@ public final class Subjects {
     /** "The rest": those of {@code cards} that {@code excluded} doesn't name. */
     public static CardSubject except(CardSubject cards, CardSubject excluded) {
         return new CardSubject.Except(cards, excluded);
+    }
+
+    /** "The card you discarded": those of {@code cards} that a player {@code owners} names owns, wherever they are. */
+    public static CardSubject ownedBy(CardSubject cards, PlayerSubject owners) {
+        return new CardSubject.OwnedBy(cards, owners);
     }
 
     /** "[Cards] in your graveyard": those of {@code cards} in the controller's graveyard. */
@@ -799,6 +805,23 @@ public final class Subjects {
      */
     public static PlayerSubject playersThisWay(StepKind kind) {
         return new PlayerSubject.PlayersThisWay(kind);
+    }
+
+    /**
+     * "Each player who discarded a nonland card this way": the owners of the cards the most recent {@code kind} step
+     * recorded that match {@code cardFilter} where they are now (see {@link PlayerSubject.PlayersThisWay}).
+     */
+    public static PlayerSubject playersThisWay(StepKind kind, CardPredicate cardFilter) {
+        return new PlayerSubject.PlayersThisWay(kind, Objects.requireNonNull(cardFilter, "cardFilter"), null);
+    }
+
+    /**
+     * "Each player who sacrificed a Plains this way": the controllers of the permanents the most recent {@code kind}
+     * step recorded that match {@code permanentFilter} as they are or last were on the battlefield (see
+     * {@link PlayerSubject.PlayersThisWay}).
+     */
+    public static PlayerSubject playersThisWay(StepKind kind, PermanentPredicate permanentFilter) {
+        return new PlayerSubject.PlayersThisWay(kind, null, Objects.requireNonNull(permanentFilter, "permanentFilter"));
     }
 
     /**

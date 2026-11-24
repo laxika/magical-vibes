@@ -2463,31 +2463,6 @@ public sealed interface ChoiceContext {
         }
     }
 
-    /** Expropriate: the current player voted for time or money. */
-    record ExpropriateChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
-                             List<UUID> moneyVoterIds, int timeVotes, String sourceName)
-            implements ChoiceContext, VoteChoiceContext {
-        public static final String TIME = "Time";
-        public static final String MONEY = "Money";
-        public static final List<String> OPTIONS = List.of(TIME, MONEY);
-
-        public ExpropriateChoice {
-            remainingPlayerIds = List.copyOf(remainingPlayerIds);
-            moneyVoterIds = List.copyOf(moneyVoterIds);
-        }
-
-        @Override
-        public List<UUID> remainingVoterIds() {
-            return remainingPlayerIds;
-        }
-
-        @Override
-        public ExpropriateChoice withRemainingVoterIds(List<UUID> remainingVoterIds) {
-            return new ExpropriateChoice(effectControllerId, remainingVoterIds,
-                    moneyVoterIds, timeVotes, sourceName);
-        }
-    }
-
     /**
      * A {@code VoteEffect}'s vote: the voter answering chooses one of {@code options} (CR 701.38a); the votes cast
      * before it, {@code votes}, are kept here until the last one is cast, as a secret vote's are hidden until then.
@@ -2586,31 +2561,6 @@ public sealed interface ChoiceContext {
 
         public EachPlayerChoosesPlanarModeChoice {
             remainingPlayerIds = List.copyOf(remainingPlayerIds);
-        }
-    }
-
-    /** Elrond of the White Council: the current player voted for fellowship or aid. */
-    record ElrondOfTheWhiteCouncilChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
-                                         List<UUID> fellowshipVoterIds, int aidVotes,
-                                         String sourceName) implements ChoiceContext, VoteChoiceContext {
-        public static final String FELLOWSHIP = "Fellowship";
-        public static final String AID = "Aid";
-        public static final List<String> OPTIONS = List.of(FELLOWSHIP, AID);
-
-        public ElrondOfTheWhiteCouncilChoice {
-            remainingPlayerIds = List.copyOf(remainingPlayerIds);
-            fellowshipVoterIds = List.copyOf(fellowshipVoterIds);
-        }
-
-        @Override
-        public List<UUID> remainingVoterIds() {
-            return remainingPlayerIds;
-        }
-
-        @Override
-        public ElrondOfTheWhiteCouncilChoice withRemainingVoterIds(List<UUID> remainingVoterIds) {
-            return new ElrondOfTheWhiteCouncilChoice(effectControllerId, remainingVoterIds,
-                    fellowshipVoterIds, aidVotes, sourceName);
         }
     }
 

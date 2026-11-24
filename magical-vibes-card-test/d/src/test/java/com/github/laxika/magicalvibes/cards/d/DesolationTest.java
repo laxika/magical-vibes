@@ -43,7 +43,7 @@ class DesolationTest extends BaseCardTest {
         assertThat(choice.playerId()).isEqualTo(player1.getId());
         assertThat(choice.maxCount()).isEqualTo(1);
         assertThat(choice.context())
-                .isInstanceOf(MultiPermanentChoiceContext.ForcedSacrificeThenDamageIfSubtype.class);
+                .isInstanceOf(MultiPermanentChoiceContext.ForcedSacrifice.class);
 
         Permanent forest = findPermanent(player1, "Forest");
         harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));

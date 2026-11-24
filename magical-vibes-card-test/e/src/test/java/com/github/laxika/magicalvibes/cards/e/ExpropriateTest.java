@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -24,8 +23,8 @@ class ExpropriateTest extends BaseCardTest {
     void timeVotesGrantExtraTurns() {
         Expropriate spell = cast();
 
-        harness.handleListChoice(player1, ChoiceContext.ExpropriateChoice.TIME);
-        harness.handleListChoice(player2, ChoiceContext.ExpropriateChoice.TIME);
+        harness.handleListChoice(player1, Expropriate.TIME);
+        harness.handleListChoice(player2, Expropriate.TIME);
 
         assertThat(gd.extraTurns).containsExactly(player1.getId(), player1.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
@@ -40,24 +39,24 @@ class ExpropriateTest extends BaseCardTest {
         Permanent opponentAlternative = addOwnedPermanent(player2, new GrizzlyBears());
         Expropriate spell = cast();
 
-        harness.handleListChoice(player1, ChoiceContext.ExpropriateChoice.MONEY);
-        harness.handleListChoice(player2, ChoiceContext.ExpropriateChoice.MONEY);
+        harness.handleListChoice(player1, Expropriate.MONEY);
+        harness.handleListChoice(player2, Expropriate.MONEY);
 
-        PendingInteraction.MultiPermanentChoice firstChoice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice firstChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(firstChoice).isNotNull();
         assertThat(firstChoice.playerId()).isEqualTo(player1.getId());
         assertThat(firstChoice.validIds()).containsExactlyInAnyOrder(ownPermanent.getId(), ownAlternative.getId());
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(ownPermanent.getId()));
+        harness.handlePermanentChosen(player1, ownPermanent.getId());
 
-        PendingInteraction.MultiPermanentChoice secondChoice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice secondChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(secondChoice).isNotNull();
         assertThat(secondChoice.playerId()).isEqualTo(player1.getId());
         assertThat(secondChoice.validIds()).containsExactlyInAnyOrder(opponentPermanent.getId(), opponentAlternative.getId());
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(opponentPermanent.getId()));
+        harness.handlePermanentChosen(player1, opponentPermanent.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownPermanent, opponentPermanent);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opponentPermanent);
@@ -71,7 +70,7 @@ class ExpropriateTest extends BaseCardTest {
         cast();
         assertThat(activeVote().playerId()).isEqualTo(player1.getId());
 
-        harness.handleListChoice(player1, ChoiceContext.ExpropriateChoice.TIME);
+        harness.handleListChoice(player1, Expropriate.TIME);
 
         assertThat(activeVote().playerId()).isEqualTo(player2.getId());
         assertThat(gd.gameLog).anySatisfy(entry -> {
@@ -86,8 +85,8 @@ class ExpropriateTest extends BaseCardTest {
         Permanent permanent = addOwnedPermanent(player2, new GrizzlyBears());
         Expropriate spell = cast();
 
-        harness.handleListChoice(player1, ChoiceContext.ExpropriateChoice.TIME);
-        harness.handleListChoice(player2, ChoiceContext.ExpropriateChoice.MONEY);
+        harness.handleListChoice(player1, Expropriate.TIME);
+        harness.handleListChoice(player2, Expropriate.MONEY);
 
         assertThat(gd.extraTurns).containsExactly(player1.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(permanent);
@@ -101,8 +100,8 @@ class ExpropriateTest extends BaseCardTest {
     void moneyVotesWithEmptyBattlefield() {
         Expropriate spell = cast();
 
-        harness.handleListChoice(player1, ChoiceContext.ExpropriateChoice.MONEY);
-        harness.handleListChoice(player2, ChoiceContext.ExpropriateChoice.MONEY);
+        harness.handleListChoice(player1, Expropriate.MONEY);
+        harness.handleListChoice(player2, Expropriate.MONEY);
 
         assertThat(gd.extraTurns).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
@@ -118,8 +117,8 @@ class ExpropriateTest extends BaseCardTest {
         Permanent opponentPermanent = addOwnedPermanent(player2, new GrizzlyBears());
         Expropriate spell = cast();
 
-        harness.handleListChoice(player1, ChoiceContext.ExpropriateChoice.MONEY);
-        harness.handleListChoice(player2, ChoiceContext.ExpropriateChoice.TIME);
+        harness.handleListChoice(player1, Expropriate.MONEY);
+        harness.handleListChoice(player2, Expropriate.TIME);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(borrowedPermanent);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentPermanent)
@@ -147,7 +146,7 @@ class ExpropriateTest extends BaseCardTest {
         PendingInteraction.ColorChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.options()).containsExactlyElementsOf(ChoiceContext.ExpropriateChoice.OPTIONS);
+        assertThat(choice.options()).containsExactlyElementsOf(List.of(Expropriate.TIME, Expropriate.MONEY));
         return choice;
     }
 }
