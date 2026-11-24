@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.a.AlloyMyr;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -52,7 +51,7 @@ class HexParasiteTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 2, targetPerm.getId());
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, 2);
+        harness.handleListChoice(player1, "2");
 
         // Target should have 1 +1/+1 counter left (3 - 2)
         assertThat(targetPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -69,7 +68,7 @@ class HexParasiteTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 3, targetPerm.getId());
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, 3);
+        harness.handleListChoice(player1, "3");
 
         // Target should have 1 charge counter left (4 - 3)
         assertThat(targetPerm.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
@@ -86,7 +85,7 @@ class HexParasiteTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 5, targetPerm.getId());
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, 2);
+        harness.handleListChoice(player1, "2");
 
         // Target had only 2 +1/+1 counters, all removed
         assertThat(targetPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
@@ -154,7 +153,7 @@ class HexParasiteTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 2, targetPerm.getId());
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, 2);
+        harness.handleListChoice(player1, "2");
 
         // Paid 2 life for Phyrexian mana
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(18);
@@ -173,7 +172,7 @@ class HexParasiteTest extends BaseCardTest {
         // First activation: X=1
         harness.activateAbility(player1, 0, 1, targetPerm.getId());
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, 1);
+        harness.handleListChoice(player1, "1");
 
         assertThat(targetPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(PermanentGrants.powerBoostOf(gd, hexPerm)).isEqualTo(1);
@@ -181,7 +180,7 @@ class HexParasiteTest extends BaseCardTest {
         // Second activation: X=1
         harness.activateAbility(player1, 0, 1, targetPerm.getId());
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, 1);
+        harness.handleListChoice(player1, "1");
 
         assertThat(targetPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(PermanentGrants.powerBoostOf(gd, hexPerm)).isEqualTo(2);
@@ -209,6 +208,7 @@ class HexParasiteTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("May remove no counters with a positive X")
     void canChooseToRemoveZeroCountersWithPositiveX() {
         Permanent source = addHexParasiteReady(player1);
         Permanent target = addCreatureWithPlusCounters(player2, 3);
@@ -218,13 +218,14 @@ class HexParasiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNotNull();
-        harness.handleXValueChosen(player1, 0);
+        harness.handleListChoice(player1, "0");
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
     }
 
     @ParameterizedTest
+    @DisplayName("Removes counters of any kind")
     @EnumSource(value = CounterType.class, names = {"MAGNET", "LEVEL", "LORE", "OIL", "STUN", "FLYING"})
     void removesCountersBeyondTheHardcodedTypes(CounterType counterType) {
         Permanent source = addHexParasiteReady(player1);
@@ -234,15 +235,14 @@ class HexParasiteTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 2, target.getId());
         harness.passBothPriorities();
-        if (gd.interaction.activeInteraction() instanceof PendingInteraction.XValueChoice) {
-            harness.handleXValueChosen(player1, 2);
-        }
+        harness.handleListChoice(player1, "2");
 
         assertThat(target.getCounterCount(counterType)).isZero();
         assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
     }
 
     @Test
+    @DisplayName("Removes the counters even when Hex Parasite left before the ability resolves")
     void removesCountersEvenWhenSourceLeavesBeforeResolution() {
         Permanent source = addHexParasiteReady(player1);
         Permanent target = addCreatureWithPlusCounters(player2, 3);
@@ -251,20 +251,21 @@ class HexParasiteTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, target.getId());
         gd.playerBattlefields.get(player1.getId()).remove(source);
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, 2);
+        harness.handleListChoice(player1, "2");
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
 
     @Test
+    @DisplayName("The boost ends at end of turn")
     void boostExpiresAtEndOfTurn() {
         Permanent source = addHexParasiteReady(player1);
         Permanent target = addCreatureWithPlusCounters(player2, 3);
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.activateAbility(player1, 0, 2, target.getId());
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, 2);
+        harness.handleListChoice(player1, "2");
         assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -276,6 +277,7 @@ class HexParasiteTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can be activated while summoning sick and target itself")
     void canActivateWhileSummoningSickAndTargetItself() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new HexParasite());
         source.setSummoningSick(true);
@@ -284,7 +286,7 @@ class HexParasiteTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 2, source.getId());
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, 2);
+        harness.handleListChoice(player1, "2");
 
         assertThat(source.getCounterCount(CounterType.CHARGE)).isZero();
         assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);

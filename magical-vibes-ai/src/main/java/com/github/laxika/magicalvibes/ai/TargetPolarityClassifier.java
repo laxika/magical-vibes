@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectRole;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveUpToCountersFromAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -515,6 +516,16 @@ public class TargetPolarityClassifier {
                     : TargetPolarity.NEUTRAL;
         }
 
+        // Removing some counters from a target: stripping -1/-1 counters helps it, any other kind (loyalty, +1/+1,
+        // lore, time) is aimed at the opponent's permanent or the opponent; the non-target forms have no polarity.
+        if (effect instanceof RemoveUpToCountersFromAllPermanentsEffect removeSome) {
+            if (removeSome.targetSpec().equals(com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE)) {
+                return null;
+            }
+            return removeSome.counterType() == CounterType.MINUS_ONE_MINUS_ONE
+                    ? TargetPolarity.BENEFICIAL : TargetPolarity.HARMFUL;
+        }
+
         // A move between two targets or from a set onto a target swings both ways; one to or from this permanent
         // has no polarity.
         if (effect instanceof MoveCounterFromSourceToTargetCreatureEffect move) {
@@ -733,12 +744,10 @@ public class TargetPolarityClassifier {
             entry("RemoveKeywordEffect", TargetPolarity.HARMFUL),
             entry("TargetCreatureDealsPowerDamageToAnyTargetEffect", TargetPolarity.HARMFUL),
             entry("TargetCreaturesDealToughnessDamageToEachOtherEffect", TargetPolarity.HARMFUL_DAMAGE),
-            entry("RemoveUpToCountersFromTargetEffect", TargetPolarity.HARMFUL),
             entry("UnattachEquipmentFromTargetPermanentsEffect", TargetPolarity.HARMFUL),
             entry("PayAnyAmountOfEnergyToBoostTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("PayEnergyToGainControlOfTargetEffect", TargetPolarity.HARMFUL),
             entry("PutCounterOnEitherTargetPermanentEffect", TargetPolarity.HARMFUL),
-            entry("RemoveChosenCountersFromTargetPermanentEffect", TargetPolarity.HARMFUL),
 
             // Arcbond's watched creature is a strategic choice: either player's creature may be
             // the best center for the later symmetric damage event.

@@ -80,10 +80,11 @@ class GlissaSunslayerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        assertThat(choice.options()).contains("+1/+1 counters", "charge counters", "Done");
-        harness.handleListChoice(player1, "charge counters");
-        harness.handleListChoice(player1, "+1/+1 counters");
-        harness.handleListChoice(player1, "charge counters");
+        assertThat(choice.options()).containsExactly("0", "1", "2");
+        harness.handleListChoice(player1, "2");
+        choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).containsExactly("0", "1");
+        harness.handleListChoice(player1, "1");
 
         assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -100,8 +101,7 @@ class GlissaSunslayerTest extends BaseCardTest {
         harness.handleListChoice(player1, REMOVE_COUNTERS);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "charge counters");
-        harness.handleListChoice(player1, "Done");
+        harness.handleListChoice(player1, "1");
 
         assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
@@ -137,7 +137,9 @@ class GlissaSunslayerTest extends BaseCardTest {
         harness.handleListChoice(player1, REMOVE_COUNTERS);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "Done");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("0", "1", "2", "3");
+        harness.handleListChoice(player1, "0");
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
     }

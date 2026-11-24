@@ -6175,6 +6175,29 @@ public class GameData {
     }
 
     /**
+     * "Remove N [kind] counters from that player": removes up to {@code amount} of {@code playerId}'s {@code kind}
+     * counters (energy through {@link #removePlayerEnergyCounters}) and returns how many were removed.
+     */
+    public int removePlayerCounters(UUID playerId, PlayerCounterType kind, int amount) {
+        if (kind == PlayerCounterType.ENERGY) {
+            return removePlayerEnergyCounters(playerId, amount);
+        }
+        int removed = Math.min(Math.max(0, amount), playerCounterCount(playerId, kind));
+        if (removed <= 0) {
+            return 0;
+        }
+        Map<UUID, Integer> store = switch (kind) {
+            case POISON -> playerPoisonCounters;
+            case EXPERIENCE -> playerExperienceCounters;
+            case RAD -> playerRadCounters;
+            case SPARK -> playerSparkCounters;
+            case ENERGY -> throw new IllegalStateException();
+        };
+        store.put(playerId, playerCounterCount(playerId, kind) - removed);
+        return removed;
+    }
+
+    /**
      * Routes a triggered-ability {@link StackEntry} to the main stack, or to
      * {@link #pendingManaAbilityTriggers} when a mana ability is currently resolving
      * (CR 603.2 / 603.3). Deferred triggers are flushed by the existing flush points

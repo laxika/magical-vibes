@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAnyNumberOfCountersFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveUpToCountersFromAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -40,7 +41,8 @@ public class RhysTheEvermore extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{W}",
-                List.of(new RemoveAnyNumberOfCountersFromTargetPermanentEffect(creatureYouControl)),
+                List.of(RemoveUpToCountersFromAllPermanentsEffect.anyNumber(CounterType.ANY, Subjects.target())
+                        .matchingTarget(creatureYouControl)),
                 "{W}, {T}: Remove any number of counters from target creature you control. Activate only as a sorcery.",
                 TargetFilters.creatureYouControl(),
                 null,

@@ -9,7 +9,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * multi-permanent choice) to pick any number of the tokens this permanent created and still on the
  * battlefield (tracked in {@code GameData.sourceCreatedTokens}); the chosen tokens are exiled and
  * that many +1/+1 counters are put on the source. Selecting none is the "you may … decline" case.
- * Paired with {@link RemoveCountersToCreateTetraviteTokensEffect}.
+ * Paired with the first trigger's counter removal, whose tokens are created linked to the source
+ * ({@code CreateTokenAndLinkToSourceEffect}).
  */
 public record ExileTetraviteTokensToPutCountersOnSelfEffect() implements CardEffect {
 }

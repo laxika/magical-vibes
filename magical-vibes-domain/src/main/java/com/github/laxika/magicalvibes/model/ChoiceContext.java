@@ -1697,37 +1697,33 @@ public sealed interface ChoiceContext {
     }
 
     /**
-     * Tetravus first upkeep trigger: the controller chooses how many of {@code permanentId}'s +1/+1
-     * counters (0..the count present) to remove; on the answer that many are removed and that many
-     * Tetravite tokens are created from {@code tokenTemplate}, each recorded as "created with" the
-     * source in {@code GameData.sourceCreatedTokens} (read by the paired exile trigger).
-     */
-    record TetravusCounterRemoval(UUID permanentId,
-                                  com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate)
-            implements ChoiceContext {}
-
-    /**
-     * "Move any number of counters" / "remove any number of counters from among": the controller answers one slot at
-     * a time how many counters of the slot's kind to move from its first permanent onto its second, or to remove from
-     * it when the slot has no second (0..what is there now, and no more than {@code totalLimit} over all the slots).
-     * {@code moved} holds the answered counts, slot by slot. A move's answer removes the counters at once and, once
-     * every slot is answered, the counters are put on each destination together, one placement per destination and
-     * kind; a removal's counters all come off once every slot is answered.
+     * "Move any number of counters" / "remove any number of counters from among" / "remove up to N / N counters from
+     * target permanent or player": the controller answers one slot at a time how many counters of the slot's kind to
+     * move from its first permanent onto its second, or to remove from its permanent or player when the slot has no
+     * second (0..what is there now, and no more than {@code totalLimit} over all the slots). {@code requiredTotal} is
+     * how many a removal must remove in all ("remove X counters", already lowered to what was there): a slot's lowest
+     * answer is what the later slots can no longer make up. {@code moved} holds the answered counts, slot by slot. A
+     * move's answer removes the counters at once and, once every slot is answered, the counters are put on each
+     * destination together, one placement per destination and kind; a removal's counters all come off once every
+     * slot is answered.
      */
     record MoveCountersAmountChoice(List<CounterMoveSlot> slots, int index, List<Integer> moved,
-                                    String sourceCardName, int totalLimit) implements ChoiceContext {
+                                    String sourceCardName, int totalLimit, int requiredTotal) implements ChoiceContext {
         public MoveCountersAmountChoice {
             slots = List.copyOf(slots);
             moved = List.copyOf(moved);
             if (totalLimit < 0) {
                 throw new IllegalArgumentException("totalLimit must not be negative");
             }
+            if (requiredTotal < 0 || requiredTotal > totalLimit) {
+                throw new IllegalArgumentException("requiredTotal must be between 0 and totalLimit");
+            }
         }
 
         /** A move with no total limit. */
         public MoveCountersAmountChoice(List<CounterMoveSlot> slots, int index, List<Integer> moved,
                                         String sourceCardName) {
-            this(slots, index, moved, sourceCardName, Integer.MAX_VALUE);
+            this(slots, index, moved, sourceCardName, Integer.MAX_VALUE, 0);
         }
 
         /** Whether the slot asked is a removal (it has no destination). */
@@ -1747,9 +1743,26 @@ public sealed interface ChoiceContext {
 
     /**
      * One "how many" question of a {@link MoveCountersAmountChoice}: counters of {@code counterType} from one permanent
-     * onto another, or removed from it when {@code toPermanentId} is {@code null}.
+     * onto another, or removed from it when {@code toPermanentId} is {@code null}; or, when {@code playerCounterType}
+     * is set, that kind of counter removed from the player {@code fromPlayerId} (no permanent, no destination).
      */
-    record CounterMoveSlot(UUID fromPermanentId, UUID toPermanentId, CounterType counterType) {}
+    record CounterMoveSlot(UUID fromPermanentId, UUID toPermanentId, CounterType counterType, UUID fromPlayerId,
+                           PlayerCounterType playerCounterType) {
+
+        public CounterMoveSlot(UUID fromPermanentId, UUID toPermanentId, CounterType counterType) {
+            this(fromPermanentId, toPermanentId, counterType, null, null);
+        }
+
+        /** A removal of {@code kind} counters from the player {@code playerId}. */
+        public static CounterMoveSlot fromPlayer(UUID playerId, PlayerCounterType kind) {
+            return new CounterMoveSlot(null, null, null, playerId, kind);
+        }
+
+        /** Whether the counters are a player's. */
+        public boolean isPlayerSlot() {
+            return playerCounterType != null;
+        }
+    }
 
     /** Choosing one of Primal Clay's three shapes "as this creature enters". */
     record PrimalClayFormChoice(UUID permanentId) implements ChoiceContext {}
@@ -2029,36 +2042,6 @@ public sealed interface ChoiceContext {
         public static final List<String> OPTIONS = List.of(ADD, REMOVE);
     }
 
-    /** Price of Betrayal's per-counter-kind removal choice. */
-    record RemoveCountersOfKindChoice(UUID targetId, UUID controllerId, String sourceCardName,
-                                      List<String> counterKinds, int index, int remaining,
-                                      UUID boostSourcePermanentId, int removedSoFar)
-            implements ChoiceContext {
-
-        public RemoveCountersOfKindChoice {
-            counterKinds = List.copyOf(counterKinds);
-        }
-
-        /**
-         * A plain removal choice. A non-null {@code boostSourcePermanentId} makes the permanent get
-         * +1/+0 until end of turn for each counter removed over the whole choice (Hex Parasite).
-         */
-        public RemoveCountersOfKindChoice(UUID targetId, UUID controllerId, String sourceCardName,
-                                          List<String> counterKinds, int index, int remaining) {
-            this(targetId, controllerId, sourceCardName, counterKinds, index, remaining, null, 0);
-        }
-
-        public static String counterLabel(String counterKind) {
-            return switch (counterKind) {
-                case "POISON" -> "poison";
-                case "ENERGY" -> "energy";
-                case "PLUS_ONE_PLUS_ONE" -> "+1/+1";
-                case "MINUS_ONE_MINUS_ONE" -> "-1/-1";
-                default -> counterKind.toLowerCase().replace('_', ' ');
-            };
-        }
-    }
-
     /** Clockspinning's choice of a counter on a permanent or suspended card. */
     record AdjustChosenCounterTypeChoice(UUID targetId, Zone targetZone, UUID controllerId,
                                          String sourceCardName, List<CounterType> counterTypes)
@@ -2191,34 +2174,6 @@ public sealed interface ChoiceContext {
         }
     }
 
-    record RemoveChosenCountersChoice(UUID targetId, UUID controllerId, String sourceCardName,
-                                      int remainingSelections, List<CounterType> counterTypes,
-                                      boolean exactAmount)
-            implements ChoiceContext {
-
-        public static final String DONE = "Done";
-
-        public RemoveChosenCountersChoice {
-            counterTypes = List.copyOf(counterTypes);
-        }
-
-        public List<String> options() {
-            List<String> options = new java.util.ArrayList<>(counterTypes.stream()
-                    .map(RemoveChosenCountersChoice::counterLabel)
-                    .toList());
-            options.add(DONE);
-            return List.copyOf(options);
-        }
-
-        public static String counterLabel(CounterType counterType) {
-            return switch (counterType) {
-                case PLUS_ONE_PLUS_ONE -> "+1/+1 counters";
-                case MINUS_ONE_MINUS_ONE -> "-1/-1 counters";
-                default -> counterType.name().toLowerCase().replace('_', ' ') + " counters";
-            };
-        }
-    }
-
     /** Chooses controlled permanents from which an optional forced counter cost removes counters. */
     record RemoveCountersFromForcedCostOrElse(PendingMayAbility ability,
                                               com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect effect,
@@ -2247,9 +2202,18 @@ public sealed interface ChoiceContext {
             counterTypes = List.copyOf(counterTypes);
         }
 
+        /** A counter kind as an option label ("+1/+1 counters", "charge counters"). */
+        public static String counterLabel(CounterType counterType) {
+            return switch (counterType) {
+                case PLUS_ONE_PLUS_ONE -> "+1/+1 counters";
+                case MINUS_ONE_MINUS_ONE -> "-1/-1 counters";
+                default -> counterType.name().toLowerCase().replace('_', ' ') + " counters";
+            };
+        }
+
         public List<String> options() {
             return counterTypes.stream()
-                    .map(RemoveChosenCountersChoice::counterLabel)
+                    .map(RemoveOneCounterChoice::counterLabel)
                     .toList();
         }
     }
@@ -2265,7 +2229,7 @@ public sealed interface ChoiceContext {
 
         public List<String> options() {
             return counterTypes.stream()
-                    .map(RemoveChosenCountersChoice::counterLabel)
+                    .map(RemoveOneCounterChoice::counterLabel)
                     .toList();
         }
     }

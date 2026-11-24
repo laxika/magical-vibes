@@ -63,20 +63,18 @@ class CemeteryDesecratorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The counter mode removes counters equal to the exiled card's mana value")
+    @DisplayName("The counter mode removes counters equal to the exiled card's mana value, one kind asking nothing")
     void counterModeRemovesManaValueCounters() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
         Card exiled = new HillGiant();
         chooseModeAfterExiling(exiled, REMOVE_COUNTERS_MODE);
 
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
-        for (int i = 0; i < 4; i++) {
-            harness.handleListChoice(player1, "+1/+1 counters");
-        }
 
-        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test
@@ -118,22 +116,30 @@ class CemeteryDesecratorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Counter removal cannot stop early while counters remain")
+    @DisplayName("Counter removal cannot stop early: the controller splits X between the kinds")
     void counterRemovalIsMandatory() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
         target.setCounterCount(CounterType.CHARGE, 3);
-        chooseModeAfterExiling(new CemeteryDesecrator(), REMOVE_COUNTERS_MODE);
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        chooseModeAfterExiling(new HillGiant(), REMOVE_COUNTERS_MODE);
 
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.handleListChoice(player1, "Done"))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("1", "2", "3");
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "0"))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+        harness.handleListChoice(player1, "1");
+
+        assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test
-    @DisplayName("Counter removal removes all available counters when there are fewer than X")
+    @DisplayName("Counter removal removes all available counters, asking nothing, when there are fewer than X")
     void removesAllAvailableMixedCounters() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
         target.setCounterCount(CounterType.CHARGE, 1);
@@ -142,8 +148,6 @@ class CemeteryDesecratorTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "charge counters");
-        harness.handleListChoice(player1, "+1/+1 counters");
 
         assertThat(target.getCounterCount(CounterType.CHARGE)).isZero();
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

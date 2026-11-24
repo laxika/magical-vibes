@@ -1125,10 +1125,6 @@ public class ChoiceHandlerService {
             handleRemoveCountersForManaChoice(gameData, player, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.TetravusCounterRemoval ctx) {
-            handleTetravusCounterRemoval(gameData, player, colorName, ctx);
-            return;
-        }
         if (colorChoice.context() instanceof ChoiceContext.MoveCountersAmountChoice ctx) {
             handleMoveCountersAmountChoice(gameData, player, colorName, ctx);
             return;
@@ -1202,10 +1198,6 @@ public class ChoiceHandlerService {
             handleAdjustCounterKindChoice(gameData, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.RemoveCountersOfKindChoice ctx) {
-            handleRemoveCountersOfKindChoice(gameData, colorName, ctx);
-            return;
-        }
         if (colorChoice.context() instanceof ChoiceContext.AdjustChosenCounterTypeChoice ctx) {
             handleAdjustChosenCounterTypeChoice(gameData, colorName, ctx);
             return;
@@ -1233,10 +1225,6 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.CreateTokenCounterChoice ctx) {
             handleCreateTokenCounterChoice(gameData, colorName, ctx);
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.RemoveChosenCountersChoice ctx) {
-            handleRemoveChosenCountersChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.RemoveOneCounterChoice ctx) {
@@ -3439,56 +3427,6 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handleRemoveCountersOfKindChoice(GameData gameData, String choice,
-            ChoiceContext.RemoveCountersOfKindChoice ctx) {
-        int requested;
-        try {
-            requested = Integer.parseInt(choice);
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid counter removal amount: " + choice, e);
-        }
-
-        if (ctx.index() < 0 || ctx.index() >= ctx.counterKinds().size()) {
-            throw new IllegalStateException("Invalid counter kind choice index");
-        }
-
-        String counterKind = ctx.counterKinds().get(ctx.index());
-        int available = counterCount(gameData, ctx.targetId(), counterKind);
-        int maxAllowed = Math.min(available, ctx.remaining());
-        if (requested < 0 || requested > maxAllowed) {
-            throw new IllegalArgumentException("Cannot remove " + requested + " " + counterKind
-                    + " counters; maximum is " + maxAllowed);
-        }
-
-        gameData.interaction.clearAwaitingInput();
-        removeCounters(gameData, ctx.targetId(), counterKind, requested);
-
-        int remaining = ctx.remaining() - requested;
-        int removedTotal = ctx.removedSoFar() + requested;
-        int nextIndex = ctx.index() + 1;
-        if (remaining > 0 && nextIndex < ctx.counterKinds().size()) {
-            int nextMax = Math.min(remaining,
-                    counterCount(gameData, ctx.targetId(), ctx.counterKinds().get(nextIndex)));
-            playerInputService.beginRemoveCountersOfKindChoice(gameData, ctx.controllerId(), ctx.targetId(),
-                    ctx.sourceCardName(), ctx.counterKinds(), nextIndex, remaining, nextMax,
-                    ctx.boostSourcePermanentId(), removedTotal);
-            inputCompletionService.publishStateAfterInput(gameData);
-            return;
-        }
-
-        if (ctx.boostSourcePermanentId() != null && removedTotal > 0) {
-            Permanent boosted = gameQueryService.findPermanentById(gameData, ctx.boostSourcePermanentId());
-            if (boosted != null) {
-                gameData.addPowerToughnessBoost(boosted, removedTotal, 0);
-                gameLogService.append(gameData, GameLog.builder().card(boosted.getCard())
-                        .text(" gets +" + removedTotal + "/+0 until end of turn.").build());
-            }
-        }
-
-        stateBasedActionService.performStateBasedActions(gameData);
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
     private void handleAdjustChosenCounterTypeChoice(GameData gameData, String choice,
             ChoiceContext.AdjustChosenCounterTypeChoice ctx) {
         if (!ctx.options().contains(choice)) {
@@ -3551,54 +3489,6 @@ public class ChoiceHandlerService {
 
         stateBasedActionService.performStateBasedActions(gameData);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private int counterCount(GameData gameData, UUID targetId, String counterKind) {
-        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        if (target != null) {
-            try {
-                return target.getCounterCount(CounterType.valueOf(counterKind));
-            } catch (IllegalArgumentException e) {
-                return 0;
-            }
-        }
-        return switch (counterKind) {
-            case "POISON" -> gameData.playerPoisonCounters.getOrDefault(targetId, 0);
-            case "ENERGY" -> gameData.playerEnergyCounters.getOrDefault(targetId, 0);
-            case "RAD" -> gameData.playerRadCounters.getOrDefault(targetId, 0);
-            case "EXPERIENCE" -> gameData.playerExperienceCounters.getOrDefault(targetId, 0);
-            case "SPARK" -> gameData.playerSparkCounters.getOrDefault(targetId, 0);
-            default -> 0;
-        };
-    }
-
-    private void removeCounters(GameData gameData, UUID targetId, String counterKind, int amount) {
-        if (amount == 0) {
-            return;
-        }
-
-        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        if (target != null) {
-            CounterType type = CounterType.valueOf(counterKind);
-            target.setCounterCount(type, target.getCounterCount(type) - amount);
-            gameLogService.append(gameData, GameLog.textCardText(
-                    amount + " " + ChoiceContext.RemoveCountersOfKindChoice.counterLabel(counterKind)
-                            + " counter(s) removed from ", target.getCard(), "."));
-            return;
-        }
-
-        switch (counterKind) {
-            case "POISON" -> gameData.playerPoisonCounters.computeIfPresent(
-                    targetId, (id, count) -> Math.max(0, count - amount));
-            case "ENERGY" -> gameData.removePlayerEnergyCounters(targetId, amount);
-            case "RAD" -> gameData.playerRadCounters.computeIfPresent(
-                    targetId, (id, count) -> Math.max(0, count - amount));
-            case "EXPERIENCE" -> gameData.playerExperienceCounters.computeIfPresent(
-                    targetId, (id, count) -> Math.max(0, count - amount));
-            case "SPARK" -> gameData.playerSparkCounters.computeIfPresent(
-                    targetId, (id, count) -> Math.max(0, count - amount));
-            default -> throw new IllegalArgumentException("Unknown player counter kind: " + counterKind);
-        }
     }
 
     /** Animation Module: add one counter of the selected kind to the target. */
@@ -3768,46 +3658,6 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handleRemoveChosenCountersChoice(GameData gameData, String choice,
-            ChoiceContext.RemoveChosenCountersChoice ctx) {
-        if (!ctx.options().contains(choice)) {
-            throw new IllegalArgumentException("Invalid counter choice: " + choice);
-        }
-
-        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
-        if (ChoiceContext.RemoveChosenCountersChoice.DONE.equals(choice) || target == null) {
-            if (ChoiceContext.RemoveChosenCountersChoice.DONE.equals(choice)
-                    && ctx.exactAmount()
-                    && target != null
-                    && target.getTotalCounterCount() >= ctx.remainingSelections()) {
-                throw new IllegalArgumentException("Must remove the required number of counters");
-            }
-            gameData.interaction.clearAwaitingInput();
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        gameData.interaction.clearAwaitingInput();
-        CounterType counterType = ctx.counterTypes().stream()
-                .filter(type -> ChoiceContext.RemoveChosenCountersChoice.counterLabel(type).equals(choice))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Unknown counter type: " + choice));
-        permanentCounterSupport.removeCounterFromPermanent(gameData, target, counterType, 1);
-
-        int remainingSelections = ctx.remainingSelections() - 1;
-        List<CounterType> remainingTypes =
-                com.github.laxika.magicalvibes.service.effect.normalfx.RemoveChosenCountersFromTargetPermanentEffectHandler
-                        .counterTypesOn(target);
-        if (remainingSelections > 0 && !remainingTypes.isEmpty()) {
-            playerInputService.beginRemoveChosenCountersChoice(gameData, ctx.controllerId(), ctx.targetId(),
-                    ctx.sourceCardName(), remainingSelections, remainingTypes, ctx.exactAmount());
-            inputCompletionService.publishStateAfterInput(gameData);
-            return;
-        }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
     private void handleRemoveOneCounterChoice(GameData gameData, String choice,
             ChoiceContext.RemoveOneCounterChoice ctx) {
         if (!ctx.options().contains(choice)) {
@@ -3817,7 +3667,7 @@ public class ChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
         CounterType counterType = ctx.counterTypes().stream()
-                .filter(type -> ChoiceContext.RemoveChosenCountersChoice.counterLabel(type).equals(choice))
+                .filter(type -> ChoiceContext.RemoveOneCounterChoice.counterLabel(type).equals(choice))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Unknown counter type: " + choice));
         if (target != null
@@ -3841,7 +3691,7 @@ public class ChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
         CounterType counterType = ctx.counterTypes().stream()
-                .filter(type -> ChoiceContext.RemoveChosenCountersChoice.counterLabel(type).equals(choice))
+                .filter(type -> ChoiceContext.RemoveOneCounterChoice.counterLabel(type).equals(choice))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Unknown counter type: " + choice));
         Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
@@ -5833,36 +5683,6 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handleTetravusCounterRemoval(GameData gameData, Player player, String numberName,
-                                              ChoiceContext.TetravusCounterRemoval ctx) {
-        int chosen = Integer.parseInt(numberName);
-
-        gameData.interaction.clearAwaitingInput();
-
-        Permanent source = gameQueryService.findPermanentById(gameData, ctx.permanentId());
-        if (source != null && chosen > 0) {
-            // Remove the chosen number of +1/+1 counters and create that many Tetravite tokens,
-            // recording each as "created with" this Tetravus so the paired exile trigger sees them.
-            int available = source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
-            int removed = Math.min(chosen, available);
-            source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, available - removed);
-
-            List<UUID> createdIds = permanentControlSupport.applyCreateToken(gameData, player.getId(),
-                    ctx.tokenTemplate(), removed, source.getCard().getSetCode());
-            gameData.sourceCreatedTokens
-                    .computeIfAbsent(ctx.permanentId(), k -> ConcurrentHashMap.<UUID>newKeySet())
-                    .addAll(createdIds);
-
-            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " removes " + removed + " +1/+1 counter"
-                    + (removed == 1 ? "" : "s") + " from ", source.getCard(),
-                    " to create " + removed + " Tetravite token" + (removed == 1 ? "" : "s") + "."));
-            log.info("Game {} - {} removes {} +1/+1 counters from {} to create {} Tetravite tokens",
-                    gameData.id, player.getUsername(), removed, source.getCard().getName(), removed);
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
     /**
      * "Move any number of counters" / "remove any number of counters from among": applies the answer to the asked
      * slot, then asks the next one or puts what was moved (see {@code PermanentCounterSupport.answerCounterMove}) or
@@ -5871,6 +5691,9 @@ public class ChoiceHandlerService {
     private void handleMoveCountersAmountChoice(GameData gameData, Player player, String numberName,
                                                 ChoiceContext.MoveCountersAmountChoice ctx) {
         int chosen = Integer.parseInt(numberName);
+        if (ctx.removal()) {
+            removeUpToCountersFromAllPermanentsEffectHandler.checkAnswer(gameData, ctx, chosen);
+        }
         gameData.interaction.clearAwaitingInput();
         boolean askedAgain = ctx.removal()
                 ? removeUpToCountersFromAllPermanentsEffectHandler.answer(gameData,

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -13,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveChosenCountersFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveUpToCountersFromAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
@@ -42,7 +43,7 @@ public class CemeteryDesecrator extends Card {
         ChooseOneEffect modes = new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Remove X counters from target permanent",
-                        new RemoveChosenCountersFromTargetPermanentEffect(x, true),
+                        RemoveUpToCountersFromAllPermanentsEffect.exactly(CounterType.ANY, x, Subjects.target()),
                         TargetFilters.permanent()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature an opponent controls gets -X/-X until end of turn",

@@ -201,20 +201,11 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
-        if (context instanceof ChoiceContext.TetravusCounterRemoval) {
-            // Options are 0..N +1/+1 counters. Remove them all to make the most flying bodies.
-            List<String> options = interaction.options();
-            String chosenNumber = options.isEmpty() ? "0" : options.get(options.size() - 1);
-            log.info("AI: Removing {} +1/+1 counters to create Tetravite tokens in game {}", chosenNumber, gameId);
-            answerWith(ctx, interaction, chosenNumber);
-            return;
-        }
-
         if (context instanceof ChoiceContext.MoveCountersAmountChoice move) {
             // "Move / remove any number of counters": options are 0..N. Move or remove them all, except a move from the
             // AI's own permanent onto one it doesn't control (Forgotten Ancient's "onto other creatures"). A removal
-            // slot has no destination; what it removes is counted by the steps after it (Galloping Lizrog, Eventide's
-            // Shadow, Sensational Spider-Man).
+            // slot has no destination (or is a player's counters); what it removes is counted by the steps after it
+            // (Galloping Lizrog, Eventide's Shadow, Sensational Spider-Man, Hex Parasite, Tetravus's tokens).
             ChoiceContext.CounterMoveSlot slot = move.slots().get(move.index());
             boolean givesAway = slot.toPermanentId() != null
                     && aiPlayerId.equals(ctx.gameQueryService()

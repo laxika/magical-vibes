@@ -86,7 +86,7 @@ public class RemoveCounterFromTargetPermanentEffectHandler implements NormalEffe
         }
 
         // "Remove a counter": the ability's controller chooses the kind when several are present.
-        List<CounterType> kinds = RemoveChosenCountersFromTargetPermanentEffectHandler.counterTypesOn(target);
+        List<CounterType> kinds = PermanentCounterSupport.counterKindsOn(target);
         if (kinds.size() > 1 && e.amount() == 1) {
             playerInputService.beginRemoveOneCounterChoice(gameData, entry.getControllerId(), target.getId(),
                     entry.getCard().getName(), kinds, false);

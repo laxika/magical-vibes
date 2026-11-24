@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveUpToCountersFromTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveUpToCountersFromAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -35,7 +36,8 @@ public class HeartlessAct extends Card {
                                 "Target must be a creature with no counters on it.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Remove up to three counters from target creature",
-                        new RemoveUpToCountersFromTargetEffect(3, new PermanentIsCreaturePredicate()),
+                        new RemoveUpToCountersFromAllPermanentsEffect(CounterType.ANY, 3, Subjects.target())
+                                .matchingTarget(new PermanentIsCreaturePredicate()),
                         TargetFilters.creature())
         )));
     }

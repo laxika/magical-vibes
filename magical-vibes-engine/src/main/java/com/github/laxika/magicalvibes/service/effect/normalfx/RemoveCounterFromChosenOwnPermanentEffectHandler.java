@@ -90,7 +90,7 @@ public class RemoveCounterFromChosenOwnPermanentEffectHandler implements NormalE
         }
 
         entry.setChosenPermanentId(target.getId());
-        List<CounterType> counterTypes = RemoveChosenCountersFromTargetPermanentEffectHandler.counterTypesOn(target);
+        List<CounterType> counterTypes = PermanentCounterSupport.counterKindsOn(target);
         if (counterTypes.isEmpty()) {
             resumeIfNeeded(gameData, resumeAfterChoice);
             return;

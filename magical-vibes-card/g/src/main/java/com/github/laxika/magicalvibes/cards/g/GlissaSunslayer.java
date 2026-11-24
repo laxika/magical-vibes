@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveChosenCountersFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveUpToCountersFromAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,7 +29,7 @@ public class GlissaSunslayer extends Card {
                         new DestroyTargetPermanentEffect(), TargetFilters.enchantment()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Remove up to three counters from target permanent",
-                        new RemoveChosenCountersFromTargetPermanentEffect(3), TargetFilters.permanent())
+                        new RemoveUpToCountersFromAllPermanentsEffect(CounterType.ANY, 3, Subjects.target()), TargetFilters.permanent())
         ))));
     }
 }

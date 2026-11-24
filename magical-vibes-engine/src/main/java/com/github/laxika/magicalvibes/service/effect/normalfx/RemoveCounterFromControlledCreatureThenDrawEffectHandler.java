@@ -62,7 +62,7 @@ public class RemoveCounterFromControlledCreatureThenDrawEffectHandler implements
             return;
         }
 
-        List<CounterType> counterTypes = RemoveChosenCountersFromTargetPermanentEffectHandler.counterTypesOn(permanent);
+        List<CounterType> counterTypes = PermanentCounterSupport.counterKindsOn(permanent);
         if (counterTypes.isEmpty()) {
             return;
         }

@@ -76,7 +76,7 @@ public class ChooseCounterTypeOnControlledPermanentThenPutOnTargetPermanentEffec
 
     private void beginCounterChoice(GameData gameData, StackEntry entry, Permanent reference, UUID targetId) {
         List<com.github.laxika.magicalvibes.model.CounterType> counterTypes =
-                RemoveChosenCountersFromTargetPermanentEffectHandler.counterTypesOn(reference);
+                PermanentCounterSupport.counterKindsOn(reference);
         if (counterTypes.isEmpty() || targetId == null) {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
             return;
@@ -96,7 +96,7 @@ public class ChooseCounterTypeOnControlledPermanentThenPutOnTargetPermanentEffec
     private List<Permanent> counteredPermanents(GameData gameData, UUID controllerId) {
         List<Permanent> candidates = new ArrayList<>();
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
-            if (!RemoveChosenCountersFromTargetPermanentEffectHandler.counterTypesOn(permanent).isEmpty()) {
+            if (!PermanentCounterSupport.counterKindsOn(permanent).isEmpty()) {
                 candidates.add(permanent);
             }
         }

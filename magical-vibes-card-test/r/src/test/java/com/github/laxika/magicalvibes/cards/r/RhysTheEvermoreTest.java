@@ -59,7 +59,7 @@ class RhysTheEvermoreTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Activated ability removes the chosen number of counters across counter types")
+    @DisplayName("Activated ability removes the chosen number of counters of each kind")
     void removesChosenNumberOfCounters() {
         addCreatureReady(player1, new RhysTheEvermore());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
@@ -70,17 +70,15 @@ class RhysTheEvermoreTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        PendingInteraction.XValueChoice choice = (PendingInteraction.XValueChoice)
-                gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.maxValue()).isEqualTo(3);
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).containsExactly("0", "1");
+        harness.handleListChoice(player1, "1");
+        choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).containsExactly("0", "1", "2");
+        harness.handleListChoice(player1, "1");
 
-        harness.handleXValueChosen(player1, 2);
-        harness.handleListChoice(player1, "+1/+1 counters");
-        harness.handleListChoice(player1, "charge counters");
-
-        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)
-                + bears.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -108,7 +106,7 @@ class RhysTheEvermoreTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Choosing a total must still allow choosing which kinds of counters to remove")
+    @DisplayName("The controller chooses which kinds of counters to remove")
     void choosingTotalDoesNotAutomaticallyChooseCounterKinds() {
         addCreatureReady(player1, new RhysTheEvermore());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
@@ -118,13 +116,15 @@ class RhysTheEvermoreTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, bears.getId());
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, 1);
+        harness.handleListChoice(player1, "0");
 
         assertThat(gd.interaction.isAwaitingInput())
                 .as("The controller must be allowed to choose the -1/-1 counter instead of the charge counter")
                 .isTrue();
+        harness.handleListChoice(player1, "1");
+
         assertThat(bears.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
-        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }
 
     @Test
@@ -137,7 +137,7 @@ class RhysTheEvermoreTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, rhys.getId());
         assertThat(rhys.isTapped()).isTrue();
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, 0);
+        harness.handleListChoice(player1, "0");
 
         assertThat(rhys.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -153,7 +153,7 @@ class RhysTheEvermoreTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, bears.getId());
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, 1);
+        harness.handleListChoice(player1, "1");
 
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

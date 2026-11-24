@@ -33,7 +33,7 @@ class FerropedeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Combat damage trigger may remove a counter from target permanent")
+    @DisplayName("Combat damage trigger may remove a counter from target permanent, one kind asking nothing more")
     void mayRemoveCounterFromTargetPermanent() {
         Permanent ferropede = addCreatureReady(player1, new Ferropede());
         ferropede.setAttacking(true);
@@ -48,9 +48,9 @@ class FerropedeTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleListChoice(player1, "charge counters");
 
         assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test
@@ -94,7 +94,7 @@ class FerropedeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Ferropede's controller chooses which counter type to remove")
+    @DisplayName("Ferropede's controller chooses which counter type to remove: none of the first kind means one of the other")
     void controllerChoosesCounterType() {
         Permanent ferropede = addCreatureReady(player1, new Ferropede());
         ferropede.setAttacking(true);
@@ -111,8 +111,9 @@ class FerropedeTest extends BaseCardTest {
 
         assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        harness.handleListChoice(player1, "+1/+1 counters");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("0", "1");
+        harness.handleListChoice(player1, "0");
 
         assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

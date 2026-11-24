@@ -6,12 +6,19 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenAndLinkToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTetraviteTokensToPutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCountersToCreateTetraviteTokensEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveUpToCountersFromAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -37,7 +44,10 @@ public class Tetravus extends Card {
         // "At the beginning of your upkeep, you may remove any number of +1/+1 counters from this
         //  creature. If you do, create that many 1/1 colorless Tetravite artifact creature tokens.
         //  They each have flying and 'This token can't be enchanted.'"
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new RemoveCountersToCreateTetraviteTokensEffect(tetravite));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
+                RemoveUpToCountersFromAllPermanentsEffect.anyNumber(CounterType.PLUS_ONE_PLUS_ONE, Subjects.source()),
+                new ConditionalEffect(HappenedThisWay.removedCounters(), new CreateTokenAndLinkToSourceEffect(
+                        tetravite.withAmount(new AmountThisWay(StepKind.REMOVE_COUNTERS)), false))));
 
         // "At the beginning of your upkeep, you may exile any number of tokens created with this
         //  creature. If you do, put that many +1/+1 counters on this creature."

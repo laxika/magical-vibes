@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.RemoveUpToCountersFromTargetEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.RemoveUpToCountersFromAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -27,6 +29,8 @@ public class PriceOfBetrayal extends Card {
                 TARGET_PERMANENT,
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an artifact, creature, planeswalker, or opponent."
-        )).addSpellEffect(new RemoveUpToCountersFromTargetEffect(5, TARGET_PERMANENT));
+        )).addSpellEffect(new RemoveUpToCountersFromAllPermanentsEffect(CounterType.ANY, 5, Subjects.target())
+                .matchingTarget(TARGET_PERMANENT)
+                .orFromPlayers(Subjects.targetPlayer()));
     }
 }

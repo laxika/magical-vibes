@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b (each in Findings; the fold queue marks its rows). Fold runs 23d, 35, 33b and 36 are reported and wait to merge; 27b, 29c and 32b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                              |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d (each in Findings; the fold queue marks its rows). Fold runs 35, 33b and 36 are reported and wait to merge; 27b, 29c and 32b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                               |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,376 / 2,710 (after fold run 34b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,371 / 2,705 (after fold run 23d) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,040 rows over 4,473 classes (after fold run 34b). Latest verdict per class: `step-9` 482, unique 1,174, absorbed 997, split 644, blocked-other 522, survivor 355, blocked-step-model 140, blocked-player-loop 96, dead 63. Waiting: 482 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,046 rows over 4,474 classes (after fold run 23d). Latest verdict per class: `step-9` 478, unique 1,174, absorbed 1,000, split 646, blocked-other 522, survivor 355, blocked-step-model 140, blocked-player-loop 96, dead 63. Waiting: 478 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -880,6 +880,11 @@ Delayed and global triggers:
 - `PlayerRestriction.activatingAbilities()` / `.activatingAbilitiesOf(types…)` (`Kind.ACTIVATE_ABILITIES`, `abilitySourceTypes`): "can't activate abilities [of artifacts, creatures, or enchantments]", mana abilities included, permanents only when typed (fold run 34b).
 - `GameQueryService.findRestriction` (returns `RestrictionInForce`), `restrictedSpellTypes`, `abilityLockRefusal(player, source)`, `nonManaAbilityLockRefusal`, `isHeldToSorceryTiming`: the restriction readers over resolved and static restrictions (fold run 34b).
 - Conditions `StackIsEmpty` and `TargetPlayerCouldCastSorcery` (CR 307.5, timing only); `TargetPlayerTurn` read for the restricted player (fold run 34b).
+
+- `RemoveUpToCountersFromAllPermanentsEffect` with `(kind, DynamicAmount, subject)`, `.exactly(kind, amount, subject)`, `.matchingTarget(filter)` and `.orFromPlayers(players)`: "remove up to N / N / any number of counters from target permanent or player". Exact X removes all when fewer are there, and one-answer slots are answered unasked (fold run 23d).
+- `ChoiceContext.MoveCountersAmountChoice.requiredTotal` (lowest answer per slot) and `CounterMoveSlot.fromPlayer(playerId, PlayerCounterType)` (player removal slots); `PlayerInputService.beginMoveCountersAmountChoice(…, min, max)` (fold run 23d).
+- `GameData.removePlayerCounters(playerId, PlayerCounterType, amount)`: removes N counters of one kind from a player, energy counting as lost (fold run 23d).
+- `ChoiceContext.RemoveOneCounterChoice.counterLabel(CounterType)`: the counter-kind option label, moved from the deleted `RemoveChosenCountersChoice` (fold run 23d).
 
 ### Blocked causes still open
 
@@ -3691,6 +3696,59 @@ Both members folded, 0 left. Ratchet 3,430 / 2,748 → 3,428 / 2,746. Ledger 3 r
 - `PlanarAbilityService` still reads `GameData.isRestricted(ACTIVATE_NON_MANA_ABILITIES)` only, not Hand to Hand. Unverified whether any planar activated ability exists. Low.
 
 **For the next run.** The survivor's name no longer says what it does (step 10: `PlayerCastLockEffect`-style rename, if approved). `PlayersCantCastSpellsFromZonesEffect` and the survivor are two static restriction records over one `PlayerRestriction` vocabulary, so step 10 could merge them, with the condition as the only difference.
+
+### Step 9, fold run 23d (2026-11-24, parallel worktree)
+Batch `chosen-counters`, the last Run 23 batch.
+- Ratchet 3,427 / 2,745 → 3,422 / 2,740.
+- Ledger 6 rows (absorbed 3, split 2, survivor 1).
+- 10 card files rewritten; Oracle text checked for all 10. Rulings checked for Cemetery Desecrator, Thornmantle Striker, Price of Betrayal, Hex Parasite, Tetravus and Rhys.
+- CR 122.1, 122.5, 608.2b, 608.2d and 611.2a checked.
+
+**The decision.** `RemoveChosenCountersFromTargetPermanentEffect` and its `RemoveChosenCountersChoice` moved onto 23c's removal slots too.
+- Counters of one kind are interchangeable (CR 122.1), so "pick one counter at a time, or Done" says the same as one how-many question per kind.
+- Its exact form fits as a lowest answer per slot.
+- Keeping a target record beside the non-target one would be two records for one verb that differ only in subject.
+- The 23c record keeps its name until step 10.
+
+**The shape.**
+- `RemoveUpToCountersFromAllPermanentsEffect(kind, DynamicAmount amount, exactly, permanents, targetFilter, players)`. The int constructors stay. New: `exactly(kind, amount, subject)`, `.matchingTarget(filter)` and `.orFromPlayers(players)`.
+- `target()` and `targetPlayer()` declare a benign target. The non-target forms are unchanged.
+- The amount is evaluated on resolution (`XValue`).
+- `exactly`: each slot's lowest answer is what the later slots can't make up (`MoveCountersAmountChoice.requiredTotal`), and a slot with one possible answer is answered unasked (CR 608.2d).
+- Player slots: `CounterMoveSlot.fromPlayer(playerId, PlayerCounterType)`, removed through `GameData.removePlayerCounters`. REMOVE_COUNTERS records those players too.
+- The removal is not a move, so CR 122.5 is not checked.
+- Why `orFromPlayers` despite the one-card guard rail: only Price of Betrayal sets it, but it is a player subject for the verb, not a card-specific option. RemoveAll already takes players (23b).
+
+| Member | Result |
+|---|---|
+| `RemoveChosenCountersFromTargetPermanentEffect` (5 cards) | absorbed: `(ANY, N, target())`, `exactly(ANY, X, target())` |
+| `RemoveUpToCountersFromTargetEffect` | absorbed: Heartless Act `.matchingTarget(creature)`, Price of Betrayal `.orFromPlayers(targetPlayer())` |
+| `RemoveAnyNumberOfCountersFromTargetPermanentEffect` | absorbed: Rhys `anyNumber(ANY, target()).matchingTarget(creatureYouControl)` |
+| `RemoveCountersToCreateTetraviteTokensEffect` | split: `anyNumber(+1/+1, source())` + `ConditionalEffect(removedCounters(), CreateTokenAndLinkToSourceEffect(token.withAmount(AmountThisWay(REMOVE_COUNTERS)), false))` |
+| `RemoveCountersFromTargetAndBoostSelfEffect` | split: `(ANY, XValue, target())` + `BoostSelfEffect(AmountThisWay(REMOVE_COUNTERS), Fixed(0))` |
+
+**Deleted.**
+- The five records and their handlers.
+- `ChoiceContext.RemoveChosenCountersChoice`, `RemoveCountersOfKindChoice` and `TetravusCounterRemoval`, with their `PlayerInputService` begins, `ChoiceHandlerService` handlers and helpers, and the AI's Tetravus branch.
+- `counterTypesOn` → `PermanentCounterSupport.counterKindsOn`, used by four handlers.
+
+**Behaviour changes.**
+- Exact X removes all counters when fewer are there and asks nothing then; one-answer questions are not asked (Cemetery Desecrator and Thornmantle Striker rulings, CR 608.2d).
+- Ferropede must remove a counter once it says yes (Oracle text).
+- All 10 cards now get the oil, time, last-counter and Siege defense checks and a log line per permanent; Render Inert has a Siege test.
+- Out-of-range answers are refused instead of clamped.
+- Heartless Act's spec no longer admits players.
+- AI: target forms are HARMFUL (-1/-1 removal BENEFICIAL). Rhys and Hex Parasite were unclassified before.
+- The survivor's prompts and log lines win.
+
+**Tests changed.** RenderInert, Glissa, Ferropede, CemeteryDesecrator, ThornmantleStriker, Rhys and HexParasite: their prompt interactions; a Render Inert Siege test was added. Price of Betrayal, Heartless Act and Tetravus pass unchanged.
+
+**Seen, not changed.**
+- The AI's removal slot removes everything, so Rhys's AI strips its own +1/+1 counters. It needs an answer that keeps a counter kind the AI wants. Sure.
+
+**For the next run.** Run 23 is closed. Candidates for step 10:
+- rename the survivor (e.g. `RemoveCountersEffect`);
+- merge it with `RemoveAllCountersFromTargetPermanentEffect` and `RemoveCounterFromTargetPermanentEffect`.
 
 ## Prompt
 

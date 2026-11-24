@@ -1715,25 +1715,6 @@ public class PlayerInputService {
                 choiceContext.card().getName());
     }
 
-    public void beginTetravusCounterRemovalChoice(GameData gameData, UUID playerId, UUID permanentId,
-                                                  int maxCounters,
-                                                  com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate) {
-        ChoiceContext.TetravusCounterRemoval choiceContext =
-                new ChoiceContext.TetravusCounterRemoval(permanentId, tokenTemplate);
-
-        List<String> options = java.util.stream.IntStream.rangeClosed(0, maxCounters)
-                .mapToObj(Integer::toString)
-                .toList();
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                playerId, null, null, choiceContext, options,
-                "Remove any number of +1/+1 counters (0-" + maxCounters
-                        + ") to create that many Tetravite tokens."));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose how many +1/+1 counters to remove (0-{})",
-                gameData.id, playerName, maxCounters);
-    }
-
     /**
      * "Move any number of counters": prompt {@code playerId} for how many counters of the asked slot's kind (0..{@code
      * max}) to move from {@code fromName} onto {@code toName}, or to remove from {@code fromName} when {@code toName} is
@@ -1743,14 +1724,22 @@ public class PlayerInputService {
     public void beginMoveCountersAmountChoice(GameData gameData, UUID playerId,
                                               ChoiceContext.MoveCountersAmountChoice choiceContext,
                                               String fromName, String toName, String counterName, int max) {
-        List<String> options = IntStream.rangeClosed(0, Math.max(0, max))
+        beginMoveCountersAmountChoice(gameData, playerId, choiceContext, fromName, toName, counterName, 0, max);
+    }
+
+    /** The same question with a lowest answer {@code min} ("remove X counters": what the later slots can't make up). */
+    public void beginMoveCountersAmountChoice(GameData gameData, UUID playerId,
+                                              ChoiceContext.MoveCountersAmountChoice choiceContext,
+                                              String fromName, String toName, String counterName, int min, int max) {
+        int low = Math.max(0, Math.min(min, max));
+        List<String> options = IntStream.rangeClosed(low, Math.max(0, max))
                 .mapToObj(Integer::toString)
                 .toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, choiceContext, options,
                 choiceContext.sourceCardName() + " — choose how many " + counterName + " counters to "
                         + (toName == null ? "remove from " + fromName : "move from " + fromName + " onto " + toName)
-                        + " (0-" + Math.max(0, max) + ")."));
+                        + " (" + low + "-" + Math.max(0, max) + ")."));
         log.info("Game {} - Awaiting {} to choose how many {} counters to move (0-{})",
                 gameData.id, gameData.playerIdToName.get(playerId), counterName, max);
     }
@@ -1773,30 +1762,6 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to add/remove a {} counter", gameData.id, playerName, current);
-    }
-
-    public void beginRemoveCountersOfKindChoice(GameData gameData, UUID playerId, UUID targetId,
-                                                String sourceCardName, List<String> counterKinds,
-                                                int index, int remaining, int maxForCurrentKind) {
-        beginRemoveCountersOfKindChoice(gameData, playerId, targetId, sourceCardName, counterKinds,
-                index, remaining, maxForCurrentKind, null, 0);
-    }
-
-    public void beginRemoveCountersOfKindChoice(GameData gameData, UUID playerId, UUID targetId,
-                                                String sourceCardName, List<String> counterKinds,
-                                                int index, int remaining, int maxForCurrentKind,
-                                                UUID boostSourcePermanentId, int removedSoFar) {
-        ChoiceContext.RemoveCountersOfKindChoice context = new ChoiceContext.RemoveCountersOfKindChoice(
-                targetId, playerId, sourceCardName, counterKinds, index, remaining,
-                boostSourcePermanentId, removedSoFar);
-        String counterKind = counterKinds.get(index);
-        int max = Math.max(0, Math.min(remaining, maxForCurrentKind));
-        List<String> options = IntStream.rangeClosed(0, max).mapToObj(Integer::toString).toList();
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                playerId, null, null, context, options,
-                sourceCardName + " — choose how many "
-                        + ChoiceContext.RemoveCountersOfKindChoice.counterLabel(counterKind)
-                        + " counters to remove (0-" + max + ")."));
     }
 
     /** Clockspinning: choose which counter on the target to add or remove. */
@@ -1900,25 +1865,6 @@ public class PlayerInputService {
                 sourceCard.getName() + " — Choose a counter type for the token."));
         log.info("Game {} - Awaiting {} to choose a counter for created token {}",
                 gameData.id, playerId, tokenIds.getFirst());
-    }
-
-    public void beginRemoveChosenCountersChoice(GameData gameData, UUID playerId, UUID targetId,
-                                                 String sourceCardName, int remainingSelections,
-                                                 List<CounterType> counterTypes) {
-        beginRemoveChosenCountersChoice(gameData, playerId, targetId, sourceCardName,
-                remainingSelections, counterTypes, false);
-    }
-
-    public void beginRemoveChosenCountersChoice(GameData gameData, UUID playerId, UUID targetId,
-                                                String sourceCardName, int remainingSelections,
-                                                List<CounterType> counterTypes, boolean exactAmount) {
-        ChoiceContext.RemoveChosenCountersChoice context = new ChoiceContext.RemoveChosenCountersChoice(
-                targetId, playerId, sourceCardName, remainingSelections, counterTypes, exactAmount);
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                playerId, null, null, context, context.options(),
-                sourceCardName + (exactAmount ? " — Choose " : " — Choose up to ")
-                        + remainingSelections + " counters to remove."));
-        log.info("Game {} - Awaiting {} to choose a counter to remove from {}", gameData.id, playerId, targetId);
     }
 
     public void beginRemoveCountersFromForcedCostOrElseChoice(GameData gameData,

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ThornmantleStrikerTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The debuff uses the number of Elves at resolution, Thornmantle Striker included")
     void debuffUsesElfCountAtResolutionIncludingThornmantleStriker() {
         harness.addToBattlefield(player1, new ElvishWarrior());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
@@ -30,6 +32,7 @@ class ThornmantleStrikerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The counter mode removes exactly as many counters as Elves, one kind asking nothing")
     void counterModeRemovesExactlyElfCountOrAllRemaining() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         target.setCounterCount(CounterType.CHARGE, 3);
@@ -41,15 +44,12 @@ class ThornmantleStrikerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.handleListChoice(player1, "Done"))
-                .isInstanceOf(IllegalArgumentException.class);
-        harness.handleListChoice(player1, "charge counters");
-        harness.handleListChoice(player1, "charge counters");
-
         assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test
+    @DisplayName("The counter mode removes every counter when there are fewer than Elves")
     void counterModeRemovesAllCountersWhenFewerThanElfCount() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         target.setCounterCount(CounterType.CHARGE, 1);
@@ -61,13 +61,13 @@ class ThornmantleStrikerTest extends BaseCardTest {
                 "Remove X counters from target permanent, where X is the number of Elves you control");
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "charge counters");
 
         assertThat(target.getCounterCount(CounterType.CHARGE)).isZero();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test
+    @DisplayName("The debuff mode rejects the controller's own creature")
     void debuffModeRejectsOwnCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new HillGiant());
         harness.addToBattlefield(player2, new HillGiant());
