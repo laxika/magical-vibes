@@ -1766,11 +1766,19 @@ public class SubjectResolutionService {
         if (live != null) {
             return permanentAttachment(ctx.gameData(), live);
         }
+        // A source that left is read as it last existed (CR 608.2h): its snapshot's host. A snapshot left unattached
+        // because its host left the battlefield first still names that host, the one the entry recorded as the ability
+        // triggered or was activated; one that became unattached while its recorded host stayed enchants nothing.
         Permanent snapshot = ctx.sourceSnapshot();
-        if (snapshot != null) {
-            return permanentAttachment(ctx.gameData(), snapshot);
-        }
         Permanent attachedSnapshot = entry.getAttachedPermanentSnapshot();
+        if (snapshot != null) {
+            UUID snapshotHost = permanentAttachment(ctx.gameData(), snapshot);
+            if (snapshotHost != null || snapshot.getAttachedTo() != null || attachedSnapshot == null) {
+                return snapshotHost;
+            }
+            return gameQueryService.findPermanentById(ctx.gameData(), attachedSnapshot.getId()) == null
+                    ? attachedSnapshot.getId() : null;
+        }
         return attachedSnapshot == null ? null : attachedSnapshot.getId();
     }
 

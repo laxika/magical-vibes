@@ -1,12 +1,16 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastToughnessAmongOpponentCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureWithLeastToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -24,7 +28,10 @@ public class TheDiningCar extends Card {
         CreateTokenEffect food = CreateTokenEffect.ofFoodToken(1);
         addTrigger(Triggers.planeswalkToThis(), new EachPlayerCreatesTokenEffect(food));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
-                new SacrificeCreatureWithLeastToughnessEffect(),
+                new SacrificePermanentsEffect(1, new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentHasLeastToughnessAmongOpponentCreaturesPredicate(CountScope.CONTROLLER))),
+                        Subjects.you()),
                 CreateTokenEffect.ofClueToken(1)));
 
         addTrigger(Triggers.chaosEnsues(), GrantStaticEffectToPlayerEffect.untilEndOfTurn(

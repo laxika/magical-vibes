@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnedPermanentDealsPowerDamageToEachOtherCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToEachOtherCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "LTC", collectorNumber = "72")
@@ -24,6 +25,7 @@ public class TooGreedilyTooDeep extends Card {
                 .build());
 
         // That creature deals damage equal to its power to each other creature.
-        addSpellEffect(new ReturnedPermanentDealsPowerDamageToEachOtherCreatureEffect());
+        addSpellEffect(new TargetCreatureDealsPowerDamageToEachOtherCreatureEffect(
+                Subjects.returnedThisResolution(), Subjects.allCreatures()));
     }
 }

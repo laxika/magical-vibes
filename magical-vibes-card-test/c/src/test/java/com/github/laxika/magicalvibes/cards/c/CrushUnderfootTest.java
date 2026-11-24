@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CrushUnderfoot.class, LowlandOaf.class, KithkinDaggerdare.class, CloudcrownOak.class, WoodlandChangeling.class})
 class CrushUnderfootTest extends BaseCardTest {
@@ -27,7 +26,6 @@ class CrushUnderfootTest extends BaseCardTest {
         prepareSpell();
 
         harness.castAndResolveInstant(player1, 0, target.getId());
-        harness.handlePermanentChosen(player1, giant.getId());
 
         harness.assertNotOnBattlefield(player2, "Kithkin Daggerdare");
         harness.assertInGraveyard(player2, "Kithkin Daggerdare");
@@ -41,42 +39,57 @@ class CrushUnderfootTest extends BaseCardTest {
         prepareSpell();
 
         harness.castAndResolveInstant(player1, 0, target.getId());
-        harness.handlePermanentChosen(player1, giant.getId());
 
         harness.assertOnBattlefield(player2, "Cloudcrown Oak");
         assertThat(target.getMarkedDamage()).isEqualTo(3);
     }
 
     @Test
-    @DisplayName("Cannot choose a non-Giant creature you control during resolution")
-    void cannotChooseNonGiant() {
+    @DisplayName("A non-Giant creature you control is not a candidate: the lone Giant deals the damage unasked")
+    void nonGiantIsNotACandidate() {
         Permanent giant = harness.addToBattlefieldAndReturn(player1, new LowlandOaf());
         Permanent nonGiant = harness.addToBattlefieldAndReturn(player1, new KithkinDaggerdare());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new KithkinDaggerdare());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CloudcrownOak());
         prepareSpell();
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactly(giant.getId());
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, nonGiant.getId()))
-                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+        assertThat(nonGiant.getMarkedDamage()).isZero();
+        assertThat(giant.getMarkedDamage()).isZero();
     }
 
     @Test
-    @DisplayName("Cannot choose an opponent's Giant during resolution")
-    void cannotChooseOpponentGiant() {
-        Permanent giant = harness.addToBattlefieldAndReturn(player1, new LowlandOaf());
-        Permanent opponentGiant = harness.addToBattlefieldAndReturn(player2, new LowlandOaf());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new KithkinDaggerdare());
+    @DisplayName("An opponent's Giant is not a candidate: your lone Giant deals the damage unasked")
+    void opponentGiantIsNotACandidate() {
+        harness.addToBattlefieldAndReturn(player1, new LowlandOaf());
+        harness.addToBattlefieldAndReturn(player2, new WoodlandChangeling());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CloudcrownOak());
+        prepareSpell();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("With two Giants you control, only they are offered and the chosen one deals the damage")
+    void choosesAmongYourGiants() {
+        Permanent oaf = harness.addToBattlefieldAndReturn(player1, new LowlandOaf());
+        Permanent changeling = harness.addToBattlefieldAndReturn(player1, new WoodlandChangeling());
+        harness.addToBattlefieldAndReturn(player1, new KithkinDaggerdare());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CloudcrownOak());
         prepareSpell();
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactly(giant.getId());
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentGiant.getId()))
-                .isInstanceOf(IllegalStateException.class);
+                .containsExactlyInAnyOrder(oaf.getId(), changeling.getId());
+        harness.handlePermanentChosen(player1, changeling.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
     }
 
     @Test
@@ -100,7 +113,6 @@ class CrushUnderfootTest extends BaseCardTest {
         Permanent giant = harness.addToBattlefieldAndReturn(player1, new LowlandOaf());
 
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, giant.getId());
 
         harness.assertInGraveyard(player2, "Kithkin Daggerdare");
     }
@@ -111,7 +123,6 @@ class CrushUnderfootTest extends BaseCardTest {
         prepareSpell();
 
         harness.castAndResolveInstant(player1, 0, giant.getId());
-        harness.handlePermanentChosen(player1, giant.getId());
 
         harness.assertNotOnBattlefield(player1, "Lowland Oaf");
         harness.assertInGraveyard(player1, "Lowland Oaf");
@@ -124,7 +135,6 @@ class CrushUnderfootTest extends BaseCardTest {
         prepareSpell();
 
         harness.castAndResolveInstant(player1, 0, target.getId());
-        harness.handlePermanentChosen(player1, giant.getId());
 
         harness.assertInGraveyard(player2, "Kithkin Daggerdare");
     }

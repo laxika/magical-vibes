@@ -27,7 +27,6 @@ import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DemonstrateEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellForAnotherOpponentPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellForEachOtherControlledCreatureEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LeastToughnessDamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.MakeTargetCreatureCantBeBlockedByMostLifePlayerEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RevealUntilCardPredicateRestOnBottomRandomEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TheMasterGallifreysEndEffectHandler;
@@ -63,7 +62,6 @@ public class PermanentChoiceTriggerHandlerService {
     private final InputCompletionService inputCompletionService;
     private final ETBTokenTargetService etbTokenTargetService;
     private final CreatureControlService creatureControlService;
-    private final LeastToughnessDamageSupport leastToughnessDamageSupport;
     private final CopySpellForEachOtherControlledCreatureEffectHandler copySpellHandler;
     private final CopySpellForAnotherOpponentPermanentEffectHandler copySpellForAnotherOpponentPermanentHandler;
     private final DemonstrateEffectHandler demonstrateEffectHandler;
@@ -517,11 +515,6 @@ public class PermanentChoiceTriggerHandlerService {
                                                PermanentChoiceContext.TheMasterMostLifeChoice context) {
         theMasterHandler.completeMostLifeChoice(gameData, playerId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleLeastToughnessDamageChoice(GameData gameData, UUID permanentId,
-                                                  PermanentChoiceContext.LeastToughnessDamageChoice context) {
-        leastToughnessDamageSupport.handleChoice(gameData, permanentId, context);
     }
 
     private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {

@@ -1621,8 +1621,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    record LeastToughnessDamageChoice(Card sourceCard, int damage) implements PermanentChoiceContext {}
-
     /** Cyclopean Tomb's resolution-time choice of a tracked land to clean up. */
     record CyclopeanTombUpkeepLandChoice(UUID delayedActionId, PermanentPredicate permanentFilter)
             implements PermanentChoiceContext {}

@@ -29,6 +29,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *   <li>{@code (triggering(), target())}: "whenever equipped creature attacks, it deals damage equal to its power to
  *       target creature" (Lothlórien Blade): the creature the trigger event was about, with its power as the
  *       ability triggered if it left.</li>
+ *   <li>{@code (set, target())} or {@code (set, targetDeclaredElsewhere())}: each permanent of a non-targeting set
+ *       deals damage equal to its power to one creature: "choose a Giant creature you control. It deals damage equal
+ *       to its power to target creature" ({@code thisWay(CHOOSE)} after a {@code ChoosePermanentsEffect}, Crush
+ *       Underfoot), "each of those creatures deals damage equal to its power to that creature" (Alpha Brawl), "each
+ *       commander creature you control deals damage equal to its power to that creature" (Judgment of Alexander's
+ *       delayed ability, whose creature is not targeted). The set is found as the effect resolves (CR 608.2h); each of
+ *       its creatures still on the battlefield deals its damage, the recipient included if the set names it.</li>
  * </ul>
  * A dealer named by a target that is no longer a creature deals no damage: a noncreature permanent has no power
  * (CR 208.3), and a source that would deal 0 damage deals none (CR 120.8).
@@ -53,7 +60,10 @@ public record TargetDealsPowerDamageToTargetEffect(PermanentSubject dealer,
         }
         boolean groups = isGroupTarget(dealer) && isGroupTarget(recipient);
         boolean singleTargetRecipient = recipient instanceof PermanentSubject.Target r && r.group() == null;
+        boolean setDealer = isSetDealer(dealer);
         boolean supported = groups
+                || setDealer && (singleTargetRecipient
+                        || recipient instanceof PermanentSubject.TargetDeclaredElsewhere)
                 || singleTargetRecipient && (dealer.equals(recipient)
                         || dealer instanceof PermanentSubject.Source
                         || dealer instanceof PermanentSubject.AttachedAtTrigger
@@ -127,6 +137,21 @@ public record TargetDealsPowerDamageToTargetEffect(PermanentSubject dealer,
         return bySource(null);
     }
 
+    /**
+     * A non-targeting dealer that is not this creature, the creature an Aura enchanted as the ability triggered or the
+     * creature the trigger event was about: a set or a step result, each of whose creatures deals its damage.
+     */
+    private static boolean isSetDealer(PermanentSubject dealer) {
+        return !dealer.declaresTarget() && !(dealer instanceof PermanentSubject.Source)
+                && !(dealer instanceof PermanentSubject.AttachedAtTrigger)
+                && !(dealer instanceof PermanentSubject.Triggering);
+    }
+
+    /** Whether each permanent of a non-targeting set (or step result) deals its damage to the recipient. */
+    public boolean dealtBySet() {
+        return isSetDealer(dealer);
+    }
+
     private static boolean isGroupTarget(PermanentSubject subject) {
         return subject instanceof PermanentSubject.Target target && target.group() != null;
     }
@@ -163,12 +188,14 @@ public record TargetDealsPowerDamageToTargetEffect(PermanentSubject dealer,
     }
 
     /**
-     * True for a dealer that is not a target (this creature, the triggering creature): the AI scores those as
-     * creature damage from a permanent it already has, as it did for the old self-dealing records.
+     * True for a dealer that is not a target (this creature, the triggering creature, a set or chosen creature): the
+     * AI scores those as creature damage from a permanent it already has, as it did for the old self-dealing and
+     * chosen-creature records.
      */
     @Override
     public boolean canDamageCreatures() {
-        return dealer instanceof PermanentSubject.Source || dealer instanceof PermanentSubject.Triggering;
+        return dealer instanceof PermanentSubject.Source || dealer instanceof PermanentSubject.Triggering
+                || isSetDealer(dealer);
     }
 
     @Override

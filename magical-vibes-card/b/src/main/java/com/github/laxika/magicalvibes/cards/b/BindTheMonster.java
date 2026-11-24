@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsPowerDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -18,7 +19,8 @@ public class BindTheMonster extends Card {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                         new TapPermanentsEffect(Subjects.attached()),
-                        new EnchantedCreatureDealsPowerDamageToControllerEffect()))
+                        TargetCreatureDealsDamageToControllerEffect.dealtBy(Subjects.attachedCreature(), new SourcePower(),
+                                Subjects.you())))
                 .addStaticEffect(DoesntUntapEffect.enchanted());
     }
 }

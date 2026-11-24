@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageToEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -26,7 +25,7 @@ public class HawkeyesBow extends Card {
                                 .withFilter(new PermanentIsHostOfSourceAuraPredicate()),
                         Triggers.permanentOpponentControlsBecomesTapped()
                                 .withFilter(new PermanentIsHostOfSourceAuraPredicate())),
-                new EnchantedCreatureDealsDamageToEachOpponentEffect(new Fixed(1)));
+                TargetCreatureDealsDamageToControllerEffect.dealtBy(Subjects.triggering(), 1, Subjects.eachOpponent()));
 
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }

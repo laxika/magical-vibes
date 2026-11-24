@@ -18,6 +18,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TheDiningCar.class, GrizzlyBears.class, AirElemental.class})
@@ -78,9 +80,9 @@ class TheDiningCarTest extends BaseCardTest {
                 .handleUpkeepTriggers(gd));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
                 .containsExactlyInAnyOrder(first.getId(), second.getId());
-        harness.handlePermanentChosen(player1, first.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(first).contains(second);

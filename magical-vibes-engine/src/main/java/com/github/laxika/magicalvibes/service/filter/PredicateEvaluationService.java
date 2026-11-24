@@ -249,6 +249,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastPowerAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastPowerAmongControllerCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastToughnessAmongOpponentCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasActivatedAbilityWithEffectsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasManaAbilityPredicate;
@@ -3433,17 +3434,22 @@ public class PredicateEvaluationService {
                                 .min().orElse(0));
                 yield gameQueryService.getEffectivePower(gameData, permanent) == minPower;
             }
-            case PermanentHasLeastToughnessAmongOpponentCreaturesPredicate ignored -> {
-                if (gameData == null || sourceControllerId == null
+            case PermanentHasLeastToughnessAmongOpponentCreaturesPredicate least -> {
+                if (gameData == null || (sourceControllerId == null && least.scope() != CountScope.ANY_PLAYER)
                         || !gameQueryService.isCreature(gameData, permanent)) {
                     yield false;
                 }
                 UUID permanentControllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
-                if (permanentControllerId == null || permanentControllerId.equals(sourceControllerId)) {
+                java.util.function.Predicate<UUID> inScope = switch (least.scope()) {
+                    case CONTROLLER -> playerId -> playerId.equals(sourceControllerId);
+                    case ANY_PLAYER -> playerId -> true;
+                    default -> playerId -> !playerId.equals(sourceControllerId);
+                };
+                if (permanentControllerId == null || !inScope.test(permanentControllerId)) {
                     yield false;
                 }
                 int leastToughness = gameData.playerBattlefields.entrySet().stream()
-                        .filter(entry -> !entry.getKey().equals(sourceControllerId))
+                        .filter(entry -> inScope.test(entry.getKey()))
                         .flatMap(entry -> entry.getValue().stream())
                         .filter(candidate -> gameQueryService.isCreature(gameData, candidate))
                         .mapToInt(candidate -> gameQueryService.getEffectiveToughness(gameData, candidate))

@@ -962,8 +962,6 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleBlackGateMostLifeChoice(gameData, permanentId, bgml);
         } else if (context instanceof PermanentChoiceContext.TheMasterMostLifeChoice tmml) {
             triggerHandler.handleTheMasterMostLifeChoice(gameData, permanentId, tmml);
-        } else if (context instanceof PermanentChoiceContext.LeastToughnessDamageChoice ltdc) {
-            triggerHandler.handleLeastToughnessDamageChoice(gameData, permanentId, ltdc);
         } else if (context instanceof PermanentChoiceContext.PucasMischiefOwnTarget pmot) {
             triggerHandler.handlePucasMischiefOwnTarget(gameData, permanentId, pmot);
         } else if (context instanceof PermanentChoiceContext.PucasMischiefOpponentTarget pmot) {

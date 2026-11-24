@@ -1,5 +1,5 @@
 # PREDICATES_REFERENCE
-| `PermanentHasLeastToughnessAmongOpponentCreaturesPredicate` | `()` | opponent-controlled creatures with least effective toughness among all creatures controlled by opponents of the source controller (ties allowed) | `gameData` + `sourceControllerId` |
+| `PermanentHasLeastToughnessAmongOpponentCreaturesPredicate` | `()` = `OPPONENTS`; `(CountScope scope)`: `CONTROLLER`, `ANY_PLAYER` | a creature of the scope with the least effective toughness among the scope's creatures, judged from the source controller (ties allowed): opponents' creatures (default), your creatures (The Dining Car), every creature (Purging Scythe); a following choice drops what can't be chosen | `gameData` + `sourceControllerId` |
 | `CardManaValueGreaterThanSourceManaValuePredicate` | `()` | a card whose mana value is strictly greater than the source card's mana value; needs `GameData` and `sourceCardId` (Kami of Mourning) |
 
 `PermanentBlockingSourcePredicate` resolves an attached Equipment's equipped creature as the source, just as it resolves an attached Aura's enchanted creature.
@@ -499,6 +499,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `PlayerTappedLandForManaThisTurnPredicate` | `()` | players who tapped a land for mana this turn (`GameData.playersWhoTappedLandForManaThisTurn`, recorded on every land mana tap whatever was on the battlefield). Desolation's `matching(eachPlayer(), …)` sacrificing players |
 | `PlayerHasPoisonCountersAtLeastPredicate` | `(int minimum)` | players with at least `minimum` poison counters (evaluated against `GameData.playerPoisonCounters`). With `Subjects.matching(Subjects.eachOpponent(), ...)`: "each opponent who has three or more poison counters" (Feed the Infection, Phyrexian Atlas) |
 | `PlayerCanSearchTheirLibraryPredicate` | `()` | players nothing stops from searching their own library at the effect controller's behest (`LibrarySearchRestrictions`: Stranglehold, an unpaid Leonin Arbiter, a "can't search this turn" effect). With `Subjects.matching(eachOpponent(), ...)`: the opponents who could accept "each opponent may search their library" (CR 608.2d); with `matching(you(), ...)`: whether your must-search happened (Tempt with Discovery) |
+| `PlayerWithoutMaxSpeedPredicate` | `()` | a player who doesn't have max speed (speed below 4, no speed included; CR 702.179e): `Subjects.matching(eachPlayer(), ...)` is "each player who doesn't have max speed" (Outpace Oblivion) |
 
 ## CardPredicate (spell/card filters)
 

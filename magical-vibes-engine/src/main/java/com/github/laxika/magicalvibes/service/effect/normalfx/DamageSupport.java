@@ -767,6 +767,85 @@ public class DamageSupport {
         return damageEntry;
     }
 
+    /**
+     * The permanent {@code permanentId} as it deals damage itself ("it deals 1 damage to each opponent", "each creature
+     * deals 1 damage to its controller"): as it is on the battlefield, else as it last existed there (CR 608.2h): the
+     * departure snapshot the game recorded as it left (its last-known power and characteristics), else the snapshot
+     * {@code entry} recorded of it (its source, the permanent its trigger event was about, the permanent its source was
+     * attached to, an attacker).
+     *
+     * @return the permanent, or {@code null} when the game remembers nothing of it
+     */
+    public Permanent dealerAsItIsOrWas(GameData gameData, StackEntry entry, UUID permanentId) {
+        if (permanentId == null) {
+            return null;
+        }
+        Permanent live = gameQueryService.findPermanentById(gameData, permanentId);
+        if (live != null) {
+            return live;
+        }
+        Permanent departed = ConditionEvaluationService.lastKnownPermanent(gameData, permanentId);
+        if (departed != null) {
+            return departed;
+        }
+        for (Permanent snapshot : Arrays.asList(entry.getSourcePermanentSnapshot(),
+                entry.getTriggeringPermanentSnapshot(), entry.getAttachedPermanentSnapshot())) {
+            if (snapshot != null && permanentId.equals(snapshot.getId())) {
+                return snapshot;
+            }
+        }
+        return entry.getAttackingPermanentSnapshots().stream()
+                .filter(snapshot -> permanentId.equals(snapshot.getId()))
+                .findFirst().orElse(null);
+    }
+
+    /**
+     * The controller of a {@link #dealerAsItIsOrWas dealer}: its current one, else the one it last had (CR 608.2h): as
+     * {@code entry} recorded it (a permanent it remembers, the permanent its trigger event was about, its source), as
+     * the game recorded it leaving, else, for an attacker, the active player.
+     */
+    public UUID dealerControllerId(GameData gameData, StackEntry entry, Permanent dealer) {
+        UUID dealerId = dealer.getId();
+        UUID controllerId = gameQueryService.findPermanentController(gameData, dealerId);
+        if (controllerId == null) {
+            controllerId = entry.lastKnownPermanentController(dealerId);
+        }
+        if (controllerId == null && dealerId.equals(entry.getTriggeringPermanentId())) {
+            controllerId = entry.getTriggeringPermanentControllerId();
+        }
+        if (controllerId == null && dealerId.equals(entry.getSourcePermanentId())) {
+            controllerId = entry.getSourcePermanentControllerId();
+        }
+        if (controllerId == null) {
+            controllerId = gameData.departedPermanentControllerIds.get(dealer.getCard().getId());
+        }
+        if (controllerId == null && dealer.isAttacking()) {
+            controllerId = gameData.activePlayerId;
+        }
+        return controllerId;
+    }
+
+    /**
+     * The entry {@code dealer}'s own damage is dealt through:{@code dealer} is its source and {@code controllerId} the
+     * source's controller (CR 120.1), so the damage has the dealer's characteristics (CR 120.3): its lifelink gains its
+     * controller life, its infect and wither give counters, protection from its colours prevents it, and "whenever a
+     * source deals damage" sees it. A dealer that left carries its last-known snapshot (CR 608.2h), and the keywords
+     * {@code entry} recorded it had as it left when it is the permanent the trigger event was about.
+     */
+    public StackEntry entryDealtByPermanent(GameData gameData, StackEntry entry, Permanent dealer, UUID controllerId) {
+        StackEntry damageEntry = StackEntry.carrier(dealer.getCard(), controllerId,
+                FaceDownVisibility.publicName(gameData, dealer) + "'s ability", List.of(), null, dealer.getId());
+        damageEntry.setDamageSourceCard(dealer.getCard());
+        damageEntry.setDamageSourceControllerId(controllerId);
+        damageEntry.setSourcePermanentSnapshot(new Permanent(dealer));
+        if (gameQueryService.findPermanentById(gameData, dealer.getId()) == null
+                && dealer.getId().equals(entry.getTriggeringPermanentId())
+                && entry.getTriggeringPermanentKeywordsAtLeave() != null) {
+            damageEntry.setTriggeringPermanentKeywordsAtLeave(entry.getTriggeringPermanentKeywordsAtLeave());
+        }
+        return damageEntry;
+    }
+
     public boolean isDamageSourcePreventedWithLog(GameData gameData, StackEntry entry) {
         Card source = entry.getEffectiveDamageSourceCard();
         if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {

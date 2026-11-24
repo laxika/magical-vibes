@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageToEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsPowerDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -43,6 +45,7 @@ public class PainForAll extends Card {
                         new EnchantedCreatureDealsPowerDamageToAnyTargetEffect());
 
         addTrigger(Triggers.enchantedCreatureDealtDamage(),
-                new EnchantedCreatureDealsDamageToEachOpponentEffect());
+                TargetCreatureDealsDamageToControllerEffect.dealtBy(Subjects.triggering(), new EventValue(),
+                        Subjects.eachOpponent()));
     }
 }

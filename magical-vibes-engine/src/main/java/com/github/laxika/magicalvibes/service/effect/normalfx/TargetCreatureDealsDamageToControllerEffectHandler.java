@@ -1,18 +1,15 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.service.FaceDownVisibility;
-import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
@@ -22,15 +19,19 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Resolves {@link TargetCreatureDealsDamageToControllerEffect}: each dealer the subject names, as it is or as it last
+ * existed (CR 608.2h), deals the damage through {@link DamageSupport#entryDealtByPermanent}, so it is the damage's
+ * source (CR 120.1). The amount is evaluated once per dealer as the effect resolves; prevention, protection and the
+ * damage replacements are applied by the damage event, never checked here first. The damage is this step's
+ * {@code DEAL_DAMAGE} result.
+ */
 @Component
 @RequiredArgsConstructor
 public class TargetCreatureDealsDamageToControllerEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
-    private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
-    private final GameLogService gameLogService;
-    private final DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
     private final SubjectResolutionService subjectResolutionService;
 
     @Override
@@ -40,84 +41,47 @@ public class TargetCreatureDealsDamageToControllerEffectHandler implements Norma
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var targetEffect = (TargetCreatureDealsDamageToControllerEffect) effect;
-        if (targetEffect.player().equals(Subjects.eachOpponent())) {
-            dealToEachOpponent(gameData, entry, targetEffect);
-            return;
-        }
-        // The target as it is, else as it last existed: the ids of the ones that left too.
-        List<UUID> sourceIds = subjectResolutionService.permanentIds(gameData, entry, effect, targetEffect.subject());
-        for (UUID sourceId : sourceIds) {
-            Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
-            if (source != null) {
-                dealDamage(gameData, entry, targetEffect, source,
-                        gameQueryService.findPermanentController(gameData, source.getId()));
-            } else if (entry.getSourcePermanentSnapshot() != null
-                    && sourceId.equals(entry.getSourcePermanentSnapshot().getId())) {
-                dealDamage(gameData, entry, targetEffect, entry.getSourcePermanentSnapshot(),
-                        gameData.activePlayerId);
-            } else {
-                entry.getAttackingPermanentSnapshots().stream()
-                        .filter(snapshot -> sourceId.equals(snapshot.getId()))
-                        .findFirst()
-                        .ifPresent(snapshot -> dealDamage(gameData, entry, targetEffect, snapshot,
-                                entry.getTriggeringPermanentControllerId()));
+        var e = (TargetCreatureDealsDamageToControllerEffect) effect;
+        entry.recordStep(StepKind.DEAL_DAMAGE, StepOutcome.NONE);
+        List<UUID> sharedPlayers = e.playerIsEachDealers()
+                ? List.of()
+                : subjectResolutionService.players(gameData, entry, e, e.player());
+        for (UUID dealerId : subjectResolutionService.permanentIds(gameData, entry, e, e.subject())) {
+            Permanent dealer = damageSupport.dealerAsItIsOrWas(gameData, entry, dealerId);
+            if (dealer == null) {
+                continue;
             }
+            UUID controllerId = damageSupport.dealerControllerId(gameData, entry, dealer);
+            if (controllerId == null) {
+                continue;
+            }
+            List<UUID> players = switch (e.player()) {
+                case PlayerSubject.ControllerOf ignored -> List.of(controllerId);
+                case PlayerSubject.OwnerOf ignored -> dealerOwner(gameData, entry, e, dealer);
+                default -> sharedPlayers;
+            };
+            if (players.isEmpty()) {
+                continue;
+            }
+            int damage = amountEvaluationService.evaluate(gameData, e.damage(),
+                    AmountContext.forStackEntry(entry, dealer));
+            StackEntry damageEntry = damageSupport.entryDealtByPermanent(gameData, entry, dealer, controllerId);
+            for (UUID playerId : players) {
+                damageSupport.dealDamageToPlayer(gameData, damageEntry, playerId, damage);
+            }
+            entry.addToStep(StepKind.DEAL_DAMAGE, damageEntry.getResolutionResults().outcome(StepKind.DEAL_DAMAGE));
         }
     }
 
     /**
-     * "Target creature deals damage to each opponent": the targeted creature is the damage source for the amount,
-     * prevention, protection, lifelink and damage triggers; the opponents are those of the ability's controller.
+     * "Its owner": the owner of the dealer's card, as it is or as it last existed (a card's owner never changes,
+     * CR 108.3).
      */
-    private void dealToEachOpponent(GameData gameData, StackEntry entry,
-                                    TargetCreatureDealsDamageToControllerEffect targetEffect) {
-        Permanent source = subjectResolutionService.permanent(gameData, entry, targetEffect, Subjects.target());
-        if (source == null || gameQueryService.findPermanentController(gameData, source.getId()) == null) {
-            return;
-        }
-        StackEntry damageEntry = StackEntry.carrier(source.getCard(),
-                entry.getControllerId(),
-                FaceDownVisibility.publicName(gameData, source) + "'s ability",
-                List.of(),
-                null,
-                source.getId());
-        dealDamageToPlayersEffectHandler.resolve(gameData, damageEntry,
-                new DealDamageToPlayersEffect(targetEffect.damage(), Subjects.eachOpponent()));
-    }
-
-    /**
-     * Deals the damage from a creature that may have left the battlefield. A creature that has left
-     * uses its last known information (CR 608.2h); a creature that attacked was controlled by the
-     * active player, so that player is its last known controller.
-     */
-    private void dealDamage(GameData gameData, StackEntry entry,
-                            TargetCreatureDealsDamageToControllerEffect targetEffect, Permanent target,
-                            UUID controllerId) {
-        if (controllerId == null) {
-            return;
-        }
-
-        if (gameQueryService.isDamagePreventable(gameData)
-                && gameQueryService.isPreventedFromDealingDamage(gameData, target)) {
-            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), "'s damage is prevented."));
-            return;
-        }
-
-        int damage = amountEvaluationService.evaluate(gameData, targetEffect.damage(),
-                AmountContext.forStackEntry(entry, target));
-
-        StackEntry damageEntry = StackEntry.carrier(target.getCard(),
-                controllerId,
-                FaceDownVisibility.publicName(gameData, target) + "'s ability",
-                List.of(),
-                null,
-                target.getId());
-
-        damageEntry.setSourcePermanentSnapshot(new Permanent(target));
-        int rawDamage = damage;
-        UUID recipientId = targetEffect.player() instanceof PlayerSubject.You
-                ? entry.getControllerId() : controllerId;
-        damageSupport.dealDamageToPlayer(gameData, damageEntry, recipientId, rawDamage);
+    private List<UUID> dealerOwner(GameData gameData, StackEntry entry, TargetCreatureDealsDamageToControllerEffect e,
+                                   Permanent dealer) {
+        Card card = dealer.getOriginalCard() != null ? dealer.getOriginalCard() : dealer.getCard();
+        UUID owner = gameData.ownerOf(card);
+        return owner != null ? List.of(owner) : subjectResolutionService.players(gameData, entry, e,
+                Subjects.ownerOf(Subjects.named(dealer.getId())));
     }
 }

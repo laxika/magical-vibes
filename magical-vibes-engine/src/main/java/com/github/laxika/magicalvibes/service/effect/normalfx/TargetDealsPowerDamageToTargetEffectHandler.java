@@ -48,7 +48,50 @@ public class TargetDealsPowerDamageToTargetEffectHandler implements NormalEffect
             case PermanentSubject.Source ignored -> resolveFromSource(gameData, entry, e);
             case PermanentSubject.AttachedAtTrigger ignored -> resolveFromEnchantedAtTrigger(gameData, entry, e);
             case PermanentSubject.Triggering ignored -> resolveFromTriggering(gameData, entry, e);
-            default -> resolveFromTargets(gameData, entry, e);
+            default -> {
+                if (e.dealtBySet()) {
+                    resolveFromSet(gameData, entry, e);
+                } else {
+                    resolveFromTargets(gameData, entry, e);
+                }
+            }
+        }
+    }
+
+    /**
+     * Each creature of a non-targeting set still on the battlefield deals its damage to the recipient creature in turn,
+     * through {@link DamageSupport#entryDealtByPermanent} (each is its own source, CR 120.1).
+     */
+    private void resolveFromSet(GameData gameData, StackEntry entry, TargetDealsPowerDamageToTargetEffect e) {
+        Permanent target = subjectResolutionService.permanent(gameData, entry, e, e.recipient());
+        if (target == null || !gameQueryService.isCreature(gameData, target)) {
+            return;
+        }
+        for (Permanent dealer : subjectResolutionService.permanents(gameData, entry, e, e.dealer())) {
+            // A noncreature permanent has no power (CR 208.3).
+            if (!gameQueryService.isCreature(gameData, dealer)) {
+                continue;
+            }
+            if (gameQueryService.isDamagePreventable(gameData)
+                    && gameQueryService.isPreventedFromDealingDamage(gameData, dealer)) {
+                gameLogService.append(gameData, GameLog.cardThen(dealer.getCard(), "'s damage is prevented."));
+                continue;
+            }
+            if (gameQueryService.isDamagePreventable(gameData)
+                    && !gameQueryService.damageCantBePreventedFromSource(gameData, dealer)
+                    && gameQueryService.hasProtectionFromSource(gameData, target, dealer)) {
+                gameLogService.append(gameData, GameLog.textCardText(FaceDownVisibility.publicName(gameData, dealer)
+                        + "'s damage to ", target.getCard(), " is prevented."));
+                continue;
+            }
+            UUID controllerId = gameQueryService.findPermanentController(gameData, dealer.getId());
+            if (controllerId == null) {
+                continue;
+            }
+            StackEntry damageEntry = damageSupport.entryDealtByPermanent(gameData, entry, dealer, controllerId);
+            int power = gameQueryService.getPowerBasedDamage(gameData, dealer);
+            damageSupport.dealCreatureDamage(gameData, damageEntry, target,
+                    SaturatingMath.multiply(power, e.powerMultiplier()), dealer);
         }
     }
 

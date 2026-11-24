@@ -73,6 +73,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeU
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureMustAttackSourcePermanentNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToEachOtherCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect;
@@ -360,6 +361,13 @@ public class TargetPolarityClassifier {
                     && !(powerDamage.dealer() instanceof PermanentSubject.AttachedAtTrigger)
                     ? TargetPolarity.HARMFUL_DAMAGE
                     : null;
+        }
+        // "Target creature an opponent controls deals damage equal to its power to each other creature that player
+        // controls" (Alpha Brawl) is harmful; the controller's own creature dealing damage to every other creature is
+        // beneficial (the name table below).
+        if (effect instanceof TargetCreatureDealsPowerDamageToEachOtherCreatureEffect eachOther
+                && eachOther.targetSpec().harmful()) {
+            return TargetPolarity.HARMFUL;
         }
         // "Target creature you control deals damage to each opponent" aims at the AI's own creature.
         if (effect instanceof TargetCreatureDealsDamageToControllerEffect toPlayers
@@ -703,7 +711,6 @@ public class TargetPolarityClassifier {
             entry("EnchantedPermanentBecomesOnlyLandEffect", TargetPolarity.HARMFUL),
             entry("BecomeColorlessEffect", TargetPolarity.HARMFUL),
             entry("MarkTargetCreatureExileInsteadOfDieThisTurnEffect", TargetPolarity.HARMFUL),
-            entry("MassFightTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("MakeTargetAttackingCreatureBlockedEffect", TargetPolarity.HARMFUL),
             entry("MustBlockSourceEffect", TargetPolarity.HARMFUL),
             entry("MustBlockTargetCreatureEffect", TargetPolarity.HARMFUL),

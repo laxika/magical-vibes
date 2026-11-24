@@ -2,7 +2,10 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.MassFightTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToEachOtherCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -18,12 +21,18 @@ public class AlphaBrawl extends Card {
         // Target creature an opponent controls deals damage equal to its power to each other
         // creature that player controls, then each of those creatures deals damage equal to
         // its power to that creature.
+        PermanentSubject creaturesThatPlayerControls = Subjects.controlledBy(
+                Subjects.controllerOf(Subjects.target()), new PermanentIsCreaturePredicate());
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Target creature an opponent controls"
-        )).addSpellEffect(new MassFightTargetCreatureEffect());
+        )).addSpellEffect(new TargetCreatureDealsPowerDamageToEachOtherCreatureEffect(Subjects.target(),
+                        creaturesThatPlayerControls))
+                .addSpellEffect(new TargetDealsPowerDamageToTargetEffect(
+                        Subjects.except(creaturesThatPlayerControls, Subjects.targetDeclaredElsewhere()),
+                        Subjects.target()));
     }
 }

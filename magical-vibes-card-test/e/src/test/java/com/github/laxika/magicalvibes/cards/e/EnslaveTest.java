@@ -203,6 +203,29 @@ class EnslaveTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Destroying the enchanted creature in response still deals its damage to its owner (last known information)")
+    void upkeepDamageResolvesAfterEnchantedCreatureIsDestroyed() {
+        SlashPanther panther = new SlashPanther();
+        panther.setOwnerId(player2.getId());
+        Permanent creature = addCreatureReady(player2, panther);
+        harness.setHand(player1, List.of(new Enslave()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new BeastWithin()));
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.assertInGraveyard(player2, "Slash Panther");
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
     @DisplayName("Enslave does not enter the battlefield if its target is destroyed in response")
     void destroyedTargetPreventsAuraFromResolving() {
         Permanent creature = addCreatureReady(player2, new SlashPanther());

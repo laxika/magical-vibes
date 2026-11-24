@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
@@ -35,8 +37,9 @@ import org.springframework.stereotype.Component;
  * {@link DamageSupport#entryDealtByTriggeringPermanent}, whose source is the permanent the trigger event was about; the
  * players and the amount are still read from the resolving entry.
  *
- * <p>The amount is evaluated for each player dealt damage: with that player as the controller for
- * {@code eachPlayer()}, as the target for {@code defendingPlayer()}, else in the resolving entry's own context.
+ * <p>The amount is evaluated for each player dealt damage, every player's before any damage is dealt (CR 608.2h): with
+ * that player as the controller for {@code eachPlayer()} and with {@code amountForEachPlayer}, as the target for
+ * {@code defendingPlayer()}, else in the resolving entry's own context.
  * "You" and "that creature's controller" check only the stack entry's own prevention; the other subjects also check
  * prevention of instant and sorcery damage and of a targeted spell's damage.
  */
@@ -108,13 +111,16 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
             return;
         }
         boolean spellController = readsTarget(e, PermanentSubject.TargetSpell.class);
+        // Every amount is determined once, before any of the damage changes the game (CR 608.2h).
+        Map<UUID, Integer> amounts = new LinkedHashMap<>();
         for (UUID playerId : players) {
-            int amount = evaluateAmount(gameData, entry, e, playerId);
-            if (spellController && amount <= 0) {
-                continue;
-            }
-            damageSupport.dealDamageToPlayer(gameData, dealing, playerId, amount);
+            amounts.put(playerId, evaluateAmount(gameData, entry, e, playerId));
         }
+        amounts.forEach((playerId, amount) -> {
+            if (!(spellController && amount <= 0)) {
+                damageSupport.dealDamageToPlayer(gameData, dealing, playerId, amount);
+            }
+        });
     }
 
     /**
@@ -198,7 +204,8 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
             source = entry.getSourcePermanentSnapshot();
         }
         AmountContext context = AmountContext.forStackEntry(entry, source);
-        if (e.player() instanceof PlayerSubject.Each each && each.relation() == PlayerSubject.Relation.ALL) {
+        if (e.amountForEachPlayer()
+                || e.player() instanceof PlayerSubject.Each each && each.relation() == PlayerSubject.Relation.ALL) {
             context = context.withControllerId(playerId);
         } else if (e.player() instanceof PlayerSubject.DefendingPlayer) {
             context = context.withTargetPermanentId(playerId);

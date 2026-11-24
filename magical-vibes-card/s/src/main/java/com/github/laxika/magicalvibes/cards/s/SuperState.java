@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageToEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -22,6 +23,7 @@ public class SuperState extends Card {
                                 Set.of(Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.TRAMPLE, Keyword.HASTE),
                                 Subjects.attachedCreature()))
                 .addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                        new EnchantedCreatureDealsDamageToEachOpponentEffect());
+                        TargetCreatureDealsDamageToControllerEffect.dealtBy(Subjects.triggering(), new EventValue(),
+                                Subjects.except(Subjects.eachOpponent(), Subjects.triggeringPlayer())));
     }
 }

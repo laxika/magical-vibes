@@ -55,7 +55,9 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndBy
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CommanderCreaturesDealPowerDamageToPreventedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import com.github.laxika.magicalvibes.model.effect.DamageHealingEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDamageReductionEffect;
@@ -202,7 +204,10 @@ public class DamagePreventionService {
         if (damagedPlayerId == null || sourceCard == null) return;
         StackEntry entry = TriggeredAbilityStackService.madeAbility(sourceCard, damagedPlayerId,
                 sourceCard.getName() + "'s triggered ability",
-                List.of(new CommanderCreaturesDealPowerDamageToPreventedCreatureEffect()), preventedCreatureId,
+                List.of(new TargetDealsPowerDamageToTargetEffect(
+                        Subjects.controlledBy(Subjects.you(), new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(), new PermanentIsCommanderPredicate()))),
+                        Subjects.targetDeclaredElsewhere())), preventedCreatureId,
                 (UUID) null);
         entry.setNonTargeting(true);
         triggeredAbilityStackServiceProvider.getObject().putDelayed(gameData, entry);

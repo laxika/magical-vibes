@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30 (each in Findings; the fold queue marks its rows). Fold runs 23b, 28b and 25b are running in worktrees; 26 waits to merge. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                               |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26 (each in Findings; the fold queue marks its rows). Fold runs 23b, 28b and 25b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,511 / 2,805 (after fold run 30) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,495 / 2,789 (after fold run 26) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,827 rows over 4,450 classes (after fold run 30). Latest verdict per class: `step-9` 647, unique 1,171, absorbed 871, split 631, blocked-other 507, survivor 325, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 647 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,848 rows over 4,451 classes (after fold run 26). Latest verdict per class: `step-9` 630, unique 1,171, absorbed 883, split 635, blocked-other 508, survivor 326, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 630 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -807,6 +807,12 @@ Delayed and global triggers:
 - Library-top permissions given by a resolution are `GrantStaticEffectToPlayerEffect.untilEndOfTurn` over `LookAtTopCardOfOwnLibraryEffect`, `PlayLandsFromTopOfLibraryEffect` and `AllowCastFromTopOfLibraryEffect`. `CastingPermissionService.libraryTopGrants` reads the floating copies first, then the permanents' statics (fold run 30).
 - `AllowCastMatchingCardsFromGraveyardThisTurnEffect.fromGraveyardsOf(players)` / `.exilingInsteadOfGraveyard()` / `.spendingManaOfAnyType()`: "from that player's graveyard" or "from any graveyard" (fold run 30).
 - `AllowCastTargetCardFromGraveyardThisTurnEffect.lasting(Duration)` / `.asAdventure()` (CR 716.3) over `sourceCard()`: "cast it from your graveyard as an Adventure until the end of your next turn" (fold run 30).
+
+- `TargetCreatureDealsDamageToControllerEffect.dealtBy(dealers, amount, player)`: any non-targeting dealer, players per dealer (`controllerOf` / `ownerOf(dealers)`) or found once; dealers as last known (fold run 26).
+- `DamageSupport.dealerAsItIsOrWas` / `dealerControllerId` / `entryDealtByPermanent`: a permanent deals damage as itself, live or last known (CR 120.1, 608.2h) (fold run 26).
+- `TargetCreatureDealsPowerDamageToEachOtherCreatureEffect(dealer, recipients)` and `TargetDealsPowerDamageToTargetEffect` with a set dealer (`thisWay(CHOOSE)`, `controlledBy(...)`, `except(…, targetDeclaredElsewhere())`) (fold run 26).
+- `DealDamageToPlayersEffect.eachEvaluatedFor(amount, players)`: per-player amounts, all fixed before damage (CR 608.2h) (fold run 26).
+- `PlayerWithoutMaxSpeedPredicate` (CR 702.179e); `PermanentHasLeastToughnessAmongOpponentCreaturesPredicate(CountScope)` with OPPONENTS, CONTROLLER or ANY_PLAYER (fold run 26).
 
 ### Blocked causes still open
 
@@ -3167,6 +3173,22 @@ Five batches touched, two left. Ratchet 3,572 / 2,853 → 3,565 / 2,848. Ledger 
 2. exiled-with-src should fold together with the unaudited `AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect` (4 cards). The open-set option (CR 611.2c) would then have 6 users; Urianger's {2} reduction is its own.
 3. gy-statics: for Raul, first pass GameData and the owner into the static graveyard filter matching. Eye of Duskmantle needs `CastSpellsFromGraveyardEffect` to carry the interface's `alternateCost`. Ninja Teen, Coram and Jaya's emblem are not started.
 4. spend-mana: all 8 rows.
+
+### Step 9, fold run 26 (2026-11-24, parallel worktree)
+6 of 7 batches taken: 19 of 20 members folded (13 absorbed, 6 split), 1 left. Ratchet 3,576 / 2,857 → 3,560 / 2,841. CR 101.4, 108.3, 115.10a, 120.1, 120.3, 120.8, 208.3, 608.2b, 608.2d, 608.2h, 702.16e, 702.179e, 704.3 checked.
+
+**dealers** (5 of 5 folded): `TargetCreatureDealsDamageToControllerEffect(damage, dealers, player)` takes any non-targeting dealer: `attachedCreature()`, `triggering()`, `triggeringOrSource()` or a set. Players are `controllerOf(dealers)` / `ownerOf(dealers)` per dealer, or any non-targeting subject found once (`defendingPlayer()`, `except(eachOpponent(), triggeringPlayer())`). Each dealer is its own source, read as it last existed, through `DamageSupport.dealerAsItIsOrWas` / `dealerControllerId` / `entryDealtByPermanent`. The step records DEAL_DAMAGE.
+**bite-each** (2 of 3): the survivor is now `(dealer, recipients)` and is a `BoardWipeEffect` for a non-target dealer. Its spec is harmful when the recipients are the target's controller's creatures. Alpha Brawl is two steps with no SBA between them (its ruling). Widespread Brutality is left: the amass step records no Army.
+**bite-dealer** (2 of 2): `TargetDealsPowerDamageToTargetEffect` takes a set or step-result dealer with a `target()` / `targetDeclaredElsewhere()` recipient (Crush Underfoot, Judgment of Alexander, Alpha Brawl's second step).
+**per-player-dmg** (3 of 3): `DealDamageToPlayersEffect.eachEvaluatedFor` (new `amountForEachPlayer` component). Every player's amount is fixed first (CR 608.2h).
+**deal-pred** (2 of 2): Searing Rays uses the existing chosen-colour step and predicate. New `PlayerWithoutMaxSpeedPredicate` (CR 702.179e).
+**least-tough** (2 of 2): `PermanentHasLeastToughnessAmongOpponentCreaturesPredicate(CountScope)` with OPPONENTS, CONTROLLER or ANY_PLAYER. The least toughness is found among all creatures in scope, and the choice drops what can't be chosen.
+**random-target**: not taken (time).
+
+**Behaviour changes.** Enslave deals damage as last known, to the card's owner (test). `attached()` falls back to the recorded host when the source left unattached (Bind the Monster). Crush Underfoot chooses a lone Giant unasked. Purging Scythe no longer offers a creature that can't be chosen. Source-prevention pre-checks are dropped in the rewritten dealer handlers. Damage amounts are fixed first. Alpha Brawl's AI polarity is now HARMFUL_DAMAGE.
+**Tests changed.** Crush Underfoot (prompt dropped per CR 608.2d, 2 rewritten, 1 added), The Dining Car (multi-permanent prompt), Enslave (+1).
+**Seen, not changed.** Several dealers still deal one dealer at a time (Rakdos Charm, Judgment of Alexander, Alpha Brawl's second step). The TargetDealsPowerDamageToTarget paths keep their source-prevention pre-checks.
+**For the next run.** `random-target` (43 cards on `SourceFightsTargetCreatureEffect`). Widespread Brutality waits for the amass step to record CHOOSE.
 
 ## Prompt
 

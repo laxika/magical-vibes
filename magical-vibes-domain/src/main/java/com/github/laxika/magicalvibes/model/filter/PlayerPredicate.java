@@ -30,5 +30,6 @@ public sealed interface PlayerPredicate permits
         PlayerChosenBySourcePredicate,
         PlayerOtherThanSourceOwnerPredicate,
         PlayerIsActiveOpponentPredicate,
-        PlayerCanSearchTheirLibraryPredicate {
+        PlayerCanSearchTheirLibraryPredicate,
+        PlayerWithoutMaxSpeedPredicate {
 }

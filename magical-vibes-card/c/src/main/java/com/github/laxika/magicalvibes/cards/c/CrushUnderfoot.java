@@ -3,7 +3,10 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.ChosenPermanentDealsPowerDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,6 +24,9 @@ public class CrushUnderfoot extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.GIANT)));
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(), "Target must be a creature"))
-                .addSpellEffect(new ChosenPermanentDealsPowerDamageToTargetCreatureEffect(giant));
+                .addSpellEffect(ChoosePermanentsEffect.exactly(1, Subjects.controlledBy(Subjects.you(), giant),
+                        "Choose a Giant creature you control to deal damage."))
+                .addSpellEffect(new TargetDealsPowerDamageToTargetEffect(Subjects.thisWay(StepKind.CHOOSE),
+                        Subjects.target()));
     }
 }

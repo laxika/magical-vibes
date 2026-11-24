@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerAttackedBySourceThisTur
 import com.github.laxika.magicalvibes.model.filter.PlayerControlsMostCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerHasNoCardsInHandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerWithoutMaxSpeedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerCanSearchTheirLibraryPredicate;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchRestrictions;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -6308,6 +6309,8 @@ public class TargetLegalityService {
             case PlayerCanSearchTheirLibraryPredicate ignored -> targetPlayerId != null
                     && LibrarySearchRestrictions.find(gameData, gameQueryService, targetPlayerId, targetPlayerId,
                             controllerId) == null;
+            case PlayerWithoutMaxSpeedPredicate ignored -> targetPlayerId != null
+                    && gameData.playerSpeeds.getOrDefault(targetPlayerId, 0) < 4;
             case PlayerHasNoCardsInHandPredicate ignored ->
                     targetPlayerId != null
                             && gameData.playerHands.getOrDefault(targetPlayerId, List.of()).isEmpty();
