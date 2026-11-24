@@ -8,12 +8,16 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -82,6 +86,35 @@ class NilsDisciplineEnforcerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana to pay attack tax (2 required)");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("In a multiplayer game, taxes a creature attacking Nils's controller when that player isn't the first opponent")
+    void taxesAttacksOnItsControllerAmongSeveralOpponents() {
+        Player third = addThirdPlayer();
+        harness.addToBattlefield(third, new NilsDisciplineEnforcer());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setCounterCount(CounterType.CHARGE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        beginAttack(player1);
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0), Map.of(0, third.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana to pay attack tax (2 required)");
+    }
+
+    @Test
+    @DisplayName("In a multiplayer game, doesn't tax a creature attacking another opponent")
+    void doesNotTaxAttacksOnAnotherOpponent() {
+        Player third = addThirdPlayer();
+        harness.addToBattlefield(player2, new NilsDisciplineEnforcer());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setCounterCount(CounterType.CHARGE, 2);
+        beginAttack(player1);
+
+        gs.declareAttackers(gd, player1, List.of(0), Map.of(0, third.getId()));
+
+        assertThat(attacker.isAttacking()).isTrue();
     }
 
     private void beginAttack(Player attacker) {
@@ -217,5 +250,23 @@ class NilsDisciplineEnforcerTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(activePlayer, TurnStep.END_STEP);
+    }
+
+    private Player addThirdPlayer() {
+        UUID thirdPlayerId = UUID.randomUUID();
+        Player third = new Player(thirdPlayerId, "Charlie");
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(thirdPlayerId, "Charlie");
+        gd.playerDecks.put(thirdPlayerId, new ArrayList<>());
+        gd.playerHands.put(thirdPlayerId, new ArrayList<>());
+        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
+        gd.playerGraveyards.put(thirdPlayerId, new ArrayList<>());
+        gd.playerCommandZones.put(thirdPlayerId, new ArrayList<>());
+        gd.playerManaPools.put(thirdPlayerId, new ManaPool());
+        gd.playerLifeTotals.put(thirdPlayerId, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), thirdPlayerId, "Charlie");
+        return third;
     }
 }

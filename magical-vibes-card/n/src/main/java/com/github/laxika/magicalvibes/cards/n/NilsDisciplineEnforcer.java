@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
-import com.github.laxika.magicalvibes.model.effect.CreaturesWithCountersCantAttackControllerUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.amount.CountersOnTargetPermanent;
+import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -19,6 +20,6 @@ public class NilsDisciplineEnforcer extends Card {
         target(TargetFilters.creature(), 0, 99)
                 .addTrigger(Triggers.endStep(ActivePlayer.YOU),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
-        addStaticEffect(new CreaturesWithCountersCantAttackControllerUnlessPaysEffect());
+        addStaticEffect(new RequirePaymentToAttackEffect(new CountersOnTargetPermanent(null)));
     }
 }

@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50 (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 8e, 50b; merge queue 48b. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                            |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50, 48b (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 50b, D11; merge queue 8e. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                             |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,029 / 2,455 (after fold run 50) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,020 / 2,448 (after fold run 48b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,702 rows over 4,571 classes (after fold run 50). Latest verdict per class: `step-9` 28, unique 1,193, absorbed 1,341, split 682, blocked-other 559, survivor 456, blocked-step-model 140, blocked-player-loop 96, dead 76. Waiting: 28 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,726 rows over 4,577 classes (after fold run 48b). Latest verdict per class: `step-9` 12, unique 1,196, absorbed 1,352, split 683, blocked-other 561, survivor 460, blocked-step-model 140, blocked-player-loop 96, dead 77. Waiting: 12 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1133,6 +1133,15 @@ Ledger rows are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cd
 
 - `PayLifeCost.x()`: "Pay X life" with the announced X, for spells (no {X} needed in the mana cost) and abilities; spells are validated by `AdditionalSpellCostService.validateSpellLifeCost` and paid by `SpellCastingService.paySpellLifeCost` through `evaluateCost` (fold run 50).
 - `ChoiceContext.ExileFreeCastModeChoice.requiredOrAllModes` / `mayStopAt(n)`: a resolution-cast mode picker that stops only at the number specified or at every mode (entwine, CR 702.42a); set by `ExileFreeCastQueueSupport` for `EscalateCost.Kind.ENTWINE` (fold run 50).
+
+- `AmountsFixedWhenFloatedEffect.withAmountsFixed(fix)`: a static rule whose amounts `GrantStaticEffectToPlayerEffect` evaluates once as it floats it (CR 608.2h). Implemented by `RequirePaymentToAttackEffect` and `RequirePaymentToBlockEffect`; "this turn, creatures can't attack / block unless their controller pays {X}" (War Tax, War Cadence) (fold run 48b).
+- `RequirePaymentToAttackEffect` floated on players (`eachPlayer()` for "creatures can't attack", `you()` for "can't attack you"). It is judged for the attacked player or the attacked planeswalker's controller (CR 506.2a, 508.5). A target-relative amount reads the attacker: `CountersOnTargetPermanent(null)` is "the number of counters on that creature" (Nils) (fold run 48b).
+- `RequirePaymentToBlockEffect(DynamicAmount[, Condition])`, floated and read board-wide by `getGlobalBlockManaTax` (fold run 48b).
+- `MayEffect` over a leading `RemoveCounterFromSourceEffect` isn't asked when the source is gone or lacks the counters; the else effect follows (CR 608.2d) (fold run 48b).
+- `PermanentRemovalService` refreshes `resolvingEntry` / `pendingEffectResolutionEntry`'s source snapshot as the source leaves, and last known information keeps lifelink, deathtouch, infect and wither, so "sacrifice it and it deals damage" after `SacrificeSelfEffect` reads it as it last existed (CR 608.2h) (fold run 48b).
+
+Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671-d50e7ccdb4f0/scratchpad/fold-48b:
+- ledger-rows.csv (23 rows)
 
 ### Blocked causes still open
 
@@ -5255,6 +5264,44 @@ Seen, not changed:
 - The outside-game normal-cost modal path (`OutsideGameNormalCostCastSupport`, maximum `choicesMax + 1`) doesn't use `requiredOrAllModes`, so Kaya's 3-of-4 is refused only by the hand path's in-between check. Sure of the code; unchanged.
 
 For the next run: the copy pair (`BecomeCopyOfCardUntilEndOfTurnEffect` with `BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffect`: Dermotaxi, Protean War Engine, Lazav) onto `BecomeCopyOfSubjectEffect`. It needs a `CardSubject` option for the unlinked (imprint) ability's card, `abilityLink == null` (Dermotaxi ruling), and Lazav's pick as `ChooseCardEffect.oneOf` + `cardsThisWay(CHOOSE)` replacing `ExiledCreatureCopyChoice`.
+
+### Step 9, fold run 48b (2026-11-25, parallel worktree)
+3 of 3 batches taken: 10 absorbed, 1 split, 1 dead, 6 survivor, 3 unique, 2 blocked-other. Ratchet 3,046 / 2,470 → 3,037 / 2,463. 7 card files rewritten, Oracle text checked for 7 of 7. CR checked: 506.2, 506.2a, 508.1d, 508.1h, 508.5, 509.1c, 509.1d, 509.1e, 608.2b, 608.2d, 608.2h, 611.2c, 702.188a, 708.2a, 118.9, 118.9d.
+
+| Batch | Result |
+|---|---|
+| attack-tax | 8 of 11 folded:
+- **War Tax:** `GrantStaticEffectToPlayerEffect(RequirePaymentToAttackEffect(XValue), eachPlayer(), UNTIL_END_OF_TURN)`.
+- **Forbidding Spirit:** `untilYourNextTurn(new RequirePaymentToAttackEffect(2))`.
+- **Summon: Yojimbo:** `untilYourNextTurn(playerOnly(2))`.
+- **War Cadence:** `untilEndOfTurn(new RequirePaymentToBlockEffect(XValue))`.
+- **Sivitri:** `untilYourNextTurn(new GlobalAttackLifeTaxEffect(2))`.
+- **Nils:** `RequirePaymentToAttackEffect(CountersOnTargetPermanent(null))`, the amount read against each attacker.
+- `GlobalAttackTaxEffect` and `GlobalBlockTaxEffect` are gone, with 4 capability interfaces (one of them dead).
+- Left: `GlobalAttackLifeTaxEffect` stays as Sivitri's floated payload (a life kind would be hers alone). Heat Wave is `unique`: its life payment and its blocker and attacker filters would be three options only it sets.
+- `RequirePaymentToAttackEffect` and `RequirePaymentToBlockEffect` are survivors. |
+| alt-cost | 0 folded, 2 `blocked-other`:
+- **Dream Halls:** its discard is a chosen non-mana alternative cost, carried by `sharedColorDiscardHandCardIndex` through the request, cast path, projection, AI and frontend. `AlternativeCostForSpellsEffect` only pays automatic `AlternativeSpellCost`s, so moving onto it would only rename the check.
+- **`WebSlingingEffect`:** it grants a keyword (CR 702.188a), the sibling of the prowl, blitz and freerunning grants, each with its own `findGranted*AlternateCast` and cast flag. Folding these is a casting redesign (step 10). |
+| cost-shape-singles (rest) | **Magmasaur** split: `MayEffect(RemoveCounterFromSourceEffect(+1/+1, 1), …, Sequence(SacrificeSelfEffect, MassDamageEffect(CountersOnSource(+1/+1), …)))`; 2 handlers and the support class are gone. **Tempest Efreet and Timmerian Fiends** are `unique` (weighed): the exchange-ownership, from-anywhere mover and ante pieces would serve only these two cards. |
+
+**Survivors and shared paths.**
+- `GrantStaticEffectToPlayerEffect` fixes an `AmountsFixedWhenFloatedEffect`'s amounts once, as it resolves (CR 608.2h).
+- The attack-tax readers judge the attacked player or the attacked planeswalker's controller (CR 506.2a, 508.5; was `getOpponentId`; failing-first tests in Nils and Forbidding Spirit). They also read copies floated on that player.
+- A floated block tax is board-wide.
+- `MayEffect` withholds a leading source counter removal the source can't make (CR 608.2d). This is a fix for 10 other cards; 12 tests that answered a no-op prompt now assert no prompt.
+- `PermanentRemovalService` refreshes the resolving entry's source snapshot when the source leaves mid-resolution. Last known information keeps lifelink, deathtouch, infect and wither (CR 608.2h). Magmasaur's lifelink test is the failing-first case: the new shape fails without the refresh.
+
+**Behaviour changes.** Multiplayer attack taxes, the face-down Nils (CR 708.2a), and the counter-removal guard, as above.
+
+**Cost-shape.** Payments stay where they were. Step 10's cost-combinator merge would take: `GlobalAttackLifeTaxEffect` (a life kind), Heat Wave's filtered life block tax, Dream Halls' chosen non-mana alternative cost, and the granted alternate-cast keywords.
+
+**Seen, not changed.**
+- War Tax doesn't tax attacks on battles (CR 506.2 battles; "creatures can't attack" is unrestricted). Its battle test looks vacuous: it checks that the pool is empty after the step moves on. Sure of the code; vacuity likely.
+- Several attack-tax card tests assert `pool.isZero()` after declaring, which may hold whatever the tax. Fairly sure.
+- `TimmerianFiendsAnteExchangeEffect`'s Javadoc said ownership stays unchanged. Fixed: the handler already swaps owners.
+
+**For the next run.** All three Run 48 batches are closed. The alt-cost pair waits for a casting-path redesign (step 10).
 
 ## Prompt
 

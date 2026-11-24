@@ -131,7 +131,7 @@ class KappaTechWreckerTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Spellbook());
 
         resolveCombat();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isNull();

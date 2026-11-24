@@ -13,12 +13,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
  * exile), mirroring {@link AmuletOfQuozAnteEffect}. An owner with an empty library has no top card
  * to ante, so they can't ante and the exchange happens immediately.
  *
- * <p>The oracle "exchange ownership … This change in ownership is permanent" is an ante concept: the
- * permanent, cross-game transfer of card ownership is outside a single game's scope and is not
- * modeled (mirroring {@link TempestEfreetAnteExchangeEffect}). Within one game this effect resolves
- * to the observable zone movements only — the artifact card into the ability controller's graveyard
- * and Timmerian Fiends into the artifact owner's graveyard; the {@code ownerId} stamped at game
- * setup is frozen and left unchanged.
+ * <p>The oracle "exchange ownership … This change in ownership is permanent" is modeled within one
+ * game, as {@link TempestEfreetAnteExchangeEffect} does: the artifact card goes into the ability
+ * controller's graveyard and Timmerian Fiends into the artifact owner's graveyard, and the two cards
+ * swap owners in {@code GameData.cardOwnerOverrides}. The cross-game transfer an ante implies is not
+ * modeled.
  *
  * <p>Targets the artifact — the ability declares the legal targets through a permanent predicate
  * target filter, and {@link #targetSpec()} narrows the harmful permanent category to artifacts.

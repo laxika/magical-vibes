@@ -66,7 +66,7 @@ class PurestrainGenestealerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting the attack trigger without a counter does not search")
+    @DisplayName("Without a counter, the attack trigger offers no removal and does not search")
     void noCounterMeansNoSearch() {
         addGenestealerWithCounters(0);
         Forest forest = new Forest();
@@ -74,7 +74,7 @@ class PurestrainGenestealerTest extends BaseCardTest {
 
         declareAttack();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();

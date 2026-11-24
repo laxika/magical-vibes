@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -39,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -357,6 +359,16 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             insertElseEffect(entry, e);
             return;
         }
+        if (optionalAction instanceof RemoveCounterFromSourceEffect removal
+                && removal.subject() instanceof PermanentSubject.Source
+                && removal.dynamicAmount() == null && !removal.targetsPlayer() && removal.amount() > 0
+                && !sourceHasCountersToRemove(gameData, entry, removal)) {
+            // "You may remove a [kind] counter from this creature. If you don't, ...": with fewer such counters on it,
+            // or with it gone, the player can't choose to remove them (CR 608.2d), so "if you don't" applies.
+            gameData.resolvingMayEffectFromStack = false;
+            insertElseEffect(entry, e);
+            return;
+        }
         boolean cannotSacrifice = e.wrapped() instanceof SacrificeSelfEffect sacrificeAttached
                 && (sacrificeAttached.subject() instanceof PermanentSubject.Attached
                 || sacrificeAttached.subject() instanceof PermanentSubject.AttachedAtTrigger)
@@ -435,6 +447,19 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         ).withGrantingPermanentId(entry.getGrantingPermanentId())
                 .withTriggeringSpell(entry.getTriggeringSpellSnapshot())
                 .withSourceGraveyardEntryVersion(entry.getSourceGraveyardEntryVersion()));
+    }
+
+    /** Whether the resolving entry's source permanent has the counters {@code removal} would remove. */
+    private boolean sourceHasCountersToRemove(GameData gameData, StackEntry entry, RemoveCounterFromSourceEffect removal) {
+        Permanent source = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            return false;
+        }
+        if (removal.counterType() == CounterType.ANY) {
+            return source.getCounters().values().stream().anyMatch(count -> count >= removal.amount());
+        }
+        return source.getCounterCount(removal.counterType()) >= removal.amount();
     }
 
     /** How many cards in {@code playerId}'s hand a discard may choose: those matching {@code filter}, or all of them. */

@@ -151,14 +151,14 @@ class LivingArtifactTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Upkeep: accepting with no vitality counters gains no life")
+    @DisplayName("Upkeep: with no vitality counter, no removal is offered and no life is gained")
     void upkeepNoCountersGainsNoLife() {
         Permanent aura = enchantArtifact();
         harness.setLife(player1, 20);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         assertThat(aura.getCounterCount(CounterType.VITALITY)).isZero();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -179,6 +179,7 @@ class LivingArtifactTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Upkeep: counters of another kind offer no vitality counter removal")
     void upkeepCannotRemoveAnotherCounterType() {
         Permanent aura = enchantArtifact();
         aura.setCounterCount(CounterType.CHARGE, 2);
@@ -186,7 +187,7 @@ class LivingArtifactTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         assertThat(aura.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
         assertThat(aura.getCounterCount(CounterType.VITALITY)).isZero();

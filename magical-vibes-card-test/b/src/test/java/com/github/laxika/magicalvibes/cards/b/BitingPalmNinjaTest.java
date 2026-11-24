@@ -115,11 +115,12 @@ class BitingPalmNinjaTest extends BaseCardTest {
         harness.setHand(player2, List.of(stalker));
 
         resolveCombatAndTrigger();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
-        assertThat(gd.playerHands.get(player2.getId())).containsExactly(stalker);
+        // With no prompt to stop at, the game moves on to player2's draw; the Stalker stays in hand.
+        assertThat(gd.playerHands.get(player2.getId())).contains(stalker);
     }
 
     @Test

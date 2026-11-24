@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+
+import java.util.function.UnaryOperator;
 
 /**
  * Board-wide static block tax: creatures can't block unless their controller pays
@@ -11,14 +15,32 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
  * state of the source permanent, re-checked at declare-blockers time — Archangel of Tithes
  * taxes only "as long as this creature is attacking".
  *
+ * <p>A resolution floats it with {@link GrantStaticEffectToPlayerEffect} on its controller: "this turn,
+ * creatures can't block unless their controller pays {X} for each blocking creature they control" (War
+ * Cadence). A floated copy is as board-wide as a printed one, whichever player it floats on; its amount is
+ * fixed as the float begins (CR 608.2h) and it carries no {@code activeCondition}.
+ *
  * <p>Block-side counterpart of {@link RequirePaymentToAttackEffect}; contrast the
  * blocker-scoped {@link BlockCostEffect} family (Hipparion), which is read off the blocker
  * itself and keyed to the attacker's power.
  */
-public record RequirePaymentToBlockEffect(int amountPerBlocker,
-                                          Condition activeCondition) implements CardEffect {
+public record RequirePaymentToBlockEffect(DynamicAmount amountPerBlocker,
+                                          Condition activeCondition) implements AmountsFixedWhenFloatedEffect {
+
+    public RequirePaymentToBlockEffect(DynamicAmount amountPerBlocker) {
+        this(amountPerBlocker, null);
+    }
+
+    public RequirePaymentToBlockEffect(int amountPerBlocker, Condition activeCondition) {
+        this(new Fixed(amountPerBlocker), activeCondition);
+    }
 
     public RequirePaymentToBlockEffect(int amountPerBlocker) {
-        this(amountPerBlocker, null);
+        this(new Fixed(amountPerBlocker), null);
+    }
+
+    @Override
+    public RequirePaymentToBlockEffect withAmountsFixed(UnaryOperator<DynamicAmount> fix) {
+        return new RequirePaymentToBlockEffect(fix.apply(amountPerBlocker), activeCondition);
     }
 }

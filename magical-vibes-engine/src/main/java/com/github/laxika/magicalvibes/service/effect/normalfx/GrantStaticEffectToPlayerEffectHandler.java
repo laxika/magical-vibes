@@ -2,12 +2,16 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.AmountsFixedWhenFloatedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -17,7 +21,8 @@ import java.util.UUID;
 /**
  * Floats the granted static effect on each player the grant names, for its duration; a source-linked duration keeps
  * the source on the floating effect so the duration clock can end it, and so does a granted effect that names its
- * source ("this creature"), so its reader can find it.
+ * source ("this creature"), so its reader can find it. The amounts of an {@link AmountsFixedWhenFloatedEffect} are
+ * evaluated once, as the effect begins, and the float keeps those numbers (CR 608.2h).
  */
 @Component
 @RequiredArgsConstructor
@@ -25,6 +30,7 @@ public class GrantStaticEffectToPlayerEffectHandler implements NormalEffectHandl
 
     private final SubjectResolutionService subjectResolutionService;
     private final GameQueryService gameQueryService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -46,13 +52,20 @@ public class GrantStaticEffectToPlayerEffectHandler implements NormalEffectHandl
             // ability's source, so the float keeps it; once it has left, the redirection does nothing (CR 614.9).
             sourcePermanentId = entry.getSourcePermanentId();
         }
+        CardEffect staticEffect = grant.staticEffect();
+        if (staticEffect instanceof AmountsFixedWhenFloatedEffect withAmounts) {
+            AmountContext context = AmountContext.forStackEntry(entry, entry.getSourcePermanentId() == null
+                    ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()));
+            staticEffect = withAmounts.withAmountsFixed(amount -> amount instanceof Fixed
+                    ? amount : new Fixed(amountEvaluationService.evaluate(gameData, amount, context)));
+        }
         for (UUID playerId : subjectResolutionService.players(gameData, entry, effect, grant.player())) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(),
                     entry.getCard().getName(),
                     sourcePermanentId,
                     entry.getControllerId(),
-                    grant.staticEffect(),
+                    staticEffect,
                     null,
                     playerId,
                     null,

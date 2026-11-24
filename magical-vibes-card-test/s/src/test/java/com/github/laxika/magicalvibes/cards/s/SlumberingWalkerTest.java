@@ -104,7 +104,7 @@ class SlumberingWalkerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
         resolveEndStepTrigger();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -186,7 +186,7 @@ class SlumberingWalkerTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         harness.assertNotOnBattlefield(player1, "Slumbering Walker");
         harness.assertInGraveyard(player1, "Grizzly Bears");

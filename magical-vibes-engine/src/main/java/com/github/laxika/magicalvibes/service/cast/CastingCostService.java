@@ -61,10 +61,7 @@ import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeEqualToSpellManaValueCost;
 import com.github.laxika.magicalvibes.model.effect.KeywordCost;
 import com.github.laxika.magicalvibes.model.effect.ModifyKeywordCostEffect;
-import com.github.laxika.magicalvibes.model.effect.DefenderAttackCostEffect;
-import com.github.laxika.magicalvibes.model.effect.DefenderAttackLifeCostEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardActivatedAbilityCostReducingEffect;
-import com.github.laxika.magicalvibes.model.effect.GlobalAttackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalAttackLifeCostEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
@@ -2707,23 +2704,36 @@ public class CastingCostService {
                         .anyMatch(ReduceOwnCastCostIfTargetingEnchantedPlayerEffect.class::isInstance));
     }
 
+    /**
+     * Generic mana {@code attackingPlayerId} must pay for each creature to attack, asked without a chosen
+     * attacker or attack target: the largest such tax over that player's opponents, so a two-player game reads its
+     * one defender. Attacker-relative taxes (Nils, Discipline Enforcer) count only with an attacker.
+     */
     public int getAttackPaymentPerCreature(GameData gameData, UUID attackingPlayerId) {
-        UUID defenderId = gameQueryService.getOpponentId(gameData, attackingPlayerId);
-        return getAttackPaymentPerCreature(gameData, attackingPlayerId, defenderId);
+        int largest = 0;
+        for (UUID defenderId : opponentsOf(gameData, attackingPlayerId)) {
+            largest = Math.max(largest, getAttackPaymentPerCreature(gameData, attackingPlayerId, defenderId));
+        }
+        return largest;
     }
 
     public int getAttackPaymentPerCreature(GameData gameData, UUID attackingPlayerId, UUID attackTargetId) {
         return getAttackPaymentPerCreature(gameData, attackingPlayerId, attackTargetId, null);
     }
 
+    /**
+     * Generic mana {@code attackingPlayerId} must pay for {@code attackingCreature} (nullable) to attack
+     * {@code attackTargetId} under the defender's {@link RequirePaymentToAttackEffect}s, printed on its permanents
+     * or floated on that player. The defender is the attacked player or the attacked planeswalker's controller
+     * (CR 506.2a, 508.5); an attack on a battle is not taxed.
+     */
     public int getAttackPaymentPerCreature(GameData gameData, UUID attackingPlayerId, UUID attackTargetId,
                                            Permanent attackingCreature) {
-        UUID defenderId = gameQueryService.getOpponentId(gameData, attackingPlayerId);
-        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
-        if (defenderBattlefield == null) return 0;
-
         Permanent attackTarget = gameQueryService.findPermanentById(gameData, attackTargetId);
         if (attackTarget != null && gameQueryService.isBattle(gameData, attackTarget)) return 0;
+        UUID defenderId = attackedPlayerId(gameData, attackingPlayerId, attackTargetId);
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        if (defenderBattlefield == null) return 0;
 
         boolean attackingPlaneswalker = defenderBattlefield.stream()
                 .filter(perm -> perm.getId().equals(attackTargetId))
@@ -2731,42 +2741,65 @@ public class CastingCostService {
                 .map(perm -> gameQueryService.isPlaneswalker(gameData, perm))
                 .orElse(false);
         int totalTax = 0;
-        for (GameQueryService.ActiveStaticEffect<CardEffect> active
-                : gameQueryService.activeStaticEffects(gameData, defenderId, CardEffect.class)) {
+        for (GameQueryService.ActiveStaticEffect<RequirePaymentToAttackEffect> active
+                : gameQueryService.activeStaticEffects(gameData, defenderId, RequirePaymentToAttackEffect.class)) {
             Permanent perm = active.source();
-            CardEffect effect = active.effect();
-            if (effect instanceof RequirePaymentToAttackEffect tax
-                    && !perm.isFaceDown()
+            RequirePaymentToAttackEffect tax = active.effect();
+            if (!perm.isFaceDown()
                     && !gameQueryService.hasLostAllAbilities(gameData, perm)
-                    && (!tax.planeswalkersOnly() || attackingPlaneswalker)
-                    && (!attackingPlaneswalker || tax.protectsPlaneswalkers())
+                    && taxesAttackOn(tax, attackingPlaneswalker)
                     && (tax.activeCondition() == null || conditionEvaluationService.isMet(
                             gameData, tax.activeCondition(), ConditionContext.forPermanent(perm, defenderId)))) {
                 totalTax += amountEvaluationService.evaluate(gameData, tax.amountPerAttacker(),
-                        AmountContext.forStaticEffect(perm, defenderId));
-            } else if (attackingCreature != null
-                    && !gameQueryService.hasLostAllAbilities(gameData, perm)
-                    && effect instanceof DefenderAttackCostEffect tax
-                    && (!attackingPlaneswalker || tax.protectsPlaneswalkers())) {
-                totalTax += tax.attackCost(attackingCreature);
+                        againstAttacker(AmountContext.forStaticEffect(perm, defenderId), attackingCreature));
             }
         }
-        synchronized (gameData.floatingEffects) {
-            for (var floatingEffect : gameData.floatingEffects) {
-                if (floatingEffect.effect() instanceof GlobalAttackCostEffect tax
-                        && (!attackingPlaneswalker || tax.protectsPlaneswalkers())
-                        && (floatingEffect.affectedPlayerId() == null
-                        || defenderId.equals(floatingEffect.affectedPlayerId()))) {
-                    totalTax += tax.attackCostPerCreature();
-                }
+        for (CardEffect floated : gameData.floatingPlayerEffects(defenderId, RequirePaymentToAttackEffect.class)) {
+            RequirePaymentToAttackEffect tax = (RequirePaymentToAttackEffect) floated;
+            if (tax.activeCondition() == null && taxesAttackOn(tax, attackingPlaneswalker)) {
+                totalTax += amountEvaluationService.evaluate(gameData, tax.amountPerAttacker(),
+                        againstAttacker(AmountContext.forEstimation(defenderId), attackingCreature));
             }
         }
         return totalTax;
     }
 
+    private static boolean taxesAttackOn(RequirePaymentToAttackEffect tax, boolean attackingPlaneswalker) {
+        return (!tax.planeswalkersOnly() || attackingPlaneswalker)
+                && (!attackingPlaneswalker || tax.protectsPlaneswalkers());
+    }
+
+    /** A target-relative tax amount reads the attacking creature ("the number of counters on that creature"). */
+    private static AmountContext againstAttacker(AmountContext context, Permanent attackingCreature) {
+        return attackingCreature == null ? context : context.withTargetPermanentId(attackingCreature.getId());
+    }
+
+    /**
+     * The player an attack on {@code attackTargetId} is against: that player, or the controller of the attacked
+     * permanent (CR 506.2a, 508.5). Without a target, the attacking player's opponent in a two-player game.
+     */
+    private UUID attackedPlayerId(GameData gameData, UUID attackingPlayerId, UUID attackTargetId) {
+        if (attackTargetId != null) {
+            if (gameData.playerIds.contains(attackTargetId)) {
+                return attackTargetId;
+            }
+            UUID controllerId = gameQueryService.findPermanentController(gameData, attackTargetId);
+            if (controllerId != null) {
+                return controllerId;
+            }
+        }
+        return gameQueryService.getOpponentId(gameData, attackingPlayerId);
+    }
+
+    private static List<UUID> opponentsOf(GameData gameData, UUID playerId) {
+        synchronized (gameData.orderedPlayerIds) {
+            return gameData.orderedPlayerIds.stream().filter(id -> !id.equals(playerId)).toList();
+        }
+    }
+
     /**
      * Life the attacking player must pay for one creature to attack the specified player or that
-     * player's planeswalker under defender-scoped and floating life attack taxes.
+     * player's planeswalker under the life attack taxes floated on the defender (Sivitri, Dragon Master).
      */
     public int getAttackLifePaymentPerCreature(GameData gameData, UUID attackingPlayerId,
                                                UUID attackTargetId, Permanent attackingCreature) {
@@ -2775,7 +2808,7 @@ public class CastingCostService {
                 : gameQueryService.findPermanentById(gameData, attackTargetId);
         // Life taxes cover attacks on the defending player and their planeswalkers, never on a battle.
         if (attackedPermanent != null && gameQueryService.isBattle(gameData, attackedPermanent)) return 0;
-        UUID defenderId = gameQueryService.getOpponentId(gameData, attackingPlayerId);
+        UUID defenderId = attackedPlayerId(gameData, attackingPlayerId, attackTargetId);
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
         if (defenderBattlefield == null) return 0;
 
@@ -2785,22 +2818,10 @@ public class CastingCostService {
                 .map(perm -> gameQueryService.isPlaneswalker(gameData, perm))
                 .orElse(false);
         int totalTax = 0;
-        for (GameQueryService.ActiveStaticEffect<DefenderAttackLifeCostEffect> active
-                : gameQueryService.activeStaticEffects(gameData, defenderId, DefenderAttackLifeCostEffect.class)) {
-            DefenderAttackLifeCostEffect tax = active.effect();
-            if (!gameQueryService.hasLostAllAbilities(gameData, active.source())
-                    && (!attackingPlaneswalker || tax.protectsPlaneswalkers())) {
-                totalTax += tax.lifeCost(attackingCreature);
-            }
-        }
-        synchronized (gameData.floatingEffects) {
-            for (var floatingEffect : gameData.floatingEffects) {
-                if (floatingEffect.effect() instanceof GlobalAttackLifeCostEffect tax
-                        && (!attackingPlaneswalker || tax.protectsPlaneswalkers())
-                        && (floatingEffect.affectedPlayerId() == null
-                        || defenderId.equals(floatingEffect.affectedPlayerId()))) {
-                    totalTax += tax.lifeCostPerCreature();
-                }
+        for (CardEffect floated : gameData.floatingPlayerEffects(defenderId, GlobalAttackLifeCostEffect.class)) {
+            GlobalAttackLifeCostEffect tax = (GlobalAttackLifeCostEffect) floated;
+            if (!attackingPlaneswalker || tax.protectsPlaneswalkers()) {
+                totalTax += tax.lifeCostPerCreature();
             }
         }
         return totalTax;
@@ -2819,31 +2840,30 @@ public class CastingCostService {
         if (hasAttackLifePaymentForAnyCreature(gameData, attackingPlayerId)) {
             return true;
         }
-        UUID defenderId = gameQueryService.getOpponentId(gameData, attackingPlayerId);
-        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
         List<Permanent> attackingBattlefield = gameData.playerBattlefields.get(attackingPlayerId);
-        if (defenderBattlefield == null || attackingBattlefield == null) {
+        if (attackingBattlefield == null) {
             return false;
         }
-        return defenderBattlefield.stream()
-                .filter(perm -> !gameQueryService.hasLostAllAbilities(gameData, perm))
-                .flatMap(perm -> perm.getCard().getStaticEffects().stream())
-                .filter(DefenderAttackCostEffect.class::isInstance)
-                .map(DefenderAttackCostEffect.class::cast)
-                .anyMatch(tax -> attackingBattlefield.stream()
-                        .filter(attacker -> gameQueryService.isCreature(gameData, attacker))
-                        .anyMatch(attacker -> tax.attackCost(attacker) > 0));
+        for (UUID defenderId : opponentsOf(gameData, attackingPlayerId)) {
+            for (Permanent attacker : attackingBattlefield) {
+                if (gameQueryService.isCreature(gameData, attacker)
+                        && getAttackPaymentPerCreature(gameData, attackingPlayerId, defenderId, attacker) > 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /** Whether attacking with any creature costs {@code attackingPlayerId} life; judged in one query scope. */
     public boolean hasAttackLifePaymentForAnyCreature(GameData gameData, UUID attackingPlayerId) {
-        UUID defenderId = gameQueryService.getOpponentId(gameData, attackingPlayerId);
         List<Permanent> attackingBattlefield = gameData.playerBattlefields.get(attackingPlayerId);
         if (attackingBattlefield == null) return false;
-        return gameQueryService.withQueryScope(gameData, () -> attackingBattlefield.stream()
-                .filter(attacker -> gameQueryService.isCreature(gameData, attacker))
-                .anyMatch(attacker -> getAttackLifePaymentPerCreature(
-                        gameData, attackingPlayerId, defenderId, attacker) > 0));
+        return gameQueryService.withQueryScope(gameData, () -> opponentsOf(gameData, attackingPlayerId).stream()
+                .anyMatch(defenderId -> attackingBattlefield.stream()
+                        .filter(attacker -> gameQueryService.isCreature(gameData, attacker))
+                        .anyMatch(attacker -> getAttackLifePaymentPerCreature(
+                                gameData, attackingPlayerId, defenderId, attacker) > 0)));
     }
 
     public List<ManaColor> getPhyrexianAttackPaymentsPerCreature(GameData gameData, UUID attackingPlayerId) {

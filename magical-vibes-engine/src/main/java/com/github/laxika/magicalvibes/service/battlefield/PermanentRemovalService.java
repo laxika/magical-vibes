@@ -116,6 +116,10 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 @Component
 public class PermanentRemovalService {
 
+    /** The keywords a departing permanent's last known information keeps for damage it deals after it left. */
+    private static final List<Keyword> LAST_KNOWN_DAMAGE_KEYWORDS =
+            List.of(Keyword.LIFELINK, Keyword.DEATHTOUCH, Keyword.INFECT, Keyword.WITHER);
+
     /** Undying (CR 702.93a), the ability a creature with the keyword has once for each instance of it. */
     private static final TriggeredAbility UNDYING_ABILITY = new TriggeredAbility(
             Triggers.dies(ObjectRelation.THIS), PersistReturnEffect.undying());
@@ -2351,14 +2355,32 @@ public class PermanentRemovalService {
                         target.getId(), gameQueryService.getEffectivePower(gameData, target)));
                 rememberAttachmentsOfDepartingPermanent(gameData, target);
                 recordLastKnownAttachmentCounts(gameData, target);
-                if (gameQueryService.hasKeyword(gameData, target, Keyword.LIFELINK)) {
-                    // Lifelink granted by an attachment falls off with it, so the permanent's last known
-                    // information keeps it for damage its leave-the-battlefield ability deals.
-                    target.setLastKnownKeywords(Set.of(Keyword.LIFELINK));
+                Set<Keyword> lastKnownDamageKeywords = EnumSet.noneOf(Keyword.class);
+                for (Keyword keyword : LAST_KNOWN_DAMAGE_KEYWORDS) {
+                    if (gameQueryService.hasKeyword(gameData, target, keyword)) {
+                        lastKnownDamageKeywords.add(keyword);
+                    }
+                }
+                if (!lastKnownDamageKeywords.isEmpty()) {
+                    // Keywords granted by an attachment fall off with it, so the permanent's last known
+                    // information keeps the ones that shape damage it deals afterwards (CR 608.2h).
+                    target.setLastKnownKeywords(Set.copyOf(lastKnownDamageKeywords));
                 }
                 Card lastKnownCard = removalSnapshot != null ? removalSnapshot.getCard()
                         : snapshotEffectivePermanentCard(gameData, target);
-                for (StackEntry entry : gameData.stackEntriesAndTriggerRecords()) {
+                List<StackEntry> snapshotEntries = gameData.stackEntriesAndTriggerRecords();
+                for (StackEntry resolving : java.util.Arrays.asList(
+                        gameData.resolvingEntry, gameData.pendingEffectResolutionEntry)) {
+                    if (resolving != null && target.getId().equals(resolving.getSourcePermanentId())
+                            && !snapshotEntries.contains(resolving)) {
+                        // The source leaves while its own ability resolves (it is sacrificed by an earlier
+                        // step): the later steps read it as it last existed (CR 608.2h).
+                        Permanent sourceSnapshot = new Permanent(target);
+                        sourceSnapshot.setCard(lastKnownCard);
+                        resolving.setSourcePermanentSnapshot(sourceSnapshot);
+                    }
+                }
+                for (StackEntry entry : snapshotEntries) {
                     for (Permanent attacker : entry.getAttackingPermanentSnapshots()) {
                         if (target.getId().equals(attacker.getId())) {
                             attacker.setLastKnownPower(target.getLastKnownPower());

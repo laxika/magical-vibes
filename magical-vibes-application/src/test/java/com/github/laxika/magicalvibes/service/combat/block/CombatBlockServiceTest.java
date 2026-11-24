@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.model.effect.GlobalBlockTaxEffect;
+import com.github.laxika.magicalvibes.model.effect.RequirePaymentToBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
@@ -448,14 +448,14 @@ class CombatBlockServiceTest extends BaseCardTest {
         }
 
         @Test
-        @DisplayName("A floating global block tax is charged once per unique blocker")
+        @DisplayName("A block tax floated on a player is charged once per unique blocker")
         void floatingGlobalBlockTaxChargesOncePerUniqueBlocker() {
             Permanent firstAttacker = attacking(player1, new GrizzlyBears());
             Permanent secondAttacker = attacking(player1, new GrizzlyBears());
             Permanent blocker = addCreatureReady(player2, new PalaceGuard());
             gd.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), "Test block tax", null, player1.getId(),
-                    new GlobalBlockTaxEffect(2), null, null, null, Duration.UNTIL_END_OF_TURN, 0));
+                    new RequirePaymentToBlockEffect(2), null, player1.getId(), null, Duration.UNTIL_END_OF_TURN, 0));
             enterDeclareBlockers();
 
             harness.addMana(player2, ManaColor.WHITE, 2);

@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithCreaturePowerAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackControllerUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -43,9 +44,9 @@ public class SummonYojimbo extends Card {
                         "Target must be an artifact, enchantment, or tapped creature an opponent controls")));
 
         addTrigger(Triggers.chapter(2),
-                new RequirePaymentToAttackControllerUntilNextTurnEffect(2));
+                GrantStaticEffectToPlayerEffect.untilYourNextTurn(RequirePaymentToAttackEffect.playerOnly(2)));
         addTrigger(Triggers.chapter(3),
-                new RequirePaymentToAttackControllerUntilNextTurnEffect(2));
+                GrantStaticEffectToPlayerEffect.untilYourNextTurn(RequirePaymentToAttackEffect.playerOnly(2)));
 
         addTrigger(Triggers.chapter(4), CreateTokenEffect.ofTreasureToken(
                 new OpponentsWithCreaturePowerAtLeast(4)));

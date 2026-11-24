@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.RequirePaymentToBlockThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.RequirePaymentToBlockEffect;
 
 import java.util.List;
 
@@ -16,7 +17,7 @@ public class WarCadence extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{X}{R}",
-                List.of(new RequirePaymentToBlockThisTurnEffect(new XValue())),
+                List.of(GrantStaticEffectToPlayerEffect.untilEndOfTurn(new RequirePaymentToBlockEffect(new XValue()))),
                 "{X}{R}: This turn, creatures can't block unless their controller pays {X} for each blocking creature they control."));
     }
 }

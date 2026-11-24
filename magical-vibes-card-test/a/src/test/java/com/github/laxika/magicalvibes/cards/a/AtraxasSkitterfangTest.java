@@ -148,7 +148,7 @@ class AtraxasSkitterfangTest extends BaseCardTest {
         skitterfang.setCounterCount(CounterType.OIL, 0);
         advanceToCombat(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         assertThat(skitterfang.getCounterCount(CounterType.OIL)).isZero();
         assertThat(gd.stack).isEmpty();

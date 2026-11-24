@@ -83,14 +83,14 @@ class SunDropletTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Upkeep: accepting with no charge counters gains no life")
+    @DisplayName("Upkeep: with no charge counter, no removal is offered and no life is gained")
     void upkeepNoCountersGainsNoLife() {
         Permanent droplet = addSunDroplet();
         harness.setLife(player1, 20);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         assertThat(droplet.getCounterCount(CounterType.CHARGE)).isZero();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -147,7 +147,7 @@ class SunDropletTest extends BaseCardTest {
         harness.castInstantWithSacrifice(player1, 0, player2.getId(), droplet.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 15);

@@ -101,13 +101,13 @@ class ArixmethesSlumberingIsleTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The cast trigger still works without counters and cannot remove below zero")
+    @DisplayName("The cast trigger offers no removal without a slumber counter")
     void acceptingWithoutCountersIsHarmless() {
         Permanent arixmethes = addCreatureReady(player1, new ArixmethesSlumberingIsle());
         harness.castFromHand(player1, new MyrRetriever(), "{2}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.passBothPriorities();
         harness.passBothPriorities();
 

@@ -181,7 +181,6 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPlayerCantActivateNo
 import com.github.laxika.magicalvibes.model.effect.BlitzGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.EvokeGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.FreerunningGrantingEffect;
-import com.github.laxika.magicalvibes.model.effect.GlobalBlockCostEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalBlockLifeCostEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -11684,8 +11683,8 @@ public class GameQueryService {
 
     /**
      * Board-wide generic mana tax to declare {@code blocker} as a blocker at all
-     * ({@link RequirePaymentToBlockEffect}, e.g. Archangel of Tithes while attacking).
-     * Charged once per blocking creature regardless of how many attackers it blocks.
+     * ({@link RequirePaymentToBlockEffect}: Archangel of Tithes while attacking, printed; War Cadence's, floated on a
+     * player with its amount fixed). Charged once per blocking creature regardless of how many attackers it blocks.
      */
     public int getGlobalBlockManaTax(GameData gameData, Permanent blocker) {
         int[] total = {0};
@@ -11696,14 +11695,15 @@ public class GameQueryService {
             if (!hasLostAllAbilities(gameData, source)
                     && (tax.activeCondition() == null || conditionEvaluationService.isMet(
                             gameData, tax.activeCondition(), ConditionContext.forPermanent(source, active.controllerId())))) {
-                total[0] += tax.amountPerBlocker();
+                total[0] += amountEvaluationService.evaluate(gameData, tax.amountPerBlocker(),
+                        AmountContext.forStaticEffect(source, active.controllerId()));
             }
         }
-        synchronized (gameData.floatingEffects) {
-            for (FloatingContinuousEffect floatingEffect : gameData.floatingEffects) {
-                if (floatingEffect.effect() instanceof GlobalBlockCostEffect tax) {
-                    total[0] += tax.blockCostPerCreature();
-                }
+        for (FloatingContinuousEffect floatingEffect : gameData.floatingEffectsOnNamedPlayers(RequirePaymentToBlockEffect.class)) {
+            RequirePaymentToBlockEffect tax = (RequirePaymentToBlockEffect) floatingEffect.effect();
+            if (tax.activeCondition() == null) {
+                total[0] += amountEvaluationService.evaluate(gameData, tax.amountPerBlocker(),
+                        AmountContext.forEstimation(floatingEffect.affectedPlayerId()));
             }
         }
         return total[0];

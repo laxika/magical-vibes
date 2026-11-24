@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -12,6 +13,6 @@ public class ForbiddingSpirit extends Card {
 
     public ForbiddingSpirit() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new RequirePaymentToAttackUntilNextTurnEffect(2));
+                GrantStaticEffectToPlayerEffect.untilYourNextTurn(new RequirePaymentToAttackEffect(2)));
     }
 }

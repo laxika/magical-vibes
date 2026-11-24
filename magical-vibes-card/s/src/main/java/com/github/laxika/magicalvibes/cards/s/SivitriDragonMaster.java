@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.RequireLifePaymentToAttackControllerUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GlobalAttackLifeTaxEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -22,7 +23,7 @@ public class SivitriDragonMaster extends Card {
     public SivitriDragonMaster() {
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new RequireLifePaymentToAttackControllerUntilNextTurnEffect(2)),
+                List.of(GrantStaticEffectToPlayerEffect.untilYourNextTurn(new GlobalAttackLifeTaxEffect(2))),
                 "+1: Until your next turn, creatures can't attack you or planeswalkers you control unless their controller pays 2 life for each of those creatures."
         ));
 

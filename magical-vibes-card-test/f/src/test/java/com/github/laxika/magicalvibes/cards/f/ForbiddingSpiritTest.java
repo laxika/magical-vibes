@@ -6,12 +6,17 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.rules.TurnEvent;
+import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -144,11 +149,70 @@ class ForbiddingSpiritTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana to pay attack tax");
     }
 
+    @Test
+    @DisplayName("In a multiplayer game, taxes attacks on its controller only, not attacks between other players")
+    void taxesOnlyAttacksOnItsControllerAmongSeveralPlayers() {
+        Player third = addThirdPlayer();
+        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+        castSpirit();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        int bearIndex = gd.playerBattlefields.get(player2.getId()).indexOf(bear);
+
+        gs.declareAttackers(gd, player2, List.of(bearIndex), Map.of(bearIndex, third.getId()));
+
+        assertThat(bear.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("In a multiplayer game, taxes a creature attacking its controller from a later opponent")
+    void taxesAttacksOnItsControllerFromALaterOpponent() {
+        Player third = addThirdPlayer();
+        Permanent bear = addCreatureReady(third, new GrizzlyBears());
+        harness.setHand(player2, List.of(new ForbiddingSpirit()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
+        harness.forceActivePlayer(third);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        int bearIndex = gd.playerBattlefields.get(third.getId()).indexOf(bear);
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, third, List.of(bearIndex), Map.of(bearIndex, player2.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana to pay attack tax");
+    }
+
     private void castSpirit() {
         harness.setHand(player1, List.of(new ForbiddingSpirit()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0);
         resolveAllTriggers();
+    }
+
+    private Player addThirdPlayer() {
+        UUID thirdPlayerId = UUID.randomUUID();
+        Player third = new Player(thirdPlayerId, "Charlie");
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(thirdPlayerId, "Charlie");
+        gd.playerDecks.put(thirdPlayerId, new ArrayList<>());
+        gd.playerHands.put(thirdPlayerId, new ArrayList<>());
+        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
+        gd.playerGraveyards.put(thirdPlayerId, new ArrayList<>());
+        gd.playerCommandZones.put(thirdPlayerId, new ArrayList<>());
+        gd.playerManaPools.put(thirdPlayerId, new ManaPool());
+        gd.playerLifeTotals.put(thirdPlayerId, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), thirdPlayerId, "Charlie");
+        return third;
     }
 }
