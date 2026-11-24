@@ -9,7 +9,7 @@
 > zones, such as Eminence, is written `addStaticEffect(AbilityZones.of(...), e)`. In a token's or a
 > copy's ability list it is `StaticAbility.of(e)`, next to `new TriggeredAbility(trigger, e)` for
 > a trigger. Readers use `getStaticEffects()`.
-- As-enters creature imprint + temporary Vehicle copy: `d/Dermotaxi.java` — `ExileCardFromGraveyardOnEnterEffect(CardTypePredicate(CREATURE), ALL_GRAVEYARDS)` + `TapMultiplePermanentsCost(2, PermanentIsCreaturePredicate())` + `BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffect({ARTIFACT}, {VEHICLE})`
+- As-enters creature imprint + temporary Vehicle copy: `d/Dermotaxi.java` — `ExileCardFromGraveyardOnEnterEffect(CardTypePredicate(CREATURE), ALL_GRAVEYARDS)` + `TapMultiplePermanentsCost(2, PermanentIsCreaturePredicate())` + `BecomeCopyOfSubjectEffect.of(Subjects.exiledWithSourceUnlinked(CardTypePredicate(CREATURE))).untilEndOfTurn().except(CopyExceptions.stillA(ARTIFACT).alsoWithSubtypes(VEHICLE))`
 
 Conditional boost, indestructible, and all-damage prevention Equipment: `c/CaduceusStaffOfHermes.java` uses lifelink on the equipped creature plus two `ConditionalEffect(new ControllerLifeAtLeast(30), ...)` static effects for `StaticBoostEffect(5, 5, INDESTRUCTIBLE, Subjects.attachedCreature())` and `PreventAllDamageToAttachedCreatureEffect`, followed by `EquipActivatedAbility("{W}{W}")`.
 - Buster Sword: `STATIC StaticBoostEffect(3, 2, Subjects.attachedCreature())` + `Triggers.dealsCombatDamageToPlayer() DrawCardEffect(1)` + `MayCastAnySpellFromHandWithoutPayingManaCostEffect(new EventValue())` + `EquipActivatedAbility("{2}")`; the dynamic cap uses damage dealt to the player and excludes lands.

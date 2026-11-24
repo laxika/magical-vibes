@@ -110,7 +110,6 @@ class LibraryChoiceHandlerServiceTest {
         registry.register(new com.github.laxika.magicalvibes.service.interaction.LibrarySearchInteractionHandler(
                 mock(LibraryChoiceHandlerService.class)));
         service = new LibraryChoiceHandlerService(battlefieldEntryBatchSupport, gameQueryService,
-                mock(com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService.class),
                 castingCostService,
                 predicateEvaluationService,
                 graveyardService, battlefieldEntryService, legendRuleService,

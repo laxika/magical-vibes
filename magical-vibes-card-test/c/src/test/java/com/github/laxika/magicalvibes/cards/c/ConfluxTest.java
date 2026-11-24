@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.h.HellsparkElemental;
 import com.github.laxika.magicalvibes.cards.r.RottingRats;
 import com.github.laxika.magicalvibes.cards.p.Progenitus;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -46,8 +45,8 @@ class ConfluxTest extends BaseCardTest {
         assertThat(search.params().reveals()).isTrue();
         assertThat(search.params().canFailToFind()).isTrue();
         assertThat(search.params().followUp().remainingToHandPicks())
-                .extracting(LibrarySearchFollowUp.ToHandPick::color)
-                .containsExactly(CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN);
+                .extracting(LibrarySearchFollowUp.ToHandPick::label)
+                .containsExactly("blue card", "black card", "red card", "green card");
     }
 
     @Test
@@ -85,8 +84,8 @@ class ConfluxTest extends BaseCardTest {
         assertThat(search).isNotNull();
         assertThat(search.params().cards()).extracting(Card::getName).containsExactly("Faerie Mechanist");
         assertThat(search.params().followUp().remainingToHandPicks())
-                .extracting(LibrarySearchFollowUp.ToHandPick::color)
-                .containsExactly(CardColor.BLACK, CardColor.RED, CardColor.GREEN);
+                .extracting(LibrarySearchFollowUp.ToHandPick::label)
+                .containsExactly("black card", "red card", "green card");
     }
 
     @Test

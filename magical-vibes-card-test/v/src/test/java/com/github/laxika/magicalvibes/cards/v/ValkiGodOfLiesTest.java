@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MaskedVandal;
 import com.github.laxika.magicalvibes.cards.t.TibaltCosmicImpostor;
 import com.github.laxika.magicalvibes.model.Emblem;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.event.GameEventEnvelope;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -161,6 +163,35 @@ class ValkiGodOfLiesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Becoming a copy of the exiled creature is logged")
+    void copyIsLogged() {
+        Permanent valki = harness.addToBattlefieldAndReturn(player1, new ValkiGodOfLies());
+        gd.addToExile(player2.getId(), new GrizzlyBears(), valki.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(valki), 0, 2, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(line -> line.contains("Valki, God of Lies becomes a copy of Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("A card exiled with Valki by an ability it has as a copy is not one Valki's ability can copy")
+    void cardExiledUnderAnAbilityLinkIsNotCopied() {
+        Permanent valki = harness.addToBattlefieldAndReturn(player1, new ValkiGodOfLies());
+        GrizzlyBears linked = new GrizzlyBears();
+        gd.addToExile(player2.getId(), linked, valki.getId());
+        gd.exiledCards.replaceAll(exiled -> exiled.card() == linked ? exiled.withAbilityLink("gained") : exiled);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(valki), 0, 2, null);
+        harness.passBothPriorities();
+
+        assertThat(valki.getCard().getName()).isEqualTo("Valki, God of Lies");
     }
 
     @Test

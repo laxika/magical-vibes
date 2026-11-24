@@ -19,7 +19,9 @@ import org.springframework.stereotype.Component;
  * A battlefield search (Gaea's Balance) is one search through
  * {@link LibrarySearchSupport#startSubtypeToBattlefieldPicks}: the chosen cards enter the battlefield
  * together after the last pick. A colour search to hand (Conflux) uses the same descriptor queue; one to a graveyard
- * (Lotuslight Dancers) is one search through {@link LibrarySearchSupport#startColorPicks}.
+ * (Lotuslight Dancers) is one search through {@link LibrarySearchSupport#startColorPicks}. A search for a card of each
+ * quality (Firemind's Foresight) uses the same descriptor queue as the colour and subtype hand searches, each pick a
+ * card the quality's filter matches.
  */
 @Component
 @RequiredArgsConstructor
@@ -40,6 +42,12 @@ public class SearchLibraryForOneCardOfEachSubtypeEffectHandler implements Normal
         UUID controllerId = entry.getControllerId();
         if (librarySearchSupport.isSearchPrevented(gameData, controllerId)) return;
 
+        if (!searchEffect.each().isEmpty()) {
+            librarySearchSupport.startSingleSearchToHandPicks(gameData, controllerId,
+                    LibrarySearchFollowUp.toHandPicks(searchEffect.each().stream()
+                            .map(each -> LibrarySearchFollowUp.ToHandPick.of(each.filter(), each.label())).toList()));
+            return;
+        }
         if (!searchEffect.colors().isEmpty()) {
             if (searchEffect.destination() == LibrarySearchDestination.HAND) {
                 librarySearchSupport.startSingleSearchToHandPicks(gameData, controllerId,

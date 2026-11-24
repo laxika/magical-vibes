@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50, 48b, 8e (each in Findings; the fold queue marks its rows). Running in parallel worktrees: D11, D12, D13; merge queue 50b. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                              |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50, 48b, 8e, 50b (each in Findings; the fold queue marks its rows). Running in parallel worktrees: D11, D12, D13; next 50c (Serene / Turn the Earth, Viconia). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                               |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,015 / 2,442 (after fold run 8e) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,009 / 2,435 (after fold run 50b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,732 rows over 4,577 classes (after fold run 8e). Latest verdict per class: `step-9` 7, unique 1,196, absorbed 1,352, split 688, blocked-other 561, survivor 460, blocked-step-model 140, blocked-player-loop 96, dead 77. Waiting: 7 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,741 rows over 4,578 classes (after fold run 50b). Latest verdict per class: `step-9` 2, unique 1,196, absorbed 1,356, split 690, blocked-other 561, survivor 460, blocked-step-model 140, blocked-player-loop 96, dead 77. Waiting: 2 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1145,6 +1145,9 @@ Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671
 
 - `LookAtTopCardsAndMayCastEffect.reveal(...)` records REVEAL (cards, controller, library) before its cast choice, and the cast resumes the later steps (CR 608.2g). "If it's a land card …" is `toACard(REVEAL, land)`; "if you don't cast it, put it into your hand" is `PutCardsIntoHandEffect(revealedThisWay())` (Unexpected Results, Rashmi; fold run 8e).
 - `PlayerLifeExactlyPredicate(DynamicAmount)`: "an opponent with the most life among your opponents" is `matching(eachOpponent(), new PlayerLifeExactlyPredicate(new HighestOpponentLifeTotal()))`, evaluated for the controller (The Master, Gallifrey's End; fold run 8e).
+
+- `Subjects.exiledWithSourceUnlinked(filter)` / `CardSubject.ExiledWithSource.UNLINKED`: the cards exiled with the source under no ability link ("the exiled card" of an imprint; Dermotaxi's ruling, CR 607.2a), static and resolving (fold run 50b).
+- `LibrarySearchFollowUp.ToHandPick.of(CardPredicate, label)` and `SearchLibraryForOneCardOfEachSubtypeEffect.ofEach(ChooseCardEffect.Each...)`: one revealed to-hand pick per quality within one search, judged by `PredicateEvaluationService`; colour and subtype picks are filters too (fold run 50b).
 
 ### Blocked causes still open
 
@@ -5346,6 +5349,31 @@ Batch `splits`, last 5 rows: all 5 split onto existing steps; the batch is close
 - `CAST_WITHOUT_PAYING_OR_PUT_INTO_HAND` and `handleCastOrPutIntoHandChoice` are dead.
 
 **For the next run.** `splits` is closed. Remove the dead destination and stop offering uncastable spells in the library-cast prompt in a defect run.
+
+### Step 9, fold run 50b (2026-11-24, parallel worktree)
+Leftovers. 6 folded (4 absorbed, 2 split; Valki extra), 1 blocked-other, 2 not reached. Ratchet 3,041 / 2,465 → 3,035 / 2,458. 7 card files rewritten; Oracle text checked for all 7 (and Darigaaz). CR checked: 400.7, 514.2, 607.2a, 608.2b, 608.2d, 608.2h, 701.23a, 707.2, 707.9b.
+
+| Member | Result |
+|---|---|
+| copy pair (Dermotaxi, Protean War Engine, Lazav, Wearer of Faces) | absorbed into `BecomeCopyOfSubjectEffect.of(exiledWithSourceUnlinked(creature card)).untilEndOfTurn().except(CopyExceptions.stillA(ARTIFACT).alsoWithSubtypes(VEHICLE))`; Lazav adds `ChooseCardEffect.oneOf(...)` + `cardsThisWay(CHOOSE)` inside its `MayEffect`. `BecomeCopyOfCardUntilEndOfTurnEffect` and its dead mayfx handler gone. `ExiledCreatureCopyChoice` stays (token copy and enter-as-copy flows) |
+| Valki (`BecomeCopyOfExiledCreatureWithManaValueEffect`, fold run 4's blocked row) | absorbed by the same option: choose `allOf(creature, CardManaValueEqualsXPredicate)` + permanent copy; `PendingValkiCopyChoice` gone |
+| Shifting Shadow | split: destroy `source()` + `RevealCardsFromTopUntilEffect` + `PutCardsOntoBattlefieldEffect(revealedThisWay)` + attach `(granter(), returnedThisResolution())` + rest on the bottom at random. The put step already remembers the permanent it put (RETURN, `returnedThisResolution()`); `thisWay(RETURN)` is refused by the subject |
+| Darigaaz | blocked-other: everything exists but a face-down exile `ConjureDestination`, which only Darigaaz would set |
+| Wakanda Forever! | split as fold run 20 wrote; MultiGraveyardChoice picks over the revealed cards |
+| Firemind's Foresight | absorbed: `SearchLibraryForOneCardOfEachSubtypeEffect.ofEach(Each...)`; `ToHandPick` is (filter, label \| cardName), colours and subtypes as predicates (Conflux, Gem, Yasharn), `remainingInstantManaValueToHandPicks` and `startNextInstantManaValueToHandPick` gone |
+| Viconia, Serene Remembrance / Turn the Earth | not reached (run length) |
+
+Behaviour changes:
+- Firemind's Foresight keeps Aven Mindcensor's original top four for all three picks (old: re-limited to the current top four for each pick; test). Defect lines 497 and 508.
+- Valki logs its copy (defect line 682; test); a card exiled under an ability link isn't copyable (test).
+- Dermotaxi, Protean War Engine and Lazav get the survivor's once-each-turn activation reset on copying (untested).
+- Conflux, Gem and Yasharn picks are judged by `PredicateEvaluationService` (effective colours and subtypes; untested); prompts read "an Island card".
+- Log and prompt lines of Shifting Shadow, Wakanda, Lazav and Firemind are the survivors' (tests updated: Lazav, Wakanda, Firemind, Conflux).
+
+Seen, not changed:
+- A Valki ability gained by another permanent still reads that permanent's unlinked exiled cards, not a link of its own (line 705 stays). Sure of the code.
+
+For the next run: Serene Remembrance / Turn the Earth with Deliver Unto Evil and Wake to Slaughter (a CardSubject naming every target card, SpellCastingService's record-keyed branches), then Viconia's faces (card data, a target group per `TargetExiledCard`).
 
 ## Prompt
 

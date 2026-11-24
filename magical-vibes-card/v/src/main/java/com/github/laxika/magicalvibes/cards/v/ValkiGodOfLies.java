@@ -4,9 +4,17 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.t.TibaltCosmicImpostor;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfExiledCreatureWithManaValueEffect;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSubjectEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentRevealsHandAndExilesCreatureCardEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsXPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,7 +32,11 @@ public class ValkiGodOfLies extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new EachOpponentRevealsHandAndExilesCreatureCardEffect());
         addActivatedAbility(new ActivatedAbility(
-                false, "{X}", List.of(new BecomeCopyOfExiledCreatureWithManaValueEffect()),
+                false, "{X}", List.of(SequenceEffect.of(
+                        ChooseCardEffect.oneOf(Subjects.exiledWithSourceUnlinked(new CardAllOfPredicate(List.of(
+                                        new CardTypePredicate(CardType.CREATURE), new CardManaValueEqualsXPredicate()))),
+                                "a creature card exiled with Valki with mana value X"),
+                        BecomeCopyOfSubjectEffect.of(Subjects.cardsThisWay(StepKind.CHOOSE)))),
                 "{X}: Choose a creature card exiled with Valki with mana value X. Valki becomes a copy of that card."
         ));
         addSpellEffect(new ChooseOneEffect(List.of(

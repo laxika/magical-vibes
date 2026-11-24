@@ -26,7 +26,6 @@ import com.github.laxika.magicalvibes.model.PendingReturnExiledWithSourceCard;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.PendingTruthOrTaleCardChoice;
 import com.github.laxika.magicalvibes.model.PendingWhimsOfTheFates;
-import com.github.laxika.magicalvibes.model.PendingValkiCopyChoice;
 import com.github.laxika.magicalvibes.model.PendingValkiHandExileChoice;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -101,7 +100,6 @@ class PendingInteractionContractTest {
             PendingPsychoticEpisodeChoice.class,
             PendingTruthOrTaleCardChoice.class,
             PendingWhimsOfTheFates.class,
-            PendingValkiCopyChoice.class,
             PendingValkiHandExileChoice.class,
             PendingInteraction.RevealedFreeCastGroup.class,
             PendingInteraction.RippleFreeCastGroup.class,

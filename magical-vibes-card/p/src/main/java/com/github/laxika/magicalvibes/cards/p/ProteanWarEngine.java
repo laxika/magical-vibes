@@ -6,14 +6,16 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSubjectEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyExceptions;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookToExileEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "YDMU", collectorNumber = "25")
 public class ProteanWarEngine extends Card {
@@ -39,8 +41,10 @@ public class ProteanWarEngine extends Card {
         // "As this enters, draft a card from its spellbook and exile it": the card is exiled face up.
         addStaticEffect(new DraftCardFromSpellbookToExileEffect(SPELLBOOK, false));
         addTrigger(Triggers.becomesCrewed(),
-                new BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffect(
-                        Set.of(CardType.ARTIFACT), Set.of(CardSubtype.VEHICLE)));
+                BecomeCopyOfSubjectEffect.of(Subjects.exiledWithSourceUnlinked(
+                                new CardTypePredicate(CardType.CREATURE)))
+                        .untilEndOfTurn()
+                        .except(CopyExceptions.stillA(CardType.ARTIFACT).alsoWithSubtypes(CardSubtype.VEHICLE)));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,

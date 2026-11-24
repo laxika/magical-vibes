@@ -2296,6 +2296,24 @@ class SubjectResolutionServiceTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("exiledWithSourceUnlinked names only the cards exiled with the source under no ability link")
+        void exiledWithSourceUnlinkedSkipsLinkedCards() {
+            Permanent source = addCreatureReady(player1, new GrizzlyBears());
+            Card imprinted = new HillGiant();
+            Card linked = new GrizzlyBears();
+            Card elsewhere = new RuneclawBear();
+            gd.addToExile(player2.getId(), imprinted, source.getId());
+            gd.addToExile(player2.getId(), linked, source.getId());
+            gd.addToExile(player2.getId(), elsewhere);
+            linkExile(linked, "gained");
+            StackEntry entry = entry(player1, null, source.getId());
+
+            assertThat(subjects.cards(gd, entry, EFFECT, Subjects.exiledWithSourceUnlinked(null)))
+                    .containsExactly(imprinted);
+            assertThat(named(source, Subjects.exiledWithSourceUnlinked(null))).containsExactly(imprinted);
+        }
+
+        @Test
         @DisplayName("A resolving exiledWithSourceBy reads the same link")
         void resolvingExiledWithSourceByReadsTheLink() {
             Permanent source = addCreatureReady(player1, new GrizzlyBears());

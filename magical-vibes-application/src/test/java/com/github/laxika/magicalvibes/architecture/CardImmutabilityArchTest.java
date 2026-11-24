@@ -82,7 +82,6 @@ class CardImmutabilityArchTest {
             "RegisterDelayedBeginningOfCombatTriggerEffectHandler", // assembles a fresh runtime copy for the delayed trigger
             "RegisterDelayedEndStepTriggerEffectHandler", // assembles targeting on a fresh runtime copy for the delayed trigger
             "ExileSourceCardFromOpeningHandAndCreateTimeWalkTokenCardsEffectHandler", // assembles and freezes fresh Time Walk token cards
-            "BecomeCopyOfCardUntilEndOfTurnEffectHandler", // changes a fresh runtime copy
             "PerpetuallyBecomeOnlyCardTypeEffectHandler", // changes a fresh runtime copy
             "GrizzledHuntmasterEffectHandler", // stamps newly conjured copies
             "ReturnCardAndConjureOpponentGraveyardDuplicateEffectHandler", // decorates a newly conjured copy

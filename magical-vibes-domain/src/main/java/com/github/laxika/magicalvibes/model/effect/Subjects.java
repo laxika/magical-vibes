@@ -486,6 +486,15 @@ public final class Subjects {
         return new CardSubject.ExiledWithSource(null, filter, abilityLink);
     }
 
+    /**
+     * "The exiled card" of an imprint ability, "a creature card exiled with it" where what the source exiles as a copy
+     * of something else doesn't count: of {@link #exiledWithSourceMatching}, those an ability recording no link
+     * exiled, never one an ability it gained or copied exiled under a link of its own (CR 607.2a; Dermotaxi's ruling).
+     */
+    public static CardSubject exiledWithSourceUnlinked(CardPredicate filter) {
+        return new CardSubject.ExiledWithSource(null, filter, CardSubject.ExiledWithSource.UNLINKED);
+    }
+
     /** "The rest": those of {@code cards} that {@code excluded} doesn't name. */
     public static CardSubject except(CardSubject cards, CardSubject excluded) {
         return new CardSubject.Except(cards, excluded);

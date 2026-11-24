@@ -42,7 +42,6 @@ import com.github.laxika.magicalvibes.model.PendingPortalPileSearch;
 import com.github.laxika.magicalvibes.model.PendingPsychoticEpisodeChoice;
 import com.github.laxika.magicalvibes.model.PendingReturnExiledWithSourceCard;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
-import com.github.laxika.magicalvibes.model.PendingValkiCopyChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
@@ -130,8 +129,6 @@ public class LibraryChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
 
     private final GameQueryService gameQueryService;
-
-    private final com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService permanentCopierService;
 
     private final com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
 
@@ -1114,7 +1111,6 @@ public class LibraryChoiceHandlerService {
             if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
             if (startNextToHandPick(gameData, playerId, followUp, librarySearch.shuffleAfterSelection())) return;
-            if (librarySearchSupport.startNextInstantManaValueToHandPick(gameData, playerId, followUp)) return;
             if (basicLandSearchQueueSupport.advance(gameData, followUp)) return;
             finishSearchAndResume(gameData);
             return;
@@ -2153,7 +2149,6 @@ public class LibraryChoiceHandlerService {
         if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
         if (startNextToHandPick(gameData, playerId, followUp, librarySearch.shuffleAfterSelection())) return;
-        if (librarySearchSupport.startNextInstantManaValueToHandPick(gameData, playerId, followUp)) return;
         if (basicLandSearchQueueSupport.advance(gameData, followUp)) return;
         if (followUp.grimReminderSearch() != null && gameData.pendingEffectResolutionEntry != null) {
             gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
@@ -2265,7 +2260,6 @@ public class LibraryChoiceHandlerService {
         if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
         if (startNextToHandPick(gameData, playerId, followUp, librarySearch.shuffleAfterSelection())) return;
-        if (librarySearchSupport.startNextInstantManaValueToHandPick(gameData, playerId, followUp)) return;
         if (basicLandSearchQueueSupport.advance(gameData, followUp)) return;
         finishSearchAndResume(gameData);
     }
@@ -3501,17 +3495,6 @@ public class LibraryChoiceHandlerService {
         if (psychoticEpisodeChoice != null) {
             handlePsychoticEpisodeChoice(gameData, player, psychoticEpisodeChoice,
                     allRevealedCards, cardIds);
-            return;
-        }
-
-        PendingValkiCopyChoice valkiCopyChoice = gameData.pollPendingInteraction(PendingValkiCopyChoice.class);
-        if (valkiCopyChoice != null) {
-            Permanent valki = gameQueryService.findPermanentById(gameData, valkiCopyChoice.sourcePermanentId());
-            if (valki != null) {
-                permanentCopierService.applyCloneCopy(valki, allCardsMatchingIds(allRevealedCards, cardIds).getFirst(),
-                        null, null, Set.of());
-            }
-            finishSearchAndResume(gameData);
             return;
         }
 

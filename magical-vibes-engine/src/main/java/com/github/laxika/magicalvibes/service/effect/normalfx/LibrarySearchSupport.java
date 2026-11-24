@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -21,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentSearchesTopCardsInste
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchRestrictions;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -54,6 +54,8 @@ public class LibrarySearchSupport {
     private final GameQueryService gameQueryService;
     @Autowired
     private ReverseMiracleSupport reverseMiracleSupport;
+    @Autowired
+    private PredicateEvaluationService predicateEvaluationService;
 
     /**
      * Starts the next targeted player's mandatory unrestricted search for a card to put on top of
@@ -256,10 +258,10 @@ public class LibrarySearchSupport {
                     : deck.stream()
                             .filter(card -> pick.searchableCardIds() == null
                                     || pick.searchableCardIds().contains(card.getId()))
-                            .filter(card -> matchesToHandPick(card, pick)).toList());
+                            .filter(card -> matchesToHandPick(gameData, playerId, card, pick)).toList());
             if (pick.includeGraveyard()) {
                 gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
-                        .filter(card -> matchesToHandPick(card, pick))
+                        .filter(card -> matchesToHandPick(gameData, playerId, card, pick))
                         .forEach(matches::add);
             }
             if (matches.isEmpty()) {
@@ -280,8 +282,8 @@ public class LibrarySearchSupport {
                 logMsg = playerName + " searches their library for a card named " + pick.cardName() + ".";
             } else {
                 String descriptor = pick.describe();
-                prompt = "Search your library for a " + descriptor + " card to reveal and put into your hand.";
-                logMsg = playerName + " searches their library for a " + descriptor + " card.";
+                prompt = "Search your library for " + descriptor + " to reveal and put into your hand.";
+                logMsg = playerName + " searches their library for " + descriptor + ".";
             }
             sendLibrarySearchToPlayer(gameData, playerId, builder.build(), prompt, true, logMsg,
                     pick.searchableCardIds());
@@ -421,75 +423,16 @@ public class LibrarySearchSupport {
         return false;
     }
 
-    private static boolean matchesToHandPick(Card card, LibrarySearchFollowUp.ToHandPick pick) {
+    /** Whether {@code card} is one {@code pick} asks for: the card named, or a card its filter matches. */
+    private boolean matchesToHandPick(GameData gameData, UUID playerId, Card card,
+                                      LibrarySearchFollowUp.ToHandPick pick) {
         if (card.hasAllCardNames()) {
             return true;
         }
         if (pick.cardName() != null) {
             return pick.cardName().equals(card.getName());
         }
-        if (pick.basicOnly() && !(card.getSupertypes().contains(CardSupertype.BASIC) && card.hasType(CardType.LAND))) {
-            return false;
-        }
-        return pick.color() != null
-                ? card.getColors().contains(pick.color())
-                : card.getSubtypes().contains(pick.subtype());
-    }
-
-    /**
-     * Starts the next "search for an instant card with the queued mana value, reveal it, put it into
-     * your hand" pick from the follow-up's mana-value queue (Firemind's Foresight). Each queue entry
-     * is one exact mana value, searched in order; values with no matching instant left in the library
-     * are skipped without shuffling. When the queue is exhausted the library is shuffled once and
-     * false is returned; returns true if a search was begun. The picks record no search: the effect records its one
-     * search before the first pick.
-     */
-    public boolean startNextInstantManaValueToHandPick(GameData gameData, UUID playerId,
-                                                       LibrarySearchFollowUp followUp) {
-        if (isSearchPrevented(gameData, playerId)) return false;
-
-        List<Integer> queue = followUp.remainingInstantManaValueToHandPicks();
-        if (queue == null) return false;
-
-        List<Card> deck = gameData.playerDecks.get(playerId);
-        String playerName = gameData.playerIdToName.get(playerId);
-        List<Integer> remaining = new ArrayList<>(queue);
-        while (!remaining.isEmpty()) {
-            int manaValue = remaining.remove(0);
-            List<Card> matches = deck == null ? List.of()
-                    : deck.stream()
-                            .filter(card -> card.hasAllCardNames()
-                                    || (card.hasType(CardType.INSTANT) && card.getManaValue() == manaValue))
-                            .toList();
-            if (matches.isEmpty()) {
-                continue;
-            }
-            // Every pick is part of the one search its effect recorded before the first pick.
-            gameData.suppressNextLibrarySearchTriggers = true;
-            try {
-                sendLibrarySearchToPlayer(gameData, playerId,
-                        LibrarySearchParams.builder(playerId, new ArrayList<>(matches))
-                                .reveals(true)
-                                .canFailToFind(true)
-                                .destination(LibrarySearchDestination.HAND)
-                                .shuffleAfterSelection(false)
-                                .followUp(followUp.withRemainingInstantManaValueToHandPicks(remaining))
-                                .build(),
-                        "Search your library for an instant card with mana value " + manaValue
-                                + " to reveal and put into your hand.", true,
-                        playerName + " searches their library for an instant card with mana value "
-                                + manaValue + ".");
-            } finally {
-                gameData.suppressNextLibrarySearchTriggers = false;
-            }
-            return true;
-        }
-
-        if (deck != null) {
-            LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
-        }
-        gameLogService.append(gameData, GameLog.text(playerName + "'s library is shuffled."));
-        return false;
+        return predicateEvaluationService.matchesCardPredicate(card, pick.filter(), null, gameData, playerId);
     }
 
     /**

@@ -54,8 +54,8 @@ class LazavWearerOfFacesTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.ExiledCreatureCopyChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.ExiledCreatureCopyChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice.validCardIds()).containsExactly(bears.getId(), giant.getId());
         harness.handleMultipleCardsChosen(player1, List.of(giant.getId()));
 

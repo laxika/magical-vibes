@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.a.AvenMindcensor;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.n.Negate;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -21,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({FiremindsForesight.class, Cancel.class, Negate.class, Shock.class, EliteVanguard.class,
-        ObNixilisUnshackled.class})
+        ObNixilisUnshackled.class, AvenMindcensor.class})
 class FiremindsForesightTest extends BaseCardTest {
 
     @Test
@@ -39,8 +41,9 @@ class FiremindsForesightTest extends BaseCardTest {
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.HAND);
         assertThat(search.params().reveals()).isTrue();
         assertThat(search.params().canFailToFind()).isTrue();
-        assertThat(search.params().followUp().remainingInstantManaValueToHandPicks())
-                .containsExactly(2, 1);
+        assertThat(search.params().followUp().remainingToHandPicks())
+                .extracting(LibrarySearchFollowUp.ToHandPick::label)
+                .containsExactly("instant card with mana value 2", "instant card with mana value 1");
     }
 
     @Test
@@ -76,8 +79,9 @@ class FiremindsForesightTest extends BaseCardTest {
         var search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
         assertThat(search.params().cards()).extracting(Card::getName).containsExactly("Negate");
-        assertThat(search.params().followUp().remainingInstantManaValueToHandPicks())
-                .containsExactly(1);
+        assertThat(search.params().followUp().remainingToHandPicks())
+                .extracting(LibrarySearchFollowUp.ToHandPick::label)
+                .containsExactly("instant card with mana value 1");
     }
 
     @Test
@@ -126,7 +130,7 @@ class FiremindsForesightTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(e -> e.contains("it is empty"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(e -> e.contains("shuffled"));
     }
 
     @Test
@@ -236,6 +240,29 @@ class FiremindsForesightTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertLife(player1, 10);
+    }
+
+    @Test
+    @DisplayName("An opponent's Aven Mindcensor limits every pick to the top four cards of the library")
+    void mindcensorLimitsEveryPickToTheTopFourCards() {
+        harness.addToBattlefield(player2, new AvenMindcensor());
+        setupAndCast();
+        Cancel withinLimit = new Cancel();
+        Negate outsideLimit = new Negate();
+        harness.setLibrary(player1, List.of(new EliteVanguard(), new EliteVanguard(), withinLimit,
+                new EliteVanguard(), outsideLimit, new Shock()));
+
+        harness.passBothPriorities();
+        GameData gd = harness.getGameData();
+        var search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(withinLimit);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(withinLimit);
+        assertThat(gd.playerDecks.get(player1.getId())).contains(outsideLimit)
+                .extracting(Card::getName).contains("Shock");
     }
 
     private void setupAndCast() {

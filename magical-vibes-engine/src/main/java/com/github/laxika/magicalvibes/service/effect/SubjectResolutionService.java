@@ -1533,11 +1533,16 @@ public class SubjectResolutionService {
 
     /**
      * Whether {@code exiled} was exiled with the permanent {@code sourceId}, by its ability of {@code abilityLink} when
-     * one is given (CR 607.2a).
+     * one is given, or under no link for {@link CardSubject.ExiledWithSource#UNLINKED} (CR 607.2a).
      */
     private static boolean exiledWithSourceBy(ExiledCardEntry exiled, UUID sourceId, String abilityLink) {
-        return sourceId.equals(exiled.sourcePermanentId())
-                && (abilityLink == null || abilityLink.equals(exiled.abilityLink()));
+        if (!sourceId.equals(exiled.sourcePermanentId())) {
+            return false;
+        }
+        if (CardSubject.ExiledWithSource.UNLINKED.equals(abilityLink)) {
+            return exiled.abilityLink() == null;
+        }
+        return abilityLink == null || abilityLink.equals(exiled.abilityLink());
     }
 
     /** How {@link #namesExiledCard} and {@link #namedCards} judge a card against a subject's filter. */

@@ -236,14 +236,19 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
      * the source, as the permanent it is or last was, that are still in exile; with a {@code filter}, those matching
      * it as they are now, a card exiled face down as one with no characteristics (CR 406.3a). With an
      * {@code abilityLink}, only the cards the source's ability of that link exiled: an ability the source gained
-     * exiles under a link of its own, so "creature cards exiled with it" doesn't read them (CR 607.2a, 607.5).
+     * exiles under a link of its own, so "creature cards exiled with it" doesn't read them (CR 607.2a, 607.5). With
+     * {@link #UNLINKED}, only the cards an exiling ability that records no link exiled: the source's own imprint or
+     * "exile target card" ability, not one it has as a copy (Dermotaxi's ruling).
      *
      * @param owners      "you own": whose cards of them; {@code null} for everybody's
      * @param filter      which of them; {@code null} for all of them
-     * @param abilityLink the link the exiling ability records on each card it exiles; {@code null} for every card
-     *                    exiled with the source
+     * @param abilityLink the link the exiling ability records on each card it exiles; {@link #UNLINKED} for the cards
+     *                    exiled with no link; {@code null} for every card exiled with the source
      */
     record ExiledWithSource(PlayerSubject owners, CardPredicate filter, String abilityLink) implements CardSubject {
+
+        /** The {@code abilityLink} naming the cards exiled with the source under no link. */
+        public static final String UNLINKED = "unlinked";
 
         public ExiledWithSource {
             if (owners != null && owners.declaresTarget()) {

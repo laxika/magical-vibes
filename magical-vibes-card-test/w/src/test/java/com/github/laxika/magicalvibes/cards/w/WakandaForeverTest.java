@@ -27,16 +27,17 @@ class WakandaForeverTest extends BaseCardTest {
                 battlefieldCard, new Shock(), handCard, new Shock(), new Shock(), new Shock());
         castAndResolve(revealed);
 
-        PendingInteraction.LibrarySearch firstPick = activeLibrarySearch();
-        assertThat(firstPick.params().cards()).containsExactly(battlefieldCard, handCard);
-        assertThat(firstPick.params().sourceCards()).containsExactlyElementsOf(revealed);
+        PendingInteraction.MultiGraveyardChoice firstPick = activeChoice();
+        assertThat(firstPick.cards()).containsExactly(battlefieldCard, handCard);
+        // The six cards are revealed, not moved, until the picks are made.
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(revealed);
 
-        chooseLibraryCard(firstPick, battlefieldCard);
+        chooseCard(battlefieldCard);
 
-        PendingInteraction.LibrarySearch secondPick = activeLibrarySearch();
-        assertThat(secondPick.params().destination()).isEqualTo(com.github.laxika.magicalvibes.model.LibrarySearchDestination.HAND);
-        assertThat(secondPick.params().cards()).containsExactly(handCard);
-        chooseLibraryCard(secondPick, handCard);
+        PendingInteraction.MultiGraveyardChoice secondPick = activeChoice();
+        assertThat(secondPick.prompt()).contains("into your hand");
+        assertThat(secondPick.cards()).containsExactly(handCard);
+        chooseCard(handCard);
 
         Permanent entered = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard() == battlefieldCard)
@@ -56,13 +57,13 @@ class WakandaForeverTest extends BaseCardTest {
         castAndResolve(List.of(firstPermanent, new Shock(), secondPermanent,
                 new Shock(), new Shock(), new Shock()));
 
-        PendingInteraction.LibrarySearch firstPick = activeLibrarySearch();
-        chooseLibraryCard(firstPick, null);
+        activeChoice();
+        chooseCard(null);
 
-        PendingInteraction.LibrarySearch secondPick = activeLibrarySearch();
-        assertThat(secondPick.params().destination()).isEqualTo(com.github.laxika.magicalvibes.model.LibrarySearchDestination.HAND);
-        assertThat(secondPick.params().cards()).containsExactly(firstPermanent, secondPermanent);
-        chooseLibraryCard(secondPick, secondPermanent);
+        PendingInteraction.MultiGraveyardChoice secondPick = activeChoice();
+        assertThat(secondPick.prompt()).contains("into your hand");
+        assertThat(secondPick.cards()).containsExactly(firstPermanent, secondPermanent);
+        chooseCard(secondPermanent);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(
                 permanent -> permanent.getCard() == firstPermanent || permanent.getCard() == secondPermanent);
@@ -76,8 +77,10 @@ class WakandaForeverTest extends BaseCardTest {
         castAndResolve(List.of(new GrizzlyBears(), new Shock(), new Forest(),
                 new Shock(), new Shock(), new Shock()));
 
-        chooseLibraryCard(activeLibrarySearch(), null);
-        chooseLibraryCard(activeLibrarySearch(), null);
+        activeChoice();
+        chooseCard(null);
+        activeChoice();
+        chooseCard(null);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName)
@@ -92,8 +95,10 @@ class WakandaForeverTest extends BaseCardTest {
         castAndResolve(List.of(battlefieldCard, unchosenPermanent, new Shock(),
                 new Shock(), new Shock(), new Shock(), seventhCard));
 
-        chooseLibraryCard(activeLibrarySearch(), battlefieldCard);
-        chooseLibraryCard(activeLibrarySearch(), null);
+        activeChoice();
+        chooseCard(battlefieldCard);
+        activeChoice();
+        chooseCard(null);
 
         Permanent entered = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(entered.getCard()).isSameAs(battlefieldCard);
@@ -110,7 +115,8 @@ class WakandaForeverTest extends BaseCardTest {
         Card instant = new Shock();
         castAndResolve(List.of(creature, instant));
 
-        chooseLibraryCard(activeLibrarySearch(), creature);
+        activeChoice();
+        chooseCard(creature);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getCard)
                 .containsExactly(creature);
@@ -155,12 +161,14 @@ class WakandaForeverTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private PendingInteraction.LibrarySearch activeLibrarySearch() {
-        return gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+    private PendingInteraction.MultiGraveyardChoice activeChoice() {
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        return choice;
     }
 
-    private void chooseLibraryCard(PendingInteraction.LibrarySearch search, Card card) {
-        int index = card == null ? -1 : search.params().cards().indexOf(card);
-        harness.handleCardChosen(player1, index);
+    private void chooseCard(Card card) {
+        harness.handleMultipleCardsChosen(player1, card == null ? List.of() : List.of(card.getId()));
     }
 }
