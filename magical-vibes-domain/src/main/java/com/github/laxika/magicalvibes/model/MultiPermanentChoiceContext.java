@@ -915,15 +915,6 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
-     * Clarion Ultimatum: the controller chose up to five different permanents they control. For
-     * each chosen permanent, the controller may then search their library for a card with the same
-     * name and put it onto the battlefield tapped; the same-name searches run one per chosen
-     * permanent (queued via {@link LibrarySearchFollowUp#remainingSameNamePicks()}), then shuffle.
-     */
-    record ChooseFivePermanentsSearchSameNameToBattlefieldTapped() implements MultiPermanentChoiceContext {
-    }
-
-    /**
      * Devour (CR 702.82): the entering creature's controller chose which of their other creatures to
      * sacrifice as it enters. The chosen creatures are sacrificed, the entering permanent receives
      * {@code multiplier} times that many +1/+1 counters and records the devoured count, then the

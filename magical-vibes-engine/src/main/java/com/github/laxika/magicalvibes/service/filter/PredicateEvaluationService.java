@@ -140,6 +140,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithControlledCreatureOrGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithAPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithPermanentsPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardCouldEnchantPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithTriggeringPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithTriggeringSpellPredicate;
@@ -1410,6 +1412,9 @@ public class PredicateEvaluationService {
             // Bound to its cards' card types by the handler that has the resolving entry
             // (SubjectResolutionService.bindCardSubjects).
             case CardSharesCardTypeWithCardsPredicate ignored -> false;
+            case CardSharesNameWithPermanentsPredicate ignored -> false;
+            // Bound to the matching library cards by the search that has the resolving entry (SearchLibraryEffectHandler).
+            case CardCouldEnchantPredicate ignored -> false;
             case CardSharesNameWithLegendaryControlledPermanentPredicate ignored -> {
                 if (gameData == null || cardOwnerId == null
                         || !card.getSupertypes().contains(CardSupertype.LEGENDARY)) {

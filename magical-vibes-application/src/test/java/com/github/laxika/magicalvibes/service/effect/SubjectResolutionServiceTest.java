@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.cards.b.Bonesplitter;
 import com.github.laxika.magicalvibes.cards.c.CurseOfStalkedPrey;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithPermanentsPredicate;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -146,6 +149,49 @@ class SubjectResolutionServiceTest extends BaseCardTest {
         Permanent attachment = addCreatureReady(controller, aura);
         attachment.setAttachedTo(host.getId());
         return attachment;
+    }
+
+    @Nested
+    @DisplayName("attachedToPlayers(players, filter)")
+    class AttachedToPlayers {
+
+        @Test
+        @DisplayName("Names each matching permanent attached to one of the players, whoever controls it")
+        void attachedToTheNamedPlayers() {
+            Permanent onOpponent = harness.addToBattlefieldAndReturn(player1, new CurseOfStalkedPrey());
+            onOpponent.setAttachedTo(player2.getId());
+            Permanent opponentsOwn = harness.addToBattlefieldAndReturn(player2, new CurseOfStalkedPrey());
+            opponentsOwn.setAttachedTo(player2.getId());
+            Permanent onYou = harness.addToBattlefieldAndReturn(player2, new CurseOfStalkedPrey());
+            onYou.setAttachedTo(player1.getId());
+            Permanent creatureAura = attach(player1, new Pacifism(), addCreatureReady(player2, new GrizzlyBears()));
+
+            assertThat(permanents(entry(player1, null, null), Subjects.attachedToPlayers(eachOpponent(),
+                    new PermanentHasSubtypePredicate(CardSubtype.CURSE))))
+                    .containsExactlyInAnyOrder(onOpponent, opponentsOwn)
+                    .doesNotContain(onYou, creatureAura);
+        }
+
+        @Test
+        @DisplayName("Binds a same-name card filter to the names of what it names as the effect applies")
+        void bindsSameNameFilter() {
+            Permanent onOpponent = harness.addToBattlefieldAndReturn(player1, new CurseOfStalkedPrey());
+            onOpponent.setAttachedTo(player2.getId());
+            StackEntry entry = entry(player1, null, null);
+            CardPredicate sameName = new CardSharesNameWithPermanentsPredicate(Subjects.attachedToPlayers(
+                    eachOpponent(), new PermanentHasSubtypePredicate(CardSubtype.CURSE)));
+            PredicateEvaluationService predicates =
+                    GameTestEngineContext.get().getBean(PredicateEvaluationService.class);
+
+            CardPredicate bound = subjects.bindCardSubjects(gd, entry, EFFECT, sameName);
+
+            assertThat(predicates.matchesCardPredicate(new CurseOfStalkedPrey(), bound, null, gd, player1.getId()))
+                    .isTrue();
+            assertThat(predicates.matchesCardPredicate(new Pacifism(), bound, null, gd, player1.getId())).isFalse();
+            onOpponent.setAttachedTo(player1.getId());
+            assertThat(predicates.matchesCardPredicate(new CurseOfStalkedPrey(),
+                    subjects.bindCardSubjects(gd, entry, EFFECT, sameName), null, gd, player1.getId())).isFalse();
+        }
     }
 
     @Nested

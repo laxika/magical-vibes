@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayDiscardThenSearchBasicLandToHandEffect;
@@ -46,6 +48,7 @@ public class EachPlayerMayDiscardThenSearchBasicLandToHandEffectHandler
                 gameData.eachPlayerMayDiscardThenSearchBasicLand;
 
         if (!state.active) {
+            entry.recordStep(StepKind.SEARCH, StepOutcome.NONE);
             state.active = true;
             state.controllerId = entry.getControllerId();
             addApnapPlayers(gameData, state);

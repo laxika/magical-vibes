@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerSearchesLibraryEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -40,6 +42,7 @@ public class EachPlayerSearchesLibraryEffectHandler implements NormalEffectHandl
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var search = (EachPlayerSearchesLibraryEffect) effect;
+        entry.recordStep(StepKind.SEARCH, StepOutcome.NONE);
         List<UUID> searchers = subjectResolutionService.players(gameData, entry, effect, search.players());
         if (searchers.isEmpty()) {
             return;
@@ -60,8 +63,15 @@ public class EachPlayerSearchesLibraryEffectHandler implements NormalEffectHandl
         boolean tapped = search.destination() == LibrarySearchDestination.BATTLEFIELD_TAPPED;
         List<LibrarySearchFollowUp.BasicLandsPick> picks = new ArrayList<>();
         for (UUID playerId : searchers) {
-            picks.add(new LibrarySearchFollowUp.BasicLandsPick(playerId, Math.max(0, amountEvaluationService.evaluate(
-                    gameData, search.count(), context.withControllerId(playerId))), tapped));
+            int count = Math.max(0, amountEvaluationService.evaluate(
+                    gameData, search.count(), context.withControllerId(playerId)));
+            if (search.oneSearchEach()) {
+                for (int i = 0; i < count; i++) {
+                    picks.add(new LibrarySearchFollowUp.BasicLandsPick(playerId, 1, tapped));
+                }
+            } else {
+                picks.add(new LibrarySearchFollowUp.BasicLandsPick(playerId, count, tapped));
+            }
         }
         LibrarySearchFollowUp followUp = LibrarySearchFollowUp.basicLandSearches(picks, List.of(), true);
         LibrarySearchFollowUp.BasicLandSearchQueue queue = followUp.basicLandSearchQueue()

@@ -18,9 +18,14 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardCouldEnchantPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIdSetPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasAllCardNamesPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -62,6 +67,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
     private final AmountEvaluationService amountEvaluationService;
     private final CreateTokenEffectHandler createTokenEffectHandler;
     private final SubjectResolutionService subjectResolutionService;
+    private final AuraAttachmentService auraAttachmentService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -117,7 +123,12 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                 : Math.max(0, amountEvaluationService.evaluate(gameData, effect.count(), amountContext));
 
         // "A card with the same name" as the triggering permanent, read as the ability resolves (Verdant Succession).
-        CardPredicate filter = AmountEvaluationService.bindTriggeringPermanentName(gameData, effect.filter(), entry);
+        CardPredicate describedFilter = AmountEvaluationService.bindTriggeringPermanentName(gameData, effect.filter(),
+                entry);
+        // "A different name than each Aura you control", "an Aura card that could enchant that creature": bound to what
+        // the subjects name now (CR 608.2h).
+        CardPredicate filter = bindCouldEnchant(gameData, entry, effect, controllerId,
+                subjectResolutionService.bindCardSubjects(gameData, entry, effect, describedFilter));
         ManaValueBound bound = effect.manaValueBound();
         boolean restricted = filter != null || bound != null || totalManaValueBound != null;
         CardPredicate searchFilter = restricted
@@ -166,7 +177,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                 : deck;
         List<Card> matchingCards = searchableCards.stream().filter(deckFilter).toList();
 
-        String baseDesc = describe(filter, boundValue, bound);
+        String baseDesc = describe(describedFilter, boundValue, bound);
         if (totalManaValueBound != null) {
             baseDesc += " with total mana value " + totalManaValueBound + " or less";
         }
@@ -265,6 +276,59 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
 
         log.info("Game {} - {} searches library for {} card(s) to {} ({} matches)",
                 gameData.id, playerName, count, destination, matchingCards.size());
+    }
+
+    /**
+     * {@code filter} with each {@link CardCouldEnchantPredicate} bound to the cards of {@code searcherId}'s library that
+     * are Auras that could enchant one of the permanents its subject names: each as it is, or as it last existed on the
+     * battlefield (CR 608.2h), judged by the Aura's enchant ability and what would make the attachment illegal
+     * (protection, "can't be enchanted"; CR 303.4a, 702.16c). A filter without the predicate is returned as it is.
+     */
+    private CardPredicate bindCouldEnchant(GameData gameData, StackEntry entry, SearchLibraryEffect effect,
+                                           UUID searcherId, CardPredicate filter) {
+        return switch (filter) {
+            case null -> null;
+            case CardCouldEnchantPredicate couldEnchant -> {
+                List<Permanent> hosts = subjectResolutionService.permanentIds(gameData, entry, effect,
+                                couldEnchant.permanents()).stream()
+                        .map(id -> asItIsOrLastWas(gameData, entry, id))
+                        .filter(java.util.Objects::nonNull)
+                        .toList();
+                java.util.Set<UUID> ids = new java.util.HashSet<>();
+                for (Card card : gameData.playerDecks.getOrDefault(searcherId, List.of())) {
+                    if (card.isAura() && !card.isEnchantPlayer() && hosts.stream().anyMatch(host ->
+                            !gameQueryService.cantBeEnchantedByOtherAuras(gameData, host)
+                                    && auraAttachmentService.canEnchant(gameData, card, searcherId, host))) {
+                        ids.add(card.getId());
+                    }
+                }
+                yield new CardIdSetPredicate(ids);
+            }
+            case CardAllOfPredicate all -> new CardAllOfPredicate(all.predicates().stream()
+                    .map(part -> bindCouldEnchant(gameData, entry, effect, searcherId, part)).toList());
+            case CardAnyOfPredicate any -> new CardAnyOfPredicate(any.predicates().stream()
+                    .map(part -> bindCouldEnchant(gameData, entry, effect, searcherId, part)).toList());
+            case CardNotPredicate not -> new CardNotPredicate(
+                    bindCouldEnchant(gameData, entry, effect, searcherId, not.predicate()));
+            default -> filter;
+        };
+    }
+
+    /** The permanent {@code permanentId} as it is on the battlefield, else as it last existed there, or {@code null}. */
+    private Permanent asItIsOrLastWas(GameData gameData, StackEntry entry, UUID permanentId) {
+        Permanent live = gameQueryService.findPermanentById(gameData, permanentId);
+        if (live != null) {
+            return live;
+        }
+        for (Permanent snapshot : java.util.Arrays.asList(entry.getSourcePermanentSnapshot(),
+                entry.getTriggeringPermanentSnapshot())) {
+            if (snapshot != null && permanentId.equals(snapshot.getId())) {
+                return snapshot;
+            }
+        }
+        return gameData.departedPermanentSnapshots.values().stream()
+                .filter(departed -> permanentId.equals(departed.getId()))
+                .findFirst().orElse(null);
     }
 
     private void insertNoCardFollowUp(GameData gameData, StackEntry entry, LibrarySearchFollowUp followUp) {

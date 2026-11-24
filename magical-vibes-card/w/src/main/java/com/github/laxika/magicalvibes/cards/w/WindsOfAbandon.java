@@ -47,7 +47,7 @@ public class WindsOfAbandon extends Card {
                                 Subjects.playersThisWay(StepKind.EXILE),
                                 CardPredicateUtils.basicLand(),
                                 new AmountThisWay(StepKind.EXILE).controlledByYou(),
-                                LibrarySearchDestination.BATTLEFIELD_TAPPED))));
+                                LibrarySearchDestination.BATTLEFIELD_TAPPED).oneSearchForEach())));
         target(TargetFilters.creatureAnOpponentControls());
     }
 

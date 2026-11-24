@@ -50,7 +50,10 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * Opposition Agent exiles instead is not found this way (its ruling: such an effect can't see it in exile).
  * {@code REVEAL_ONLY} keeps the found card in the library (revealed when the search states a quality) for a later step
  * to move ("If you reveal a card named X this way, put it onto the battlefield. Otherwise, put that card into your
- * hand"); {@code EXILE_IMPRINT} exiles it imprinted on the source permanent.
+ * hand"); {@code KEEP_IN_LIBRARY} keeps it there unrevealed, for "put it onto the battlefield attached to [it]", where a
+ * card that can't be attached stays hidden in the library (CR 303.4g); {@code EXILE_IMPRINT} exiles it imprinted on the
+ * source permanent. The filter's {@code CardSharesNameWithPermanentsPredicate} and {@code CardCouldEnchantPredicate} are
+ * bound to what their subjects name as the search begins.
  *
  * <p>Replaced the {@code SearchLibraryFor*} family (to-hand tutors, by-name searches, to-top,
  * creature-to-battlefield with MV/colour/subtype constraints, and card-types-to-battlefield).

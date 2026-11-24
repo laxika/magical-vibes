@@ -342,10 +342,6 @@ public class MultiPermanentChoiceHandlerService {
                 && permanentIds.size() != maxCount) {
             throw new IllegalStateException("Must choose exactly " + maxCount + " permanents to keep");
         }
-        if (multiPermanentChoice.context() instanceof MultiPermanentChoiceContext.ChooseFivePermanentsSearchSameNameToBattlefieldTapped
-                && permanentIds.size() != maxCount) {
-            throw new IllegalStateException("Exactly " + maxCount + " permanents must be selected");
-        }
         if (multiPermanentChoice.context() instanceof MultiPermanentChoiceContext.FadeAwayKeep keep) {
             var pool = new com.github.laxika.magicalvibes.model.ManaPool(gameData.playerManaPools.get(playerId));
             var cost = new com.github.laxika.magicalvibes.model.ManaCost(keep.manaCost());
@@ -979,8 +975,6 @@ public class MultiPermanentChoiceHandlerService {
             mayCastHandlerService.completeMadnessConvokeChoice(gameData, player, madnessConvoke, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesCreaturePutsVowCounterChoice ctx) {
             handleVowCounterCreatureChoice(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.ChooseFivePermanentsSearchSameNameToBattlefieldTapped) {
-            handleChooseFivePermanentsSearchSameName(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.RemoveAllCountersAsEntersForCounters ctx) {
             handleRemoveAllCountersAsEntersForCounters(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.PayManaPerCreatureUntap ctx) {
@@ -2323,38 +2317,6 @@ public class MultiPermanentChoiceHandlerService {
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    private void handleChooseFivePermanentsSearchSameName(GameData gameData, UUID playerId,
-                                                          List<UUID> permanentIds) {
-        List<String> names = new ArrayList<>();
-        for (UUID permId : permanentIds) {
-            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-            if (perm != null) {
-                names.add(perm.getCard().getName());
-            }
-        }
-
-        if (names.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(
-                    gameData.playerIdToName.get(playerId) + " chooses no permanents."));
-        } else if (librarySearchSupport.startNextSameNamePick(gameData, playerId,
-                LibrarySearchFollowUp.sameNamePicks(names, false,
-                        com.github.laxika.magicalvibes.model.LibrarySearchDestination.BATTLEFIELD_TAPPED)
-                        .withRemainingSameNamePicks(new LibrarySearchFollowUp.SameNamePickQueue(names, false,
-                                com.github.laxika.magicalvibes.model.LibrarySearchDestination.BATTLEFIELD_TAPPED,
-                                null, null, false, true, List.of())))) {
-            // A same-name search is now active; it resumes effect resolution on completion.
-            return;
-        } else if (!librarySearchSupport.isSearchPrevented(gameData, playerId)) {
-            // The controller searched but found no matching cards — shuffle once.
-            com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
-            gameLogService.append(gameData, GameLog.text(
-                    gameData.playerIdToName.get(playerId) + " finds no matching cards. Library is shuffled."));
-        }
-
-        // Standard completion: SBA → may abilities → resume effects
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 

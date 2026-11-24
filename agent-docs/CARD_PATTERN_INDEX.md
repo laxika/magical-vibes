@@ -350,7 +350,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | pump, boost, giant growth, overrun | CARD_PATTERNS_LANDS_SPELLS.md |
 | destroy, terror, wrath, board wipe, total power and toughness target restriction | CARD_PATTERNS_LANDS_SPELLS.md |
 | each player chooses a party, then sacrifices the rest | `EachPlayerChoosesPartyThenSacrificesRestEffect` |
-| each player sacrifices artifacts, enchantments, and nonbasic lands, then searches for basics | WaveOfVitriolEffect |
+| each player sacrifices artifacts, enchantments, and nonbasic lands, then searches for basics | `SacrificeEachMatchingPermanentEffect(artifact, enchantment or nonbasic land)` + `EachPlayerSearchesLibraryEffect.maySearch(playersThisWay(SACRIFICE), basicLand(), AmountThisWay(SACRIFICE).matching(land).controlledByYou(), BATTLEFIELD_TAPPED).oneSearchForEach()` (Wave of Vitriol) |
 | X-tiered spell that performs one branch at X=1/2/3 and all branches plus life gain at X>=4 | `v/VariableSolutions.java` + `ConditionalEffect(SpellXAtLeast/AllOf)` + seek, sacrifice, and random-conjure effects |
 | draw, mill, discard, tutor, search | CARD_PATTERNS_LANDS_SPELLS.md; CARD_PATTERNS_PERMANENTS_STATIC.md for static draw replacements |
 | each player may discard and draw, then damage accepting opponents | `s/Snort.java` + `EachPlayerMayDiscardHandThenDrawEffect` + `DealDamageToPlayersEffect.selectedOpponents` |

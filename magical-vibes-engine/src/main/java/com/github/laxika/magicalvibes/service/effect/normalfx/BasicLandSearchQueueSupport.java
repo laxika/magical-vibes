@@ -185,7 +185,12 @@ public class BasicLandSearchQueueSupport {
         // asked whatever those cards and the ones below them hold: whether a prompt comes, and what is logged, tells
         // nothing of a library not searched yet (CR 701.23a).
         int searchable = Math.min(deck.size(), librarySearchSupport.opponentSearchTopCardsLimit(gameData, playerId));
+        // A card an earlier search of the queue found waits in the library for the others; it can't be found again.
+        java.util.Set<UUID> alreadyFound = queue.selectedLands().stream()
+                .map(selected -> selected.card().getId())
+                .collect(java.util.stream.Collectors.toSet());
         List<Card> matching = deck.subList(0, searchable).stream()
+                .filter(card -> !alreadyFound.contains(card.getId()))
                 .filter(card -> card.hasAllCardNames() || predicateEvaluationService.matchesCardPredicate(
                         card, queue.filter(), null, gameData, playerId))
                 .toList();

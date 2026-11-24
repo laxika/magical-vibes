@@ -6,6 +6,12 @@ public enum LibrarySearchDestination {
     HAND_OR_GRAVEYARD,
     /** Reveal the chosen card, return it to the library, then shuffle. */
     REVEAL_ONLY,
+    /**
+     * Return the chosen card to the library unrevealed, for a later step of the resolution to move: "search your library
+     * for an Aura card, put it onto the battlefield attached to it", where a card that can't be put there stays hidden
+     * in the library (CR 303.4g, 400.2).
+     */
+    KEEP_IN_LIBRARY,
     BATTLEFIELD,
     BATTLEFIELD_TAPPED,
     EXILE_IMPRINT,
@@ -13,8 +19,6 @@ public enum LibrarySearchDestination {
     /** Exile the chosen card tracked "with" a source permanent (Endless Horizons). Carries the
      * {@code sourcePermanentId} and re-filters the library on each repeated pick. */
     EXILE_WITH_SOURCE,
-    /** Exile any number of matching cards, then create one token for each selected card. */
-    EXILE_AND_CREATE_TOKENS,
     /** Exile any number of matching cards and grant permission to cast each until end of turn. */
     EXILE_PLAYABLE_ANY_NUMBER,
     /** Exile the chosen card face down into a pile tracked "with" a source permanent, shuffling the

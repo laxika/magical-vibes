@@ -242,6 +242,15 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardPutIntoGraveyardFromNonBattlefieldThisTurnPredicate) {
             return "card put into a graveyard from a non-battlefield zone this turn";
         }
+        if (predicate instanceof CardCouldEnchantPredicate) {
+            return "Aura card that could enchant it";
+        }
+        if (predicate instanceof CardSharesNameWithPermanentsPredicate) {
+            return "card with the same name as one of those permanents";
+        }
+        if (predicate instanceof CardNotPredicate p && p.predicate() instanceof CardSharesNameWithPermanentsPredicate) {
+            return "card with a different name";
+        }
         if (predicate instanceof CardNotPredicate p) {
             String inner = describeFilter(p.predicate());
             if (inner.endsWith(" card")) {

@@ -8,6 +8,10 @@ import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.cards.c.CurseOfThePiercedHeart;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -347,6 +351,30 @@ class BitterheartWitchTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player1.getId());
+    }
+
+    @Test
+    @DisplayName("A Curse that can't enchant the target player stays in the library")
+    void curseTheTargetPlayerHasProtectionFromStaysInLibrary() {
+        harness.addToBattlefield(player1, new BitterheartWitch());
+        Card curse = new CurseOfThePiercedHeart();
+        setupLibraryWithCurse(player1, curse);
+        setupCombatWhereWitchDies();
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        // Protection from red after the target is chosen: the black ability still resolves, the red Curse can't
+        // enchant that player (its ruling, CR 702.16c).
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2.getId(),
+                new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.RED), player2.getId(),
+                Duration.UNTIL_END_OF_TURN));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Curse of the Pierced Heart");
+        assertThat(gd.playerDecks.get(player1.getId())).contains(curse);
     }
 
     private void setupCombatWhereWitchDies() {

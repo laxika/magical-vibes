@@ -30,8 +30,6 @@ class AuratouchedMageTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards()).containsExactly(cloak);
-        assertThat(search.params().destination())
-                .isEqualTo(com.github.laxika.magicalvibes.model.LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PERMANENT);
 
         harness.handleCardChosen(player1, 0);
 
@@ -53,8 +51,6 @@ class AuratouchedMageTest extends BaseCardTest {
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
-        assertThat(search.params().destination())
-                .isEqualTo(com.github.laxika.magicalvibes.model.LibrarySearchDestination.HAND);
         assertThat(search.params().reveals()).isTrue();
 
         harness.handleCardChosen(player1, 0);

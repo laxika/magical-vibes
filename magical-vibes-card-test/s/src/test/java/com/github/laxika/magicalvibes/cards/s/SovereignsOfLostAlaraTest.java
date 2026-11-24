@@ -178,6 +178,30 @@ class SovereignsOfLostAlaraTest extends BaseCardTest {
         assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player1.getId());
     }
 
+    @Test
+    @DisplayName("With the attacker gone the search still happens, puts no Aura onto the battlefield and shuffles")
+    void attackerGoneStillSearchesAndShuffles() {
+        harness.addToBattlefield(player1, new SovereignsOfLostAlara());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        MarkOfTheVampire aura = new MarkOfTheVampire();
+        harness.setLibrary(player1, List.of(aura));
+
+        declareAttackers(player1, List.of(1));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, attacker));
+        resolveUntilMayPrompt();
+        harness.handleMayAbilityChosen(player1, true);
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.LibrarySearch) {
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        }
+        resolveAllTriggers();
+
+        // The ruling: "You may still choose to search your library just to shuffle it."
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player1.getId());
+        assertThat(gameLogContains("shuffles their library.")).isTrue();
+        assertThat(findPermanents(player1, "Mark of the Vampire")).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(aura);
+    }
+
     private void resolveUntilMayPrompt() {
         resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);

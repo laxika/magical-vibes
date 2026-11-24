@@ -18,7 +18,8 @@ import org.springframework.stereotype.Component;
 /**
  * Sacrifices every permanent matching the effect's filter, each on behalf of its own controller.
  * Matching permanents are collected across all battlefields before the first sacrifice, so a
- * permanent leaving play mid-sweep cannot change which others are sacrificed.
+ * permanent leaving play mid-sweep cannot change which others are sacrificed. It is a
+ * {@code StepKind.SACRIFICE} step: what it sacrificed, and whose it was, is its outcome.
  */
 @Slf4j
 @Component
@@ -37,6 +38,8 @@ public class SacrificeEachMatchingPermanentEffectHandler implements NormalEffect
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (SacrificeEachMatchingPermanentEffect) effect;
+        // A SACRIFICE step: "for each land sacrificed this way" reads what it sacrificed (Wave of Vitriol).
+        entry.beginSacrificeStep();
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId())

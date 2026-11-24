@@ -21,7 +21,7 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
         PermanentSubject.Attached, PermanentSubject.AttachedOrSource, PermanentSubject.AttachedAtTrigger, PermanentSubject.Triggering, PermanentSubject.TriggeringAll, PermanentSubject.TriggeringOrSource, PermanentSubject.TriggeringCard,
         PermanentSubject.TargetSpell, PermanentSubject.TargetAbilitySource, PermanentSubject.TriggeringSpell, PermanentSubject.Returned,
         PermanentSubject.ReturnedThisResolution, PermanentSubject.ExiledThisResolution, PermanentSubject.Granter,
-        PermanentSubject.Named, PermanentSubject.ControlledBy, PermanentSubject.OwnedBy, PermanentSubject.AttachmentsOf,
+        PermanentSubject.Named, PermanentSubject.ControlledBy, PermanentSubject.OwnedBy, PermanentSubject.AttachmentsOf, PermanentSubject.AttachedToPlayers,
         PermanentSubject.AllOf, PermanentSubject.Except, PermanentSubject.OneOf, PermanentSubject.TriggeringAttackers,
         PermanentSubject.TriggeringSpellTargets, PermanentSubject.CreatedThisResolution, PermanentSubject.BandmatesOf,
         PermanentSubject.WithCreaturesSharingAColor, PermanentSubject.OtherPermanentsSharing, PermanentSubject.AttachedAndSharingCreatureType,
@@ -359,6 +359,31 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
         @Override
         public boolean needsStackEntry() {
             return permanents.needsStackEntry();
+        }
+
+        @Override
+        public boolean isSet() {
+            return true;
+        }
+    }
+
+    /**
+     * "Each Curse attached to enchanted player": every permanent matching {@code filter} attached to one of the players
+     * {@code players} names, whoever controls it, found once when the effect is applied. Nothing is targeted.
+     */
+    record AttachedToPlayers(PlayerSubject players, PermanentPredicate filter) implements PermanentSubject {
+
+        public AttachedToPlayers {
+            Objects.requireNonNull(players, "players");
+            Objects.requireNonNull(filter, "filter (use PermanentTruePredicate for any attachment)");
+            if (players.declaresTarget()) {
+                throw new IllegalArgumentException("The players a set of attachments names are no target: " + players);
+            }
+        }
+
+        @Override
+        public boolean needsStackEntry() {
+            return players.needsStackEntry();
         }
 
         @Override

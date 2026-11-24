@@ -26,10 +26,17 @@ import java.util.Objects;
  * @param filter      which cards may be found; {@link CardTruePredicate} for any card
  * @param count       up to how many, for each searcher
  * @param destination {@code BATTLEFIELD}, {@code BATTLEFIELD_TAPPED}, {@code HAND} or {@code TOP_OF_LIBRARY}
- * @param optional    "may search"
+ * <p>With {@code oneSearchEach} the count is a number of searches, each for one card and each its own search, in turn:
+ * "for each land destroyed this way, its controller may search their library for a basic land card" (From the Ashes,
+ * Wave of Vitriol, Winds of Abandon); a "may" is asked for each of them, and a player who takes a card in any of them
+ * has searched. What all of them found still moves together after the last.
+ *
+ * @param optional      "may search"
+ * @param oneSearchEach {@code count} separate searches for one card each, not one search for up to {@code count}
  */
 public record EachPlayerSearchesLibraryEffect(PlayerSubject players, CardPredicate filter, DynamicAmount count,
-                                              LibrarySearchDestination destination, boolean optional)
+                                              LibrarySearchDestination destination, boolean optional,
+                                              boolean oneSearchEach)
         implements CardEffect {
 
     public EachPlayerSearchesLibraryEffect {
@@ -46,6 +53,22 @@ public record EachPlayerSearchesLibraryEffect(PlayerSubject players, CardPredica
                 && (!(filter instanceof CardTruePredicate) || !new Fixed(1).equals(count) || optional)) {
             throw new IllegalArgumentException("A search to the top of the library is a must, for any one card");
         }
+        if (oneSearchEach && destination == LibrarySearchDestination.TOP_OF_LIBRARY) {
+            throw new IllegalArgumentException("A search to the top of the library is one search for one card");
+        }
+    }
+
+    public EachPlayerSearchesLibraryEffect(PlayerSubject players, CardPredicate filter, DynamicAmount count,
+                                           LibrarySearchDestination destination, boolean optional) {
+        this(players, filter, count, destination, optional, false);
+    }
+
+    /**
+     * The same searches, {@code count} of them for each searcher, each for one card: "for each [object] this way, its
+     * controller [may search] their library for a [filter] card".
+     */
+    public EachPlayerSearchesLibraryEffect oneSearchForEach() {
+        return new EachPlayerSearchesLibraryEffect(players, filter, count, destination, optional, true);
     }
 
     /** "[Players] may each search their library for up to [count] [filter] cards and put them [destination]." */

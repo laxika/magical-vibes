@@ -648,6 +648,8 @@ public final class Subjects {
                     new PermanentSubject.OwnedBy(ownedBy.players(), and(ownedBy.filter(), filter));
             case PermanentSubject.AttachmentsOf attachmentsOf ->
                     new PermanentSubject.AttachmentsOf(attachmentsOf.permanents(), and(attachmentsOf.filter(), filter));
+            case PermanentSubject.AttachedToPlayers attached ->
+                    new PermanentSubject.AttachedToPlayers(attached.players(), and(attached.filter(), filter));
             default -> throw new IllegalArgumentException("Only a set is narrowed by a filter: " + set);
         };
     }
@@ -668,6 +670,11 @@ public final class Subjects {
     /** Every permanent matching {@code filter} attached to a permanent {@code permanents} names ("all Auras attached to it"). */
     public static PermanentSubject attachmentsOf(PermanentSubject permanents, PermanentPredicate filter) {
         return new PermanentSubject.AttachmentsOf(permanents, filter);
+    }
+
+    /** Every permanent matching {@code filter} attached to a player {@code players} names ("each Curse attached to enchanted player"). */
+    public static PermanentSubject attachedToPlayers(PlayerSubject players, PermanentPredicate filter) {
+        return new PermanentSubject.AttachedToPlayers(players, filter);
     }
 
     /** Several subjects together, each permanent once. */

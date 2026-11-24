@@ -115,9 +115,13 @@ class SearchLibraryEffectHandlerTest {
         // "You": the resolving entry's controller, as the resolver answers it.
         org.mockito.Mockito.lenient().when(subjectResolutionService.player(any(), any(), any(), any()))
                 .thenAnswer(invocation -> ((StackEntry) invocation.getArgument(1)).getControllerId());
+        // A filter without subject predicates is bound to itself.
+        org.mockito.Mockito.lenient().when(subjectResolutionService.bindCardSubjects(any(), any(), any(), any()))
+                .thenAnswer(invocation -> invocation.getArgument(3));
         searchLibraryHandler = new SearchLibraryEffectHandler(gameQueryService, predicateEvaluationService,
                 gameLogService, support, amountEvaluationService, createTokenEffectHandler,
-                subjectResolutionService);
+                subjectResolutionService,
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.aura.AuraAttachmentService.class));
         distantMemoriesHandler = new DistantMemoriesEffectHandler(drawService, gameLogService, support);
         headGamesHandler = new HeadGamesEffectHandler(gameLogService, support);
     }

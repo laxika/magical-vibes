@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b (each in Findings; the fold queue marks its rows). Fold runs 8 to 14b run in parallel worktrees from 2026-11-24. Next: fold run 13b (running), 12c, 14c (`auction`), 11c, `drafted-step`, 8b, 15. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).              |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b (each in Findings; the fold queue marks its rows). Fold runs 8 to 14c run in parallel worktrees from 2026-11-24. Next: fold runs 12c and 14c (running), 11c, `drafted-step`, 8b, 15. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).               |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,782 / 3,045 (after fold run 14b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,774 / 3,037 (after fold run 13b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,374 rows over 4,415 classes (after fold run 14b). Latest verdict per class: `step-9` 960, unique 1,165, absorbed 650, split 571, blocked-other 488, survivor 282, blocked-step-model 140, blocked-player-loop 97, dead 62. Waiting: 960 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,387 rows over 4,416 classes (after fold run 13b). Latest verdict per class: `step-9` 952, unique 1,165, absorbed 658, split 572, blocked-other 487, survivor 284, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 952 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -623,6 +623,16 @@ Delayed and global triggers:
   (fold run 14b).
 - `SacrificeSelfEffect(thisWay(CHOOSE), player)`: "that player sacrifices all permanents in the pile of their choice", as one event
   (fold run 14b).
+
+- `SearchLibraryEffect(filter, KEEP_IN_LIBRARY, …)` + `PutCardsOntoBattlefieldEffect(foundThisWay()).attachedTo(host)` +
+  `ShuffleLibraryEffect(false)`: "search for an Aura [that could enchant it], put it onto the battlefield attached to it"; a card that
+  can't be attached stays hidden in the library (fold run 13b).
+- `CardCouldEnchantPredicate(permanents)` and `CardSharesNameWithPermanentsPredicate(permanents)`, bound as the search begins;
+  `Subjects.attachedToPlayers(players, filter)` (fold run 13b).
+- `SearchLibraryForSameNameAsEachPermanentEffect(permanents, libraryOwner, creatureOnly, tapped, optional)`: "for each [permanent],
+  search for a card with the same name"; one search, one pick per permanent, records SEARCH (fold run 13b).
+- `EachPlayerSearchesLibraryEffect.oneSearchForEach()`: "for each [object] this way, its controller [may] search for a [card]";
+  `SacrificeEachMatchingPermanentEffect` is a SACRIFICE step (fold run 13b).
 
 ### Blocked causes still open
 
@@ -1925,6 +1935,32 @@ survivor's.
 death-replacement asks kept, the three bid prompts and AI strategies merged with the prize kind on the prompt. Make an Example
 (`blocked-player-loop`) now fits the pile step with a `separator` option and `you()` choosing, then one sacrifice batch, which also fixes
 its "sacrifices each opponent's piles before the next separates" defect.
+
+### Step 9, fold run 13b (2026-11-24, parallel worktree)
+
+`search-attach` (4), `same-name-search` (3), `per-object-search` (1 + the Wave of Vitriol joiner): 9 folded (8 absorbed, 1 split), 4
+survivor rows (1 new record). Ratchet in its worktree 3,806 / 3,068 → 3,798 / 3,060. 11 card files rewritten, all checked with
+`get_card`; rulings for Sovereigns, Light-Paws, Auratouched Mage, Curse of Misfortunes, Bitterheart, Clarion, Dichotomancy, Doubling
+Chant, Winds, Leonin Arbiter. CR 101.4, 201.2a, 303.4a, 303.4f, 303.4g, 608.2d, 608.2e, 608.2h, 701.23a, 701.23b, 702.16c, 708.2
+checked.
+
+| Batch | Result |
+|---|---|
+| `search-attach` | Search with `KEEP_IN_LIBRARY` + `PutCardsOntoBattlefieldEffect(foundThisWay()).attachedTo(host)` + `ShuffleLibraryEffect(false)`, in a `MayEffect`. Hosts: Sovereigns `triggering()`; Light-Paws `source()`; Curse `enchantedPlayer()`; Bitterheart a card-level player target read by `targetPlayerDeclaredElsewhere()`. Sovereigns and the Mage filter with `CardCouldEnchantPredicate`; Light-Paws has none (its ruling: an Aura that can't be attached stays in the library). The Mage uses `REVEAL_ONLY` + `ConditionalEffect(SourceIsOnBattlefield)` for its battlefield and hand branches |
+| `same-name-search` | New `SearchLibraryForSameNameAsEachPermanentEffect(permanents, libraryOwner, creatureOnly, tapped, optional)` over the existing same-name pick queue: one search, one pick per permanent, records SEARCH. Clarion = `ChoosePermanentsEffect.exactly(5, controlledBy(you()))` + the record over `thisWay(CHOOSE)` |
+| `per-object-search` | `EachPlayerSearchesLibraryEffect.oneSearchForEach()`: that many one-card searches. From the Ashes = `DestroyAllPermanentsEffect` + the search over `playersThisWay(DESTROY)`; Wave = `SacrificeEachMatchingPermanentEffect` (now a SACRIFICE step) + the search over `playersThisWay(SACRIFICE)`; Winds of Abandon's overload gains `.oneSearchForEach()` |
+
+**Behaviour changes.** Light-Paws can find an Aura that can't be attached to it (it stays in the library) and may search with
+Light-Paws gone. Sovereigns with the attacker gone searches and shuffles (ruling). Bitterheart and Curse of Misfortunes: a Curse that
+can't enchant the player stays in the library (CR 303.4g, 702.16c). Winds (overload) and Wave: one search per object (the P15 defect;
+Winds' test failed first); found lands enter together after all searches (CR 101.4); the queue no longer offers again a card an earlier
+search found. Clarion: a choice among five or fewer is made unasked (ruling, CR 608.2d), and it reads effective names, so a face-down
+permanent finds nothing. SEARCH is now recorded by same-name picks and the deferred each-player queue. Deleted:
+`EXILE_AND_CREATE_TOKENS`, `LibrarySearchParams.tokenTemplate` / `sourceSetCode`.
+
+**For the next run.** Queue-based searches still without SEARCH: subtype and colour picks, held-out pools, d20, the may-put-selected
+branch, `HAND_OR_GRAVEYARD`. The "may search … then shuffle" shuffle under a search prohibition needs a may-search option on
+`SearchLibraryEffect` or a shuffle gated on `HappenedThisWay.searched()` (defect queue).
 
 ## Prompt
 

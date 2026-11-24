@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyUpToOneNonbasicLandPerPlayerThenSearchEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -44,6 +46,7 @@ public class DestroyUpToOneNonbasicLandPerPlayerThenSearchEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        entry.recordStep(StepKind.SEARCH, StepOutcome.NONE);
         beginNextChoice(gameData, entry.getControllerId(), apnapPlayers(gameData), 0, List.of(),
                 entry.getCard().getName());
     }

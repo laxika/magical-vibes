@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.o.ObNixilisUnshackled;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -18,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WindsOfAbandon.class, GrizzlyBears.class, Forest.class, Island.class})
+@CardUsed({WindsOfAbandon.class, GrizzlyBears.class, Forest.class, Island.class, ObNixilisUnshackled.class})
 class WindsOfAbandonTest extends BaseCardTest {
 
     @Test
@@ -75,6 +76,32 @@ class WindsOfAbandonTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
                 .hasSize(2)
                 .allMatch(Permanent::isTapped);
+    }
+
+    @Test
+    @DisplayName("Overload gives one search for each exiled creature, so a search trigger fires for each")
+    void overloadSearchesSeparatelyForEachExiledCreature() {
+        harness.addToBattlefield(player1, new ObNixilisUnshackled());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setLibrary(player2, List.of(new Island(), new Forest()));
+        harness.setHand(player1, List.of(new WindsOfAbandon()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castWithOverload(player1, 0);
+        harness.passBothPriorities();
+        // "For each creature exiled this way, its controller searches their library for a basic land card": two
+        // searches, each for one card.
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().remainingCount())
+                .isEqualTo(1);
+        harness.handleCardChosen(player2, 0);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().remainingCount())
+                .isEqualTo(1);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Ob Nixilis, Unshackled"))
+                .hasSize(2);
     }
 
     @Test

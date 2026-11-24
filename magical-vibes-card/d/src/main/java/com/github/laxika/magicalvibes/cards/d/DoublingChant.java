@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForSameNameCreatureForEachControlledCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForSameNameAsEachPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "M12", collectorNumber = "170")
 public class DoublingChant extends Card {
@@ -10,6 +12,8 @@ public class DoublingChant extends Card {
     public DoublingChant() {
         // For each creature you control, you may search your library for a creature card with the
         // same name as that creature. Put those cards onto the battlefield, then shuffle.
-        addSpellEffect(new SearchLibraryForSameNameCreatureForEachControlledCreatureEffect());
+        addSpellEffect(new SearchLibraryForSameNameAsEachPermanentEffect(
+                Subjects.controlledBy(Subjects.you(), new PermanentIsCreaturePredicate()),
+                Subjects.you(), true, false, true));
     }
 }

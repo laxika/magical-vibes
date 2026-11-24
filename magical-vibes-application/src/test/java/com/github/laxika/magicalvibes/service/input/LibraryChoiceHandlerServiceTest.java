@@ -25,7 +25,6 @@ import com.github.laxika.magicalvibes.model.effect.BecomeForetoldEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachOneOfEquipmentToSamuraiEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -91,7 +90,6 @@ class LibraryChoiceHandlerServiceTest {
     @Mock private EffectResolutionService effectResolutionService;
     @Mock private ExileService exileService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
-    @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.MemoriesReturningEffectHandler memoriesReturningEffectHandler;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport librarySearchSupport;
@@ -130,7 +128,7 @@ class LibraryChoiceHandlerServiceTest {
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.SeekTwoCardsToBattlefieldEffectHandler.class),
-                permanentControlSupport, permanentCounterSupport,
+                permanentCounterSupport,
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.ManifestService.class),
                 mock(com.github.laxika.magicalvibes.service.cast.CastingPermissionService.class));
         org.springframework.test.util.ReflectionTestUtils.setField(service, "landEquilibriumSupport",
@@ -428,45 +426,6 @@ class LibraryChoiceHandlerServiceTest {
         assertThat(PermanentGrants.grantedTriggerEffects(gd, entered.getValue(), Triggers.endStep(ActivePlayer.YOU)))
                 .singleElement().isInstanceOf(ReturnToHandEffect.class);
         assertThat(DelayedPermanentMoves.waiting(gd)).isEmpty();
-    }
-
-    @Test
-    @DisplayName("Exile-and-create-tokens search keeps selecting after the source is gone")
-    void exileAndCreateTokensSearchResumesAfterSourceSacrifice() {
-        Card artifact1 = createCard("Artifact One", CardType.ARTIFACT);
-        Card artifact2 = createCard("Artifact Two", CardType.ARTIFACT);
-        gd.playerDecks.get(player1Id).addAll(List.of(artifact1, artifact2));
-        CreateTokenEffect token = new CreateTokenEffect(
-                1, "Myr", 1, 1, null, List.of(), Set.of(), Set.of(CardType.ARTIFACT));
-        when(predicateEvaluationService.matchesCardPredicate(any(Card.class),
-                any(com.github.laxika.magicalvibes.model.filter.CardPredicate.class), isNull(), eq(gd), eq(player1Id)))
-                .thenReturn(true);
-        LibrarySearchParams params = LibrarySearchParams.builder(player1Id, List.of(artifact1, artifact2))
-                .canFailToFind(true)
-                .destination(LibrarySearchDestination.EXILE_AND_CREATE_TOKENS)
-                .filterPredicate(new CardTypePredicate(CardType.ARTIFACT))
-                .tokenTemplate(token)
-                .sourceSetCode("MRD")
-                .build();
-        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(params, "Choose cards", true));
-
-        service.handleLibraryCardChosen(gd, player1, 0);
-        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(
-                LibrarySearchParams.builder(player1Id, List.of(artifact2))
-                        .canFailToFind(true)
-                        .destination(LibrarySearchDestination.EXILE_AND_CREATE_TOKENS)
-                        .filterPredicate(new CardTypePredicate(CardType.ARTIFACT))
-                        .accumulatedCards(List.of(artifact1))
-                        .tokenTemplate(token)
-                        .sourceSetCode("MRD")
-                        .build(),
-                "Choose cards", true));
-        service.handleLibraryCardChosen(gd, player1, -1);
-
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.playerDecks.get(player1Id)).containsExactly(artifact2);
-        verify(permanentControlSupport).applyCreateToken(gd, player1Id, token, 1, "MRD");
-        verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
     }
 
     @Test

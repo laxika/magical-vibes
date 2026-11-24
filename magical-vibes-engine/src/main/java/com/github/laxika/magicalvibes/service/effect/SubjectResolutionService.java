@@ -25,6 +25,8 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithCardsPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithPermanentsPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -191,8 +193,9 @@ public class SubjectResolutionService {
     /**
      * {@code filter} with each {@link CardSharesCardTypeWithCardsPredicate} bound to the card types the cards its subject
      * names have as the effect applies ("a card that doesn't share a card type with the discarded card"): it becomes
-     * "is any of those types", which matches nothing when the subject names no card. A filter without the predicate is
-     * returned as it is.
+     * "is any of those types", which matches nothing when the subject names no card; and each
+     * {@link CardSharesNameWithPermanentsPredicate} to the names those permanents have ({@link #names}), which matches
+     * nothing when they have none. A filter without the predicates is returned as it is.
      */
     public CardPredicate bindCardSubjects(GameData gameData, StackEntry entry, CardEffect effect, CardPredicate filter) {
         return switch (filter) {
@@ -209,6 +212,9 @@ public class SubjectResolutionService {
                 yield new CardAnyOfPredicate(types.stream()
                         .<CardPredicate>map(CardTypePredicate::new).toList());
             }
+            case CardSharesNameWithPermanentsPredicate shares -> new CardAnyOfPredicate(
+                    names(gameData, entry, effect, shares.permanents()).stream()
+                            .<CardPredicate>map(CardNamedPredicate::new).toList());
             case CardAllOfPredicate all -> new CardAllOfPredicate(all.predicates().stream()
                     .map(part -> bindCardSubjects(gameData, entry, effect, part)).toList());
             case CardAnyOfPredicate any -> new CardAnyOfPredicate(any.predicates().stream()
@@ -975,6 +981,9 @@ public class SubjectResolutionService {
         if (subject instanceof PermanentSubject.AttachmentsOf attachmentsOf) {
             return attachmentsOf(ctx, attachmentsOf);
         }
+        if (subject instanceof PermanentSubject.AttachedToPlayers attached) {
+            return attachedToPlayers(ctx, attached);
+        }
         List<Permanent> live = new ArrayList<>();
         for (UUID id : ids(ctx, subject)) {
             Permanent permanent = gameQueryService.findPermanentById(ctx.gameData(), id);
@@ -1021,6 +1030,9 @@ public class SubjectResolutionService {
                     .map(Permanent::getId)
                     .toList();
             case PermanentSubject.AttachmentsOf attachmentsOf -> attachmentsOf(ctx, attachmentsOf).stream()
+                    .map(Permanent::getId)
+                    .toList();
+            case PermanentSubject.AttachedToPlayers attached -> attachedToPlayers(ctx, attached).stream()
                     .map(Permanent::getId)
                     .toList();
             case PermanentSubject.AllOf allOf -> {
@@ -1479,6 +1491,25 @@ public class SubjectResolutionService {
         for (Permanent host : livePermanents(ctx, subject.permanents())) {
             hosts.add(host.getId());
         }
+        if (hosts.isEmpty()) {
+            return List.of();
+        }
+        FilterContext filterContext = filterContext(ctx);
+        List<Permanent> matching = new ArrayList<>();
+        for (UUID playerId : apnapOrder(ctx.gameData())) {
+            for (Permanent permanent : ctx.gameData().playerBattlefields.getOrDefault(playerId, List.of())) {
+                if (permanent.getAttachedTo() != null && hosts.contains(permanent.getAttachedTo())
+                        && predicateEvaluationService.matchesPermanentPredicate(permanent, subject.filter(),
+                        filterContext)) {
+                    matching.add(permanent);
+                }
+            }
+        }
+        return matching;
+    }
+
+    private List<Permanent> attachedToPlayers(Context ctx, PermanentSubject.AttachedToPlayers subject) {
+        Set<UUID> hosts = new LinkedHashSet<>(players(ctx, subject.players()));
         if (hosts.isEmpty()) {
             return List.of();
         }

@@ -63,10 +63,13 @@ class WaveOfVitriolTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
         assertThat(search.params().playerId()).isEqualTo(player1.getId());
-        assertThat(search.params().remainingCount()).isEqualTo(2);
+        // "For each land sacrificed this way, its controller may search": one search for one card per land.
+        assertThat(search.params().remainingCount()).isEqualTo(1);
         assertThat(search.params().destination().name()).isEqualTo("BATTLEFIELD_TAPPED");
 
         harness.handleCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().remainingCount())
+                .isEqualTo(1);
         harness.handleCardChosen(player1, 0);
 
         search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -157,6 +160,8 @@ class WaveOfVitriolTest extends BaseCardTest {
 
         cast();
         harness.handleCardChosen(player1, 0);
+        // The second land's search finds no basic land card.
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))

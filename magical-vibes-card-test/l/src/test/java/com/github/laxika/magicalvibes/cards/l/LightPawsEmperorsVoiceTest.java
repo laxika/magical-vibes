@@ -9,13 +9,13 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class LightPawsEmperorsVoiceTest extends BaseCardTest {
 
     @Test
+    @DisplayName("A cast Aura lets it search for a cheaper, differently named Aura and attach it to Light-Paws")
     void castAuraSearchesForEligibleAuraAndAttachesItToLightPaws() {
         Permanent lightPaws = addCreatureReady(player1, new LightPawsEmperorsVoice());
         Card enteringAura = aura("Entering Aura", "{2}");
@@ -46,8 +47,6 @@ class LightPawsEmperorsVoiceTest extends BaseCardTest {
 
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards()).containsExactly(eligibleAura);
-        assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PERMANENT);
-        assertThat(search.params().attachToPermanentId()).isEqualTo(lightPaws.getId());
 
         harness.handleCardChosen(player1, 0);
 
@@ -59,6 +58,7 @@ class LightPawsEmperorsVoiceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An Aura put onto the battlefield without being cast does not trigger the search")
     void auraPutOntoBattlefieldWithoutBeingCastDoesNotTriggerSearch() {
         addCreatureReady(player1, new LightPawsEmperorsVoice());
         Card enteringAura = aura("Put Aura", "{1}");
@@ -71,6 +71,7 @@ class LightPawsEmperorsVoiceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The search excludes the names of every Aura you control and the fetched Aura does not trigger again")
     void realAuraSearchExcludesNamesOfAllControlledAurasAndDoesNotTriggerAgain() {
         Permanent lightPaws = addCreatureReady(player1, new LightPawsEmperorsVoice());
         Permanent otherCreature = addCreatureReady(player1, new SpiritedCompanion());
@@ -100,6 +101,7 @@ class LightPawsEmperorsVoiceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The controller may decline the search")
     void controllerCanDeclineSearch() {
         Permanent lightPaws = addCreatureReady(player1, new LightPawsEmperorsVoice());
         Card eligible = new ClawingTorment();
@@ -117,6 +119,7 @@ class LightPawsEmperorsVoiceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With Light-Paws gone a found Aura stays in the library and the library is shuffled")
     void searchStillShufflesWhenLightPawsHasLeftTheBattlefield() {
         Permanent lightPaws = addCreatureReady(player1, new LightPawsEmperorsVoice());
         Permanent otherCreature = addCreatureReady(player1, new SpiritedCompanion());
@@ -131,13 +134,17 @@ class LightPawsEmperorsVoiceTest extends BaseCardTest {
 
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
+        // The search may still find an Aura; with nothing to attach it to, it stays in the library (ruling).
+        harness.handleCardChosen(player1, 0);
 
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(eligible);
         assertThat(findPermanents(player1, "Clawing Torment")).isEmpty();
-        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+        assertThat(gameLogContains("shuffles their library.")).isTrue();
     }
 
     @Test
+    @DisplayName("An Aura spell cast by an opponent does not trigger it after control of the spell changes")
     void auraCastByOpponentDoesNotTriggerAfterSpellControlChanges() {
         addCreatureReady(player2, new LightPawsEmperorsVoice());
         Permanent otherCreature = addCreatureReady(player1, new SpiritedCompanion());
@@ -154,6 +161,7 @@ class LightPawsEmperorsVoiceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An Aura Light-Paws has protection from stays in the library")
     void protectionPreventsFetchedAuraFromEnteringBattlefield() {
         Permanent lightPaws = addCreatureReady(player1, new LightPawsEmperorsVoice());
         Permanent otherCreature = addCreatureReady(player1, new SpiritedCompanion());
@@ -175,9 +183,11 @@ class LightPawsEmperorsVoiceTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ineligible);
         assertThat(findPermanents(player1, "Clawing Torment")).isEmpty();
-        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+        assertThat(gameLogContains("shuffles their library.")).isTrue();
     }
+
     @Test
+    @DisplayName("The mana value bound reads the triggering Aura as it last existed")
     void boundsTheSearchByTheLastKnownManaValueOfAnAuraThatLeft() {
         Permanent lightPaws = addCreatureReady(player1, new LightPawsEmperorsVoice());
         Card enteringAura = aura("Entering Aura", "{2}");
@@ -202,6 +212,32 @@ class LightPawsEmperorsVoiceTest extends BaseCardTest {
         // name with an Aura you control, so the same-name card is eligible now.
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards()).containsExactlyInAnyOrder(eligibleAura, sameNameAura);
+    }
+
+    @Test
+    @DisplayName("An Aura that can't enchant Light-Paws may be found and stays in the library")
+    void foundAuraThatCantEnchantLightPawsStaysInLibrary() {
+        Permanent lightPaws = addCreatureReady(player1, new LightPawsEmperorsVoice());
+        Card enteringAura = aura("Entering Aura", "{2}");
+        Card landAura = card("Land Aura", CardType.ENCHANTMENT, "{1}");
+        landAura.setSubtypes(List.of(CardSubtype.AURA));
+        landAura.target(TargetFilters.land());
+
+        harness.setHand(player1, List.of(enteringAura));
+        harness.setLibrary(player1, List.of(landAura));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, lightPaws.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().cards()).containsExactly(landAura);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(landAura);
+        assertThat(findPermanents(player1, "Land Aura")).isEmpty();
     }
 
     private Card aura(String name, String manaCost) {

@@ -63,6 +63,26 @@ class FromTheAshesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The found basic lands enter together after the last search")
+    void foundLandsEnterTogetherAfterAllSearches() {
+        harness.addToBattlefield(player1, new SavageLands());
+        harness.addToBattlefield(player2, new SavageLands());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Island()));
+
+        castFromTheAshes();
+        harness.handleCardChosen(player1, 0);
+
+        // Choices in APNAP order, then the action at once (CR 101.4, 608.2e).
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getName().equals("Forest"));
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Island");
+    }
+
+    @Test
     @DisplayName("Each optional search can be declined independently")
     void searchesCanBeDeclinedIndependently() {
         harness.addToBattlefield(player1, new SavageLands());

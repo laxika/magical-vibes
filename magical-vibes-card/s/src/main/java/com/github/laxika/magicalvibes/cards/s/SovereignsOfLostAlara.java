@@ -2,10 +2,16 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardCouldEnchantPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,11 +28,15 @@ public class SovereignsOfLostAlara extends Card {
                 new BoostTargetCreatureEffect(1, 1));
 
         // Whenever a creature you control attacks alone, you may search your library for an Aura card
-        // that could enchant that creature and put it onto the battlefield attached to it. The search
-        // reads the recorded lone attacker (the trigger's non-targeting target) as the host.
+        // that could enchant that creature, put it onto the battlefield attached to that creature, then shuffle.
         addTrigger(Triggers.creatureYouControlAttacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
-                new MayEffect(new SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffect(),
+                new MayEffect(SequenceEffect.of(
+                        new SearchLibraryEffect(new CardCouldEnchantPredicate(Subjects.triggering()),
+                                LibrarySearchDestination.KEEP_IN_LIBRARY, null, false),
+                        new PutCardsOntoBattlefieldEffect(Subjects.foundThisWay())
+                                .attachedTo(Subjects.triggering()),
+                        new ShuffleLibraryEffect(false)),
                         "Search your library for an Aura card to attach to the attacking creature?"));
     }
 }

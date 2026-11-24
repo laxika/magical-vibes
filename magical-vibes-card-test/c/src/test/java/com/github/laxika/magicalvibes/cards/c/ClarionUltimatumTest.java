@@ -17,6 +17,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
+import com.github.laxika.magicalvibes.model.CardType;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,21 +29,19 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ClarionUltimatumTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Resolving Clarion Ultimatum offers all controlled permanents when fewer than five exist")
-    void promptsPermanentChoice() {
-        List<Permanent> forests = setupForests(3);
+    @DisplayName("With fewer than five permanents each of them is chosen unasked and the search begins")
+    void choosesEveryPermanentUnaskedWhenFewerThanFive() {
+        setupForests(3);
         setupLibrary();
         castClarion();
 
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(choice.playerId()).isEqualTo(player1.getId());
-        assertThat(choice.maxCount()).isEqualTo(3);
-        assertThat(choice.validIds())
-                .containsExactlyInAnyOrderElementsOf(forests.stream().map(Permanent::getId).toList());
+        // Its ruling: "If you control fewer than five permanents at that time, choose each permanent you do control."
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().playerId()).isEqualTo(player1.getId());
+        assertThat(search.params().cards()).allMatch(card -> "Forest".equals(card.getName()));
     }
 
     @Test
@@ -65,8 +65,6 @@ class ClarionUltimatumTest extends BaseCardTest {
         castClarion();
         harness.passBothPriorities();
 
-        harness.handleMultiplePermanentsChosen(player1,
-                List.of(forests.get(0).getId(), forests.get(1).getId()));
 
         // The first same-name pick offers only Forest cards.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -93,7 +91,6 @@ class ClarionUltimatumTest extends BaseCardTest {
         castClarion();
         harness.passBothPriorities();
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(forests.get(0).getId()));
 
         // Decline the only same-name search.
         harness.handleCardChosen(player1, -1);
@@ -104,18 +101,19 @@ class ClarionUltimatumTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The controller must choose every permanent when fewer than five exist")
-    void cannotChooseNoneWhenPermanentsExist() {
+    @DisplayName("Every permanent is chosen when fewer than five exist, so each gives a pick")
+    void everyPermanentGivesAPickWhenFewerThanFive() {
         setupForests(3);
-        setupLibrary();
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         castClarion();
         harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of()))
-                .isInstanceOf(IllegalStateException.class);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(forestsOnBattlefield()).hasSize(3);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(forestsOnBattlefield()).hasSize(6);
     }
 
     @Test
@@ -139,7 +137,6 @@ class ClarionUltimatumTest extends BaseCardTest {
         setupLibrary();
         castClarion();
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, forests.stream().map(Permanent::getId).toList());
 
         harness.handleCardChosen(player1, 0);
 
@@ -158,7 +155,6 @@ class ClarionUltimatumTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new DruidOfTheAnima()));
         castClarion();
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(island.getId(), forest.getId()));
 
         harness.handleCardChosen(player1, 0);
 
@@ -175,7 +171,6 @@ class ClarionUltimatumTest extends BaseCardTest {
         setupLibrary();
         castClarion();
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, forests.stream().map(Permanent::getId).toList());
         harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
             harness.handleCardChosen(player1, 0);
             assertThat(trickster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -196,7 +191,6 @@ class ClarionUltimatumTest extends BaseCardTest {
         setupLibrary();
         castClarion();
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, forests.stream().map(Permanent::getId).toList());
 
         harness.handleCardChosen(player1, -1);
         harness.handleCardChosen(player1, 0);
@@ -224,6 +218,7 @@ class ClarionUltimatumTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A found Clone chooses what to copy before the found cards enter together tapped")
     void foundCloneChoosesItsCopyBeforeTheCardsEnterTogetherTapped() {
         Permanent druid = harness.addToBattlefieldAndReturn(player1, new DruidOfTheAnima());
         Permanent originalClone = harness.addToBattlefieldAndReturn(player1, new Clone());
@@ -231,7 +226,6 @@ class ClarionUltimatumTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new DruidOfTheAnima(), new Clone()));
         castClarion();
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(druid.getId(), originalClone.getId()));
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
 
@@ -254,7 +248,6 @@ class ClarionUltimatumTest extends BaseCardTest {
         setupLibrary();
         castClarion();
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, forests.stream().map(Permanent::getId).toList());
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
 
@@ -271,7 +264,6 @@ class ClarionUltimatumTest extends BaseCardTest {
         setupLibrary();
         castClarion();
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, forests.stream().map(Permanent::getId).toList());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).decidingPlayerId())
                 .isEqualTo(player2.getId());
@@ -289,17 +281,33 @@ class ClarionUltimatumTest extends BaseCardTest {
     @Test
     @DisplayName("A permanent that can't be chosen is not among the five permanents to choose")
     void doesNotOfferPermanentThatCantBeChosen() {
-        List<Permanent> forests = setupForests(2);
+        setupForests(2);
         harness.addToBattlefield(player1, new GlimpseTheUnthinkablePlaytest());
-        setupLibrary();
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new GlimpseTheUnthinkablePlaytest()));
         castClarion();
         harness.passBothPriorities();
 
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(choice.validIds())
-                .containsExactlyInAnyOrderElementsOf(forests.stream().map(Permanent::getId).toList());
-        assertThat(choice.maxCount()).isEqualTo(2);
+        // Only the two Forests can be chosen, so both are, unasked: two picks, none for the Glimpse.
+        harness.handleCardChosen(player1, -1);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("A face-down permanent has no name, so no card is found for it")
+    void faceDownPermanentFindsNothing() {
+        Permanent faceDown = harness.addToBattlefieldAndReturn(player1, new DruidOfTheAnima());
+        faceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setLibrary(player1, List.of(new DruidOfTheAnima()));
+        castClarion();
+        harness.passBothPriorities();
+
+        // Its ruling: "If you choose a permanent with no name, such as a face-down creature, no card in your library
+        // can be found with that name."
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
     private List<Permanent> setupForests(int count) {

@@ -80,9 +80,10 @@ package com.github.laxika.magicalvibes.model;
  *       same player goaded again counts, CR 701.15d), those creatures, their controllers: "for each creature goaded this
  *       way".</li>
  *   <li>{@link #SEARCH}: the number of cards a library search found ({@code SearchLibraryEffect},
- *       {@code SearchTargetLibraryEffect}, {@code IntuitionEffect}), those cards, the searching player, each one's
+ *       {@code SearchTargetLibraryEffect}, {@code IntuitionEffect}, {@code EachPlayerSearchesLibraryEffect}, the
+ *       same-name searches of {@code SearchLibraryForSameNameAsEachPermanentEffect}), those cards, the searching player, each one's
  *       {@link StepOutcome#movedCards()} entry naming the zone the search put it in (a hand, a graveyard, exile, or the
- *       library for a search that reveals and keeps it there, CR 701.20b); a card put onto the battlefield has no entry
+ *       library for a search that keeps it there, revealed or not, CR 701.20b); a card put onto the battlefield has no entry
  *       ({@code Subjects.searched()} names the permanent). A search that is prevented, finds nothing or searches an
  *       empty library records nothing found (CR 701.23a, 701.23b); a card Opposition Agent exiled instead is not
  *       found this way.</li>
