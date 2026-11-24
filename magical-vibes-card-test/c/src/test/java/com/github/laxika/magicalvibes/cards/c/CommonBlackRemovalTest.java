@@ -83,7 +83,7 @@ class CommonBlackRemovalTest extends BaseCardTest {
 
         cast(target, 2);
         harness.assertInGraveyard(player2, "Grizzly Bears");
-        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+        harness.handlePermanentChosen(player1, second.getId());
 
         assertThat(first.getCounterCount(CounterType.MENACE)).isZero();
         assertThat(second.getCounterCount(CounterType.MENACE)).isEqualTo(1);
@@ -99,7 +99,7 @@ class CommonBlackRemovalTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId()));
+        harness.handlePermanentChosen(player1, first.getId());
         assertThat(first.getCounterCount(CounterType.MENACE)).isEqualTo(1);
     }
 

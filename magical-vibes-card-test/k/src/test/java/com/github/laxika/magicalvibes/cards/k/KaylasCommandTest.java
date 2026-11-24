@@ -36,8 +36,8 @@ class KaylasCommandTest extends BaseCardTest {
         harness.castModalSorceryWithModes(player1, 0, 2, new int[]{0, 1}, List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, bears.getId());
 
         harness.assertOnBattlefield(player1, "Construct");
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -115,8 +115,8 @@ class KaylasCommandTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, bears.getId());
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.DOUBLE_STRIKE);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);

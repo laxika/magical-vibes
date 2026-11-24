@@ -49,8 +49,8 @@ class BloodCurdleTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, second.getId());
 
         assertThat(first.getCounterCount(CounterType.MENACE)).isZero();
         assertThat(second.getCounterCount(CounterType.MENACE)).isEqualTo(1);
@@ -157,12 +157,12 @@ class BloodCurdleTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+        harness.handlePermanentChosen(player1, second.getId());
 
         assertThat(first.getCounterCount(CounterType.MENACE)).isZero();
         assertThat(second.getCounterCount(CounterType.MENACE)).isEqualTo(1);

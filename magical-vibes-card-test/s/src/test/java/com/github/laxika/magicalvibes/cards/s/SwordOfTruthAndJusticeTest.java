@@ -46,8 +46,8 @@ class SwordOfTruthAndJusticeTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(attacker.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, attacker.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         harness.handleMultiplePermanentsChosen(player1, List.of(attacker.getId()));
@@ -81,8 +81,8 @@ class SwordOfTruthAndJusticeTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(otherCreature.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, otherCreature.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         harness.handleMultiplePermanentsChosen(player1, List.of(otherCreature.getId()));
 
@@ -140,10 +140,10 @@ class SwordOfTruthAndJusticeTest extends BaseCardTest {
         resolveCombat();
         resolveAllTriggers();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(attacker.getId()));
+        harness.handlePermanentChosen(player1, attacker.getId());
         harness.handleMultiplePermanentsChosen(player1, List.of());
         assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -182,7 +182,7 @@ class SwordOfTruthAndJusticeTest extends BaseCardTest {
 
         resolveCombat();
         resolveAllTriggers();
-        harness.handleMultiplePermanentsChosen(player1, List.of(otherCreature.getId()));
+        harness.handlePermanentChosen(player1, otherCreature.getId());
 
         assertThat(otherCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(otherCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);

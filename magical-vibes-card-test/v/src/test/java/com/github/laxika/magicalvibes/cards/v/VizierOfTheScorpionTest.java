@@ -61,7 +61,7 @@ class VizierOfTheScorpionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+        harness.handlePermanentChosen(player1, second.getId());
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId()))

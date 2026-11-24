@@ -117,7 +117,7 @@ package com.github.laxika.magicalvibes.model;
  * chooses at a prompt), exile the top card of a library, a hand or a spell ({@code ExileTargetPlayerHandEffect},
  * {@code ExileTargetSpellEffect}), exile the top cards with the source ({@code ExileTopCardsToSourceEffect}), search
  * for cards to exile with the source ({@code SearchLibraryForCardsToExileWithSourceEffect}: each pick adds to it as it
- * is answered), seek cards ({@code SeekLibraryEffect}, {@code SeekCardsToHandEffect}), conjure cards ({@code ConjureCardsEffect}), put exiled cards into a graveyard, note a number, destroy, copy, create a token (also attached to a permanent, {@code CreateTokenAttachedToTargetEffect}, whose choice among triggering creatures adds the token as it is answered), manifest, mill and exile the
+ * is answered), seek cards ({@code SeekLibraryEffect}, {@code SeekCardsToHandEffect}), conjure cards ({@code ConjureCardsEffect}), put exiled cards into a graveyard, note a number, destroy, copy, create a token (also attached to a permanent, {@code CreateTokenAttachedToTargetEffect}, whose choice among triggering creatures adds the token as it is answered), manifest ({@code ManifestDreadEffect}: as its choice is answered), mill and exile the
  * source and return it transformed ({@code ExileSelfAndReturnTransformedEffect}), transform the source
  * ({@code TransformSelfEffect}) (never prompt, or
  * rerun before any change); the self sacrifice ({@code departAsStep}), discard and

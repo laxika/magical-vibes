@@ -107,8 +107,8 @@ class CallTheSpiritDragonsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(secondRed.getId()));
+                .isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, secondRed.getId());
 
         assertThat(firstRed.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(secondRed.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -166,8 +166,8 @@ class CallTheSpiritDragonsTest extends BaseCardTest {
         harness.passBothPriorities();
         for (int color = 0; color < 3; color++) {
             assertThat(gd.interaction.activeInteraction())
-                    .isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-            harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId()));
+                    .isInstanceOf(PendingInteraction.PermanentChoice.class);
+            harness.handlePermanentChosen(player1, chosen.getId());
         }
 
         assertThat(chosen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);

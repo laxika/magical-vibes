@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({EternalSkylord.class, GrizzlyBears.class, LazotepReaver.class})
 class EternalSkylordTest extends BaseCardTest {
@@ -84,13 +86,34 @@ class EternalSkylordTest extends BaseCardTest {
         PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
 
         castEternalSkylord();
-        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+        harness.handlePermanentChosen(player1, second.getId());
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken()).isEmpty();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Amass must choose one of several Armies: an empty answer is refused (CR 701.47a)")
+    void cannotDeclineChoosingAnArmy() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new LazotepReaver());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new LazotepReaver());
+        PermanentGrants.subtype(gd, first, CardSubtype.ARMY);
+        PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
+
+        castEternalSkylord();
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.handlePermanentChosen(player1, first.getId());
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(PermanentGrants.subtypesOf(gd, first)).contains(CardSubtype.ZOMBIE);
     }
 
     @Test

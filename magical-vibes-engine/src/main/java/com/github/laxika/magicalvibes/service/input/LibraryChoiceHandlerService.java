@@ -2737,6 +2737,9 @@ public class LibraryChoiceHandlerService {
                 gameData, controllerId, sourceCard, selectedCards.getFirst());
         if (sourceEntry != null && manifestedPermanent != null) {
             sourceEntry.setChosenPermanentId(manifestedPermanent.getId());
+            // The manifest dread step ends with this answer: "that creature" is thisWay(MANIFEST) (CR 701.62a).
+            sourceEntry.recordStep(StepKind.MANIFEST,
+                    StepOutcome.ofObjects(List.of(manifestedPermanent.getId()), List.of(controllerId)));
         }
 
         if (remainingCards.isEmpty()) {

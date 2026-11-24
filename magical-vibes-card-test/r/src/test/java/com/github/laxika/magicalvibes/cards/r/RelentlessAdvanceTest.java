@@ -57,7 +57,7 @@ class RelentlessAdvanceTest extends BaseCardTest {
         castRelentlessAdvance();
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+        harness.handlePermanentChosen(player1, second.getId());
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(PermanentGrants.subtypesOf(gd, first)).doesNotContain(CardSubtype.ZOMBIE);
@@ -79,7 +79,7 @@ class RelentlessAdvanceTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId()));
+        harness.handlePermanentChosen(player1, first.getId());
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
@@ -111,7 +111,7 @@ class RelentlessAdvanceTest extends BaseCardTest {
         assertThat(armies).hasSize(2);
         assertThat(armies).allSatisfy(army ->
                 assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero());
-        harness.handleMultiplePermanentsChosen(player1, List.of(armies.getFirst().getId()));
+        harness.handlePermanentChosen(player1, armies.getFirst().getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())

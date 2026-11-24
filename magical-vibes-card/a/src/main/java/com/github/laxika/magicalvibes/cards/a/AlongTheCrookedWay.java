@@ -9,12 +9,14 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToChosenPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenOwnPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -26,7 +28,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
 import java.util.List;
 import java.util.Set;
 
@@ -51,12 +52,16 @@ public class AlongTheCrookedWay extends Card {
                         SequenceEffect.of(
                                 new CreateTokenEffect("Goblin Army", 0, 0, CardColor.BLACK,
                                         List.of(CardSubtype.GOBLIN, CardSubtype.ARMY), Set.of(), Set.of()),
-                                new PutCounterOnChosenOwnPermanentEffect(
-                                        CounterType.PLUS_ONE_PLUS_ONE, 1, army)),
+                                ChoosePermanentsEffect.exactly(1, Subjects.controlledBy(Subjects.you(), army),
+                                        "an Army you control"),
+                                new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE),
+                                        CounterType.PLUS_ONE_PLUS_ONE, 1)),
                         SequenceEffect.of(
-                                new PutCounterOnChosenOwnPermanentEffect(
-                                        CounterType.PLUS_ONE_PLUS_ONE, 1, army),
-                                new GrantSubtypeToChosenPermanentEffect(CardSubtype.GOBLIN))));
+                                ChoosePermanentsEffect.exactly(1, Subjects.controlledBy(Subjects.you(), army),
+                                        "an Army you control"),
+                                new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE),
+                                        CounterType.PLUS_ONE_PLUS_ONE, 1),
+                                new GrantSubtypeEffect(CardSubtype.GOBLIN, Subjects.thisWay(StepKind.CHOOSE)))));
 
         PermanentPredicate goblinOrOrc = new PermanentAnyOfPredicate(List.of(
                 new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),

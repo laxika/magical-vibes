@@ -408,6 +408,8 @@ public class CopySupport {
         copy.setSacrificedPermanentSnapshot(source.getSacrificedPermanentSnapshot() == null
                 ? null : new com.github.laxika.magicalvibes.model.Permanent(source.getSacrificedPermanentSnapshot()));
         copy.setSacrificedColorCount(source.getSacrificedColorCount());
+        // ... and the permanents its costs tapped or exiled ("the creature tapped to pay this spell's additional cost").
+        copy.setChosenCostPermanentIds(source.getChosenCostPermanentIds());
         copy.setKicked(source.isKicked());
         copy.setGiftPromised(source.isGiftPromised());
         copy.setAlternativeCost(source.getAlternativeCost());

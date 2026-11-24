@@ -3,14 +3,16 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.ControlsCreatureWithGreatestPower;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenOwnPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,8 +26,9 @@ public class PrimalEmpathy extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 new ConditionalEffect(greatestPower, new DrawCardEffect()),
                 new ConditionalEffect(new NotCondition(greatestPower),
-                        new PutCounterOnChosenOwnPermanentEffect(
-                                CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1), new PermanentIsCreaturePredicate(),
-                                false, true))));
+                        SequenceEffect.of(
+                                ChoosePermanentsEffect.exactly(1, Subjects.creaturesYouControl(), "a creature you control"),
+                                new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE),
+                                        CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))))));
     }
 }

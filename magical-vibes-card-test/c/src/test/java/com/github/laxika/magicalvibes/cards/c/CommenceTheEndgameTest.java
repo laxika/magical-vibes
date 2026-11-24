@@ -87,7 +87,7 @@ class CommenceTheEndgameTest extends BaseCardTest {
 
         harness.castFromHand(player1, new CommenceTheEndgame(), "{4}{U}{U}");
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+        harness.handlePermanentChosen(player1, second.getId());
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);

@@ -85,7 +85,7 @@ class WidespreadBrutalityTest extends BaseCardTest {
         castWidespreadBrutality();
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         assertThat(opponent.getMarkedDamage()).isZero();
-        harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId()));
+        harness.handlePermanentChosen(player1, chosen.getId());
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(PermanentGrants.subtypesOf(gd, first)).doesNotContain(CardSubtype.ZOMBIE);

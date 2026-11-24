@@ -6,16 +6,19 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenOwnPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-
 import java.util.List;
 import java.util.Set;
 
@@ -28,12 +31,14 @@ public class MyFollowersAscend extends Card {
 
         addSpellEffect(new ConditionalEffect(controlsCreature,
                         SequenceEffect.of(
-                                new PutCounterOnChosenOwnPermanentEffect(
-                                        CounterType.PLUS_ONE_PLUS_ONE, 5, creature),
-                                new GrantKeywordToChosenCreatureUntilEndOfTurnEffect(
-                                        Keyword.FLYING, null),
-                                new GrantKeywordToChosenCreatureUntilEndOfTurnEffect(
-                                        Keyword.VIGILANCE, null))));
+                                ChoosePermanentsEffect.exactly(1, Subjects.controlledBy(Subjects.you(), creature),
+                                        "a creature you control"),
+                                new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE),
+                                        CounterType.PLUS_ONE_PLUS_ONE, 5),
+                                new GrantKeywordEffect(Keyword.FLYING, Subjects.thisWay(StepKind.CHOOSE),
+                                        Duration.UNTIL_END_OF_TURN),
+                                new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.thisWay(StepKind.CHOOSE),
+                                        Duration.UNTIL_END_OF_TURN))));
         addSpellEffect(new ConditionalEffect(new NotCondition(controlsCreature),
                         new CreateTokenEffect(
                                 "Scarecrow", 4, 4, null,

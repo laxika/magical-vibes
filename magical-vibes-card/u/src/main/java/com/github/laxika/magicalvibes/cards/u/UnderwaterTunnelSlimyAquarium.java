@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ManifestDreadEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,6 +31,7 @@ public class UnderwaterTunnelSlimyAquarium extends Card {
         addTrigger(Triggers.doorUnlocked(1),
                 SequenceEffect.of(
                         ManifestDreadEffect.forController(),
-                        new PutCountersOnChosenPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)));
+                        new PutCounterOnTargetPermanentEffect(
+                                Subjects.thisWay(StepKind.MANIFEST), CounterType.PLUS_ONE_PLUS_ONE, 1)));
     }
 }

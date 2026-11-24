@@ -5,14 +5,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenOwnPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.Set;
 
@@ -27,8 +28,9 @@ public class SwordOfTruthAndJustice extends Card {
         addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE, CardColor.BLUE), Subjects.attachedCreature()));
         addTrigger(Triggers.equippedCreatureDealsCombatDamageToPlayer(),
                 SequenceEffect.of(
-                        new PutCounterOnChosenOwnPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1),
-                                new PermanentIsCreaturePredicate(), false, true),
+                        ChoosePermanentsEffect.exactly(1, Subjects.creaturesYouControl(), "a creature you control"),
+                        new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE),
+                                CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)),
                         new ProliferateEffect()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

@@ -97,7 +97,7 @@ class CrushDissentTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, spell.getId());
-        harness.handleMultiplePermanentsChosen(player2, List.of(second.getId()));
+        harness.handlePermanentChosen(player2, second.getId());
 
         harness.assertInGraveyard(player1, "Prismite");
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

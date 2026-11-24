@@ -34,8 +34,8 @@ class SeasonOfGatheringTest extends BaseCardTest {
         Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
         cast(mode(0));
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(giant.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, giant.getId());
 
         assertThat(giant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, giant)).contains(Keyword.VIGILANCE, Keyword.TRAMPLE);
@@ -101,9 +101,9 @@ class SeasonOfGatheringTest extends BaseCardTest {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         cast(mode(0, 0));
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(giant.getId()));
+        harness.handlePermanentChosen(player1, bears.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, giant.getId());
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(giant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -218,9 +218,9 @@ class SeasonOfGatheringTest extends BaseCardTest {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         cast(mode(0));
 
-        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(opponentCreature.getId())))
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
+        harness.handlePermanentChosen(player1, bears.getId());
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

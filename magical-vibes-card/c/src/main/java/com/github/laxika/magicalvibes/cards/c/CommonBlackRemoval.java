@@ -3,20 +3,21 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenOwnPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-
 import java.util.List;
 
 @CardRegistration(set = "MB2", collectorNumber = "307")
@@ -35,8 +36,10 @@ public class CommonBlackRemoval extends Card {
                         creatureTargetFilter()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target creature, then put a menace counter on a creature you control",
-                        destroyThen(new PutCounterOnChosenOwnPermanentEffect(
-                                CounterType.MENACE, new Fixed(1), new PermanentIsCreaturePredicate(), false, true)),
+                        destroyThen(SequenceEffect.of(
+                                ChoosePermanentsEffect.exactly(1, Subjects.creaturesYouControl(), "a creature you control"),
+                                new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE),
+                                        CounterType.MENACE, new Fixed(1)))),
                         creatureTargetFilter()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target creature, then its controller mills cards equal to its power",

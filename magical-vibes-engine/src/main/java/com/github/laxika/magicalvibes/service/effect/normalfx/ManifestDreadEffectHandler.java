@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManifestDreadEffect;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -14,7 +16,12 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
-/** Resolves manifest dread for the source-linked exiled card's owner, an effect controller, or a targeted spell's controller. */
+/**
+ * Resolves manifest dread for the source-linked exiled card's owner, an effect controller, or a targeted spell's
+ * controller. A {@code StepKind.MANIFEST} step that pauses at its end: it records nothing as it begins, and the answer
+ * to its choice records the manifested permanent ("then put a +1/+1 counter on that creature" reads
+ * {@code Subjects.thisWay(MANIFEST)}).
+ */
 @Component
 @RequiredArgsConstructor
 public class ManifestDreadEffectHandler implements NormalEffectHandlerBean {
@@ -30,6 +37,8 @@ public class ManifestDreadEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ManifestDreadEffect manifestDreadEffect = (ManifestDreadEffect) effect;
+        // A MANIFEST step that pauses at its end: the choice's answer records the manifested permanent.
+        entry.recordStep(StepKind.MANIFEST, StepOutcome.NONE);
         UUID libraryOwnerId;
         if (manifestDreadEffect.useTargetSpellControllerLibrary()) {
             StackEntry targetSpell = gameData.stack.stream()

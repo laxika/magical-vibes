@@ -59,7 +59,7 @@ class GleamingOverseerTest extends BaseCardTest {
         PermanentGrants.subtype(gd, second, CardSubtype.ARMY);
 
         castGleamingOverseer();
-        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+        harness.handlePermanentChosen(player1, second.getId());
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(PermanentGrants.subtypesOf(gd, first)).doesNotContain(CardSubtype.ZOMBIE);

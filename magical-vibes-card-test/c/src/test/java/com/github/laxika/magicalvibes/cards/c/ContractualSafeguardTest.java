@@ -7,11 +7,13 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ContractualSafeguard.class, LeafkinDruid.class})
 class ContractualSafeguardTest extends BaseCardTest {
@@ -22,14 +24,30 @@ class ContractualSafeguardTest extends BaseCardTest {
         Permanent second = addCreatureReady(player1, new LeafkinDruid());
         castSafeguardInMainPhase();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, first.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
 
         harness.handleListChoice(player1, "shield counters");
 
         assertThat(first.getCounterCount(CounterType.SHIELD)).isEqualTo(1);
         assertThat(second.getCounterCount(CounterType.SHIELD)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The addendum's shield counter must go on a creature you control: an empty answer is refused")
+    void addendumShieldCounterCannotBeDeclined() {
+        Permanent first = addCreatureReady(player1, new LeafkinDruid());
+        Permanent second = addCreatureReady(player1, new LeafkinDruid());
+        castSafeguardInMainPhase();
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, second.getId());
+
+        assertThat(second.getCounterCount(CounterType.SHIELD)).isEqualTo(1);
+        assertThat(first.getCounterCount(CounterType.SHIELD)).isZero();
     }
 
     @Test
@@ -57,7 +75,7 @@ class ContractualSafeguardTest extends BaseCardTest {
         reference.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         castSafeguardInMainPhase();
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(shieldRecipient.getId()));
+        harness.handlePermanentChosen(player1, shieldRecipient.getId());
         harness.handlePermanentChosen(player1, reference.getId());
         harness.handleListChoice(player1, "+1/+1 counters");
 

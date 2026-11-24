@@ -43,11 +43,11 @@ class HumiliateTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(chosenCard);
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(land, otherCard);
-        PendingInteraction.MultiPermanentChoice creatureChoice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice creatureChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(creatureChoice).isNotNull();
-        assertThat(creatureChoice.validIds()).containsExactlyInAnyOrder(firstCreature.getId(), chosenCreature.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(chosenCreature.getId()));
+        assertThat(creatureChoice.validPermanentIds()).containsExactlyInAnyOrder(firstCreature.getId(), chosenCreature.getId());
+        harness.handlePermanentChosen(player1, chosenCreature.getId());
         assertThat(firstCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(chosenCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

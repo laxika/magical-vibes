@@ -123,7 +123,7 @@ class GrMaWormtongueTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.handlePermanentChosen(player1, fodder.getId());
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(secondArmy.getId()));
+        harness.handlePermanentChosen(player1, secondArmy.getId());
 
         assertThat(firstArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(PermanentGrants.subtypesOf(gd, firstArmy)).doesNotContain(CardSubtype.ORC);

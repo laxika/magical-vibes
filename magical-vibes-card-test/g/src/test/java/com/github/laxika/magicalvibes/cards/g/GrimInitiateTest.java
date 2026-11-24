@@ -57,7 +57,7 @@ class GrimInitiateTest extends BaseCardTest {
         Permanent initiate = harness.addToBattlefieldAndReturn(player1, new GrimInitiate());
 
         destroyInitiate(initiate.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+        harness.handlePermanentChosen(player1, second.getId());
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

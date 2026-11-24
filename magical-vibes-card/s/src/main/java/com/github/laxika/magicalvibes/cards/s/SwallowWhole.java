@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,6 +26,6 @@ public class SwallowWhole extends Card {
                 )),
                 "Target must be a tapped creature"
         )).addSpellEffect(new ExileTargetPermanentEffect());
-        addSpellEffect(new PutCountersOnChosenPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
+        addSpellEffect(new PutCounterOnTargetPermanentEffect(Subjects.paidAsCost(), CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

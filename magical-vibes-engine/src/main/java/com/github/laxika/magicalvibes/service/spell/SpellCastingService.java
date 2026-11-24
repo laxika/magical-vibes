@@ -6282,6 +6282,8 @@ public class SpellCastingService {
             }
             if (additionalCostPayment.tappedPermanentId() != null) {
                 entry.setChosenPermanentId(additionalCostPayment.tappedPermanentId());
+                // "The creature tapped to pay this spell's additional cost" is Subjects.paidAsCost().
+                entry.setChosenCostPermanentIds(additionalCostPayment.tappedPermanentIds());
             }
             entry.setDelvedCardIds(additionalCostPayment.delvedCardIds());
             entry.setDelvedCards(delvedCardsOf(gameData, additionalCostPayment.delvedCardIds()));
@@ -7690,6 +7692,7 @@ public class SpellCastingService {
             }
             if (additionalCostPayment.tappedPermanentId() != null && !gameData.stack.isEmpty()) {
                 gameData.stack.getLast().setChosenPermanentId(additionalCostPayment.tappedPermanentId());
+                gameData.stack.getLast().setChosenCostPermanentIds(additionalCostPayment.tappedPermanentIds());
             }
             if (!gameData.stack.isEmpty()) {
                 gameData.stack.getLast().setDelvedCardIds(additionalCostPayment.delvedCardIds());
@@ -8274,7 +8277,7 @@ public class SpellCastingService {
                 selection.escalateModeCount(), selection.sacrificePermanentIds());
         payEscalateTapCost(gameData, player, card, costs.escalateTapCost(),
                 selection.escalateModeCount(), selection.sacrificePermanentIds());
-        UUID tappedPermanentId = null;
+        List<UUID> tappedPermanentIds = List.of();
         if (costs.sacrificeAnyNumberCost() != null) {
             resolvedXValue = paySacrificeAnyNumberOfPermanentsCost(gameData, player, card,
                     costs.sacrificeAnyNumberCost(), selection.sacrificePermanentIds());
@@ -8287,7 +8290,7 @@ public class SpellCastingService {
             payTapCreaturesForManaCost(gameData, player, card, selection.sacrificePermanentIds());
         }
         if (costs.tapMultipleCost() != null) {
-            tappedPermanentId = payTapMultiplePermanentsCost(gameData, player, card, costs.tapMultipleCost(),
+            tappedPermanentIds = payTapMultiplePermanentsCost(gameData, player, card, costs.tapMultipleCost(),
                     selection.sacrificePermanentIds(), announcedXValue);
         }
         if (costs.tapPermanentOrPayManaCost() != null
@@ -8296,7 +8299,7 @@ public class SpellCastingService {
             UUID selectedTapPermanentId = payTapPermanentOrPayManaCost(gameData, player, card,
                     costs.tapPermanentOrPayManaCost(), selection.sacrificePermanentIds(), preManaPaymentPool);
             if (selectedTapPermanentId != null) {
-                tappedPermanentId = selectedTapPermanentId;
+                tappedPermanentIds = List.of(selectedTapPermanentId);
             }
         }
         if (costs.teamworkCost() != null && selection.sacrificePermanentIds() != null
@@ -8382,7 +8385,7 @@ public class SpellCastingService {
                 effectiveSacrificePayment.sacrificedPower(), effectiveSacrificePayment.sacrificedToughness(),
                 costs.casualtyCost() != null && selection.sacrificePermanentId() != null,
                 exiledCostPayment.cardId(),
-                exiledCostPayment.cardSnapshot(), tappedPermanentId, delvedCardIds);
+                exiledCostPayment.cardSnapshot(), tappedPermanentIds, delvedCardIds);
     }
 
     private ExiledCostPayment payExileCreatureCost(GameData gameData, Player player, Card card,
@@ -8923,7 +8926,7 @@ public class SpellCastingService {
     }
 
     /** Pays an exact-count untapped-permanent tap cost after cast-time validation. */
-    private UUID payTapMultiplePermanentsCost(GameData gameData, Player player, Card card,
+    private List<UUID> payTapMultiplePermanentsCost(GameData gameData, Player player, Card card,
                                              TapMultiplePermanentsCost cost, List<UUID> tapPermanentIds,
                                              int announcedXValue) {
         List<Permanent> toTap = additionalSpellCostService.validateTapMultiplePermanentsCost(
@@ -8944,7 +8947,7 @@ public class SpellCastingService {
         } finally {
             gameData.endPermanentTapTriggerBatch();
         }
-        return toTap.isEmpty() ? null : toTap.getFirst().getId();
+        return toTap.stream().map(Permanent::getId).toList();
     }
 
     private UUID payTapPermanentOrPayManaCost(GameData gameData, Player player, Card card,
@@ -8952,8 +8955,9 @@ public class SpellCastingService {
                                               ManaPool preManaPaymentPool) {
         List<UUID> ids = tapPermanentIds != null ? tapPermanentIds : List.of();
         if (!ids.isEmpty()) {
-            return payTapMultiplePermanentsCost(gameData, player, card,
+            List<UUID> tapped = payTapMultiplePermanentsCost(gameData, player, card,
                     new TapMultiplePermanentsCost(1, cost.filter()), ids, 0);
+            return tapped.isEmpty() ? null : tapped.getFirst();
         }
         try {
             ManaCost extra = new ManaCost(cost.manaCost());
@@ -9090,8 +9094,14 @@ public class SpellCastingService {
                                          Permanent sacrificedPermanentSnapshot, int sacrificedPower,
                                          int sacrificedToughness, boolean casualtyCostPaid,
                                          UUID exiledCostCardId,
-                                         Card exiledCostCardSnapshot, UUID tappedPermanentId,
-                                         List<UUID> delvedCardIds) {}
+                                         Card exiledCostCardSnapshot, List<UUID> tappedPermanentIds,
+                                         List<UUID> delvedCardIds) {
+
+        /** The first permanent tapped to pay the spell's tap cost, the stack entry's chosen permanent. */
+        UUID tappedPermanentId() {
+            return tappedPermanentIds.isEmpty() ? null : tappedPermanentIds.getFirst();
+        }
+    }
 
     private record SacrificeCostPayment(int resolvedXValue, UUID sacrificedCardId,
                                         Card sacrificedCardSnapshot,

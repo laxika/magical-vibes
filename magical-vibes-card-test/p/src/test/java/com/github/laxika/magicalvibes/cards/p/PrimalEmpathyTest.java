@@ -61,11 +61,11 @@ class PrimalEmpathyTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIds()).containsExactlyInAnyOrder(firstCreature.getId(), secondCreature.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(secondCreature.getId()));
+        assertThat(choice.validPermanentIds()).containsExactlyInAnyOrder(firstCreature.getId(), secondCreature.getId());
+        harness.handlePermanentChosen(player1, secondCreature.getId());
 
         assertThat(firstCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(secondCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -102,8 +102,8 @@ class PrimalEmpathyTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNotNull();
-        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId()));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+        harness.handlePermanentChosen(player1, first.getId());
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -121,7 +121,7 @@ class PrimalEmpathyTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
     @Test
@@ -138,7 +138,7 @@ class PrimalEmpathyTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
     @Test

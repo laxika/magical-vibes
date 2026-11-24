@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AlmightyBrushwagg;
+import com.github.laxika.magicalvibes.cards.t.Twincast;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -13,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SwallowWhole.class, AlmightyBrushwagg.class})
+@CardUsed({SwallowWhole.class, AlmightyBrushwagg.class, Twincast.class})
 class SwallowWholeTest extends BaseCardTest {
 
     @Test
@@ -207,6 +209,32 @@ class SwallowWholeTest extends BaseCardTest {
         assertThat(gd.findExiledCard(target.getCard().getId())).isNull();
         assertThat(paymentCreature.isTapped()).isTrue();
         assertThat(paymentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A copy puts its counter on the creature tapped to pay the original spell's cost (CR 707.10)")
+    void copyCountersCreatureTappedForTheOriginal() {
+        Permanent paymentCreature = harness.addToBattlefieldAndReturn(player1, new AlmightyBrushwagg());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlmightyBrushwagg());
+        target.tap();
+        SwallowWhole swallowWhole = new SwallowWhole();
+        harness.setHand(player1, List.of(swallowWhole));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setHand(player2, List.of(new Twincast()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castSorceryTappingPermanents(player1, 0, target.getId(), List.of(paymentCreature.getId()));
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, swallowWhole.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(target.getCard().getId())).isNotNull();
+        assertThat(paymentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(paymentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     private void castSwallowWhole(Permanent paymentCreature, Permanent target) {

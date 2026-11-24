@@ -7,19 +7,21 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.SacrificedCardMatches;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToChosenPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenOwnPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -28,7 +30,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
-
 import java.util.List;
 import java.util.Set;
 
@@ -50,15 +51,19 @@ public class GrMaWormtongue extends Card {
                         SequenceEffect.of(
                                 new CreateTokenEffect("Orc Army", 0, 0, CardColor.BLACK,
                                         List.of(CardSubtype.ORC, CardSubtype.ARMY), Set.of(), Set.of()),
-                                new PutCounterOnChosenOwnPermanentEffect(
-                                        CounterType.PLUS_ONE_PLUS_ONE, 2, army))),
+                                ChoosePermanentsEffect.exactly(1, Subjects.controlledBy(Subjects.you(), army),
+                                        "an Army you control"),
+                                new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE),
+                                        CounterType.PLUS_ONE_PLUS_ONE, 2))),
                 new ConditionalEffect(
                         new SacrificedCardMatches(
                                 new CardSupertypePredicate(CardSupertype.LEGENDARY), "legendary"),
                         SequenceEffect.of(
-                                new PutCounterOnChosenOwnPermanentEffect(
-                                        CounterType.PLUS_ONE_PLUS_ONE, 2, army),
-                                new GrantSubtypeToChosenPermanentEffect(CardSubtype.ORC))));
+                                ChoosePermanentsEffect.exactly(1, Subjects.controlledBy(Subjects.you(), army),
+                                        "an Army you control"),
+                                new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE),
+                                        CounterType.PLUS_ONE_PLUS_ONE, 2),
+                                new GrantSubtypeEffect(CardSubtype.ORC, Subjects.thisWay(StepKind.CHOOSE)))));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

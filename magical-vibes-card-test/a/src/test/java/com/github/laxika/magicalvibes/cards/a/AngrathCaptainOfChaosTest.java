@@ -75,7 +75,7 @@ class AngrathCaptainOfChaosTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+        harness.handlePermanentChosen(player1, second.getId());
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(PermanentGrants.subtypesOf(gd, first)).doesNotContain(CardSubtype.ZOMBIE);

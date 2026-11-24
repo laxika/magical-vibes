@@ -62,7 +62,7 @@ class MyFollowersAscendTest extends BaseCardTest {
         Permanent opponent = addCreatureReady(player2, new GrizzlyBears());
 
         resolveScheme();
-        harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId()));
+        harness.handlePermanentChosen(player1, chosen.getId());
 
         assertThat(chosen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, chosen, Keyword.FLYING)).isTrue();

@@ -7,13 +7,15 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToChosenPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenOwnPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -23,7 +25,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
 import java.util.List;
 import java.util.Set;
 
@@ -42,9 +43,11 @@ public class GleamingOverseer extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ConditionalEffect(controlsArmy,
                         SequenceEffect.of(
-                                new PutCounterOnChosenOwnPermanentEffect(
-                                        CounterType.PLUS_ONE_PLUS_ONE, 1, army),
-                                new GrantSubtypeToChosenPermanentEffect(CardSubtype.ZOMBIE))),
+                                ChoosePermanentsEffect.exactly(1, Subjects.controlledBy(Subjects.you(), army),
+                                        "an Army you control"),
+                                new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE),
+                                        CounterType.PLUS_ONE_PLUS_ONE, 1),
+                                new GrantSubtypeEffect(CardSubtype.ZOMBIE, Subjects.thisWay(StepKind.CHOOSE)))),
                 new ConditionalEffect(new NotCondition(controlsArmy),
                         new CreateTokenEffect(
                                 CardType.CREATURE, 1, "Zombie Army", 0, 0, CardColor.BLACK, null,

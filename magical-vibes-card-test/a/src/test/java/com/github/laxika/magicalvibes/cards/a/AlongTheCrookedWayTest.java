@@ -168,7 +168,7 @@ class AlongTheCrookedWayTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, creature.getId());
         resolveAllTriggers();
-        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+        harness.handlePermanentChosen(player1, second.getId());
         resolveAllTriggers();
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
