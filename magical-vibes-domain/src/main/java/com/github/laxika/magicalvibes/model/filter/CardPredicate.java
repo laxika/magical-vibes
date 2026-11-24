@@ -90,6 +90,7 @@ public sealed interface CardPredicate permits
         CardPutIntoHandThisTurnPredicate,
     CardPutIntoGraveyardFromBattlefieldThisTurnPredicate,
     CardPutIntoGraveyardFromLibraryThisTurnPredicate,
+    CardMilledThisTurnPredicate,
     CardPutIntoGraveyardFromNonBattlefieldThisTurnPredicate,
     CardPutIntoGraveyardThisTurnPredicate,
     CardSharesCardTypeWithCardsPredicate,

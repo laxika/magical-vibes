@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Grants the controller permission to play every card currently exiled with the source permanent
- * until end of turn, including cards exiled with it later that turn. Nonland spells played through the permission may receive a generic cost
- * reduction.
+ * "Until end of turn, you may play cards exiled with Urianger Augurelt. Spells you cast this way cost {2} less to
+ * cast": the controller may play every card exiled with the source this turn, also the ones exiled with it later that
+ * turn (CR 611.2c, through the source's {@code ExilePlayGrantBySource}), nonland spells cast this way costing
+ * {@code spellCostReduction} less. Without a reduction write
+ * {@code AllowPlayCardsFromExileEffect.thisTurn(exiledWithSource()).alsoCardsExiledLaterThisTurn()}.
  */
 public record AllowPlayCardsExiledWithSourceUntilEndOfTurnEffect(int spellCostReduction)
         implements CardEffect {

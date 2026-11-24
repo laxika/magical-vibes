@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.ExilePlayGrantBySource;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -19,7 +20,9 @@ import java.util.UUID;
  * Resolves {@link AllowPlayCardsFromExileEffect}: each card its subject names in exile may be played by the effect's
  * controller (or by the card's owner) for the effect's duration, with its riders (free, any type of mana, exile instead of a graveyard, a
  * condition that must hold as the card is played). A permission for as long as the controller controls the source is
- * granted only while they control it, linked to that source. It never prompts.
+ * granted only while they control it, linked to that source. A permission that also covers the cards exiled with the
+ * source later this turn leaves an {@link ExilePlayGrantBySource} on the source, which the exile service applies to each
+ * card as it is exiled with it (CR 611.2c). It never prompts.
  */
 @Component
 @RequiredArgsConstructor
@@ -73,6 +76,14 @@ public class AllowPlayCardsFromExileEffectHandler implements NormalEffectHandler
                 gameData.updateExilePlayPermission(cardId,
                         granted -> granted.withCondition(permission.playCondition()));
             }
+        }
+        if (permission.laterExiles() && sourcePermanentId != null) {
+            // A rule-of-the-game permission also covers the cards exiled with the source later this turn (CR 611.2c).
+            gameData.grantExilePlayUntilEndOfTurnBySource(sourcePermanentId, new ExilePlayGrantBySource(
+                    permission.cards(), new ExilePlayPermissionEffect(controllerId)
+                    .withCondition(permission.playCondition())
+                    .withWithoutPayingManaCost(permission.freeCast())
+                    .withAnyManaType(permission.anyManaType() && !permission.freeCast())));
         }
     }
 }

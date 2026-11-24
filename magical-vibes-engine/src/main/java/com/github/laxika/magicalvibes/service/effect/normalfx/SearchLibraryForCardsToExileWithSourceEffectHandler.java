@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToExileWithSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -49,6 +51,7 @@ public class SearchLibraryForCardsToExileWithSourceEffectHandler implements Norm
         CardPredicate filter = searchEffect.filter();
         UUID controllerId = entry.getControllerId();
 
+        entry.recordStep(StepKind.EXILE, StepOutcome.NONE);
         UUID sourcePermanentId = resolveSourcePermanentId(gameData, entry, controllerId);
         if (sourcePermanentId == null) {
             log.info("Game {} - Source permanent no longer on battlefield, search-to-exile fizzles", gameData.id);

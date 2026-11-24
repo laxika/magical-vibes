@@ -2,12 +2,15 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ExilePlayCostModifier;
+import com.github.laxika.magicalvibes.model.ExilePlayGrantBySource;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsExiledWithSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -27,8 +30,11 @@ public class AllowPlayCardsExiledWithSourceUntilEndOfTurnEffectHandler implement
         if (sourcePermanentId == null) return;
 
         var grant = (AllowPlayCardsExiledWithSourceUntilEndOfTurnEffect) effect;
-        gameData.grantExilePlayUntilEndOfTurnBySource(sourcePermanentId,
-                new ExilePlayCostModifier(entry.getControllerId(), null, -grant.spellCostReduction()));
+        ExilePlayCostModifier reduction = grant.spellCostReduction() > 0
+                ? new ExilePlayCostModifier(entry.getControllerId(), null, -grant.spellCostReduction()) : null;
+        gameData.grantExilePlayUntilEndOfTurnBySource(sourcePermanentId, new ExilePlayGrantBySource(
+                Subjects.exiledWithSource(), new ExilePlayPermissionEffect(entry.getControllerId())
+                .withCostModifier(reduction)));
         List<ExiledCardEntry> matchingEntries = gameData.getExiledWithPermanentEntries(
                 sourcePermanentId, entry.getCard().getId());
         for (ExiledCardEntry matchingEntry : matchingEntries) {

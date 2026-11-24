@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -69,6 +70,50 @@ class KaylasMusicBoxTest extends BaseCardTest {
         }
 
         harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The tap ability lets you play only the exiled cards you own")
+    void tapAbilityCoversOnlyCardsYouOwn() {
+        Permanent musicBox = harness.addToBattlefieldAndReturn(player1, new KaylasMusicBox());
+        GrizzlyBears own = new GrizzlyBears();
+        GrizzlyBears opponents = new GrizzlyBears();
+        gd.addToExile(player1.getId(), own, musicBox.getId(), true);
+        gd.addToExile(player2.getId(), opponents, musicBox.getId(), true);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.exilePlayPermissionHolders())
+                .containsEntry(own.getId(), player1.getId())
+                .doesNotContainKey(opponents.getId());
+    }
+
+    @Test
+    @DisplayName("A card exiled with the music box later that turn may be played too")
+    void cardExiledLaterThisTurnIsCovered() {
+        Permanent musicBox = harness.addToBattlefieldAndReturn(player1, new KaylasMusicBox());
+        GrizzlyBears later = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(later));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        musicBox.untap();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(later.getId()).sourcePermanentId()).isEqualTo(musicBox.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(later.getId(), player1.getId());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromExile(player1, later.getId());
+        harness.passBothPriorities();
+
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 }

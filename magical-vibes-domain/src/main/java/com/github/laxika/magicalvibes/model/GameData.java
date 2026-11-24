@@ -9415,20 +9415,21 @@ public class GameData {
     }
 
     /**
-     * Lets the cards exiled with {@code sourcePermanentId} be played this turn at the given cost change (Urianger
-     * Augurelt), also the ones exiled with it later that turn (CR 611.2c). A grant of the same source replaces it.
+     * Lets the cards exiled with {@code sourcePermanentId} that {@code grant} covers be played this turn, also the ones
+     * exiled with it later that turn (CR 611.2c; applied by the exile service as they are exiled). A grant of the same
+     * source replaces it.
      */
-    public void grantExilePlayUntilEndOfTurnBySource(UUID sourcePermanentId, ExilePlayCostModifier modifier) {
-        endFloatingEffectsOnPermanent(sourcePermanentId, ExilePlayCostModifier.class);
+    public void grantExilePlayUntilEndOfTurnBySource(UUID sourcePermanentId, ExilePlayGrantBySource grant) {
+        endFloatingEffectsOnPermanent(sourcePermanentId, ExilePlayGrantBySource.class);
         addFloatingEffect(FloatingContinuousEffect.onPermanent("an exile permission", sourcePermanentId,
-                modifier.permittedPlayerId(), modifier, sourcePermanentId, Duration.UNTIL_END_OF_TURN));
+                grant.permission().holderId(), grant, sourcePermanentId, Duration.UNTIL_END_OF_TURN));
     }
 
     /** The "play the cards exiled with it this turn" grant of {@code sourcePermanentId}, or {@code null}. */
-    public ExilePlayCostModifier exilePlayGrantBySource(UUID sourcePermanentId) {
+    public ExilePlayGrantBySource exilePlayGrantBySource(UUID sourcePermanentId) {
         List<FloatingContinuousEffect> effects = floatingEffectsOnPermanent(sourcePermanentId,
-                ExilePlayCostModifier.class);
-        return effects.isEmpty() ? null : (ExilePlayCostModifier) effects.getFirst().effect();
+                ExilePlayGrantBySource.class);
+        return effects.isEmpty() ? null : (ExilePlayGrantBySource) effects.getFirst().effect();
     }
 
     /** Ends the floating effects of any of {@code types} on the permanent {@code permanentId}. */

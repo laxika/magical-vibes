@@ -5,12 +5,14 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToExileWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -57,7 +59,8 @@ public class UginEyeOfTheStorms extends Card {
                 -11,
                 List.of(
                         new SearchLibraryForCardsToExileWithSourceEffect(colorlessNonland),
-                        new AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect(colorlessNonland, true, true)
+                        AllowPlayCardsFromExileEffect.thisTurn(Subjects.cardsThisWay(StepKind.EXILE))
+                                .withoutPayingManaCost()
                 ),
                 "−11: Search your library for any number of colorless nonland cards, exile them, then shuffle. "
                         + "Until end of turn, you may cast those cards without paying their mana costs."

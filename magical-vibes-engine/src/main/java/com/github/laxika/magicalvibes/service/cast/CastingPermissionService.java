@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CastingCost;
@@ -42,7 +41,6 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffe
 import com.github.laxika.magicalvibes.model.effect.PlayFromAmongExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsExiledWithPlanarSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayFromAnyLibraryTopEffect;
-import com.github.laxika.magicalvibes.model.effect.AnyManaTypeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastAdditionalNonartifactSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
@@ -50,6 +48,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardNameRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CastPermanentSpellsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardPermission;
+import com.github.laxika.magicalvibes.model.effect.SpendAnyManaTypeToCastEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetualAnyManaTypeToCastSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DampingEngineEffect;
@@ -1733,6 +1732,10 @@ public class CastingPermissionService {
         if (!isCastableSpellCard(card)) {
             return Optional.empty();
         }
+        // The filter judges the card as it is in its owner's graveyard (a "milled this turn" or "put there from a
+        // library this turn" card is tracked by that graveyard).
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
+        UUID cardOwnerId = graveyardOwnerId != null ? graveyardOwnerId : playerId;
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield != null) {
@@ -1744,7 +1747,7 @@ public class CastingPermissionService {
                     CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
                     if (!(resolved instanceof CastSpellsFromGraveyardPermission permission)
                             || !predicateEvaluationService.matchesCardPredicate(
-                            card, permission.filter(), perm.getOriginalCard().getId(), gameData, playerId)
+                            card, permission.filter(), perm.getOriginalCard().getId(), gameData, cardOwnerId)
                             || !matchesGraveyardPermission(gameData, playerId, card, permission)) {
                         continue;
                     }
@@ -1759,7 +1762,7 @@ public class CastingPermissionService {
         for (CardEffect effect : gameData.floatingPlayerEffects(playerId, CastSpellsFromGraveyardPermission.class)) {
             if (effect instanceof CastSpellsFromGraveyardPermission permission
                     && predicateEvaluationService.matchesCardPredicate(
-                    card, permission.filter(), null, gameData, playerId)) {
+                    card, permission.filter(), null, gameData, cardOwnerId)) {
                 return Optional.of(new FilteredGraveyardPermission(null, permission));
             }
         }
@@ -1769,7 +1772,7 @@ public class CastingPermissionService {
                 for (CardEffect effect : planar.getCard().getStaticEffects()) {
                     if (effect instanceof CastSpellsFromGraveyardPermission permission
                             && predicateEvaluationService.matchesCardPredicate(
-                            card, permission.filter(), null, gameData, playerId)
+                            card, permission.filter(), null, gameData, cardOwnerId)
                             && matchesGraveyardPermission(gameData, playerId, card, permission)
                             && isGraveyardPermissionAvailable(gameData, playerId, planar.getId(), permission)) {
                         return Optional.of(new FilteredGraveyardPermission(planar.getId(), permission));
@@ -1810,9 +1813,6 @@ public class CastingPermissionService {
         }
         return (!permission.onlyCardsPutIntoGraveyardFromLibraryThisTurn()
                 || gameData.cardsPutIntoGraveyardFromLibraryThisTurn
-                .getOrDefault(graveyardOwnerId, Set.of()).contains(card.getId()))
-                && (!permission.onlyCardsMilledThisTurn()
-                || gameData.cardsMilledThisTurn
                 .getOrDefault(graveyardOwnerId, Set.of()).contains(card.getId()));
     }
 
@@ -1978,36 +1978,10 @@ public class CastingPermissionService {
                         card, permission.filter(), null));
     }
 
-    private boolean matchesGraveyardPlayPermission(GameData gameData, UUID playerId, Card card,
-                                                    GraveyardPlayPermission permission) {
-        if (permission.onlyCardsPutIntoGraveyardFromLibraryThisTurn()
-                && !cardWasPutIntoGraveyardFromLibraryThisTurn(gameData, card)) {
-            return false;
-        }
-        if (permission.onlyCardsMilledThisTurn() && !cardWasMilledThisTurn(gameData, card)) {
-            return false;
-        }
-        if (permission instanceof CastSpellsFromGraveyardPermission castPermission) {
-            return predicateEvaluationService.matchesCardPredicate(card, castPermission.filter(), null);
-        }
-        if (permission instanceof PlayLandsFromGraveyardPermission landPermission) {
-            return matchesLandFilter(gameData, playerId, card, landPermission, null);
-        }
-        return false;
-    }
-
     private boolean cardWasPutIntoGraveyardFromLibraryThisTurn(GameData gameData, Card card) {
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
         return graveyardOwnerId != null
                 && gameData.cardsPutIntoGraveyardFromLibraryThisTurn
-                .getOrDefault(graveyardOwnerId, Set.of())
-                .contains(card.getId());
-    }
-
-    private boolean cardWasMilledThisTurn(GameData gameData, Card card) {
-        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
-        return graveyardOwnerId != null
-                && gameData.cardsMilledThisTurn
                 .getOrDefault(graveyardOwnerId, Set.of())
                 .contains(card.getId());
     }
@@ -2751,32 +2725,12 @@ public class CastingPermissionService {
             if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
             for (CardEffect effect : perm.getCard().getStaticEffects()) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
-                if (resolved instanceof AnyManaTypeCastEffect anyMana
-                        && ((!anyMana.appliesToNonOwnedSpellsOnly()
-                        && (cardHasAnyType(card, anyMana.spellTypes())
-                        || cardHasAnySubtype(card, anyMana.spellSubtypes())))
-                        || (anyMana.appliesToNonOwnedSpellsOnly()
-                        && !card.hasType(CardType.LAND)
-                        && card.getOwnerId() != null
-                        && !playerId.equals(card.getOwnerId())))) {
+                if (resolved instanceof SpendAnyManaTypeToCastEffect anyMana
+                        && predicateEvaluationService.matchesCardPredicate(card, anyMana.spellFilter(),
+                        perm.getOriginalCard().getId(), gameData, playerId)) {
                     return true;
                 }
             }
-        }
-        return false;
-    }
-
-    private static boolean cardHasAnyType(Card card, Set<CardType> types) {
-        if (types.contains(card.getType())) return true;
-        for (CardType type : card.getAdditionalTypes()) {
-            if (types.contains(type)) return true;
-        }
-        return false;
-    }
-
-    private static boolean cardHasAnySubtype(Card card, Set<CardSubtype> subtypes) {
-        for (CardSubtype subtype : card.getSubtypes()) {
-            if (subtypes.contains(subtype)) return true;
         }
         return false;
     }

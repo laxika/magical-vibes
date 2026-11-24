@@ -28,10 +28,14 @@ import java.util.Objects;
  *                               played; {@code null} for always
  * @param ownerPlays             "its owner may play it" (Suspend Aggression, Release to the Wind): each card's owner holds
  *                               its permission instead of the effect's controller, "their next turn" being the owner's
+ * @param laterExiles            "until end of turn, you may play cards [you own] exiled with this": the permission also
+ *                               covers the cards {@link #cards()} names that are exiled with the source later this turn,
+ *                               as it changes only the rules of the game (CR 611.2c); only over
+ *                               {@code Subjects.exiledWithSource(...)} and for this turn
  */
 public record AllowPlayCardsFromExileEffect(CardSubject cards, Duration duration, boolean freeCast,
                                             boolean anyManaType, boolean exileInsteadOfGraveyard,
-                                            Condition playCondition, boolean ownerPlays)
+                                            Condition playCondition, boolean ownerPlays, boolean laterExiles)
         implements CardEffect {
 
     public AllowPlayCardsFromExileEffect {
@@ -43,11 +47,16 @@ public record AllowPlayCardsFromExileEffect(CardSubject cards, Duration duration
         if (ownerPlays && Duration.WHILE_SOURCE_CONTROLLED.equals(duration)) {
             throw new IllegalArgumentException("A permission held while you control the source is yours");
         }
+        if (laterExiles && (!(cards instanceof CardSubject.ExiledWithSource)
+                || !Duration.UNTIL_END_OF_TURN.equals(duration) || ownerPlays || exileInsteadOfGraveyard)) {
+            throw new IllegalArgumentException("Only a this-turn permission over the cards exiled with the source, "
+                    + "held by you, covers the cards exiled with it later: " + cards);
+        }
     }
 
     public AllowPlayCardsFromExileEffect(CardSubject cards, Duration duration, boolean freeCast, boolean anyManaType,
                                          boolean exileInsteadOfGraveyard) {
-        this(cards, duration, freeCast, anyManaType, exileInsteadOfGraveyard, null, false);
+        this(cards, duration, freeCast, anyManaType, exileInsteadOfGraveyard, null, false, false);
     }
 
     /** "You may play that card for as long as it remains exiled." */
@@ -73,30 +82,39 @@ public record AllowPlayCardsFromExileEffect(CardSubject cards, Duration duration
     /** "… without paying its mana cost." */
     public AllowPlayCardsFromExileEffect withoutPayingManaCost() {
         return new AllowPlayCardsFromExileEffect(cards, duration, true, anyManaType, exileInsteadOfGraveyard,
-                playCondition, ownerPlays);
+                playCondition, ownerPlays, laterExiles);
     }
 
     /** "… and mana of any type can be spent to cast that spell." */
     public AllowPlayCardsFromExileEffect withAnyManaType() {
         return new AllowPlayCardsFromExileEffect(cards, duration, freeCast, true, exileInsteadOfGraveyard,
-                playCondition, ownerPlays);
+                playCondition, ownerPlays, laterExiles);
     }
 
     /** "If that spell would be put into a graveyard, exile it instead." */
     public AllowPlayCardsFromExileEffect exilingInsteadOfGraveyard() {
         return new AllowPlayCardsFromExileEffect(cards, duration, freeCast, anyManaType, true, playCondition,
-                ownerPlays);
+                ownerPlays, laterExiles);
     }
 
     /** "During any turn [condition], you may cast that card", "… as long as [condition]". */
     public AllowPlayCardsFromExileEffect playableOnlyIf(Condition condition) {
         return new AllowPlayCardsFromExileEffect(cards, duration, freeCast, anyManaType, exileInsteadOfGraveyard,
-                Objects.requireNonNull(condition, "condition"), ownerPlays);
+                Objects.requireNonNull(condition, "condition"), ownerPlays, laterExiles);
     }
 
     /** "Its owner may play it": each card's owner, not you, may play it. */
     public AllowPlayCardsFromExileEffect playableByOwner() {
         return new AllowPlayCardsFromExileEffect(cards, duration, freeCast, anyManaType, exileInsteadOfGraveyard,
-                playCondition, true);
+                playCondition, true, laterExiles);
+    }
+
+    /**
+     * "Until end of turn, you may play cards exiled with this": also the cards exiled with the source later this turn
+     * (CR 611.2c).
+     */
+    public AllowPlayCardsFromExileEffect alsoCardsExiledLaterThisTurn() {
+        return new AllowPlayCardsFromExileEffect(cards, duration, freeCast, anyManaType, exileInsteadOfGraveyard,
+                playCondition, ownerPlays, true);
     }
 }

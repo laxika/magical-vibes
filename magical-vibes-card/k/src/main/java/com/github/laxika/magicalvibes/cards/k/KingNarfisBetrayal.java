@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.StepKind;
-import com.github.laxika.magicalvibes.model.effect.AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -39,9 +39,9 @@ public class KingNarfisBetrayal extends Card {
                 ExileGraveyardCardsEffect.cardsWithSource(Subjects.cardsThisWay(StepKind.CHOOSE)));
 
         var nonlandCard = new CardNotPredicate(new CardTypePredicate(CardType.LAND));
-        addTrigger(Triggers.chapter(2),
-                new AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect(nonlandCard));
-        addTrigger(Triggers.chapter(3),
-                new AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect(nonlandCard));
+        var castSpellsFromAmongExiled = AllowPlayCardsFromExileEffect.thisTurn(
+                Subjects.exiledWithSourceMatching(nonlandCard)).withAnyManaType().alsoCardsExiledLaterThisTurn();
+        addTrigger(Triggers.chapter(2), castSpellsFromAmongExiled);
+        addTrigger(Triggers.chapter(3), castSpellsFromAmongExiled);
     }
 }

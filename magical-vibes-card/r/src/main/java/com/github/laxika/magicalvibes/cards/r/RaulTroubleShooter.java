@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CastMilledSpellFromGraveyardOncePerYourTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CastSpellFromGraveyardOncePerYourTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardMilledThisTurnPredicate;
 
 import java.util.List;
 
@@ -15,7 +15,7 @@ import java.util.List;
 public class RaulTroubleShooter extends Card {
 
     public RaulTroubleShooter() {
-        addStaticEffect(new CastMilledSpellFromGraveyardOncePerYourTurnEffect(new CardTruePredicate()));
+        addStaticEffect(new CastSpellFromGraveyardOncePerYourTurnEffect(new CardMilledThisTurnPredicate()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

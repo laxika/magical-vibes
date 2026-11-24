@@ -2,12 +2,13 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ExiledCardsControlLossWatch;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -109,12 +110,19 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
         }
 
         List<UUID> exiledCardIds = new ArrayList<>();
+        List<UUID> exilingPlayerIds = new ArrayList<>();
         for (UUID playerId : subjectResolutionService.players(gameData, entry, e, e.player())) {
+            int before = exiledCardIds.size();
             exileTopCards(gameData, e, playerId, sourceCard, sourcePermanentId,
                     effectiveCount(gameData, entry, sourcePermanent, e), persistentPermissions,
                     controllerId, exiledCardIds);
+            if (exiledCardIds.size() > before) {
+                exilingPlayerIds.add(playerId);
+            }
         }
         entry.setResolutionExiledCardIds(exiledCardIds);
+        entry.recordStep(StepKind.EXILE, exiledCardIds.isEmpty() ? StepOutcome.NONE
+                : StepOutcome.ofObjects(exiledCardIds, exilingPlayerIds));
     }
 
     private int effectiveCount(GameData gameData, StackEntry entry, Permanent sourcePermanent,
@@ -148,19 +156,6 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
         return null;
     }
 
-    /** Gives a card just exiled with the source the source's active "until end of turn, you may play" permission. */
-    private void grantUntilEndOfTurnPlayPermission(GameData gameData, Card card, UUID sourcePermanentId) {
-        var grant = sourcePermanentId == null ? null
-                : gameData.exilePlayGrantBySource(sourcePermanentId);
-        if (grant == null) {
-            return;
-        }
-        gameData.grantExilePlayPermission(card.getId(), grant.permittedPlayerId(), Duration.UNTIL_END_OF_TURN);
-        if (!card.hasType(CardType.LAND) && grant.amount() < 0) {
-            gameData.updateExilePlayPermission(card.getId(), granted -> granted.withCostModifier(grant));
-        }
-    }
-
     private void exileTopCards(GameData gameData, ExileTopCardsToSourceEffect e, UUID playerId,
                                Card sourceCard, UUID sourcePermanentId, int count,
                                List<PersistentPermission> persistentPermissions,
@@ -187,7 +182,6 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
                 // controller's "you may look at" permission is recorded per card instead.
                 gameData.grantExileLookPermission(card.getId(), sourceControllerId);
             }
-            grantUntilEndOfTurnPlayPermission(gameData, card, sourcePermanentId);
             if (e.markWithIntelCounters()) {
                 gameData.addExiledCardCounters(card.getId(), CounterType.INTEL, 1);
             }

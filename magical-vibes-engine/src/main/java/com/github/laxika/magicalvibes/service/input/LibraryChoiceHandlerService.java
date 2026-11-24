@@ -1615,6 +1615,8 @@ public class LibraryChoiceHandlerService {
                 List<UUID> exiledThisResolution = new ArrayList<>(resolving.getResolutionExiledCardIds());
                 exiledThisResolution.add(chosenCard.getId());
                 resolving.setResolutionExiledCardIds(exiledThisResolution);
+                resolving.addToStep(StepKind.EXILE,
+                        StepOutcome.ofObjects(List.of(chosenCard.getId()), List.of(deckOwnerId)));
             }
             if (requireDifferentNames) {
                 excludedCardNames.add(chosenCard.getName());

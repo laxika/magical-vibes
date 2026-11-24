@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsExiledWithSourceUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOneFromTopCardsFaceDownWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -22,7 +23,8 @@ public class KaylasMusicBox extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AllowPlayCardsExiledWithSourceUntilEndOfTurnEffect(0)),
+                List.of(AllowPlayCardsFromExileEffect.thisTurn(Subjects.exiledWithSource(Subjects.you()))
+                        .alsoCardsExiledLaterThisTurn()),
                 "{T}: Until end of turn, you may play cards you own exiled with Kayla's Music Box."
         ));
     }

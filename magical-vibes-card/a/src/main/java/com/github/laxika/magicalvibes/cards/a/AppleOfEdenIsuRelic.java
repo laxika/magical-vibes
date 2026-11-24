@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerHandEffect;
@@ -40,7 +40,7 @@ public class AppleOfEdenIsuRelic extends Card {
                         new ExileTargetPlayerHandEffect(true).exiledFaceDown(),
                         RegisterDelayedStepTriggerEffect.aboutExiled(Triggers.endStep(ActivePlayer.ANY),
                                 new PutCardsIntoHandEffect(Subjects.cardsThisWay(StepKind.EXILE))),
-                        new AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect(null),
+                        AllowPlayCardsFromExileEffect.thisTurn(Subjects.cardsThisWay(StepKind.EXILE)).withAnyManaType(),
                         new RegisterGlobalTriggeredAbilityEffect(
                                 new TriggeredAbility(Triggers.youCastSpell().exiledWithThis(), ownerDraws)),
                         new RegisterGlobalTriggeredAbilityEffect(
