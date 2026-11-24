@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.s.SharedFate;
 import com.github.laxika.magicalvibes.cards.s.StaffOfDomination;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -76,6 +78,20 @@ class PossessedPortalTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Possessed Portal");
         harness.assertNotOnBattlefield(player1, "Staff of Domination");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A face-down Possessed Portal does not skip draws")
+    void faceDownPortalDoesNotSkipDraws() {
+        var portal = harness.addToBattlefieldAndReturn(player1, new PossessedPortal());
+        portal.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        StaffOfDomination card = new StaffOfDomination();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(card));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
     }
 
     @Test

@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.m.MoggToady;
 import com.github.laxika.magicalvibes.cards.r.RootwaterCommando;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -98,6 +100,24 @@ class WanderingEyeTest extends BaseCardTest {
                 .anyMatch(message -> message.contains("Mogg Toady"));
         assertThat(harness.getConn2().getMessagesContaining("\"opponentHand\""))
                 .anyMatch(message -> message.contains("Rootwater Commando"));
+    }
+
+    @Test
+    @DisplayName("A face-down Wandering Eye does not reveal hands")
+    void faceDownWanderingEyeRevealsNothing() {
+        harness.addToBattlefieldAndReturn(player1, new WanderingEye()).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setHand(player1, List.of(new RootwaterCommando()));
+        harness.setHand(player2, List.of(new MoggToady()));
+        harness.clearMessages();
+
+        harness.publishState();
+
+        assertThat(harness.getConn1().getMessagesContaining("\"opponentHand\""))
+                .isNotEmpty()
+                .noneMatch(message -> message.contains("Mogg Toady"));
+        assertThat(harness.getConn2().getMessagesContaining("\"opponentHand\""))
+                .isNotEmpty()
+                .noneMatch(message -> message.contains("Rootwater Commando"));
     }
 
     @Test

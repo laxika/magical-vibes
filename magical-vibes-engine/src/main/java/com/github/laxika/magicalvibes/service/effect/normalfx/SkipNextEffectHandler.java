@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
-import com.github.laxika.magicalvibes.model.effect.SkipChosenStepOrPhaseEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -50,7 +50,7 @@ public class SkipNextEffectHandler implements NormalEffectHandlerBean {
         if (e.allCombatPhasesOfNextTurn()) {
             gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
                     entry.getSourcePermanentId(), entry.getControllerId(),
-                    new SkipChosenStepOrPhaseEffect(SkipStepOrPhaseKind.COMBAT_PHASE), affectedPlayerId,
+                    new SkipDrawStepEffect(SkipStepOrPhaseKind.COMBAT_PHASE), affectedPlayerId,
                     Duration.DURING_AFFECTED_PLAYERS_NEXT_TURN));
         } else {
             // Each "skip your next ..." is its own replacement effect, used up as it applies (CR 614.10, 614.10a).

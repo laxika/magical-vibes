@@ -32,7 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersWithChosenPlanarModePl
 import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.OnlyChosenCreaturesCanAttackEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipChosenStepOrPhaseEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
 import com.github.laxika.magicalvibes.model.effect.RenewExilePlayPermissionOnLoreCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.LukkaExileCastPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileLookPermissionEffect;
@@ -3352,10 +3352,13 @@ public class GameData {
                 .toList();
     }
 
-    /** Whether {@code playerId} skips the step or phase {@code kind} this turn (an effect that lasts the turn). */
+    /**
+     * Whether a {@link SkipDrawStepEffect} floated on {@code playerId} makes them skip the step or phase {@code kind}
+     * for its duration ("skips each instance of the chosen step or phase this turn").
+     */
     public boolean skipsStepOrPhase(UUID playerId, SkipStepOrPhaseKind kind) {
-        return floatingPlayerEffects(playerId, SkipChosenStepOrPhaseEffect.class).stream()
-                .anyMatch(effect -> ((SkipChosenStepOrPhaseEffect) effect).kind() == kind);
+        return floatingPlayerEffects(playerId, SkipDrawStepEffect.class).stream()
+                .anyMatch(effect -> ((SkipDrawStepEffect) effect).kind() == kind);
     }
 
     /** Creatures that were able to attack as each player reached their declare-attackers step this turn. */

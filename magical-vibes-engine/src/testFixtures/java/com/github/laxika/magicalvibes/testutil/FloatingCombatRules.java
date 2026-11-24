@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.CreaturesMustAttackTargetPlay
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.OnlyChosenCreaturesCanAttackEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipChosenStepOrPhaseEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
@@ -93,13 +93,13 @@ public final class FloatingCombatRules {
     /** {@code playerId} skips every {@code kind} step or phase this turn. */
     public static void skipThisTurn(GameData gd, UUID playerId, SkipStepOrPhaseKind kind) {
         gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, playerId,
-                new SkipChosenStepOrPhaseEffect(kind), playerId, Duration.UNTIL_END_OF_TURN));
+                new SkipDrawStepEffect(kind), playerId, Duration.UNTIL_END_OF_TURN));
     }
 
     /** Whether a skip of every {@code kind} step or phase waits for {@code playerId}'s next turn. */
     public static boolean skipsNextTurn(GameData gd, UUID playerId, SkipStepOrPhaseKind kind) {
         return gd.scheduledFloatingEffects.stream().anyMatch(effect -> playerId.equals(effect.affectedPlayerId())
-                && effect.effect() instanceof SkipChosenStepOrPhaseEffect skip && skip.kind() == kind);
+                && effect.effect() instanceof SkipDrawStepEffect skip && skip.kind() == kind);
     }
 
     /** {@code creatureId} assigns no combat damage for {@code duration}. */

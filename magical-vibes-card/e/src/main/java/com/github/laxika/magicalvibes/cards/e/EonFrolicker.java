@@ -4,7 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromTargetPlayerToControllerAndPlaneswalkersUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -24,6 +27,8 @@ public class EonFrolicker extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new WasCast()),
                 SequenceEffect.of(
                         new ExtraTurnEffect(1),
-                        new GrantProtectionFromTargetPlayerToControllerAndPlaneswalkersUntilNextTurnEffect()));
+                        new GrantProtectionFromPlayerEffect(Subjects.targetPlayerDeclaredElsewhere(),
+                                Subjects.controlledBy(Subjects.you(), new PermanentIsPlaneswalkerPredicate()),
+                                Duration.UNTIL_YOUR_NEXT_TURN)));
     }
 }

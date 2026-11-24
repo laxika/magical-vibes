@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.l.LibraryOfLeng;
 import com.github.laxika.magicalvibes.cards.m.MindRavel;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -294,6 +296,20 @@ class NecropotenceTest extends BaseCardTest {
         gs.advanceStep(gd);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);
+    }
+
+    @Test
+    @DisplayName("A face-down Necropotence does not skip the draw step")
+    void faceDownNecropotenceDoesNotSkipDrawStep() {
+        Permanent necropotence = harness.addToBattlefieldAndReturn(player1, new Necropotence());
+        necropotence.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.forceActivePlayer(player1);
+        gd.turnNumber = 2;
+        harness.forceStep(TurnStep.UPKEEP);
+
+        gs.advanceStep(gd);
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.DRAW);
     }
 
     @Test

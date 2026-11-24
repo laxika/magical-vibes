@@ -220,9 +220,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardStaticEffect;
 import com.github.laxika.magicalvibes.model.effect.WrappedStackStaticEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardSubtypeGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.HandAbilityGrantingEffect;
-import com.github.laxika.magicalvibes.model.effect.IgnoreOpponentCreatureHexproofEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreOpponentHexproofEffect;
-import com.github.laxika.magicalvibes.model.effect.IgnoreOpponentHexproofUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtFaceDownCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MadnessGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
@@ -265,6 +263,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventionScope;
 import com.github.laxika.magicalvibes.model.effect.ProliferateReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsOfPermanentsYouControlEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromNonSubtypeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProwlGrantingEffect;
@@ -346,11 +345,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerAndPermanentsHexproofFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayersGainKeywordUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromEverythingUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenPlayerToControllerAndTargetPermanentUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromTargetPlayerToControllerAndPlaneswalkersUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 import java.util.Comparator;
 
@@ -5110,25 +5106,14 @@ public class GameQueryService {
     }
 
     /**
-     * Returns {@code true} if {@code controllerId} controls a permanent whose static effects let
-     * them target opponents' hexproof creatures as though they didn't have hexproof (Glaring
-     * Spotlight). Only hexproof is lifted â€” shroud and protection still apply.
+     * Returns {@code true} if {@code controllerId} may target opponents' hexproof creatures as though they didn't have
+     * hexproof: an {@link IgnoreOpponentHexproofEffect} over creatures (Glaring Spotlight; Detection Tower floated).
+     * Callers ask {@link #ignoresOpponentPermanentHexproof} too. Only hexproof is lifted; shroud and protection still
+     * apply.
      */
     public boolean ignoresOpponentCreatureHexproof(GameData gameData, UUID controllerId) {
-        if (controllerId == null) {
-            return false;
-        }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield != null) {
-            for (Permanent permanent : battlefield) {
-                if (permanent.getCard().getStaticEffects().stream()
-                        .anyMatch(IgnoreOpponentCreatureHexproofEffect.class::isInstance)
-                        && !hasLostPrintedAbilities(gameData, permanent)) {
-                    return true;
-                }
-            }
-        }
-        return controllerHasFloatingHexproofIgnore(gameData, controllerId);
+        return hasHexproofIgnore(gameData, controllerId,
+                ignore -> ignore.permanents() == IgnoreOpponentHexproofEffect.Breadth.CREATURES);
     }
 
     /**
@@ -5152,48 +5137,43 @@ public class GameQueryService {
     }
 
     /**
-     * Returns whether {@code controllerId} controls a permanent whose static effects let them
-     * target any opponent-controlled permanent with hexproof as though it didn't have hexproof
-     * (Kaya, Bane of the Dead). Only hexproof is lifted â€” shroud and protection still apply.
+     * Returns whether {@code controllerId} may target any opponent-controlled permanent with hexproof as though it
+     * didn't have hexproof: an {@link IgnoreOpponentHexproofEffect} over permanents (Kaya, Bane of the Dead). Only
+     * hexproof is lifted; shroud and protection still apply.
      */
     public boolean ignoresOpponentPermanentHexproof(GameData gameData, UUID controllerId) {
-        if (controllerId == null) {
-            return false;
-        }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield != null) {
-            for (Permanent permanent : battlefield) {
-                if (permanent.getCard().getStaticEffects().stream()
-                        .anyMatch(IgnoreOpponentHexproofEffect.class::isInstance)
-                        && !gameData.removesOwnStaticAbility(permanent.getId(), IgnoreOpponentHexproofEffect.class)
-                        && !hasLostAllAbilities(gameData, permanent)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return hasHexproofIgnore(gameData, controllerId,
+                ignore -> ignore.permanents() == IgnoreOpponentHexproofEffect.Breadth.PERMANENTS);
     }
 
     /**
-     * Returns {@code true} if {@code controllerId} has an effect allowing them to target opponents
-     * with hexproof as though they didn't have hexproof (Detection Tower's activated ability).
-     * Only hexproof is lifted â€” shroud and protection still apply.
+     * Returns {@code true} if {@code controllerId} may target opponents with hexproof as though they didn't have
+     * hexproof (Kaya, Bane of the Dead; Detection Tower's activated ability). Only hexproof is lifted; shroud and
+     * protection still apply.
      */
     public boolean ignoresOpponentPlayerHexproof(GameData gameData, UUID controllerId) {
+        return hasHexproofIgnore(gameData, controllerId, IgnoreOpponentHexproofEffect::opponents);
+    }
+
+    /**
+     * Whether a matching {@link IgnoreOpponentHexproofEffect} is {@code controllerId}'s: an active static ability of a
+     * permanent they control (none of a face-down or ability-less one's, nor one an effect removed, CR 613.1f), or one
+     * floated on them.
+     */
+    private boolean hasHexproofIgnore(GameData gameData, UUID controllerId,
+                                      java.util.function.Predicate<IgnoreOpponentHexproofEffect> matches) {
         if (controllerId == null) {
             return false;
         }
-        return ignoresOpponentPermanentHexproof(gameData, controllerId)
-                || controllerHasFloatingHexproofIgnore(gameData, controllerId);
-    }
-
-    private boolean controllerHasFloatingHexproofIgnore(GameData gameData, UUID controllerId) {
-        synchronized (gameData.floatingEffects) {
-            for (var floatingEffect : gameData.floatingEffects) {
-                if (controllerId.equals(floatingEffect.controllerId())
-                        && IgnoreOpponentHexproofUntilEndOfTurnEffect.class.isInstance(floatingEffect.effect())) {
-                    return true;
-                }
+        for (CardEffect effect : gameData.floatingPlayerEffects(controllerId, IgnoreOpponentHexproofEffect.class)) {
+            if (matches.test((IgnoreOpponentHexproofEffect) effect)) {
+                return true;
+            }
+        }
+        for (var active : activeStaticEffects(gameData, controllerId, IgnoreOpponentHexproofEffect.class)) {
+            if (matches.test(active.effect())
+                    && !gameData.removesOwnStaticAbility(active.source().getId(), IgnoreOpponentHexproofEffect.class)) {
+                return true;
             }
         }
         return false;
@@ -9946,13 +9926,8 @@ public class GameQueryService {
      */
     private boolean playerHasTemporaryKeyword(GameData gameData, UUID playerId, Keyword keyword) {
         for (CardEffect effect : gameData.floatingPlayerEffects(playerId,
-                PlayersGainKeywordUntilEndOfTurnEffect.class, GrantControllerKeywordUntilEndOfTurnEffect.class)) {
-            Keyword granted = switch (effect) {
-                case PlayersGainKeywordUntilEndOfTurnEffect gain -> gain.keyword();
-                case GrantControllerKeywordUntilEndOfTurnEffect gain -> gain.keyword();
-                default -> null;
-            };
-            if (granted == keyword) {
+                GrantControllerKeywordUntilEndOfTurnEffect.class)) {
+            if (((GrantControllerKeywordUntilEndOfTurnEffect) effect).keyword() == keyword) {
                 return true;
             }
         }
@@ -10025,25 +10000,17 @@ public class GameQueryService {
     }
 
     /**
-     * Returns whether the player has protection from a source controlled by the given opponent,
-     * through a static effect on a permanent they control.
+     * Returns whether the player has protection from a source controlled by the given player: a
+     * {@link ProtectionFromPlayersEffect} floated on them ({@code GrantProtectionFromPlayerEffect}) naming that player,
+     * or, for an opponent, a static effect on a permanent they control.
      */
     public boolean playerHasProtectionFromOpponents(GameData gameData, UUID playerId,
                                                     UUID sourceControllerId) {
         if (playerId == null || sourceControllerId == null) {
             return false;
         }
-        for (CardEffect effect : gameData.floatingPlayerEffects(playerId,
-                GrantProtectionFromChosenPlayerToControllerAndTargetPermanentUntilEndOfTurnEffect.class,
-                GrantProtectionFromTargetPlayerToControllerAndPlaneswalkersUntilNextTurnEffect.class)) {
-            UUID protectedFrom = switch (effect) {
-                case GrantProtectionFromChosenPlayerToControllerAndTargetPermanentUntilEndOfTurnEffect grant ->
-                        grant.playerId();
-                case GrantProtectionFromTargetPlayerToControllerAndPlaneswalkersUntilNextTurnEffect grant ->
-                        grant.playerId();
-                default -> null;
-            };
-            if (sourceControllerId.equals(protectedFrom)) {
+        for (CardEffect effect : gameData.floatingPlayerEffects(playerId, ProtectionFromPlayersEffect.class)) {
+            if (((ProtectionFromPlayersEffect) effect).playerIds().contains(sourceControllerId)) {
                 return true;
             }
         }

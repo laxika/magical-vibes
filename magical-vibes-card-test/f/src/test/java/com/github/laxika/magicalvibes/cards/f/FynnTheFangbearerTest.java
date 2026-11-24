@@ -12,7 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.PlayersGainKeywordUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,7 +47,7 @@ class FynnTheFangbearerTest extends BaseCardTest {
     @DisplayName("Poison applies to the damaged player without targeting through shroud")
     void damagedPlayerWithShroudStillGetsPoison() {
         gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2.getId(),
-                new PlayersGainKeywordUntilEndOfTurnEffect(Keyword.SHROUD), player2.getId(),
+                new GrantControllerKeywordUntilEndOfTurnEffect(Keyword.SHROUD), player2.getId(),
                 Duration.UNTIL_END_OF_TURN));
         addCreatureReady(player1, new FynnTheFangbearer()).setAttacking(true);
 

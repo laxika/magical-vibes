@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.RegenerationShield;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 import com.github.laxika.magicalvibes.model.effect.OutsideGamePlayPermissionEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipChosenStepOrPhaseEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
 import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -1573,7 +1573,7 @@ class RunedTerrorTest extends BaseCardTest {
         assertThat(gd.cardsLeftGraveyardCountThisTurn).isEmpty();
         assertThat(gd.cardsExiledThisTurn).isZero();
         assertThat(gd.creatureExileCountThisTurn).isEmpty();
-        assertThat(gd.floatingEffectsOfTypes(SkipChosenStepOrPhaseEffect.class)).isEmpty();
+        assertThat(gd.floatingEffectsOfTypes(SkipDrawStepEffect.class)).isEmpty();
     }
 
     @Test

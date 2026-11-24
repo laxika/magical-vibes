@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d (each in Findings; the fold queue marks its rows). Fold runs 35, 33b and 36 are reported and wait to merge; 27b, 29c and 32b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                               |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35 (each in Findings; the fold queue marks its rows). Fold runs 33b, 36 and 29c are reported and wait to merge; 27b, 32b and 29d are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,371 / 2,705 (after fold run 23d) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,355 / 2,699 (after fold run 35) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,046 rows over 4,474 classes (after fold run 23d). Latest verdict per class: `step-9` 478, unique 1,174, absorbed 1,000, split 646, blocked-other 522, survivor 355, blocked-step-model 140, blocked-player-loop 96, dead 63. Waiting: 478 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,077 rows over 4,483 classes (after fold run 35). Latest verdict per class: `step-9` 459, unique 1,174, absorbed 1,023, split 646, blocked-other 521, survivor 361, blocked-step-model 140, blocked-player-loop 96, dead 63. Waiting: 459 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -885,6 +885,15 @@ Delayed and global triggers:
 - `ChoiceContext.MoveCountersAmountChoice.requiredTotal` (lowest answer per slot) and `CounterMoveSlot.fromPlayer(playerId, PlayerCounterType)` (player removal slots); `PlayerInputService.beginMoveCountersAmountChoice(…, min, max)` (fold run 23d).
 - `GameData.removePlayerCounters(playerId, PlayerCounterType, amount)`: removes N counters of one kind from a player, energy counting as lost (fold run 23d).
 - `ChoiceContext.RemoveOneCounterChoice.counterLabel(CounterType)`: the counter-kind option label, moved from the deleted `RemoveChosenCountersChoice` (fold run 23d).
+
+- `SkipDrawStepEffect(SkipStepOrPhaseKind, PlayerSubject)` (`UPKEEP_STEP`): static "skip your draw / upkeep step", floated "skip the chosen step or phase this turn", read by `skipsDrawStepByStaticAbility`, `playersSkipUpkeepStepApplies` and `GameData.skipsStepOrPhase` (fold run 35).
+- `SkipDrawsEffect(PlayerSubject)`: "that player skips that draw instead", read by DrawService over active statics (fold run 35).
+- `SetControllerMaximumHandSizeEffect(players, Change, DynamicAmount)` / `.set` / `.increase` / `.reduce` / `.fixedAt`: every maximum hand size change, static or resolved (fold run 35).
+- `PlayWithHandsRevealedEffect(PlayerSubject)`: static or floated hand reveal, judged per hand (fold run 35).
+- `GrantStaticEffectToPlayerEffect` with `PERMANENT` and `WHILE_SOURCE_REMAINS` (source-linked; nothing begins if the source left, CR 611.2b) (fold run 35).
+- `GrantProtectionFromPlayerEffect(from, permanents, duration)`: "you and [permanents] gain protection from [player]"; floated `ProtectionFromPlayersEffect` is read by `playerHasProtectionFromOpponents` (fold run 35).
+- `IgnoreOpponentHexproofEffect(opponents, Breadth)` / `.opponentsCreatures()` / `.opponentsAndTheirCreatures()`: the one hexproof-ignore, static or floated (fold run 35).
+- `GrantControllerKeywordUntilEndOfTurnEffect(keyword, PlayerSubject, duration)` / `.eachPlayer(keyword)`: player keywords shroud, hexproof, flying (fold run 35).
 
 ### Blocked causes still open
 
@@ -3749,6 +3758,39 @@ Batch `chosen-counters`, the last Run 23 batch.
 **For the next run.** Run 23 is closed. Candidates for step 10:
 - rename the survivor (e.g. `RemoveCountersEffect`);
 - merge it with `RemoveAllCountersFromTargetPermanentEffect` and `RemoveCounterFromTargetPermanentEffect`.
+
+### Step 9, fold run 35 (2026-11-24, parallel worktree)
+Six of seven batches done. Ratchet 3,427 / 2,745 → 3,411 / 2,739. Ledger 31 rows: absorbed 23 (4 interfaces), survivor 8. 26 card files rewritten; Oracle text checked for 24.
+
+| Batch | Result |
+|---|---|
+| player-kw | 1 folded. `GrantControllerKeywordUntilEndOfTurnEffect` gains a non-target `PlayerSubject players` and FLYING (Sarah's Wings' player float); one log line per player. |
+| skip-step | 4 folded. `SkipDrawStepEffect(SkipStepOrPhaseKind, PlayerSubject)` (UPKEEP_STEP added); hellbent is a `ConditionalEffect(ControllerHandEmpty)`; Fatespinner floats it by `GrantStaticEffectToPlayerEffect` on `triggeringPlayer()`. A draw skip is not a step skip (CR 614.10): the new `SkipDrawsEffect(PlayerSubject)` takes Possessed Portal and Living Conundrum (in a `ConditionalEffect`), and its two one-implementer interfaces are gone. |
+| hand-size | 6 folded plus ReduceControllerMaxHandSizeEffect (its 5m block was this batch). `SetControllerMaximumHandSizeEffect(players, Change SET/INCREASE/REDUCE, DynamicAmount)`, applied in timestamp order (CR 613.11). Players are judged by `namesPlayer`, so Cursed Rack is `chosenPlayer()` and the inference is gone. Winter is delirium + `Sum(Fixed(7), Scaled(CardTypesAmongCardsInGraveyard, -1))`. Resolved (Inspired Idea), it floats PERMANENT with the amount fixed. The Controller/Opponent interfaces are gone. |
+| hand-reveal | 3 folded, plus the `PubliclyRevealedHandEffect` interface. `PlayWithHandsRevealedEffect(PlayerSubject)`; Truth or Dare and Stromgald Spy float it through `GrantStaticEffectToPlayerEffect`, which now accepts PERMANENT and WHILE_SOURCE_REMAINS (source kept on the float; nothing begins if it left, CR 611.2b). |
+| player-prot | 2 folded into the new `GrantProtectionFromPlayerEffect(from, permanents, duration)`: it floats `ProtectionFromPlayersEffect` on the controller and grants it to the permanents found as it resolves. Runed Halo and Absolute Virtue are left: they need the single player-protection reader (6 TargetLegalityService sites, damage preventions, aura attach). Seht's Tiger and Faith's Shield are unchanged. |
+| hexproof-ignore | 2 folded. `IgnoreOpponentHexproofEffect(opponents, Breadth CREATURES/PERMANENTS)`; Detection Tower floats it until end of turn; the three reads go through one `hasHexproofIgnore` (active statics plus floated copies). |
+| enters-tapped | not started |
+
+**Behaviour changes.**
+- Face-down or ability-less sources no longer skip draw steps or draws, or reveal hands (CR 708.2a, 613.1f). New tests: Necropotence, Possessed Portal, Living Conundrum, Wandering Eye.
+- Hands are revealed per player: in multiplayer one opponent's reveal no longer shows every opponent's hand.
+- Cursed Rack with no chosen player affects nobody.
+- Logs: Everybody Lives! logs per player; Spy and Truth or Dare lose their reveal lines; Archon and Frolicker log the survivor's lines.
+
+**Tests changed.** DrawServiceTest (stub), TurnCleanupServiceTest (fixtures; the Winter case moved to its card test), CursedRackTest (setup sets the chosen player, as BlackViseTest does), plus class renames in Fatespinner, RunedTerror, Fynn and PsychicSpiral.
+
+**Seen, not changed.**
+- Nowhere to Run says "spells and abilities" (anyone's), but is modelled as its controller's only. Multiplayer only. Sure of the text.
+- `playerHasProtectionFromOpponents` ignores objects the player owns that no other player controls (CR 702.16k). Sure of the code.
+- `getRevealedOpponentHand` returns only the first opponent's hand. Sure of the code.
+- An increase or reduction newer than "no maximum hand size" overrides it. Not checked against the rulings.
+
+**For the next run.**
+- 35b: `enters-tapped`. Give `EnterPermanentsOfTypesTappedEffect` a `PlayerSubject` in place of `opponentsOnly` (Radiant Restraints: `enchantedPlayer()`).
+- Due Respect and Nahiri's Lithoforming become floated copies on players.
+- Ashling's Prerogative needs a parity predicate judged against its source.
+- PlayersSkipUntapStepEffect (3 cards, one of them a plane) and RevealOpponentHandsEffect (Telepathy) can join this run's survivors.
 
 ## Prompt
 

@@ -51,7 +51,7 @@ class CursedRackTest extends BaseCardTest {
     @DisplayName("Cursed Rack entering after Library of Leng sets the chosen opponent's maximum to four")
     void rackEnteringLaterOverridesUnlimitedHandSize() {
         harness.addToBattlefield(player2, new LibraryOfLeng());
-        harness.addToBattlefield(player1, new CursedRack());
+        harness.addToBattlefieldAndReturn(player1, new CursedRack()).setRememberedTargetPlayerId(player2.getId());
         harness.setHand(player2, List.of(new Forest(), new Forest(), new Forest(),
                 new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
         harness.forceActivePlayer(player2);
@@ -66,7 +66,7 @@ class CursedRackTest extends BaseCardTest {
     @Test
     @DisplayName("Chosen opponent must discard down to four during cleanup")
     void opponentDiscardsDownToFour() {
-        harness.addToBattlefield(player1, new CursedRack());
+        harness.addToBattlefieldAndReturn(player1, new CursedRack()).setRememberedTargetPlayerId(player2.getId());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
 
@@ -89,7 +89,7 @@ class CursedRackTest extends BaseCardTest {
     @Test
     @DisplayName("Chosen opponent holding exactly four cards need not discard")
     void noDiscardWhenOpponentAtFour() {
-        harness.addToBattlefield(player1, new CursedRack());
+        harness.addToBattlefieldAndReturn(player1, new CursedRack()).setRememberedTargetPlayerId(player2.getId());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
 
@@ -106,7 +106,7 @@ class CursedRackTest extends BaseCardTest {
     @Test
     @DisplayName("Controller's own hand size is unaffected (still seven)")
     void controllerHandSizeUnaffected() {
-        harness.addToBattlefield(player1, new CursedRack());
+        harness.addToBattlefieldAndReturn(player1, new CursedRack()).setRememberedTargetPlayerId(player2.getId());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
 
@@ -128,7 +128,7 @@ class CursedRackTest extends BaseCardTest {
     @Test
     @DisplayName("Hand-size limit is lifted when Cursed Rack leaves the battlefield")
     void handSizeRestoredWhenRemoved() {
-        harness.addToBattlefield(player1, new CursedRack());
+        harness.addToBattlefieldAndReturn(player1, new CursedRack()).setRememberedTargetPlayerId(player2.getId());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
 

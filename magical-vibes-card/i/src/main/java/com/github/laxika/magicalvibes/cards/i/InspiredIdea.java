@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceControllerMaxHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "VOW", collectorNumber = "64")
 @CardRegistration(set = "DBL", collectorNumber = "331")
@@ -18,6 +19,6 @@ public class InspiredIdea extends Card {
         addSpellEffect(new DrawCardEffect(3));
         addSpellEffect(new ConditionalEffect(
                 new NotCondition(new CastForAlternateCost()),
-                new ReduceControllerMaxHandSizeEffect(3)));
+                SetControllerMaximumHandSizeEffect.reduce(Subjects.you(), 3)));
     }
 }

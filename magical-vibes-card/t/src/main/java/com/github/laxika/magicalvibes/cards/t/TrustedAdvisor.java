@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.BouncePermanentOnUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.IncreaseControllerMaxHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -19,7 +20,7 @@ import java.util.Set;
 public class TrustedAdvisor extends Card {
 
     public TrustedAdvisor() {
-        addStaticEffect(new IncreaseControllerMaxHandSizeEffect(2));
+        addStaticEffect(SetControllerMaximumHandSizeEffect.increase(Subjects.you(), 2));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new BouncePermanentOnUpkeepEffect(
                 BouncePermanentOnUpkeepEffect.Scope.SOURCE_CONTROLLER,
                 Set.of(new ControlledPermanentPredicateTargetFilter(

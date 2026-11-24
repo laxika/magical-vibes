@@ -81,8 +81,8 @@ import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsCreaturesToHandDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCreatureToGraveyardElseDrawReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipDrawReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipDrawIfEmptyLibraryReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipDrawsEffect;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.model.effect.MiracleRevealEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealDrawnCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnFromGraveyardInsteadOfDrawEffect;
@@ -1190,19 +1190,16 @@ public class DrawService {
         return exileReplacementSources;
     }
 
+    /**
+     * The first permanent whose active {@link SkipDrawsEffect} names {@code playerId} ("that player skips that draw
+     * instead"), in turn order: none of a face-down or ability-less permanent's (CR 708.2a, 613.1f), a conditional
+     * one ("while your library has no cards in it") only while its condition holds.
+     */
     private Permanent findDrawSkipSource(GameData gameData, UUID playerId) {
-        List<Card> library = gameData.playerDecks.get(playerId);
-        boolean libraryEmpty = library == null || library.isEmpty();
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-            if (battlefield == null) continue;
-            for (Permanent permanent : battlefield) {
-                boolean skips = permanent.getCard().getStaticEffects().stream().anyMatch(effect ->
-                        effect instanceof SkipDrawReplacementEffect
-                                || (libraryEmpty
-                                && pid.equals(playerId)
-                                && effect instanceof SkipDrawIfEmptyLibraryReplacementEffect));
-                if (skips) return permanent;
+        for (var active : gameQueryService.activeStaticEffects(gameData, SkipDrawsEffect.class)) {
+            if (SubjectResolutionService.namesPlayer(gameData, active.source(), active.controllerId(), playerId,
+                    active.effect().players())) {
+                return active.source();
             }
         }
         return null;
@@ -1216,21 +1213,7 @@ public class DrawService {
     }
 
     private boolean isDrawSkipped(GameData gameData, UUID playerId) {
-        List<Card> library = gameData.playerDecks.get(playerId);
-        boolean libraryEmpty = library == null || library.isEmpty();
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-            if (battlefield == null) continue;
-            for (Permanent permanent : battlefield) {
-                boolean skips = permanent.getCard().getStaticEffects().stream().anyMatch(effect ->
-                        effect instanceof SkipDrawReplacementEffect
-                                || (libraryEmpty
-                                && pid.equals(playerId)
-                                && effect instanceof SkipDrawIfEmptyLibraryReplacementEffect));
-                if (skips) return true;
-            }
-        }
-        return false;
+        return findDrawSkipSource(gameData, playerId) != null;
     }
 
     /** Every Shared Fate on the battlefield; each is a separate replacement the drawing player may choose (CR 616.1). */

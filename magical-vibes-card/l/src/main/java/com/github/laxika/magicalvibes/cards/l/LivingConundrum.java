@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.LivingConundrumDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipDrawsEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
@@ -17,9 +17,8 @@ import java.util.Set;
 public class LivingConundrum extends Card {
 
     public LivingConundrum() {
-        addStaticEffect(new LivingConundrumDrawReplacementEffect());
-
         NotCondition emptyLibrary = new NotCondition(new CardsInLibraryAtLeast(1));
+        addStaticEffect(new ConditionalEffect(emptyLibrary, new SkipDrawsEffect(Subjects.you())));
         addStaticEffect(new ConditionalEffect(
                 emptyLibrary,
                 new SetBasePowerToughnessEffect(10, 10, Subjects.source())));

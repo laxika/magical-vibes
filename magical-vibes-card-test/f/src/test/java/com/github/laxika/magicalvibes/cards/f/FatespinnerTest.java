@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.model.effect.SkipChosenStepOrPhaseEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -112,7 +112,7 @@ class FatespinnerTest extends BaseCardTest {
                 () -> harness.handleListChoice(player2, COMBAT_PHASE));
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.floatingEffectsOfTypes(SkipChosenStepOrPhaseEffect.class)).isEmpty();
+        assertThat(gd.floatingEffectsOfTypes(SkipDrawStepEffect.class)).isEmpty();
         harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
         assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
     }

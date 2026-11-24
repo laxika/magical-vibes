@@ -35,9 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
-import com.github.laxika.magicalvibes.model.effect.MakeDefendingPlayerPlayWithHandRevealedEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayWithTargetPlayerHandRevealedEffect;
-import com.github.laxika.magicalvibes.model.effect.PubliclyRevealedHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayWithHandsRevealedEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
 import com.github.laxika.magicalvibes.model.effect.WebSlingingEffect;
 import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
@@ -57,6 +55,7 @@ import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.effect.GrantedAbilityViewFactory;
 import com.github.laxika.magicalvibes.service.effect.GrantedEffectAttribution;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -512,34 +511,8 @@ public class GameViewProjectionFactory {
         // Mindslaver: controller always sees the controlled player's hand
         // (handled separately while building each player-specific state projection)
 
-        boolean allHandsRevealed = false;
-        boolean opponentRevealsOwnHand = false;
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf == null) continue;
-            for (Permanent perm : bf) {
-                if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-                for (CardEffect effect : perm.getCard().getStaticEffects()) {
-                    if (effect instanceof PubliclyRevealedHandEffect reveal) {
-                        if (!reveal.controllerOnly()) {
-                            allHandsRevealed = true;
-                        } else if (!pid.equals(playerId)) {
-                            // Opponent plays with their hand revealed (Enduring Renewal).
-                            opponentRevealsOwnHand = true;
-                        }
-                    }
-                }
-            }
-        }
-
-        if (gameData.handRevealedToSenTripletsController(playerId)) {
-            // Sen Triplets: the targeted player plays with their hand revealed this turn.
-            opponentRevealsOwnHand = true;
-        }
-
-        boolean fullHandRevealed = allHandsRevealed
-                || opponentRevealsOwnHand
-                || opponentHandRevealedBySource(gameData, playerId);
+        // Sen Triplets: the targeted player plays with their hand revealed this turn.
+        boolean fullHandRevealed = gameData.handRevealedToSenTripletsController(playerId);
         if (!fullHandRevealed) {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf != null) {
@@ -559,8 +532,7 @@ public class GameViewProjectionFactory {
             if (!opponentId.equals(playerId)) {
                 List<CardSubtype> granted = gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(gameData, opponentId);
                 List<Card> opponentHand = gameData.playerHands.getOrDefault(opponentId, List.of());
-                boolean revealEntireOpponentHand = fullHandRevealed
-                        || gameData.hasFloatingEffectOnPlayer(opponentId, PlayWithTargetPlayerHandRevealedEffect.class);
+                boolean revealEntireOpponentHand = fullHandRevealed || playsWithHandRevealed(gameData, opponentId);
                 return opponentHand.stream()
                         .filter(card -> revealEntireOpponentHand
                                 || gameData.isCardRevealedInHand(card.getId(), opponentId))
@@ -573,12 +545,21 @@ public class GameViewProjectionFactory {
     }
 
     /**
-     * {@code true} if an opponent of {@code playerId} plays with their hand revealed for as long as a source permanent
-     * remains on the battlefield (Stromgald Spy).
+     * Whether {@code playerId} plays with their hand revealed: an active static {@link PlayWithHandsRevealedEffect}
+     * names them (none of a face-down or ability-less permanent's, CR 708.2a, 613.1f), or one is floated on them
+     * (Truth or Dare, Stromgald Spy).
      */
-    private boolean opponentHandRevealedBySource(GameData gameData, UUID playerId) {
-        return gameData.floatingEffectsOfTypes(MakeDefendingPlayerPlayWithHandRevealedEffect.class).stream()
-                .anyMatch(reveal -> reveal.affectedPlayerId() != null && !reveal.affectedPlayerId().equals(playerId));
+    private boolean playsWithHandRevealed(GameData gameData, UUID playerId) {
+        if (gameData.hasFloatingEffectOnPlayer(playerId, PlayWithHandsRevealedEffect.class)) {
+            return true;
+        }
+        for (var active : gameQueryService.activeStaticEffects(gameData, PlayWithHandsRevealedEffect.class)) {
+            if (SubjectResolutionService.namesPlayer(gameData, active.source(), active.controllerId(), playerId,
+                    active.effect().players())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

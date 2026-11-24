@@ -29,7 +29,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.LivingConundrumDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipDrawsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.OpponentDrawTwoOrMoreReplacedEffect;
 import com.github.laxika.magicalvibes.model.effect.QuantumRiddlerDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -375,8 +376,10 @@ class DrawServiceTest {
     @Test
     void emptyLibraryDrawReplacementOnlySkipsControllerDraw() {
         Card sourceCard = createCard("Living Conundrum", CardType.CREATURE);
-        sourceCard.addStaticEffect(new LivingConundrumDrawReplacementEffect());
-        gd.playerBattlefields.get(player1Id).add(new Permanent(sourceCard));
+        Permanent source = new Permanent(sourceCard);
+        gd.playerBattlefields.get(player1Id).add(source);
+        lenient().when(gameQueryService.activeStaticEffects(gd, SkipDrawsEffect.class)).thenReturn(List.of(
+                new GameQueryService.ActiveStaticEffect<>(new SkipDrawsEffect(Subjects.you()), source, player1Id)));
         gd.playerDecks.put(player1Id, new ArrayList<>());
         gd.playerHands.put(player1Id, new ArrayList<>());
 

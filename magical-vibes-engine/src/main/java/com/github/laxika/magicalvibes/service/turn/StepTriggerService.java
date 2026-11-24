@@ -39,8 +39,8 @@ import com.github.laxika.magicalvibes.model.effect.MaySkipDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolveRadCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayersSkipUpkeepStepEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -391,7 +391,7 @@ public class StepTriggerService {
         }
 
         // A permanent may instruct its controller to skip their draw step (e.g. Colfenor's Plans).
-        if (controlsSkipDrawStep(gameData, activePlayerId)) {
+        if (skipsDrawStepByStaticAbility(gameData, activePlayerId)) {
             String logEntry = gameData.playerIdToName.get(activePlayerId) + " skips their draw step.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} skips draw step (SkipDrawStepEffect)", gameData.id, gameData.playerIdToName.get(activePlayerId));
@@ -486,34 +486,31 @@ public class StepTriggerService {
     private record DrawStepReplacementSource(Card card, DrawReplacementKind kind) {
     }
 
-    public boolean controlsSkipDrawStep(GameData gameData, UUID playerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return false;
-        for (Permanent perm : battlefield) {
-            if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-            for (CardEffect effect : perm.getCard().getStaticEffects()) {
-                if (effect instanceof SkipDrawStepEffect) {
-                    return true;
-                }
+    /** Whether a static ability makes {@code playerId} skip their draw step ("skip your draw step"). */
+    public boolean skipsDrawStepByStaticAbility(GameData gameData, UUID playerId) {
+        return skipsStepByStaticAbility(gameData, playerId, SkipStepOrPhaseKind.DRAW_STEP);
+    }
+
+    /**
+     * Whether a static ability makes the active player skip their upkeep step ("players skip their upkeep steps",
+     * hellbent "skip your upkeep step").
+     */
+    public boolean playersSkipUpkeepStepApplies(GameData gameData) {
+        return skipsStepByStaticAbility(gameData, gameData.activePlayerId, SkipStepOrPhaseKind.UPKEEP_STEP);
+    }
+
+    /**
+     * Whether an active static {@link SkipDrawStepEffect} of {@code kind} names {@code playerId}: none of a face-down
+     * or ability-less permanent's (CR 708.2a, 613.1f), a conditional one only while its condition holds.
+     */
+    private boolean skipsStepByStaticAbility(GameData gameData, UUID playerId, SkipStepOrPhaseKind kind) {
+        for (var active : gameQueryService.activeStaticEffects(gameData, SkipDrawStepEffect.class)) {
+            if (active.effect().kind() == kind && SubjectResolutionService.namesPlayer(gameData, active.source(),
+                    active.controllerId(), playerId, active.effect().players())) {
+                return true;
             }
         }
         return false;
-    }
-
-    public boolean playersSkipUpkeepStepApplies(GameData gameData) {
-        boolean globalSkip = gameData.anyPermanentMatches(permanent ->
-                gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
-                        .anyMatch(PlayersSkipUpkeepStepEffect::isGlobal));
-        if (globalSkip) {
-            return true;
-        }
-
-        if (!gameData.playerHands.getOrDefault(gameData.activePlayerId, List.of()).isEmpty()) {
-            return false;
-        }
-        return gameData.playerBattlefields.getOrDefault(gameData.activePlayerId, List.of()).stream()
-                .flatMap(permanent -> gameQueryService.getActiveStaticEffects(gameData, permanent).stream())
-                .anyMatch(PlayersSkipUpkeepStepEffect::isControllerScoped);
     }
 
     public void handleDrawStepTriggers(GameData gameData) {

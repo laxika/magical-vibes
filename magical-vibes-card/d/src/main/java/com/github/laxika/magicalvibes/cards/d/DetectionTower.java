@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.IgnoreOpponentHexproofUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.IgnoreOpponentHexproofEffect;
 
 import java.util.List;
 
@@ -17,7 +18,8 @@ public class DetectionTower extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new IgnoreOpponentHexproofUntilEndOfTurnEffect()),
+                List.of(GrantStaticEffectToPlayerEffect.untilEndOfTurn(
+                        IgnoreOpponentHexproofEffect.opponentsAndTheirCreatures())),
                 "{1}, {T}: Until end of turn, your opponents and creatures your opponents control "
                         + "with hexproof can be the targets of spells and abilities you control as "
                         + "though they didn't have hexproof."

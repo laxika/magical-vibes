@@ -37,7 +37,7 @@ All paths relative to `cards/`.
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | Pay-life trigger + counter-scaled activated destruction | `f/FontOfAgonies.java` | `Triggers.youPayLife() PutCountersOnSelfEffect(BLOOD, EventValue())` + `{1}{B}` `RemoveCounterFromSourceCost(4, BLOOD)` + `DestroyTargetPermanentEffect()` targeting a creature — the pay-life trigger snapshots the amount actually paid |
-| Global draw replacement plus end-step sacrifice-or-discard | `p/PossessedPortal.java` | STATIC `PossessedPortalDrawReplacementEffect` plus Triggers.endStep(ActivePlayer.ANY) `EachPlayerSacrificesPermanentUnlessDiscardEffect` |
+| Global draw replacement plus end-step sacrifice-or-discard | `p/PossessedPortal.java` | STATIC `SkipDrawsEffect(eachPlayer())` plus Triggers.endStep(ActivePlayer.ANY) `EachPlayerSacrificesPermanentUnlessDiscardEffect` |
 | Extra-turn skip + self-exile extra-turn replacement | `u/UginsNexus.java` | STATIC `UginNexusReplacementEffect` — skips an extra turn as it would begin while the Nexus remains on the battlefield; if the Nexus would go from the battlefield to a graveyard, exiles it and queues an extra turn for its last controller |
 | Opponent-only extra-turn skip plus second-event draw triggers | `t/TroubleInPairs.java` | STATIC `OpponentExtraTurnSkipReplacementEffect` + `Triggers.playerAttacks() ConditionalEffect(OpponentAttacksWithAtLeastCreatures(2, false), DrawCardEffect)` + `Triggers.opponentDrawsSecondCardEachTurn()` + `DrawCardEffect` + `Triggers.opponentCastsSpell().nthThisTurn(2)` + `DrawCardEffect` |
 

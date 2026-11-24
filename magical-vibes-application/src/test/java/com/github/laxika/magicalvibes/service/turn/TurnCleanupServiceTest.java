@@ -22,12 +22,12 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersHaveNoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceControllerMaxHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffect;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeToSourceCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.SetOpponentMaximumHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.SetOpponentMaximumHandSizeToSevenMinusCardTypesInGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -79,6 +79,9 @@ class TurnCleanupServiceTest {
     private GameQueryService gameQueryService;
 
     @Mock
+    private AmountEvaluationService amountEvaluationService;
+
+    @Mock
     private com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService triggeredAbilityStackService;
 
     @InjectMocks
@@ -91,6 +94,16 @@ class TurnCleanupServiceTest {
     @BeforeEach
     void setUp() {
         org.springframework.test.util.ReflectionTestUtils.setField(sut, "gameQueryService", gameQueryService);
+        org.springframework.test.util.ReflectionTestUtils.setField(sut, "amountEvaluationService", amountEvaluationService);
+        // The hand-size amounts these tests use: a fixed number and the source's counters.
+        lenient().when(amountEvaluationService.evaluate(org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
+                .thenAnswer(invocation -> switch (invocation.getArgument(1)) {
+                    case Fixed fixed -> fixed.value();
+                    case CountersOnSource counters ->
+                            invocation.<AmountContext>getArgument(2).sourcePermanent().getCounterCount(counters.counterType());
+                    default -> throw new IllegalArgumentException("Not stubbed: " + invocation.getArgument(1));
+                });
         // The stack door puts a delayed ability on the stack (its own routes are TriggeredAbilityStackServiceTest's).
         org.springframework.test.util.ReflectionTestUtils.setField(sut, "triggeredAbilityStackService",
                 triggeredAbilityStackService);
@@ -350,17 +363,17 @@ class TurnCleanupServiceTest {
         void includesFloatingControllerReduction() {
             gd.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), "Inspired Idea", null, player1Id,
-                    new ReduceControllerMaxHandSizeEffect(3), null, player1Id, null,
+                    SetControllerMaximumHandSizeEffect.reduce(Subjects.you(), 3), null, player1Id, null,
                     Duration.PERMANENT, 0));
 
             assertThat(sut.getMaxHandSize(gd, player1Id)).isEqualTo(4);
         }
 
         @Test
-        @DisplayName("Reduces hand size when opponent controls ReduceOpponentMaxHandSizeEffect")
+        @DisplayName("An opponent's \"each opponent's maximum hand size is reduced\" reduces the player's")
         void reducedByOpponentReduceEffect() {
             Card card = createCardWithName("Jin-Gitaxias, Core Augur");
-            card.addStaticEffect(new ReduceOpponentMaxHandSizeEffect(7));
+            card.addStaticEffect(SetControllerMaximumHandSizeEffect.reduce(Subjects.eachOpponent(), 7));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
             assertThat(sut.getMaxHandSize(gd, player1Id)).isEqualTo(0);
@@ -370,7 +383,7 @@ class TurnCleanupServiceTest {
         @DisplayName("Does not reduce own controller's hand size")
         void doesNotReduceOwnHandSize() {
             Card card = createCardWithName("Jin-Gitaxias, Core Augur");
-            card.addStaticEffect(new ReduceOpponentMaxHandSizeEffect(7));
+            card.addStaticEffect(SetControllerMaximumHandSizeEffect.reduce(Subjects.eachOpponent(), 7));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             assertThat(sut.getMaxHandSize(gd, player1Id)).isEqualTo(7);
@@ -380,9 +393,9 @@ class TurnCleanupServiceTest {
         @DisplayName("Multiple reduction effects from the same opponent stack additively")
         void multipleReductionEffectsStack() {
             Card card1 = createCardWithName("Reducer A");
-            card1.addStaticEffect(new ReduceOpponentMaxHandSizeEffect(2));
+            card1.addStaticEffect(SetControllerMaximumHandSizeEffect.reduce(Subjects.eachOpponent(), 2));
             Card card2 = createCardWithName("Reducer B");
-            card2.addStaticEffect(new ReduceOpponentMaxHandSizeEffect(3));
+            card2.addStaticEffect(SetControllerMaximumHandSizeEffect.reduce(Subjects.eachOpponent(), 3));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card1));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card2));
 
@@ -390,7 +403,7 @@ class TurnCleanupServiceTest {
         }
 
         @Test
-        @DisplayName("Sets own hand size when controlling SetControllerMaximumHandSizeEffect")
+        @DisplayName("\"Your maximum hand size is N\" sets only its controller's")
         void setByControllerSetEffect() {
             Card card = createCardWithName("Recycle");
             card.addStaticEffect(new SetControllerMaximumHandSizeEffect(2));
@@ -404,7 +417,8 @@ class TurnCleanupServiceTest {
         @DisplayName("Sets own hand size to the source permanent's current counter count")
         void setByControllerSourceCounterEffect() {
             Card card = createCardWithName("Midnight Oil");
-            card.addStaticEffect(new SetControllerMaximumHandSizeToSourceCountersEffect(CounterType.HOUR));
+            card.addStaticEffect(SetControllerMaximumHandSizeEffect.set(Subjects.you(),
+                    new CountersOnSource(CounterType.HOUR)));
             Permanent permanent = new Permanent(card);
             permanent.setCounterCount(CounterType.HOUR, 3);
             gd.playerBattlefields.get(player1Id).add(permanent);
@@ -416,43 +430,26 @@ class TurnCleanupServiceTest {
         }
 
         @Test
-        @DisplayName("Sets hand size to a specific value when opponent controls SetOpponentMaximumHandSizeEffect")
+        @DisplayName("\"The chosen player's maximum hand size is four\" sets the chosen player's")
         void setByOpponentSetEffect() {
-            Card card = createCardWithName("Cursed Rack");
-            card.addStaticEffect(new SetOpponentMaximumHandSizeEffect(4));
-            gd.playerBattlefields.get(player2Id).add(new Permanent(card));
+            gd.playerBattlefields.get(player2Id).add(cursedRackChoosing(player1Id));
 
             assertThat(sut.getMaxHandSize(gd, player1Id)).isEqualTo(4);
+            assertThat(sut.getMaxHandSize(gd, player2Id)).isEqualTo(7);
         }
 
-        @Test
-        @DisplayName("Sets opponents' hand size from the controller's graveyard card types when delirium is met")
-        void setByControllerGraveyardCardTypes() {
-            Card winter = createCardWithName("Winter, Misanthropic Guide");
-            winter.addStaticEffect(new SetOpponentMaximumHandSizeToSevenMinusCardTypesInGraveyardEffect());
-            gd.playerBattlefields.get(player2Id).add(new Permanent(winter));
-
-            gd.playerGraveyards.put(player2Id, List.of(
-                    cardOfType(CardType.CREATURE),
-                    cardOfType(CardType.LAND),
-                    cardOfType(CardType.INSTANT),
-                    cardOfType(CardType.ENCHANTMENT)));
-
-            assertThat(sut.getMaxHandSize(gd, player1Id)).isEqualTo(3);
-        }
-
-        private Card cardOfType(CardType type) {
-            Card card = new Card();
-            card.setType(type);
-            return card;
+        private Permanent cursedRackChoosing(UUID chosenPlayerId) {
+            Card card = createCardWithName("Cursed Rack");
+            card.addStaticEffect(SetControllerMaximumHandSizeEffect.set(Subjects.chosenPlayer(), new Fixed(4)));
+            Permanent rack = new Permanent(card);
+            rack.setRememberedTargetPlayerId(chosenPlayerId);
+            return rack;
         }
 
         @Test
         @DisplayName("A set effect does not affect its own controller")
         void setEffectDoesNotAffectOwnController() {
-            Card card = createCardWithName("Cursed Rack");
-            card.addStaticEffect(new SetOpponentMaximumHandSizeEffect(4));
-            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+            gd.playerBattlefields.get(player1Id).add(cursedRackChoosing(player2Id));
 
             assertThat(sut.getMaxHandSize(gd, player1Id)).isEqualTo(7);
         }
@@ -461,11 +458,9 @@ class TurnCleanupServiceTest {
         @DisplayName("A later set effect overrides an earlier reduction (timestamp order)")
         void setAppliedAfterReduceOverridesIt() {
             Card reducer = createCardWithName("Jin-Gitaxias, Core Augur");
-            reducer.addStaticEffect(new ReduceOpponentMaxHandSizeEffect(3));
-            Card rack = createCardWithName("Cursed Rack");
-            rack.addStaticEffect(new SetOpponentMaximumHandSizeEffect(4));
+            reducer.addStaticEffect(SetControllerMaximumHandSizeEffect.reduce(Subjects.eachOpponent(), 3));
             gd.playerBattlefields.get(player2Id).add(new Permanent(reducer));
-            gd.playerBattlefields.get(player2Id).add(new Permanent(rack));
+            gd.playerBattlefields.get(player2Id).add(cursedRackChoosing(player1Id));
 
             assertThat(sut.getMaxHandSize(gd, player1Id)).isEqualTo(4);
         }
@@ -473,11 +468,10 @@ class TurnCleanupServiceTest {
         @Test
         @DisplayName("A reduction after a set is applied on top of the set value (timestamp order)")
         void reduceAppliedAfterSet() {
-            Card rack = createCardWithName("Cursed Rack");
-            rack.addStaticEffect(new SetOpponentMaximumHandSizeEffect(4));
+            Permanent rack = cursedRackChoosing(player1Id);
             Card reducer = createCardWithName("Jin-Gitaxias, Core Augur");
-            reducer.addStaticEffect(new ReduceOpponentMaxHandSizeEffect(1));
-            gd.playerBattlefields.get(player2Id).add(new Permanent(rack));
+            reducer.addStaticEffect(SetControllerMaximumHandSizeEffect.reduce(Subjects.eachOpponent(), 1));
+            gd.playerBattlefields.get(player2Id).add(rack);
             gd.playerBattlefields.get(player2Id).add(new Permanent(reducer));
 
             assertThat(sut.getMaxHandSize(gd, player1Id)).isEqualTo(3);

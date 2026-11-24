@@ -211,7 +211,7 @@ public class TurnProgressionService {
         }
 
         if (next == TurnStep.DRAW
-                && (stepTriggerService.controlsSkipDrawStep(gameData, gameData.activePlayerId)
+                && (stepTriggerService.skipsDrawStepByStaticAbility(gameData, gameData.activePlayerId)
                 || skips(gameData, SkipStepOrPhaseKind.DRAW_STEP))) {
             if (gameData.additionalBeginningPhaseReturnStep != null) {
                 if (gameData.additionalBeginningPhasesAfterPostcombatMain > 0) {

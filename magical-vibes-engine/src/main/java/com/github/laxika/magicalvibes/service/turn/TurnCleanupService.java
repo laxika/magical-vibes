@@ -14,19 +14,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.EndOfTurnStateShare;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerMaxHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.DamagePersistenceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCreatureDamagePersistenceEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersHaveNoMaximumHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentMaxHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceManaDrainWithColorlessEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.SetOpponentMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
@@ -38,6 +33,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -58,7 +55,7 @@ import java.util.UUID;
  *   <li>Resetting "until end of turn" modifiers on permanents and global flags.</li>
  *   <li>Draining all mana pools between phases (unless prevented by e.g. Upwelling).</li>
  *   <li>Computing each player's effective maximum hand size, accounting for
- *       effects that reduce it ({@link ReduceOpponentMaxHandSizeEffect}) or
+ *       effects that change it ({@link SetControllerMaximumHandSizeEffect}) or
  *       remove it entirely ({@link NoMaximumHandSizeEffect} /
  *       {@link PlayersHaveNoMaximumHandSizeEffect}).</li>
  *   <li>Reconciling control at end of turn via {@link CreatureControlService} — expired
@@ -81,6 +78,9 @@ public class TurnCleanupService {
     @Autowired
     @Lazy
     private GameQueryService gameQueryService;
+    @Autowired
+    @Lazy
+    private AmountEvaluationService amountEvaluationService;
 
     public TurnCleanupService(CreatureControlService creatureControlService,
                               @Lazy PermanentRemovalService permanentRemovalService) {
@@ -419,13 +419,10 @@ public class TurnCleanupService {
     }
 
     /**
-     * Calculates the effective maximum hand size for the given player.
-     * Starts at the default 7, then applies each opponent-controlled
-     * {@link OpponentMaxHandSizeEffect} (e.g. {@link ReduceOpponentMaxHandSizeEffect} reducing by
-     * N, {@link SetOpponentMaximumHandSizeEffect} setting to a specific value) to the running
-     * value in battlefield/timestamp order (CR 402.2), plus every controller-controlled
-     * {@link ControllerMaxHandSizeEffect} (e.g. {@link SetControllerMaximumHandSizeEffect} —
-     * Recycle's "your maximum hand size is two").
+     * Calculates the effective maximum hand size for the given player: the default seven (CR 402.2), then every
+     * {@link SetControllerMaximumHandSizeEffect} that names the player (a static ability's players judged against its
+     * source and controller, a floated one on the player) applied to the running value in timestamp order, then
+     * battlefield order.
      *
      * @param gameData the current game state
      * @param playerId the player whose hand-size limit to compute
@@ -453,43 +450,18 @@ public class TurnCleanupService {
         int maxHandSize = 7;
         List<HandSizeModifier> modifiers = new ArrayList<>();
         int order = 0;
-        // Fold every hand-size effect that applies to this player over the running value in
-        // timestamp order — opponent-controlled ones from the other battlefields, and the
-        // player's own "your maximum hand size is N" effects from theirs.
         for (UUID otherPlayerId : gameData.orderedPlayerIds) {
-            boolean own = otherPlayerId.equals(playerId);
             List<Permanent> bf = gameData.playerBattlefields.get(otherPlayerId);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                boolean hasChosenPlayer = perm.getCard().getOwnEntryEffects().stream()
-                        .anyMatch(RememberTargetPlayerEffect.class::isInstance);
-                boolean choosesOpponentAsEnters = perm.getCard().getStaticEffects().stream()
-                        .anyMatch(com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect.class::isInstance);
                 List<CardEffect> staticEffects = nested
                         ? unconditionalPrintedStaticEffects(gameData, perm)
                         : gameQueryService.getActiveStaticEffects(gameData, perm, otherPlayerId);
                 for (CardEffect effect : staticEffects) {
-                    if (effect instanceof OpponentMaxHandSizeEffect handSizeEffect) {
-                        UUID affectedPlayerId = null;
-                        if (hasChosenPlayer) {
-                            affectedPlayerId = perm.getRememberedTargetPlayerId();
-                            if (affectedPlayerId == null) {
-                                UUID originalControllerId = gameData.stolenCreatures
-                                        .getOrDefault(perm.getId(), otherPlayerId);
-                                affectedPlayerId = gameData.orderedPlayerIds.stream()
-                                        .filter(id -> !id.equals(originalControllerId))
-                                        .findFirst()
-                                        .orElse(null);
-                            }
-                        }
-                        boolean affectsPlayer = choosesOpponentAsEnters && !perm.getChosenPlayerIds().isEmpty()
-                                ? perm.getChosenPlayerIds().contains(playerId)
-                                : hasChosenPlayer ? playerId.equals(affectedPlayerId) : !own;
-                        if (affectsPlayer) {
-                            modifiers.add(new HandSizeModifier(effect, perm, perm.getTimestamp(), order++, otherPlayerId));
-                        }
-                    } else if (own && effect instanceof ControllerMaxHandSizeEffect handSizeEffect) {
-                        modifiers.add(new HandSizeModifier(effect, perm, perm.getTimestamp(), order++, otherPlayerId));
+                    if (effect instanceof SetControllerMaximumHandSizeEffect change
+                            && SubjectResolutionService.namesPlayer(gameData, perm, otherPlayerId, playerId,
+                            change.players())) {
+                        modifiers.add(new HandSizeModifier(change, perm, perm.getTimestamp(), order++, otherPlayerId));
                     }
                 }
             }
@@ -497,9 +469,8 @@ public class TurnCleanupService {
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect floatingEffect : gameData.floatingEffects) {
                 if (playerId.equals(floatingEffect.affectedPlayerId())
-                        && (floatingEffect.effect() instanceof ControllerMaxHandSizeEffect
-                        || floatingEffect.effect() instanceof OpponentMaxHandSizeEffect)) {
-                    modifiers.add(new HandSizeModifier(floatingEffect.effect(), null,
+                        && floatingEffect.effect() instanceof SetControllerMaximumHandSizeEffect change) {
+                    modifiers.add(new HandSizeModifier(change, null,
                             floatingEffect.timestamp(), order++, floatingEffect.controllerId()));
                 }
             }
@@ -507,14 +478,9 @@ public class TurnCleanupService {
         modifiers.sort(Comparator.comparingLong(HandSizeModifier::timestamp)
                 .thenComparingInt(HandSizeModifier::order));
         for (HandSizeModifier modifier : modifiers) {
-            if (modifier.effect() instanceof ControllerMaxHandSizeEffect handSizeEffect) {
-                maxHandSize = modifier.source() == null
-                        ? handSizeEffect.applyToMaximumHandSize(maxHandSize)
-                        : handSizeEffect.applyToMaximumHandSize(maxHandSize, modifier.source());
-            } else if (modifier.effect() instanceof OpponentMaxHandSizeEffect handSizeEffect) {
-                maxHandSize = handSizeEffect.applyToMaximumHandSize(maxHandSize, gameData,
-                        modifier.sourceControllerId());
-            }
+            int value = amountEvaluationService.evaluate(gameData, modifier.effect().amount(),
+                    AmountContext.forStaticEffect(modifier.source(), modifier.sourceControllerId()));
+            maxHandSize = modifier.effect().applyTo(maxHandSize, value);
         }
         return maxHandSize;
     }
@@ -545,17 +511,38 @@ public class TurnCleanupService {
         return position;
     }
 
-    /** The newest effect that sets this player's maximum hand size to a number, or null if none. */
+    /**
+     * The newest maximum hand size change that names this player, or null if none. Outside a hand-size computation
+     * a conditional change counts while its condition holds; inside one (a condition asking about maximum hand size)
+     * only the unconditional printed ones count, so the query cannot recurse.
+     */
     private HandSizeStamp latestHandSizeSettingStamp(GameData gameData, UUID playerId) {
+        boolean nested = computingMaxHandSize.get();
+        if (!nested) {
+            computingMaxHandSize.set(true);
+        }
+        try {
+            return latestHandSizeSettingStamp(gameData, playerId, nested);
+        } finally {
+            if (!nested) {
+                computingMaxHandSize.remove();
+            }
+        }
+    }
+
+    private HandSizeStamp latestHandSizeSettingStamp(GameData gameData, UUID playerId, boolean nested) {
         HandSizeStamp latest = null;
         for (UUID otherPlayerId : gameData.orderedPlayerIds) {
-            boolean own = otherPlayerId.equals(playerId);
             List<Permanent> battlefield = gameData.playerBattlefields.get(otherPlayerId);
             if (battlefield == null) continue;
             for (Permanent perm : battlefield) {
-                for (CardEffect effect : unconditionalPrintedStaticEffects(gameData, perm)) {
-                    if (own ? effect instanceof ControllerMaxHandSizeEffect
-                            : effect instanceof OpponentMaxHandSizeEffect) {
+                List<CardEffect> staticEffects = nested
+                        ? unconditionalPrintedStaticEffects(gameData, perm)
+                        : gameQueryService.getActiveStaticEffects(gameData, perm, otherPlayerId);
+                for (CardEffect effect : staticEffects) {
+                    if (effect instanceof SetControllerMaximumHandSizeEffect change
+                            && SubjectResolutionService.namesPlayer(gameData, perm, otherPlayerId, playerId,
+                            change.players())) {
                         HandSizeStamp stamp = new HandSizeStamp(perm.getTimestamp(), handSizePosition(gameData, perm));
                         if (latest == null || stamp.isNewerThan(latest)) {
                             latest = stamp;
@@ -567,8 +554,7 @@ public class TurnCleanupService {
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect floating : gameData.floatingEffects) {
                 if (playerId.equals(floating.affectedPlayerId())
-                        && (floating.effect() instanceof ControllerMaxHandSizeEffect
-                        || floating.effect() instanceof OpponentMaxHandSizeEffect)) {
+                        && floating.effect() instanceof SetControllerMaximumHandSizeEffect) {
                     HandSizeStamp stamp = new HandSizeStamp(floating.timestamp(), Integer.MAX_VALUE);
                     if (latest == null || stamp.isNewerThan(latest)) {
                         latest = stamp;
@@ -588,7 +574,8 @@ public class TurnCleanupService {
                 .toList();
     }
 
-    private record HandSizeModifier(CardEffect effect, Permanent source, long timestamp, int order, UUID sourceControllerId) {}
+    private record HandSizeModifier(SetControllerMaximumHandSizeEffect effect, Permanent source, long timestamp, int order,
+                                    UUID sourceControllerId) {}
 
     /**
      * Checks whether the given player's hand size is unlimited, either via

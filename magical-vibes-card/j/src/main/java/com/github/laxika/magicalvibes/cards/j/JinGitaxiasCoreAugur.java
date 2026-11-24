@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,6 +19,6 @@ public class JinGitaxiasCoreAugur extends Card {
 
     public JinGitaxiasCoreAugur() {
         addTrigger(Triggers.endStep(ActivePlayer.YOU), new DrawCardEffect(7));
-        addStaticEffect(new ReduceOpponentMaxHandSizeEffect(7));
+        addStaticEffect(SetControllerMaximumHandSizeEffect.reduce(Subjects.eachOpponent(), 7));
     }
 }

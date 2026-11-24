@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.IgnoreOpponentCreatureHexproofEffect;
+import com.github.laxika.magicalvibes.model.effect.IgnoreOpponentHexproofEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeAllCreaturesUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
@@ -16,7 +16,7 @@ import java.util.List;
 public class GlaringSpotlight extends Card {
 
     public GlaringSpotlight() {
-        addStaticEffect(new IgnoreOpponentCreatureHexproofEffect());
+        addStaticEffect(IgnoreOpponentHexproofEffect.opponentsCreatures());
 
         addActivatedAbility(new ActivatedAbility(false, "{3}",
                 List.of(new SacrificeSelfCost(),

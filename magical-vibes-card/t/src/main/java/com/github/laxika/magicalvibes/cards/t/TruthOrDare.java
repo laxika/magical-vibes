@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayWithTargetPlayerHandRevealedEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayWithHandsRevealedEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerChoosesOneEffect;
 import com.github.laxika.magicalvibes.model.amount.CardsInLibrary;
@@ -26,7 +28,9 @@ public class TruthOrDare extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent."
         )).addSpellEffect(TargetPlayerChoosesOneEffect.forTargetedPlayer(List.of(
-                new ChooseOneEffect.ChooseOneOption("Truth", new PlayWithTargetPlayerHandRevealedEffect()),
+                new ChooseOneEffect.ChooseOneOption("Truth", new GrantStaticEffectToPlayerEffect(
+                        new PlayWithHandsRevealedEffect(Subjects.you()), Subjects.targetPlayerDeclaredElsewhere(),
+                        Duration.PERMANENT)),
                 new ChooseOneEffect.ChooseOneOption("Dare", new MillEffect(
                         new Max(new Fixed(0), new Sum(
                                 new CardsInLibrary(CountScope.TARGET_PLAYER), new Fixed(-10))),
