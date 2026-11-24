@@ -31,7 +31,7 @@ public class CastExiledCardWithoutPayingManaCostEffectHandler implements NormalE
         // A suspend cast is still a cast: an opponent locked to sorcery timing (Teferi, Mage of Zhalfir)
         // can't make it from a resolving trigger outside their own main phase.
         if (castEffect.suspendHaste()
-                && gameQueryService.isLockedOutByOpponentsSorceryTimingRestriction(gameData, entry.getControllerId())) {
+                && gameQueryService.isHeldToSorceryTiming(gameData, entry.getControllerId())) {
             return;
         }
         Player player = new Player(entry.getControllerId(), gameData.playerIdToName.get(entry.getControllerId()));

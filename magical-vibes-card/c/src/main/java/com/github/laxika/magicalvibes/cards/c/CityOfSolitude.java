@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PlayersCanCastAndActivateOnlyDuringOwnTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDuringYourTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 /**
  * City of Solitude: players can cast spells and activate abilities only during their own turns.
@@ -11,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCanCastAndActivateOnly
 public class CityOfSolitude extends Card {
 
     public CityOfSolitude() {
-        addStaticEffect(new PlayersCanCastAndActivateOnlyDuringOwnTurnEffect());
+        addStaticEffect(OpponentsCantCastOrActivateDuringYourTurnEffect.onlyDuringTheirOwnTurns(Subjects.eachPlayer(),
+                PlayerRestriction.activatingAbilities()));
     }
 }

@@ -290,9 +290,9 @@ public class GameService {
         if (gameData.hasFloatingEffectOnPlayer(player.getId(), SenTripletsUpkeepEffect.class)) {
             throw new IllegalStateException("You can't activate abilities this turn");
         }
-        if (gameQueryService.isLockedOutByOwnTurnOnlyRestriction(gameData, player.getId())) {
-            throw new IllegalStateException(
-                    "You can only cast spells and activate abilities during your own turn");
+        String refusal = gameQueryService.abilityLockRefusal(gameData, player.getId(), null);
+        if (refusal != null) {
+            throw new IllegalStateException(refusal);
         }
     }
 

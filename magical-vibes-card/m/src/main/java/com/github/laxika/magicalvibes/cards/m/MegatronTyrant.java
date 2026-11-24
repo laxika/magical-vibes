@@ -11,8 +11,9 @@ import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsDuringCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDuringYourTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,7 +26,7 @@ public class MegatronTyrant extends Card {
         setBackFaceCard(new MegatronDestructiveForce());
         addCastingOption(AlternateHandCast.moreThanMeetsTheEye("{1}{R}{W}{B}"));
 
-        addStaticEffect(new OpponentsCantCastSpellsDuringCombatEffect());
+        addStaticEffect(OpponentsCantCastOrActivateDuringYourTurnEffect.duringCombat(Subjects.eachOpponent()));
         addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU),
                 new MayEffect(
                         SequenceEffect.of(new TransformSelfEffect(),

@@ -73,10 +73,8 @@ import com.github.laxika.magicalvibes.model.effect.PlayLandOrCastSpellFromTopOfL
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantCastSpellsAndAttackWithCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
-import com.github.laxika.magicalvibes.model.effect.PlayersCantCastInstantsUnlessSpellOrAbilityOnStackEffect;
 import com.github.laxika.magicalvibes.model.effect.PlotNonlandCardsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingRestrictionEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastingTimingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsAndLandsWithChosenNamesCantBePlayedEffect;
 import com.github.laxika.magicalvibes.model.effect.TopLibraryCardCastPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
@@ -266,8 +264,9 @@ public class CastingPermissionService {
 
     /**
      * Whether something stops {@code playerId} casting any spell now, whatever the spell and the zone it is cast from:
-     * a resolved "can't cast spells" restriction (Silence, "you can't cast additional spells this turn"), a turn lock
-     * (Grand Abolisher, City of Solitude, Dosan the Falling Leaf), Sen Triplets, or an attack lock (Angelic Arbiter).
+     * a resolved "can't cast spells" restriction (Silence, "you can't cast additional spells this turn"), a static lock
+     * now holding (Grand Abolisher, City of Solitude, Dosan the Falling Leaf, Basandra, Teferi), Sen Triplets, or an
+     * attack lock (Angelic Arbiter).
      * This is the one player-level check of the casting paths: the hand, command zone, graveyard, exile, library-top and
      * library-search paths ask it through {@link #isSpellCastingAllowed} or their playability context, suspend asks it
      * directly (CR 702.62a: "if you could begin to cast this card"), and a cast during a resolution asks it through
@@ -275,7 +274,9 @@ public class CastingPermissionService {
      */
     public boolean isPlayerPreventedFromCasting(GameData gameData, UUID playerId) {
         if (gameData.hasFloatingEffectOnPlayer(playerId, SenTripletsUpkeepEffect.class)) return true;
-        if (gameData.restrictionsOnPlayer(playerId).stream().anyMatch(PlayerRestriction::stopsEverySpell)) return true;
+        // A resolved "can't cast spells" (Silence) or a static lock now holding (Grand Abolisher, City of Solitude, Dosan the
+        // Falling Leaf, Basandra during combat, Teferi outside the player's sorcery timing).
+        if (gameQueryService.isPlayerRestricted(gameData, playerId, PlayerRestriction::stopsEverySpell)) return true;
         synchronized (gameData.floatingEffects) {
             if (gameData.floatingEffects.stream().anyMatch(floating ->
                     playerId.equals(floating.affectedPlayerId())
@@ -283,15 +284,6 @@ public class CastingPermissionService {
                 return true;
             }
         }
-
-        // Grand Abolisher: during its controller's turn their opponents can't cast spells.
-        if (gameQueryService.isLockedOutByOpponentsTurnRestriction(gameData, playerId)) return true;
-
-        // City of Solitude: players can cast spells only during their own turns.
-        if (gameQueryService.isLockedOutByOwnTurnOnlyRestriction(gameData, playerId)) return true;
-
-        // Dosan the Falling Leaf: players can cast spells only during their own turns.
-        if (gameQueryService.isLockedOutByOwnTurnOnlySpellRestriction(gameData, playerId)) return true;
 
         for (UUID controllerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
@@ -366,31 +358,9 @@ public class CastingPermissionService {
      * set: {@link #isPlayerPreventedFromCasting} answers it, and every reader of this set asks that too.
      */
     public Set<CardType> getRestrictedSpellTypes(GameData gameData, UUID playerId) {
-        Set<CardType> restricted = EnumSet.noneOf(CardType.class);
-        // Cease-Fire, Abeyance, Single Combat: a resolved "can't cast [type] spells" restriction on the player.
-        for (PlayerRestriction restriction : gameData.restrictionsOnPlayer(playerId)) {
-            if (restriction.kind() == PlayerRestriction.Kind.CAST_SPELLS) {
-                restricted.addAll(restriction.spellTypes());
-            }
-        }
-        // Hand to Hand: during combat no player can cast instant spells.
-        if (gameQueryService.isCombatActionLockActive(gameData)) {
-            restricted.add(CardType.INSTANT);
-        }
-        // Priority Avenger: no player can cast instant spells while the stack is empty.
-        if (gameData.stack.isEmpty() && anyBattlefieldHasStaticEffect(
-                gameData, PlayersCantCastInstantsUnlessSpellOrAbilityOnStackEffect.class)) {
-            restricted.add(CardType.INSTANT);
-        }
-        // Basandra, Battle Seraph (every player); Marisi, Breaker of the Coil (its controller's opponents): during
-        // combat those players can't cast spells. Lands are excluded because playing a land is not casting a spell;
-        // planar cards are not spells either.
-        if (gameQueryService.isSpellCastingCombatLockActive(gameData, playerId)) {
-            EnumSet<CardType> spellTypes = EnumSet.allOf(CardType.class);
-            spellTypes.remove(CardType.LAND);
-            spellTypes.removeIf(CardType::isPlanar);
-            restricted.addAll(spellTypes);
-        }
+        // Cease-Fire, Abeyance, Single Combat (resolved); Hand to Hand during combat, Priority Avenger while the stack is
+        // empty (static locks): "can't cast [type] spells".
+        Set<CardType> restricted = gameQueryService.restrictedSpellTypes(gameData, playerId);
         // Controller-only restrictions (Steel Golem) come from the player's own permanents;
         // symmetric restrictions (Aether Storm) apply no matter whose battlefield they sit on.
         for (UUID pid : gameData.orderedPlayerIds) {
@@ -413,22 +383,6 @@ public class CastingPermissionService {
         addWardOfBonesRestrictedTypes(gameData, playerId, restricted);
         addDampingEngineRestrictedTypes(gameData, playerId, restricted);
         return restricted;
-    }
-
-    private boolean anyBattlefieldHasStaticEffect(GameData gameData,
-                                                   Class<? extends CardEffect> effectType) {
-        for (UUID controllerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-            if (battlefield == null) continue;
-            for (Permanent permanent : battlefield) {
-                if (permanent.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-                if (permanent.getCard().getStaticEffects().stream()
-                        .anyMatch(effectType::isInstance)) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     private void addDampingEngineRestrictedTypes(GameData gameData, UUID playerId, Set<CardType> restricted) {
@@ -1082,13 +1036,11 @@ public class CastingPermissionService {
     private boolean canCastWithTiming(GameData gameData, UUID playerId, Card card,
                                       boolean isActivePlayer, boolean isMainPhase, boolean stackEmpty,
                                       boolean fromLibraryTop, int xValue, boolean includeAlternativeCostFlash) {
-        if (isSorcerySpeedOnlyForPlayer(gameData, playerId)) {
+        // Teferi: a player held to sorcery timing may cast only then, whatever permission the card has (CR 307.5).
+        if (gameQueryService.isHeldToSorceryTiming(gameData, playerId)) {
             return sorceryTimingAvailable(gameData, playerId);
         }
         boolean sorceryTiming = isActivePlayer && isMainPhase && stackEmpty;
-        if (gameQueryService.isLockedOutByOpponentsSorceryTimingRestriction(gameData, playerId)) {
-            return sorceryTiming;
-        }
 
         boolean isInstantSpeed = card.hasType(CardType.INSTANT)
                 || cardHasFlash(gameData, card)
@@ -1115,37 +1067,14 @@ public class CastingPermissionService {
                 .orElse(false);
     }
 
-    private boolean isSorcerySpeedOnlyForPlayer(GameData gameData, UUID playerId) {
-        for (UUID sourceControllerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
-            if (battlefield == null) continue;
-            for (Permanent permanent : battlefield) {
-                if (permanent.isFaceDown()) continue;
-                GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
-                if (gameData.losesAllAbilitiesByEffect(permanent)
-                        || staticBonus.losesAllAbilities()
-                        || staticBonus.losesAllNonManaAbilities()) {
-                    continue;
-                }
-                for (CardEffect effect : permanent.getCard().getStaticEffects()) {
-                    if (effect instanceof SpellCastingTimingRestrictionEffect restriction
-                            && restriction.appliesTo(sourceControllerId, playerId)) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
     /**
-     * Explicit sorcery-timing restrictions and effects that stop a player casting spells (Dosan the
-     * Falling Leaf, Grand Abolisher) prevent a cast made during another effect's resolution.
+     * Effects that stop a player casting spells (Dosan the Falling Leaf, Grand Abolisher) prevent a cast made during
+     * another effect's resolution, and so does a sorcery-timing lock (Teferi): a resolution is never a time the player
+     * could cast a sorcery (CR 608.2g; Teferi, Mage of Zhalfir's ruling).
      */
     public boolean canCastDuringResolution(GameData gameData, UUID playerId) {
         return !isPlayerPreventedFromCasting(gameData, playerId)
-                && !isSorcerySpeedOnlyForPlayer(gameData, playerId)
-                && !gameQueryService.isLockedOutByOpponentsSorceryTimingRestriction(gameData, playerId);
+                && !gameQueryService.isHeldToSorceryTiming(gameData, playerId);
     }
 
     /**

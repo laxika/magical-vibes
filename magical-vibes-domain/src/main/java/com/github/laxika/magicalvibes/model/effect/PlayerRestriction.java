@@ -18,8 +18,9 @@ import java.util.stream.Collectors;
 /**
  * What a {@link PlayerRestrictionEffect} stops its players doing: casting spells (every spell, those of some card
  * types, those matching a filter, or noncreature spells), playing lands, playing cards (lands and spells, CR 701.18b)
- * from some zones, or activating abilities that aren't mana abilities. Built through the factories; each reader in
- * the engine answers one of these questions.
+ * from some zones, activating abilities (every ability, or those of permanents of some card types, mana abilities
+ * included), or activating abilities that aren't mana abilities. Built through the factories; each reader in the
+ * engine answers one of these questions.
  *
  * <p>A spell, land or card-play restriction may name the zones it applies to ({@link #from}, {@link #fromAnywhereBut}):
  * "can't cast spells from anywhere other than their hands" (Avatar's Wrath, Drannith Magistrate), "can't play land
@@ -36,9 +37,12 @@ import java.util.stream.Collectors;
  * @param zones       the zones the action is restricted from, or with {@code exceptZones} the zones it is still allowed
  *                    from; {@code null} for every zone
  * @param exceptZones whether {@code zones} names the zones that stay allowed
+ * @param abilitySourceTypes for {@link Kind#ACTIVATE_ABILITIES}, the card types of the permanents whose abilities can't
+ *                    be activated ("abilities of artifacts, creatures, or enchantments": permanents only), in the order
+ *                    the card names them; empty for every ability in every zone, and for every other kind
  */
 public record PlayerRestriction(Kind kind, List<CardType> spellTypes, CardPredicate spellFilter, Set<Zone> zones,
-                                boolean exceptZones) {
+                                boolean exceptZones, List<CardType> abilitySourceTypes) {
 
     /** The action a {@link PlayerRestriction} stops. */
     public enum Kind {
@@ -54,12 +58,18 @@ public record PlayerRestriction(Kind kind, List<CardType> spellTypes, CardPredic
         /** "Can't play cards [from zones]": neither play lands nor cast spells from those zones (CR 701.18b). */
         PLAY_CARDS,
         /** "Can't activate abilities that aren't mana abilities" (loyalty abilities included). */
-        ACTIVATE_NON_MANA_ABILITIES
+        ACTIVATE_NON_MANA_ABILITIES,
+        /**
+         * "Can't activate abilities [of {@link #abilitySourceTypes}]": mana abilities included, so a mana ability can't
+         * be activated even during a payment (CR 605.3a gives no exception to a "can't", CR 101.2).
+         */
+        ACTIVATE_ABILITIES
     }
 
     public PlayerRestriction {
         Objects.requireNonNull(kind, "kind");
         spellTypes = List.copyOf(spellTypes);
+        abilitySourceTypes = List.copyOf(abilitySourceTypes);
         zones = zones == null ? null : Set.copyOf(zones);
         if (kind != Kind.CAST_SPELLS && !spellTypes.isEmpty()) {
             throw new IllegalArgumentException("Only a spell restriction names spell types: " + kind);
@@ -73,8 +83,14 @@ public record PlayerRestriction(Kind kind, List<CardType> spellTypes, CardPredic
         if (spellFilter != null && (kind != Kind.CAST_SPELLS || !spellTypes.isEmpty())) {
             throw new IllegalArgumentException("Only a spell restriction naming no type takes a filter: " + kind);
         }
+        if (kind != Kind.ACTIVATE_ABILITIES && !abilitySourceTypes.isEmpty()) {
+            throw new IllegalArgumentException("Only an ability restriction names ability source types: " + kind);
+        }
+        if (new HashSet<>(abilitySourceTypes).size() != abilitySourceTypes.size()) {
+            throw new IllegalArgumentException("An ability source type is named once: " + abilitySourceTypes);
+        }
         if (zones != null && (zones.isEmpty() || kind == Kind.ACTIVATE_NON_MANA_ABILITIES
-                || !spellTypes.isEmpty() || spellFilter != null)) {
+                || kind == Kind.ACTIVATE_ABILITIES || !spellTypes.isEmpty() || spellFilter != null)) {
             throw new IllegalArgumentException("Only a plain spell, land or card-play restriction names zones: " + kind);
         }
         if (kind == Kind.PLAY_CARDS && zones == null) {
@@ -83,6 +99,12 @@ public record PlayerRestriction(Kind kind, List<CardType> spellTypes, CardPredic
         if (exceptZones && zones == null) {
             throw new IllegalArgumentException("No zones to except");
         }
+    }
+
+    /** A restriction naming no ability source types. */
+    public PlayerRestriction(Kind kind, List<CardType> spellTypes, CardPredicate spellFilter, Set<Zone> zones,
+                             boolean exceptZones) {
+        this(kind, spellTypes, spellFilter, zones, exceptZones, List.of());
     }
 
     private PlayerRestriction(Kind kind, List<CardType> spellTypes) {
@@ -131,14 +153,32 @@ public record PlayerRestriction(Kind kind, List<CardType> spellTypes, CardPredic
         return new PlayerRestriction(Kind.ACTIVATE_NON_MANA_ABILITIES, List.of());
     }
 
+    /** "Can't activate abilities": every activated ability in every zone, mana abilities included. */
+    public static PlayerRestriction activatingAbilities() {
+        return new PlayerRestriction(Kind.ACTIVATE_ABILITIES, List.of());
+    }
+
+    /**
+     * "Can't activate abilities of [type] or [type]": the activated abilities of permanents of those card types, mana
+     * abilities included, the types in the order the card names them.
+     */
+    public static PlayerRestriction activatingAbilitiesOf(CardType... types) {
+        if (types.length == 0) {
+            throw new IllegalArgumentException("Name at least one card type, or use activatingAbilities()");
+        }
+        return new PlayerRestriction(Kind.ACTIVATE_ABILITIES, List.of(), null, null, false, List.of(types));
+    }
+
     /** This restriction, only from {@code zones} ("can't cast spells from graveyards"). */
     public PlayerRestriction from(Zone... zones) {
-        return new PlayerRestriction(kind, spellTypes, spellFilter, EnumSet.copyOf(List.of(zones)), false);
+        return new PlayerRestriction(kind, spellTypes, spellFilter, EnumSet.copyOf(List.of(zones)), false,
+                abilitySourceTypes);
     }
 
     /** This restriction, from every zone but {@code zones} ("from anywhere other than their hands"). */
     public PlayerRestriction fromAnywhereBut(Zone... zones) {
-        return new PlayerRestriction(kind, spellTypes, spellFilter, EnumSet.copyOf(List.of(zones)), true);
+        return new PlayerRestriction(kind, spellTypes, spellFilter, EnumSet.copyOf(List.of(zones)), true,
+                abilitySourceTypes);
     }
 
     /** Whether this stops every spell, from every zone. */
@@ -186,6 +226,8 @@ public record PlayerRestriction(Kind kind, List<CardType> spellTypes, CardPredic
             case PLAY_LANDS -> zones == null ? "play lands" : "play land cards";
             case PLAY_CARDS -> "play cards";
             case ACTIVATE_NON_MANA_ABILITIES -> "activate abilities that aren't mana abilities";
+            case ACTIVATE_ABILITIES -> abilitySourceTypes.isEmpty() ? "activate abilities"
+                    : "activate abilities of " + pluralList(abilitySourceTypes);
         };
         if (zones == null) {
             return action;
@@ -202,6 +244,15 @@ public record PlayerRestriction(Kind kind, List<CardType> spellTypes, CardPredic
             return "spells with mana value " + min;
         }
         return CardPredicateUtils.describeFilter(filter).replaceFirst("card", "spells");
+    }
+
+    private static String pluralList(List<CardType> types) {
+        List<String> words = types.stream().map(type -> type.getDisplayName().toLowerCase() + "s").toList();
+        if (words.size() == 1) {
+            return words.getFirst();
+        }
+        String last = words.getLast();
+        return String.join(", ", words.subList(0, words.size() - 1)) + (words.size() > 2 ? ", or " : " or ") + last;
     }
 
     private static String zoneWord(Zone zone) {

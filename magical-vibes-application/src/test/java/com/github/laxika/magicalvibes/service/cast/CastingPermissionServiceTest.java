@@ -902,6 +902,9 @@ class CastingPermissionServiceTest {
             gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2Id,
                 PlayerRestrictionEffect.thisTurn(Subjects.eachOpponent(), PlayerRestriction.castingSpells()),
                 player1Id, Duration.UNTIL_END_OF_TURN));
+            when(gameQueryService.isPlayerRestricted(eq(gd), any(UUID.class), any())).thenAnswer(invocation ->
+                    gd.restrictionsOnPlayer(invocation.getArgument(1)).stream()
+                            .anyMatch(invocation.<java.util.function.Predicate<PlayerRestriction>>getArgument(2)));
 
             Card bolt = new Card();
             bolt.setName("Lightning Bolt");

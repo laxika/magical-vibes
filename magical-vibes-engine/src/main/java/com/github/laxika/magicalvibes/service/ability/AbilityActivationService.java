@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.ability;
 import com.github.laxika.magicalvibes.model.effect.GrantExtraLoyaltyActivationToPlaneswalkersEffect;
 import com.github.laxika.magicalvibes.model.effect.GuardianAngelPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantActivatePlaneswalkerLoyaltyAbilitiesThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect;
 import com.github.laxika.magicalvibes.model.Ability;
@@ -414,8 +413,7 @@ public class AbilityActivationService {
             throw new IllegalStateException("Tap abilities of " + FaceDownVisibility.publicName(gameData, permanent) + " can't be activated");
         }
         validateNotBlockedByStaticAbilityLock(gameData, permanent, true);
-        validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
-        validateNotBlockedByOpponentsTurnRestriction(gameData, playerId, permanent);
+        validateNotBlockedByAbilityLock(gameData, playerId, permanent);
 
         // The printed mana ability is still an activated ability, so activation taxes (Oppressive Rays) apply.
         int manaAbilityTax = castingCostService.getActivatedAbilityActivationTax(
@@ -1295,7 +1293,7 @@ public class AbilityActivationService {
 
         validateNotBlockedByNonManaAbilityLock(gameData, player.getId(), ability);
 
-        validateNotBlockedByOwnTurnOnlyRestriction(gameData, player.getId());
+        validateNotBlockedByAbilityLock(gameData, player.getId(), null);
 
         HandCardCost discardCost = ability.getEffects().stream()
                 .filter(HandCardCost.class::isInstance)
@@ -1413,7 +1411,7 @@ public class AbilityActivationService {
         }
 
         UUID playerId = player.getId();
-        validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
+        validateNotBlockedByAbilityLock(gameData, playerId, null);
 
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
         if (graveyard == null || graveyardCardIndex < 0 || graveyardCardIndex >= graveyard.size()) {
@@ -1475,7 +1473,6 @@ public class AbilityActivationService {
         // Overwhelming Splendor: the enchanted player may activate only mana / loyalty abilities
         validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
         validateNotBlockedByNonManaAbilityLock(gameData, playerId, ability);
-        validateNotBlockedByCombatActionLock(gameData, ability);
 
         // Identify permanent-choice costs (e.g. return lands to hand)
         List<PermanentChoiceCostHandler> permanentChoiceCosts = ability.getEffects().stream()
@@ -2220,7 +2217,7 @@ public class AbilityActivationService {
             throw new IllegalStateException("Card has no exile-activated ability");
         }
 
-        validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
+        validateNotBlockedByAbilityLock(gameData, playerId, null);
         if (gameData.hasFloatingEffectOnPlayer(playerId, SenTripletsUpkeepEffect.class)) {
             throw new IllegalStateException("You can't activate abilities this turn");
         }
@@ -2239,7 +2236,6 @@ public class AbilityActivationService {
         validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
         validateNotBlockedByNameLock(gameData, card, isManaAbility(ability));
         validateNotBlockedByNonManaAbilityLock(gameData, playerId, ability);
-        validateNotBlockedByCombatActionLock(gameData, ability);
 
         if (ability.getManaCost() != null) {
             payManaCost(gameData, playerId, ability.getManaCost(), effectiveXValue, false, false);
@@ -2348,7 +2344,7 @@ public class AbilityActivationService {
         }
         ActivatedAbility ability = abilities.get(idx);
         if (!ability.isSuspendsSourceFromHand() && !ability.isDiscardSourceAsSpecialAction()) {
-            validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
+            validateNotBlockedByAbilityLock(gameData, playerId, null);
             validateNotBlockedByNameLock(gameData, card, isManaAbility(ability));
             validateNotBlockedByCyclingRestriction(gameData, ability);
         }
@@ -2363,7 +2359,6 @@ public class AbilityActivationService {
         if (!ability.isSuspendsSourceFromHand() && !ability.isDiscardSourceAsSpecialAction()) {
             validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
             validateNotBlockedByNonManaAbilityLock(gameData, playerId, ability);
-            validateNotBlockedByCombatActionLock(gameData, ability);
         }
         if (ability.isSuspendsSourceFromHand()) {
             // CR 702.62a: suspend requires that the player could begin to cast the card, so a name
@@ -3044,7 +3039,7 @@ public class AbilityActivationService {
             throw new IllegalStateException("Card has no hand-activated ability");
         }
 
-        validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
+        validateNotBlockedByAbilityLock(gameData, playerId, null);
 
         int idx = abilityIndex != null ? abilityIndex : 0;
         if (idx < 0 || idx >= abilities.size()) {
@@ -3057,7 +3052,6 @@ public class AbilityActivationService {
         // Overwhelming Splendor: the enchanted player may activate only mana / loyalty abilities
         validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
         validateNotBlockedByNonManaAbilityLock(gameData, playerId, ability);
-        validateNotBlockedByCombatActionLock(gameData, ability);
         validateHandTimingRestriction(gameData, playerId, ability);
         validateHandActivationLimitPerTurn(gameData, card, ability, idx);
 
@@ -7084,8 +7078,8 @@ public class AbilityActivationService {
             throw new IllegalStateException("Power-up abilities can't be activated this turn");
         }
 
-        // City of Solitude: players can activate abilities only during their own turns.
-        validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
+        // City of Solitude, Grand Abolisher: a lock on every ability, or on abilities of this permanent's types.
+        validateNotBlockedByAbilityLock(gameData, playerId, permanent);
 
         // Soul Ransom: only opponents of the source permanent's controller may activate this ability.
         if (ability.isActivatableOnlyByOpponents()
@@ -7101,12 +7095,10 @@ public class AbilityActivationService {
             throw new IllegalStateException("Activated abilities of " + FaceDownVisibility.publicName(gameData, permanent) + " can't be activated (Arrest)");
         }
         validateNotBlockedByStaticAbilityLock(gameData, permanent, isManaAbility(ability));
-        validateNotBlockedByOpponentsTurnRestriction(gameData, playerId, permanent);
 
         // Overwhelming Splendor: the enchanted player may activate only mana / loyalty abilities
         validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
         validateNotBlockedByNonManaAbilityLock(gameData, playerId, ability);
-        validateNotBlockedByCombatActionLock(gameData, ability);
 
         // Activation timing restrictions (e.g. "Activate only during your upkeep")
         validateTimingRestrictions(gameData, playerId, permanent, ability);
@@ -10894,7 +10886,7 @@ public class AbilityActivationService {
     }
 
     /**
-     * Abeyance: a player locked out this turn can't activate abilities that aren't mana abilities
+     * Abeyance, Hand to Hand: a player locked out can't activate abilities that aren't mana abilities
      * (loyalty abilities included). {@code ability} is the activated ability being played, or
      * {@code null} for activations that are never mana abilities.
      */
@@ -10905,47 +10897,22 @@ public class AbilityActivationService {
             throw new IllegalStateException(
                     "You can't activate abilities that aren't mana abilities while a spell with split second is on the stack");
         }
-        if (gameData.isRestricted(playerId, PlayerRestriction.Kind.ACTIVATE_NON_MANA_ABILITIES)) {
-            throw new IllegalStateException("You can't activate abilities that aren't mana abilities this turn");
+        String refusal = gameQueryService.nonManaAbilityLockRefusal(gameData, playerId);
+        if (refusal != null) {
+            throw new IllegalStateException(refusal);
         }
     }
 
     /**
-     * Hand to Hand: during combat, no player can activate abilities that aren't mana abilities.
-     * {@code ability} is the activated ability being played, or {@code null} for activations that
-     * are never mana abilities.
+     * City of Solitude, Grand Abolisher: a lock on every activated ability, or on the abilities of permanents of
+     * {@code permanent}'s card types, mana abilities included (CR 602.5). {@code permanent} is the source permanent, or
+     * {@code null} for an ability of a card in another zone or of a spell.
      */
-    private void validateNotBlockedByCombatActionLock(GameData gameData, ActivatedAbility ability) {
-        if (ability != null && isManaAbility(ability)) return;
-        if (gameQueryService.isCombatActionLockActive(gameData)) {
-            throw new IllegalStateException(
-                    "You can't activate abilities that aren't mana abilities during combat");
+    private void validateNotBlockedByAbilityLock(GameData gameData, UUID playerId, Permanent permanent) {
+        String refusal = gameQueryService.abilityLockRefusal(gameData, playerId, permanent);
+        if (refusal != null) {
+            throw new IllegalStateException(refusal);
         }
-    }
-
-    /**
-     * City of Solitude: players can cast spells and activate abilities only during their own turns
-     * (mana abilities included; all zones).
-     */
-    private void validateNotBlockedByOwnTurnOnlyRestriction(GameData gameData, UUID playerId) {
-        if (gameQueryService.isLockedOutByOwnTurnOnlyRestriction(gameData, playerId)) {
-            throw new IllegalStateException(
-                    "You can only cast spells and activate abilities during your own turn");
-        }
-    }
-
-    /**
-     * Grand Abolisher: during its controller's turn, their opponents can't activate abilities of
-     * artifacts, creatures or enchantments. Mana abilities are included; abilities of lands and
-     * other permanent types stay usable.
-     */
-    private void validateNotBlockedByOpponentsTurnRestriction(GameData gameData, UUID playerId, Permanent permanent) {
-        if (!gameQueryService.isLockedOutByOpponentsTurnAbilityRestriction(gameData, playerId)) return;
-        if (!gameQueryService.isCreature(gameData, permanent)
-                && !gameQueryService.isArtifact(gameData, permanent)
-                && !gameQueryService.isEnchantment(gameData, permanent)) return;
-        throw new IllegalStateException("You can't activate abilities of artifacts, creatures, "
-                + "or enchantments during your opponent's turn");
     }
 
     private void validateNotBlockedByStaticAbilityLock(GameData gameData, Permanent permanent,

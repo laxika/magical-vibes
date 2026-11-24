@@ -7,8 +7,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCanCastSpellsOnlyAtSorcerySpeedEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDuringYourTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,7 +27,7 @@ import java.util.List;
 public class TeferiTimeRaveler extends Card {
 
     public TeferiTimeRaveler() {
-        addStaticEffect(new OpponentsCanCastSpellsOnlyAtSorcerySpeedEffect());
+        addStaticEffect(OpponentsCantCastOrActivateDuringYourTurnEffect.onlyAtSorceryTiming(Subjects.eachOpponent()));
 
         addActivatedAbility(new ActivatedAbility(
                 +1,

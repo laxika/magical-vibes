@@ -193,6 +193,8 @@ import com.github.laxika.magicalvibes.model.condition.TargetPlayerLifeTotalEqual
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerTurn;
+import com.github.laxika.magicalvibes.model.condition.TargetPlayerCouldCastSorcery;
+import com.github.laxika.magicalvibes.model.condition.StackIsEmpty;
 import com.github.laxika.magicalvibes.model.condition.SourceHasAtLeastAttachedEquipment;
 import com.github.laxika.magicalvibes.model.condition.NoCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.condition.NoCreaturesAttackedThisTurn;
@@ -1196,6 +1198,12 @@ public class ConditionEvaluationService {
                     targetPlayerIsAfraidOfController(gameData, ctx);
             case TargetPlayerTurn ignored ->
                     ctx.targetId() != null && ctx.targetId().equals(gameData.activePlayerId);
+            case TargetPlayerCouldCastSorcery ignored ->
+                    ctx.targetId() != null && ctx.targetId().equals(gameData.activePlayerId)
+                            && (gameData.currentStep == TurnStep.PRECOMBAT_MAIN
+                            || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN)
+                            && gameData.stack.isEmpty();
+            case StackIsEmpty ignored -> gameData.stack.isEmpty();
             case TargetPlayerIsActivePlayer ignored ->
                     ctx.targetId() != null && ctx.targetId().equals(gameData.activePlayerId);
             case TargetPlayerIsController ignored ->

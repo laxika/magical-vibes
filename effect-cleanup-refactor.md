@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c (each in Findings; the fold queue marks its rows). Fold runs 34b, 23d, 35 and 33b are reported and wait to merge; 36, 27b and 29c are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                             |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b (each in Findings; the fold queue marks its rows). Fold runs 23d, 35, 33b and 36 are reported and wait to merge; 27b, 29c and 32b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                              |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,382 / 2,710 (after fold run 28c) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,376 / 2,710 (after fold run 34b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,032 rows over 4,471 classes (after fold run 28c). Latest verdict per class: `step-9` 486, unique 1,174, absorbed 991, split 644, blocked-other 522, survivor 356, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 486 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,040 rows over 4,473 classes (after fold run 34b). Latest verdict per class: `step-9` 482, unique 1,174, absorbed 997, split 644, blocked-other 522, survivor 355, blocked-step-model 140, blocked-player-loop 96, dead 63. Waiting: 482 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -875,6 +875,11 @@ Delayed and global triggers:
 
 - `CardPredicateUtils.instantOrSorcery()` / `.instantOrSorceryWithManaValueAtMost(n)`: "an instant or sorcery spell [with mana value n or less]" (fold run 28c).
 - `RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(filter, List.of(new CopyTriggeringSpellEffect()[.withCopies(…)]))`: "when you next cast a [filter] spell this turn, copy that spell [n times]". It works in a mana ability too (Ether) (fold run 28c).
+
+- `OpponentsCantCastOrActivateDuringYourTurnEffect(players, spells, abilities, condition)` / `.onlyDuringTheirOwnTurns(players, abilities)` / `.onlyAtSorceryTiming(players)` / `.duringCombat(players)`: every static cast and activation lock, its condition judged with the restricted player as the context's target (fold run 34b).
+- `PlayerRestriction.activatingAbilities()` / `.activatingAbilitiesOf(types…)` (`Kind.ACTIVATE_ABILITIES`, `abilitySourceTypes`): "can't activate abilities [of artifacts, creatures, or enchantments]", mana abilities included, permanents only when typed (fold run 34b).
+- `GameQueryService.findRestriction` (returns `RestrictionInForce`), `restrictedSpellTypes`, `abilityLockRefusal(player, source)`, `nonManaAbilityLockRefusal`, `isHeldToSorceryTiming`: the restriction readers over resolved and static restrictions (fold run 34b).
+- Conditions `StackIsEmpty` and `TargetPlayerCouldCastSorcery` (CR 307.5, timing only); `TargetPlayerTurn` read for the restricted player (fold run 34b).
 
 ### Blocked causes still open
 
@@ -3662,6 +3667,30 @@ Both members folded, 0 left. Ratchet 3,430 / 2,748 → 3,428 / 2,746. Ledger 3 r
 **Seen, not changed.** The Clone Saga II says "copy it" with no "you may choose new targets", but the copy still offers new targets (CR 707.10). This is not observable today: the engine casts no creature spell with targets, because mutate is not a casting option. Fairly sure.
 
 **For the next run.** Nothing is left in fold run 28's rows. `RegisterDelayedControllerSpellCastTriggerEffect` and `RegisterGlobalTriggeredAbilityEffect` overlap on "next this turn"; that is a step-10 question.
+
+### Step 9, fold run 34b (2026-11-24, parallel worktree)
+`cast-lock` done: 6 absorbed, 1 survivor, 1 dead (interface). Ratchet 3,430 / 2,748 → 3,424 / 2,748. 10 card files rewritten; Oracle text checked for 19 cards.
+
+| Batch | Result |
+|---|---|
+| cast-lock | 6 folded into `OpponentsCantCastOrActivateDuringYourTurnEffect(PlayerSubject players, PlayerRestriction spells, PlayerRestriction abilities, Condition condition)`. The condition is judged with the restricted player as the context's target: `ControllerTurn` (Abolisher and the spells-only cards), `NotCondition(TargetPlayerTurn)` (City, Dosan, Fires), `DuringCombat` (Hand to Hand, Basandra, Marisi, Megatron), `StackIsEmpty` (Priority Avenger), `NotCondition(TargetPlayerCouldCastSorcery)` (Teferi ×2). Factories: `.onlyDuringTheirOwnTurns`, `.onlyAtSorceryTiming`, `.duringCombat`. `SpellCastingTimingRestrictionEffect` deleted. |
+
+**Readers.** `GameQueryService.findRestriction` (behind `isPlayerRestricted`) reads resolved restrictions, `PlayersCantCastSpellsFromZonesEffect` and the survivor. `restrictedSpellTypes` covers "can't cast instant spells". `abilityLockRefusal(player, source)` covers City and Abolisher (mana abilities included, CR 605.3a gives no exception, CR 101.2). `nonManaAbilityLockRefusal` covers Abeyance and Hand to Hand. `isHeldToSorceryTiming` replaces Teferi's two readers and is used by cast timing, `canCastDuringResolution` and the two suspend casts. A resolution is never sorcery timing (CR 608.2g; Teferi, Mage of Zhalfir's ruling), because an ability leaves the engine's stack before it resolves. Teferi stays timing only (CR 307.5): nothing reads it as a sorcery cast.
+
+**Behaviour changes.**
+- Hand to Hand now also stops activating an ability of a spell on the stack during combat. Oracle: "abilities that aren't mana abilities". The stack-ability path read only Abeyance. HandToHandTest covers it.
+- Basandra, Marisi and Megatron stop casting at player level (`stopsEverySpell`), not by an all-types set. This matches the convention "a can't cast spells restriction is never a type set".
+- Teferi is also refused through `isPlayerPreventedFromCasting`; the timing hook is kept.
+- City and Teferi are now read from granted static abilities too (the old readers saw printed ones only).
+- Error messages are built from the restriction and the condition: "You can't activate abilities outside your own turn", "… of artifacts, creatures, or enchantments during your opponent's turn". The existing `hasMessageContaining` assertions all hold.
+
+**Tests changed.** `CastingPermissionServiceTest`'s Silence case gained the class's own `isPlayerRestricted` stub, because the mocked `GameQueryService` now answers that check. Added HandToHandTest "An ability of a spell on the stack can't be activated during combat".
+
+**Seen, not changed.**
+- Priority Avenger: while an activated or triggered ability resolves, the engine's stack can be empty, so "unless a spell or ability is on the stack" restricts an instant cast during that resolution. This is unchanged from before. Sure of the code, low impact.
+- `PlanarAbilityService` still reads `GameData.isRestricted(ACTIVATE_NON_MANA_ABILITIES)` only, not Hand to Hand. Unverified whether any planar activated ability exists. Low.
+
+**For the next run.** The survivor's name no longer says what it does (step 10: `PlayerCastLockEffect`-style rename, if approved). `PlayersCantCastSpellsFromZonesEffect` and the survivor are two static restriction records over one `PlayerRestriction` vocabulary, so step 10 could merge them, with the condition as the only difference.
 
 ## Prompt
 

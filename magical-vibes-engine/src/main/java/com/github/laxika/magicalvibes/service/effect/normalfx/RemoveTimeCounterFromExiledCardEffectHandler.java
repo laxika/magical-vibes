@@ -108,7 +108,7 @@ public class RemoveTimeCounterFromExiledCardEffectHandler implements NormalEffec
     public void queueCastTrigger(GameData gameData, ExiledCardEntry exiledEntry, boolean suspendHaste) {
         // A suspend cast is still a cast: an owner locked to sorcery timing by an opponent's static
         // effect (Teferi, Mage of Zhalfir) is never offered it outside sorcery timing, so the card stays exiled.
-        if (suspendHaste && gameQueryService.isLockedOutByOpponentsSorceryTimingRestriction(
+        if (suspendHaste && gameQueryService.isHeldToSorceryTiming(
                 gameData, exiledEntry.ownerId())) {
             return;
         }

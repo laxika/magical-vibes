@@ -242,9 +242,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeredAbilitiesCantCauseSa
 import com.github.laxika.magicalvibes.model.effect.TheValeyardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentPermanentsEnteringDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentRecipientDamageMultiplyingEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCanCastSpellsOnlyAtSorcerySpeedEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDuringYourTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsDuringCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantTargetLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantVentureIntoDungeonMoreThanOnceEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OwnCardTypeGrantingEffect;
@@ -255,9 +253,6 @@ import com.github.laxika.magicalvibes.model.effect.OwnEffectsCantAffectSourceEff
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkerLoyaltyAbilitiesCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCounterReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayersCanCastAndActivateOnlyDuringOwnTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayersCanCastSpellsOnlyDuringOwnTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayersCantCastInstantsOrActivateNonManaAbilitiesDuringCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageDealtByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToCreaturesYouControlEffect;
@@ -2654,17 +2649,125 @@ public class GameQueryService {
      * abilities restrict nobody (CR 708.2a, 613.1f); a conditional static restricts while its condition holds.
      */
     public boolean isPlayerRestricted(GameData gameData, UUID playerId, Predicate<PlayerRestriction> stops) {
-        if (gameData.restrictionsOnPlayer(playerId).stream().anyMatch(stops)) {
-            return true;
+        return findRestriction(gameData, playerId, stops) != null;
+    }
+
+    /**
+     * A restriction on {@code playerId} in force now that matches {@code stops}, as {@link #isPlayerRestricted} finds it,
+     * or {@code null}: a resolved one, an active {@link PlayersCantCastSpellsFromZonesEffect} naming them, or an active
+     * {@link OpponentsCantCastOrActivateDuringYourTurnEffect} lock naming them whose condition is met for them (the
+     * condition is judged with the restricted player as the context's target).
+     */
+    public RestrictionInForce findRestriction(GameData gameData, UUID playerId, Predicate<PlayerRestriction> stops) {
+        for (PlayerRestriction restriction : gameData.restrictionsOnPlayer(playerId)) {
+            if (stops.test(restriction)) {
+                return new RestrictionInForce(restriction, null);
+            }
         }
         for (ActiveStaticEffect<PlayersCantCastSpellsFromZonesEffect> active
                 : activeStaticEffects(gameData, PlayersCantCastSpellsFromZonesEffect.class)) {
             if (stops.test(active.effect().restriction()) && SubjectResolutionService.namesPlayer(
                     active.source(), active.controllerId(), playerId, active.effect().players())) {
+                return new RestrictionInForce(active.effect().restriction(), null);
+            }
+        }
+        for (ActiveStaticEffect<OpponentsCantCastOrActivateDuringYourTurnEffect> active
+                : activeStaticEffects(gameData, OpponentsCantCastOrActivateDuringYourTurnEffect.class)) {
+            OpponentsCantCastOrActivateDuringYourTurnEffect lock = active.effect();
+            boolean matches = lock.spells() != null && stops.test(lock.spells())
+                    || lock.abilities() != null && stops.test(lock.abilities());
+            if (matches && castLockHolds(gameData, active, playerId)) {
+                return new RestrictionInForce(lock.spells() != null && stops.test(lock.spells())
+                        ? lock.spells() : lock.abilities(), lock);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The card types of the spells {@code playerId} can't cast now by the restrictions in force on them ("can't cast
+     * instant spells": Cease-Fire's resolved restriction, Hand to Hand during combat, Priority Avenger while the stack
+     * is empty). A restriction on every spell is not a type set ({@link #isPlayerRestricted} with
+     * {@link PlayerRestriction#stopsEverySpell()}).
+     */
+    public Set<CardType> restrictedSpellTypes(GameData gameData, UUID playerId) {
+        Set<CardType> types = EnumSet.noneOf(CardType.class);
+        for (PlayerRestriction restriction : gameData.restrictionsOnPlayer(playerId)) {
+            if (restriction.kind() == PlayerRestriction.Kind.CAST_SPELLS) {
+                types.addAll(restriction.spellTypes());
+            }
+        }
+        for (ActiveStaticEffect<OpponentsCantCastOrActivateDuringYourTurnEffect> active
+                : activeStaticEffects(gameData, OpponentsCantCastOrActivateDuringYourTurnEffect.class)) {
+            PlayerRestriction spells = active.effect().spells();
+            if (spells != null && !spells.spellTypes().isEmpty() && castLockHolds(gameData, active, playerId)) {
+                types.addAll(spells.spellTypes());
+            }
+        }
+        return types;
+    }
+
+    /**
+     * Why {@code playerId} can't activate any activated ability of {@code source} now, mana abilities included, or
+     * {@code null}: a restriction on every ability (City of Solitude) or on abilities of permanents of some card types
+     * (Grand Abolisher; judged by the permanent's types after effects, so it never matches an ability of a card in
+     * another zone or of a spell, whose {@code source} is {@code null}).
+     */
+    public String abilityLockRefusal(GameData gameData, UUID playerId, Permanent source) {
+        return refusal(findRestriction(gameData, playerId,
+                restriction -> restriction.kind() == PlayerRestriction.Kind.ACTIVATE_ABILITIES
+                        && (restriction.abilitySourceTypes().isEmpty() || source != null
+                        && restriction.abilitySourceTypes().stream().anyMatch(type -> type == CardType.CREATURE
+                        ? isCreature(gameData, source) : hasEffectiveCardType(gameData, source, type)))));
+    }
+
+    /**
+     * Why {@code playerId} can't activate abilities that aren't mana abilities now (loyalty abilities included), or
+     * {@code null}: a resolved restriction (Abeyance) or a static lock (Hand to Hand during combat).
+     */
+    public String nonManaAbilityLockRefusal(GameData gameData, UUID playerId) {
+        return refusal(findRestriction(gameData, playerId,
+                restriction -> restriction.kind() == PlayerRestriction.Kind.ACTIVATE_NON_MANA_ABILITIES));
+    }
+
+    private static String refusal(RestrictionInForce found) {
+        if (found == null) {
+            return null;
+        }
+        return "You can't " + found.restriction().description()
+                + (found.lock() == null ? " this turn" : found.lock().whenRestricted());
+    }
+
+    /**
+     * Whether a lock holds {@code playerId} to sorcery timing now
+     * ({@link OpponentsCantCastOrActivateDuringYourTurnEffect#holdsToSorceryTiming()}; Teferi): they may cast spells
+     * only in their main phase with an empty stack, and never while another spell or ability resolves.
+     */
+    public boolean isHeldToSorceryTiming(GameData gameData, UUID playerId) {
+        for (ActiveStaticEffect<OpponentsCantCastOrActivateDuringYourTurnEffect> active
+                : activeStaticEffects(gameData, OpponentsCantCastOrActivateDuringYourTurnEffect.class)) {
+            if (active.effect().holdsToSorceryTiming() && SubjectResolutionService.namesPlayer(
+                    active.source(), active.controllerId(), playerId, active.effect().players())) {
                 return true;
             }
         }
         return false;
+    }
+
+    private boolean castLockHolds(GameData gameData,
+                                  ActiveStaticEffect<OpponentsCantCastOrActivateDuringYourTurnEffect> active,
+                                  UUID playerId) {
+        OpponentsCantCastOrActivateDuringYourTurnEffect lock = active.effect();
+        return SubjectResolutionService.namesPlayer(active.source(), active.controllerId(), playerId, lock.players())
+                && (lock.condition() == null || conditionEvaluationService.isMet(gameData, lock.condition(),
+                ConditionContext.forStaticEffect(active.source(), active.controllerId()).withTargetId(playerId)));
+    }
+
+    /**
+     * A restriction in force on a player: the restriction, and the static lock it comes from ({@code null} for a
+     * resolved restriction or a static zone restriction).
+     */
+    public record RestrictionInForce(PlayerRestriction restriction, OpponentsCantCastOrActivateDuringYourTurnEffect lock) {
     }
 
     /**
@@ -12233,97 +12336,6 @@ public class GameQueryService {
     }
 
     /**
-     * True if {@code playerId} is locked out by an opponent's
-     * {@link OpponentsCantCastOrActivateDuringYourTurnEffect} (Grand Abolisher): that opponent
-     * controls the source and it is currently their turn, so {@code playerId} can neither cast
-     * spells nor activate abilities of artifacts, creatures or enchantments.
-     */
-    public boolean isLockedOutByOpponentsTurnRestriction(GameData gameData, UUID playerId) {
-        UUID activePlayerId = gameData.activePlayerId;
-        if (activePlayerId == null || activePlayerId.equals(playerId)) return false;
-        List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
-        if (battlefield == null) return false;
-        return battlefield.stream().anyMatch(p -> staticEffectsIncludingTemporary(gameData, p, activePlayerId).stream()
-                .anyMatch(OpponentsCantCastOrActivateDuringYourTurnEffect.class::isInstance));
-    }
-
-    /**
-     * True if {@code playerId} is locked out by the activated-ability half of a controller's
-     * turn restriction.
-     */
-    public boolean isLockedOutByOpponentsTurnAbilityRestriction(GameData gameData, UUID playerId) {
-        UUID activePlayerId = gameData.activePlayerId;
-        if (activePlayerId == null || activePlayerId.equals(playerId)) return false;
-        List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
-        if (battlefield == null) return false;
-        return battlefield.stream().anyMatch(p -> staticEffectsIncludingTemporary(gameData, p, activePlayerId).stream()
-                .anyMatch(effect -> effect instanceof OpponentsCantCastOrActivateDuringYourTurnEffect restriction
-                        && restriction.restrictsActivatedAbilities()));
-    }
-
-    /**
-     * True if {@code playerId} is an opponent of a permanent with a
-     * {@link OpponentsCanCastSpellsOnlyAtSorcerySpeedEffect} static effect.
-     */
-    public boolean isLockedOutByOpponentsSorceryTimingRestriction(GameData gameData, UUID playerId) {
-        for (UUID controllerId : gameData.orderedPlayerIds) {
-            if (controllerId.equals(playerId)) continue;
-            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-            if (battlefield == null) continue;
-            if (battlefield.stream().anyMatch(p -> !hasLostAllAbilities(gameData, p)
-                    && p.getCard().getStaticEffects().stream()
-                    .anyMatch(OpponentsCanCastSpellsOnlyAtSorcerySpeedEffect.class::isInstance))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * True if {@code playerId} cannot cast spells or activate abilities because a
-     * {@link PlayersCanCastAndActivateOnlyDuringOwnTurnEffect} (City of Solitude) is on the
-     * battlefield and it is not currently that player's turn. Mana abilities are included.
-     */
-    public boolean isLockedOutByOwnTurnOnlyRestriction(GameData gameData, UUID playerId) {
-        UUID activePlayerId = gameData.activePlayerId;
-        if (activePlayerId == null || activePlayerId.equals(playerId)) return false;
-        return anyBattlefieldHasStaticEffect(gameData, PlayersCanCastAndActivateOnlyDuringOwnTurnEffect.class);
-    }
-
-    /**
-     * True if {@code playerId} cannot cast spells because a
-     * {@link PlayersCanCastSpellsOnlyDuringOwnTurnEffect} naming them (Dosan the Falling Leaf, Fires of Invention) is
-     * on the battlefield and it is not currently that player's turn. Activated abilities are unaffected.
-     */
-    public boolean isLockedOutByOwnTurnOnlySpellRestriction(GameData gameData, UUID playerId) {
-        UUID activePlayerId = gameData.activePlayerId;
-        if (activePlayerId == null || activePlayerId.equals(playerId)) return false;
-        return staticEffectNamesPlayer(gameData, playerId, PlayersCanCastSpellsOnlyDuringOwnTurnEffect.class,
-                PlayersCanCastSpellsOnlyDuringOwnTurnEffect::players);
-    }
-
-    /**
-     * True while a {@link PlayersCantCastInstantsOrActivateNonManaAbilitiesDuringCombatEffect}
-     * (Hand to Hand) is on the battlefield and the game is currently in a combat step: no player
-     * may cast instant spells or activate abilities that aren't mana abilities.
-     */
-    public boolean isCombatActionLockActive(GameData gameData) {
-        return gameData.currentStep != null && gameData.currentStep.isCombatPhase()
-                && anyBattlefieldHasStaticEffect(gameData,
-                PlayersCantCastInstantsOrActivateNonManaAbilitiesDuringCombatEffect.class);
-    }
-
-    /**
-     * True while the game is in a combat step and an {@link OpponentsCantCastSpellsDuringCombatEffect} names
-     * {@code playerId} (Basandra, Battle Seraph; Marisi, Breaker of the Coil).
-     */
-    public boolean isSpellCastingCombatLockActive(GameData gameData, UUID playerId) {
-        return gameData.currentStep != null && gameData.currentStep.isCombatPhase()
-                && staticEffectNamesPlayer(gameData, playerId, OpponentsCantCastSpellsDuringCombatEffect.class,
-                OpponentsCantCastSpellsDuringCombatEffect::players);
-    }
-
-    /**
      * Applies the global damage multiplier to the given damage amount.
      *
      * @return the damage after applying all {@link GlobalDamageMultiplyingEffect} multipliers
@@ -13793,22 +13805,15 @@ public class GameQueryService {
      * are not properties of the permanent.
      */
     public boolean canActivateManaAbility(GameData gameData, Permanent permanent) {
-        // City of Solitude: mana abilities can only be activated on the controller's turn.
+        // City of Solitude, Grand Abolisher: a lock on every ability, or on abilities of the permanent's card types,
+        // stops its mana abilities too (lands keep producing under Grand Abolisher).
         UUID controllerId = findPermanentController(gameData, permanent.getId());
-        if (controllerId != null && isLockedOutByOwnTurnOnlyRestriction(gameData, controllerId)) {
+        if (controllerId != null && abilityLockRefusal(gameData, controllerId, permanent) != null) {
             return false;
         }
 
         // Sen Triplets: a player locked out this turn can activate no ability at all, mana included.
         if (controllerId != null && gameData.hasFloatingEffectOnPlayer(controllerId, SenTripletsUpkeepEffect.class)) {
-            return false;
-        }
-
-        // Grand Abolisher: on the opponent's turn, abilities of the controller's artifacts,
-        // creatures and enchantments are locked. Lands keep producing.
-        if (controllerId != null && isLockedOutByOpponentsTurnAbilityRestriction(gameData, controllerId)
-                && (isCreature(gameData, permanent) || isArtifact(gameData, permanent)
-                        || isEnchantment(gameData, permanent))) {
             return false;
         }
 

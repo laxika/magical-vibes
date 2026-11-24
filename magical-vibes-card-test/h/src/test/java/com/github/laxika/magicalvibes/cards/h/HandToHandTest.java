@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.k.Kindle;
+import com.github.laxika.magicalvibes.cards.l.LightningStorm;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.m.Manakin;
 import com.github.laxika.magicalvibes.cards.m.MoggFanatic;
@@ -22,7 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({HandToHand.class, Kindle.class, Manakin.class, MoggFanatic.class,
-        RootwaterShaman.class, ShimmeringWings.class, Humility.class, Opalescence.class})
+        RootwaterShaman.class, ShimmeringWings.class, Humility.class, Opalescence.class, LightningStorm.class,
+        Forest.class})
 class HandToHandTest extends BaseCardTest {
 
     @Test
@@ -181,6 +184,25 @@ class HandToHandTest extends BaseCardTest {
         harness.assertLife(player2, 18);
         harness.assertInGraveyard(player1, "Kindle");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An ability of a spell on the stack can't be activated during combat")
+    void stackAbilityBlockedDuringCombat() {
+        LightningStorm storm = new LightningStorm();
+        harness.setHand(player1, List.of(storm));
+        harness.setHand(player2, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.addToBattlefield(player1, new HandToHand());
+
+        assertThatThrownBy(() -> harness.activateStackAbility(player2, storm.getId(), 0, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("during combat");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.stack).hasSize(1);
     }
 
     @Test
