@@ -48,6 +48,8 @@ class RevealTopCardOfLibraryEffectHandlerTest {
     private ExileService exileService;
     @Mock
     private LifeSupport lifeSupport;
+    @Mock
+    private com.github.laxika.magicalvibes.service.CardRevealService cardRevealService;
     private LibraryRevealSupport libraryRevealSupport;
     private GameData gd;
     private UUID player1Id;
@@ -85,7 +87,8 @@ class RevealTopCardOfLibraryEffectHandlerTest {
                 gameQueryService, amountEvaluationService,
                 new com.github.laxika.magicalvibes.service.effect.SubjectResolutionService(gameQueryService,
                         mock(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class),
-                        mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class)));
+                        mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class)),
+                cardRevealService);
 
     }
 
@@ -130,6 +133,23 @@ class RevealTopCardOfLibraryEffectHandlerTest {
 
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("reveals") && logEntry.plainText().contains("Grizzly Bears")));
+            }
+
+            @Test
+            @DisplayName("Shows the revealed card to every player")
+            void showsRevealedCardToEveryPlayer() {
+                Card topCard = createCard("Grizzly Bears");
+                gd.playerDecks.get(player2Id).add(topCard);
+
+                RevealTopCardOfLibraryEffect effect = new RevealTopCardOfLibraryEffect(Subjects.targetPlayer());
+                StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Aven Windreader"),
+                        player1Id, "Aven Windreader", List.of(effect), 0,
+                        player2Id, null);
+
+                revealTopCardOfLibraryEffectHandler.resolve(gd, entry, effect);
+
+                verify(cardRevealService).revealToAllPlayers(gd, player2Id,
+                        com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.LIBRARY, List.of(topCard));
             }
 
             @Test

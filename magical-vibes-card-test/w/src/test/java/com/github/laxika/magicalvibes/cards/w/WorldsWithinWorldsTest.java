@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.e.ElvishVisionary;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MishrasFactory;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WorldsWithinWorlds.class, GrizzlyBears.class, Forest.class, MishrasFactory.class})
+@CardUsed({WorldsWithinWorlds.class, GrizzlyBears.class, Forest.class, MishrasFactory.class, ElvishVisionary.class})
 class WorldsWithinWorldsTest extends BaseCardTest {
 
     @Test
@@ -43,13 +44,13 @@ class WorldsWithinWorldsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.WorldsWithinWorldsChoice.class);
+                .isInstanceOf(PendingInteraction.EachPlayerMayPutCardFromHandChoice.class);
 
         harness.handleMultipleCardsChosen(player1, List.of(ownHandCreature.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.WorldsWithinWorldsChoice.class);
+                .isInstanceOf(PendingInteraction.EachPlayerMayPutCardFromHandChoice.class);
 
         harness.handleMultipleCardsChosen(player2, List.of(opponentHandCreature.getId()));
 
@@ -138,5 +139,23 @@ class WorldsWithinWorldsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(factory);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId).doesNotContain(factory.getId());
+    }
+
+    @Test
+    @DisplayName("A creature put onto the battlefield from a hand has its enters ability trigger")
+    void creaturePutFromHandTriggersItsEntersAbility() {
+        Card visionary = new ElvishVisionary();
+        Card drawn = new Forest();
+        harness.setHand(player2, List.of());
+        harness.castFromHand(player1, new WorldsWithinWorlds(), "{5}{G}{U}");
+        harness.setHand(player1, List.of(visionary));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(visionary.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId()).containsExactly(visionary.getId());
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
     }
 }

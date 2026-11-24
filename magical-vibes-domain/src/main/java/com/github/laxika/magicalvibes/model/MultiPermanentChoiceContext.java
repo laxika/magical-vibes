@@ -1166,11 +1166,6 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
-    /** The controller of a creature chooses a contested land to gain control of. */
-    record TurfWarLandChoice(UUID creatureControllerId, UUID damagedPlayerId, String sourceName)
-            implements MultiPermanentChoiceContext {
-    }
-
     /**
      * One player casts a vote for an object or a player ({@code VoteEffect} over permanents, cards or players, CR
      * 701.38a, 701.38b). Its queue of voters still to vote lets an answer be replayed with the same voter voting again

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
@@ -21,53 +20,52 @@ import static org.assertj.core.api.Assertions.assertThat;
 class InfernalOfferingTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Both players sacrifice their creature, both draw two, then each returns it from the graveyard")
     void sacrificesCreaturesAndBothPlayersDrawTwo() {
-        harness.addToBattlefield(player1, new LlanowarElves());
-        harness.addToBattlefield(player2, new LlanowarElves());
+        Permanent ownElves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        Permanent opponentElves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
         harness.setLibrary(player1, List.of(new Island(), new Island()));
         harness.setLibrary(player2, List.of(new Island(), new Island()));
         castOffering();
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
-        harness.assertInGraveyard(player1, "Llanowar Elves");
-        harness.assertInGraveyard(player2, "Llanowar Elves");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ownElves);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opponentElves);
         assertThat(gd.playerHands.get(player1.getId())).filteredOn(card -> card instanceof Island).hasSize(2);
         assertThat(gd.playerHands.get(player2.getId())).filteredOn(card -> card instanceof Island).hasSize(2);
-
-        returnCreature(player1);
-        returnCreature(player2);
         harness.assertOnBattlefield(player1, "Llanowar Elves");
         harness.assertOnBattlefield(player2, "Llanowar Elves");
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotInGraveyard(player2, "Llanowar Elves");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
+    @DisplayName("Only a player who sacrificed a creature draws two cards")
     void onlyPlayersWhoSacrificedDrawTwo() {
-        harness.addToBattlefield(player1, new LlanowarElves());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
         harness.setLibrary(player1, List.of(new Island(), new Island()));
         castOffering();
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(elves);
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).filteredOn(card -> card instanceof Island).hasSize(2);
         assertThat(gd.playerHands.get(player2.getId())).filteredOn(card -> card instanceof Island).isEmpty();
-
-        returnCreature(player1);
         harness.assertOnBattlefield(player1, "Llanowar Elves");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
+    @DisplayName("The controller returns a creature card first, then the chosen opponent returns one")
     void returnsOneCreatureFromEachGraveyardInOrder() {
-        harness.setGraveyard(player1, List.of(new LlanowarElves(), new Island()));
-        harness.setGraveyard(player2, List.of(new LlanowarElves(), new Island()));
+        harness.setGraveyard(player1, List.of(new LlanowarElves(), new LlanowarElves(), new Island()));
+        harness.setGraveyard(player2, List.of(new LlanowarElves(), new LlanowarElves(), new Island()));
         castOffering();
 
         PendingInteraction.GraveyardChoice firstChoice =
                 gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
         assertThat(firstChoice).isNotNull();
         assertThat(firstChoice.playerId()).isEqualTo(player1.getId());
-        assertThat(firstChoice.validIndices()).containsExactly(0);
+        assertThat(firstChoice.validIndices()).containsExactly(0, 1);
         harness.handleGraveyardCardChosen(player1, firstChoice.validIndices().getFirst());
 
         harness.assertOnBattlefield(player1, "Llanowar Elves");
@@ -77,46 +75,46 @@ class InfernalOfferingTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
         assertThat(secondChoice).isNotNull();
         assertThat(secondChoice.playerId()).isEqualTo(player2.getId());
-        assertThat(secondChoice.validIndices()).containsExactly(0);
+        assertThat(secondChoice.validIndices()).containsExactly(0, 1);
         harness.handleGraveyardCardChosen(player2, secondChoice.validIndices().getFirst());
 
-        harness.assertOnBattlefield(player1, "Llanowar Elves");
-        harness.assertOnBattlefield(player2, "Llanowar Elves");
-        harness.assertNotInGraveyard(player1, "Llanowar Elves");
-        harness.assertNotInGraveyard(player2, "Llanowar Elves");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Llanowar Elves");
         harness.assertInGraveyard(player1, "Island");
         harness.assertInGraveyard(player2, "Island");
     }
 
     @Test
+    @DisplayName("A lone creature card in a graveyard is returned without a prompt")
     void opponentStillReturnsCreatureWhenControllerHasNoCreatureCards() {
         harness.setGraveyard(player1, List.of(new Island()));
         harness.setGraveyard(player2, List.of(new LlanowarElves()));
         castOffering();
 
-        returnCreature(player2);
-
         harness.assertOnBattlefield(player2, "Llanowar Elves");
         harness.assertInGraveyard(player1, "Island");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
+    @DisplayName("Only the opponent sacrifices and draws when the controller has no creatures")
     void onlyOpponentSacrificesAndDrawsWhenControllerHasNoCreatures() {
-        harness.addToBattlefield(player2, new LlanowarElves());
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
         harness.setLibrary(player2, List.of(new Island(), new Island()));
         castOffering();
 
-        harness.assertInGraveyard(player2, "Llanowar Elves");
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(elves);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).filteredOn(card -> card instanceof Island).hasSize(2);
-
-        returnCreature(player2);
         harness.assertOnBattlefield(player2, "Llanowar Elves");
     }
 
     @Test
+    @DisplayName("Each player chooses a creature in turn order, then both are sacrificed together")
     void eachPlayerChoosesOneCreatureAndSacrificesHappenTogether() {
         harness.addToBattlefield(player1, new LlanowarElves());
         harness.addToBattlefield(player1, new LlanowarElves());
@@ -130,29 +128,25 @@ class InfernalOfferingTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Island(), new Island()));
         castOffering();
 
-        harness.handlePermanentChosen(player1, controllerCreatureId);
+        harness.handleMultiplePermanentsChosen(player1, List.of(controllerCreatureId));
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        harness.handlePermanentChosen(player2, opponentCreatureId);
+        harness.handleMultiplePermanentsChosen(player2, List.of(opponentCreatureId));
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getId().equals(controllerCardId));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(card -> card.getId().equals(opponentCardId));
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
-
-        returnCreature(player1);
-        returnCreature(player2);
-        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2)
+                .anyMatch(permanent -> permanent.getCard().getId().equals(controllerCardId));
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2)
+                .anyMatch(permanent -> permanent.getCard().getId().equals(opponentCardId));
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(controllerCreatureId));
+        assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(opponentCreatureId));
     }
 
     @Test
+    @DisplayName("Resolves without drawing or returning when no player has creatures or creature cards")
     void resolvesWithoutDrawingWhenNeitherPlayerHasCreaturesOrCreatureCards() {
         harness.setGraveyard(player1, List.of(new Island()));
         harness.setGraveyard(player2, List.of(new Island()));
@@ -181,7 +175,7 @@ class InfernalOfferingTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Island(), new Island()));
         castOffering();
 
-        harness.handlePermanentChosen(player1, elves.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(elves.getId()));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                 .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
@@ -192,19 +186,12 @@ class InfernalOfferingTest extends BaseCardTest {
 
         harness.handleListChoice(player2, "Put it into its owner's library");
 
-        harness.assertInGraveyard(player1, "Llanowar Elves");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(elves);
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(zombie);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2)
                 .anyMatch(card -> card.getId().equals(zombie.getCard().getId()));
-    }
-
-    private void returnCreature(Player player) {
-        PendingInteraction.GraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.playerId()).isEqualTo(player.getId());
-        harness.handleGraveyardCardChosen(player, choice.validIndices().getFirst());
     }
 
     private void castOffering() {

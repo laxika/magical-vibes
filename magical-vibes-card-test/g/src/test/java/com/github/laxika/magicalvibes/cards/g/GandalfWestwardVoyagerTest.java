@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.a.ArcaneDenial;
+import com.github.laxika.magicalvibes.cards.e.EncroachingMycosynth;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
 import com.github.laxika.magicalvibes.cards.l.LavaAxe;
 import com.github.laxika.magicalvibes.model.Card;
@@ -10,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -17,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({GandalfWestwardVoyager.class, ColossalDreadmaw.class, GrizzlyBears.class, Forest.class,
-        ArcaneDenial.class, Hurricane.class, LavaAxe.class})
+        ArcaneDenial.class, Hurricane.class, LavaAxe.class, EncroachingMycosynth.class, Millstone.class})
 class GandalfWestwardVoyagerTest extends BaseCardTest {
 
     @Test
@@ -189,5 +192,41 @@ class GandalfWestwardVoyagerTest extends BaseCardTest {
         List<Permanent> copies = findPermanents(player1, "Colossal Dreadmaw");
         assertThat(copies).hasSize(1);
         assertThat(copies.getFirst().getCard().isToken()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A card type the spell has from an effect counts for sharing a card type with it")
+    void cardTypeGrantedToTheSpellCountsAsShared() {
+        harness.addToBattlefield(player1, new GandalfWestwardVoyager());
+        harness.addToBattlefield(player1, new EncroachingMycosynth());
+        Card revealed = new Millstone();
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(revealed));
+        harness.setHand(player2, List.of());
+        harness.castFromHand(player1, new ColossalDreadmaw(), "{4}{G}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Colossal Dreadmaw")).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(revealed);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A revealed card sharing no card type with the spell is left on top of its library")
+    void revealedCardStaysOnTopWhenNoTypeIsShared() {
+        harness.addToBattlefield(player1, new GandalfWestwardVoyager());
+        Card drawn = new Forest();
+        Card revealed = new Millstone();
+        harness.setLibrary(player1, List.of(drawn));
+        harness.setLibrary(player2, List.of(revealed));
+        harness.castFromHand(player1, new ColossalDreadmaw(), "{4}{G}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Colossal Dreadmaw")).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(revealed);
     }
 }

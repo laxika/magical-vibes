@@ -2741,6 +2741,16 @@ public class AmountEvaluationService {
      */
     public static CardPredicate bindTriggeringSpellCardTypes(GameData gameData, CardPredicate filter,
                                                              StackEntry entry) {
+        return bindTriggeringSpellCardTypes(gameData, filter, entry, null);
+    }
+
+    /**
+     * {@link #bindTriggeringSpellCardTypes(GameData, CardPredicate, StackEntry)} with the spell's card types read by
+     * {@code gameQueryService} for its controller ({@code GameQueryService.cardHasType}: perpetual types and "the same
+     * is true for permanent spells you control", Encroaching Mycosynth), or its card's own types when {@code null}.
+     */
+    public static CardPredicate bindTriggeringSpellCardTypes(GameData gameData, CardPredicate filter,
+                                                             StackEntry entry, GameQueryService gameQueryService) {
         return switch (filter) {
             case null -> null;
             case CardSharesCardTypeWithTriggeringSpellPredicate ignored -> {
@@ -2748,17 +2758,18 @@ public class AmountEvaluationService {
                         entry.getTriggeringSpellSnapshot());
                 Card seen = spell == null ? null : CastingPermissionService.spellAsEffectsSeeIt(spell).getCard();
                 List<CardPredicate> types = seen == null ? List.of() : java.util.Arrays.stream(CardType.values())
-                        .filter(seen::hasType)
+                        .filter(type -> gameQueryService == null ? seen.hasType(type)
+                                : gameQueryService.cardHasType(seen, type, gameData, spell.getControllerId()))
                         .<CardPredicate>map(CardTypePredicate::new)
                         .toList();
                 yield types.isEmpty() ? new CardNotPredicate(new CardTruePredicate()) : new CardAnyOfPredicate(types);
             }
             case CardAllOfPredicate all -> new CardAllOfPredicate(all.predicates().stream()
-                    .map(part -> bindTriggeringSpellCardTypes(gameData, part, entry)).toList());
+                    .map(part -> bindTriggeringSpellCardTypes(gameData, part, entry, gameQueryService)).toList());
             case CardAnyOfPredicate any -> new CardAnyOfPredicate(any.predicates().stream()
-                    .map(part -> bindTriggeringSpellCardTypes(gameData, part, entry)).toList());
+                    .map(part -> bindTriggeringSpellCardTypes(gameData, part, entry, gameQueryService)).toList());
             case CardNotPredicate not -> new CardNotPredicate(bindTriggeringSpellCardTypes(gameData, not.predicate(),
-                    entry));
+                    entry, gameQueryService));
             default -> filter;
         };
     }

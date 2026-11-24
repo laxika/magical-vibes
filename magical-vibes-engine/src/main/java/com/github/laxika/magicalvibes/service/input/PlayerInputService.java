@@ -1916,18 +1916,6 @@ public class PlayerInputService {
                 gameData.id, playerId, sourcePermanentId, targetId);
     }
 
-    /** Dismantle: choose whether the copied counter count becomes +1/+1 or charge counters. */
-    public void beginDismantleCounterTypeChoice(GameData gameData, UUID playerId, int counterCount,
-                                                String sourceCardName) {
-        ChoiceContext.DismantleCounterTypeChoice context =
-                new ChoiceContext.DismantleCounterTypeChoice(counterCount, sourceCardName);
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                playerId, null, null, context, ChoiceContext.DismantleCounterTypeChoice.OPTIONS,
-                sourceCardName + " — Choose a counter type."));
-
-        log.info("Game {} - Awaiting {} to choose Dismantle's counter type", gameData.id, playerId);
-    }
-
     public void beginPrimalClayFormChoice(GameData gameData, UUID playerId, UUID permanentId) {
         ChoiceContext.PrimalClayFormChoice choiceContext = new ChoiceContext.PrimalClayFormChoice(permanentId);
 

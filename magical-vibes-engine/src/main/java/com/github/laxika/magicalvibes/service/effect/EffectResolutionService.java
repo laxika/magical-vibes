@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.TriggeringCardMatches;
 import com.github.laxika.magicalvibes.model.condition.TriggeringCardManaValueIsUncrossedChosenDigit;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasSubtype;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TriggeringSpellMatches;
 import com.github.laxika.magicalvibes.model.Card;
@@ -767,6 +768,13 @@ public class EffectResolutionService {
                                    ConditionContext context) {
         if (condition instanceof NotCondition not) {
             return !isConditionMet(gameData, entry, not.inner(), context);
+        }
+        // "If any of those cards shares a card type with that spell": the triggering spell's types read as the ability
+        // resolves, the live spell or as it last existed on the stack (CR 608.2h).
+        if (condition instanceof HappenedThisWay happened && happened.cardFilter() != null) {
+            condition = new HappenedThisWay(happened.kind(), happened.minimum(), null,
+                    AmountEvaluationService.bindTriggeringSpellCardTypes(gameData, happened.cardFilter(), entry,
+                            gameQueryService));
         }
         // "Copy that spell if it targets a permanent or player": the triggering spell as the ability resolves, the live
         // spell or as it last existed on the stack (CR 608.2h), judged from the ability's controller and source.

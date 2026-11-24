@@ -123,6 +123,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             } else {
                 exileService.exileCard(gameData, located.ownerId(), card);
             }
+            imprint(gameData, entry, e, card);
             recordExiled(entry, List.of(card), located.ownerId(), known);
             gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " exiles ", card,
                     " from " + gameData.playerIdToName.get(located.ownerId())

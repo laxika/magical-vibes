@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -39,6 +41,7 @@ public class RevealTopCardOfLibraryEffectHandler implements NormalEffectHandlerB
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final SubjectResolutionService subjectResolutionService;
+    private final CardRevealService cardRevealService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -92,6 +95,8 @@ public class RevealTopCardOfLibraryEffectHandler implements NormalEffectHandlerB
                 reveal.card(card);
             }
             gameLogService.append(gameData, reveal.text(" from the top of their library.").build());
+            // A revealed card is shown to every player (CR 701.20a).
+            cardRevealService.revealToAllPlayers(gameData, playerId, GameEventFact.RevealZone.LIBRARY, revealed);
         }
         entry.recordStep(StepKind.REVEAL, StepOutcome.ofObjects(revealedIds, revealingPlayerIds, whereTheyAre));
         if (revealEffect.lifeGainIfLand() > 0 && landsRevealed > 0) {

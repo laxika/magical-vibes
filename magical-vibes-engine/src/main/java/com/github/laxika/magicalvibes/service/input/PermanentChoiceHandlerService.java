@@ -42,7 +42,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenAttache
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnAurasFromGraveyardAttachedToCreaturesEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RedHerringExchangeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RingTemptsYouEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.InfernalOfferingEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ToymakersTrapEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ZndrsplatsJudgmentEffectHandler;
 import com.github.laxika.magicalvibes.service.battlefield.DeathReplacementChoicePending;
@@ -127,7 +126,6 @@ public class PermanentChoiceHandlerService {
             returnAurasFromGraveyardAttachedToCreaturesEffectHandler;
     private final RedHerringExchangeEffectHandler redHerringExchangeEffectHandler;
     private final RingTemptsYouEffectHandler ringTemptsYouEffectHandler;
-    private final InfernalOfferingEffectHandler infernalOfferingEffectHandler;
     private final MayEffectHandlerRegistry mayEffectHandlerRegistry;
     private final ToymakersTrapEffectHandler toymakersTrapEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.InventoryManagementEffectHandler
@@ -676,14 +674,6 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleChooseOpponentThenSearchLandDifference(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.OrzhovAdvokistCreatureChoice advokistChoice) {
             battlefieldHandler.handleOrzhovAdvokistCreatureChoice(gameData, permanentId, advokistChoice);
-        } else if (context instanceof PermanentChoiceContext.InfernalOfferingOpponentChoice chooseOpponent) {
-            infernalOfferingEffectHandler.completeOpponentChoice(gameData, permanentId, chooseOpponent);
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-        } else if (context instanceof PermanentChoiceContext.InfernalOfferingCreatureChoice creatureChoice) {
-            infernalOfferingEffectHandler.completeCreatureChoice(gameData, permanentId, creatureChoice);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-            }
         } else if (context instanceof PermanentChoiceContext.RiskyMoveCreatureChoice riskyMove) {
             riskyMoveEffectHandler.completeCreatureChoice(gameData, permanentId, riskyMove,
                     new GameData.InteractionAnswerReplay(player, permanentChoice,

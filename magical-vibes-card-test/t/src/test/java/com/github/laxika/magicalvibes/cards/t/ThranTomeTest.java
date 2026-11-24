@@ -35,15 +35,13 @@ class ThranTomeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        PendingInteraction.LibrarySearch choice =
-                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.params().playerId()).isEqualTo(player2.getId());
-        assertThat(choice.params().targetPlayerId()).isEqualTo(player1.getId());
-        assertThat(choice.params().cards()).extracting(Card::getId)
-                .containsExactly(top.getId(), chosen.getId(), third.getId());
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(top.getId(), chosen.getId(), third.getId());
 
-        harness.handleCardChosen(player2, 1);
+        harness.handleMultipleCardsChosen(player2, List.of(chosen.getId()));
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getId)
@@ -68,7 +66,7 @@ class ThranTomeTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
-        harness.handleCardChosen(player2, 0);
+        harness.handleMultipleCardsChosen(player2, List.of(top.getId()));
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getId)

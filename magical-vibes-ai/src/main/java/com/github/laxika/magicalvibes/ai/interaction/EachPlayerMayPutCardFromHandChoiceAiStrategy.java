@@ -24,6 +24,11 @@ class EachPlayerMayPutCardFromHandChoiceAiStrategy
             return;
         }
 
+        if (interaction.anyNumber() && !interaction.repeatUntilNoOne()) {
+            // "Any number of" cards that enter together: put them all.
+            ctx.gameActions().answerInteraction(new InteractionAnswer.CardsChosen(interaction.validCardIds()));
+            return;
+        }
         List<Card> hand = ctx.gameData().playerHands.getOrDefault(interaction.playerId(), List.of());
         UUID choice = hand.stream()
                 .filter(card -> interaction.validCardIds().contains(card.getId()))

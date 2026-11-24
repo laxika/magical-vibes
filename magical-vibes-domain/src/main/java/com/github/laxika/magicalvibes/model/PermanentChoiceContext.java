@@ -277,20 +277,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Boreas Charger: choose an opponent before searching for the land-count difference. */
     record ChooseOpponentThenSearchLandDifference(UUID controllerId, CardSubtype subtype,
                                                    String sourceCardName) implements PermanentChoiceContext {}
-    /** Infernal Offering: choose the opponent affected by the selected mode. */
-    record InfernalOfferingOpponentChoice(UUID controllerId, boolean sacrificeMode, String sourceCardName)
-            implements PermanentChoiceContext {}
-    /** Infernal Offering: choose one creature before both selected sacrifices happen simultaneously. */
-    record InfernalOfferingCreatureChoice(UUID controllerId, UUID opponentId, UUID choosingPlayerId,
-                                          List<UUID> remainingChooserIds, List<UUID> chosenCreatureIds,
-                                          List<UUID> chosenPlayerIds, String sourceCardName)
-            implements PermanentChoiceContext {
-        public InfernalOfferingCreatureChoice {
-            remainingChooserIds = List.copyOf(remainingChooserIds);
-            chosenCreatureIds = List.copyOf(chosenCreatureIds);
-            chosenPlayerIds = List.copyOf(chosenPlayerIds);
-        }
-    }
     record MayReturnPermanentToHandAndEnterWithCounters(
             Card sourceCard,
             UUID controllerId,

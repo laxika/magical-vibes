@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 50, 48b; merge queue 8d. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                          |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 48b, 8e, 50b; merge queue 50. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                           |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,037 / 2,461 (after fold run 7c) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,031 / 2,455 (after fold run 8d) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,679 rows over 4,569 classes (after fold run 7c). Latest verdict per class: `step-9` 39, unique 1,193, absorbed 1,339, split 675, blocked-other 555, survivor 456, blocked-step-model 140, blocked-player-loop 96, dead 76. Waiting: 39 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,693 rows over 4,569 classes (after fold run 8d). Latest verdict per class: `step-9` 28, unique 1,193, absorbed 1,339, split 682, blocked-other 559, survivor 456, blocked-step-model 140, blocked-player-loop 96, dead 76. Waiting: 28 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1124,6 +1124,12 @@ Ledger rows are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cd
 - `MatchingCreaturesMustAttackThisTurnEffect.attacking(PlayerSubject | PermanentSubject)` / `.lasting(Duration)`: "creatures [players] control attack [you / CARDNAME] [during their next turn] if able"; the next-turn form makes one float per player (fold run 7c).
 - `MustBeBlockedIfAbleEffect(PermanentPredicate blockerFilter)` and `GameQueryService.mustBeBlockedRequirements` / `mustBeBlockedIfAble` / `mustBeBlockedByMatchingCreatureRequirements` / `obeysAMustBeBlockedRequirement`: the one must-be-blocked reader (fold run 7c).
 - `ProtectionFromColorsEffect` with a set subject (`chosenColor(controlledBy(...))`) also protects its source, through `ProtectionFromColorsSelfEffectHandler` (fold run 7c).
+
+- `AmountEvaluationService.bindTriggeringSpellCardTypes(gd, filter, entry, GameQueryService)`: binds "shares a card type with that spell", reading the spell's types with `cardHasType` for its controller. `EffectResolutionService` applies it to every `HappenedThisWay` card filter (Gandalf, Westward Voyager; fold run 8d).
+- `ExileGraveyardCardsEffect.cards(subject).imprintingOnSource()`: "you may exile that card" that becomes the source's imprinted card (Mimic Vat; fold run 8d).
+- `RevealTopCardOfLibraryEffect` shows each revealed card to every player through `CardRevealService.revealToAllPlayers` (CR 701.20a; fold run 8d).
+
+Ledger rows are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671-d50e7ccdb4f0/scratchpad/fold-8d/ledger-rows.csv.
 
 ### Blocked causes still open
 
@@ -5188,6 +5194,42 @@ The three `must-attack` rows fold run 7 left, plus the Ward Sliver re-triage. Ra
 - `MustBeBlockedIfAbleEffect` has no subject: an Aura's or Equipment's static is told apart from the creature's own only by the Equipment check. Low impact.
 
 **For the next run.** Run 7 is closed. Step 10 could give `MustBeBlockedIfAbleEffect` a subject (`source()` / `attachedCreature()`) and merge it with `SetCombatRequirementThisTurnEffect`'s MUST_BE_BLOCKED payload.
+
+### Step 9, fold run 8d (2026-11-24, parallel worktree)
+Batch `splits` (second half, 11 rows): 7 split, 4 `blocked-other`. Records and handlers 3,059 / 2,480 → 3,052 / 2,473 in the worktree (7 records and 7 handlers deleted). CR 101.4, 118.12, 400.7, 406.3, 603.4, 603.6a, 603.12, 608.2c, 608.2d, 608.2h, 701.20a and 701.23d checked with `get_rule`. Oracle text checked for 7 of 7 rewritten cards, plus the 4 left cards.
+
+| Folded | Into |
+|---|---|
+| Dismantle | `NoteAmountEffect(CountersOnTargetPermanent(null))` + destroy + `ConditionalEffect(HappenedThisWay(NOTE), ChooseOneAtResolutionEffect(+1/+1 \| charge: choose an artifact you control + place counters over `AmountThisWay.noted()`))` |
+| Gandalf, Westward Voyager | reveal over each opponent + `toACard(REVEAL, CardSharesCardTypeWithTriggeringSpellPredicate)` gating the copy and each opponent's draw + `NotCondition` "otherwise" (nothing revealed means none shares, as before) |
+| Worlds Within Worlds | exile all creatures + `EachPlayerMayPutCardFromHandToBattlefieldEffect(..., anyNumber)` + `PutCardsIntoHandEffect(cardsThisWay(EXILE))` |
+| Mimic Vat | `ExileGraveyardCardsEffect.cards(triggeringCards()).imprintingOnSource()` + `exiled()` gating `PutExiledCardsIntoOwnersGraveyardEffect(except(exiledWithSource(), cardsThisWay(EXILE)))` |
+| Infernal Offering | choose an opponent + sacrifice by you and that player (APNAP, one event) + draw for the players who sacrificed + choose an opponent + two mandatory returns, one step each |
+| Turf War | choice by the creature's controller + `GainControlOfTargetEffect.gainedBy` + untap of the chosen land (untapped even if control doesn't change) |
+| Thran Tome | reveal 3 + choice by the target opponent + put the chosen card into the graveyard + draw 2 (Murmurs from Beyond's pattern) |
+
+**Pieces closed.** `EffectResolutionService` now binds a `HappenedThisWay` card filter's triggering-spell types, through a new `bindTriggeringSpellCardTypes(..., GameQueryService)` overload that reads perpetual types and Encroaching Mycosynth's spell types. The CARDS scope of `ExileGraveyardCardsEffect` now imprints. `RevealTopCardOfLibraryEffect` now shows the revealed cards to every player. Deleted with the members: `DismantleCounterTypeChoice`, `WorldsWithinWorldsChoice` (with its support, handler, projection and AI strategy), `TurfWarLandChoice`, the two Infernal Offering contexts and `PendingThranTomeChoice`.
+
+**Behaviour changes.**
+- Worlds Within Worlds' creatures enter through the entry batch, so their enters abilities trigger (CR 603.6a; the old `place` path skipped them). New Elvish Visionary test.
+- Every revealed top card now raises the reveal event (CR 701.20a). New handler test. Kellan's test card was nameless and is now a real Shock.
+- A lone Infernal Offering return is made unasked (CR 608.2d).
+- The survivor's AI answer for an any-number put-from-hand choice puts every eligible card (Tempting Wurm too).
+- Mimic Vat finds the dying card in its graveyard stay (CR 400.7) instead of by id in any graveyard.
+- Gandalf: a type granted to the spell counts. New Encroaching Mycosynth test.
+
+**Where the triage was wrong.** Turf War: untapping `thisWay(GAIN_CONTROL)` would skip a land its controller already controls (the Ray of Command test). Mimic Vat: the note's `triggeringCards(creature)` would refuse the noncreature cards its rulings allow. Risky Move: the two CHOOSE steps collide.
+
+**Blocked.**
+- Earth Rumble: no way to declare a two-group reflexive target with one optional group; earthbend records no step.
+- Head Games: needs an unrevealed HAND destination on `SearchTargetLibraryEffect`.
+- Mirror of Fate: no face-up exiled card filter.
+- Risky Move: two choice results of one kind in one resolution.
+Each would be a one-card piece.
+
+**Seen, not changed.** `SubjectResolutionService.bindResolutionFilter` still binds the triggering spell's printed types only, so Baral and Kari Zev and Possibility Storm miss types an effect grants (Encroaching Mycosynth). Fairly sure.
+
+**For the next run.** Risky Move needs a way to keep two choice results of one kind. Earth Rumble needs two-group reflexive targets. No other blocked row names either piece.
 
 ## Prompt
 

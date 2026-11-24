@@ -1225,10 +1225,6 @@ public class ChoiceHandlerService {
             abilityActivationService.handleControlledCounterCostTypeChosen(gameData, player, ctx, colorName);
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.DismantleCounterTypeChoice ctx) {
-            handleDismantleCounterTypeChoice(gameData, colorName, ctx);
-            return;
-        }
         if (colorChoice.context() instanceof ChoiceContext.TriggeredModalChoice ctx) {
             handleTriggeredModalChoice(gameData, player, colorName, ctx);
             return;
@@ -3681,31 +3677,6 @@ public class ChoiceHandlerService {
                 counterType, 1);
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /** Completes Dismantle's counter-type choice and then chooses a controlled artifact if needed. */
-    private void handleDismantleCounterTypeChoice(GameData gameData, String choice,
-            ChoiceContext.DismantleCounterTypeChoice ctx) {
-        if (!ChoiceContext.DismantleCounterTypeChoice.OPTIONS.contains(choice)) {
-            throw new IllegalArgumentException("Invalid Dismantle counter type: " + choice);
-        }
-        StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
-        if (sourceEntry == null) {
-            throw new IllegalStateException("Dismantle choice has no parked resolution");
-        }
-
-        gameData.interaction.clearAwaitingInput();
-        CounterType counterType = ChoiceContext.DismantleCounterTypeChoice.PLUS_ONE_PLUS_ONE.equals(choice)
-                ? CounterType.PLUS_ONE_PLUS_ONE
-                : CounterType.CHARGE;
-        permanentCounterSupport.resolveCounterOnOwnPermanent(gameData, sourceEntry, counterType,
-                ctx.counterCount(), new com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate());
-
-        if (gameData.interaction.isAwaitingInput()) {
-            inputCompletionService.publishStateAfterInput(gameData);
-        } else {
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-        }
     }
 
     /**

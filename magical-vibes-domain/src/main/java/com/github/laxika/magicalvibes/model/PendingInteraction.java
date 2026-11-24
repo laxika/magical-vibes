@@ -31,7 +31,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingManifoldInsightsChoice,
         PendingValkiCopyChoice, PendingValkiHandExileChoice,
         PendingAllureOfTheUnknownChoice,
-        PendingThranTomeChoice,
         PendingDubiousChallengeChoice,
         PendingReturnExiledWithSourceCard, PendingPortalPileSearch,
         PendingMakeAnExample, PendingKarnRestart, PendingKnowledgePoolCast, PendingPileSeparation, PendingPileStep, PendingRagingRiver, PendingBendOrBreak,
@@ -78,7 +77,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.MirrorOfFateChoice,
         PendingInteraction.KeepCardsInHandChoice,
         PendingInteraction.EachPlayerChoosesOneCardOfEachColorChoice,
-        PendingInteraction.PutLandsFromHandChoice, PendingInteraction.WorldsWithinWorldsChoice,
+        PendingInteraction.PutLandsFromHandChoice,
         PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice,
         PendingInteraction.PutCardFromHandOrGraveyardChoice,
         PendingInteraction.WerewhatOnEnterChoice, PendingInteraction.WerewhatBackFaceChoice,
@@ -1538,34 +1537,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             validCardIds = java.util.List.copyOf(validCardIds);
             remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
             choicesSoFar = java.util.Map.copyOf(choicesSoFar);
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds, 0, validCardIds.size());
-        }
-    }
-
-    /** The hidden creature-card choice made by one player while Worlds Within Worlds resolves. */
-    record WorldsWithinWorldsChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                    java.util.List<UUID> remainingPlayerIds,
-                                    java.util.List<UUID> exiledCardIds,
-                                    java.util.Map<UUID, java.util.List<UUID>> chosenCardIdsByPlayer,
-                                    String cardName)
-            implements PendingInteraction {
-
-        public WorldsWithinWorldsChoice {
-            validCardIds = java.util.List.copyOf(validCardIds);
-            remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
-            exiledCardIds = java.util.List.copyOf(exiledCardIds);
-            java.util.Map<UUID, java.util.List<UUID>> copied = new java.util.LinkedHashMap<>();
-            chosenCardIdsByPlayer.forEach((id, cards) -> copied.put(id, java.util.List.copyOf(cards)));
-            chosenCardIdsByPlayer = java.util.Collections.unmodifiableMap(copied);
         }
 
         @Override

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -59,6 +60,20 @@ class EachPlayerMayPutCardFromHandChoiceAiStrategyTest {
         strategy.answer(interaction(List.of(UUID.randomUUID())), context());
 
         assertChosen(List.of());
+    }
+
+    @Test
+    @DisplayName("Puts every eligible card when any number of them may enter together")
+    void choosesEveryEligibleCardForAnyNumber() throws Exception {
+        Card first = card("First", "{1}");
+        Card second = card("Second", "{5}");
+        gameData.playerHands.put(aiPlayerId, List.of(first, second));
+
+        strategy.answer(new PendingInteraction.EachPlayerMayPutCardFromHandChoice(
+                aiPlayerId, List.of(first.getId(), second.getId()), List.of(), List.of(), new CardTruePredicate(),
+                "creature", "Worlds Within Worlds", false, null, false, true), context());
+
+        assertChosen(List.of(first.getId(), second.getId()));
     }
 
     private PendingInteraction.EachPlayerMayPutCardFromHandChoice interaction(List<UUID> validCardIds) {

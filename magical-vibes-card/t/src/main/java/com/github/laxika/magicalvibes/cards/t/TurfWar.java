@@ -3,8 +3,16 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesLandAndPutCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.TurfWarCombatDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -30,9 +38,23 @@ public class TurfWar extends Card {
                 new EachPlayerChoosesLandAndPutCounterEffect(CounterType.CONTESTED));
         addTrigger(Triggers.creatureDealsCombatDamageToYou(),
                 TriggerOptions.DEFAULT.withInterveningIf(new ControlsPermanent(CONTESTED_LAND)),
-                new TurfWarCombatDamageEffect(true));
+                gainControlOfAContestedLandOf(Subjects.you()));
         addTrigger(Triggers.creatureDealsCombatDamageToOpponent(),
                 TriggerOptions.DEFAULT.withInterveningIf(new TargetPlayerControlsPermanent(CONTESTED_LAND)),
-                new TurfWarCombatDamageEffect(false));
+                gainControlOfAContestedLandOf(Subjects.triggeringPlayer()));
+    }
+
+    /**
+     * "That creature's controller gains control of one of those lands of their choice and untaps it", the lands those
+     * the damaged player controls.
+     */
+    private static CardEffect gainControlOfAContestedLandOf(PlayerSubject damagedPlayer) {
+        PlayerSubject creatureController = Subjects.controllerOf(Subjects.triggering());
+        return SequenceEffect.of(
+                ChoosePermanentsEffect.exactly(1, Subjects.controlledBy(damagedPlayer, CONTESTED_LAND),
+                        "a contested land").chosenBy(creatureController),
+                GainControlOfTargetEffect.of(Subjects.thisWay(StepKind.CHOOSE), Duration.PERMANENT)
+                        .gainedBy(creatureController),
+                new UntapPermanentsEffect(Subjects.thisWay(StepKind.CHOOSE)));
     }
 }

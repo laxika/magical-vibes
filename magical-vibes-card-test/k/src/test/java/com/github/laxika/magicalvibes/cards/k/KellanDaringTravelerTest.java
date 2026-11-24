@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.g.GoldfuryStrider;
 import com.github.laxika.magicalvibes.cards.t.TinkersTote;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,7 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KellanDaringTraveler.class, GrizzlyBears.class,
+@CardUsed({KellanDaringTraveler.class, GrizzlyBears.class, Shock.class,
         GoldfuryStrider.class, KutzilsFlanker.class, TinkersTote.class})
 class KellanDaringTravelerTest extends BaseCardTest {
 
@@ -65,8 +66,7 @@ class KellanDaringTravelerTest extends BaseCardTest {
     @DisplayName("Attacking offers a nonmatching revealed card for the graveyard")
     void attackingMayPutNonmatchingCardIntoGraveyard() {
         addCreatureReady(player1, new KellanDaringTraveler());
-        Card nonCreature = new Card();
-        nonCreature.setType(CardType.INSTANT);
+        Card nonCreature = new Shock();
         harness.setLibrary(player1, List.of(nonCreature));
 
         declareAttackers(List.of(0));

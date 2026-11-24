@@ -2264,14 +2264,6 @@ public sealed interface ChoiceContext {
         }
     }
 
-    /** Dismantle's choice of counter type for the destroyed artifact's counters. */
-    record DismantleCounterTypeChoice(int counterCount, String sourceCardName) implements ChoiceContext {
-
-        public static final String PLUS_ONE_PLUS_ONE = "+1/+1 counters";
-        public static final String CHARGE = "charge counters";
-        public static final List<String> OPTIONS = List.of(PLUS_ONE_PLUS_ONE, CHARGE);
-    }
-
     /**
      * Mode announcement for a modal triggered ability that is already on the stack but whose mode
      * has not been chosen yet (CR 603.3c). {@code stackEntryId} is the entry's

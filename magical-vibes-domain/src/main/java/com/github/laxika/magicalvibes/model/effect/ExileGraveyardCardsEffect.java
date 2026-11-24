@@ -59,8 +59,9 @@ public record ExileGraveyardCardsEffect(
         }
         if (imprint && scope != GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD
                 && scope != GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD
-                && scope != GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD) {
-            throw new IllegalArgumentException("Only a target-card scope imprints: " + scope);
+                && scope != GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD
+                && scope != GraveyardExileScope.CARDS) {
+            throw new IllegalArgumentException("Only a target-card or CARDS scope imprints: " + scope);
         }
     }
 
@@ -289,7 +290,8 @@ public record ExileGraveyardCardsEffect(
     /**
      * This target exile, imprinting what it exiles: "Imprint — exile target card from a graveyard", whose card the
      * source's other abilities read as "the exiled card". Tracks the card with the source permanent too ("cards exiled
-     * with this creature"). Only the target-card scopes imprint.
+     * with this creature"). The target-card scopes and the {@link GraveyardExileScope#CARDS} scope imprint ("Imprint —
+     * whenever a nontoken creature dies, you may exile that card", Mimic Vat).
      */
     public ExileGraveyardCardsEffect imprintingOnSource() {
         return new ExileGraveyardCardsEffect(count, scope, filter, exactTargetCount, true, fromBattlefieldThisTurn,

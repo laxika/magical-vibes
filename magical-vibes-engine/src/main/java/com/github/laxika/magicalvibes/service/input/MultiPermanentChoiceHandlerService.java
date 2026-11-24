@@ -238,8 +238,6 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerChoosesLandAndPutCounterEffectHandler eachPlayerChoosesLandAndPutCounterHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
-            .TurfWarCombatDamageEffectHandler turfWarCombatDamageHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ChooseLandOfEachBasicTypeThenDestroyEffectHandler chooseLandOfEachBasicTypeThenDestroyHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerReturnsCreatureToHandEffectHandler eachPlayerReturnsCreatureToHandHandler;
@@ -422,7 +420,6 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesNonlandPermanentAndPutCounterChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesCreatureThenSacrificesRestChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandAndPutCounterChoice
-                || context instanceof MultiPermanentChoiceContext.TurfWarLandChoice
                 || context instanceof MultiPermanentChoiceContext.ObjectVoteChoice vote && !vote.upToOne()
                 || context instanceof MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesDifferentOpponentPermanentThenDestroyRest)
@@ -945,8 +942,6 @@ public class MultiPermanentChoiceHandlerService {
             handleEachPlayerChoosesCreatureThenSacrificesRest(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandAndPutCounterChoice ctx) {
             handleEachPlayerChoosesLandAndPutCounter(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.TurfWarLandChoice ctx) {
-            handleTurfWarLandChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.RaidingPartyTapChoice ctx) {
             handleRaidingPartyTapChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.RaidingPartyPlainsChoice ctx) {
@@ -3004,13 +2999,6 @@ public class MultiPermanentChoiceHandlerService {
             return;
         }
 
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    private void handleTurfWarLandChoice(
-            GameData gameData, List<UUID> permanentIds,
-            MultiPermanentChoiceContext.TurfWarLandChoice context) {
-        turfWarCombatDamageHandler.completeChoice(gameData, permanentIds, context);
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 

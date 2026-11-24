@@ -133,11 +133,11 @@ class TurfWarTest extends BaseCardTest {
 
         resolveCombat(player2);
         harness.passBothPriorities();
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.playerId()).isEqualTo(player2.getId());
         assertThat(choice.validIds()).containsExactlyInAnyOrder(firstLand.getId(), secondLand.getId());
-        harness.handleMultiplePermanentsChosen(player2, java.util.List.of(secondLand.getId()));
+        harness.handlePermanentChosen(player2, secondLand.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(secondLand);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(firstLand).doesNotContain(secondLand);

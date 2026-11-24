@@ -3,8 +3,13 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ThranTomeRevealTopThreeOpponentChoosesEffect;
+import com.github.laxika.magicalvibes.model.effect.PutExiledCardsIntoOwnersGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -19,7 +24,10 @@ public class ThranTome extends Card {
                 true,
                 "{5}",
                 List.of(
-                        new ThranTomeRevealTopThreeOpponentChoosesEffect(),
+                        RevealTopCardOfLibraryEffect.topCards(Subjects.you(), new Fixed(3)),
+                        ChooseCardEffect.oneOf(Subjects.revealedThisWay(), "a revealed card to put into the graveyard")
+                                .by(Subjects.targetPlayerDeclaredElsewhere()),
+                        new PutExiledCardsIntoOwnersGraveyardEffect(Subjects.cardsThisWay(StepKind.CHOOSE)),
                         new DrawCardEffect(2)
                 ),
                 "{5}, {T}: Reveal the top three cards of your library. Target opponent chooses one of those cards. "
