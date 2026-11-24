@@ -193,8 +193,8 @@ public class StaticEffectSupport implements SubjectResolutionService.StaticReads
                 accumulator.addKeywords(grant.keywords());
             }
         } else if (wrapped instanceof GrantSubtypeEffect grant) {
-            if (names(context, grant.subject(), grant.filter())) {
-                accumulator.addGrantedSubtype(grant.subtype());
+            if (names(context, grant.subject(), grant.filter()) && grant.subtypeFor(context.source()) != null) {
+                accumulator.addGrantedSubtype(grant.subtypeFor(context.source()));
                 if (grant.overriding()) {
                     accumulator.setSubtypeOverriding(true);
                 }

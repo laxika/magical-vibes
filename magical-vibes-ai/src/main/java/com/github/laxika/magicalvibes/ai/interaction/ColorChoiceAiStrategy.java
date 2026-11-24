@@ -269,13 +269,6 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
-        if (context instanceof ChoiceContext.OwnLandsBecomeBasicTypeChoice) {
-            String chosenType = "ISLAND";
-            log.info("AI: Choosing basic land type for own lands {} in game {}", chosenType, gameId);
-            answerWith(ctx, interaction, chosenType);
-            return;
-        }
-
         if (context instanceof ChoiceContext.LandsOfTypeBecomeBasicTypeChoice landTypeCtx) {
             // First pick: a land type currently on the board (prefer opponent's); second: Island.
             String chosenType = landTypeCtx.fromType() == null

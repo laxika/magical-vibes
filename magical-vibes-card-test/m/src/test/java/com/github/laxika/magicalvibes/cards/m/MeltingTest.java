@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.a.ArcticFoxes;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBarbarians;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.i.ImprisonedInTheMoon;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredPlains;
 import com.github.laxika.magicalvibes.cards.w.WoollyMammoths;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -24,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * cares whether a land is snow: Arctic Foxes can't be blocked by power 2+ creatures while the
  * defending player controls a snow land.
  */
-@CardUsed({ArcticFoxes.class, BalduvianBarbarians.class, Disenchant.class, Melting.class, SnowCoveredPlains.class,
+@CardUsed({ArcticFoxes.class, BalduvianBarbarians.class, Disenchant.class, ImprisonedInTheMoon.class, Melting.class, SnowCoveredPlains.class,
         WoollyMammoths.class})
 class MeltingTest extends BaseCardTest {
 
@@ -142,5 +144,17 @@ class MeltingTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, melting.getId());
 
         assertThat(gqs.hasKeyword(gd, mammoths, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Melting's layer-4 removal still applies when a later Aura takes its abilities away in layer 6")
+    void meltingStillAppliesAfterLosingItsAbilities() {
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new SnowCoveredPlains());
+        Permanent melting = harness.addToBattlefieldAndReturn(player1, new Melting());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new ImprisonedInTheMoon());
+        aura.setAttachedTo(melting.getId());
+
+        assertThat(gqs.isLand(gd, melting)).isTrue();
+        assertThat(gqs.hasEffectiveSupertype(gd, plains, CardSupertype.SNOW)).isFalse();
     }
 }

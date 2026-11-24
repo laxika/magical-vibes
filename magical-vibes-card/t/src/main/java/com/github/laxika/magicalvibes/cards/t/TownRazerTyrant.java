@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.LosesAllNonManaAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -40,7 +40,7 @@ public class TownRazerTyrant extends Card {
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new GrantStaticEffectToTargetEffect(
-                        new LosesAllNonManaAbilitiesEffect(Subjects.source())),
+                        LosesAllAbilitiesEffect.exceptManaAbilities(Subjects.source())),
                         new GrantStaticEffectToTargetEffect(new GrantTriggeredAbilityEffect(
                                 new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
                                 new ForcedCostOrElseEffect(

@@ -28,6 +28,7 @@ final class EnchantedEquipmentGrantSupport {
             return false;
         }
         return gameData.floatingEffectsOnPermanent(equipment.getId(), LosesAllAbilitiesEffect.class).stream()
+                .filter(loss -> ((LosesAllAbilitiesEffect) loss.effect()).losesEveryAbility())
                 .noneMatch(loss -> loss.timestamp() > aura.getTimestamp());
     }
 }

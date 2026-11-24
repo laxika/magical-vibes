@@ -1782,20 +1782,27 @@ public sealed interface ChoiceContext {
     }
 
     /**
-     * Choosing a basic land type for a target land: either added "in addition to its other types"
-     * (Navigator's Compass) or, when {@code replacing} is {@code true}, replacing the land's other
-     * types and mana ability per rule 305.7 (Tideshaper Mystic).
+     * Choosing a basic land type for lands: either added "in addition to its other types"
+     * (Navigator's Compass) or, when {@code replacing} is {@code true}, replacing the lands' other
+     * types and mana ability per rule 305.7 (Tideshaper Mystic, Elsewhere Flask). The lands were
+     * found as the effect resolved (CR 611.2c): a target land, or each land a set names.
      *
-     * @param targetLandId the target land that gains/becomes the chosen basic land type
+     * @param landIds      the lands that gain/become the chosen basic land type
      * @param duration     how long the granted/overriding type lasts
      * @param replacing    {@code true} to replace the land's types, {@code false} to add
      * @param allowedTypes the offered basic land types; an empty list offers all five
      */
-    record AddBasicLandTypeChoice(UUID targetLandId, Duration duration, boolean replacing,
+    record AddBasicLandTypeChoice(List<UUID> landIds, Duration duration, boolean replacing,
                                   List<CardSubtype> allowedTypes) implements ChoiceContext {
 
         public AddBasicLandTypeChoice {
+            landIds = List.copyOf(landIds);
             allowedTypes = allowedTypes == null ? List.of() : List.copyOf(allowedTypes);
+        }
+
+        public AddBasicLandTypeChoice(UUID targetLandId, Duration duration, boolean replacing,
+                                      List<CardSubtype> allowedTypes) {
+            this(List.of(targetLandId), duration, replacing, allowedTypes);
         }
 
         public AddBasicLandTypeChoice(UUID targetLandId, Duration duration, boolean replacing) {
@@ -1815,16 +1822,6 @@ public sealed interface ChoiceContext {
      * @param targetId the target creature that gains snow landwalk of the chosen type
      */
     record SnowLandwalkGrantChoice(UUID targetId) implements ChoiceContext {
-    }
-
-    /**
-     * The controller has chosen a basic land type; each land they control becomes that type
-     * until end of turn, replacing its other land types/mana ability per rule 305.7
-     * (Elsewhere Flask).
-     *
-     * @param controllerId the player whose lands become the chosen type
-     */
-    record OwnLandsBecomeBasicTypeChoice(UUID controllerId) implements ChoiceContext {
     }
 
     /**

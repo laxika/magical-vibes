@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.AnimateControlledEnchantments
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNonAuraEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.BasicLandsOfChosenTypesBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureWhileTargetTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetLandEffect;
@@ -24,7 +23,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostByBushidoEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByAttackCountEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureOfEnchantedEquipmentEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesByManaSymbolEffect;
@@ -46,10 +44,8 @@ import com.github.laxika.magicalvibes.model.effect.CountAsCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetWhileHasCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentToughnessBecomesLoyaltyEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesOnlyLandEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfAllLandsEffect;
@@ -112,13 +108,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantSupertypeUntilEndOfTurnE
 import com.github.laxika.magicalvibes.model.effect.SetTargetPermanentSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllLandTypesEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseSubtypesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.LosesAllNonManaAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolvedCopyEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlledLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledNonlandPermanentsAreColorEffect;
-import com.github.laxika.magicalvibes.model.effect.LandsOfSubtypeBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
@@ -144,7 +136,6 @@ import com.github.laxika.magicalvibes.model.effect.HasAllCardNamesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkersWithLoyaltyBecomeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentsCantPhaseInEffect;
 import com.github.laxika.magicalvibes.model.effect.ShrinkEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.SourceBecomesChosenBasicLandTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SuspectedEffect;
@@ -301,9 +292,6 @@ public final class LayerClassifier {
         map.put(GrantSupertypeToOwnLandsAndLandCardsEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantChosenBasicLandTypeToOwnLandsEffect.class, fixed(Layer.L4_TYPE, Layer.L6_ABILITIES));
         map.put(EnchantedPermanentBecomesTypeEffect.class, fixed(Layer.L4_TYPE));
-        map.put(EnchantedPermanentBecomesChosenTypeEffect.class, fixed(Layer.L4_TYPE));
-        map.put(SourceBecomesChosenBasicLandTypeEffect.class, fixed(Layer.L4_TYPE));
-        map.put(EnchantedPermanentBecomesOnlyLandEffect.class, fixed(Layer.L4_TYPE));
         // Aura animates the enchanted permanent (Living Terrain): the creature type is added in
         // layer 4; its base P/T is a timestamped 7b entry (Ensoul Artifact), and the colour (5) is
         // harvested from the handler in timestamp order.
@@ -361,13 +349,9 @@ public final class LayerClassifier {
                         }));
         map.put(SetCardTypesUntilEndOfTurnEffect.class, fixed(Layer.L4_TYPE));
         map.put(NonbasicLandsBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
-        map.put(LandsOfSubtypeBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
-        map.put(ControlledLandsBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
-        map.put(BasicLandsOfChosenTypesBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
         // Source-bound land type changes apply in the type layer.
         map.put(LoseAllCreatureTypesEffect.class, fixed(Layer.L4_TYPE));
         map.put(LoseAllLandTypesEffect.class, fixed(Layer.L4_TYPE));
-        map.put(LoseSubtypesUntilEndOfTurnEffect.class, fixed(Layer.L4_TYPE));
         map.put(SetCreatureTypesToImprintedCreatureEffect.class, fixed(Layer.L4_TYPE));
         // Animate-and-set-P/T: the type change applies in layer 4, the MV-based base P/T in
         // sublayer 7b, both with ONE timestamp (CR 613.4, March of the Machines). Titania's Song
@@ -441,7 +425,6 @@ public final class LayerClassifier {
         map.put(PrimevalCounterEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(CantBeTurnedFaceUpEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(PermanentsCantPhaseInEffect.class, fixed(Layer.L6_ABILITIES));
-        map.put(LosesAllNonManaAbilitiesEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantActivatedAbilityEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantEffectEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantNonAbilityEffectEffect.class, fixed(Layer.L6_ABILITIES));
@@ -535,7 +518,6 @@ public final class LayerClassifier {
         map.put(BoostByAttackCountEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostBySharedCreatureTypeEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostEquippedCreatureOfEnchantedEquipmentEffect.class, fixed(Layer.L7C_MODIFY_PT));
-        map.put(BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostOwnCreaturesByManaSymbolEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostOtherMulticoloredCreaturesByColorCountEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostNonHumanCreaturesByCreatureTypeCountEffect.class, fixed(Layer.L7C_MODIFY_PT));

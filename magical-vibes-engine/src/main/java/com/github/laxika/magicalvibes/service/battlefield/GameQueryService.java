@@ -207,6 +207,7 @@ import com.github.laxika.magicalvibes.model.effect.SetTargetPermanentSupertypeEf
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.LoseAllLandTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.GrantSplitSecondToControllerSpellsUsingArtifactManaEffect;
@@ -251,7 +252,6 @@ import com.github.laxika.magicalvibes.model.effect.OwnCreatureSubtypeGrantingEff
 import com.github.laxika.magicalvibes.model.effect.OwnLandSubtypeGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.OwnLandSupertypeGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.OwnEffectsCantAffectSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentsMatchingLoseSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkerLoyaltyAbilitiesCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCounterReplacementEffect;
@@ -856,22 +856,17 @@ public class GameQueryService {
     }
 
     /**
-     * Returns {@code true} if the permanent currently has the given supertype, accounting for
-     * global static supertype removals ({@link PermanentsMatchingLoseSupertypeEffect}, e.g.
-     * Melting's "All lands are no longer snow") and the floating {@code SetTargetPermanentSupertypeEffect}s on the
-     * permanent (Arcum's Weathervane). Every supertype check that such an effect can touch must route through this
-     * instead of reading the printed supertypes. Of the permanent's own changes the newest decides, and a gain
-     * newer than every matching global removal wins over it (CR 613.7).
+     * Returns {@code true} if the permanent currently has the given supertype. On the battlefield the layered pass
+     * decides: it applies every supertype change in layer 4 in timestamp order (CR 613.1d, 613.7), printed and granted
+     * supertypes, the floating {@code SetTargetPermanentSupertypeEffect}s (Arcum's Weathervane) and the static
+     * removals ({@link LoseAllLandTypesEffect#supertype}, Melting's "All lands are no longer snow"). Every supertype
+     * check that such an effect can touch must route through this instead of reading the printed supertypes. A
+     * permanent off the layered board (one departing) is judged by its own newest change, then its printed or granted
+     * supertypes and the static removals whose filter it matches.
      */
     public boolean hasEffectiveSupertype(GameData gameData, Permanent permanent, CardSupertype supertype) {
         if (supertype == CardSupertype.LEGENDARY && isRingBearer(gameData, permanent)) {
             return true;
-        }
-        FloatingContinuousEffect change = gameData == null ? null
-                : newestSupertypeChange(gameData, permanent.getId(), supertype);
-        if (change != null) {
-            return ((SetTargetPermanentSupertypeEffect) change.effect()).gained()
-                    && latestMatchingSupertypeRemovalTimestamp(gameData, permanent, supertype) <= change.timestamp();
         }
         CharacteristicState activeState = gameData != null
                 ? LayerSystemService.activeStateFor(permanent.getId()) : null;
@@ -884,9 +879,13 @@ public class GameQueryService {
             }
         }
         if (activeState != null) {
-            return (activeState.hasSupertype(supertype)
-                    || supertype == CardSupertype.LEGENDARY && isRingBearer(gameData, permanent))
-                    && !losesSupertypeFromGlobalStaticEffect(gameData, permanent, supertype);
+            return activeState.hasSupertype(supertype);
+        }
+        FloatingContinuousEffect change = gameData == null ? null
+                : newestSupertypeChange(gameData, permanent.getId(), supertype);
+        if (change != null) {
+            return ((SetTargetPermanentSupertypeEffect) change.effect()).gained()
+                    && latestMatchingSupertypeRemovalTimestamp(gameData, permanent, supertype) <= change.timestamp();
         }
         if (!permanent.getCard().getSupertypes().contains(supertype)) {
             // A departing permanent may still be queried while its attached Aura is being removed.
@@ -984,9 +983,11 @@ public class GameQueryService {
                 || (!isStaticEvaluationActive() && computeStaticBonus(gameData, source).losesAllAbilities())
                 ? java.util.stream.Stream.<CardEffect>empty()
                 : source.getCard().getStaticEffects().stream())
-                .filter(effect -> effect instanceof PermanentsMatchingLoseSupertypeEffect lose
+                .filter(effect -> effect instanceof LoseAllLandTypesEffect lose
                         && lose.supertype() == supertype
-                        && (isStaticEvaluationActive()
+                        && (!(lose.subject() instanceof PermanentSubject.Source)
+                        || source.getId().equals(permanent.getId()))
+                        && (lose.filter() == null || (isStaticEvaluationActive()
                         ? predicateEvaluationService.matchesStaticFilter(
                                 permanent, lose.filter(), FilterContext.of(gameData)
                                         .withSourceCardId(source.getCard().getId())
@@ -994,7 +995,7 @@ public class GameQueryService {
                         : predicateEvaluationService.matchesPermanentPredicate(
                                 permanent, lose.filter(), FilterContext.of(gameData)
                                         .withSourceCardId(source.getCard().getId())
-                                        .withSourceControllerId(controllerId))))
+                                        .withSourceControllerId(controllerId)))))
                 .forEach(effect -> latest[0] = Math.max(latest[0], source.getTimestamp())));
         return latest[0];
     }
@@ -4072,7 +4073,7 @@ public class GameQueryService {
      */
     private boolean hasLaterLosesAllAbilitiesEffect(GameData gameData, UUID permanentId, long timestamp) {
         return gameData.floatingEffects.stream()
-                .anyMatch(other -> other.effect() instanceof LosesAllAbilitiesEffect
+                .anyMatch(other -> other.effect() instanceof LosesAllAbilitiesEffect loss && loss.losesEveryAbility()
                         && permanentId.equals(other.affectedPermanentId())
                         && other.timestamp() > timestamp);
     }

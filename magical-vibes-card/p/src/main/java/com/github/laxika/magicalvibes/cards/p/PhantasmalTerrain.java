@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "6ED", collectorNumber = "84")
 @CardRegistration(set = "LEA", collectorNumber = "68")
@@ -21,6 +22,6 @@ public class PhantasmalTerrain extends Card {
     public PhantasmalTerrain() {
         target(TargetFilters.land())
                 .addStaticEffect(new ChooseBasicLandTypeOnEnterEffect())
-                .addStaticEffect(new EnchantedPermanentBecomesChosenTypeEffect());
+                .addStaticEffect(GrantSubtypeEffect.chosenSubtype(Subjects.attached(), true, null));
     }
 }

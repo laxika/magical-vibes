@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseSubtypesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.LoseAllLandTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -27,7 +28,8 @@ public class HauntedPlateMail extends Card {
                 "{0}",
                 List.of(
                         new AnimatePermanentsEffect(4, 4, List.of(CardSubtype.SPIRIT), Set.of()),
-                        new LoseSubtypesUntilEndOfTurnEffect(Set.of(CardSubtype.EQUIPMENT))),
+                        LoseAllLandTypesEffect.subtypes(Set.of(CardSubtype.EQUIPMENT), Subjects.source(),
+                                Duration.UNTIL_END_OF_TURN)),
                 "{0}: Until end of turn, this permanent becomes a 4/4 Spirit artifact creature that's no longer an Equipment. Activate only if you control no creatures."
         ).withActivationCondition(
                 new ControlsPermanentCountAtMost(0, new PermanentIsCreaturePredicate()),

@@ -1,15 +1,20 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.m.MagicalHack;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.p.Plateau;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -185,5 +190,26 @@ class ConversionTest extends BaseCardTest {
 
         assertThat(gqs.effectiveLandTypes(gd, findPermanent(player1, "Plateau")))
                 .containsExactly(CardSubtype.PLAINS);
+    }
+
+    @Test
+    @CardUsed({MagicalHack.class, Island.class})
+    @DisplayName("A land-type text change to Conversion changes which lands it turns into Plains (CR 612.2)")
+    void textChangeRewritesTheConvertedLandType() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Island());
+        Permanent conversion = harness.addToBattlefieldAndReturn(player1, new Conversion());
+        harness.setHand(player1, List.of(new MagicalHack()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, conversion.getId());
+        harness.handleListChoice(player1, "MOUNTAIN");
+        harness.handleListChoice(player1, "ISLAND");
+        harness.tapPermanent(player1, 0);
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
 }

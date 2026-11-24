@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesOnlyLandEffect;
+import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -16,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "INR", collectorNumber = "69")
 @CardRegistration(set = "INR", collectorNumber = "358")
@@ -44,7 +46,7 @@ public class ImprisonedInTheMoon extends Card {
                 "Target must be a creature, land, or planeswalker"
         ))
                 // Enchanted permanent is a colorless land …
-                .addStaticEffect(new EnchantedPermanentBecomesOnlyLandEffect())
+                .addStaticEffect(new SetCardTypesEffect(Set.of(CardType.LAND), Subjects.attached()))
                 .addStaticEffect(new BecomeColorlessEffect(Subjects.attached()))
                 // … loses all other abilities …
                 .addStaticEffect(new LosesAllAbilitiesEffect(Subjects.attached()))

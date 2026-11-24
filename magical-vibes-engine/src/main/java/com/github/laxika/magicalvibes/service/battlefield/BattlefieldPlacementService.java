@@ -80,7 +80,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.LosesAllNonManaAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffect;
@@ -1735,9 +1735,10 @@ public class BattlefieldPlacementService {
                 return;
             }
             losesAbilities[0] = source.getCard().getStaticEffects().stream()
-                    .filter(LosesAllNonManaAbilitiesEffect.class::isInstance)
-                    .map(LosesAllNonManaAbilitiesEffect.class::cast)
-                    .anyMatch(effect -> effect.subject() instanceof PermanentSubject.ControlledBy
+                    .filter(LosesAllAbilitiesEffect.class::isInstance)
+                    .map(LosesAllAbilitiesEffect.class::cast)
+                    .anyMatch(effect -> effect.exceptManaAbilities()
+                            && effect.subject() instanceof PermanentSubject.ControlledBy
                             && gameQueryService.staticSubjectNames(gameData, source, sourceControllerId,
                             controllerId, permanent, effect.subject(),
                             SubjectResolutionService.StaticReads.knownLand()))

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
@@ -23,8 +24,9 @@ public class GrantSubtypeEffectHandler implements StaticEffectHandlerBean {
         var grant = (GrantSubtypeEffect) effect;
         boolean matches = support.namesBeyondSource(context,
                 grant.subject(), grant.filter());
-        if (matches) {
-            accumulator.addGrantedSubtype(grant.subtype());
+        CardSubtype subtype = grant.subtypeFor(context.source());
+        if (matches && subtype != null) {
+            accumulator.addGrantedSubtype(subtype);
             if (grant.overriding()) {
                 accumulator.setSubtypeOverriding(true);
             }

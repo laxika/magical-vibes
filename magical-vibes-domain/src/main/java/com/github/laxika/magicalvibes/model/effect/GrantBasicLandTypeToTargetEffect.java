@@ -26,12 +26,22 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  *                     {@code false} to add "in addition to its other types"
  * @param allowedTypes the basic land types offered when {@code fixedSubtype} is {@code null};
  *                     an empty list offers all five
+ * @param subject      the lands changed: {@link Subjects#target()} (the default), or a set ("each land you
+ *                     control", "all lands") found once as the effect resolves (CR 611.2c), with one choice of
+ *                     type for all of them
  */
 public record GrantBasicLandTypeToTargetEffect(Duration duration, CardSubtype fixedSubtype,
-                                               boolean replacing, List<CardSubtype> allowedTypes) implements CardEffect {
+                                               boolean replacing, List<CardSubtype> allowedTypes,
+                                               PermanentSubject subject) implements CardEffect {
 
     public GrantBasicLandTypeToTargetEffect {
         allowedTypes = allowedTypes == null ? List.of() : List.copyOf(allowedTypes);
+        subject = subject == null ? Subjects.target() : subject;
+    }
+
+    public GrantBasicLandTypeToTargetEffect(Duration duration, CardSubtype fixedSubtype,
+                                            boolean replacing, List<CardSubtype> allowedTypes) {
+        this(duration, fixedSubtype, replacing, allowedTypes, Subjects.target());
     }
 
     public GrantBasicLandTypeToTargetEffect(Duration duration) {
@@ -46,8 +56,16 @@ public record GrantBasicLandTypeToTargetEffect(Duration duration, CardSubtype fi
         this(duration, fixedSubtype, replacing, List.of());
     }
 
+    /** "[Each land the subject names] becomes [the chosen / the given] basic land type". */
+    public static GrantBasicLandTypeToTargetEffect of(PermanentSubject lands, CardSubtype fixedSubtype,
+                                                      boolean replacing, Duration duration) {
+        return new GrantBasicLandTypeToTargetEffect(duration, fixedSubtype, replacing, List.of(), lands);
+    }
+
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.land());
+        return subject instanceof PermanentSubject.Target
+                ? TargetSpec.benign(TargetPredicates.land())
+                : TargetSpec.NONE;
     }
 }

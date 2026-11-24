@@ -22,7 +22,7 @@ public class LoseAllLandTypesEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var lose = (LoseAllLandTypesEffect) effect;
-        if (support.namesBeyondSource(context, lose.subject(), lose.filter())) {
+        if (lose.removesLandTypes() && support.namesBeyondSource(context, lose.subject(), lose.filter())) {
             accumulator.setSubtypeOverriding(true);
             accumulator.setLandSubtypeOverriding(true);
         }

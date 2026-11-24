@@ -29,7 +29,11 @@ public class LosesAllAbilitiesSelfEffectHandler implements StaticEffectHandlerBe
         var loses = (LosesAllAbilitiesEffect) effect;
         boolean applies = support.names(context, loses.subject(), loses.filter());
         if (applies) {
-            accumulator.setLosesAllAbilities(true);
+            if (loses.exceptManaAbilities()) {
+                accumulator.setLosesAllNonManaAbilities(true);
+            } else {
+                accumulator.setLosesAllAbilities(true);
+            }
         }
     }
 }

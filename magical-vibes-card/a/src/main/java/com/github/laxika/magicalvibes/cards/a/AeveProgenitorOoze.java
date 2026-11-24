@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.LoseAllLandTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -22,11 +25,8 @@ public class AeveProgenitorOoze extends Card {
         PermanentCount otherOozes = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.OOZE), CountScope.CONTROLLER, true);
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, otherOozes));
-        addStaticEffect(new com.github.laxika.magicalvibes.model.effect.PermanentsMatchingLoseSupertypeEffect(
-                        new com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate(List.of(
-                                new com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate(),
-                                new com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate())),
-                        com.github.laxika.magicalvibes.model.CardSupertype.LEGENDARY));
+        addStaticEffect(LoseAllLandTypesEffect.supertype(
+                CardSupertype.LEGENDARY, Subjects.source(), new PermanentIsTokenPredicate()));
         addTrigger(Triggers.youCastThisSpell(), CopyTriggeringSpellEffect.storm().permanentSpellCopiesAreTokens()
                 .withoutSupertypes(Set.of(CardSupertype.LEGENDARY)));
     }

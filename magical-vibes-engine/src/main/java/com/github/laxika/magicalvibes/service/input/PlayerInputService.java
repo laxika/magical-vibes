@@ -2072,8 +2072,15 @@ public class PlayerInputService {
     public void beginAddBasicLandTypeChoice(GameData gameData, UUID playerId, UUID targetLandId,
                                             Duration duration, boolean replacing,
                                             List<CardSubtype> allowedTypes) {
+        beginAddBasicLandTypeChoice(gameData, playerId, List.of(targetLandId), duration, replacing, allowedTypes);
+    }
+
+    /** Begins one basic land type choice for several lands ("each land you control becomes that type"). */
+    public void beginAddBasicLandTypeChoice(GameData gameData, UUID playerId, List<UUID> landIds,
+                                            Duration duration, boolean replacing,
+                                            List<CardSubtype> allowedTypes) {
         ChoiceContext.AddBasicLandTypeChoice choiceContext =
-                new ChoiceContext.AddBasicLandTypeChoice(targetLandId, duration, replacing, allowedTypes);
+                new ChoiceContext.AddBasicLandTypeChoice(landIds, duration, replacing, allowedTypes);
 
         List<String> basicLandTypes = allowedTypes == null || allowedTypes.isEmpty()
                 ? List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST")
@@ -2110,17 +2117,6 @@ public class PlayerInputService {
                         .map(Enum::name)).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, choiceContext, landTypes, "Choose a land type for landwalk."));
-    }
-
-    public void beginOwnLandsBecomeBasicTypeChoice(GameData gameData, UUID playerId) {
-        ChoiceContext.OwnLandsBecomeBasicTypeChoice choiceContext = new ChoiceContext.OwnLandsBecomeBasicTypeChoice(playerId);
-
-        List<String> basicLandTypes = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                playerId, null, null, choiceContext, basicLandTypes, "Choose a basic land type."));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose a basic land type for their lands", gameData.id, playerName);
     }
 
     /**

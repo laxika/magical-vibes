@@ -2594,8 +2594,8 @@ public class PredicateEvaluationService {
                         > gameQueryService.getEffectivePower(gameData, permanent);
             }
             case PermanentHasSupertypePredicate hasSupertypePredicate -> {
-                // The layered state alone misses a supertype an effect gave or took away outside the layer pass
-                // (Arcum's Weathervane, Melting), so it is read only while static abilities are being assembled.
+                // While static abilities are being assembled the in-progress layered state answers; otherwise the
+                // one supertype read, which judges a permanent off the layered board too.
                 CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
                 if (layered != null && (gameData == null || GameQueryService.isStaticEvaluationActive())) {
                     yield layered.hasSupertype(hasSupertypePredicate.supertype());

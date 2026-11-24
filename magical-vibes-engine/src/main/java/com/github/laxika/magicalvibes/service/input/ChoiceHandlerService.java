@@ -1153,10 +1153,6 @@ public class ChoiceHandlerService {
             handleSnowLandwalkGrantChoice(gameData, player, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.OwnLandsBecomeBasicTypeChoice ctx) {
-            handleOwnLandsBecomeBasicTypeChoice(gameData, colorName, ctx);
-            return;
-        }
         if (colorChoice.context() instanceof ChoiceContext.LandsOfTypeBecomeBasicTypeChoice ctx) {
             handleLandsOfTypeBecomeBasicTypeChoice(gameData, player, colorName, ctx);
             return;
@@ -6015,8 +6011,11 @@ public class ChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
 
-        Permanent targetLand = gameQueryService.findPermanentById(gameData, ctx.targetLandId());
-        if (targetLand != null) {
+        for (UUID landId : ctx.landIds()) {
+            Permanent targetLand = gameQueryService.findPermanentById(gameData, landId);
+            if (targetLand == null) {
+                continue;
+            }
             GrantBasicLandTypeToTargetEffectHandler.applyBasicLandType(gameData, targetLand, subtype,
                     ctx.duration(), ctx.replacing(), "Basic land type choice", null, player.getId());
 
@@ -6061,32 +6060,6 @@ public class ChoiceHandlerService {
             log.info("Game {} - {} gains snow {}walk until end of turn",
                     gameData.id, target.getCard().getName(), subtype);
         }
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void handleOwnLandsBecomeBasicTypeChoice(GameData gameData, String subtypeName, ChoiceContext.OwnLandsBecomeBasicTypeChoice ctx) {
-        CardSubtype subtype = CardSubtype.valueOf(subtypeName);
-
-        gameData.interaction.clearAwaitingInput();
-
-        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
-        if (battlefield != null) {
-            for (Permanent permanent : battlefield) {
-                if (gameQueryService.isLand(gameData, permanent)) {
-                    gameData.addFloatingEffect(new FloatingContinuousEffect(
-                            UUID.randomUUID(), "Elsewhere Flask", null, ctx.controllerId(),
-                            new GrantSubtypeEffect(subtype, Subjects.target(), true),
-                            permanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
-                }
-            }
-        }
-
-        String playerName = gameData.playerIdToName.get(ctx.controllerId());
-        String logEntry = "Each land " + playerName + " controls becomes a "
-                + subtype.getDisplayName() + " until end of turn.";
-        gameLogService.append(gameData, GameLog.text(logEntry));
-        log.info("Game {} - Each land {} controls becomes a {} until end of turn", gameData.id, playerName, subtype);
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

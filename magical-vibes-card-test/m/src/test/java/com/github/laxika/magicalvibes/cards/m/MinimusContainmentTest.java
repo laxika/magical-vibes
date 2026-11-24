@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FiftyFeetOfRope;
 import com.github.laxika.magicalvibes.cards.h.HillGiantHerdgorger;
+import com.github.laxika.magicalvibes.cards.h.HondenOfSeeingWinds;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MinimusContainment.class, GrizzlyBears.class, Forest.class, FiftyFeetOfRope.class, HillGiantHerdgorger.class})
+@CardUsed({MinimusContainment.class, GrizzlyBears.class, Forest.class, FiftyFeetOfRope.class, HillGiantHerdgorger.class,
+        HondenOfSeeingWinds.class})
 class MinimusContainmentTest extends BaseCardTest {
 
     @Test
@@ -30,6 +32,18 @@ class MinimusContainmentTest extends BaseCardTest {
         assertThat(gqs.isArtifact(gd, bears)).isTrue();
         assertThat(gqs.isCreature(gd, bears)).isFalse();
         assertThat(gqs.computeStaticBonus(gd, bears).grantedSubtypes()).contains(CardSubtype.TREASURE);
+    }
+
+    @Test
+    @DisplayName("An enchanted Shrine stops being an enchantment and loses its Shrine type")
+    void enchantedShrineLosesItsEnchantmentType() {
+        Permanent honden = harness.addToBattlefieldAndReturn(player2, new HondenOfSeeingWinds());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new MinimusContainment());
+        aura.setAttachedTo(honden.getId());
+
+        assertThat(gqs.isArtifact(gd, honden)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, honden, CardSubtype.SHRINE)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, honden, CardSubtype.TREASURE)).isTrue();
     }
 
     @Test

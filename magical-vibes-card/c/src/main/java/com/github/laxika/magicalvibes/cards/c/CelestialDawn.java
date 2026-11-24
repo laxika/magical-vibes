@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.ControlledLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledNonlandPermanentsAreColorEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsAnyColorEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MIR", collectorNumber = "6")
 @CardRegistration(set = "6ED", collectorNumber = "7")
@@ -15,7 +16,7 @@ public class CelestialDawn extends Card {
 
     public CelestialDawn() {
         // Lands you control are Plains.
-        addStaticEffect(new ControlledLandsBecomeTypeEffect(CardSubtype.PLAINS));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.PLAINS, Subjects.landsYouControl(), true));
 
         // Nonland permanents you control, spells you control, and nonland cards you own outside the
         // battlefield are white. The shared color query applies this effect outside the battlefield.

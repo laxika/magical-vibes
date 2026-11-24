@@ -1790,7 +1790,7 @@ public class AbilityActivationService {
     private boolean perpetuallyLostAllAbilities(GameData gameData, Card card) {
         return gameData.perpetualCardBattlefieldEffectGrants.getOrDefault(card.getId(), List.of()).stream()
                 .anyMatch(effect -> effect instanceof GrantEffectEffect grant
-                        && grant.effect() instanceof LosesAllAbilitiesEffect);
+                        && grant.effect() instanceof LosesAllAbilitiesEffect loss && loss.losesEveryAbility());
     }
 
     /**

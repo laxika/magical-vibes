@@ -17,9 +17,25 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param subject    which permanents are affected (ENCHANTED_CREATURE, TARGET, etc.)
  * @param filter   optional additional permanent filter
  * @param duration how long the effect lasts
+ * @param exceptManaAbilities whether mana abilities are kept ("loses all abilities except mana abilities", Blood Sun):
+ *                            the layered pass then records a non-mana loss, which the ability readers honour
  */
 public record LosesAllAbilitiesEffect(PermanentSubject subject, PermanentPredicate filter,
-                                      Duration duration) implements CardEffect {
+                                      Duration duration, boolean exceptManaAbilities) implements CardEffect {
+
+    public LosesAllAbilitiesEffect(PermanentSubject subject, PermanentPredicate filter, Duration duration) {
+        this(subject, filter, duration, false);
+    }
+
+    /** "[Permanents] lose all abilities except mana abilities", a static ability. */
+    public static LosesAllAbilitiesEffect exceptManaAbilities(PermanentSubject subject) {
+        return new LosesAllAbilitiesEffect(subject, null, Duration.STATIC, true);
+    }
+
+    /** Whether every ability goes, mana abilities included. */
+    public boolean losesEveryAbility() {
+        return !exceptManaAbilities;
+    }
 
     /** Convenience constructor defaulting to {@link Duration#CONTINUOUS}. */
     public LosesAllAbilitiesEffect(PermanentSubject subject) {

@@ -23,7 +23,11 @@ public class LosesAllAbilitiesEffectHandler implements StaticEffectHandlerBean {
         var loses = (LosesAllAbilitiesEffect) effect;
         boolean matches = support.namesBeyondSource(context, loses.subject(), loses.filter());
         if (matches) {
-            accumulator.setLosesAllAbilities(true);
+            if (loses.exceptManaAbilities()) {
+                accumulator.setLosesAllNonManaAbilities(true);
+            } else {
+                accumulator.setLosesAllAbilities(true);
+            }
         }
     }
 }

@@ -67,7 +67,7 @@ class ElsewhereFlaskTest extends BaseCardTest {
 
         var interaction = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(interaction.playerId()).isEqualTo(player1.getId());
-        assertThat(interaction.context()).isInstanceOf(ChoiceContext.OwnLandsBecomeBasicTypeChoice.class);
+        assertThat(interaction.context()).isInstanceOf(ChoiceContext.AddBasicLandTypeChoice.class);
         assertThat(interaction.options()).containsExactlyInAnyOrder("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
     }
 

@@ -26,16 +26,13 @@ import com.github.laxika.magicalvibes.model.effect.AnimateControlledEnchantments
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNonAuraEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.BasicLandsOfChosenTypesBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveOrGainKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesOnlyLandEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
@@ -70,15 +67,11 @@ import com.github.laxika.magicalvibes.model.effect.ErrataCreatureTypeForMatchEff
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlledLandsBecomeTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.LandsOfSubtypeBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllLandTypesEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseSubtypesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectOnTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.LosesAllNonManaAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.PrimevalCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
@@ -101,7 +94,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.SetCreatureTypesToImprintedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
-import com.github.laxika.magicalvibes.model.effect.SourceBecomesChosenBasicLandTypeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
@@ -196,6 +188,9 @@ public class LayerSystemService {
             CardSubtype.AURA, CardSubtype.CARTOUCHE, CardSubtype.CASE, CardSubtype.CURSE, CardSubtype.PLAN,
             CardSubtype.ROLE, CardSubtype.ROOM, CardSubtype.RUNE, CardSubtype.SAGA, CardSubtype.SHARD,
             CardSubtype.SHRINE);
+
+    /** Battle types represented in the {@code CardSubtype} enum (CR 205.3q). */
+    private static final Set<CardSubtype> BATTLE_SUBTYPES = EnumSet.of(CardSubtype.SIEGE);
 
     private static final ThreadLocal<Pass> ACTIVE_PASS = new ThreadLocal<>();
 
@@ -1653,8 +1648,9 @@ public class LayerSystemService {
             // ability granted before it would survive the removal. Its filter is evaluated when the
             // instance is applied, against the board as of the layers applied so far.
             return layer == Layer.L6_ABILITIES
-                    && (enchantedConditional.ifMatch() instanceof LosesAllAbilitiesEffect
-                    || enchantedConditional.ifNotMatch() instanceof LosesAllAbilitiesEffect);
+                    && (enchantedConditional.ifMatch() instanceof LosesAllAbilitiesEffect loss && loss.losesEveryAbility()
+                    || enchantedConditional.ifNotMatch() instanceof LosesAllAbilitiesEffect other
+                    && other.losesEveryAbility());
         }
         if (!(effect instanceof ConditionalEffect conditional)) {
             return false;
@@ -1706,7 +1702,6 @@ public class LayerSystemService {
     /** Equal-timestamp tie-break within one source: lose-all, then keyword removals, then grants. */
     private static int abilityRemovalRank(CardEffect effect) {
         if (effect instanceof LosesAllAbilitiesEffect
-                || effect instanceof LosesAllNonManaAbilitiesEffect
                 || effect instanceof PrimevalCounterEffect) return 0;
         if (effect instanceof RemoveKeywordEffect) return 1;
         return 2;
@@ -2138,22 +2133,24 @@ public class LayerSystemService {
             }
             case GrantSubtypeEffect grant -> {
                 manage(board, instance);
+                CardSubtype subtype = grant.subtypeFor(instance.source() == null ? null : instance.source().permanent());
+                if (subtype == null) return;
                 for (PermanentSlot target : scopeTargets(gameData, instance, grant.subject(), grant.filter(), slots, slotsById, board)) {
                     CharacteristicState state = states.get(target.permanent().getId());
                     if (!grant.overriding()) {
-                        state.addSubtype(grant.subtype());
-                    } else if (BASIC_LAND_SUBTYPES.contains(grant.subtype())) {
-                        setLandType(state, target.permanent().getId(), grant.subtype(), landTypeOverrides);
-                    } else if (ARTIFACT_SUBTYPES.contains(grant.subtype())) {
+                        state.addSubtype(subtype);
+                    } else if (BASIC_LAND_SUBTYPES.contains(subtype)) {
+                        setLandType(state, target.permanent().getId(), subtype, landTypeOverrides);
+                    } else if (ARTIFACT_SUBTYPES.contains(subtype)) {
                         state.removeSubtypesIf(ARTIFACT_SUBTYPES::contains);
-                        state.addSubtype(grant.subtype());
+                        state.addSubtype(subtype);
                     } else {
-                        setCreatureType(state, grant.subtype());
+                        setCreatureType(state, subtype);
                     }
                     boolean landSubtypeOverride = grant.overriding()
-                            && BASIC_LAND_SUBTYPES.contains(grant.subtype());
+                            && BASIC_LAND_SUBTYPES.contains(subtype);
                     record(board, instance, target, new L4Contribution(
-                            grant.subtype(), grant.overriding() && !landSubtypeOverride,
+                            subtype, grant.overriding() && !landSubtypeOverride,
                             landSubtypeOverride, null, null));
                 }
             }
@@ -2247,7 +2244,8 @@ public class LayerSystemService {
                 for (PermanentSlot target : scopeTargets(gameData, instance, set.subject(), null, slots, slotsById, board)) {
                     CharacteristicState state = states.get(target.permanent().getId());
                     state.overrideCardTypes(set.cardTypes());
-                    if (!state.hasCardType(CardType.CREATURE)) {
+                    // CR 205.1a: the subtypes of a card type the permanent no longer has go with it.
+                    if (!state.hasCardType(CardType.CREATURE) && !state.hasCardType(CardType.KINDRED)) {
                         state.removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
                     }
                     if (!state.hasCardType(CardType.ARTIFACT)) {
@@ -2258,6 +2256,12 @@ public class LayerSystemService {
                     }
                     if (!state.hasCardType(CardType.LAND)) {
                         state.removeSubtypesIf(LAND_SUBTYPES::contains);
+                    }
+                    if (!state.hasCardType(CardType.ENCHANTMENT)) {
+                        state.removeSubtypesIf(ENCHANTMENT_SUBTYPES::contains);
+                    }
+                    if (!state.hasCardType(CardType.BATTLE)) {
+                        state.removeSubtypesIf(BATTLE_SUBTYPES::contains);
                     }
                     record(board, instance, target, new L4Contribution(
                             List.of(), false, false, null, null, true,
@@ -2429,51 +2433,6 @@ public class LayerSystemService {
                             becomes.subtypes(), true, becomes.isBasicLandSubtype()));
                 }
             }
-            case EnchantedPermanentBecomesChosenTypeEffect ignored -> {
-                manage(board, instance);
-                if (instance.source() == null) return;
-                CardSubtype chosen = instance.source().permanent().getChosenSubtype();
-                if (chosen == null) return;
-                for (PermanentSlot target : scopeTargets(gameData, instance, ATTACHED, null, slots, slotsById, board)) {
-                    CharacteristicState state = states.get(target.permanent().getId());
-                    if (BASIC_LAND_SUBTYPES.contains(chosen)) {
-                        setLandType(state, target.permanent().getId(), chosen, landTypeOverrides);
-                    } else {
-                        setCreatureType(state, chosen);
-                    }
-                    record(board, instance, target, new L4Contribution(chosen, true, true, null, null));
-                }
-            }
-            case SourceBecomesChosenBasicLandTypeEffect chosenType -> {
-                manage(board, instance);
-                PermanentSlot source = instance.source();
-                if (source == null) return;
-                CardSubtype chosen = source.permanent().getChosenSubtype();
-                CharacteristicState state = states.get(source.permanent().getId());
-                if (chosen == null || state == null || !state.hasCardType(CardType.LAND)) return;
-                if (chosenType.inAdditionToOtherTypes()) {
-                    state.addSubtype(chosen);
-                    landTypeOverrides.put(source.permanent().getId(), List.of(chosen));
-                    record(board, instance, source, new L4Contribution(chosen, false, false, null, null));
-                } else {
-                    setLandType(state, source.permanent().getId(), chosen, landTypeOverrides);
-                    record(board, instance, source, new L4Contribution(chosen, true, true, null, null));
-                }
-            }
-            case EnchantedPermanentBecomesOnlyLandEffect ignored -> {
-                manage(board, instance);
-                for (PermanentSlot target : scopeTargets(gameData, instance, ATTACHED, null, slots, slotsById, board)) {
-                    CharacteristicState state = states.get(target.permanent().getId());
-                    state.overrideCardTypes(Set.of(CardType.LAND));
-                    // CR 205.1a: subtypes correlated with a removed card type are removed too.
-                    state.removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
-                    state.removeSubtypesIf(ARTIFACT_SUBTYPES::contains);
-                    state.removeSubtypesIf(PLANESWALKER_SUBTYPES::contains);
-                    state.removeSubtypesIf(ENCHANTMENT_SUBTYPES::contains);
-                    record(board, instance, target, new L4Contribution(
-                            List.<CardSubtype>of(), false, false, CardType.LAND, null, true));
-                }
-            }
             case EnchantedPermanentBecomesCreatureEffect becomes -> {
                 // NOT managed: the colour and base P/T are contributed by the effect's static
                 // handler in the accumulator pass, so its handler must keep running during
@@ -2505,6 +2464,19 @@ public class LayerSystemService {
                     }
                 }
             }
+            case LoseAllLandTypesEffect lose when lose.supertype() != null -> {
+                manage(board, instance);
+                for (PermanentSlot target : scopeTargets(gameData, instance, lose.subject(), lose.filter(),
+                        slots, slotsById, board)) {
+                    states.get(target.permanent().getId()).removeSupertype(lose.supertype());
+                }
+            }
+            case LoseAllLandTypesEffect lose when lose.subtypes() != null -> {
+                for (PermanentSlot target : scopeTargets(gameData, instance, lose.subject(), lose.filter(),
+                        slots, slotsById, board)) {
+                    states.get(target.permanent().getId()).removeSubtypesIf(lose.subtypes()::contains);
+                }
+            }
             case LoseAllLandTypesEffect lose -> {
                 manage(board, instance);
                 for (PermanentSlot target : scopeTargets(gameData, instance, lose.subject(), lose.filter(),
@@ -2514,50 +2486,6 @@ public class LayerSystemService {
                     state.removeSubtypesIf(LAND_SUBTYPES::contains);
                     landTypeOverrides.put(target.permanent().getId(), List.of());
                     record(board, instance, target, new L4Contribution(List.of(), true, true));
-                }
-            }
-            case LandsOfSubtypeBecomeTypeEffect becomes -> {
-                manage(board, instance);
-                for (PermanentSlot target : slots) {
-                    if (isSource(instance, target)) continue;
-                    CharacteristicState state = states.get(target.permanent().getId());
-                    if (state.hasCardType(CardType.LAND) && state.hasSubtype(becomes.fromSubtype())) {
-                        setLandType(state, target.permanent().getId(), becomes.toSubtype(), landTypeOverrides);
-                        record(board, instance, target, new L4Contribution(
-                                becomes.toSubtype(), true, true, null, null));
-                    }
-                }
-            }
-            case ControlledLandsBecomeTypeEffect becomes -> {
-                manage(board, instance);
-                if (instance.source() == null) return;
-                UUID controllerId = instance.source().controllerId();
-                for (PermanentSlot target : slots) {
-                    if (isSource(instance, target)) continue;
-                    if (!controllerId.equals(target.controllerId())) continue;
-                    CharacteristicState state = states.get(target.permanent().getId());
-                    if (state.hasCardType(CardType.LAND)) {
-                        setLandType(state, target.permanent().getId(), becomes.subtype(), landTypeOverrides);
-                        record(board, instance, target, new L4Contribution(
-                                becomes.subtype(), true, true, null, null));
-                    }
-                }
-            }
-            case BasicLandsOfChosenTypesBecomeTypeEffect ignored -> {
-                manage(board, instance);
-                if (instance.source() == null) return;
-                CardSubtype from = instance.source().permanent().getChosenSubtype();
-                CardSubtype to = instance.source().permanent().getSecondChosenSubtype();
-                if (from == null || to == null) return;
-                for (PermanentSlot target : slots) {
-                    if (isSource(instance, target)) continue;
-                    CharacteristicState state = states.get(target.permanent().getId());
-                    if (state.hasCardType(CardType.LAND)
-                            && state.getSupertypes().contains(CardSupertype.BASIC)
-                            && state.hasSubtype(from)) {
-                        setLandType(state, target.permanent().getId(), to, landTypeOverrides);
-                        record(board, instance, target, new L4Contribution(to, true, true, null, null));
-                    }
                 }
             }
             case AnimateNoncreatureArtifactsEffect ignored -> {
@@ -2648,11 +2576,6 @@ public class LayerSystemService {
                                 state.removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
                                 record(board, instance, target, new L4Contribution(List.of(), true, false));
                             });
-                }
-            }
-            case LoseSubtypesUntilEndOfTurnEffect lose -> {
-                for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
-                    states.get(target.permanent().getId()).removeSubtypesIf(lose.subtypes()::contains);
                 }
             }
             case RemoveCardTypeFromTargetPermanentEffect remove -> {
@@ -3363,8 +3286,6 @@ public class LayerSystemService {
         return switch (instance.effect()) {
             case LosesAllAbilitiesEffect loss -> scopeTargets(gameData, instance, loss.subject(), loss.filter(),
                     slots, slotsById, board);
-            case LosesAllNonManaAbilitiesEffect loss -> scopeTargets(gameData, instance, loss.subject(), loss.filter(),
-                    slots, slotsById, board);
             default -> List.of();
         };
     }
@@ -3478,8 +3399,12 @@ public class LayerSystemService {
                                     ModifierLine.abilities(provenanceSourceName(instance), Set.of(), Set.of(), true));
                         }
                     }
-                    case LosesAllAbilitiesEffect ignored -> {
-                        state.loseAllAbilities(instance.timestamp());
+                    case LosesAllAbilitiesEffect loss -> {
+                        if (loss.exceptManaAbilities()) {
+                            state.loseAllNonManaAbilities(instance.timestamp());
+                        } else {
+                            state.loseAllAbilities(instance.timestamp());
+                        }
                         board.clearGrantedEffects(target.permanent().getId());
                         board.recordProvenance(target.permanent().getId(),
                                 ModifierLine.abilities(provenanceSourceName(instance), Set.of(), Set.of(), true));
@@ -3487,12 +3412,6 @@ public class LayerSystemService {
                     case PrimevalCounterEffect ignored -> {
                         state.loseAllAbilities(instance.timestamp());
                         state.preventAbilityGain();
-                        board.clearGrantedEffects(target.permanent().getId());
-                        board.recordProvenance(target.permanent().getId(),
-                                ModifierLine.abilities(provenanceSourceName(instance), Set.of(), Set.of(), true));
-                    }
-                    case LosesAllNonManaAbilitiesEffect ignored -> {
-                        state.loseAllNonManaAbilities(instance.timestamp());
                         board.clearGrantedEffects(target.permanent().getId());
                         board.recordProvenance(target.permanent().getId(),
                                 ModifierLine.abilities(provenanceSourceName(instance), Set.of(), Set.of(), true));
@@ -3552,13 +3471,12 @@ public class LayerSystemService {
                         // A granted "loses all (non-mana) abilities" static ability (Town-Razer Tyrant's
                         // "target land loses all abilities except mana abilities") takes effect in this
                         // layer-6 pass at the grant's timestamp, rather than only being recorded.
-                        if (grant.effect() instanceof LosesAllAbilitiesEffect) {
-                            state.loseAllAbilities(instance.timestamp());
-                        } else if (grant.effect() instanceof LosesAllNonManaAbilitiesEffect) {
-                            state.loseAllNonManaAbilities(instance.timestamp());
-                        }
-                        if (grant.effect() instanceof LosesAllAbilitiesEffect
-                                || grant.effect() instanceof LosesAllNonManaAbilitiesEffect) {
+                        if (grant.effect() instanceof LosesAllAbilitiesEffect loss) {
+                            if (loss.exceptManaAbilities()) {
+                                state.loseAllNonManaAbilities(instance.timestamp());
+                            } else {
+                                state.loseAllAbilities(instance.timestamp());
+                            }
                             board.clearGrantedEffects(target.permanent().getId());
                             board.recordProvenance(target.permanent().getId(),
                                     ModifierLine.abilities(provenanceSourceName(instance), Set.of(), Set.of(), true));

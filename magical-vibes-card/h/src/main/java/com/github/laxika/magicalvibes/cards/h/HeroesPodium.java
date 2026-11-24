@@ -8,12 +8,18 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 
@@ -25,8 +31,16 @@ import java.util.List;
 @CardRegistration(set = "DMC", collectorNumber = "185")
 public class HeroesPodium extends Card {
 
+    /** "For each other legendary creature you control", counted for each boosted creature. */
+    private static final PermanentCount OTHER_LEGENDARY_CREATURES_YOU_CONTROL = new PermanentCount(
+            new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                    new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))),
+            CountScope.CONTROLLER, true);
+
     public HeroesPodium() {
-        addStaticEffect(new BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect(1, 1));
+        addStaticEffect(new DynamicStaticBoostEffect(
+                OTHER_LEGENDARY_CREATURES_YOU_CONTROL, OTHER_LEGENDARY_CREATURES_YOU_CONTROL,
+                Subjects.creaturesYouControl(), new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY), true));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

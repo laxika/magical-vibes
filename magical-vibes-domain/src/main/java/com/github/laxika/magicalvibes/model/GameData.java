@@ -4800,8 +4800,10 @@ public class GameData {
      * ones it removed is for the layered pass to say.
      */
     public boolean losesAllAbilitiesByEffect(UUID permanentId) {
-        return hasFloatingEffectOnPermanent(permanentId,
-                com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect.class);
+        return floatingEffectsOnPermanent(permanentId,
+                com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect.class).stream()
+                .anyMatch(fe -> ((com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect) fe.effect())
+                        .losesEveryAbility());
     }
 
     /**

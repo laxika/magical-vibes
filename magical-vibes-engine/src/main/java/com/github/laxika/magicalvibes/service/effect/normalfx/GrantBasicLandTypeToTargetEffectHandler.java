@@ -12,12 +12,14 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantBasicLandTypeToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -30,6 +32,7 @@ import java.util.UUID;
 public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
     private final PlayerInputService playerInputService;
     private final GameLogService gameLogService;
 
@@ -41,6 +44,10 @@ public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHand
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantBasicLandTypeToTargetEffect) effect;
+        if (!(e.subject() instanceof PermanentSubject.Target)) {
+            resolveForSet(gameData, entry, e);
+            return;
+        }
         if (e.fixedSubtype() == null) {
             Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
             if (target == null && !entry.getTargetIds().isEmpty()) {
@@ -64,6 +71,24 @@ public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHand
                     entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());
             gameLogService.append(gameData, GameLog.text(describeBasicLandTypeChange(
                     target, e.fixedSubtype(), e.duration(), e.replacing())));
+        }
+    }
+
+    /** A set subject: its lands are found once, now (CR 611.2c), and share one choice of type. */
+    private void resolveForSet(GameData gameData, StackEntry entry, GrantBasicLandTypeToTargetEffect e) {
+        List<Permanent> lands = subjectResolutionService.permanents(gameData, entry, e, e.subject()).stream()
+                .filter(permanent -> gameQueryService.isLand(gameData, permanent))
+                .toList();
+        if (e.fixedSubtype() == null) {
+            playerInputService.beginAddBasicLandTypeChoice(gameData, entry.getControllerId(),
+                    lands.stream().map(Permanent::getId).toList(), e.duration(), e.replacing(), e.allowedTypes());
+            return;
+        }
+        for (Permanent land : lands) {
+            applyBasicLandType(gameData, land, e.fixedSubtype(), e.duration(), e.replacing(),
+                    entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());
+            gameLogService.append(gameData, GameLog.text(describeBasicLandTypeChange(
+                    land, e.fixedSubtype(), e.duration(), e.replacing())));
         }
     }
 

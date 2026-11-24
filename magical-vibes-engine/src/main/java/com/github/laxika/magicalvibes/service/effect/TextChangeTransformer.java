@@ -390,7 +390,7 @@ public final class TextChangeTransformer {
                 CardSubtype subtype = replaceSubtype(grant.subtype(), substitution);
                 PermanentPredicate filter = apply(grant.filter(), substitution);
                 yield subtype == grant.subtype() && filter == grant.filter() ? grant
-                        : new GrantSubtypeEffect(subtype, grant.subject(), grant.overriding(), filter);
+                        : new GrantSubtypeEffect(subtype, grant.subject(), grant.overriding(), filter, grant.chosen());
             }
             case StaticBoostEffect boost -> {
                 Set<Keyword> keywords = replaceLandwalk(boost.grantedKeywords(), substitution);

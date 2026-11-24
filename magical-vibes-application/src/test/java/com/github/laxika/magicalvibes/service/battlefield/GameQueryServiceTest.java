@@ -63,7 +63,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageToOppon
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateTapAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
@@ -4137,12 +4137,12 @@ class GameQueryServiceTest {
         }
 
         @Test
-        @DisplayName("returns chosen subtype color for EnchantedPermanentBecomesChosenTypeEffect")
+        @DisplayName("returns the chosen subtype's color for an Aura granting the chosen land type")
         void returnsChosenColor_convincingMirage() {
             Permanent land = addPermanent(player1Id, createLand("Mountain"));
 
             Card mirage = createAura("Convincing Mirage",
-                    new EnchantedPermanentBecomesChosenTypeEffect());
+                    GrantSubtypeEffect.chosenSubtype(Subjects.attached(), true, null));
             Permanent auraPerm = addPermanent(player1Id, mirage);
             auraPerm.setAttachedTo(land.getId());
             auraPerm.setChosenSubtype(CardSubtype.PLAINS);
@@ -4151,12 +4151,12 @@ class GameQueryServiceTest {
         }
 
         @Test
-        @DisplayName("returns null for EnchantedPermanentBecomesChosenTypeEffect with no chosen subtype")
+        @DisplayName("returns null for an Aura granting the chosen land type with no subtype chosen")
         void returnsNull_chosenTypeButNoSubtypeChosen() {
             Permanent land = addPermanent(player1Id, createLand("Mountain"));
 
             Card mirage = createAura("Convincing Mirage",
-                    new EnchantedPermanentBecomesChosenTypeEffect());
+                    GrantSubtypeEffect.chosenSubtype(Subjects.attached(), true, null));
             Permanent auraPerm = addPermanent(player1Id, mirage);
             auraPerm.setAttachedTo(land.getId());
             // chosenSubtype not set

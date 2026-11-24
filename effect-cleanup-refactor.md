@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27 (each in Findings; the fold queue marks its rows). Fold runs 32, 28c, 34b and 23d are reported and wait to merge; 35, 36 and 33b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                           |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32 (each in Findings; the fold queue marks its rows). Fold runs 28c, 34b, 23d and 35 are reported and wait to merge; 36 and 33b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                            |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,396 / 2,724 (after fold run 27) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,384 / 2,712 (after fold run 32) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,996 rows over 4,466 classes (after fold run 27). Latest verdict per class: `step-9` 509, unique 1,174, absorbed 977, split 644, blocked-other 512, survivor 352, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 509 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,029 rows over 4,469 classes (after fold run 32). Latest verdict per class: `step-9` 486, unique 1,175, absorbed 989, split 644, blocked-other 522, survivor 355, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 486 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -867,6 +867,11 @@ Delayed and global triggers:
 - `DamageCantBePreventedEffect()` / `.combatDamage()` / `.dealtBySource()` / `.combatDamageDealtBy(controlledBy(you(), filter))`, read by `GameQueryService.isDamagePreventable` / `isCombatDamageCantBePrevented` / `damageCantBePreventedFromSource` (fold run 27).
 - `PreventDamageAndAddPlusCountersEffect.replacingWith(type)` / `.preventingAndPutting(type)` / `.preventingAndPuttingPerPrevented(type)`: damage to +1/+1 or -1/-1 counters, CR 615.12 per kind (fold run 27).
 - `GrantStaticEffectToPlayerEffect.untilEndOfTurn(new ReplaceDamageAboveThresholdEffect(t, n))`: "this turn" threshold replacement (fold run 27).
+
+- `LoseAllLandTypesEffect.subtypes(Set<CardSubtype>, subject, Duration)` / `.supertype(CardSupertype, subject, filter)`: "no longer an Equipment", "isn't a Human" (resolved, floated; an Equipment that stops being one is unattached) and "all lands are no longer snow" / "isn't legendary if it's a token" (layered pass, timestamp order) (fold run 32).
+- `GrantSubtypeEffect.chosenSubtype(subject, overriding, filter)` / `.secondChosenSubtype(...)` (`ChosenSubtype`, `subtypeFor(source)`): "enchanted land is the chosen type", "this land is the chosen type [in addition]", Illusionary Terrain; an overriding basic land type over any subject is the CR 305.7 setter (Celestial Dawn, Conversion) (fold run 32).
+- `GrantBasicLandTypeToTargetEffect.of(lands, fixedSubtype, replacing, Duration)`: a set of lands found once (CR 611.2c) with one choice; `AddBasicLandTypeChoice(landIds, …)` (fold run 32).
+- `LosesAllAbilitiesEffect.exceptManaAbilities(subject)` / `losesEveryAbility()`: "loses all abilities except mana abilities" (Blood Sun, Town-Razer Tyrant) (fold run 32).
 
 ### Blocked causes still open
 
@@ -3606,6 +3611,37 @@ Batches `land-mana`, `mana-twist`, `mana-drain`, `cost-paid-land`, `player-mana`
 - Kjeldoran Royal Guard's float sets `affectedPermanentId` on a player-scoped floating effect. Code.
 
 **For the next run.** `redir-source`, `next-dmg-shields` and Desperate Gambit together: a choose-a-damage-source step (permanents and stack objects you control, recording CHOOSE) and one source-keyed redirect shield (source, recipient, destination, amount or next event, combat-only, Duration). Then `redir-absorb` once a resolution-floated static can name its source.
+
+### Step 9, fold run 32 (2026-11-24, parallel worktree)
+
+13 folded, 12 blocked-other, 1 unique, 4 not started (mv-animation, floated-name). Ratchet 3,459 / 2,764 → 3,447 / 2,752. 21 card files rewritten, Oracle text checked for all. CR 205.1a, 205.1b, 205.3d, 205.3g, 205.3h, 205.3q, 301.5c, 305.6, 305.7, 611.2c, 612.2, 613.1d, 613.1f, 613.4b, 613.4c, 613.6, 613.7a, 613.8a, 608.2b, 608.2h, 115.3, 601.2c, 704.5n and 704.5p checked.
+
+| Batch | Result |
+|---|---|
+| set-card-types | 1 folded: Imprisoned in the Moon and Song of the Dryads are `SetCardTypesEffect({LAND}, attached())`; the layer case was fixed (Fold: defect) |
+| type-removal | 2 folded onto `LoseAllLandTypesEffect.subtypes(...)` (resolved, floated, Equipment unattach kept) and `.supertype(...)` (layered pass) |
+| land-type-static | 5 folded onto `GrantSubtypeEffect` (P05's reading: it already takes a subject and filter, and its overriding basic land type is the same CR 305.7 setter as Blood Moon's); `ChosenSubtype` for Convincing Mirage, Phantasmal Terrain, Thran Portal, Multiversal Passage and Illusionary Terrain |
+| land-types-oneshot | 2 folded (Nightcreep; Elsewhere Flask and Terraformer) onto `GrantBasicLandTypeToTargetEffect.of(lands, …)`. Vision Charm left: no land-type choice step, one card. Energybending left: its own-type skip guards against the in-addition path's explicit mana ability |
+| loses-abilities | 1 folded: `LosesAllAbilitiesEffect.exceptManaAbilities`; the two staticfx handlers merged, readers guarded |
+| mv-animation | not started: three board tables, the 7b injection and the GameQueryService creature fallbacks need a run of their own |
+| set-boost | 3 left: Haunted One needs `otherPermanentsSharing` to read a departed permanent as last known (CR 608.2h; live-only would narrow it). Phyresis Outbreak and Jurin need per-boosted-creature amounts (step 10's boost merge, 5i) plus a one-card amount |
+| perm-static-boost | 1 folded: Heroes' Podium and Jodah onto `DynamicStaticBoostEffect(PermanentCount(legendary creature, CONTROLLER, excludeSource), …, amountsFromTarget)`; Jodah's +1/+1 `StaticBoostEffect` kept for the AI. Attack count left (AI reads `StaticCreatureBoostEffect`). Bushido, creature-type count, colour count and chroma left: each would be a one-card amount |
+| target-groups | unique: Arm the Cathars is one ordered group; three groups would change the cast prompt and need a one-card constraint |
+| floated-name | not started (its own run with The Irencrag) |
+
+**Behaviour changes.**
+- `SetCardTypesEffect` drops the enchantment and Siege subtypes of removed types and keeps creature types with kindred (CR 205.1a). Shrine test, which fails on the old case.
+- Static supertype removals are applied in the layered pass, so they follow timestamp order and dependency. A layer-6 loss of the source's abilities no longer switches them off (CR 613.6). `hasEffectiveSupertype` reads the layered state on the battlefield. Melting test.
+- Conversion and Glaciers are now text-changeable (CR 612.2, the P09 defect). Magical Hack test.
+- Thran Portal's in-addition type no longer records a land-type override, so its mana comes from its effective types (CR 305.6).
+- Logs: one line per land for set land-type changes; the "no longer [subtype]" line is the new resolved path's.
+
+**Seen, not changed.**
+- Energybending skips a type the land has printed, so under Blood Moon a Taiga misses Forest (CR 305.7, 613.7). Fairly sure.
+- `losesNonManaAbilitiesAsLandEnters` ignores full "loses all abilities" statics on lands (Alpine Moon) for entering lands' replacements (CR 614.12). Unverified.
+- `GrantBasicLandTypeToTargetEffect`'s in-addition path grants an explicit mana ability beside the intrinsic one, so a land that already had the type has it twice. Sure of the code, low.
+
+**For the next run.** Take mv-animation alone (merge `marchAnimatedIds` / `starfieldAnimatedIds` / `opalescenceAnimatedIds`, a per-permanent base-P/T amount, Spark Rupture's planeswalker read from the state). Then floated-name with The Irencrag.
 
 ## Prompt
 
