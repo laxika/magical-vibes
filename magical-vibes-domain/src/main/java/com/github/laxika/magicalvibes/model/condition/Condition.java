@@ -437,6 +437,7 @@ public sealed interface Condition permits
         TargetGraveyardCardManaValueAtMost,
         TargetGraveyardCardManaValueAtMostControllerExperienceCounters,
         TargetGraveyardCardManaValueAtLeast,
+        TargetGraveyardCardManaValueEqualsStepAmount,
         TargetPermanentManaValueEqualsControllerUnspentMana,
         TargetPermanentManaValueAtMostColorsSpent,
         TargetPermanentMatches,

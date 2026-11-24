@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 46b, 47, 49; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                         |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 47, 49, 24; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                          |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,124 / 2,534 (after fold run 45b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,117 / 2,527 (after fold run 46b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,505 rows over 4,544 classes (after fold run 45b). Latest verdict per class: `step-9` 146, unique 1,187, absorbed 1,254, split 670, blocked-other 548, survivor 434, blocked-step-model 139, blocked-player-loop 96, dead 70. Waiting: 146 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,514 rows over 4,544 classes (after fold run 46b). Latest verdict per class: `step-9` 139, unique 1,187, absorbed 1,261, split 670, blocked-other 548, survivor 434, blocked-step-model 139, blocked-player-loop 96, dead 70. Waiting: 139 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1041,6 +1041,10 @@ Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671
 - `ChooseNewTargetsForTargetSpellEffect(mustChangeAll, PermanentSubject spell, onlyIfItHasTargets)` / `.ifItHasTargets(targetSpell() | triggeringSpell())`: the one "[player] may choose new targets for [spell]" step inside a `MayEffect` (CR 115.7d) (fold run 45b).
 - `SubjectResolutionService.spellOnStack(gd, entry, targetSpell() | triggeringSpell())`: the spell a spell subject names while it is on the stack, from any target group (fold run 45b).
 - `LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect.revealing(always, mvCapped)`: "reveal the top X … put the rest into your graveyard" (Genesis Wave, Saheeli's Directive) (fold run 45b).
+
+- `TargetGraveyardCardManaValueEqualsStepAmount(StepKind)`: "return target … with mana value X" after "you may pay {X}", the target declared on the trigger and compared with the latest step's amount; reads a triggered ability's single graveyard target (fold run 46b).
+- `GrantKeywordEffect` over `controlledBy(players, filter)`: amount predicates in the filter (`PermanentPowerAtLeast/AtMostAmountPredicate`) are fixed as it resolves (CR 608.2h) (fold run 46b).
+- "You may pay {X}. When you do, [ability reading X]": `MayEffect(SequenceEffect.of(EachPlayerPaysAnyManaEffect.byYou(X_MANA), QueueReflexiveAbilityEffect.withEventValue(effect, manaPaid())))`, X read as the event value; `CastTargetInstantOrSorceryFromGraveyardEffect` binds `CardManaValueEqualsEventValuePredicate` (fold run 46b).
 
 ### Blocked causes still open
 
@@ -4642,6 +4646,41 @@ All of these have tests that would fail on the old code by reasoning. Prompts an
 - Transcantation queues its own new-targets offer through a `CopySpellEffect` payload (`TargetSpellBecomesCopyOfCardEffectHandler`). Sure.
 - Deliver Unto Evil still gives the choice to `getOpponentId` (multiplayer chooser; existing defect). Sure.
 **For the next run.** Build the multi-target-card subject and a generic graveyard up-to-N cast path (Deliver Unto Evil, Wake to Slaughter), and a look-top-N exile step (Dubious Challenge).
+
+### Step 9, fold run 46b (2026-11-24, parallel worktree)
+`pay-any` (rest): 7 absorbed, 2 left for 46c. Ratchet 3,144 / 2,560 → 3,137 / 2,553. 7 card files rewritten; Oracle text checked for all 10 batch cards, rulings for 5 (Halo, Tester, Isareth, Sozin, Relentless Dead). CR 107.1c, 118.12, 601.2g, 603.12, 608.2g, 608.2h, 615.1 checked.
+
+| Batch | Result |
+|---|---|
+| reflexive four | Halo Forager, Tester, Isareth, Fire Lord Sozin → `MayEffect(SequenceEffect.of(EachPlayerPaysAnyManaEffect.byYou(X_MANA), QueueReflexiveAbilityEffect.withEventValue(effect, AmountThisWay.manaPaid())))`; X is the reflexive's event value (`CardManaValueEqualsEventValuePredicate`, `EventValue()` count or total cap). |
+| Relentless Dead | `MayEffect(Seq(pay, ConditionalEffect(TargetGraveyardCardManaValueEqualsStepAmount(PAY_MANA), ReturnCardFromGraveyardEffect(target))))`; target declared on the trigger, X on resolution; paid {0} returns an MV 0 Zombie. |
+| Localized Destruction | `byYou(ENERGY)` + `ConditionalEffect(HappenedThisWay(PAY_ENERGY), GrantKeywordEffect(INDESTRUCTIBLE, controlledBy(you(), creature + PermanentPowerAtLeast/AtMostAmountPredicate(energyPaid()))))`. |
+| Depala | parameters only: `LookAtTopCardsEffect(manaPaid(), manaPaid(), Dwarf|Vehicle, BOTTOM_OF_LIBRARY_RANDOM, true)` (Lair Delve's choice-free shape). |
+| left | Errant Minion/Power Leak (needs a "prevent N of that damage" rider on the damage event, CR 615.1); Vault 112 (needs a play-now option on `ExileTopCardMayPlayThisTurnEffect.chooseOne`). |
+
+**Behaviour changes.**
+- "You may pay {X}" now asks a may first; declining pays nothing and makes no reflexive ability (was: X prompt only, X = 0 still queued; Isareth was forced to return an MV 0 card) (CR 603.12, 118.12).
+- Relentless Dead's paid {0} returns an MV 0 Zombie (was: X = 0 declined).
+- Myr-only and artifact-only mana no longer pays Halo, Tester, Sozin, Relentless Dead or Depala.
+- Sozin asks even when nothing is returnable.
+- Log lines are the survivor's.
+
+**Shared engine.**
+- The cast-from-graveyard handler and its target validator bind the event value.
+- `GrantKeywordEffectHandler` fixes amount predicates in a `controlledBy` set as it resolves.
+- New `TargetGraveyardCardManaValueEqualsStepAmount` reads a trigger's single graveyard target from the resolving entry.
+
+**Tests changed.**
+- 6 card tests now answer the may; Depala's crew test declines it.
+- 9 new tests.
+- Ran 61 classes, 755 cases, 0 failures.
+
+**Seen, not changed.**
+- Fire Lord Sozin's reflexive targets `ALL_GRAVEYARDS`; Oracle says "from that player's graveyard", so the controller's own graveyard is offered. This is old behaviour. `ReturnTargetCards…` resolves only CONTROLLERS or ALL scopes. Sure of the code.
+- Rose Room Treasurer (fold run 46) queues its reflexive without a may, so declining still targets (with X = 0). Fairly sure; low impact.
+- The AI's value readers don't look inside `MayEffect` / `ConditionalEffect` / the reflexive ability (Localized Destruction's `KeywordGrantingEffect` view is now inside a `ConditionalEffect`).
+
+**For the next run.** 46c: Errant Minion/Power Leak (prevent-N-of-that-damage rider, payer `targetPlayerDeclaredElsewhere()`), Vault 112 (play-now `chooseOne`, look for a second user).
 
 ## Prompt
 

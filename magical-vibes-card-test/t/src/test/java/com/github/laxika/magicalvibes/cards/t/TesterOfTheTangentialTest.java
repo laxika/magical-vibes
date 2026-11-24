@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,6 +28,7 @@ class TesterOfTheTangentialTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.addMana(player1, ManaColor.BLUE, 3);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
         harness.handleXValueChosen(player1, 2);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
@@ -48,6 +50,7 @@ class TesterOfTheTangentialTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleXValueChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
@@ -70,6 +73,7 @@ class TesterOfTheTangentialTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleXValueChosen(player1, 1);
 
         PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -136,6 +140,7 @@ class TesterOfTheTangentialTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With no mana the controller may still pay {0}, and the reflexive ability asks for its target")
     void mayChooseToPayZeroEvenWithoutMana() {
         harness.addToBattlefield(player1, new TesterOfTheTangential());
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -143,7 +148,28 @@ class TesterOfTheTangentialTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Declining to pay {X} creates no reflexive ability")
+    void decliningToPayCreatesNoReflexiveAbility() {
+        Permanent tester = harness.addToBattlefieldAndReturn(player1, new TesterOfTheTangential());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        tester.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        advanceToCombat(player1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(tester.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -155,6 +181,7 @@ class TesterOfTheTangentialTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.addMana(player1, ManaColor.BLUE, 3);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleXValueChosen(player1, 3);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
@@ -173,6 +200,7 @@ class TesterOfTheTangentialTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleXValueChosen(player1, 1);
 
         PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -190,6 +218,7 @@ class TesterOfTheTangentialTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleXValueChosen(player1, 2);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();

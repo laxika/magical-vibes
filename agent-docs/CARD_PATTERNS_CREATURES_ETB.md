@@ -25,9 +25,11 @@ ETB Exploit plus an exploit trigger that uses the sacrificed creature's toughnes
 `ReturnOpponentsCreaturesWithToughnessLessThanSacrificedEffect` on `Triggers.exploits()`, as in
 `p/ProfanerOfTheDead.java`.
 
-For an ETB that pays X and then offers a free cast of an instant or sorcery with mana value X
-from any graveyard, use `PayXManaCastTargetInstantOrSorceryFromGraveyardEffect()` as in
-`h/HaloForager.java`.
+For an ETB that says "you may pay {X}. When you do, you may cast target instant or sorcery card with
+mana value X from a graveyard", see `h/HaloForager.java`: `MayEffect(SequenceEffect.of(
+EachPlayerPaysAnyManaEffect.byYou(X_MANA), QueueReflexiveAbilityEffect.withEventValue(
+CastTargetInstantOrSorceryFromGraveyardEffect(…, filter + CardManaValueEqualsEventValuePredicate),
+AmountThisWay.manaPaid())))`.
 
 Echo pattern: `k/KeldonChampion.java` combines an ETB `DealDamageToTargetPlayerOrPlaneswalkerEffect(3)` with STATIC `EchoEffect("{2}{R}{R}")`; `v/VolcanoHellion.java` uses the `(DynamicAmount)` overload for a cost evaluated at upkeep; `d/DeepcavernImp.java` uses the `(HandCardCost)` overload for echo—discard a card; `s/ShahOfNaarIsle.java` passes a `List<CardEffect>` as the second argument for effects that resolve when echo is paid. The trigger index lists echo's upkeep ability for the permanent (CR 702.30a).
 

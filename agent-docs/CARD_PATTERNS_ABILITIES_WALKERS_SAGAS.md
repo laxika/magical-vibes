@@ -18,7 +18,7 @@ All paths relative to `cards/`.
 
 | Manifest the top card, then put counters on it | `f/FierceInvocation.java` / `w/Wildcall.java` | `ManifestTopCardEffect()` then `PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.MANIFEST), CounterType.PLUS_ONE_PLUS_ONE, 2)` / `…, new XValue())` (the MANIFEST step names the manifested permanent) |
 
-| 3-chapter double-faced Saga with a delayed X-payment combat trigger on its back face | `t/TheRiseOfSozin.java` / `f/FireLordSozin.java` | Front: chapter I destroys all creatures, chapter II targets an opponent and uses `ChooseCardNameAtResolutionEffect()` + `ExileCardsWithSameNameEffect.upToWithChosenName(4, targetPlayer())`, and chapter III uses `ExileSelfAndReturnTransformedEffect()`. Back: `Triggers.dealsCombatDamageToPlayer()` uses `PayXManaReanimateCreaturesWithTotalManaValueXEffect()` |
+| 3-chapter double-faced Saga with a delayed X-payment combat trigger on its back face | `t/TheRiseOfSozin.java` / `f/FireLordSozin.java` | Front: chapter I destroys all creatures, chapter II targets an opponent and uses `ChooseCardNameAtResolutionEffect()` + `ExileCardsWithSameNameEffect.upToWithChosenName(4, targetPlayer())`, and chapter III uses `ExileSelfAndReturnTransformedEffect()`. Back: `Triggers.dealsCombatDamageToPlayer()` uses `MayEffect(SequenceEffect.of(EachPlayerPaysAnyManaEffect.byYou(X_MANA), QueueReflexiveAbilityEffect.withEventValue(ReturnTargetCardsFromGraveyardToBattlefieldEffect(…, EventValue() total mana value cap, …), manaPaid())))` |
 
 ## Activated abilities
 

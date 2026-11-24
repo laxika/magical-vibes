@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -83,6 +84,7 @@ class TheRiseOfSozinTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleXValueChosen(player1, 4);
 
         PendingInteraction.MultiGraveyardChoice choice =
@@ -156,6 +158,7 @@ class TheRiseOfSozinTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleXValueChosen(player1, 0);
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
@@ -175,12 +178,30 @@ class TheRiseOfSozinTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleXValueChosen(player1, 3);
         harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Declining Fire Lord Sozin's payment returns nothing, even a mana value 0 creature card")
+    void fireLordSozinDecliningReturnsNothing() {
+        addTransformedSaga();
+        Card ornithopter = new Ornithopter();
+        harness.setGraveyard(player2, List.of(ornithopter));
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player2, "Ornithopter");
+        harness.assertNotOnBattlefield(player1, "Ornithopter");
     }
 
     private Permanent addSaga(int loreCounters) {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.a.AncestralVision;
 import com.github.laxika.magicalvibes.cards.c.CorruptedConviction;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.m.Murder;
@@ -11,13 +12,14 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HaloForager.class, LightningBolt.class, Murder.class, Shock.class,
+@CardUsed({HaloForager.class, AncestralVision.class, LightningBolt.class, Murder.class, Shock.class,
         CorruptedConviction.class, WrennsResolve.class, ThaliaGuardianOfThraben.class})
 class HaloForagerTest extends BaseCardTest {
 
@@ -225,10 +227,48 @@ class HaloForagerTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(card.getId()));
     }
 
+    @Test
+    @DisplayName("Declining to pay {X} spends no mana and creates no reflexive ability")
+    void decliningToPayCreatesNoReflexiveAbility() {
+        Shock shock = new Shock();
+        harness.setGraveyard(player1, List.of(shock));
+        castHaloForagerWithoutAnswering();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Shock");
+    }
+
+    @Test
+    @DisplayName("Paying zero can target a mana value 0 sorcery card")
+    void payingZeroTargetsZeroManaValueSorcery() {
+        AncestralVision vision = new AncestralVision();
+        harness.setGraveyard(player2, List.of(vision, new Shock()));
+        castHaloForager();
+
+        harness.handleXValueChosen(player1, 0);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.cards()).containsExactly(vision);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    /** Casts Halo Forager and accepts its "you may pay {X}" as the enter ability resolves. */
     private void castHaloForager() {
+        castHaloForagerWithoutAnswering();
+        harness.handleMayAbilityChosen(player1, true);
+    }
+
+    private void castHaloForagerWithoutAnswering() {
         harness.castFromHand(player1, new HaloForager(), "{1}{U}{B}");
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.passBothPriorities();
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
     }
 }

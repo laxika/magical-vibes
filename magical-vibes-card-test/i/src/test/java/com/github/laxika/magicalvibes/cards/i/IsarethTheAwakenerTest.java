@@ -33,7 +33,8 @@ class IsarethTheAwakenerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         declareAttackers(player1, List.of(0));
-        harness.passBothPriorities(); // resolve the attack trigger -> prompts for X
+        harness.passBothPriorities(); // resolve the attack trigger -> asks whether to pay {X}
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleXValueChosen(player1, 2);
         chooseOnlyGraveyardTarget();
         harness.passBothPriorities(); // resolve the reflexive return trigger
@@ -54,6 +55,7 @@ class IsarethTheAwakenerTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleXValueChosen(player1, 2);
         chooseOnlyGraveyardTarget();
         harness.passBothPriorities();
@@ -76,6 +78,7 @@ class IsarethTheAwakenerTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleXValueChosen(player1, 2);
         chooseGraveyardTargetNamed("Child of Night");
         harness.passBothPriorities();
@@ -93,6 +96,7 @@ class IsarethTheAwakenerTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleXValueChosen(player1, 0);
 
         harness.assertInGraveyard(player1, "Greenwood Sentinel");
@@ -108,6 +112,7 @@ class IsarethTheAwakenerTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleXValueChosen(player1, 2);
 
         harness.assertInGraveyard(player1, "Havoc Devils");
@@ -123,6 +128,7 @@ class IsarethTheAwakenerTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleXValueChosen(player1, 0);
         chooseOnlyGraveyardTarget();
         resolveAllTriggers();
@@ -141,8 +147,9 @@ class IsarethTheAwakenerTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
-        assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handleXValueChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNull();
         chooseOnlyGraveyardTarget();
         resolveAllTriggers();
 
@@ -161,6 +168,7 @@ class IsarethTheAwakenerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThatThrownBy(() -> harness.handleXValueChosen(player1, 2))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -181,6 +189,7 @@ class IsarethTheAwakenerTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleXValueChosen(player1, 2);
         chooseOnlyGraveyardTarget();
         harness.passBothPriorities();
@@ -208,6 +217,7 @@ class IsarethTheAwakenerTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleXValueChosen(player1, 2);
         chooseOnlyGraveyardTarget();
         harness.assertInGraveyard(player1, "Greenwood Sentinel");
@@ -224,6 +234,22 @@ class IsarethTheAwakenerTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Greenwood Sentinel");
         assertThat(gd.exiledCards).extracting(entry -> entry.card().getName())
                 .contains("Greenwood Sentinel");
+    }
+
+    @Test
+    @DisplayName("Declining to pay {X} returns nothing, even a mana value 0 creature card")
+    void decliningToPayReturnsNothing() {
+        addCreatureReady(player1, new IsarethTheAwakener());
+        harness.setGraveyard(player1, List.of(new Ornithopter()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Ornithopter");
+        harness.assertNotOnBattlefield(player1, "Ornithopter");
     }
 
     /** The reflexive ability's one legal graveyard target, chosen as it goes on the stack (CR 603.3d). */

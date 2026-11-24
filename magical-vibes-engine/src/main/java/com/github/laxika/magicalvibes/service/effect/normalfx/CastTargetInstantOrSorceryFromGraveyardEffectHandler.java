@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -37,8 +38,11 @@ public class CastTargetInstantOrSorceryFromGraveyardEffectHandler implements Nor
         var unbound = (CastTargetInstantOrSorceryFromGraveyardEffect) effect;
         // "Target card with the same name as that spell" is the triggering spell's name as the ability resolves; the
         // cast offered below carries it, so the cast checks the card against the same name.
-        CardPredicate filter = AmountEvaluationService.bindTriggeringSpellName(gameData, unbound.filter(), entry);
-        var e = filter == unbound.filter() ? unbound : unbound.withFilter(filter);
+        // "With mana value X" of a reflexive ability is its event value (Halo Forager), bound the same way.
+        CardPredicate filter = PredicateEvaluationService.bindEventValue(
+                AmountEvaluationService.bindTriggeringSpellName(gameData, unbound.filter(), entry),
+                entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY ? entry.getEventValue() : null);
+        var e = java.util.Objects.equals(filter, unbound.filter()) ? unbound : unbound.withFilter(filter);
 
         UUID controllerId = entry.getControllerId();
 

@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +46,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final SubjectResolutionService subjectResolutionService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -177,8 +180,13 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         int count = 0;
-        for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, grant,
-                Subjects.narrowed(subject, grant.filter()))) {
+        PermanentSubject set = Subjects.narrowed(subject, grant.filter());
+        if (set instanceof PermanentSubject.ControlledBy controlledBy) {
+            // "Each creature you control with power equal to the amount paid": the amount is fixed now (CR 608.2h).
+            set = Subjects.controlledBy(controlledBy.players(), amountEvaluationService.bindAmounts(gameData,
+                    controlledBy.filter(), AmountContext.forStackEntry(entry, entry.getSourcePermanentSnapshot())));
+        }
+        for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, grant, set)) {
             // A layer-6 floating effect, so a grant resolving after an "all creatures you control lose all
             // abilities" on the same entry survives it (CR 613.7 timestamp order) — Dragonshift overloaded.
             Set<Keyword> grantableKeywords = grantableKeywords(gameData, permanent, grant.keywords());

@@ -467,6 +467,7 @@ import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanS
 import com.github.laxika.magicalvibes.model.condition.SpellManaValueEqualsSourceCounters;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.condition.TargetGraveyardCardManaValueAtLeast;
+import com.github.laxika.magicalvibes.model.condition.TargetGraveyardCardManaValueEqualsStepAmount;
 import com.github.laxika.magicalvibes.model.condition.TargetGraveyardCardManaValueAtMost;
 import com.github.laxika.magicalvibes.model.condition.TargetManaValueAtMostControllerGraveyardCount;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentManaValueAtMostColorsSpent;
@@ -1712,6 +1713,8 @@ public class ConditionEvaluationService {
                     targetGraveyardCardManaValueAtMostControllerExperienceCounters(gameData, ctx);
             case TargetGraveyardCardManaValueAtLeast c ->
                     targetGraveyardCardManaValueAtLeast(gameData, ctx, c.minManaValue());
+            case TargetGraveyardCardManaValueEqualsStepAmount c ->
+                    targetGraveyardCardManaValueEqualsStepAmount(gameData, ctx, c.kind());
             case ColorSpentToCast c ->
                     ctx.sourceCard() != null
                             && gameData.getSpellCastManaSpentByColor(ctx.sourceCard().getId(), c.color())
@@ -4099,6 +4102,26 @@ public class ConditionEvaluationService {
                 && ctx.controllerId() != null
                 && target.getManaValue() <= gameData.playerExperienceCounters
                 .getOrDefault(ctx.controllerId(), 0);
+    }
+
+    /**
+     * The graveyard target of the resolving entry whose step results {@code ctx} reads: its target, or the one card a
+     * triggered ability targets in a graveyard (kept among its target cards), compared with the step's amount.
+     */
+    private boolean targetGraveyardCardManaValueEqualsStepAmount(GameData gameData, ConditionContext ctx,
+                                                                 StepKind kind) {
+        if (ctx.resolutionResults() == null) {
+            return false;
+        }
+        UUID targetId = ctx.targetId();
+        StackEntry resolving = gameData.resolvingEntry != null
+                ? gameData.resolvingEntry : gameData.pendingEffectResolutionEntry;
+        if (targetId == null && resolving != null && resolving.getResolutionResults() == ctx.resolutionResults()
+                && resolving.getTargetCardIds().size() == 1) {
+            targetId = resolving.getTargetCardIds().getFirst();
+        }
+        Card target = targetId == null ? null : gameQueryService.findCardInGraveyardById(gameData, targetId);
+        return target != null && target.getManaValue() == ctx.resolutionResults().outcome(kind).amount();
     }
 
     private boolean targetGraveyardCardManaValueAtLeast(GameData gameData, ConditionContext ctx, int minManaValue) {

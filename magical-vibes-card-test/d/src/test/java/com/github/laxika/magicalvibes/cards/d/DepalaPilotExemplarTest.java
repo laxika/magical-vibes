@@ -112,6 +112,7 @@ class DepalaPilotExemplarTest extends BaseCardTest {
         assertThat(depala.isTapped()).isTrue();
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, skiff)).isTrue();
@@ -202,11 +203,35 @@ class DepalaPilotExemplarTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
+    @Test
+    @DisplayName("Declining to pay {X} reveals nothing and spends no mana")
+    void decliningToPayRevealsNothing() {
+        Permanent depala = harness.addToBattlefieldAndReturn(player1, new DepalaPilotExemplar());
+        Card dwarf = creature("Top Dwarf", CardSubtype.DWARF);
+        harness.setLibrary(player1, List.of(dwarf));
+        List<Card> deck = gd.playerDecks.get(player1.getId());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        tapAndResolveWithoutAnswering(depala);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(deck).containsExactly(dwarf);
+    }
+
+    /** Taps Depala, resolves its trigger and accepts its "you may pay {X}". */
     private void tapAndResolve(Permanent permanent) {
+        tapAndResolveWithoutAnswering(permanent);
+        harness.handleMayAbilityChosen(player1, true);
+    }
+
+    private void tapAndResolveWithoutAnswering(Permanent permanent) {
         permanent.tap();
         harness.inMutationScope(
                 () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true)));
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
     }
 
     private static Card creature(String name, CardSubtype subtype) {

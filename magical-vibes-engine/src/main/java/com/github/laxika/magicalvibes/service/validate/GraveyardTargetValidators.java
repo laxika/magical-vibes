@@ -223,7 +223,7 @@ public class GraveyardTargetValidators {
                         ctx.gameData(),
                         gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId()),
                         ctx.sourcePermanentId(), ctx.sourcePowerAtTrigger(), ctx.xValue(),
-                        ctx.sourcePermanentSnapshot())) {
+                        ctx.sourcePermanentSnapshot(), ctx.eventValue())) {
             throw new IllegalStateException("Target card does not match the required filter");
         }
         // Opponent-graveyard scope check is enforced in SpellCastingService (which has playerId context)

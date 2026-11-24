@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastE
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEachOpponentThenIfMilledEffect;
-import com.github.laxika.magicalvibes.model.effect.PayXManaReturnTargetCreatureWithManaValueXEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetEquipmentFromGraveyardAndAttachToCreatedTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
@@ -181,15 +180,6 @@ public class GraveyardTargetingSupport {
                     ? Integer.MAX_VALUE : targetCards.maxTargets();
             return new Target(targetCards.filter(), targetCards.source(),
                     "into its owner's library", maxTargets, 0);
-        }
-        if (effect instanceof PayXManaReturnTargetCreatureWithManaValueXEffect payX) {
-            CardPredicate creatureCard = payX.filter() == null
-                    ? new CardTypePredicate(com.github.laxika.magicalvibes.model.CardType.CREATURE)
-                    : new com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate(List.of(
-                            new CardTypePredicate(com.github.laxika.magicalvibes.model.CardType.CREATURE),
-                            payX.filter()));
-            return new Target(creatureCard, GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
-                    "to the battlefield", 1, 1);
         }
         if (effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
             String destination = switch (returnEffect.destination()) {

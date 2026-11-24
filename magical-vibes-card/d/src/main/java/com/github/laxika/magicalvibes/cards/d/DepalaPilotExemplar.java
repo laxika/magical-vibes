@@ -3,7 +3,13 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.PayXManaRevealTopCardsToHandRestToBottomRandomEffect;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaEffect.Resource;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.LookDestination;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -23,10 +29,16 @@ public class DepalaPilotExemplar extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.DWARF)));
         addStaticEffect(new StaticBoostEffect(1, 1, Subjects.creaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)));
+        // "Reveal the top X cards, put all Dwarf and Vehicle cards from among them into your hand, then the rest on the
+        // bottom in a random order": every matching card is taken, so the reveal asks nothing.
         addTrigger(Triggers.becomesTapped(),
-                new PayXManaRevealTopCardsToHandRestToBottomRandomEffect(
-                        new CardAnyOfPredicate(List.of(
-                                new CardSubtypePredicate(CardSubtype.DWARF),
-                                new CardSubtypePredicate(CardSubtype.VEHICLE)))));
+                new MayEffect(SequenceEffect.of(
+                        EachPlayerPaysAnyManaEffect.byYou(Resource.X_MANA),
+                        new LookAtTopCardsEffect(AmountThisWay.manaPaid(), AmountThisWay.manaPaid(),
+                                new CardAnyOfPredicate(List.of(
+                                        new CardSubtypePredicate(CardSubtype.DWARF),
+                                        new CardSubtypePredicate(CardSubtype.VEHICLE))),
+                                LookDestination.BOTTOM_OF_LIBRARY_RANDOM, true)),
+                        "Pay {X} to reveal the top X cards and take the Dwarf and Vehicle cards?"));
     }
 }

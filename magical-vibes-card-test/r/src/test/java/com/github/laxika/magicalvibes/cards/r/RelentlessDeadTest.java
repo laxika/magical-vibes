@@ -115,6 +115,49 @@ class RelentlessDeadTest extends BaseCardTest {
         harness.assertNotInHand(player1, "Relentless Dead");
     }
 
+    @Test
+    @DisplayName("Paying {0} returns another Zombie card with mana value 0")
+    void payingZeroReturnsZeroManaValueZombie() {
+        Card zeroManaValueZombie = new DiregrafColossus();
+        zeroManaValueZombie.setManaCost("");
+        prepareDeath(List.of(zeroManaValueZombie));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        resolveUntilXTrigger(0);
+
+        harness.assertOnBattlefield(player1, "Diregraf Colossus");
+        harness.assertNotInGraveyard(player1, "Diregraf Colossus");
+        resolveRemainingTriggerByDecliningHandReturn();
+    }
+
+    @Test
+    @DisplayName("Paying an X other than the target's mana value returns nothing")
+    void payingTheWrongXReturnsNothing() {
+        prepareDeath(List.of(new DiregrafColossus()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        resolveUntilXTrigger(2);
+
+        harness.assertInGraveyard(player1, "Diregraf Colossus");
+        harness.assertNotOnBattlefield(player1, "Diregraf Colossus");
+        resolveRemainingTriggerByDecliningHandReturn();
+    }
+
+    @Test
+    @DisplayName("Declining the pay-{X} ability asks for no X and returns nothing")
+    void decliningXReturnsNothing() {
+        prepareDeath(List.of(new DiregrafColossus()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        resolveUntilHandTrigger();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveRemainingTriggerByDecliningX();
+
+        harness.assertInGraveyard(player1, "Diregraf Colossus");
+        harness.assertNotOnBattlefield(player1, "Diregraf Colossus");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void prepareDeath(List<Card> graveyardCards) {
         addCreatureReady(player1, new RelentlessDead());
         harness.setGraveyard(player1, graveyardCards);
@@ -132,13 +175,15 @@ class RelentlessDeadTest extends BaseCardTest {
     private void resolveUntilHandTrigger() {
         for (int attempts = 0; attempts < 4; attempts++) {
             harness.passBothPriorities();
-            PendingInteraction interaction = gd.interaction.activeInteraction();
-            if (interaction instanceof PendingInteraction.MayAbilityChoice) {
+            PendingInteraction.MayAbilityChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+            if (choice == null) {
+                continue;
+            }
+            if (!isXPayment(choice)) {
                 return;
             }
-            if (interaction instanceof PendingInteraction.XValueChoice) {
-                harness.handleXValueChosen(player1, 0);
-            }
+            harness.handleMayAbilityChosen(player1, false);
         }
         throw new AssertionError("Expected the return-to-hand payment choice");
     }
@@ -146,29 +191,43 @@ class RelentlessDeadTest extends BaseCardTest {
     private void resolveUntilXTrigger(int x) {
         for (int attempts = 0; attempts < 4; attempts++) {
             harness.passBothPriorities();
-            PendingInteraction interaction = gd.interaction.activeInteraction();
-            if (interaction instanceof PendingInteraction.XValueChoice) {
-                harness.handleXValueChosen(player1, x);
+            PendingInteraction.MayAbilityChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+            if (choice == null) {
+                continue;
+            }
+            if (isXPayment(choice)) {
+                harness.handleMayAbilityChosen(player1, true);
+                if (gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class) != null) {
+                    harness.handleXValueChosen(player1, x);
+                }
                 return;
             }
-            if (interaction instanceof PendingInteraction.MayAbilityChoice) {
-                harness.handleMayAbilityChosen(player1, false);
-            }
+            harness.handleMayAbilityChosen(player1, false);
         }
         throw new AssertionError("Expected the reanimation payment choice");
     }
 
     private void resolveRemainingTriggerByDecliningX() {
         harness.passBothPriorities();
-        if (gd.interaction.activeInteraction() instanceof PendingInteraction.XValueChoice) {
-            harness.handleXValueChosen(player1, 0);
+        PendingInteraction.MayAbilityChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        if (choice != null && isXPayment(choice)) {
+            harness.handleMayAbilityChosen(player1, false);
         }
     }
 
     private void resolveRemainingTriggerByDecliningHandReturn() {
         harness.passBothPriorities();
-        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+        PendingInteraction.MayAbilityChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        if (choice != null && !isXPayment(choice)) {
             harness.handleMayAbilityChosen(player1, false);
         }
+    }
+
+    /** Whether the "you may" question is the pay-{X} reanimation's rather than the pay-{B} return's. */
+    private static boolean isXPayment(PendingInteraction.MayAbilityChoice choice) {
+        return choice.description().contains("{X}");
     }
 }
