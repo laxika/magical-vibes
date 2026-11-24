@@ -63,7 +63,6 @@ public final class AiInteractionStrategies {
         register(new PlarggAndNassariCardChoiceAiStrategy());
         register(new EyeOfTheStormCastChoiceAiStrategy());
         register(new ExiledSpellCopyChoiceAiStrategy());
-        register(new AssimilationAegisCopyChoiceAiStrategy());
         register(new ExiledCreatureCopyChoiceAiStrategy());
         register(new KohExiledCreatureChoiceAiStrategy());
         register(new LudevicCopyChoiceAiStrategy());

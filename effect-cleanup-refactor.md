@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22 (each in Findings; the fold queue marks its rows). Fold runs 17d, 21b and 18c are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                    |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d (each in Findings; the fold queue marks its rows). Fold runs 21b, 18c and 19d are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                     |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,604 / 2,877 (after fold run 22) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,600 / 2,873 (after fold run 17d) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,690 rows over 4,440 classes (after fold run 22). Latest verdict per class: `step-9` 747, unique 1,172, absorbed 784, split 625, blocked-other 506, survivor 308, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 747 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,696 rows over 4,440 classes (after fold run 17d). Latest verdict per class: `step-9` 746, unique 1,172, absorbed 787, split 626, blocked-other 503, survivor 308, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 746 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -758,6 +758,11 @@ Delayed and global triggers:
 
 - `AddOnePlusOneCountersEffect(counterType, permanents, players, placedBy, Change)`, with `plusOne` / `twice` / `halfRoundedDown` / `plusOneForYou`, `.placedByYou()` / `.placedByAnOpponent()` / `.alsoOnPlayers()`, and `youControl([filter])` / `anyPermanent()` / `creatureOr(subtypes…)`: every static counter-placement replacement. A placement naming no placer is put by the affected controller; "this permanent" applies to its own entering counters (CR 614.12) (fold run 22).
 - `GameQueryService.placementReplacementApplies` / `placementAffects`: the one applicability judge for counter-placement replacements on every placement path, planes and player grants included (fold run 22).
+
+- `EffectResolutionService.resolveNestedInCurrentResolution(gameData, nested)`: steps resolved inside whatever is resolving, without the stack; if they stop for an answer they resume first, then the outer resolution with its next effect (fold run 17d).
+- `StackEntry.eventCardExileEntryVersions`: each card's exile stay for a one-or-more event; `triggeringCards` names every exiled card in its stay (fold run 17d).
+- `Subjects.triggeringCardsAsTheyLastExisted(filter)` (`CardSubject.TriggeringCards.asLastKnown`): "a card from among those cards" after they left a zone, offered and copied as last known; `cardsToDuplicate(cardsThisWay(CHOOSE))` reads such a chosen card as last known (fold run 17d).
+- `BecomeCopyOfSubjectEffect.lasting(WHILE_ATTACHED)`: the "as this Equipment becomes attached" copy kept while attached (Dinosaur Headdress; fold run 17d).
 
 ### Blocked causes still open
 
@@ -2737,6 +2742,36 @@ New pieces:
 - Entering permanents are judged by printed types (Winding Constrictor's Mycosynth Lattice ruling, CR 614.12). Code, sure.
 
 **For the next run.** `token-add` is its own run: the per-kind counters in `TokenCreationReplacementSupport` and the fixed-order addition counts in `PermanentControlSupport` should move onto `AddTokenCreationEffect`. Corpsejack Menace's and Primal Vigor's +1/+1 doublers (ledgered `unique` in step 5e), Zabaz and Vizier of Remedies could now be the survivor's TWICE or a minus-one change in step 10.
+
+### Step 9, fold run 17d (2026-11-24, parallel worktree)
+
+Fold runs 17 to 17c left these copy members in `copier` and `copy-exc`. Ratchet 3,648 / 2,909 → 3,644 / 2,905. Ledger 6 rows (absorbed 3, split 1, survivor 1, step-9 1). 4 card files rewritten; Oracle text and rulings checked for Assimilation Aegis, Dinosaur Headdress (LCC 16), Kaya, Spirit of Resilience. CR 400.7, 400.7e, 406.3a, 603.6c, 603.10a, 608.2b, 608.2c, 608.2d, 608.2h, 611.2b, 613.2a, 702.26f, 707.2, 707.9b checked.
+
+**The shape.**
+- Aegis: `SequenceEffect.of(ChooseCardEffect.oneOf(exiledWithSourceMatching(creature card)), BecomeCopyOfSubjectEffect.of(cardsThisWay(CHOOSE)).by(triggering()).lasting(WHILE_REMAINS_ATTACHED))`. Headdress puts the same two steps, lasting `WHILE_ATTACHED`, in `AsThisBecomesAttachedEffect`.
+- `AttachmentTriggers` resolves any as-attached ability other than the color and name/type choices on a carrier (the Equipment as source, the creature as triggering permanent) through the new `EffectResolutionService.resolveNestedInCurrentResolution`.
+- With nothing resolving, it resolves on its own, or as `resolveNestedInParkedResolution` when a resolution is parked.
+- With one resolving, a nested entry that stops for an answer pushes a placeholder `ParkedResolution(outer, -1, nested)`. The outer loop's awaiting branch turns it into `(outer, i + 1, nested)` instead of overwriting the park, so the nested steps resume first and the outer goes on with its next effect.
+- Kaya: the token-you-control target is a card target filter, with `ChooseCardEffect.upTo(triggeringCards(creature card), 1)` + `BecomeCopyOfSubjectEffect.of(cardsThisWay(CHOOSE)).by(target()).untilEndOfTurn().except(withKeywords(FLYING))`. A one-or-more zone-change record now stores each exiled card's exile stay (`StackEntry.eventCardExileEntryVersions`, copied by `copyTriggerEventFrom`, deep-copy test). `triggeringCards` names each card in that stay; before, only the first card of the batch was named.
+- Spirit: `PutCountersOnSourceEffect(1,1,1)` + `ChooseCardEffect.upTo(Subjects.triggeringCardsAsTheyLastExisted(artifact or creature card), 1)` + `BecomeCopyOfSubjectEffect.of(cardsThisWay(CHOOSE)).untilEndOfTurn()`.
+- `TriggeringCards.asLastKnown` names event cards that left their zone as the event recorded them (CR 608.2h).
+- `cardsToDuplicate(cardsThisWay(CHOOSE))` reads a chosen event card that has left as last known too.
+
+| Batch | Result |
+|---|---|
+| copier | Aegis/Headdress and Kaya folded. Gone: `AssimilationAegisCopyChoice` (record, interaction handler, AI strategy, projection), the Kaya branch of `GraveyardChoiceHandlerService` and its resume flag. Left: Myriad Pools and the Metamorphic Alteration pair (`blocked-other`, as before) |
+| copy-exc | Spirit of Resilience's pair folded (1 split, 1 absorbed). Gone: the mayfx choice handler, `COPY_FROM_LEAVING_GRAVEYARD`, the copy-handler dependency of `GraveyardChoiceHandlerService`. `BecomeCopyOfCardUntilEndOfTurnEffect` stays `step-9`; its one maker is the unaudited exiled-with-source handler |
+
+**Behaviour changes.**
+- Kaya offers every creature card of a one-or-more exile, each only in its exile stay; a card that left exile and was exiled again is not offered (CR 400.7, ruling; new tests).
+- Spirit's yes/no then pick is one optional pick (same outcome; tests moved to the pick).
+- The Aegis prompt is the generic card choice.
+- The survivor's log lines win (Kaya's "finds no creature cards" line is gone).
+- Aegis and Spirit still show the choice when the Equipment has come off or Spirit has left; the copy then does nothing.
+
+**Seen, not changed.** None new.
+
+**For the next run.** Myriad Pools needs a card subject for a spell on the stack. The Metamorphic Alteration pair needs a static copy verb. `BecomeCopyOfCardUntilEndOfTurnEffect` folds with `BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffectHandler`'s cards (Dermotaxi, Lazav Wearer of Faces, Protean War Engine).
 
 ## Prompt
 

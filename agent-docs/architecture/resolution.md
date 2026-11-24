@@ -44,6 +44,11 @@ A handler answering an interaction ends via an `InputCompletionService` epilogue
 Owner: `InputCompletionService` (`InputHandlerEpilogueRatchetTest`, `BaseCardTest`).
 Why: else `GameData.pendingEffectResolutionEntry` stays parked: remaining effects are dropped, no player can lose.
 
+### A nested resolution that stops for an answer goes on first
+Steps resolved inside another resolution without the stack (an "as this Equipment becomes attached" choice and copy) go through `EffectResolutionService.resolveNestedInCurrentResolution`: stopped for an answer, they resume first, then the outer resolution with its next effect.
+Owner: `EffectResolutionService`, `GameData.parkedOuterResolutions`.
+Why: the outer resolution's park would replace the nested one's and drop its later steps.
+
 ### A mana ability's prompt nests under the payment prompt (CR 605.3a)
 A mana ability activated inside a payment prompt runs within `InteractionState.openNestedPromptWindow()`; the payment prompt then returns under its decision id with no SBA, parked resolution or auto-pass in between.
 Owner: `GameService.activateDuringManaPayment`, `InteractionHandlerRegistry.resumeSuspended`.

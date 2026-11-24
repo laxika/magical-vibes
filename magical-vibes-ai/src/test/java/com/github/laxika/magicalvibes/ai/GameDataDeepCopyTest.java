@@ -842,6 +842,23 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    @DisplayName("Deep copy keeps a stack entry's per-card exile stays of a one-or-more event, independently")
+    void deepCopyKeepsEventCardExileStaysIndependently() {
+        UUID cardId = UUID.randomUUID();
+        StackEntry entry = TestStackDoor.triggered(new SerraAngel(), player1.getId(), "Exile trigger", List.of());
+        entry.getEventCardExileEntryVersions().put(cardId, 3L);
+        gd.stack.add(entry);
+
+        GameData copy = gd.simulationCopy();
+        StackEntry copied = copy.stack.getFirst();
+        assertThat(copied.getEventCardExileEntryVersions()).containsEntry(cardId, 3L);
+        copied.getEventCardExileEntryVersions().put(cardId, 4L);
+
+        assertThat(copied.getEventCardExileEntryVersions()).isNotSameAs(entry.getEventCardExileEntryVersions());
+        assertThat(entry.getEventCardExileEntryVersions()).containsEntry(cardId, 3L);
+    }
+
+    @Test
     @DisplayName("Deep copy keeps a stack entry's triggering permanent and attachments, independently")
     void deepCopyKeepsTriggeringPermanentIndependently() {
         Permanent dying = new Permanent(new GrizzlyBears());

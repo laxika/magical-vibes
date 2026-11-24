@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -101,6 +102,47 @@ class PaleontologistsPickAxeTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(3);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(graveyardMaterial);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(material);
+    }
+
+    @Test
+    @DisplayName("Dinosaur Headdress asks again as it becomes attached to another creature, the equip resolution then ending")
+    void headdressChoosesAgainWhenEquippedToAnotherCreature() {
+        harness.addToBattlefield(player1, new PaleontologistsPickAxe());
+        HillGiant giantMaterial = new HillGiant();
+        Permanent material = harness.addToBattlefieldAndReturn(player1, giantMaterial);
+        Card bearsMaterial = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bearsMaterial));
+        Permanent firstHost = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent secondHost = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleMultipleCardsChosen(player1, List.of(material.getCard().getId(), bearsMaterial.getId()));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, firstHost.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(giantMaterial.getId()));
+        assertThat(gqs.getEffectivePower(gd, firstHost)).isEqualTo(3);
+
+        Permanent headdress = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof DinosaurHeaddress)
+                .findFirst()
+                .orElseThrow();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(headdress), null,
+                secondHost.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(giantMaterial.getId()));
+
+        assertThat(headdress.getAttachedTo()).isEqualTo(secondHost.getId());
+        assertThat(gqs.getEffectivePower(gd, secondHost)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, secondHost)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, firstHost)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test

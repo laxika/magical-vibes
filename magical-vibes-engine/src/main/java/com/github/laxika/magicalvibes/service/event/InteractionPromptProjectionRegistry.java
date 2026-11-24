@@ -111,8 +111,6 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.EyeOfTheStormCastChoice.class,
                 this::projectEyeOfTheStormCastChoice);
         register(PendingInteraction.ExiledSpellCopyChoice.class, this::projectExiledSpellCopyChoice);
-        register(PendingInteraction.AssimilationAegisCopyChoice.class,
-                this::projectAssimilationAegisCopyChoice);
         register(PendingInteraction.ExiledCreatureCopyChoice.class,
                 this::projectExiledCreatureCopyChoice);
         register(PendingInteraction.EspersToMagiciteCreatureChoice.class,
@@ -1667,15 +1665,6 @@ public class InteractionPromptProjectionRegistry {
                 Math.min(interaction.maxCount(), interaction.pool().size()),
                 "Choose up to " + interaction.maxCount()
                         + " cards you own from outside the game to shuffle into your library.");
-    }
-
-    private InteractionPromptMessage projectAssimilationAegisCopyChoice(
-            GameData gameData, PendingInteraction.AssimilationAegisCopyChoice interaction) {
-        return InteractionPromptMessage.multiCardPick(
-                new ArrayList<>(interaction.validCardIds()),
-                exiledCardViews(gameData, interaction.decidingPlayerId(), interaction.validCardIds()),
-                1,
-                "Choose a creature card exiled with Assimilation Aegis to copy.");
     }
 
     private InteractionPromptMessage projectFaceUpExiledCardChoice(

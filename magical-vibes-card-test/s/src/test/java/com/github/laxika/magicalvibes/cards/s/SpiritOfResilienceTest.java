@@ -32,8 +32,8 @@ class SpiritOfResilienceTest extends BaseCardTest {
         resolveTrigger();
 
         assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(giant.getId()));
 
         assertThat(spirit.getCard().getName()).isEqualTo("Hill Giant");
         assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -46,7 +46,7 @@ class SpiritOfResilienceTest extends BaseCardTest {
         returnCardFromGraveyard(new HillGiant());
 
         resolveTrigger();
-        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(spirit.getCard().getName()).isEqualTo("Spirit of Resilience");
         assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -56,10 +56,11 @@ class SpiritOfResilienceTest extends BaseCardTest {
     @DisplayName("Can become a copy of an artifact card that left the graveyard")
     void copiesArtifactCard() {
         Permanent spirit = addSpirit();
-        returnCardFromGraveyard(new MindStone());
+        MindStone stone = new MindStone();
+        returnCardFromGraveyard(stone);
 
         resolveTrigger();
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(stone.getId()));
 
         assertThat(spirit.getCard().getName()).isEqualTo("Mind Stone");
     }
@@ -68,10 +69,11 @@ class SpiritOfResilienceTest extends BaseCardTest {
     @DisplayName("The copy wears off at end of turn")
     void copyWearsOffAtEndOfTurn() {
         Permanent spirit = addSpirit();
-        returnCardFromGraveyard(new HillGiant());
+        HillGiant giant = new HillGiant();
+        returnCardFromGraveyard(giant);
 
         resolveTrigger();
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(giant.getId()));
 
         assertThat(spirit.getCard().getName()).isEqualTo("Hill Giant");
 
@@ -99,11 +101,11 @@ class SpiritOfResilienceTest extends BaseCardTest {
         Permanent spirit = addSpirit();
         returnCardFromGraveyard(new HillGiant());
         resolveTrigger();
-        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         returnCardFromGraveyard(new HillGiant());
         resolveTrigger();
-        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
@@ -111,9 +113,10 @@ class SpiritOfResilienceTest extends BaseCardTest {
     @Test
     void copiedCreatureNoLongerTriggersOnGraveyardDepartures() {
         Permanent spirit = addSpirit();
-        returnCardFromGraveyard(new HillGiant());
+        HillGiant giant = new HillGiant();
+        returnCardFromGraveyard(giant);
         resolveTrigger();
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(giant.getId()));
 
         returnCardFromGraveyard(new MindStone());
 
@@ -148,11 +151,10 @@ class SpiritOfResilienceTest extends BaseCardTest {
 
         resolveTrigger();
         assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        harness.handleMayAbilityChosen(player1, true);
-        PendingInteraction.GraveyardChoice choice =
-                (PendingInteraction.GraveyardChoice) gd.interaction.activeInteraction();
-        assertThat(choice.cardPool()).containsExactly(stone, timepiece);
-        harness.handleGraveyardCardChosen(player1, 1);
+        PendingInteraction.MultiGraveyardChoice choice =
+                (PendingInteraction.MultiGraveyardChoice) gd.interaction.activeInteraction();
+        assertThat(choice.cards()).containsExactly(stone, timepiece);
+        harness.handleMultipleCardsChosen(player1, List.of(timepiece.getId()));
         harness.passBothPriorities();
 
         assertThat(spirit.getCard().getName()).isEqualTo("Perpetual Timepiece");
@@ -169,8 +171,7 @@ class SpiritOfResilienceTest extends BaseCardTest {
         shuffleCardsFromGraveyard(stone, timepiece);
 
         resolveTrigger();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(stone.getId()));
 
         assertThat(gd.stack).isEmpty();
         assertThat(spirit.getCard().getName()).isEqualTo("Mind Stone");
@@ -181,11 +182,15 @@ class SpiritOfResilienceTest extends BaseCardTest {
         Permanent spirit = addSpirit();
         shuffleCardsFromGraveyard(new MindStone());
         resolveTrigger();
-        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMultipleCardsChosen(player1, List.of());
 
-        shuffleCardsFromGraveyard(new PerpetualTimepiece());
+        PerpetualTimepiece timepiece = new PerpetualTimepiece();
+        shuffleCardsFromGraveyard(timepiece);
         resolveTrigger();
-        harness.handleMayAbilityChosen(player1, true);
+        PendingInteraction.MultiGraveyardChoice choice =
+                (PendingInteraction.MultiGraveyardChoice) gd.interaction.activeInteraction();
+        assertThat(choice.cards()).containsExactly(timepiece);
+        harness.handleMultipleCardsChosen(player1, List.of(timepiece.getId()));
 
         assertThat(spirit.getCard().getName()).isEqualTo("Perpetual Timepiece");
         assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);

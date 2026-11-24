@@ -5,16 +5,25 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUpToOneCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.KayaSpiritsJusticeEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSubjectEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyExceptions;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -31,12 +40,18 @@ public class KayaSpiritsJustice extends Card {
     public KayaSpiritsJustice() {
         // "Whenever one or more creatures you control and/or creature cards in your graveyard are put into exile":
         // one ability of two trigger conditions, triggering once for the event.
-        addTriggeredAbility(new TriggeredAbility(List.of(
-                new TriggerCondition(Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD), Triggers.CREATURE,
-                        ObjectRelation.YOU_CONTROL)),
-                new TriggerCondition(Triggers.exiledFrom(Set.of(Zone.GRAVEYARD), Triggers.NONTOKEN_CREATURE,
-                        ObjectRelation.YOU_OWN))),
-                TriggerOptions.ONE_OR_MORE, List.of(new EffectRegistration(new KayaSpiritsJusticeEffect()))));
+        target(new ControlledPermanentPredicateTargetFilter(new PermanentIsTokenPredicate(),
+                "Target must be a token you control."))
+                .addTriggeredAbility(new TriggeredAbility(List.of(
+                        new TriggerCondition(Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD), Triggers.CREATURE,
+                                ObjectRelation.YOU_CONTROL)),
+                        new TriggerCondition(Triggers.exiledFrom(Set.of(Zone.GRAVEYARD), Triggers.NONTOKEN_CREATURE,
+                                ObjectRelation.YOU_OWN))),
+                        TriggerOptions.ONE_OR_MORE, List.of(new EffectRegistration(SequenceEffect.of(
+                        ChooseCardEffect.upTo(Subjects.triggeringCards(new CardTypePredicate(CardType.CREATURE)), 1,
+                                "a creature card from among them"),
+                        BecomeCopyOfSubjectEffect.of(Subjects.cardsThisWay(StepKind.CHOOSE)).by(Subjects.target())
+                                .untilEndOfTurn().except(CopyExceptions.withKeywords(Keyword.FLYING)))))));
 
         addActivatedAbility(new ActivatedAbility(
                 2,

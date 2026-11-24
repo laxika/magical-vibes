@@ -156,7 +156,9 @@ public class SubjectResolutionService {
                             thisWay.filter()))
                     .toList();
             case CardSubject.TargetCard target -> targetCard(gameData, entry, target);
-            case CardSubject.TriggeringCards triggering -> triggeringCards(gameData, entry, triggering);
+            case CardSubject.TriggeringCards triggering -> triggering.asLastKnown()
+                    ? triggeringCardsAsLastKnown(gameData, entry, triggering)
+                    : triggeringCards(gameData, entry, triggering);
             case CardSubject.TriggeringCardsInHand ignored -> eventCardsPutIntoHand(entry).stream()
                     .map(card -> locate(gameData, card.getId(), Zone.HAND))
                     .filter(Objects::nonNull)
@@ -349,6 +351,9 @@ public class SubjectResolutionService {
         if (subject instanceof CardSubject.TriggeringCards triggering) {
             return triggeringCardsAsLastKnown(gameData, entry, triggering);
         }
+        if (subject instanceof CardSubject.CardsThisWay thisWay && thisWay.kind() == StepKind.CHOOSE) {
+            return chosenCardsAsLastKnown(gameData, entry, effect, thisWay);
+        }
         if (!(subject instanceof CardSubject.TriggeringCardsInHand)) {
             return locatedCards(gameData, entry, effect, subject).stream()
                     .filter(located -> !located.card().isToken()).toList();
@@ -408,6 +413,34 @@ public class SubjectResolutionService {
             return List.copyOf(named.values());
         }
         return originals;
+    }
+
+    /**
+     * {@code cardsThisWay(CHOOSE)} for a duplicate or a copy: each chosen card where it is, and a chosen card of the
+     * trigger event that has left its zone ({@link CardSubject.TriggeringCards#asLastKnown()}: "a card from among those
+     * cards" that left a graveyard) as the event recorded it, its last known information (CR 608.2h).
+     */
+    private List<LocatedCard> chosenCardsAsLastKnown(GameData gameData, StackEntry entry, CardEffect effect,
+                                                     CardSubject.CardsThisWay chosen) {
+        List<LocatedCard> located = new ArrayList<>(locatedCards(gameData, entry, effect, chosen).stream()
+                .filter(card -> !card.card().isToken()).toList());
+        Set<UUID> found = new LinkedHashSet<>();
+        located.forEach(card -> found.add(card.card().getId()));
+        List<UUID> chosenIds = entry.getResolutionResults().outcome(StepKind.CHOOSE).objectIds();
+        if (found.containsAll(chosenIds) || entry.getTriggeringCards().isEmpty()) {
+            return located;
+        }
+        Map<UUID, LocatedCard> eventCards = new LinkedHashMap<>();
+        triggeringCardsAsLastKnown(gameData, entry, new CardSubject.TriggeringCards(null, true))
+                .forEach(card -> eventCards.putIfAbsent(card.card().getId(), card));
+        for (UUID id : chosenIds) {
+            LocatedCard lastKnown = eventCards.get(id);
+            if (!found.contains(id) && lastKnown != null && (chosen.filter() == null || cardMatches(gameData, entry,
+                    lastKnown.card(), lastKnown.ownerId(), chosen.filter()))) {
+                located.add(lastKnown);
+            }
+        }
+        return located;
     }
 
     /** The cards a "put into a hand" or seek event was about, as the entry recorded them, each once. */
@@ -476,9 +509,9 @@ public class SubjectResolutionService {
     }
 
     /**
-     * {@link CardSubject.TriggeringCards}: the event's cards in the graveyard stay it put them in, the one card of an
-     * event that exiled it in that exile stay, face up or face down (CR 400.2, 400.7e). The filter sees a card exiled
-     * face down as a card with no characteristics (CR 406.3a).
+     * {@link CardSubject.TriggeringCards}: the event's cards in the graveyard stay it put them in, each card an event
+     * exiled (every card of a "one or more" event) in that exile stay, face up or face down (CR 400.2, 400.7e). The
+     * filter sees a card exiled face down as a card with no characteristics (CR 406.3a).
      */
     private List<LocatedCard> triggeringCards(GameData gameData, StackEntry entry,
                                               CardSubject.TriggeringCards triggering) {
@@ -493,10 +526,13 @@ public class SubjectResolutionService {
         for (UUID id : new LinkedHashSet<>(ids)) {
             LocatedCard card;
             boolean faceDown = false;
-            if (id.equals(eventCardId) && entry.getTriggeringCardExileEntryVersion() >= 0) {
+            Long exileStay = entry.getEventCardExileEntryVersions().get(id);
+            if (exileStay == null && id.equals(eventCardId) && entry.getTriggeringCardExileEntryVersion() >= 0) {
+                exileStay = entry.getTriggeringCardExileEntryVersion();
+            }
+            if (exileStay != null) {
                 ExiledCardEntry exiled = gameData.findExiledCard(id);
-                card = exiled == null || gameData.exileEntryVersions.getOrDefault(id, 0L)
-                        != entry.getTriggeringCardExileEntryVersion()
+                card = exiled == null || gameData.exileEntryVersions.getOrDefault(id, 0L) != exileStay
                         ? null : new LocatedCard(exiled.card(), Zone.EXILE, exiled.ownerId());
                 faceDown = exiled != null && exiled.faceDown();
             } else {

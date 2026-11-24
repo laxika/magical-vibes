@@ -599,6 +599,12 @@ public class StackEntry {
     @Setter private List<UUID> eventCardIds = List.of();
     private final Map<UUID, Long> eventCardGraveyardEntryVersions = new HashMap<>();
     /**
+     * The exile stay each card of a "one or more" event went to ({@code GameData.exileEntryVersions}), by card id:
+     * "a creature card from among them" after "whenever one or more creatures ... are put into exile" names a card only
+     * while it is still in that stay (CR 400.7).
+     */
+    private final Map<UUID, Long> eventCardExileEntryVersions = new HashMap<>();
+    /**
      * Cards exiled during this entry's resolution, excluding earlier uses of the same source. An immutable list, which
      * a copy of the entry shares. A later step that acts on "cards exiled this way" reads this list, not the
      * exile records linked to the source, which also hold cards exiled by earlier resolutions.
@@ -1616,6 +1622,8 @@ public class StackEntry {
         this.eventCardIds = source.eventCardIds.isEmpty() ? List.of() : new ArrayList<>(source.eventCardIds);
         this.eventCardGraveyardEntryVersions.clear();
         this.eventCardGraveyardEntryVersions.putAll(source.eventCardGraveyardEntryVersions);
+        this.eventCardExileEntryVersions.clear();
+        this.eventCardExileEntryVersions.putAll(source.eventCardExileEntryVersions);
         this.eventManaValues = source.eventManaValues.isEmpty() ? List.of() : new ArrayList<>(source.eventManaValues);
         this.attachedPermanentSnapshot = source.attachedPermanentSnapshot;
         this.triggeringCardId = source.triggeringCardId;

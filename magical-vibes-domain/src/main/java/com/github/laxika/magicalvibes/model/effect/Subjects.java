@@ -385,6 +385,15 @@ public final class Subjects {
         return new CardSubject.TriggeringCards(filter);
     }
 
+    /**
+     * "An artifact or creature card from among those cards" after "whenever one or more cards leave your graveyard":
+     * the event's cards matching {@code filter}, one that has left its zone as it last existed there
+     * ({@link CardSubject.TriggeringCards#asLastKnown()}), for a choice and a copy of the chosen card.
+     */
+    public static CardSubject triggeringCardsAsTheyLastExisted(CardPredicate filter) {
+        return new CardSubject.TriggeringCards(filter, true);
+    }
+
     /** "That card", "it": {@link #triggeringCards(CardPredicate)} without a filter. */
     public static CardSubject triggeringCards() {
         return new CardSubject.TriggeringCards(null);

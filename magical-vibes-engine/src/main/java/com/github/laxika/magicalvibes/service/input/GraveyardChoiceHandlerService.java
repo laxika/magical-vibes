@@ -93,7 +93,6 @@ import java.util.stream.IntStream;
 @RequiredArgsConstructor
 public class GraveyardChoiceHandlerService {
 
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.BecomeCopyOfCardUntilEndOfTurnEffectHandler becomeCopyHandler;
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -157,7 +156,6 @@ public class GraveyardChoiceHandlerService {
             if (destination == GraveyardChoiceDestination.EXILE
                     || destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET
                     || destination == GraveyardChoiceDestination.CONJURE_DUPLICATE_INTO_HAND
-                    || destination == GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD
                     || graveyardChoice.mandatory()) {
                 throw new IllegalStateException("Cannot decline forced graveyard choice");
             }
@@ -339,7 +337,6 @@ public class GraveyardChoiceHandlerService {
             if (destination == GraveyardChoiceDestination.EXILE
                     || destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET
                     || destination == GraveyardChoiceDestination.CONJURE_DUPLICATE_INTO_HAND
-                    || destination == GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD
                     || graveyardChoice.mandatory()) {
                 throw new IllegalStateException("Cannot decline forced graveyard choice");
             }
@@ -392,8 +389,6 @@ public class GraveyardChoiceHandlerService {
                 } else {
                     card = gameData.playerGraveyards.get(playerId).get(cardIndex);
                 }
-            } else if (destination == GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD) {
-                card = cardPool.get(cardIndex);
             } else if (cardPool != null) {
                 // Cross-graveyard choice: card pool contains cards from any graveyard
                 card = cardPool.get(cardIndex);
@@ -585,16 +580,6 @@ public class GraveyardChoiceHandlerService {
                     if (!gameData.interaction.isAwaitingInput()) {
                         legendRuleService.checkLegendRule(gameData, battlefieldControllerId);
                     }
-                }
-                case COPY_FROM_LEAVING_GRAVEYARD -> {
-                    // "... then you may have this creature become a copy of [one of those cards]" is part of the
-                    // ability that asked (CR 608.2c): the copy happens as that ability resolves, whichever of the
-                    // cards is chosen, and no player can respond to it.
-                    gameLogService.append(gameData, GameLog.textCardText(
-                            player.getUsername() + " chooses ", card, " for "
-                                    + mayAbilitySourceCard.getName() + "'s copy ability."));
-                    becomeCopyHandler.becomeCopy(gameData, mayAbilitySourceCard, mayAbilityControllerId,
-                            mayAbilitySourcePermanentId, card, Set.of());
                 }
                 case SHUFFLE_INTO_OWNERS_LIBRARY -> {
                     // Card already removed from the graveyard above; shuffle it into the owner's library.
@@ -925,43 +910,6 @@ public class GraveyardChoiceHandlerService {
                 throw new IllegalStateException("Selected cards exceed the total power "
                         + maxTotalPower + " limit");
             }
-        }
-
-        if (gameData.graveyardTargetOperation.resolutionTimeKayaSpiritsJusticeResume) {
-            gameData.graveyardTargetOperation.resolutionTimeKayaSpiritsJusticeResume = false;
-            gameData.interaction.clearAwaitingInput();
-
-            if (cardIds.isEmpty()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-                return;
-            }
-
-            UUID chosenCardId = cardIds.getFirst();
-            Card chosenCard = multiGraveyardChoice.cards().stream()
-                    .filter(card -> card.getId().equals(chosenCardId))
-                    .findFirst()
-                    .orElse(null);
-            StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-            if (chosenCard == null || gameData.findExiledCard(chosenCard.getId()) == null
-                    || pendingEntry == null) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-                return;
-            }
-
-            UUID controllerId = pendingEntry.getControllerId();
-            UUID tokenId = pendingEntry.getTargetId();
-            Permanent token = tokenId == null ? null : gameQueryService.findPermanentById(gameData, tokenId);
-            if (token == null || !token.getCard().isToken()
-                    || !controllerId.equals(gameData.findControllerOf(token))) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-                return;
-            }
-
-            // The token becomes the copy as the ability that chose the card resolves.
-            becomeCopyHandler.becomeCopy(gameData, pendingEntry.getCard(), controllerId, tokenId, chosenCard,
-                    Set.of(Keyword.FLYING));
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
         }
 
         int selectedManaValue = cardIds.stream()

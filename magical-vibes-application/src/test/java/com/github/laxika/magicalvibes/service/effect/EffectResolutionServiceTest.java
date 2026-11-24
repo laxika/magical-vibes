@@ -1378,4 +1378,84 @@ class EffectResolutionServiceTest {
             verify(drawHandler).resolve(gd, copy, draw);
         }
     }
+
+    @Nested
+    @DisplayName("resolveNestedInCurrentResolution")
+    class NestedInCurrentResolution {
+
+        @Test
+        @DisplayName("A nested resolution stopped for an answer goes on first, then the one it was nested in with its next effect")
+        void nestedStoppedForAnAnswerResumesBeforeTheOuterNextEffect() {
+            CardEffect begin = new DrawCardEffect(1);
+            CardEffect after = new DrawCardEffect(2);
+            CardEffect ask = new DrawCardEffect(3);
+            CardEffect then = new DrawCardEffect(4);
+            StackEntry outer = createEntry(createCard("Outer"), player1Id, List.of(begin, after));
+            StackEntry nested = StackEntry.carrier(createCard("Nested"), player1Id, "Nested",
+                    new ArrayList<>(List.of(ask, then)));
+            EffectHandler beginHandler = stubHandler(begin);
+            EffectHandler afterHandler = stubHandler(after);
+            EffectHandler askHandler = stubHandler(ask);
+            EffectHandler thenHandler = stubHandler(then);
+            doAnswer(invocation -> {
+                effectResolutionService.resolveNestedInCurrentResolution(gd, nested);
+                return null;
+            }).when(beginHandler).resolve(gd, outer, begin);
+            int[] asked = {0};
+            doAnswer(invocation -> {
+                if (asked[0]++ == 0) {
+                    gd.interaction.beginInteraction(new PendingInteraction.XValueChoice(
+                            player1Id, 0, 1, "Choose", "Nested"));
+                }
+                return null;
+            }).when(askHandler).resolve(gd, nested, ask);
+
+            effectResolutionService.resolveEffects(gd, outer);
+
+            assertThat(gd.pendingEffectResolutionEntry).isSameAs(nested);
+            assertThat(gd.pendingEffectResolutionIndex).isZero();
+            verifyNoInteractions(afterHandler, thenHandler);
+
+            gd.interaction.clearAwaitingInput();
+            effectResolutionService.resolveEffectsFrom(gd, nested, gd.pendingEffectResolutionIndex);
+
+            verify(thenHandler).resolve(gd, nested, then);
+            verifyNoInteractions(afterHandler);
+            assertThat(gd.pendingEffectResolutionEntry).isSameAs(outer);
+            assertThat(gd.pendingEffectResolutionIndex).isEqualTo(1);
+
+            effectResolutionService.resolveEffectsFrom(gd, outer, gd.pendingEffectResolutionIndex);
+
+            verify(afterHandler).resolve(gd, outer, after);
+            verify(beginHandler, times(1)).resolve(gd, outer, begin);
+            assertThat(gd.pendingEffectResolutionEntry).isNull();
+            assertThat(gd.parkedOuterResolutions).isEmpty();
+        }
+
+        @Test
+        @DisplayName("A nested resolution that needs no answer finishes inside the effect that began it")
+        void nestedWithoutAnAnswerFinishesInline() {
+            CardEffect begin = new DrawCardEffect(1);
+            CardEffect after = new DrawCardEffect(2);
+            CardEffect step = new DrawCardEffect(3);
+            StackEntry outer = createEntry(createCard("Outer"), player1Id, List.of(begin, after));
+            StackEntry nested = StackEntry.carrier(createCard("Nested"), player1Id, "Nested",
+                    new ArrayList<>(List.of(step)));
+            EffectHandler beginHandler = stubHandler(begin);
+            EffectHandler afterHandler = stubHandler(after);
+            EffectHandler stepHandler = stubHandler(step);
+            doAnswer(invocation -> {
+                effectResolutionService.resolveNestedInCurrentResolution(gd, nested);
+                return null;
+            }).when(beginHandler).resolve(gd, outer, begin);
+
+            effectResolutionService.resolveEffects(gd, outer);
+
+            InOrder order = inOrder(stepHandler, afterHandler);
+            order.verify(stepHandler).resolve(gd, nested, step);
+            order.verify(afterHandler).resolve(gd, outer, after);
+            assertThat(gd.pendingEffectResolutionEntry).isNull();
+            assertThat(gd.parkedOuterResolutions).isEmpty();
+        }
+    }
 }

@@ -12,7 +12,6 @@ public class GraveyardTargetOperationState {
     public int independentTargetGroupIndex = -1;
     public final java.util.List<UUID> independentTargetCardIds = new java.util.ArrayList<>();
     public final java.util.List<Integer> independentTargetGroupSizes = new java.util.ArrayList<>();
-    public boolean resolutionTimeKayaSpiritsJusticeResume;
     /** Whether a resolution-time collect-evidence choice is awaiting completion. */
     public boolean resolutionTimeCollectEvidenceResume;
     /** Resolution-time selection of cards to return for an aggregate mana-value effect. */

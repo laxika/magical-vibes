@@ -152,7 +152,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.ExchangeOutsideGameCardChoice,
         PendingInteraction.ExchangeOutsideGameHandChoice,
         PendingInteraction.ShuffleCardsFromOutsideGameChoice,
-        PendingInteraction.AssimilationAegisCopyChoice,
         PendingInteraction.ExiledCreatureCopyChoice,
         PendingInteraction.EspersToMagiciteCreatureChoice,
         PendingInteraction.FaceUpExiledCardChoice,
@@ -3449,7 +3448,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     boolean declinable = destination != GraveyardChoiceDestination.EXILE
                     && destination != GraveyardChoiceDestination.MAY_ABILITY_TARGET
                     && destination != GraveyardChoiceDestination.CONJURE_DUPLICATE_INTO_HAND
-                    && destination != GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD
                     && !mandatory;
             return new InteractionOptions.GraveyardIndexPick(validIndices, declinable);
         }
@@ -5876,26 +5874,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.ListPick(options);
-        }
-    }
-
-    /** The exiled creature card an attached creature becomes a copy of, for {@code duration}. */
-    record AssimilationAegisCopyChoice(UUID playerId, UUID equipmentId, UUID attachedCreatureId,
-                                        java.util.List<UUID> validCardIds,
-                                        com.github.laxika.magicalvibes.model.effect.Duration duration)
-            implements PendingInteraction {
-        public AssimilationAegisCopyChoice {
-            validCardIds = java.util.List.copyOf(validCardIds);
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
         }
     }
 

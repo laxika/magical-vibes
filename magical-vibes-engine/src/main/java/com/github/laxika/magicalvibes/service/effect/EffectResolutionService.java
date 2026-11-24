@@ -99,6 +99,9 @@ public class EffectResolutionService {
     private final ObjectProvider<StackResolutionService> stackResolutionService;
     private final VisualCueService visualCueService;
 
+    /** The index of a resolution parked behind a nested one before the effect that began it has ended. */
+    private static final int RESUMES_AFTER_CURRENT_EFFECT = -1;
+
     /**
      * Resolves all effects on the given stack entry from the beginning.
      *
@@ -126,6 +129,31 @@ public class EffectResolutionService {
             gameData.pendingEffectResolutionIndex = 0;
         }
         resolveEffects(gameData, nested);
+    }
+
+    /**
+     * Resolves {@code nested}, an entry of its own for an ability that applies as part of what is happening now and
+     * uses no stack (an "as this Equipment becomes attached" choice), inside whatever resolution is under
+     * way. With a resolution parked for an answer this is {@link #resolveNestedInParkedResolution}. With one resolving,
+     * a {@code nested} that stopped for an answer before its last step is resumed first once the resolving one has
+     * finished the effect that began it; that one then goes on with its next effect.
+     */
+    public void resolveNestedInCurrentResolution(GameData gameData, StackEntry nested) {
+        StackEntry resolving = gameData.resolvingEntry;
+        if (resolving == null) {
+            if (gameData.pendingEffectResolutionEntry != null) {
+                resolveNestedInParkedResolution(gameData, nested);
+            } else {
+                resolveEffects(gameData, nested);
+            }
+            return;
+        }
+        resolveEffects(gameData, nested);
+        if (gameData.pendingEffectResolutionEntry == nested) {
+            // The resolving entry parks behind it as its effect ends (resolveEffectsLoop).
+            gameData.parkedOuterResolutions.push(
+                    new GameData.ParkedResolution(resolving, RESUMES_AFTER_CURRENT_EFFECT, nested));
+        }
     }
 
     /**
@@ -614,6 +642,17 @@ public class EffectResolutionService {
                 if (rerunCurrentEffect && effectToResolve != effect
                         && entry.getEffectsToResolve().get(i) == effect) {
                     entry.replaceEffectToResolve(i, effectToResolve);
+                }
+                GameData.ParkedResolution behindNested = gameData.parkedOuterResolutions.peek();
+                if (behindNested != null && behindNested.entry() == entry
+                        && behindNested.index() == RESUMES_AFTER_CURRENT_EFFECT
+                        && gameData.pendingEffectResolutionEntry == behindNested.nested()) {
+                    // A nested resolution this effect began stopped for an answer (resolveNestedInCurrentResolution):
+                    // it goes on first, and this one after it with its next effect, this effect being done.
+                    gameData.parkedOuterResolutions.pop();
+                    gameData.parkedOuterResolutions.push(
+                            new GameData.ParkedResolution(entry, i + 1, behindNested.nested()));
+                    return;
                 }
                 gameData.pendingEffectResolutionEntry = entry;
                 gameData.pendingEffectResolutionIndex = rerunCurrentEffect ? i : i + 1;

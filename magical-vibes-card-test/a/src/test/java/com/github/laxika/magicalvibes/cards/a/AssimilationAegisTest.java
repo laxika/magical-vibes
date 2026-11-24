@@ -84,7 +84,7 @@ class AssimilationAegisTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.AssimilationAegisCopyChoice.class);
+                .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
 
         assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(3);

@@ -109,9 +109,19 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
      * exiled face down is named too, as exile is a public zone (CR 400.2, 400.7e), but {@code filter} sees it as a card
      * with no characteristics (CR 406.3a).
      *
-     * @param filter which of the event's cards are named; {@code null} for all of them
+     * <p>{@code asLastKnown}: "an artifact or creature card from among those cards" after "whenever one or more cards
+     * leave your graveyard": the event's cards wherever they are, each one that has left the zone the event put it in
+     * (or, for a departure, the zone it left) as the event recorded it, its last known information (CR 608.2h), for a
+     * step that needs only information about the card (a choice and a copy of it).
+     *
+     * @param filter      which of the event's cards are named; {@code null} for all of them
+     * @param asLastKnown whether a card that has left its zone is named as it last existed there
      */
-    record TriggeringCards(CardPredicate filter) implements CardSubject {
+    record TriggeringCards(CardPredicate filter, boolean asLastKnown) implements CardSubject {
+
+        public TriggeringCards(CardPredicate filter) {
+            this(filter, false);
+        }
     }
 
     /**

@@ -28,7 +28,9 @@ import java.util.Set;
  * @param duration         {@link Duration#PERMANENT} for no stated duration, {@link Duration#UNTIL_END_OF_TURN},
  *                         {@link Duration#UNTIL_YOUR_NEXT_TURN}, or {@link Duration#WHILE_REMAINS_ATTACHED} ("for as
  *                         long as this Equipment remains attached to it", which does nothing once the source is no
- *                         longer attached to the copier as it resolves, CR 611.2b)
+ *                         longer attached to the copier as it resolves, CR 611.2b), or {@link Duration#WHILE_ATTACHED}
+ *                         for an "as this Equipment becomes attached" choice that a static "equipped creature is a
+ *                         copy of" keeps while the source stays attached (Dinosaur Headdress)
  * @param keepsThisAbility "except it has this ability": the copy has each ability of the source, as it was, that this
  *                         effect is part of (a kept triggered ability with its target group), a second instance when
  *                         the copied values already have it (CR 707.9a, 113.2c); only for the source as copier
@@ -39,7 +41,7 @@ public record BecomeCopyOfSubjectEffect(CardSubject card, PermanentSubject perma
                                         CopyExceptions exceptions) implements CardEffect {
 
     private static final Set<Duration> DURATIONS = Set.of(Duration.PERMANENT, Duration.UNTIL_END_OF_TURN,
-            Duration.UNTIL_YOUR_NEXT_TURN, Duration.WHILE_REMAINS_ATTACHED);
+            Duration.UNTIL_YOUR_NEXT_TURN, Duration.WHILE_REMAINS_ATTACHED, Duration.WHILE_ATTACHED);
 
     public BecomeCopyOfSubjectEffect {
         Objects.requireNonNull(duration, "duration");

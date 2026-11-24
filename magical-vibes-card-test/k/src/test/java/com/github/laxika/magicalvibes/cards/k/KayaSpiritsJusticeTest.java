@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.b.BubbleSmuggler;
 import com.github.laxika.magicalvibes.cards.d.Doppelgang;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.t.TormodsCrypt;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -22,7 +24,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KayaSpiritsJustice.class, Forest.class, BubbleSmuggler.class, Doppelgang.class})
+@CardUsed({KayaSpiritsJustice.class, Forest.class, BubbleSmuggler.class, Doppelgang.class, HillGiant.class,
+        TormodsCrypt.class})
 class KayaSpiritsJusticeTest extends BaseCardTest {
 
     @Test
@@ -301,6 +304,67 @@ class KayaSpiritsJusticeTest extends BaseCardTest {
         assertThat(token.getCard().getName()).isEqualTo("Spirit");
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature.getCard());
+    }
+
+    @Test
+    @DisplayName("Every creature card one exile put into exile together can be chosen, the others not")
+    void choosesAmongEveryCreatureCardExiledTogether() {
+        Permanent token = readyKayaWithSpiritToken();
+        BubbleSmuggler smuggler = new BubbleSmuggler();
+        HillGiant giant = new HillGiant();
+        Forest forest = new Forest();
+        harness.setGraveyard(player1, List.of(smuggler, giant, forest));
+
+        exileOwnGraveyardWithTormodsCrypt();
+        targetTokenAndResolve(token);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                (PendingInteraction.MultiGraveyardChoice) gd.interaction.activeInteraction();
+        assertThat(choice.cards()).containsExactlyInAnyOrder(smuggler, giant);
+        harness.handleMultipleCardsChosen(player1, List.of(giant.getId()));
+
+        assertThat(token.getCard().getName()).isEqualTo("Hill Giant");
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature card that left exile and was exiled again is a new object and can't be chosen")
+    void creatureCardExiledAgainIsANewObject() {
+        Permanent token = readyKayaWithSpiritToken();
+        BubbleSmuggler smuggler = new BubbleSmuggler();
+        HillGiant giant = new HillGiant();
+        harness.setGraveyard(player1, List.of(smuggler, giant));
+
+        exileOwnGraveyardWithTormodsCrypt();
+        gd.removeFromExile(giant.getId());
+        gd.addToExile(player1.getId(), giant);
+        targetTokenAndResolve(token);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                (PendingInteraction.MultiGraveyardChoice) gd.interaction.activeInteraction();
+        assertThat(choice.cards()).containsExactly(smuggler);
+    }
+
+    private Permanent readyKayaWithSpiritToken() {
+        Permanent kaya = addReadyKaya(3);
+        activate(kaya, 1);
+        harness.passBothPriorities();
+        return findPermanent(player1, "Spirit");
+    }
+
+    private void exileOwnGraveyardWithTormodsCrypt() {
+        Permanent crypt = harness.addToBattlefieldAndReturn(player1, new TormodsCrypt());
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(crypt), null,
+                player1.getId());
+        harness.passBothPriorities();
+    }
+
+    private void targetTokenAndResolve(Permanent token) {
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice) {
+            harness.handlePermanentChosen(player1, token.getId());
+        }
+        resolveAllTriggers();
     }
 
     private void resolveCopyChoice(Permanent token, java.util.UUID cardId) {
