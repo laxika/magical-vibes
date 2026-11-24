@@ -108,11 +108,6 @@ class PermanentDamageRedirects extends PermanentDamageCandidateSource {
                         (ctx, instance) -> new ApplyResult.Applied<>(redirected(ctx,
                                 prevention.applyStaticPermanentDamageRedirectToSelf(ctx.gameData(),
                                         ctx.targetControllerId(), ctx.amount(), absorber(ctx, instance))))),
-                redirect("ControllerCreatureRedirectUntilNextTurn", "Redirect the damage to the chosen creature",
-                        ctx -> prevention.hasCreatureControllerDamageRedirectUntilNextTurn(
-                                ctx.gameData(), ctx.targetControllerId(), ctx.target()),
-                        ctx -> prevention.applyCreatureControllerDamageRedirectUntilNextTurn(ctx.gameData(),
-                                ctx.targetControllerId(), ctx.target(), ctx.sourcePermanentId(), ctx.amount())),
                 new Rule<PermanentDamageContext>("AllCreatureDamageRedirectChoice", REDIRECT, false,
                         ctx -> redirectable(ctx) && !allCreatureRedirectControllers(ctx).isEmpty() ? ONCE : List.of(),
                         (ctx, instance) -> "Let a player have the damage dealt to them instead",
@@ -184,9 +179,10 @@ class PermanentDamageRedirects extends PermanentDamageCandidateSource {
     }
 
     /**
-     * Damage one of these shields already moved stays where it went: with several Saving Graces, all
-     * damage dealt at once goes to the one enchanted creature its player chooses (Saving Grace
-     * ruling, 2017-07-14), so another shield doesn't move it again.
+     * Damage one of these redirections already moved stays where it went: with several Saving Graces,
+     * all damage dealt at once goes to the one enchanted creature its player chooses (Saving Grace
+     * ruling, 2017-07-14), so another redirection of this kind (Ascent of the Worthy's too) doesn't
+     * move it again.
      */
     private static boolean turnRedirectAlreadyMoved(PermanentDamageContext ctx) {
         return ctx.event().appliedKeys().stream().anyMatch(key -> key.startsWith("TurnRedirectToCreature"));

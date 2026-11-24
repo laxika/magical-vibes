@@ -28,9 +28,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Chooses the next target of a split half cast for free from hand or graveyard. */
     record SplitFreeCastTarget(SplitCardCast.Targeting targeting) implements PermanentChoiceContext {}
 
-    /** Chooses the recipient of damage redirected from the controller's creatures. */
-    record RedirectCreatureDamage(UUID controllerId) implements PermanentChoiceContext {}
-
     /** Celestial Judgment: the controller chooses one creature for each distinct battlefield power. */
     record CelestialJudgmentChoice(List<Integer> powers, int powerIndex, List<UUID> chosenIds,
                                    String sourceName) implements PermanentChoiceContext {

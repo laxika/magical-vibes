@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.HighestOpponentLifeTotal;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
-import com.github.laxika.magicalvibes.model.effect.SourceDamageCantBePreventedEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedEffect;
 
 @CardRegistration(set = "AVR", collectorNumber = "148")
 public class Malignus extends Card {
@@ -14,6 +14,6 @@ public class Malignus extends Card {
     public Malignus() {
         DynamicAmount halfHighestOpponentLife = new HalvedRoundedUp(new HighestOpponentLifeTotal());
         addStaticEffect(new SetPowerToughnessToAmountEffect(halfHighestOpponentLife, halfHighestOpponentLife));
-        addStaticEffect(new SourceDamageCantBePreventedEffect());
+        addStaticEffect(DamageCantBePreventedEffect.dealtBySource());
     }
 }

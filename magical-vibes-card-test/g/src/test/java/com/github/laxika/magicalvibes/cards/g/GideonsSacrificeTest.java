@@ -199,8 +199,13 @@ class GideonsSacrificeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId()));
+        // With one creature or planeswalker to choose from, it is chosen unasked.
+        if (gd.interaction.isAwaitingInput()) {
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                    .contains(chosen.getId());
+            harness.handlePermanentChosen(player1, chosen.getId());
+        }
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void castPyrohelixAtPlayer(com.github.laxika.magicalvibes.model.Player player) {

@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.RedirectYourDamageToEnchantedCreatureThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RedirectYourDamageToTargetCreatureThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RedirectYourDamageToTargetCreatureThisTurnEffect.RedirectedDamage;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -17,7 +18,8 @@ public class SavingGrace extends Card {
         target(TargetFilters.creatureYouControl())
         // When this Aura enters, all damage that would be dealt this turn to you and
         // permanents you control is dealt to enchanted creature instead.
-        .addTrigger(Triggers.enters(ObjectRelation.THIS), new RedirectYourDamageToEnchantedCreatureThisTurnEffect())
+        .addTrigger(Triggers.enters(ObjectRelation.THIS), RedirectYourDamageToTargetCreatureThisTurnEffect
+                .to(Subjects.attached(), RedirectedDamage.YOU_AND_PERMANENTS))
         // Enchanted creature gets +0/+3.
         .addStaticEffect(new StaticBoostEffect(0, 3, Subjects.attachedCreature()));
     }

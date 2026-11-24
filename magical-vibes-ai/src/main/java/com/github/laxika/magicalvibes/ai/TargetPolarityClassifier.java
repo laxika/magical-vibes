@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbil
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentOrGraveyardCardOnTopOrBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.RedirectYourDamageToTargetCreatureThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectRole;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
@@ -441,6 +442,16 @@ public class TargetPolarityClassifier {
                     : TargetPolarity.BENEFICIAL;
         }
 
+        // "All damage that would be dealt to you is dealt to [target] instead": a target destination taking only your
+        // damage is an attacker (Turn the Tables); one taking your creatures' damage too is your own (Heroic Sacrifice).
+        // A targeted damage source (Shimian Night Stalker) keeps the fallback.
+        if (effect instanceof RedirectYourDamageToTargetCreatureThisTurnEffect redirect) {
+            if (!redirect.destination().declaresTarget()) {
+                return null;
+            }
+            return redirect.redirectsOnlyYourDamage() ? TargetPolarity.HARMFUL_DAMAGE : TargetPolarity.BENEFICIAL;
+        }
+
         // Conjured Currency's source-mode exchange hands the source away but takes the target, so
         // the target should be an opponent's permanent.
         if (effect instanceof ExchangeControlOfTargetPermanentsEffect) {
@@ -690,7 +701,6 @@ public class TargetPolarityClassifier {
             // prevented damage is then dealt to.
             entry("PreventNextDamageAndRedirectEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RedirectCombatDamageFromTargetUnblockedCreatureToItsControllerEffect", TargetPolarity.HARMFUL_DAMAGE),
-            entry("RedirectCombatDamageToTargetAttackingCreatureEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RedirectNextDamageFromTargetToAnotherTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DoubleDamageFromTargetPermanentThisTurnEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("ChannelHarmEffect", TargetPolarity.HARMFUL_DAMAGE),
@@ -793,9 +803,6 @@ public class TargetPolarityClassifier {
             entry("PreventNextDamageByTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("PreventNextDamageToTargetAndAddPlusOnePlusOneCountersEffect", TargetPolarity.BENEFICIAL),
             entry("PreventNextDamageToTargetAndAddToughnessCountersEffect", TargetPolarity.BENEFICIAL),
-            entry("RedirectAllDamageToTargetCreatureToControllerEffect", TargetPolarity.BENEFICIAL),
-            entry("RedirectYourDamageToTargetCreatureThisTurnEffect", TargetPolarity.BENEFICIAL),
-            entry("RedirectAllDamageToChosenCreatureUntilNextTurnEffect", TargetPolarity.BENEFICIAL),
             entry("ReturnTargetCardOnDeathThisTurnEffect", TargetPolarity.BENEFICIAL),
 
             // Pack Hunt searches for cards named after the opposing creature it targets.

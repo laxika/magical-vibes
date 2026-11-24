@@ -153,11 +153,6 @@ public sealed interface MultiPermanentChoiceContext {
     record UntapChosenPermanent(String sourceName) implements MultiPermanentChoiceContext {
     }
 
-    /** Choose a creature or planeswalker to receive redirected damage for the rest of the turn. */
-    record RedirectDamageToChosenPermanent(UUID protectedPlayerId, String sourceName)
-            implements MultiPermanentChoiceContext {
-    }
-
     /**
      * "You may sacrifice [source]. If you do, destroy target creature that player controls."
      * {@code sourceSacrificed} is set for the completion's second departure, the destroy, once the source has been

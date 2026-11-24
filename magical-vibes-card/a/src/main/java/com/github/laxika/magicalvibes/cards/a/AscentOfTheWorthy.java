@@ -6,7 +6,14 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.RedirectAllDamageToChosenCreatureUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.RedirectYourDamageToTargetCreatureThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RedirectYourDamageToTargetCreatureThisTurnEffect.RedirectedDamage;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,9 +24,9 @@ import java.util.List;
 public class AscentOfTheWorthy extends Card {
 
     public AscentOfTheWorthy() {
-        addTrigger(Triggers.chapter(1), new RedirectAllDamageToChosenCreatureUntilNextTurnEffect());
+        addTrigger(Triggers.chapter(1), chosenCreatureTakesYourCreaturesDamage());
 
-        addTrigger(Triggers.chapter(2), new RedirectAllDamageToChosenCreatureUntilNextTurnEffect());
+        addTrigger(Triggers.chapter(2), chosenCreatureTakesYourCreaturesDamage());
 
         addTrigger(Triggers.chapter(3), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
@@ -29,5 +36,18 @@ public class AscentOfTheWorthy extends Card {
                 .enterWithCounterCount(1)
                 .grantSubtypes(List.of(CardSubtype.ANGEL, CardSubtype.WARRIOR))
                 .build());
+    }
+
+    /**
+     * "Choose a creature you control. Until your next turn, all damage that would be dealt to creatures you control is
+     * dealt to that creature instead."
+     */
+    private static SequenceEffect chosenCreatureTakesYourCreaturesDamage() {
+        return SequenceEffect.of(
+                ChoosePermanentsEffect.exactly(1, Subjects.controlledBy(Subjects.you(),
+                        new PermanentIsCreaturePredicate()), "a creature you control"),
+                RedirectYourDamageToTargetCreatureThisTurnEffect
+                        .to(Subjects.thisWay(StepKind.CHOOSE), RedirectedDamage.CREATURES)
+                        .lasting(Duration.UNTIL_YOUR_NEXT_TURN));
     }
 }

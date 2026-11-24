@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
  * "The next {@code amount} damage that would be dealt to X this turn is dealt to Y instead," or
- * the next damage event is redirected in full when {@code nextEvent} is true.
+ * the next damage event is redirected in full when {@code nextEvent} is true, or "all damage that would be dealt to X
+ * this turn is dealt to Y instead" when {@code allThisTurn} is true ({@link #allThisTurn}: Karona's Zealot, Sivvi's
+ * Valor; X is then a permanent).
  * Both ends of the redirection are roles rather than fixed objects, which is the only axis the
  * whole family varies on: {@code protectedRole} is whose incoming damage is diverted and
  * {@code destinationRole} is who receives it instead. The shield matches damage from any source
@@ -31,13 +33,28 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                        creature"), or {@code null} when the declared target alone suffices
  * @param nextEvent       whether the next damage event is redirected in full instead of redirecting
  *                        a fixed or dynamic amount
+ * @param allThisTurn     whether all damage dealt to the protected permanent this turn is redirected, any amount
  */
 public record RedirectNextDamageEffect(RedirectRole protectedRole,
                                        RedirectRole destinationRole,
                                        DynamicAmount amount,
                                        TargetPredicate declaredTarget,
                                        PermanentPredicate targetPredicate,
-                                       boolean nextEvent) implements CardEffect {
+                                       boolean nextEvent,
+                                       boolean allThisTurn) implements CardEffect {
+
+    public RedirectNextDamageEffect {
+        if (allThisTurn && (nextEvent || protectedRole == RedirectRole.CONTROLLER
+                || protectedRole == RedirectRole.SOURCE_PERMANENT_AND_CONTROLLER)) {
+            throw new IllegalArgumentException("All damage this turn is redirected from one permanent");
+        }
+    }
+
+    public RedirectNextDamageEffect(RedirectRole protectedRole, RedirectRole destinationRole,
+                                    DynamicAmount amount, TargetPredicate declaredTarget,
+                                    PermanentPredicate targetPredicate, boolean nextEvent) {
+        this(protectedRole, destinationRole, amount, declaredTarget, targetPredicate, nextEvent, false);
+    }
 
     public RedirectNextDamageEffect(RedirectRole protectedRole, RedirectRole destinationRole,
                                     DynamicAmount amount, TargetPredicate declaredTarget) {
@@ -53,6 +70,13 @@ public record RedirectNextDamageEffect(RedirectRole protectedRole,
                                     DynamicAmount amount, TargetPredicate declaredTarget,
                                     PermanentPredicate targetPredicate) {
         this(protectedRole, destinationRole, amount, declaredTarget, targetPredicate, false);
+    }
+
+    /** "All damage that would be dealt to [protected] this turn is dealt to [destination] instead." */
+    public static RedirectNextDamageEffect allThisTurn(RedirectRole protectedRole, RedirectRole destinationRole,
+                                                       TargetPredicate declaredTarget) {
+        return new RedirectNextDamageEffect(protectedRole, destinationRole, new Fixed(1), declaredTarget, null,
+                false, true);
     }
 
     public static RedirectNextDamageEffect nextEvent(RedirectRole protectedRole,

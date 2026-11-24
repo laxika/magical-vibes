@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ControllerSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
-import com.github.laxika.magicalvibes.model.effect.CombatDamageCantBePreventedEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedEffect;
 
 import java.util.Set;
 
@@ -15,6 +15,6 @@ public class FrenziedBaloth extends Card {
     public FrenziedBaloth() {
         addStaticEffect(new CantBeCounteredEffect());
         addStaticEffect(new ControllerSpellsCantBeCounteredEffect(Set.of(CardType.CREATURE)));
-        addStaticEffect(new CombatDamageCantBePreventedEffect());
+        addStaticEffect(DamageCantBePreventedEffect.combatDamage());
     }
 }

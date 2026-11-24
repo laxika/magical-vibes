@@ -49,8 +49,13 @@ public class RedirectNextDamageEffectHandler implements NormalEffectHandlerBean 
             return;
         }
 
+        // Redirecting a permanent's damage to itself does nothing.
+        if (protectedId.equals(destinationId)) {
+            return;
+        }
+
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        int amount = e.nextEvent() ? 1 : amountEvaluationService.evaluate(gameData, e.amount(),
+        int amount = e.nextEvent() || e.allThisTurn() ? 1 : amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source));
         if (!e.nextEvent() && amount <= 0) {
             return;
@@ -68,16 +73,22 @@ public class RedirectNextDamageEffectHandler implements NormalEffectHandlerBean 
         }
 
         if (protectedPermanent == null) {
+            if (e.allThisTurn()) {
+                return;
+            }
             gameData.addShield(
                     new PlayerNextDamageRedirectShield(protectedId, amount, destinationId));
         } else {
             gameData.addShield(new CreatureDamageRedirectShield(
-                    protectedId, null, e.nextEvent() ? CreatureDamageRedirectShield.NEXT_EVENT : amount,
+                    protectedId, null, e.allThisTurn() ? CreatureDamageRedirectShield.UNLIMITED
+                    : e.nextEvent() ? CreatureDamageRedirectShield.NEXT_EVENT : amount,
                     destinationId));
         }
 
         GameLog.Builder logEntry = GameLog.builder();
-        if (e.nextEvent()) {
+        if (e.allThisTurn()) {
+            logEntry.text("All damage that would be dealt to ");
+        } else if (e.nextEvent()) {
             logEntry.text("The next time damage would be dealt to ");
         } else {
             logEntry.text("The next " + amount + " damage that would be dealt to ");

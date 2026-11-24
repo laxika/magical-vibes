@@ -138,8 +138,6 @@ public class PermanentChoiceHandlerService {
     private final EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamageEffectHandler
             olorinSearingLightEffectHandler;
     private final EachOpponentChoosesCreatureToTapAndGoadEffectHandler fellBeastsShriekEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.RedirectAllDamageToChosenCreatureUntilNextTurnEffectHandler
-            redirectCreatureDamageHandler;
     private final org.springframework.beans.factory.ObjectProvider<MultiPermanentChoiceHandlerService>
             multiPermanentChoiceHandlerServiceProvider;
     private final org.springframework.beans.factory.ObjectProvider<ChoiceHandlerService> choiceHandlerServiceProvider;
@@ -593,10 +591,7 @@ public class PermanentChoiceHandlerService {
 
         PermanentChoiceContext context = permanentChoice.context();
 
-        if (context instanceof PermanentChoiceContext.RedirectCreatureDamage redirect) {
-            redirectCreatureDamageHandler.completeChoice(gameData, redirect.controllerId(), permanentId);
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-        } else if (context instanceof PermanentChoiceContext.LibraryNinjutsu libraryNinjutsu) {
+        if (context instanceof PermanentChoiceContext.LibraryNinjutsu libraryNinjutsu) {
             libraryChoiceHandlerService.completeLibraryNinjutsuChoice(gameData, player, permanentId, libraryNinjutsu);
         } else if (context instanceof PermanentChoiceContext.AuraEntryBatchChoice auraEntry) {
             battlefieldHandler.handleAuraEntryBatchChoice(gameData, permanentId, auraEntry);

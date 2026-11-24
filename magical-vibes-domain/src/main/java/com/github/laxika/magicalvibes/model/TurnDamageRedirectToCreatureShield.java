@@ -1,65 +1,29 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.RedirectYourDamageToTargetCreatureThisTurnEffect.RedirectedDamage;
+
 import java.util.UUID;
 
 /**
- * A turn-scoped damage redirect to a fixed creature. The flags select whether the shield covers only
- * combat damage and whether it also covers damage to permanents controlled by the protected player.
- * Any source and unlimited amount are supported. A shield may optionally match one source permanent
- * instead of every source, and may optionally cover only the protected player rather than their
- * permanents. Another option limits the permanent half to creatures. The redirect only applies while
- * the destination is still a creature on the battlefield, or while it is a creature or planeswalker
- * for Gideon's Sacrifice. Damage dealt to the destination permanent itself is left alone.
+ * The redirection {@code RedirectYourDamageToTargetCreatureThisTurnEffect} begins: damage that would be dealt to the
+ * protected player and / or the permanents they control ({@code redirected}) is dealt to one fixed permanent instead,
+ * for as long as its floating effect lasts, any amount. It may cover combat damage only, or the damage of one source
+ * only. It does nothing while the destination is off the battlefield (CR 614.9) or is no longer what the text names:
+ * a creature, or for "the chosen permanent" of a creature or planeswalker choice, a creature, planeswalker or battle
+ * (CR 614.9). Damage dealt to the destination itself is left alone.
  *
- * @param protectedPlayerId             the player whose incoming damage is redirected
- * @param redirectTargetCreatureId      the creature the damage is dealt to instead
- * @param combatOnly                    whether only combat damage is covered
- * @param includeControlledPermanents   whether damage to the protected player's permanents is covered
- * @param damageSourceId                an optional source permanent to match
- * @param allowsPlaneswalker            whether the destination may also be a planeswalker
- * @param controlledCreaturesOnly       whether only creatures controlled by the protected player are covered
+ * @param protectedPlayerId         the player whose damage (or whose permanents' damage) is redirected
+ * @param redirectTargetCreatureId  the permanent the damage is dealt to instead
+ * @param combatOnly                whether only combat damage is covered
+ * @param redirected                whose damage is covered
+ * @param damageSourceId            the one source permanent whose damage is covered, or {@code null} for any source
+ * @param allowsPlaneswalker        whether the destination may be a planeswalker (or battle) rather than a creature
  */
 public record TurnDamageRedirectToCreatureShield(UUID protectedPlayerId,
                                                  UUID redirectTargetCreatureId,
                                                  boolean combatOnly,
-                                                 boolean includeControlledPermanents,
+                                                 RedirectedDamage redirected,
                                                  UUID damageSourceId,
-                                                 boolean allowsPlaneswalker,
-                                                 boolean controlledCreaturesOnly) implements CardEffect {
-
-    public TurnDamageRedirectToCreatureShield(UUID protectedPlayerId, UUID redirectTargetCreatureId,
-                                              boolean combatOnly, boolean includeControlledPermanents,
-                                              UUID damageSourceId, boolean allowsPlaneswalker) {
-        this(protectedPlayerId, redirectTargetCreatureId, combatOnly, includeControlledPermanents,
-                damageSourceId, allowsPlaneswalker, false);
-    }
-
-    public TurnDamageRedirectToCreatureShield(UUID protectedPlayerId, UUID redirectTargetCreatureId,
-                                              boolean combatOnly, boolean includeControlledPermanents,
-                                              UUID damageSourceId) {
-        this(protectedPlayerId, redirectTargetCreatureId, combatOnly, includeControlledPermanents,
-                damageSourceId, false);
-    }
-
-    public TurnDamageRedirectToCreatureShield(UUID protectedPlayerId, UUID redirectTargetCreatureId,
-                                              boolean combatOnly, boolean includeControlledPermanents) {
-        this(protectedPlayerId, redirectTargetCreatureId, combatOnly, includeControlledPermanents, null, false);
-    }
-
-    public TurnDamageRedirectToCreatureShield(UUID protectedPlayerId, UUID redirectTargetCreatureId) {
-        this(protectedPlayerId, redirectTargetCreatureId, false, true, null, false);
-    }
-
-    public static TurnDamageRedirectToCreatureShield forCreatureOrPlaneswalker(
-            UUID protectedPlayerId, UUID redirectTargetId) {
-        return new TurnDamageRedirectToCreatureShield(
-                protectedPlayerId, redirectTargetId, false, true, null, true);
-    }
-
-    public static TurnDamageRedirectToCreatureShield forControlledCreatures(
-            UUID protectedPlayerId, UUID redirectTargetId) {
-        return new TurnDamageRedirectToCreatureShield(
-                protectedPlayerId, redirectTargetId, false, true, null, false, true);
-    }
+                                                 boolean allowsPlaneswalker) implements CardEffect {
 }

@@ -118,9 +118,6 @@ import com.github.laxika.magicalvibes.model.effect.CantLoseGameFromLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantWinGameEffect;
 import com.github.laxika.magicalvibes.model.effect.NoncombatDamageToOpponentCreaturesAsMinusCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedEffect;
-import com.github.laxika.magicalvibes.model.effect.CombatDamageCantBePreventedEffect;
-import com.github.laxika.magicalvibes.model.effect.SourceDamageCantBePreventedEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesCombatDamageCantBePreventedEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsAndAbilitiesCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageLifeFloorEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeFloorCondition;
@@ -137,7 +134,6 @@ import com.github.laxika.magicalvibes.model.effect.ReduceSpellDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdEffect;
 import com.github.laxika.magicalvibes.model.effect.HalveAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.OjerAxonilDamageReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsAnyColorEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsRedEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendManaAsAnyColorEffect;
@@ -3070,13 +3066,15 @@ public class GameQueryService {
 
     /**
      * Returns {@code true} if damage can be prevented. Returns {@code false}
-     * when a {@link DamageCantBePreventedEffect} is on any battlefield
+     * when a {@link DamageCantBePreventedEffect} for every source and all damage is on any battlefield
      * (e.g. Leyline of Punishment).
      */
     public boolean isDamagePreventable(GameData gameData) {
         return !gameData.damageCantBePreventedThisTurn()
                 && !gameData.unpreventableDamageInProgress
-                && !anyBattlefieldHasStaticEffect(gameData, DamageCantBePreventedEffect.class);
+                && !(anyBattlefieldHasStaticEffect(gameData, DamageCantBePreventedEffect.class)
+                && activeStaticEffects(gameData, DamageCantBePreventedEffect.class).stream()
+                .anyMatch(active -> active.effect().sources() == null && !active.effect().combatOnly()));
     }
 
     /** Returns the mana value of a permanent, including its face-down and transformed state. */
@@ -3117,39 +3115,49 @@ public class GameQueryService {
                         com.github.laxika.magicalvibes.model.effect.StackUsesFirstInFirstOutEffect.class));
     }
 
-    /** Returns whether an active battlefield effect prevents combat damage prevention globally. */
+    /** Returns whether an active battlefield effect for every source makes combat damage unpreventable (Frenzied Baloth). */
     public boolean isCombatDamageCantBePrevented(GameData gameData) {
-        return gameData.anyPermanentMatches(permanent ->
-                hasActiveStaticEffect(gameData, permanent, CombatDamageCantBePreventedEffect.class));
+        return activeStaticEffects(gameData, DamageCantBePreventedEffect.class).stream()
+                .anyMatch(active -> active.effect().sources() == null && active.effect().combatOnly());
     }
 
     /**
-     * Returns {@code true} if damage dealt by the given source permanent can't be prevented because
-     * that permanent itself carries {@link SourceDamageCantBePreventedEffect} (e.g. Malignus). Unlike
-     * {@link #isDamagePreventable(GameData)} this is scoped to one source, so callers that know the
-     * damage source consult it in addition to the global check.
+     * Returns {@code true} if noncombat damage dealt by the given source permanent can't be prevented because of a
+     * {@link DamageCantBePreventedEffect} naming that source (Malignus). Unlike {@link #isDamagePreventable(GameData)}
+     * this is scoped to one source, so callers that know the damage source consult it in addition to the global check.
      */
     public boolean damageCantBePreventedFromSource(GameData gameData, Permanent source) {
-        return source != null && hasActiveStaticEffectIncludingGranted(
-                gameData, source, SourceDamageCantBePreventedEffect.class);
+        return damageCantBePreventedFromSource(gameData, source, false);
     }
 
-    /** Returns whether damage from the source can't be prevented for the current damage event. */
+    /**
+     * Returns whether damage from the source can't be prevented for the current damage event: a
+     * {@link DamageCantBePreventedEffect} of the source itself or of a permanent its controller controls, printed or
+     * granted, names the source ("this creature", "creatures you control"), for combat damage if it says so.
+     */
     public boolean damageCantBePreventedFromSource(GameData gameData, Permanent source,
                                                    boolean isCombatDamage) {
-        return damageCantBePreventedFromSource(gameData, source)
-                || (isCombatDamage && hasControlledCreatureCombatDamageCantBePrevented(gameData, source));
-    }
-
-    private boolean hasControlledCreatureCombatDamageCantBePrevented(GameData gameData, Permanent source) {
         if (source == null) return false;
         UUID controllerId = findPermanentController(gameData, source.getId());
         if (controllerId == null) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return false;
-        return battlefield.stream().anyMatch(permanent ->
-                hasActiveStaticEffectIncludingGranted(gameData, permanent,
-                        ControlledCreaturesCombatDamageCantBePreventedEffect.class));
+        for (Permanent holder : battlefield) {
+            if (!hasActiveStaticEffectIncludingGranted(gameData, holder, DamageCantBePreventedEffect.class)) {
+                continue;
+            }
+            List<CardEffect> effects = new ArrayList<>(getActiveStaticEffects(gameData, holder, controllerId));
+            effects.addAll(getGrantedEffects(gameData, holder));
+            for (CardEffect effect : effects) {
+                if (effect instanceof DamageCantBePreventedEffect unpreventable && unpreventable.sources() != null
+                        && (isCombatDamage || !unpreventable.combatOnly())
+                        && staticSubjectNames(gameData, holder, controllerId, controllerId, source,
+                        unpreventable.sources())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /** Returns whether this player's active turn-scoped source filters prevent damage from the source. */
@@ -10198,8 +10206,8 @@ public class GameQueryService {
             }
         });
         for (FloatingContinuousEffect floatingReplacement
-                : gameData.floatingEffectsOfTypes(ReplaceDamageAboveThresholdThisTurnEffect.class)) {
-            var replacement = (ReplaceDamageAboveThresholdThisTurnEffect) floatingReplacement.effect();
+                : gameData.floatingEffectsOfTypes(ReplaceDamageAboveThresholdEffect.class)) {
+            var replacement = (ReplaceDamageAboveThresholdEffect) floatingReplacement.effect();
             if (result[0] >= replacement.threshold()) {
                 result[0] = replacement.replacementDamage();
             }

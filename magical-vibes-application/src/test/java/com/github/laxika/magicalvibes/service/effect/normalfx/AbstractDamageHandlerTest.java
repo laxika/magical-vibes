@@ -124,22 +124,11 @@ abstract class AbstractDamageHandlerTest {
         lenient().when(damagePreventionService.applySourcePermanentAndControllerNextDamageRedirectToPlayer(
                         eq(gd), any(), nullable(UUID.class), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(3));
-        // Saving Grace redirect (CR 614) is a pass-through in these unit tests — no redirect shields are set up,
-        // so it must return the damage unchanged. Called unconditionally by dealDamageToPlayer and (for
-        // controlled creatures) by dealCreatureDamage; the second UUID is null on the player path, so match with any().
-        lenient().when(damagePreventionService.applyTurnDamageRedirectToCreature(eq(gd), any(), any(), anyInt()))
-                .thenAnswer(inv -> inv.getArgument(3));
-        lenient().when(damagePreventionService.applyTurnDamageRedirectToCreature(
-                        eq(gd), any(), any(), any(), anyInt(), anyBoolean()))
-                .thenAnswer(inv -> inv.getArgument(4));
         // Palisade Giant / RedirectPlayerDamageToSelfEffect (includeOtherPermanents): pass-through when no
         // absorbing permanent is set up. Called unconditionally for creature damage once the controller is known.
         lenient().when(damagePreventionService.applyStaticPermanentDamageRedirectToSelf(
                         eq(gd), any(), any(), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(3));
-        lenient().when(damagePreventionService.applyCreatureControllerDamageRedirectUntilNextTurn(
-                        eq(gd), any(), any(Permanent.class), any(), anyInt()))
-                .thenAnswer(inv -> inv.getArgument(4));
         lenient().when(damagePreventionService.applyAllCreatureDamageRedirectToController(
                         eq(gd), any(Permanent.class), any(), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(3));

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndAddPlusCountersEffect;
 
 @CardRegistration(set = "RAV", collectorNumber = "218")
@@ -9,6 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageAndAddPlusCounte
 public class Phytohydra extends Card {
 
     public Phytohydra() {
-        addStaticEffect(new PreventDamageAndAddPlusCountersEffect());
+        addStaticEffect(PreventDamageAndAddPlusCountersEffect.replacingWith(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

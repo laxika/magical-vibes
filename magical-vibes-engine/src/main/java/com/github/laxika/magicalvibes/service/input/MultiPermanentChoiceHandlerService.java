@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.input;
 
-import com.github.laxika.magicalvibes.model.TurnDamageRedirectToCreatureShield;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChoosePermanentsEffectHandler;
@@ -561,18 +560,6 @@ public class MultiPermanentChoiceHandlerService {
                 && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one creature must be selected");
         }
-        if (context instanceof MultiPermanentChoiceContext.RedirectDamageToChosenPermanent ctx) {
-            if (permanentIds.size() != 1) {
-                throw new IllegalStateException("Exactly one creature or planeswalker must be selected");
-            }
-            Permanent selected = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
-            if (selected == null
-                    || !ctx.protectedPlayerId().equals(gameQueryService.findPermanentController(gameData, selected.getId()))
-                    || (!gameQueryService.isCreature(gameData, selected)
-                    && !gameQueryService.isPlaneswalker(gameData, selected))) {
-                throw new IllegalStateException("Selected permanent is no longer a creature or planeswalker you control");
-            }
-        }
         if ((context instanceof MultiPermanentChoiceContext.ChooseTwoCreaturesByPowerDifference
                 || context instanceof MultiPermanentChoiceContext.RemoveCounterFromTwoCreatures)
                 && permanentIds.size() != 2) {
@@ -793,8 +780,6 @@ public class MultiPermanentChoiceHandlerService {
             handleDealDamageToDamagedPlayerControls(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.UntapChosenPermanent ctx) {
             handleUntapChosenPermanent(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.RedirectDamageToChosenPermanent ctx) {
-            handleRedirectDamageToChosenPermanent(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapAnyNumberPermanents) {
             handleTapAnyNumberPermanents(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeSelfToDestroy) {
@@ -1314,20 +1299,6 @@ public class MultiPermanentChoiceHandlerService {
                         GameLog.builder().text(context.sourceName() + " untaps ").card(target.getCard()).text(".").build());
                 log.info("Game {} - {} untaps {}", gameData.id, context.sourceName(), target.getCard().getName());
             }
-        }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    private void handleRedirectDamageToChosenPermanent(
-            GameData gameData,
-            List<UUID> permanentIds,
-            MultiPermanentChoiceContext.RedirectDamageToChosenPermanent context) {
-        Permanent target = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
-        if (target != null) {
-            gameData.addShield(
-                    com.github.laxika.magicalvibes.model.TurnDamageRedirectToCreatureShield
-                            .forCreatureOrPlaneswalker(context.protectedPlayerId(), target.getId()));
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);

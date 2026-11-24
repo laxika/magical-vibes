@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b (each in Findings; the fold queue marks its rows). Fold runs 27, 32, 28c and 34b are reported and wait to merge; 23d, 35 and 36 are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                          |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27 (each in Findings; the fold queue marks its rows). Fold runs 32, 28c, 34b and 23d are reported and wait to merge; 35, 36 and 33b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                           |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,409 / 2,732 (after fold run 29b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,396 / 2,724 (after fold run 27) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,977 rows over 4,464 classes (after fold run 29b). Latest verdict per class: `step-9` 525, unique 1,174, absorbed 966, split 642, blocked-other 512, survivor 347, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 525 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,996 rows over 4,466 classes (after fold run 27). Latest verdict per class: `step-9` 509, unique 1,174, absorbed 977, split 644, blocked-other 512, survivor 352, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 509 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -861,6 +861,12 @@ Delayed and global triggers:
 - `CopyImprintedCardAndMayCastCopyEffect.of(cards)` copies cards a subject names in exile, a graveyard or a hand (`of(cardsThisWay(CHOOSE))` after a revealed-hand choice); `.castingUpTo(n)` / `.castingAnyNumber()`: "you may cast up to N / any number of the copies", one ordered choice among free copies (CR 608.2g) (fold run 29b).
 - `ExileCardAtRandomEffect.withSource()` and `ExileCardsFromTopUntilEffect.withSource()`: the exiled cards are exiled with the source permanent for a linked ability (CR 607.2a) (fold run 29b).
 - Cipher's granted trigger is `CopyImprintedCardAndMayCastCopyEffect.of(Subjects.exiledCards(new CardIdSetPredicate(Set.of(id))))`, the pattern for an engine-built copy of one known exiled card (fold run 29b).
+
+- `RedirectYourDamageToTargetCreatureThisTurnEffect.to(destination, RedirectedDamage)` + `.lasting(d)` / `.combatDamageOnly()` / `.dealtBy(source)` / `.targeting(filter)` / `.orPlaneswalkerDestination()`: every "all damage that would be dealt [this turn] to you / your permanents / your creatures is dealt to [destination] instead"; with `ChoosePermanentsEffect` + `thisWay(CHOOSE)` for a chosen destination (fold run 27).
+- `RedirectNextDamageEffect.allThisTurn(protected, destination, target)`: "all damage that would be dealt to [permanent] this turn is dealt to [destination] instead" (fold run 27).
+- `DamageCantBePreventedEffect()` / `.combatDamage()` / `.dealtBySource()` / `.combatDamageDealtBy(controlledBy(you(), filter))`, read by `GameQueryService.isDamagePreventable` / `isCombatDamageCantBePrevented` / `damageCantBePreventedFromSource` (fold run 27).
+- `PreventDamageAndAddPlusCountersEffect.replacingWith(type)` / `.preventingAndPutting(type)` / `.preventingAndPuttingPerPrevented(type)`: damage to +1/+1 or -1/-1 counters, CR 615.12 per kind (fold run 27).
+- `GrantStaticEffectToPlayerEffect.untilEndOfTurn(new ReplaceDamageAboveThresholdEffect(t, n))`: "this turn" threshold replacement (fold run 27).
 
 ### Blocked causes still open
 
@@ -3570,6 +3576,36 @@ Batches `land-mana`, `mana-twist`, `mana-drain`, `cost-paid-land`, `player-mana`
 - Both need "may cast that card, then put the exiled cards on the bottom in a random order", with the bottoming after the cast completes. Check `MayCastDiscardedCardWithoutPayingManaCostEffect` against the step-model rule first. Today's `deferredExileBottomSourceIds` exists for exactly that wait.
 - Reweave is a reveal (`AsksDeathReplacementsFirst`), not an exile step; it needs a filter over a departed permanent's last-known types.
 - `land-or-cast`: a mandatory "land onto the battlefield, else cast it free if able" step. Omen Machine refuses any card with a cost increase today; CR 601.2f says the increase is paid. It also skips additional costs (the "Fold:" defect).
+
+### Step 9, fold run 27 (2026-11-24, parallel worktree)
+5 of 8 batches done: 14 folded (11 absorbed, 2 split, plus Equal Treatment), 1 unique. Ratchet 3,459 / 2,764 → 3,446 / 2,756. 17 card files rewritten, Oracle text checked for all. Saving Grace, Ascent and Gideon rulings read. CR 608.2b, 608.2d, 609.7b, 611.2c, 614.5, 614.9, 615.1, 615.6, 615.7, 615.12 checked.
+
+| Batch | Result |
+|---|---|
+| `redir-your` | 6 of 6. `RedirectYourDamageToTargetCreatureThisTurnEffect(destination, RedirectedDamage, damageSource, combatOnly, Duration, targetFilter, destinationMayBePlaneswalker)` with `.to`, `.lasting`, `.combatDamageOnly`, `.dealtBy`, `.targeting`, `.orPlaneswalkerDestination`. `RedirectedDamage` is YOU, YOU_AND_CREATURES, YOU_AND_PERMANENTS or CREATURES. One `TurnDamageRedirectToCreatureShield` shape, and Ascent's `CreatureControllerDamageRedirectShield` and its rule merged into it. Ascent and Gideon are `ChoosePermanentsEffect` plus `thisWay(CHOOSE)`; both choice contexts are gone. The target is harmful only when the destination takes only your damage (Turn the Tables). |
+| `redir-creature` | 2 of 3. `RedirectNextDamageEffect.allThisTurn(protected, destination, target)` (Karona, Sivvi). Shield Dancer is `unique`: its source filter and combat-only scope would be set by it alone. |
+| `redir-source` | Not started. 8 different shields and readers (Harsh Judgment's static, Reverberation, Mirror Strike, Psychopath, Soltari, Aegis, Reflect Damage, Opal-Eye). It needs one source-keyed redirect shield, and a choose-a-damage-source step for Opal-Eye, Reflect Damage and Desperate Gambit. |
+| `redir-absorb` | Not started. Weathered Bodyguards needs `combatOnly` on `RedirectPlayerDamageToSelfEffect`, and the Royal Guard's floated form needs the floated copy to know its "this creature". `GrantStaticEffectToPlayerEffect` records no source permanent, and 111 readers use `FloatingContinuousEffect.sourcePermanentId`. |
+| `next-dmg-shields` | Not started. Doubling and combat-only (Impulsive Maneuvers) and a fixed amount (Barbed Wire) would each be set by one card until Desperate Gambit's choose-a-source step exists. |
+| `cant-prevent` | 3 of 3. `DamageCantBePreventedEffect(sources, combatOnly)`: `()`, `.combatDamage()`, `.dealtBySource()`, `.combatDamageDealtBy(controlledBy(you(), creature))`. One reader family: `isDamagePreventable`, `isCombatDamageCantBePrevented`, and `damageCantBePreventedFromSource` (own and granted copies on the source's controller's permanents, `staticSubjectNames`). |
+| `dmg-counters` | 2 of 2. `PreventDamageAndAddPlusCountersEffect(CounterType, Kind)` with REPLACE (Phytohydra, Lichenthrope), PREVENT_AND_PUT (Panther Habit: counters even on unpreventable damage, which is dealt, CR 615.12) and PREVENT_PUT_PER_PREVENTED (Phyrexian Hydra). One creature-damage step per counter type. |
+| `dmg-threshold` | 1 of 1. Equal Treatment floats `ReplaceDamageAboveThresholdEffect` through `GrantStaticEffectToPlayerEffect.untilEndOfTurn`, read for every recipient. |
+
+**Behaviour changes.**
+- Ascent drops creatures that can't be chosen (CR 608.2d; test).
+- Ascent and Gideon choose a lone candidate unasked, and Gideon now asks with a single-permanent prompt.
+- Ascent's redirections are per-instance options, and damage one already moved isn't moved again (Saving Grace ruling).
+- Shimian, Turn the Tables and Heroic redirect whenever the destination is a creature at damage time, not only if it was one at resolution (CR 614.9). Untested.
+- Questing Beast's reader checks the source is a creature; can't-be-prevented checks read active static abilities.
+- Karona and Sivvi log the survivor's line; Equal Treatment's line is gone; a self-redirect installs nothing.
+
+**Tests changed.** AscentOfTheWorthyTest (shield class; lone-candidate prompt dropped; +1 for CR 608.2d), GideonsSacrificeTest (prompt helper), lenient stubs of deleted methods in AbstractDamageHandlerTest and CombatDamageServiceTest.
+
+**Seen, not changed.**
+- The damage-to-counters step reads `getCard().getStaticEffects()` with only `hasLostAllAbilities`; a face-down Phytohydra-like creature may still apply. Unverified.
+- Kjeldoran Royal Guard's float sets `affectedPermanentId` on a player-scoped floating effect. Code.
+
+**For the next run.** `redir-source`, `next-dmg-shields` and Desperate Gambit together: a choose-a-damage-source step (permanents and stack objects you control, recording CHOOSE) and one source-keyed redirect shield (source, recipient, destination, amount or next event, combat-only, Duration). Then `redir-absorb` once a resolution-floated static can name its source.
 
 ## Prompt
 

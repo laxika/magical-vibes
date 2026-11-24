@@ -18,7 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesCombatDamageCantBePreventedEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
@@ -89,7 +90,8 @@ public class QuestingCosplayer extends Card {
                                         new PermanentPowerAtMostPredicate(2)),
                                 Subjects.attachedCreature()),
                         new GrantEffectEffect(
-                                new ControlledCreaturesCombatDamageCantBePreventedEffect(),
+                                DamageCantBePreventedEffect.combatDamageDealtBy(
+                                        Subjects.controlledBy(Subjects.you(), new PermanentIsCreaturePredicate())),
                                 Subjects.attachedCreature()),
                         new GrantTriggeredAbilityEffect(
                                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
