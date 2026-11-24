@@ -259,6 +259,12 @@ public class PermanentCounterSupport {
         return placeCounterOnPermanent(gameData, entry, target, counterType, count, false, null, true);
     }
 
+    /** {@link #placeCounterOnPermanentAfterReplacements} for counters {@code placingPlayerId} puts. */
+    public int placeCounterOnPermanentAfterReplacements(GameData gameData, StackEntry entry, Permanent target,
+                                                        CounterType counterType, int count, UUID placingPlayerId) {
+        return placeCounterOnPermanent(gameData, entry, target, counterType, count, false, placingPlayerId, true);
+    }
+
     private int placeCounterOnPermanent(GameData gameData, StackEntry entry, Permanent target,
                                         CounterType counterType, int count, boolean modularAbility,
                                         UUID placingPlayerIdOverride, boolean replacementsApplied) {

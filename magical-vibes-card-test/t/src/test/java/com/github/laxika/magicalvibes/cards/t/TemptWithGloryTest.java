@@ -4,11 +4,18 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.v.VorinclexMonstrousRaider;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -99,7 +106,80 @@ class TemptWithGloryTest extends BaseCardTest {
         assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
-    private Permanent addCreatureReady(com.github.laxika.magicalvibes.model.Player player) {
+    @Test
+    @DisplayName("No opponent puts counters until every opponent has decided, then the controller gets one per acceptor")
+    void opponentsDecideBeforeAnyCountersArePut() {
+        Player player3 = addThirdPlayer();
+        Permanent own = addCreatureReady(player1);
+        Permanent second = addCreatureReady(player2);
+        Permanent third = addCreatureReady(player3);
+        harness.setHand(player1, List.of(new TemptWithGlory()));
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.WHITE, 6);
+        harness.castSorcery(player1, 0);
+        passUntilAwaitingInput(player3);
+
+        assertThat(own.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(own.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+
+        harness.handleMayAbilityChosen(player3, true);
+
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(third.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(own.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A declining opponent gets no counters while an accepting one does, and only acceptors reward you")
+    void onlyAcceptingOpponentsCount() {
+        Player player3 = addThirdPlayer();
+        Permanent own = addCreatureReady(player1);
+        Permanent second = addCreatureReady(player2);
+        Permanent third = addCreatureReady(player3);
+        harness.setHand(player1, List.of(new TemptWithGlory()));
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.WHITE, 6);
+        harness.castSorcery(player1, 0);
+        passUntilAwaitingInput(player3);
+
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player3, true);
+
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(third.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(own.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    private void passUntilAwaitingInput(Player player3) {
+        for (int i = 0; i < 20 && !gd.interaction.isAwaitingInput(); i++) {
+            UUID priorityId = gqs.getPriorityPlayerId(gd);
+            Player priorityPlayer = List.of(player1, player2, player3).stream()
+                    .filter(player -> player.getId().equals(priorityId)).findFirst().orElseThrow();
+            harness.passPriority(priorityPlayer);
+        }
+    }
+
+    private Player addThirdPlayer() {
+        UUID id = UUID.randomUUID();
+        Player player = new Player(id, "Charlie");
+        gd.playerIds.add(id);
+        gd.orderedPlayerIds.add(id);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(id, "Charlie");
+        gd.playerDecks.put(id, new ArrayList<>());
+        gd.playerHands.put(id, new ArrayList<>());
+        gd.playerBattlefields.put(id, new ArrayList<>());
+        gd.playerGraveyards.put(id, new ArrayList<>());
+        gd.playerCommandZones.put(id, new ArrayList<>());
+        gd.playerManaPools.put(id, new ManaPool());
+        gd.playerLifeTotals.put(id, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), id, "Charlie");
+        return player;
+    }
+
+    private Permanent addCreatureReady(Player player) {
         return addCreatureReady(player, new GrizzlyBears());
     }
 

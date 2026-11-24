@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndCreateTokenCopyForEachOtherPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SLD", collectorNumber = "272")
@@ -18,6 +20,8 @@ public class FracturedIdentity extends Card {
 
     public FracturedIdentity() {
         target(TargetFilters.nonlandPermanent())
-                .addSpellEffect(new ExileTargetPermanentAndCreateTokenCopyForEachOtherPlayerEffect());
+                .addSpellEffect(new ExileTargetPermanentEffect())
+                .addSpellEffect(new CreateTokenCopyOfTargetPermanentEffect().forController(
+                        Subjects.except(Subjects.eachPlayer(), Subjects.controllerOf(Subjects.target()))));
     }
 }

@@ -38,6 +38,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>A non-target subject declares no target, so shroud and hexproof don't stop it and a permanent that is gone at
  * resolution simply gets nothing. It takes no {@code predicate}, {@code targetPredicate},
  * {@code regenerateIfSurvives} or {@code optionalTarget}.</p>
+ *
+ * <p>The effect's controller puts the counters, unless {@code eachControllerPlaces}: then each
+ * permanent's controller puts them on it ({@link #placedByEachController()}: "target player puts a +1/+1 counter on
+ * each creature they control", "each opponent may put a +1/+1 counter on each creature they control"), so the
+ * replacements and triggers that ask who puts them ("if you would put", "if an opponent would put") see that
+ * player.</p>
  */
 public record PutCounterOnTargetPermanentEffect(CounterType counterType, DynamicAmount amount,
                                                 PermanentPredicate predicate,
@@ -45,7 +51,8 @@ public record PutCounterOnTargetPermanentEffect(CounterType counterType, Dynamic
                                                 boolean regenerateIfSurvives,
                                                 PermanentPredicate resolutionCondition,
                                                 boolean optionalTarget,
-                                                PermanentSubject subject)
+                                                PermanentSubject subject,
+                                                boolean eachControllerPlaces)
         implements CardEffect {
 
     public PutCounterOnTargetPermanentEffect {
@@ -59,6 +66,18 @@ public record PutCounterOnTargetPermanentEffect(CounterType counterType, Dynamic
             throw new IllegalArgumentException("A resolution-time choice, a target restriction, regeneration and an "
                     + "optional target need the target subject: " + subject);
         }
+    }
+
+    /** A counter effect whose counters the effect's controller puts. */
+    public PutCounterOnTargetPermanentEffect(CounterType counterType, DynamicAmount amount,
+                                             PermanentPredicate predicate,
+                                             PermanentPredicate targetPredicate,
+                                             boolean regenerateIfSurvives,
+                                             PermanentPredicate resolutionCondition,
+                                             boolean optionalTarget,
+                                             PermanentSubject subject) {
+        this(counterType, amount, predicate, targetPredicate, regenerateIfSurvives, resolutionCondition,
+                optionalTarget, subject, false);
     }
 
     /** The full constructor of a target or resolution-time-choice counter effect. */
@@ -172,7 +191,19 @@ public record PutCounterOnTargetPermanentEffect(CounterType counterType, Dynamic
     /** This effect on the permanent {@code subject} names, everything else kept. */
     public PutCounterOnTargetPermanentEffect withSubject(PermanentSubject subject) {
         return new PutCounterOnTargetPermanentEffect(counterType, amount, predicate, targetPredicate,
-                regenerateIfSurvives, resolutionCondition, optionalTarget, subject);
+                regenerateIfSurvives, resolutionCondition, optionalTarget, subject, eachControllerPlaces);
+    }
+
+    /**
+     * This effect with each permanent's controller putting the counters on it ("target player puts a +1/+1 counter on
+     * each creature they control"), for a non-target subject.
+     */
+    public PutCounterOnTargetPermanentEffect placedByEachController() {
+        if (subject instanceof PermanentSubject.Target) {
+            throw new IllegalArgumentException("Counters put by each controller name their permanents without a target");
+        }
+        return new PutCounterOnTargetPermanentEffect(counterType, amount, predicate, targetPredicate,
+                regenerateIfSurvives, resolutionCondition, optionalTarget, subject, true);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.e.EagerFirstYear;
+import com.github.laxika.magicalvibes.cards.v.VorinclexMonstrousRaider;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -16,7 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ShadrixSilverquill.class, EagerFirstYear.class})
+@CardUsed({ShadrixSilverquill.class, EagerFirstYear.class, VorinclexMonstrousRaider.class})
 class ShadrixSilverquillTest extends BaseCardTest {
 
     private static final String TOKEN_MODE =
@@ -158,6 +159,24 @@ class ShadrixSilverquillTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()).toList()).hasSize(1);
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The counter mode's target player is the one who puts the counters, as Vorinclex sees it")
+    void targetPlayerPutsTheCounters() {
+        harness.addToBattlefield(player1, new ShadrixSilverquill());
+        Permanent vorinclex = harness.addToBattlefieldAndReturn(player2, new VorinclexMonstrousRaider());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new EagerFirstYear());
+
+        advanceToCombat(player1);
+        harness.handleListChoice(player1, COUNTER_MODE);
+        harness.handleListChoice(player1, DRAW_MODE);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(vorinclex.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     private void advanceToCombat(Player activePlayer) {

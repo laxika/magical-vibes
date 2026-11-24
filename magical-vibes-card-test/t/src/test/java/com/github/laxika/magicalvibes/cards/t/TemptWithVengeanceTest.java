@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TemptWithVengeanceTest extends BaseCardTest {
 
     @Test
+    @DisplayName("An accepting opponent creates X Elementals and you create X more")
     void createsBaseTokensAndBonusTokensWhenOpponentAccepts() {
         castWithX(2);
 
@@ -31,6 +33,7 @@ class TemptWithVengeanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A declining opponent leaves only your X Elementals")
     void createsOnlyBaseTokensWhenOpponentDeclines() {
         castWithX(2);
 
@@ -41,6 +44,7 @@ class TemptWithVengeanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With X of 0 nobody creates a token")
     void zeroXCreatesNoTokensEvenWhenOpponentAccepts() {
         castWithX(0);
 
@@ -51,6 +55,7 @@ class TemptWithVengeanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("No offered token is created until every opponent has decided")
     void waitsForEveryOpponentDecisionBeforeCreatingOfferedTokens() {
         Player thirdPlayer = new Player(UUID.randomUUID(), "Charlie");
         UUID id = thirdPlayer.getId();

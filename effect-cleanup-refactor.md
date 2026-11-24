@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e (each in Findings; the fold queue marks its rows). Fold runs 19c, 22 and 17d are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                  |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c (each in Findings; the fold queue marks its rows). Fold runs 22 and 17d are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                   |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,623 / 2,886 (after fold run 12e) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,617 / 2,877 (after fold run 19c) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,661 rows over 4,438 classes (after fold run 12e). Latest verdict per class: `step-9` 767, unique 1,169, absorbed 765, split 624, blocked-other 509, survivor 306, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 767 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,674 rows over 4,439 classes (after fold run 19c). Latest verdict per class: `step-9` 762, unique 1,170, absorbed 771, split 625, blocked-other 506, survivor 307, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 762 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -752,6 +752,10 @@ Delayed and global triggers:
 - `new CardSubject.TopmostInLibrary(players, null)` for another player's top card, e.g. "a duplicate of the top card of their library" (fold run 12e).
 - A card chosen by `ChooseCardEffect` while it is in a hand is logged without its name (fold run 12e).
 
+- `TemptingOfferEffect.of(prompt, players -> payload)`: "each opponent may [X]. For each opponent who does, [X for you]": all decide in turn order, then the payload over `acceptedPlayers()`, then `RepeatEffect(n)` over `you()` (fold run 19c).
+- `CreateTokenCopyOfTargetPermanentEffect.forController(PlayerSubject)`: each named player creates, owns and controls the copies (CR 111.2), with no Esix-style offer for them (Glimmervoid Basin, Echocasting Symposium, Fractured Identity, Tempt with Reflections; fold run 19c).
+- `PutCounterOnTargetPermanentEffect.placedByEachController()`: "target player puts / each opponent may put a counter on each creature they control"; the permanent's controller is the placer (Shadrix, Tempt with Glory; fold run 19c).
+
 ### Blocked causes still open
 
 Counts are ledger rows of existing classes whose latest note names the cause (approximate, by keyword).
@@ -765,7 +769,7 @@ Counts are ledger rows of existing classes whose latest note names the cause (ap
 | Planar deck cards | 9 | a card subject for the planar deck with its reveal, bottom-order and planeswalk steps |
 | Next-draw replacement payloads (`DrawService`'s inline payloads) | about 20 | a "this draw was replaced" record in `DrawService` |
 | Owner's questions (perpetual "it", gift opponent) | 5 | the owner's decisions below |
-| A token controller on `CreateTokenEffect` / the token copies | 8 | a `PlayerSubject` token controller with the Esix, investigate and attack paths agreeing |
+| A token controller on `CreateTokenEffect` / the token copies | 5 | a `PlayerSubject` token controller with the Esix, investigate and attack paths agreeing; the token copies have one since fold run 19c (`forController`), the four `CreateTokenFor*` records remain |
 | Out-of-battlefield characteristics (the all-zones grants) | 5 | a redesign of the out-of-battlefield characteristic queries (outside this plan) |
 | One or two classes each | most of the other blocked-other rows | a third user; each note names the part |
 
@@ -2649,6 +2653,50 @@ Rows: `dup-hand` leftovers (5) and `drafted-step` (7). Ratchet 3,690 / 2,954 →
 **Seen, not changed.** `TargetPolarityClassifier` has the duplicated `ConjureCardsEffect` BENEFICIAL block twice (harmless). The selection-follow-up drafts (`LibraryRevealChoice`: Skyforge, Adaptive Armorer, Dragon Typhoon, Masterpiece Vault) record no CONJURE.
 
 **For the next run.** Viconia in `specialize`. Necropotence's exile half is `ExileTopCardOfOwnLibraryEffect.of(you()).exiledFaceDown()`. A types-replacing perpetual option would fold Skyforge and Housemeld together.
+
+### Step 9, fold run 19c (2026-11-24, parallel worktree)
+
+`tempting`: 5 of 7 folded, plus 3 token-controller records the new subject unblocked. Ratchet 3,653 / 2,914 → 3,647 / 2,905. Ledger 13 rows (survivor 3, absorbed 6, split 1, unique 1, step-9 2). 9 card files rewritten, Oracle text checked for all 9. CR 101.4, 111.2, 608.2d, 608.2h, 707.10c checked.
+
+**Shape.** `TemptingOfferEffect.of(prompt, players -> payload)` stores the payload twice: over `acceptedPlayers()` and over `you()`.
+- Its handler asks each opponent in turn order (`apnapOpponents`) and changes nothing while they decide.
+- After the last answer it sets `StackEntry.acceptedPlayerIds` and inserts `[payload over acceptors, RepeatEffect(n, payload over you)]` into the parked resolution.
+- The text before "each opponent may" is the payload over `you()` as its own step.
+
+New pieces:
+- `CreateTokenCopyOfTargetPermanentEffect.forController(PlayerSubject)`: each named player creates, owns and controls the copies (CR 111.2). No Esix-style replacement is offered for them.
+- `PutCounterOnTargetPermanentEffect.placedByEachController()`: each permanent's controller puts the counters.
+
+| Member | Result |
+|---|---|
+| TemptingOfferPutCountersEffect | absorbed: counters `controlledBy(players, creature)`.placedByEachController() over you + offer |
+| TemptingOfferCreateTokensEffect | absorbed: token + offer(`token::forController`) (Vengeance; Contract has no first batch) |
+| TemptingOfferDrawAndCreateTokenEffect | absorbed: `SequenceEffect(DrawCardEffect(1, p), rabbit.forController(p))` |
+| TemptingOfferCreateTokenCopyEffect | absorbed: target-group copy + offer(`copy::forController`) |
+| TemptingOfferCopySpellEffect | unique: the M3C ruling has each opponent choose new targets while deciding; the old handler already does that |
+| TemptingOfferReturnCreatureFromGraveyardEffect | left (19d): needs a `PlayerSubject` on `EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect` and an offer limited to opponents who can (CR 608.2d) |
+| TemptingOfferSearchLibraryForLandToBattlefieldEffect | left (19d): needs to count only opponents who searched and one final shuffle over several SEARCH steps |
+| CreateTokenCopyOfTargetCreatureForEachOtherPlayerEffect | absorbed: `forController(except(eachPlayer(), controllerOf(target())))` (Glimmervoid Basin) |
+| CreateTokenCopyOfTargetCreatureForTargetPlayerEffect | absorbed: player group marker + `forController(targetPlayer(0))` (Echocasting Symposium) |
+| ExileTargetPermanentAndCreateTokenCopyForEachOtherPlayerEffect | split: `ExileTargetPermanentEffect` + the copy for the others, read as last known (Fractured Identity) |
+
+**Behaviour changes.**
+- Glory and Bunnies wait for every opponent's decision (fixes the defect for these two; new tests).
+- Glory's acceptors and Shadrix's target player put the counters, so Vorinclex sees them (Oracle; new Shadrix test).
+- Reflections' copies for you are now offered Esix-style replacements (not tested).
+- Fractured Identity exiles through the exile step.
+- Logs: "accepts / declines the offer".
+- AI polarity: Reflections NEUTRAL (was BENEFICIAL), Glimmervoid NEUTRAL (was none).
+
+**Tests changed.** 4 added. DisplayNames added to the Bunnies, Vengeance and Contract tests. One allow-list line removed from `CardImmutabilityArchTest`.
+
+**Seen, not changed.** The defect line naming Mayhem is wrong for Mayhem (M3C ruling). Sure.
+
+**For the next run.** 19d:
+- Give `EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect` a `PlayerSubject` (15 cards use it; check how `underOwnersControl` decides the controller).
+- Give `TemptingOfferEffect` an "offered only to opponents who could" filter (CR 608.2d).
+- Fold Immortality and Discovery; Discovery's final shuffle needs the union of the SEARCH steps' players.
+- The four `CreateTokenFor*` records (40 and 27 cards) need their own run. Terrapact Intimidator's is a may-carrier with a target, not a one-liner.
 
 ## Prompt
 

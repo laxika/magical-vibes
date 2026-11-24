@@ -35,6 +35,11 @@ import java.util.UUID;
  * <p>Optional overrides support "except it's X/Y", "except it's also a [type]",
  * additional subtypes, colors or supertypes, removing legendary, and counters placed after the token enters
  * (CR 707.9).
+ *
+ * <p>The effect's controller creates the tokens, unless {@code tokenController} names other players
+ * ({@link #forController(PlayerSubject)}: "each player except that creature's controller creates a token that's a copy
+ * of it", "each opponent who accepted creates one"): each of them creates the copies, owns them and controls them (CR
+ * 111.2), in the order the subject names them. {@code null} is the effect's controller.
  */
 public record CreateTokenCopyOfTargetPermanentEffect(
         List<CardSubtype> additionalSubtypes,
@@ -64,12 +69,20 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         boolean replaceCardTypes,
         boolean hasteUntilEndOfTurn,
         AnimatePermanentsEffect animateIfNotCreature,
-        PermanentSubject subject
+        PermanentSubject subject,
+        PlayerSubject tokenController
 ) implements CardEffect {
 
     public CreateTokenCopyOfTargetPermanentEffect {
         if (subject == null) {
             subject = Subjects.target();
+        }
+        if (tokenController instanceof PlayerSubject.You) {
+            tokenController = null;
+        }
+        if (tokenController != null && (createForTargetController || chooseAttackTarget || tappedAndAttacking)) {
+            throw new IllegalArgumentException("A token controller subject replaces createForTargetController and "
+                    + "doesn't create attacking tokens");
         }
         if (!(subject instanceof PermanentSubject.Target && ((PermanentSubject.Target) subject).group() == null)
                 && !(subject instanceof PermanentSubject.Triggering)
@@ -91,6 +104,44 @@ public record CreateTokenCopyOfTargetPermanentEffect(
             throw new IllegalArgumentException(
                     "Post-entry animation must be a permanent TARGET animation with fixed power and toughness");
         }
+    }
+
+    /** A token copy the effect's controller creates. */
+    public CreateTokenCopyOfTargetPermanentEffect(
+            List<CardSubtype> additionalSubtypes,
+            Set<CardType> additionalTypes,
+            Integer powerOverride,
+            Integer toughnessOverride,
+            Map<CounterType, Integer> initialCounters,
+            boolean grantHaste,
+            boolean exileAtEndStep,
+            boolean sacrificeAtEndStep,
+            boolean tappedAndAttacking,
+            boolean trackWithSource,
+            boolean createForTargetController,
+            CardColor colorOverride,
+            Set<Keyword> additionalKeywords,
+            boolean sacrificeAtNextUpkeep,
+            List<Ability> additionalAbilities,
+            List<CardSubtype> creatureSubtypeOverride,
+            boolean tapped,
+            boolean removeLegendary,
+            DynamicAmount amount,
+            boolean exileAtEndOfCombat,
+            Set<CardSupertype> additionalSupertypes,
+            boolean chooseAttackTarget,
+            List<CardColor> additionalColors,
+            String nameOverride,
+            boolean replaceCardTypes,
+            boolean hasteUntilEndOfTurn,
+            AnimatePermanentsEffect animateIfNotCreature,
+            PermanentSubject subject) {
+        this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
+                grantHaste, exileAtEndStep, sacrificeAtEndStep, tappedAndAttacking, trackWithSource,
+                createForTargetController, colorOverride, additionalKeywords, sacrificeAtNextUpkeep,
+                additionalAbilities, creatureSubtypeOverride, tapped, removeLegendary, amount,
+                exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors, nameOverride,
+                replaceCardTypes, hasteUntilEndOfTurn, animateIfNotCreature, subject, null);
     }
 
     /** Backward-compatible constructor for copies of the entry's target. */
@@ -245,7 +296,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 tappedAndAttacking, trackWithSource, createForTargetController, colorOverride, additionalKeywords,
                 sacrificeAtNextUpkeep, additionalAbilities, creatureSubtypeOverride, tapped, removeLegendary,
                 amount, exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors,
-                nameOverride, true, hasteUntilEndOfTurn, animateIfNotCreature, subject);
+                nameOverride, true, hasteUntilEndOfTurn, animateIfNotCreature, subject, tokenController);
     }
 
     /**
@@ -258,7 +309,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 tappedAndAttacking, trackWithSource, createForTargetController, colorOverride, additionalKeywords,
                 sacrificeAtNextUpkeep, additionalAbilities, creatureSubtypeOverride, tapped, removeLegendary,
                 amount, exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors,
-                nameOverride, replaceCardTypes, true, animateIfNotCreature, subject);
+                nameOverride, replaceCardTypes, true, animateIfNotCreature, subject, tokenController);
     }
 
     /**
@@ -294,7 +345,21 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 tappedAndAttacking, trackWithSource, createForTargetController, colorOverride, additionalKeywords,
                 sacrificeAtNextUpkeep, additionalAbilities, creatureSubtypeOverride, tapped, removeLegendary,
                 amount, exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors,
-                nameOverride, replaceCardTypes, hasteUntilEndOfTurn, animateIfNotCreature, newSubject);
+                nameOverride, replaceCardTypes, hasteUntilEndOfTurn, animateIfNotCreature, newSubject, tokenController);
+    }
+
+    /**
+     * This copy effect with the tokens created by each player {@code players} names, in that order ("each player
+     * except that creature's controller creates a token that's a copy of it"); {@code you()} is the effect's
+     * controller.
+     */
+    public CreateTokenCopyOfTargetPermanentEffect forController(PlayerSubject players) {
+        return new CreateTokenCopyOfTargetPermanentEffect(additionalSubtypes, additionalTypes, powerOverride,
+                toughnessOverride, initialCounters, grantHaste, exileAtEndStep, sacrificeAtEndStep,
+                tappedAndAttacking, trackWithSource, createForTargetController, colorOverride, additionalKeywords,
+                sacrificeAtNextUpkeep, additionalAbilities, creatureSubtypeOverride, tapped, removeLegendary,
+                amount, exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors,
+                nameOverride, replaceCardTypes, hasteUntilEndOfTurn, animateIfNotCreature, subject, players);
     }
 
     /**
@@ -311,7 +376,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 tappedAndAttacking, trackWithSource, createForTargetController, colorOverride, additionalKeywords,
                 sacrificeAtNextUpkeep, additionalAbilities, creatureSubtypeOverride, tapped, removeLegendary,
                 amount, exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors,
-                nameOverride, replaceCardTypes, hasteUntilEndOfTurn, animation, subject);
+                nameOverride, replaceCardTypes, hasteUntilEndOfTurn, animation, subject, tokenController);
     }
 
     /** Backward-compatible full constructor without a name override. */

@@ -785,8 +785,6 @@ public class TargetPolarityClassifier {
             entry("ChangeColorTextEffect", TargetPolarity.NEUTRAL),
             entry("ChooseOneForTargetPermanentEffect", TargetPolarity.NEUTRAL),
             entry("CreateTokenCopyAndLinkToSourceEffect", TargetPolarity.NEUTRAL),
-            entry("CreateTokenCopyOfTargetCreatureForTargetPlayerEffect", TargetPolarity.NEUTRAL),
-            entry("TemptingOfferCreateTokenCopyEffect", TargetPolarity.BENEFICIAL),
             entry("RegisterMysticReflectionEffect", TargetPolarity.NEUTRAL),
             // Fell the Mighty uses the target's power as a threshold and spares the target itself.
             entry("DestroyAllCreaturesWithPowerGreaterThanTargetEffect", TargetPolarity.NEUTRAL),

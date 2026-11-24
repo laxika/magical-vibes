@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TemptingOfferCreateTokensEffect;
-
+import com.github.laxika.magicalvibes.model.effect.TemptingOfferEffect;
 import java.util.List;
 import java.util.Set;
 
@@ -19,8 +18,11 @@ import java.util.Set;
 public class TemptWithVengeance extends Card {
 
     public TemptWithVengeance() {
-        addSpellEffect(new TemptingOfferCreateTokensEffect(
-                new CreateTokenEffect(new XValue(), "Elemental", 1, 1, CardColor.RED,
-                        List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.HASTE), Set.of())));
+        CreateTokenEffect elementals = new CreateTokenEffect(new XValue(), "Elemental", 1, 1, CardColor.RED,
+                List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.HASTE), Set.of());
+        addSpellEffect(elementals);
+        addSpellEffect(TemptingOfferEffect.of(
+                "Create X 1/1 red Elemental creature tokens with haste? If you do, its controller creates X more.",
+                elementals::forController));
     }
 }

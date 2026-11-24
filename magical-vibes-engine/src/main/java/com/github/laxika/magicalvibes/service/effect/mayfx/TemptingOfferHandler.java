@@ -4,29 +4,28 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.TemptingOfferPutCountersEffect;
-import com.github.laxika.magicalvibes.service.effect.normalfx.TemptingOfferPutCountersEffectHandler;
+import com.github.laxika.magicalvibes.model.effect.TemptingOfferEffect;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TemptingOfferEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Handles one opponent's choice for Tempt with Glory. */
+/** One opponent's answer to a tempting offer. */
 @Component
 @RequiredArgsConstructor
-public class TemptingOfferPutCountersHandler implements MayEffectHandlerBean {
+public class TemptingOfferHandler implements MayEffectHandlerBean {
 
-    private final TemptingOfferPutCountersEffectHandler effectHandler;
+    private final TemptingOfferEffectHandler effectHandler;
     private final InputCompletionService inputCompletionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
-        return TemptingOfferPutCountersEffect.class;
+        return TemptingOfferEffect.class;
     }
 
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        TemptingOfferPutCountersEffect effect = (TemptingOfferPutCountersEffect) ability.effects().getFirst();
-        effectHandler.completeChoice(gameData, ability, effect, accepted);
+        effectHandler.completeChoice(gameData, ability, (TemptingOfferEffect) ability.effects().getFirst(), accepted);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 }

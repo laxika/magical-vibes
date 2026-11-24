@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPermanentOrPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetCreatureForEachOtherPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasOneTargetPredicate;
@@ -26,6 +27,7 @@ public class GlimmervoidBasin extends Card {
                         .withStackEntryFilter(new StackEntryHasOneTargetPredicate()),
                 new CopySpellForEachOtherPermanentOrPlayerEffect());
         target(TargetFilters.creature()).addTrigger(Triggers.chaosEnsues(),
-                new CreateTokenCopyOfTargetCreatureForEachOtherPlayerEffect());
+                new CreateTokenCopyOfTargetPermanentEffect().forController(
+                        Subjects.except(Subjects.eachPlayer(), Subjects.controllerOf(Subjects.target()))));
     }
 }

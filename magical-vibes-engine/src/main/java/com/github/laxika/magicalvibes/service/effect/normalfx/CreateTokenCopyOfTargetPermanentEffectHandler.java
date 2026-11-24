@@ -101,7 +101,7 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
             return;
         }
 
-        if (targetIds.size() > 1 && !copyEffect.createForTargetController()
+        if (targetIds.size() > 1 && !copyEffect.createForTargetController() && copyEffect.tokenController() == null
                 && (copyEffect.chooseAttackTarget() || !copyEffect.tappedAndAttacking())) {
             // One instruction ("for each of X target permanents, create X tokens", "for each attacking creature,
             // create a tapped and attacking copy"): the action is processed simultaneously (CR 608.2f), so token
@@ -252,7 +252,7 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
             return true;
         }
         if (copyEffect.chooseAttackTarget() || copyEffect.createForTargetController()
-                || copyEffect.tappedAndAttacking()) {
+                || copyEffect.tokenController() != null || copyEffect.tappedAndAttacking()) {
             return false;
         }
         long existingTargets = targetIds.stream()
@@ -291,6 +291,14 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
         }
         Permanent sourcePermanent = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (effect.tokenController() != null) {
+            Card copySource = copySourceFor(targetPermanent);
+            for (UUID creatorId : subjectResolutionService.players(gameData, entry, effect, effect.tokenController())) {
+                tokenCopySupport.createTokenCopies(gameData, entry, Collections.nCopies(copyCount, copySource),
+                        sourcePermanent, creatorId, effect, null);
+            }
+            return;
+        }
         UUID tokenControllerId = entry.getControllerId();
         if (effect.createForTargetController()) {
             UUID targetControllerId = gameQueryService.findPermanentController(gameData, targetId);
@@ -333,6 +341,13 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
         }
         Permanent sourcePermanent = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (effect.tokenController() != null) {
+            for (UUID creatorId : subjectResolutionService.players(gameData, entry, effect, effect.tokenController())) {
+                tokenCopySupport.createTokenCopies(gameData, entry, Collections.nCopies(copyCount, lastKnownCard),
+                        sourcePermanent, creatorId, effect, null);
+            }
+            return;
+        }
         UUID attackTargetId = effect.tappedAndAttacking() ? entry.getAttackedTargetId() : null;
         List<UUID> attackTargetIds = attackTargetId == null ? null : List.of(attackTargetId);
         tokenCopySupport.createTokenCopies(gameData, entry, Collections.nCopies(copyCount, lastKnownCard),

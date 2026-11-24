@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TemptingContractTest extends BaseCardTest {
 
     @Test
+    @DisplayName("An accepting opponent creates a Treasure and so do you")
     void acceptedOpponentCreatesTreasureAndControllerCreatesTreasure() {
         harness.addToBattlefield(player1, new TemptingContract());
 
@@ -33,6 +35,7 @@ class TemptingContractTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A declining opponent leaves nobody a Treasure")
     void declinedOpponentCreatesNoTreasure() {
         harness.addToBattlefield(player1, new TemptingContract());
 
@@ -45,6 +48,7 @@ class TemptingContractTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Doesn't trigger in an opponent's upkeep")
     void doesNotTriggerDuringOpponentsUpkeep() {
         harness.addToBattlefield(player1, new TemptingContract());
 
@@ -57,6 +61,7 @@ class TemptingContractTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The trigger still resolves after Tempting Contract leaves")
     void triggeredAbilityStillResolvesAfterContractLeavesBattlefield() {
         var contract = harness.addToBattlefieldAndReturn(player1, new TemptingContract());
         advanceToUpkeep(player1);
@@ -71,6 +76,7 @@ class TemptingContractTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Every opponent decides before any Treasure is created")
     void allOpponentsChooseBeforeAnyTreasuresAreCreated() {
         harness.addToBattlefield(player1, new TemptingContract());
         advanceToUpkeep(player1);

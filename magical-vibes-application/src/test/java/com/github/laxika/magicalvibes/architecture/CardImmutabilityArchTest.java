@@ -129,7 +129,6 @@ class CardImmutabilityArchTest {
             "EachOpponentSacrificesNontokenCreatureConjuresDuplicatesEffectHandler", // stamps owner on fresh conjured copies
             "EachPlayerDiscardsHandThenConjuresFromAdjacentPlayerLibraryEffectHandler", // stamps owner on fresh conjured copies
             "PayXManaConjureRandomCreatureWithManaValueAndCloakEffectHandler", // stamps the freshly created printing as conjured
-            "ExileTargetPermanentAndCreateTokenCopyForEachOtherPlayerEffectHandler", // assembles fresh face-down copiable values
             "ReturnTargetCreatureToHandAndCreateTokenCopyEffectHandler", // assembles fresh face-down copiable values
             "ReturnTargetCreatureCardToHandAndPerpetuallyModifyEffectHandler", // perpetual changes on a fresh runtime copy
             "ChoiceHandlerService", // as-enters P/T form on a fresh runtime copy

@@ -190,10 +190,11 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
         boolean counterBlocked = gameQueryService.cantHaveCounters(gameData, target)
                 || (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE
                 && gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target));
+        UUID placerId = placerOf(gameData, entry, e, target);
 
         if (!counterBlocked && !replacementsApplied && count > 0) {
             var modifiers = gameQueryService.counterReplacementsFor(gameData, target, e.counterType(),
-                    entry.getControllerId(), false);
+                    placerId, false);
             if (gameQueryService.counterReplacementOrderMatters(gameData, e.counterType(), count, modifiers)) {
                 beginReplacementChoice(gameData, new ChoiceContext.CounterReplacementOrder(
                         entry, targetId, count, modifiers, e, subsequentTargets, count));
@@ -205,9 +206,10 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
         if (!counterBlocked) {
             if (replacementsApplied) {
                 permanentCounterSupport.placeCounterOnPermanentAfterReplacements(
-                        gameData, entry, target, e.counterType(), count);
+                        gameData, entry, target, e.counterType(), count, placerId);
             } else {
-                permanentCounterSupport.placeCounterOnPermanent(gameData, entry, target, e.counterType(), count);
+                permanentCounterSupport.placeCounterOnPermanentForPlayer(
+                        gameData, entry, target, e.counterType(), count, placerId);
             }
         }
 
@@ -221,6 +223,21 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
             }
         }
         return false;
+    }
+
+    /**
+     * The player who puts the counters on {@code target}: the effect's controller, or the permanent's controller when
+     * each controller puts them on their own permanents.
+     */
+    private UUID placerOf(GameData gameData, StackEntry entry, PutCounterOnTargetPermanentEffect e,
+                          Permanent target) {
+        if (e.eachControllerPlaces()) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+            if (controllerId != null) {
+                return controllerId;
+            }
+        }
+        return entry.getControllerId();
     }
 
     /**
