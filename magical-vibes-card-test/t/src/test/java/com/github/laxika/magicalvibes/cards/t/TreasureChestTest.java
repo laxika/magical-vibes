@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -86,6 +87,17 @@ class TreasureChestTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(searched);
+    }
+
+    @Test
+    @DisplayName("A natural 20's unrevealed card goes into its controller's hand without its name being logged")
+    void naturalTwentyPutsTheUnrevealedCardIntoHandWithoutNamingIt() {
+        Card searched = new GrizzlyBears();
+        activate(20, List.of(searched));
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(searched);
+        assertThat(gd.gameLog).noneMatch(entry -> entry.plainText().contains("Grizzly Bears"));
     }
 
     @Test

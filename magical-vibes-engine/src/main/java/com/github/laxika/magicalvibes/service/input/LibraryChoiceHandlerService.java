@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.DelayedExiledCardReturns;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -59,7 +61,6 @@ import com.github.laxika.magicalvibes.model.effect.PutExiledCardsIntoOwnersGrave
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardInGraveyardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -1188,6 +1189,9 @@ public class LibraryChoiceHandlerService {
             finishSearchAndResume(gameData);
             return;
         }
+        recordFoundCard(gameData, chosenCard, playerId,
+                destination == LibrarySearchDestination.HAND ? handOwnerId : deckOwnerId,
+                toBattlefield || putChosenCardOnBattlefield ? null : destination);
         if (destination == LibrarySearchDestination.BATTLEFIELD && chosenCard.isAura()
                 && !placeBattlefieldCardsSimultaneously && remainingCount == 1) {
             battlefieldEntryBatchSupport.begin(gameData, List.of(
@@ -1841,16 +1845,7 @@ public class LibraryChoiceHandlerService {
                 accumulatedCards.clear();
             }
         } else if (toGraveyard) {
-            boolean enteredGraveyard = graveyardService.addCardToGraveyard(
-                    gameData, deckOwnerId, chosenCard, Zone.LIBRARY);
-            if ((enteredGraveyard || gameData.findExiledCard(chosenCard.getId()) != null)
-                    && librarySearch.sourcePermanentId() != null
-                    && gameData.pendingEffectResolutionEntry != null) {
-                gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
-                        gameData.pendingEffectResolutionIndex,
-                        List.of(new BecomeCopyOfCardInGraveyardUntilEndOfTurnEffect(
-                                chosenCard.getId())));
-            }
+            graveyardService.addCardToGraveyard(gameData, deckOwnerId, chosenCard, Zone.LIBRARY);
         } else if (destination == LibrarySearchDestination.REVEAL_ONLY) {
             deck.add(chosenCard);
         } else if (destination == LibrarySearchDestination.HAND) {
@@ -2205,6 +2200,29 @@ public class LibraryChoiceHandlerService {
                             chosenCard.getName(), followUp.grimReminderSearch().lifeLoss())));
         }
         finishSearchAndResume(gameData);
+    }
+
+    /**
+     * Adds {@code card}, which the search of the parked entry's library-search step found, to its
+     * {@link StepKind#SEARCH} outcome, with the zone {@code destination} puts it in (a hand, a graveyard, exile, or the
+     * library for a search that keeps it there); a card going onto the battlefield or to a destination that hides or
+     * holds it is recorded with no zone. Called as each pick is answered, before the card moves.
+     */
+    private static void recordFoundCard(GameData gameData, Card card, UUID searcherId, UUID zoneOwnerId,
+                                        LibrarySearchDestination destination) {
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        if (entry == null) {
+            return;
+        }
+        Zone zone = destination == null ? null : switch (destination) {
+            case HAND -> Zone.HAND;
+            case GRAVEYARD -> Zone.GRAVEYARD;
+            case EXILE, EXILE_IMPRINT -> Zone.EXILE;
+            case REVEAL_ONLY, TOP_OF_LIBRARY -> Zone.LIBRARY;
+            default -> null;
+        };
+        entry.addToStep(StepKind.SEARCH, StepOutcome.ofObjects(List.of(card.getId()), List.of(searcherId),
+                zone == null ? List.of() : List.of(new MovedCard(card.getId(), card.getId(), zone, zoneOwnerId))));
     }
 
     private boolean startNextToHandPick(GameData gameData, UUID playerId, LibrarySearchFollowUp followUp, boolean alreadyShuffled) {

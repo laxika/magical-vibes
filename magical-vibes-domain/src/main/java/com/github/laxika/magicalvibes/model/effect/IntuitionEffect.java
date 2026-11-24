@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * "Search your library for three cards and reveal them" (Intuition), "search your library for exactly two cards not
  * named Burning-Rune Demon that have different names. If you do, reveal those cards" (Burning-Rune Demon): the
  * controller searches their own library through a {@code PendingInteraction.IntuitionSearchChoice} and reveals what
- * they find. The found cards stay in the library (CR 701.20b) and are the step's {@code StepKind.REVEAL} result, so
+ * they find. The found cards stay in the library (CR 701.20b) and are the step's {@code StepKind.SEARCH} and
+ * {@code StepKind.REVEAL} result, so
  * "an opponent chooses one of them", "put that card into your hand and the rest into your graveyard" and "then
  * shuffle" are later steps over {@code Subjects.revealedThisWay()} and {@code ShuffleLibraryEffect}. The step records
  * the search (CR 701.23a); a prevented search finds nothing; Aven Mindcensor limits it to the top cards; under

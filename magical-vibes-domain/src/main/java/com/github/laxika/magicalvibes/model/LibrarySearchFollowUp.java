@@ -572,17 +572,6 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                 new SelectedCardFollowUp(predicate, effect, false, effectIfNoCardChosen));
     }
 
-    public static LibrarySearchFollowUp forNoCard(CardEffect effect) {
-        return new LibrarySearchFollowUp(null, null, null, null, List.of(), null, null, List.of(), null, null, null,
-                new SelectedCardFollowUp(null, null, false, effect));
-    }
-
-    public static LibrarySearchFollowUp forSelectedCardWithManaValue(
-            CardPredicate predicate, CardEffect effect) {
-        return new LibrarySearchFollowUp(null, null, null, null, List.of(), null, null, List.of(), null, null, null,
-                new SelectedCardFollowUp(predicate, effect, true));
-    }
-
     public static LibrarySearchFollowUp forD20BasicLandSearch(
             com.github.laxika.magicalvibes.model.effect.D20BasicLandPlacementEffect oneToNine,
             com.github.laxika.magicalvibes.model.effect.D20BasicLandPlacementEffect tenToNineteen,

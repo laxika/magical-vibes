@@ -2,15 +2,16 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypeToExileAndImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.Set;
 
 @CardRegistration(set = "M11", collectorNumber = "144")
 @CardRegistration(set = "M15", collectorNumber = "149")
@@ -22,7 +23,8 @@ public class HoardingDragon extends Card {
         // When Hoarding Dragon enters the battlefield, you may search your library
         // for an artifact card, exile it, then shuffle.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MayEffect(new SearchLibraryForCardTypeToExileAndImprintEffect(Set.of(CardType.ARTIFACT)),
+                new MayEffect(new SearchLibraryEffect(new CardTypePredicate(CardType.ARTIFACT),
+                        LibrarySearchDestination.EXILE_IMPRINT),
                         "Search your library for an artifact card to exile?"));
 
         // When Hoarding Dragon dies, you may put the exiled card into its owner's hand.

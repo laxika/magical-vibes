@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
@@ -61,8 +62,11 @@ public class PutCardsIntoHandEffectHandler implements NormalEffectHandlerBean {
                 List<Card> library = gameData.playerDecks.get(located.ownerId());
                 if (library != null && library.remove(card)) {
                     gameData.addCardToHand(located.ownerId(), card);
-                    gameLogService.append(gameData, GameLog.textCardText(
-                            gameData.playerIdToName.get(located.ownerId()) + " puts ", card, " into their hand."));
+                    String ownerName = gameData.playerIdToName.get(located.ownerId());
+                    // A card a search found without revealing it goes from one hidden zone to another unseen (CR 400.2).
+                    gameLogService.append(gameData, foundUnrevealed(entry, card)
+                            ? GameLog.text(ownerName + " puts a card into their hand.")
+                            : GameLog.textCardText(ownerName + " puts ", card, " into their hand."));
                 }
                 continue;
             }
@@ -83,6 +87,12 @@ public class PutCardsIntoHandEffectHandler implements NormalEffectHandlerBean {
                     : GameLog.textCardText(ownerName + " puts ", card, " into their hand."));
             log.info("Game {} - {} puts {} from exile into their hand", gameData.id, ownerName, card.getName());
         }
+    }
+
+    /** Whether the resolution's library search found {@code card} and no reveal step of it showed it. */
+    private static boolean foundUnrevealed(StackEntry entry, Card card) {
+        return entry.getResolutionResults().outcome(StepKind.SEARCH).objectIds().contains(card.getId())
+                && !entry.getResolutionResults().outcome(StepKind.REVEAL).objectIds().contains(card.getId());
     }
 
     /** The named graveyard cards leave as one event, each for its owner's hand (CR 400.3). */

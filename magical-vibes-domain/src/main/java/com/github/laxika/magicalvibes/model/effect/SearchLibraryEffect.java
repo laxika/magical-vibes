@@ -44,6 +44,14 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * {@code topLibraryFractionDenominator} restricts the search to the top ceiling(size / denominator)
  * cards of the library when positive.
  *
+ * <p>The search is a step: it records {@code StepKind.SEARCH}, nothing as it begins and each card it finds as that
+ * pick is answered, with the zone the card goes to, so "if you do", "that many", "its mana value" and "that card" are
+ * later steps ({@code HappenedThisWay.searched()}, {@code AmountThisWay(SEARCH)}, {@code Subjects.foundThisWay()}). A card
+ * Opposition Agent exiles instead is not found this way (its ruling: such an effect can't see it in exile).
+ * {@code REVEAL_ONLY} keeps the found card in the library (revealed when the search states a quality) for a later step
+ * to move ("If you reveal a card named X this way, put it onto the battlefield. Otherwise, put that card into your
+ * hand"); {@code EXILE_IMPRINT} exiles it imprinted on the source permanent.
+ *
  * <p>Replaced the {@code SearchLibraryFor*} family (to-hand tutors, by-name searches, to-top,
  * creature-to-battlefield with MV/colour/subtype constraints, and card-types-to-battlefield).
  */

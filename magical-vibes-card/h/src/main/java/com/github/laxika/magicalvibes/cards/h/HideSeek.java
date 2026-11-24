@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryAndConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
+import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -41,12 +41,9 @@ public class HideSeek extends Card {
                 ).withManaCost("{R}{W}"),
                 new ChooseOneEffect.ChooseOneOption(
                         "Seek - Search target opponent's library for a card and exile it. You gain life equal to its mana value",
-                        new SearchTargetLibraryAndConditionalEffect(
-                                new CardTruePredicate(),
-                                LibrarySearchDestination.EXILE,
-                                new CardTruePredicate(),
-                                new GainLifeEffect(new EventValue())
-                        ),
+                        SequenceEffect.of(
+                                new SearchTargetLibraryEffect(1, null, LibrarySearchDestination.EXILE, false),
+                                new GainLifeEffect(AmountThisWay.searchedManaValue())),
                         opponent
                 ).withManaCost("{W}{B}")
         )));

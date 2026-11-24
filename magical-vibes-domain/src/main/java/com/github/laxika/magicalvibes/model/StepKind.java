@@ -77,6 +77,13 @@ package com.github.laxika.magicalvibes.model;
  *   <li>{@link #GOAD}: the number of creatures the step goaded ({@code GoadTargetCreatureUntilNextTurnEffect}; one the
  *       same player goaded again counts, CR 701.15d), those creatures, their controllers: "for each creature goaded this
  *       way".</li>
+ *   <li>{@link #SEARCH}: the number of cards a library search found ({@code SearchLibraryEffect},
+ *       {@code SearchTargetLibraryEffect}, {@code IntuitionEffect}), those cards, the searching player, each one's
+ *       {@link StepOutcome#movedCards()} entry naming the zone the search put it in (a hand, a graveyard, exile, or the
+ *       library for a search that reveals and keeps it there, CR 701.20b); a card put onto the battlefield has no entry
+ *       ({@code Subjects.searched()} names the permanent). A search that is prevented, finds nothing or searches an
+ *       empty library records nothing found (CR 701.23a, 701.23b); a card Opposition Agent exiled instead is not
+ *       found this way.</li>
  * </ul>
  *
  * <p>A later step may read a step only if that step finishes before the next one starts (CR 608.2c): its handler never
@@ -102,8 +109,12 @@ package com.github.laxika.magicalvibes.model;
  * {@code RevealCardsFromTopUntilEffect}, {@code RevealCardsFromHandEffect}, never prompting), the discard of named
  * cards ({@code DiscardCardsEffect}: a replacement's question ends it) and the any-amount payment
  * ({@code EachPlayerPaysAnyManaEffect}: it resolves again at its own index for each answer and records after the last),
- * the tap ({@code TapPermanentsEffect}: its up-to-N choice adds what it taps as it is answered), the goad ({@code GoadTargetCreatureUntilNextTurnEffect}, never prompting), the shuffle of each player's zones into their library ({@code EachPlayerShufflesZonesIntoLibraryEffect}, never
- * prompting), the vote ({@code VoteEffect}: it records as its last vote is cast), the put onto the battlefield ({@code PutCardsOntoBattlefieldEffect}: its entry choices come before
+ * the tap ({@code TapPermanentsEffect}: its up-to-N choice adds what it taps as it is answered), the goad
+ * ({@code GoadTargetCreatureUntilNextTurnEffect}, never prompting), the shuffle of each player's zones into their library
+ * ({@code EachPlayerShufflesZonesIntoLibraryEffect}, never prompting), the vote ({@code VoteEffect}: it records as its last
+ * vote is cast), the library search ({@code SearchLibraryEffect}, {@code SearchTargetLibraryEffect}: nothing as it begins,
+ * each card as its pick is answered; {@code IntuitionEffect}: as its answer ends it), the put onto the battlefield
+ * ({@code PutCardsOntoBattlefieldEffect}: its entry choices come before
  * anything moves and it records as its batch enters); deal damage, return a card from a graveyard,
  * remove counters and return to hand only on the paths that
  * don't prompt mid-step. A handler that pauses mid-step by rerunning itself after changes, or by a continuation of its
@@ -140,5 +151,6 @@ public enum StepKind {
     VOTE,
     CONJURE,
     TAP,
-    GOAD
+    GOAD,
+    SEARCH
 }

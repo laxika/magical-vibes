@@ -319,7 +319,8 @@ public class SubjectResolutionService {
      * {@link CardSubject.CardsThisWay}: for each object the step recorded, the card it became in the zone the step put
      * it in ({@link StepOutcome#movedCards()}; every card of a merged permanent, CR 731.3c); an exiled card that kept
      * its id is looked for in exile, a discarded card in its graveyard, else in exile where a replacement put it, a revealed card in the library it
-     * was revealed from. Only
+     * was revealed from, a card a library search found in the zone the search put it in (a graveyard card a replacement
+     * exiled instead, in exile). Only
      * a card still in that zone is named, and, for a delayed ability's step, in the stay it was bound to
      * ({@link MovedCard#entryVersion()}, CR 603.7c); the subject's filter, when it has one, is then judged on each card
      * as it is there.
@@ -349,6 +350,10 @@ public class SubjectResolutionService {
                     continue;
                 }
                 LocatedCard found = locate(gameData, card.cardId(), card.zone());
+                if (found == null && kind == StepKind.SEARCH && card.zone() == Zone.GRAVEYARD) {
+                    // A card a search put into a graveyard that a replacement exiled instead (Rest in Peace).
+                    found = locate(gameData, card.cardId(), Zone.EXILE);
+                }
                 // A destroyed or sacrificed token is no card, in the moment before it ceases to exist (CR 108.2b).
                 if (found != null && !((kind == StepKind.DESTROY || kind == StepKind.SACRIFICE)
                         && found.card().isToken())) {

@@ -26,8 +26,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link IntuitionEffect}: the controller searches their library (as many cards as it holds if fewer) via a
- * {@link PendingInteraction.IntuitionSearchChoice} and reveals what they find, recording {@link StepKind#REVEAL} with
- * the found cards still in the library. A step that pauses at its end: the search records {@code REVEAL} as nothing
+ * {@link PendingInteraction.IntuitionSearchChoice} and reveals what they find, recording {@link StepKind#SEARCH} and
+ * {@link StepKind#REVEAL} with the found cards still in the library. A step that pauses at its end: the search records {@code REVEAL} as nothing
  * before it asks, and the answer ({@link #found}) records what was found before the resolution goes on. A library with
  * one card leaves no choice, so that card is found unasked; a prevented search, an empty library or a search with
  * nothing that can be found finds nothing. Shuffling is a later step.
@@ -53,6 +53,7 @@ public class IntuitionEffectHandler implements NormalEffectHandlerBean {
         var search = (IntuitionEffect) effect;
         UUID controllerId = entry.getControllerId();
         entry.recordStep(StepKind.REVEAL, StepOutcome.NONE);
+        entry.recordStep(StepKind.SEARCH, StepOutcome.NONE);
         if (librarySearchSupport.isSearchPrevented(gameData, controllerId, false)) {
             return;
         }
@@ -95,7 +96,7 @@ public class IntuitionEffectHandler implements NormalEffectHandlerBean {
 
     /**
      * The cards the search of {@code controllerId}'s library found: revealed and recorded as the step's
-     * {@link StepKind#REVEAL} result, still in the library; under Opposition Agent ({@code agentControllerId}) exiled
+     * {@link StepKind#SEARCH} and {@link StepKind#REVEAL} result, still in the library; under Opposition Agent ({@code agentControllerId}) exiled
      * instead, playable by the Agent's controller, and nothing is revealed.
      */
     public void found(GameData gameData, StackEntry entry, UUID controllerId, List<Card> found,
@@ -130,6 +131,7 @@ public class IntuitionEffectHandler implements NormalEffectHandlerBean {
             whereTheyAre.add(new MovedCard(card.getId(), card.getId(), Zone.LIBRARY, controllerId));
         }
         gameLogService.append(gameData, reveal.text(" from their library.").build());
+        entry.recordStep(StepKind.SEARCH, StepOutcome.ofObjects(cardIds, List.of(controllerId), whereTheyAre));
         entry.recordStep(StepKind.REVEAL, StepOutcome.ofObjects(cardIds, List.of(controllerId), whereTheyAre));
     }
 }

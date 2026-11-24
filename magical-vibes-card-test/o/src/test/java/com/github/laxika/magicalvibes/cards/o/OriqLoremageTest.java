@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OriqLoremage.class, Fog.class, GrizzlyBears.class, HuntForSpecimens.class})
+@CardUsed({OriqLoremage.class, Fog.class, GrizzlyBears.class, HuntForSpecimens.class, OppositionAgent.class})
 class OriqLoremageTest extends BaseCardTest {
 
     @Test
@@ -30,6 +30,20 @@ class OriqLoremageTest extends BaseCardTest {
 
         assertThat(loremage.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Fog");
+    }
+
+    @Test
+    @DisplayName("An instant Opposition Agent exiles instead is not seen in exile, so no counter is added")
+    void instantExiledByOppositionAgentAddsNoCounter() {
+        harness.addToBattlefield(player2, new OppositionAgent());
+        Card fog = new Fog();
+        Permanent loremage = setUpLoremage(List.of(fog));
+
+        activateAndResolve();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(fog);
+        assertThat(loremage.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test

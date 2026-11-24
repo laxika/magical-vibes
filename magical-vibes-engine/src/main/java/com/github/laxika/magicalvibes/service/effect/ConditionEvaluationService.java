@@ -1422,6 +1422,8 @@ public class ConditionEvaluationService {
             case VoteResult c -> voteResult(ctx.resolutionResults().outcome(StepKind.VOTE), c);
             case HappenedThisWay c -> c.kind() == StepKind.REVEAL && c.cardFilter() != null
                     ? revealedCardMatches(gameData, ctx, c)
+                    : c.kind() == StepKind.SEARCH && c.cardFilter() != null
+                    ? searchedCardMatches(gameData, ctx, c)
                     : c.cardFilter() != null
                     // An exiled permanent is judged as the card it became (Deicide's ruling: the card in exile).
                     ? Stream.concat(ctx.resolutionResults().outcome(c.kind()).objectIds().stream(),
@@ -2959,6 +2961,20 @@ public class ConditionEvaluationService {
             case MORE_VOTES_OR_TIED -> moreVotes || withMost > 1;
             case ANY_VOTES -> mine > 0;
         };
+    }
+
+    /**
+     * A card the most recent library search found matches the condition's card filter, judged as it is now wherever the
+     * search put it (on the battlefield as its card), with the resolving entry's X ("less than the sacrificed
+     * permanent's mana value").
+     */
+    private boolean searchedCardMatches(GameData gameData, ConditionContext ctx, HappenedThisWay condition) {
+        return ctx.resolutionResults().outcome(StepKind.SEARCH).objectIds().stream().anyMatch(id -> {
+            Card card = gameQueryService.findCardById(gameData, id);
+            return card != null && predicateEvaluationService.matchesCardPredicate(card, condition.cardFilter(),
+                    ctx.sourceCard() == null ? null : ctx.sourceCard().getId(), gameData, gameData.ownerOf(card),
+                    ctx.sourcePermanentId(), null, ctx.xValue(), ctx.sourcePermanent());
+        });
     }
 
     private boolean revealedCardMatches(GameData gameData, ConditionContext ctx, HappenedThisWay condition) {

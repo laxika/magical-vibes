@@ -1192,8 +1192,8 @@ public class AmountEvaluationService {
                     thisWay.yours() ? controlledBy(exiled, ctx.controllerId()) : exiled.objectIds());
             return thisWay.negativeKept() ? total : Math.max(0, total);
         }
-        if (thisWay.kind() == StepKind.CHOOSE) {
-            StepOutcome chosen = results.outcome(StepKind.CHOOSE);
+        if (thisWay.kind() == StepKind.CHOOSE || thisWay.kind() == StepKind.SEARCH) {
+            StepOutcome chosen = results.outcome(thisWay.kind());
             return Math.max(0, exiledStat(gameData, entry, chosen, thisWay.stat(), chosen.objectIds()));
         }
         if (thisWay.kind() == StepKind.RETURN) {

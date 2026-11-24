@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AnchovyBananaPizza;
+import com.github.laxika.magicalvibes.cards.o.OppositionAgent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CourierOfComestibles.class, AnchovyBananaPizza.class})
+@CardUsed({CourierOfComestibles.class, AnchovyBananaPizza.class, OppositionAgent.class})
 class CourierOfComestiblesTest extends BaseCardTest {
 
     @Test
@@ -63,6 +64,23 @@ class CourierOfComestiblesTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, -1);
 
+        harness.assertOnBattlefield(player1, "Food");
+    }
+
+    @Test
+    @DisplayName("Creates a Food token when Opposition Agent exiles the found Food card instead")
+    void createsFoodTokenWhenOppositionAgentExilesTheFoundCard() {
+        harness.addToBattlefield(player2, new OppositionAgent());
+        Card pizza = new AnchovyBananaPizza();
+        castCourier(List.of(pizza));
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(pizza);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(pizza);
         harness.assertOnBattlefield(player1, "Food");
     }
 

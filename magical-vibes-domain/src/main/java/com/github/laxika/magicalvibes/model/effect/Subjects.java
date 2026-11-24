@@ -311,6 +311,15 @@ public final class Subjects {
         return new CardSubject.Voted(VoteEffect.Tally.MOST);
     }
 
+    /**
+     * "That card", "it" after "search your library for a card and [put it into your hand | put it into your graveyard |
+     * exile it | reveal it]": the cards the resolution's most recent library search found, still in the zone the search
+     * put them in (the library, for a search that reveals and keeps them there). A step result.
+     */
+    public static CardSubject foundThisWay() {
+        return cardsThisWay(StepKind.SEARCH);
+    }
+
     /** "All cards revealed this way": those still where the last reveal step showed them. */
     public static CardSubject revealedThisWay() {
         return cardsThisWay(StepKind.REVEAL);

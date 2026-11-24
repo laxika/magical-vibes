@@ -42,6 +42,20 @@ class StonehewerGiantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Searching an empty library is still a search, recorded for this turn")
+    void searchingAnEmptyLibraryIsRecorded() {
+        addCreatureReady(player1, new StonehewerGiant());
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player1.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
     @DisplayName("Can attach the found Equipment to the Giant itself")
     void attachesToGiantItself() {
         Permanent giant = addCreatureReady(player1, new StonehewerGiant());

@@ -4,11 +4,15 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToHandOrCreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,8 +24,9 @@ public class CourierOfComestibles extends Card {
 
     public CourierOfComestibles() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                new SearchLibraryForCardToHandOrCreateTokenEffect(
-                        new CardSubtypePredicate(CardSubtype.FOOD), foodToken()),
+                SequenceEffect.of(
+                        new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.FOOD)),
+                        new ConditionalEffect(new NotCondition(HappenedThisWay.searched()), foodToken())),
                 "Search your library for a Food card?",
                 foodToken()));
     }

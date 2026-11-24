@@ -32,7 +32,10 @@ import java.util.Objects;
  * card it became in exile ("if the exiled card is a God card", Deicide). A milled or chosen card is judged the same
  * way ("if a creature card was milled this way"), and so is a revealed card ("if no creature cards were revealed this
  * way") and a card a {@link StepKind#RETURN} step returned to a hand ("if it's a Zombie card", Cemetery Recruitment); a
- * permanent a return step put onto the battlefield is judged as a permanent ({@link #toA}).
+ * permanent a return step put onto the battlefield is judged as a permanent ({@link #toA}). A card a
+ * {@link StepKind#SEARCH} step found is judged as it is now wherever the search put it, the battlefield included ("if
+ * it's an instant or sorcery card", Oriq Loremage; "if it has mana value less than the sacrificed permanent's",
+ * Anchor to Reality, whose X the filter reads).
  *
  * @param kind       the kind of step read
  * @param minimum    the least amount the step must have recorded; at least 1
@@ -54,10 +57,11 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
             throw new IllegalArgumentException("A step result is filtered as permanents or as cards, not both");
         }
         if (cardFilter != null && kind != StepKind.EXILE && kind != StepKind.DISCARD && kind != StepKind.MILL
-                && kind != StepKind.CHOOSE && kind != StepKind.REVEAL && kind != StepKind.RETURN) {
+                && kind != StepKind.CHOOSE && kind != StepKind.REVEAL && kind != StepKind.RETURN
+                && kind != StepKind.SEARCH) {
             throw new IllegalArgumentException(
-                    "Only an exile, discard, mill, choose, reveal or return step's cards are judged by a card filter: "
-                            + kind);
+                    "Only an exile, discard, mill, choose, reveal, return or search step's cards are judged by a card"
+                            + " filter: " + kind);
         }
     }
 
@@ -95,6 +99,11 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
     /** "When you mill four cards this way": the most recent {@code kind} step did at least {@code minimum}. */
     public static HappenedThisWay atLeast(StepKind kind, int minimum) {
         return new HappenedThisWay(kind, minimum);
+    }
+
+    /** "If you do", "if you find a card this way" after a library search: it found a card. */
+    public static HappenedThisWay searched() {
+        return new HappenedThisWay(StepKind.SEARCH);
     }
 
     /** "If you do" after an exile step: it exiled something. */
@@ -194,6 +203,7 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
             case CONJURE -> "conjured";
             case TAP -> "tapped";
             case GOAD -> "goaded";
+            case SEARCH -> "found";
         };
     }
 }

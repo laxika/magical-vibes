@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14 (each in Findings; the fold queue marks its rows). Fold runs 8 to 14 run in parallel worktrees from 2026-11-24. Next: fold runs 12b and 13 (running), 14b (`piles`, `auction`), 12c, 11c, `drafted-step`, 8b, 15. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).           |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13 (each in Findings; the fold queue marks its rows). Fold runs 8 to 14b run in parallel worktrees from 2026-11-24. Next: fold runs 12b and 14b (running), 13b (`search-attach`, `same-name-search`, `per-object-search`), 12c, 11c, `drafted-step`, 8b, 15. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).            |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,814 / 3,076 (after fold run 14) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,806 / 3,068 (after fold run 13) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,324 rows over 4,414 classes (after fold run 14). Latest verdict per class: `step-9` 1,004, unique 1,165, absorbed 633, split 556, blocked-other 477, survivor 281, blocked-step-model 140, blocked-player-loop 97, dead 61. Waiting: 1,004 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,338 rows over 4,414 classes (after fold run 13). Latest verdict per class: `step-9` 991, unique 1,165, absorbed 636, split 561, blocked-other 482, survivor 281, blocked-step-model 140, blocked-player-loop 97, dead 61. Waiting: 991 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -601,6 +601,15 @@ Delayed and global triggers:
   by its target filter and effect (Yotia, Teferi; fold run 14).
 - `GoadTargetCreatureUntilNextTurnEffect.of(subject, duration)` / `.targetWhileSourceRemains()`: goad any non-target subject for
   `UNTIL_YOUR_NEXT_TURN`, `PERMANENT` or `WHILE_SOURCE_REMAINS`; records `StepKind.GOAD` (fold run 14).
+
+- `StepKind.SEARCH`: a library search's found cards and the zone each went to (`SearchLibraryEffect`, `SearchTargetLibraryEffect`,
+  `IntuitionEffect`); cards Opposition Agent exiled are not recorded. Readers `HappenedThisWay.searched()`, `toACard(SEARCH, filter)`
+  (with the entry's X), `AmountThisWay.searchedManaValue()`, `Subjects.foundThisWay()` (fold run 13).
+- "Reveal it; if X put it onto the battlefield, otherwise into your hand": `SearchLibraryEffect(filter, REVEAL_ONLY, null, false)` +
+  `PutCardsOntoBattlefieldEffect(cardsThisWay(SEARCH, X))` + `PutCardsIntoHandEffect(cardsThisWay(SEARCH, not X))` +
+  `ShuffleLibraryEffect(false)` (Nazahn, Ruin in Their Wake, Treasure Chest; fold run 13).
+- `SearchLibraryEffect(filter, EXILE_IMPRINT)`: "search for a card, exile it" on an imprint permanent (Strata Scythe, Hoarding
+  Dragon; fold run 13).
 
 ### Blocked causes still open
 
@@ -1799,6 +1808,42 @@ Champion and Orphans of the Wheat with nothing tapped get a +0/+0 boost.
 verbs over it; Stand or Fall takes each defending player. `auction`: one bid step recording the high bidder (`playersThisWay`) and the
 bid (`AmountThisWay`), keeping the death-replacement asks. Kaima's "goaded this way" counts a creature you already goaded (CR 701.15d;
 unsure, unchanged).
+
+### Step 9, fold run 13 (2026-11-24, parallel worktree)
+
+`search-step` (13 rows) and `IntuitionEffect`: 8 folded (5 split, 3 absorbed), 1 survivor, 5 blocked-other. `search-attach`,
+`same-name-search` and `per-object-search` not taken (time; fold run 13b). Ratchet in its worktree 3,840 / 3,101 → 3,832 / 3,093. 15
+card files rewritten, all checked with `get_card`; rulings Scion, Distant Memories, Transmute Artifact, Treasure Chest, Nazahn, Ruin,
+Opposition Agent. CR 400.2, 400.7j, 608.2c, 608.2d, 608.2h, 701.20b, 701.23a–d checked. Merged with fold run 14 (`StepKind` holds TAP,
+GOAD and SEARCH).
+
+**The SEARCH step (`StepKind.SEARCH`).** `SearchLibraryEffect` and `SearchTargetLibraryEffect` record nothing as they begin;
+`LibraryChoiceHandlerService.recordFoundCard` adds each card as its pick is answered, before it moves: the card, the searcher, and the
+zone it goes to (a card going onto the battlefield gets no zone; `searched()` still names its permanent). A card Opposition Agent
+exiles (its ruling) and a prevented search are left out; a search that finds nothing records nothing found (CR 701.23a, 701.23b).
+`IntuitionEffect` records SEARCH beside REVEAL. Readers: `HappenedThisWay.searched()`, `toACard(SEARCH, filter)` (wherever the card is
+now, with the entry's X), `AmountThisWay(SEARCH)` and `.searchedManaValue()`, `Subjects.foundThisWay()` and `cardsThisWay(SEARCH,
+filter)` (a graveyard card a replacement exiled instead is followed into exile). `REVEAL_ONLY` keeps the found card in the library for
+a later mover (CR 701.20b), revealing it only when the search states a quality; `EXILE_IMPRINT` imprints it on the source.
+`PutCardsIntoHandEffect` doesn't name a library card a search found and no REVEAL step showed (CR 400.2). Not recorded yet:
+`HAND_OR_GRAVEYARD` and the flows handled before the generic path (same-name queue, subtype and colour picks, basic-land queues,
+held-out pools, d20, the may-put-selected branch).
+
+| Batch | Result |
+|---|---|
+| `search-step` | Courier `MayEffect(Sequence(search, ConditionalEffect(NotCondition(searched()), Food)), …, Food)`; Myr Incubator search to exile + tokens `AmountThisWay(SEARCH)`; Scion graveyard search + `BecomeCopyOfSubjectEffect.of(foundThisWay()).untilEndOfTurn()`; Seek target-library exile + `GainLifeEffect(searchedManaValue())`; Anchor, Instrument, Oriq use `toACard(SEARCH, …)`; Woodland `PerpetuallyGrantCardCharacteristicsEffect.to(foundThisWay())`; Nazahn, Ruin, Treasure Chest `REVEAL_ONLY` + battlefield or may-battlefield mover + hand + shuffle; Strata Scythe, Hoarding Dragon `EXILE_IMPRINT`; Stonehewer, Quest `BATTLEFIELD_ATTACHED_TO_CREATURE`. Distant Memories (+ payload) blocked (an any-opponent-in-turn may); Transmute ×3 blocked (cost-shape: a filter against `sacrificedManaValue()` and a difference amount; step 10) |
+
+**Behaviour changes.** Opposition Agent (ruling: an effect can't see the found cards in exile): Courier makes its Food; Oriq,
+Instrument, Anchor, Woodland, Nazahn, Ruin, Treasure Chest and Scion no longer act on the exiled card. Stonehewer and Quest record an
+empty-library search and shuffle (CR 701.23a), and skip cards that can't enter from the library. Nazahn, Ruin and Treasure Chest put
+the card onto the battlefield from the library through the entry batch (Treasure Chest ruling); Ruin's land enters tapped. A found card
+put into a hand without being revealed is logged as "a card". New tests: Courier, Oriq, Stonehewer, Treasure Chest.
+
+**For the next run.** `search-attach`: found-and-kept + `PutCardsOntoBattlefieldEffect.attachedTo(host)` needs a could-enchant-host
+card predicate (enchant restriction, protection) and Curse of Misfortunes' "not the name of a Curse attached to that player".
+`same-name-search`: one per-permanent same-name search over a `PermanentSubject` and a library-owner `PlayerSubject`, recorded as
+SEARCH. `per-object-search`: one may-search per land on `EachPlayerSearchesLibraryEffect` (Wave of Vitriol, Winds of Abandon's
+defect). Delete `EXILE_AND_CREATE_TOKENS` with its test.
 
 ## Prompt
 

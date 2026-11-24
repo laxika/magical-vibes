@@ -717,7 +717,7 @@ four and is unchanged. No AI, view or serialization file named any of the four r
   gives `filterPredicate` priority over `filterCardTypes`, and a `CardTypePredicate` resolves to
   `Card.hasType` — character-identical to `LibrarySearchSupport.matchesCardTypes`. Life's Finale
   therefore carries `new CardTypePredicate(CardType.CREATURE)`, and the `filterCardTypes` field stays
-  for its remaining user, `SearchLibraryForCardTypeToExileAndImprintEffectHandler`.
+  for its remaining users.
 - **There was a fourth sibling.** `SearchTargetLibraryForCardToExileWithPlayPermissionEffect`
   (Praetor's Grasp, Grinning Totem) is the same shape whose only component,
   `boolean expiresAtNextUpkeep`, its own handler already spelled as a *destination* pair

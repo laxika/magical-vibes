@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -94,8 +96,14 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
     private void doResolve(GameData gameData, StackEntry entry, SearchLibraryEffect effect,
                            LibrarySearchFollowUp followUp, Integer totalManaValueBound,
                            List<Card> enteringWithFound) {
+        entry.recordStep(StepKind.SEARCH, StepOutcome.NONE);
         UUID controllerId = subjectResolutionService.player(gameData, entry, effect, effect.searchPlayer());
         if (controllerId == null) return;
+        if (effect.destination() == LibrarySearchDestination.EXILE_IMPRINT
+                && followUp == LibrarySearchFollowUp.NONE) {
+            // Imprint: the found card is exiled and imprinted on the source permanent (Strata Scythe, Hoarding Dragon).
+            followUp = LibrarySearchFollowUp.imprint(entry.getSourcePermanentId());
+        }
         if (librarySearchSupport.isSearchPrevented(gameData, controllerId, effect.shuffleAfterSelection())) {
             insertNoCardFollowUp(gameData, entry, followUp);
             return;
@@ -318,7 +326,8 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
     private boolean reveals(boolean restricted, LibrarySearchDestination destination) {
         return restricted && (destination == LibrarySearchDestination.HAND
                 || destination == LibrarySearchDestination.HAND_OR_GRAVEYARD
-                || destination == LibrarySearchDestination.TOP_OF_LIBRARY);
+                || destination == LibrarySearchDestination.TOP_OF_LIBRARY
+                || destination == LibrarySearchDestination.REVEAL_ONLY);
     }
 
     private String buildPrompt(String desc, LibrarySearchDestination destination,

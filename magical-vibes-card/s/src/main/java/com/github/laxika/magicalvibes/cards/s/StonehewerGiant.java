@@ -3,7 +3,10 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForEquipmentToBattlefieldAndAttachEffect;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 
 import java.util.List;
 
@@ -19,7 +22,8 @@ public class StonehewerGiant extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,       // requires tap
                 "{1}{W}",
-                List.of(new SearchLibraryForEquipmentToBattlefieldAndAttachEffect()),
+                List.of(new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.EQUIPMENT),
+                        LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_CREATURE)),
                 "{1}{W}, {T}: Search your library for an Equipment card, put it onto the battlefield, attach it to a creature you control, then shuffle."
         ));
     }

@@ -2,11 +2,17 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChosenCardFromHandOntoBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
@@ -25,11 +31,13 @@ import java.util.List;
 public class NazahnReveredBladesmith extends Card {
 
     public NazahnReveredBladesmith() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SearchLibraryAndConditionalEffect(
-                new CardSubtypePredicate(CardSubtype.EQUIPMENT),
-                LibrarySearchDestination.HAND,
-                new CardNamedPredicate("Hammer of Nazahn"),
-                new PutChosenCardFromHandOntoBattlefieldEffect()));
+        CardPredicate hammer = new CardNamedPredicate("Hammer of Nazahn");
+        addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
+                new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.EQUIPMENT),
+                        LibrarySearchDestination.REVEAL_ONLY, null, false),
+                new PutCardsOntoBattlefieldEffect(Subjects.cardsThisWay(StepKind.SEARCH, hammer)),
+                new PutCardsIntoHandEffect(Subjects.cardsThisWay(StepKind.SEARCH, new CardNotPredicate(hammer))),
+                new ShuffleLibraryEffect(false)));
 
         PermanentPredicate defendingCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

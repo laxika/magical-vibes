@@ -45,7 +45,8 @@ import java.util.Objects;
  * creature's power" after "return another creature you control to its owner's hand" (First Responder, CR 608.2h).
  *
  * <p>A card choice's {@link Stat#MANA_VALUE} ({@link #chosenManaValue()}) totals the chosen cards, each as it is now
- * wherever it went: a mana value doesn't change as a face-up card moves.
+ * wherever it went: a mana value doesn't change as a face-up card moves. A library search's
+ * ({@link #searchedManaValue()}) totals the cards it found the same way.
  *
  * <p>A mill step's {@link Stat#MANA_VALUE} is "the total mana value of cards milled this way" ({@link #milledManaValue()}),
  * or with a {@code cardFilter} "its mana value" of the matching cards milled this way ({@link #milledManaValue(CardPredicate)}),
@@ -101,7 +102,8 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
         boolean removal = kind == StepKind.SACRIFICE || kind == StepKind.DESTROY;
         if ((stat == Stat.POWER || stat == Stat.TOUGHNESS || stat == Stat.MANA_VALUE)
                 && !removal && kind != StepKind.EXILE && kind != StepKind.RETURN && kind != StepKind.REVEAL
-                && !(stat == Stat.MANA_VALUE && (kind == StepKind.MILL || kind == StepKind.CHOOSE))) {
+                && !(stat == Stat.MANA_VALUE && (kind == StepKind.MILL || kind == StepKind.CHOOSE
+                || kind == StepKind.SEARCH))) {
             throw new IllegalArgumentException(
                     "Only a sacrifice, destroy, exile or return step records last-known " + stat + ": " + kind);
         }
@@ -322,6 +324,14 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
      */
     public static AmountThisWay chosenManaValue() {
         return new AmountThisWay(StepKind.CHOOSE, Stat.MANA_VALUE);
+    }
+
+    /**
+     * "You gain life equal to its mana value" after "search ... for a card and exile it" (Seek): the total mana value of
+     * the cards the most recent {@link StepKind#SEARCH} step found, each as it is now wherever the search put it.
+     */
+    public static AmountThisWay searchedManaValue() {
+        return new AmountThisWay(StepKind.SEARCH, Stat.MANA_VALUE);
     }
 
     /** "The exiled card's mana value", "that card's mana value" after an exile step. */

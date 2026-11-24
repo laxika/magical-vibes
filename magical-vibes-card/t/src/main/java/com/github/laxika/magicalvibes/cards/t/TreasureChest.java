@@ -3,16 +3,22 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPutSelectedCardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -33,11 +39,15 @@ public class TreasureChest extends Card {
                                 CreateTokenEffect.ofTreasureToken(5),
                                 SequenceEffect.of(new GainLifeEffect(3), new DrawCardEffect(3)),
                                 SequenceEffect.of(
-                                        new SearchLibraryAndConditionalEffect(null, LibrarySearchDestination.HAND,
-                                                new CardTypePredicate(CardType.ARTIFACT),
-                                                MayPutSelectedCardOntoBattlefieldEffect.forCard(
-                                                        new CardTypePredicate(CardType.ARTIFACT), false),
+                                        new SearchLibraryEffect(null, LibrarySearchDestination.REVEAL_ONLY, null,
                                                 false),
+                                        new ConditionalEffect(
+                                                HappenedThisWay.toACard(StepKind.SEARCH,
+                                                        new CardTypePredicate(CardType.ARTIFACT)),
+                                                new MayEffect(new PutCardsOntoBattlefieldEffect(
+                                                        Subjects.foundThisWay()),
+                                                        "Put the artifact card you found onto the battlefield?")),
+                                        new PutCardsIntoHandEffect(Subjects.foundThisWay()),
                                         new ShuffleLibraryEffect(false))
                         )
                 ),
