@@ -7,15 +7,16 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromChosenPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -40,9 +41,10 @@ public class ChandraLegacyOfFire extends Card {
         addActivatedAbility(new ActivatedAbility(
                 0,
                 List.of(
-                        new RemoveCounterFromChosenPermanentsEffect(
-                                CounterType.LOYALTY, new PermanentTruePredicate()),
-                        new ExileTopCardMayPlayThisTurnEffect(new EventValue(), false)
+                        ChoosePermanentsEffect.anyNumber(Subjects.permanentsYouControl(),
+                                "any number of permanents you control"),
+                        new RemoveCounterFromSourceEffect(Subjects.thisWay(StepKind.CHOOSE), CounterType.LOYALTY),
+                        new ExileTopCardMayPlayThisTurnEffect(new AmountThisWay(StepKind.REMOVE_COUNTERS), false)
                 ),
                 "0: Remove a loyalty counter from each of any number of permanents you control. "
                         + "Exile that many cards from the top of your library. You may play them this turn."

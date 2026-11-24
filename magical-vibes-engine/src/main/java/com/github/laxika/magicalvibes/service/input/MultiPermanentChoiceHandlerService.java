@@ -840,8 +840,6 @@ public class MultiPermanentChoiceHandlerService {
             handleUntapPermanentsForAmount(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ReturnTargetPermanentsToHand ctx) {
             handleReturnTargetPermanentsToHand(gameData, playerId, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.RemoveCounterFromChosenPermanents ctx) {
-            handleRemoveCounterFromChosenPermanents(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.RemoveCounterFromTwoCreatures ctx) {
             handleRemoveCounterFromTwoCreatures(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ReturnChosenPermanentsToHand ctx) {
@@ -1618,33 +1616,6 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         // Resume resolving remaining effects on the same ability (e.g. the cycling draw)
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    private void handleRemoveCounterFromChosenPermanents(
-            GameData gameData, UUID playerId, List<UUID> permanentIds,
-            MultiPermanentChoiceContext.RemoveCounterFromChosenPermanents context) {
-        int removedCount = 0;
-        for (UUID permanentId : permanentIds) {
-            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
-            if (permanent == null
-                    || !playerId.equals(gameQueryService.findPermanentController(gameData, permanentId))
-                    || !predicateEvaluationService.matchesPermanentPredicate(
-                    gameData, permanent, context.permanentFilter())) {
-                continue;
-            }
-
-            int currentCount = permanent.getCounterCount(context.counterType());
-            if (currentCount > 0) {
-                permanent.setCounterCount(context.counterType(), currentCount - 1);
-                removedCount++;
-            }
-        }
-        context.resolvingEntry().setEventValue(removedCount);
-        gameLogService.append(gameData, GameLog.text(
-                gameData.playerIdToName.get(playerId) + " removes " + removedCount
-                        + " counter" + (removedCount == 1 ? "" : "s") + "."));
-
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 

@@ -12,7 +12,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,9 +34,7 @@ class SensationalSpiderManTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
-        choosePermanentById(ownCreature.getId());
-        choosePermanentById(ownCreature.getId());
-        choosePermanentById(defendingCreature.getId());
+        answerRemovals(new Removal(ownCreature.getId(), 2), new Removal(defendingCreature.getId(), 1));
 
         assertThat(spiderMan.isTapped()).isTrue();
         assertThat(defendingCreature.isTapped()).isTrue();
@@ -78,8 +75,7 @@ class SensationalSpiderManTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, defendingCreature.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        choosePermanentById(ownCreature.getId());
-        harness.handleListChoice(player1, ChoiceContext.RemoveUpToCountersFromAllPermanentsChoice.DONE);
+        answerRemovals(new Removal(ownCreature.getId(), 1));
 
         assertThat(ownCreature.getCounterCount(CounterType.STUN)).isEqualTo(1);
         assertThat(defendingCreature.getCounterCount(CounterType.STUN)).isEqualTo(1);
@@ -98,7 +94,7 @@ class SensationalSpiderManTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, defender.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleListChoice(player1, ChoiceContext.RemoveUpToCountersFromAllPermanentsChoice.DONE);
+        answerRemovals();
 
         assertThat(defender.getCounterCount(CounterType.STUN)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
@@ -117,9 +113,10 @@ class SensationalSpiderManTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, defender.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        choosePermanentById(defender.getId());
-        choosePermanentById(defender.getId());
-        choosePermanentById(defender.getId());
+        PendingInteraction.ColorChoice question =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(question.options()).containsExactly("0", "1", "2", "3");
+        answerRemovals(new Removal(defender.getId(), 3));
 
         assertThat(defender.getCounterCount(CounterType.STUN)).isEqualTo(2);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize + 3);
@@ -141,8 +138,7 @@ class SensationalSpiderManTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, defender.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        choosePermanentById(land.getId());
-        choosePermanentById(defender.getId());
+        answerRemovals(new Removal(land.getId(), 1), new Removal(defender.getId(), 1));
 
         assertThat(land.getCounterCount(CounterType.STUN)).isZero();
         assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -165,7 +161,7 @@ class SensationalSpiderManTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(defender.getCounterCount(CounterType.STUN)).isEqualTo(1);
         harness.handleMayAbilityChosen(player1, true);
-        choosePermanentById(defender.getId());
+        answerRemovals(new Removal(defender.getId(), 1));
 
         assertThat(defender.isTapped()).isTrue();
         assertThat(defender.getCounterCount(CounterType.STUN)).isZero();
@@ -186,7 +182,7 @@ class SensationalSpiderManTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(spiderMan.getCard());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        choosePermanentById(defender.getId());
+        answerRemovals(new Removal(defender.getId(), 1));
 
         assertThat(defender.isTapped()).isTrue();
         assertThat(defender.getCounterCount(CounterType.STUN)).isZero();
@@ -215,16 +211,24 @@ class SensationalSpiderManTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    private void choosePermanentById(UUID permanentId) {
-        PendingInteraction.ColorChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        ChoiceContext.RemoveUpToCountersFromAllPermanentsChoice context =
-                (ChoiceContext.RemoveUpToCountersFromAllPermanentsChoice) choice.context();
-        String option = context.permanentOptions().entrySet().stream()
-                .filter(entry -> entry.getValue().equals(permanentId))
-                .map(Map.Entry::getKey)
-                .findFirst()
-                .orElseThrow();
-        harness.handleListChoice(player1, option);
+    private record Removal(UUID permanentId, int amount) {
+    }
+
+    /** Answers each "how many stun counters to remove" question with the listed amount (zero if unlisted). */
+    private void answerRemovals(Removal... removals) {
+        while (gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class) != null
+                && gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context()
+                instanceof ChoiceContext.MoveCountersAmountChoice context) {
+            ChoiceContext.CounterMoveSlot slot = context.slots().get(context.index());
+            assertThat(slot.toPermanentId()).isNull();
+            assertThat(slot.counterType()).isEqualTo(CounterType.STUN);
+            int amount = 0;
+            for (Removal removal : removals) {
+                if (removal.permanentId().equals(slot.fromPermanentId())) {
+                    amount = removal.amount();
+                }
+            }
+            harness.handleListChoice(player1, Integer.toString(amount));
+        }
     }
 }

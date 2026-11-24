@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -34,7 +35,7 @@ public class SensationalSpiderMan extends Card {
                         new MayEffect(
                                 SequenceEffect.of(
                                         new RemoveUpToCountersFromAllPermanentsEffect(CounterType.STUN, 3),
-                                        new DrawCardEffect(new EventValue())),
+                                        new DrawCardEffect(new AmountThisWay(StepKind.REMOVE_COUNTERS))),
                                 "Remove up to three stun counters from among all permanents?")));
     }
 }

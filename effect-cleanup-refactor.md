@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34 (each in Findings; the fold queue marks its rows). Fold runs 23c and 33 are reported and wait to merge; 27, 32 and 29b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                       |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c (each in Findings; the fold queue marks its rows). Fold run 33 is reported and waits to merge; 27, 32 and 29b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                        |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,430 / 2,748 (after fold run 34) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,427 / 2,745 (after fold run 23c) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,935 rows over 4,458 classes (after fold run 34). Latest verdict per class: `step-9` 557, unique 1,171, absorbed 943, split 641, blocked-other 509, survivor 339, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 557 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,941 rows over 4,458 classes (after fold run 23c). Latest verdict per class: `step-9` 551, unique 1,173, absorbed 946, split 641, blocked-other 509, survivor 340, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 551 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -844,6 +844,10 @@ Delayed and global triggers:
 - `PlayersCantCastSpellsFromZonesEffect(PlayerSubject, PlayerRestriction)`: the static restriction; `GameQueryService.isPlayerRestricted(gd, player, predicate)` reads it with the resolved restrictions (fold run 34).
 - `CantSearchLibrariesEffect(players, payableToIgnore)`, floated by `GrantStaticEffectToPlayerEffect`, a floated "you" being its player (fold run 34).
 - `PlayersCantPayLifeEffect(includingManaAbilities, sacrificeFilter)`: every "can't pay life [or sacrifice X] to cast or activate" (fold run 34).
+
+- `RemoveUpToCountersFromAllPermanentsEffect(kind, maxAmount, PermanentSubject)` / `.anyNumber(kind, permanents)`: "remove up to N / any number of [kind | ANY] counters from among [permanents]", one how-many question per permanent and kind, counters removed together, records REMOVE_COUNTERS (fold run 23c).
+- `ChoiceContext.MoveCountersAmountChoice.totalLimit` and removal slots (`CounterMoveSlot.toPermanentId == null`), answered by `RemoveUpToCountersFromAllPermanentsEffectHandler.answer` (fold run 23c).
+- "Remove a [kind] counter from each of any number of [permanents]": `ChoosePermanentsEffect.anyNumber(set, label)` + `RemoveCounterFromSourceEffect(thisWay(CHOOSE), kind)` + `AmountThisWay(REMOVE_COUNTERS)` (Chandra, Legacy of Fire; Garnet; fold run 23c).
 
 ### Blocked causes still open
 
@@ -3451,6 +3455,45 @@ Six of seven batches done. Ratchet 3,511 / 2,805 → 3,493 / 2,800. Ledger 25 ro
 - The face-down and lost-ability fix and the land exemption above have no test of their own.
 
 **For the next run.** Take `cast-lock` onto `OpponentsCantCastOrActivateDuringYourTurnEffect`. It needs a static `PlayerSubject`, a spell filter (or `PlayerRestriction`), an ability filter and a `Condition` judged for the restricted player. Teferi's sorcery timing must stay a timing rule (CR 307.5).
+
+### Step 9, fold run 23c (2026-11-24, parallel worktree)
+Batches `counters-among` with Galloping Lizrog, and `asenters-counter-removal` (verdicts only). `chosen-counters` not started. Ratchet 3,479 / 2,783 → 3,476 / 2,780. Ledger 6 rows (survivor 1, absorbed 3, unique 2). 5 card files rewritten, Oracle text and rulings checked for all 5. CR 122.1, 122.5, 608.2d, 310.12b, 614.1c, 702.63a and 704.5v checked.
+
+**The shape.**
+- `RemoveUpToCountersFromAllPermanentsEffect(kind, maxAmount, PermanentSubject permanents)` and `anyNumber(kind, permanents)`:
+- The subject is non-target and defaults to `allPermanents()`. `CounterType.ANY` means every kind.
+- The handler asks one 0..N question per permanent and kind. These are removal slots of `MoveCountersAmountChoice`: `CounterMoveSlot.toPermanentId == null`, plus a new `totalLimit`, and a slot's maximum is what the total leaves (CR 608.2d).
+- The counters all come off once the last answer is in, through `removeCounterFromPermanent`. That sends the oil and vanishing checks, plus `notifyLastCounterRemoved` and the Siege check.
+- It records REMOVE_COUNTERS (total, permanents, controllers). It skips the CR 122.5 check, which is for moves only.
+- "Remove a [kind] counter from each of any number of [permanents]" needs no new piece. It is `ChoosePermanentsEffect.anyNumber(...)` + `RemoveCounterFromSourceEffect(thisWay(CHOOSE), kind)`.
+
+| Batch | Result |
+|---|---|
+| `counters-among` + Lizrog | 4 of 4: Eventide's Shadow and Lizrog onto the survivor; Spider-Man moved to `AmountThisWay`; Chandra and Garnet by parameters (same multi-permanent prompt) |
+| `asenters-counter-removal` | 0 folded, 2 `unique`. Folding Thief onto Sin's record needs an all-matching option only Thief would set (guard rail). It would also move Thief off its entry replacement, which removes the counters before it enters (CR 614.1c), onto Sin's choice path, which runs after placement |
+| `chosen-counters` | not started |
+
+**Behaviour changes.**
+- Eventide's Shadow: a Siege's last defense counter removed triggers its defeat ability (CR 310.12b, test written failing first).
+- Removals now log per permanent and send the last-counter event: Eventide, Spider-Man, Lizrog, Chandra, Garnet.
+- AI: a removal slot removes everything (Lizrog's AI used to remove 0). `ChosenPermanentsAiChoice` prefers its own permanents for a LORE `RemoveCounterFromSourceEffect` over `thisWay(CHOOSE)`, so it picks its Sagas for Garnet. For Chandra's 0 it picks nothing; the old fallback picked one.
+- The survivor's prompts and logs win.
+
+**Tests changed.** `EventidesShadowTest` (interactions, 2 display names, 1 Siege test added), `SensationalSpiderManTest` (interactions, an at-most-3 check).
+
+**Defect fixed.** "Chandra, Legacy of Fire and Garnet remove counters with `setCounterCount`" (Fold: counters-among). For loyalty and lore counters nothing changes in the rules: the counters-removed triggers already fired at the SBA check. The existing tests cover it.
+
+**Seen, not changed.**
+- Sin's handler (`MultiPermanentChoiceHandlerService.handleRemoveAllCountersAsEntersForCounters`) removes counters with `setCounterCount`. It makes no vanishing last-time-counter check (CR 702.63a) and sends no last-counter event, so Divine Intervention, an enchantment, is missed. Sure of the code.
+- Thief of Blood's entry handler sends no last-counter event (Divine Intervention). Sure of the code.
+- Sin's after-placement choice may offer permanents entering in the same batch. Unverified.
+
+**For the next run.** 23d: `chosen-counters` (Heartless Act, Price of Betrayal, Rhys, Tetravus, Hex Parasite). All five are "remove up to N / any number of counters from one permanent (or opponent)". The removal slots built here could carry them if the survivor gains:
+- a target subject;
+- a `DynamicAmount` bound (X for Hex Parasite);
+- player slots with `PlayerCounterType` (Price of Betrayal).
+
+The followers are `CreateTokenEffect(AmountThisWay)` tracked as created with the source (Tetravus) and `BoostSelfEffect(AmountThisWay)` (Hex Parasite). First decide whether the queue's survivor `RemoveChosenCountersFromTargetPermanentEffect` (5 cards, its own `RemoveChosenCountersChoice`) moves onto the same slots too. That rewrites 5 more cards' tests.
 
 ## Prompt
 

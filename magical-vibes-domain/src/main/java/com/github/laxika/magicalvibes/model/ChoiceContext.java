@@ -1705,53 +1705,49 @@ public sealed interface ChoiceContext {
             implements ChoiceContext {}
 
     /**
-     * "Move any number of counters": the controller answers one slot at a time how many counters of the slot's kind to
-     * move from its first permanent onto its second (0..what is there now). Each answer removes the counters at once;
-     * {@code moved} holds the answered counts, slot by slot, and once every slot is answered the counters are put on
-     * each destination together, one placement per destination and kind.
+     * "Move any number of counters" / "remove any number of counters from among": the controller answers one slot at
+     * a time how many counters of the slot's kind to move from its first permanent onto its second, or to remove from
+     * it when the slot has no second (0..what is there now, and no more than {@code totalLimit} over all the slots).
+     * {@code moved} holds the answered counts, slot by slot. A move's answer removes the counters at once and, once
+     * every slot is answered, the counters are put on each destination together, one placement per destination and
+     * kind; a removal's counters all come off once every slot is answered.
      */
     record MoveCountersAmountChoice(List<CounterMoveSlot> slots, int index, List<Integer> moved,
-                                    String sourceCardName) implements ChoiceContext {
+                                    String sourceCardName, int totalLimit) implements ChoiceContext {
         public MoveCountersAmountChoice {
             slots = List.copyOf(slots);
             moved = List.copyOf(moved);
-        }
-    }
-
-    /** One "how many" question of a {@link MoveCountersAmountChoice}: counters of {@code counterType} from one permanent onto another. */
-    record CounterMoveSlot(UUID fromPermanentId, UUID toPermanentId, CounterType counterType) {}
-
-    /**
-     * Galloping Lizrog: the controller chooses how many counters to remove from each eligible permanent,
-     * then the source gets {@code countersPerMovedCounter} for each one removed. The sequence advances to the next permanent after every
-     * answer, so zero is a valid choice for each one.
-     */
-    record MoveCountersFromControlledPermanentsAmountChoice(List<UUID> fromPermanentIds, int index,
-                                                             UUID toPermanentId, CounterType counterType,
-                                                             String sourceCardName, String fromCardName,
-                                                             int countersPerMovedCounter, int countersRemoved)
-            implements ChoiceContext {
-        public MoveCountersFromControlledPermanentsAmountChoice(List<UUID> fromPermanentIds, int index,
-                                                                 UUID toPermanentId, CounterType counterType,
-                                                                 String sourceCardName, String fromCardName) {
-            this(fromPermanentIds, index, toPermanentId, counterType, sourceCardName, fromCardName, 1, 0);
-        }
-
-        public MoveCountersFromControlledPermanentsAmountChoice(List<UUID> fromPermanentIds, int index,
-                                                                 UUID toPermanentId, CounterType counterType,
-                                                                 String sourceCardName, String fromCardName,
-                                                                 int countersPerMovedCounter) {
-            this(fromPermanentIds, index, toPermanentId, counterType, sourceCardName, fromCardName,
-                    countersPerMovedCounter, 0);
-        }
-
-        public MoveCountersFromControlledPermanentsAmountChoice {
-            fromPermanentIds = List.copyOf(fromPermanentIds);
-            if (countersPerMovedCounter < 1 || countersRemoved < 0) {
-                throw new IllegalArgumentException("counter choice values must be non-negative and valid");
+            if (totalLimit < 0) {
+                throw new IllegalArgumentException("totalLimit must not be negative");
             }
         }
+
+        /** A move with no total limit. */
+        public MoveCountersAmountChoice(List<CounterMoveSlot> slots, int index, List<Integer> moved,
+                                        String sourceCardName) {
+            this(slots, index, moved, sourceCardName, Integer.MAX_VALUE);
+        }
+
+        /** Whether the slot asked is a removal (it has no destination). */
+        public boolean removal() {
+            return slots.get(index).toPermanentId() == null;
+        }
+
+        /** How many counters the answered slots moved or removed. */
+        public int answeredTotal() {
+            int total = 0;
+            for (int count : moved) {
+                total += count;
+            }
+            return total;
+        }
     }
+
+    /**
+     * One "how many" question of a {@link MoveCountersAmountChoice}: counters of {@code counterType} from one permanent
+     * onto another, or removed from it when {@code toPermanentId} is {@code null}.
+     */
+    record CounterMoveSlot(UUID fromPermanentId, UUID toPermanentId, CounterType counterType) {}
 
     /** Choosing one of Primal Clay's three shapes "as this creature enters". */
     record PrimalClayFormChoice(UUID permanentId) implements ChoiceContext {}
@@ -2224,24 +2220,6 @@ public sealed interface ChoiceContext {
         }
     }
 
-    record RemoveUpToCountersFromAllPermanentsChoice(StackEntry resolvingEntry, CounterType counterType,
-                                                     int remaining, Map<String, UUID> permanentOptions)
-            implements ChoiceContext {
-
-        public static final String DONE = "Done";
-
-        public RemoveUpToCountersFromAllPermanentsChoice {
-            permanentOptions = java.util.Collections.unmodifiableMap(
-                    new java.util.LinkedHashMap<>(permanentOptions));
-        }
-
-        public List<String> options() {
-            List<String> options = new java.util.ArrayList<>(permanentOptions.keySet());
-            options.add(DONE);
-            return List.copyOf(options);
-        }
-    }
-
     /** Chooses controlled permanents from which an optional forced counter cost removes counters. */
     record RemoveCountersFromForcedCostOrElse(PendingMayAbility ability,
                                               com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect effect,
@@ -2260,24 +2238,6 @@ public sealed interface ChoiceContext {
     }
 
     record CounterSelection(UUID permanentId, CounterType counterType) {
-    }
-
-    record RemoveAnyNumberOfCountersFromAllPermanentsChoice(
-            StackEntry resolvingEntry, Map<String, CounterSelection> counterOptions)
-            implements ChoiceContext {
-
-        public static final String DONE = "Done";
-
-        public RemoveAnyNumberOfCountersFromAllPermanentsChoice {
-            counterOptions = java.util.Collections.unmodifiableMap(
-                    new java.util.LinkedHashMap<>(counterOptions));
-        }
-
-        public List<String> options() {
-            List<String> options = new java.util.ArrayList<>(counterOptions.keySet());
-            options.add(DONE);
-            return List.copyOf(options);
-        }
     }
 
     record RemoveOneCounterChoice(UUID targetId, UUID controllerId, String sourceCardName,

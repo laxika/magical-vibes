@@ -212,8 +212,6 @@ public class ChoiceHandlerService {
             removeUpToCountersFromAllPermanentsEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ForcedCostOrElseEffectHandler
             forcedCostOrElseEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.RemoveAnyNumberOfCountersFromAllPermanentsEffectHandler
-            removeAnyNumberOfCountersFromAllPermanentsEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RemoveTimeCounterFromExiledCardEffectHandler removeTimeCounterFromExiledCardEffectHandler;
     private final TimeTravelService timeTravelService;
     private final ToymakersTrapEffectHandler toymakersTrapEffectHandler;
@@ -1135,10 +1133,6 @@ public class ChoiceHandlerService {
             handleMoveCountersAmountChoice(gameData, player, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.MoveCountersFromControlledPermanentsAmountChoice ctx) {
-            handleMoveCountersFromControlledPermanentsAmountChoice(gameData, player, colorName, ctx);
-            return;
-        }
         if (colorChoice.context() instanceof ChoiceContext.PrimalClayFormChoice ctx) {
             handlePrimalClayFormChoice(gameData, player, colorName, ctx);
             return;
@@ -1247,14 +1241,6 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.RemoveChosenCountersChoice ctx) {
             handleRemoveChosenCountersChoice(gameData, colorName, ctx);
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.RemoveUpToCountersFromAllPermanentsChoice ctx) {
-            handleRemoveUpToCountersFromAllPermanentsChoice(gameData, colorName, ctx);
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.RemoveAnyNumberOfCountersFromAllPermanentsChoice ctx) {
-            handleRemoveAnyNumberOfCountersFromAllPermanentsChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.RemoveOneCounterChoice ctx) {
@@ -3826,78 +3812,6 @@ public class ChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handleRemoveUpToCountersFromAllPermanentsChoice(GameData gameData, String choice,
-            ChoiceContext.RemoveUpToCountersFromAllPermanentsChoice ctx) {
-        if (!ctx.permanentOptions().containsKey(choice)
-                && !ChoiceContext.RemoveUpToCountersFromAllPermanentsChoice.DONE.equals(choice)) {
-            throw new IllegalArgumentException("Invalid permanent choice: " + choice);
-        }
-
-        if (ChoiceContext.RemoveUpToCountersFromAllPermanentsChoice.DONE.equals(choice)) {
-            gameData.interaction.clearAwaitingInput();
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        UUID permanentId = ctx.permanentOptions().get(choice);
-        Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
-        if (permanent == null || permanent.getCounterCount(ctx.counterType()) <= 0) {
-            throw new IllegalArgumentException("Permanent no longer has the chosen counter");
-        }
-
-        gameData.interaction.clearAwaitingInput();
-        permanentCounterSupport.removeCounterFromPermanent(gameData, permanent, ctx.counterType(), 1);
-        ctx.resolvingEntry().setEventValue(ctx.resolvingEntry().getEventValue() + 1);
-
-        int remaining = ctx.remaining() - 1;
-        Map<String, UUID> permanentOptions = removeUpToCountersFromAllPermanentsEffectHandler
-                .permanentOptions(gameData, ctx.counterType());
-        if (remaining > 0 && !permanentOptions.isEmpty()) {
-            removeUpToCountersFromAllPermanentsEffectHandler.beginChoice(
-                    gameData, ctx.resolvingEntry(), ctx.counterType(), remaining, permanentOptions);
-            inputCompletionService.publishStateAfterInput(gameData);
-            return;
-        }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void handleRemoveAnyNumberOfCountersFromAllPermanentsChoice(GameData gameData, String choice,
-            ChoiceContext.RemoveAnyNumberOfCountersFromAllPermanentsChoice ctx) {
-        if (!ctx.counterOptions().containsKey(choice)
-                && !ChoiceContext.RemoveAnyNumberOfCountersFromAllPermanentsChoice.DONE.equals(choice)) {
-            throw new IllegalArgumentException("Invalid counter choice: " + choice);
-        }
-
-        if (ChoiceContext.RemoveAnyNumberOfCountersFromAllPermanentsChoice.DONE.equals(choice)) {
-            gameData.interaction.clearAwaitingInput();
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        ChoiceContext.CounterSelection selection = ctx.counterOptions().get(choice);
-        Permanent permanent = gameQueryService.findPermanentById(gameData, selection.permanentId());
-        if (permanent == null || permanent.getCounterCount(selection.counterType()) <= 0) {
-            throw new IllegalArgumentException("Permanent no longer has the chosen counter");
-        }
-
-        gameData.interaction.clearAwaitingInput();
-        permanentCounterSupport.removeCounterFromPermanent(
-                gameData, permanent, selection.counterType(), 1);
-        ctx.resolvingEntry().setEventValue(ctx.resolvingEntry().getEventValue() + 1);
-
-        Map<String, ChoiceContext.CounterSelection> counterOptions =
-                removeAnyNumberOfCountersFromAllPermanentsEffectHandler.counterOptions(gameData);
-        if (!counterOptions.isEmpty()) {
-            removeAnyNumberOfCountersFromAllPermanentsEffectHandler.beginChoice(
-                    gameData, ctx.resolvingEntry(), counterOptions);
-            inputCompletionService.publishStateAfterInput(gameData);
-            return;
-        }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
     private void handleRemoveOneCounterChoice(GameData gameData, String choice,
             ChoiceContext.RemoveOneCounterChoice ctx) {
         if (!ctx.options().contains(choice)) {
@@ -5954,106 +5868,23 @@ public class ChoiceHandlerService {
     }
 
     /**
-     * "Move any number of counters": applies the answer to the asked slot, then asks the next one or puts what was
-     * moved (see {@code PermanentCounterSupport.answerCounterMove}).
+     * "Move any number of counters" / "remove any number of counters from among": applies the answer to the asked
+     * slot, then asks the next one or puts what was moved (see {@code PermanentCounterSupport.answerCounterMove}) or
+     * removes what was chosen (a removal slot, {@code RemoveUpToCountersFromAllPermanentsEffectHandler.answer}).
      */
     private void handleMoveCountersAmountChoice(GameData gameData, Player player, String numberName,
                                                 ChoiceContext.MoveCountersAmountChoice ctx) {
         int chosen = Integer.parseInt(numberName);
         gameData.interaction.clearAwaitingInput();
-        if (permanentCounterSupport.answerCounterMove(gameData, gameData.pendingEffectResolutionEntry,
-                player.getId(), ctx, chosen)) {
+        boolean askedAgain = ctx.removal()
+                ? removeUpToCountersFromAllPermanentsEffectHandler.answer(gameData,
+                gameData.pendingEffectResolutionEntry, player.getId(), ctx, chosen)
+                : permanentCounterSupport.answerCounterMove(gameData, gameData.pendingEffectResolutionEntry,
+                player.getId(), ctx, chosen);
+        if (askedAgain) {
             return;
         }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void handleMoveCountersFromControlledPermanentsAmountChoice(
-            GameData gameData, Player player, String numberName,
-            ChoiceContext.MoveCountersFromControlledPermanentsAmountChoice ctx) {
-        int chosen = Integer.parseInt(numberName);
-
-        gameData.interaction.clearAwaitingInput();
-
-        Permanent from = gameQueryService.findPermanentById(gameData,
-                ctx.fromPermanentIds().get(ctx.index()));
-        Permanent to = gameQueryService.findPermanentById(gameData, ctx.toPermanentId());
-        boolean canPlace = to != null && !cantHaveCounter(gameData, to, ctx.counterType());
-        int countersRemoved = ctx.countersRemoved();
-        if (from != null && chosen > 0) {
-            int moved = Math.min(chosen, from.getCounterCount(ctx.counterType()));
-            if (moved > 0) {
-                from.setCounterCount(ctx.counterType(), from.getCounterCount(ctx.counterType()) - moved);
-                if (ctx.counterType() == CounterType.OIL) {
-                    gameData.recordOilCounterRemoved(from, moved);
-                }
-                countersRemoved += moved;
-                if (!canPlace) {
-                    gameLogService.append(gameData, GameLog.builder()
-                            .text(player.getUsername() + " removes " + moved + " counter" + (moved == 1 ? "" : "s") + " from ")
-                            .card(from.getCard()).text(".").build());
-                } else if (ctx.countersPerMovedCounter() == 1) {
-                    gameLogService.append(gameData, GameLog.builder()
-                            .text(player.getUsername() + " removes " + moved + " counter" + (moved == 1 ? "" : "s") + " from ")
-                            .card(from.getCard()).text(" and puts ").text(Integer.toString(moved))
-                            .text(" counter" + (moved == 1 ? "" : "s") + " on ")
-                            .card(to.getCard()).text(".").build());
-                } else {
-                    gameLogService.append(gameData, GameLog.builder()
-                            .text(player.getUsername() + " removes " + moved + " counter" + (moved == 1 ? "" : "s") + " from ")
-                            .card(from.getCard()).text(".").build());
-                }
-            }
-        }
-
-        int nextIndex = ctx.index() + 1;
-        while (nextIndex < ctx.fromPermanentIds().size()) {
-            Permanent next = gameQueryService.findPermanentById(gameData, ctx.fromPermanentIds().get(nextIndex));
-            if (next != null && next.getCounterCount(ctx.counterType()) > 0) {
-                playerInputService.beginMoveCountersFromControlledPermanentsAmountChoice(
-                        gameData, player.getId(), ctx.fromPermanentIds(), nextIndex, ctx.toPermanentId(),
-                        ctx.counterType(), ctx.sourceCardName(), FaceDownVisibility.publicName(gameData, next),
-                        next.getCounterCount(ctx.counterType()), ctx.countersPerMovedCounter(), countersRemoved);
-                return;
-            }
-            nextIndex++;
-        }
-
-        if (countersRemoved > 0 && canPlace) {
-            int countersToPlace = countersRemoved * ctx.countersPerMovedCounter();
-            StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
-            if (sourceEntry != null) {
-                permanentCounterSupport.placeCounterOnPermanent(gameData, sourceEntry, to,
-                        ctx.counterType(), countersToPlace);
-            } else {
-                to.setCounterCount(ctx.counterType(), to.getCounterCount(ctx.counterType()) + countersToPlace);
-                if (ctx.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
-                    permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
-                            gameData, to, player.getId());
-                    UUID controllerId = gameQueryService.findPermanentController(gameData, to.getId());
-                    if (controllerId != null) {
-                        gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
-                    }
-                    permanentCounterSupport.recordPlusOnePlusOneCountersPutOnControlledCreaturesThisTurn(
-                            gameData, to, countersToPlace, player.getId());
-                }
-            }
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(player.getUsername() + " puts ").text(Integer.toString(countersToPlace))
-                    .text(" counters on ").card(to.getCard()).text(".").build());
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private boolean cantHaveCounter(GameData gameData, Permanent permanent, CounterType counterType) {
-        if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
-            return gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent);
-        }
-        if (counterType == CounterType.MINUS_ONE_MINUS_ONE) {
-            return gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent);
-        }
-        return gameQueryService.cantHaveCounters(gameData, permanent);
     }
 
     private void handlePrimalClayFormChoice(GameData gameData, Player player, String formName, ChoiceContext.PrimalClayFormChoice ctx) {

@@ -1736,8 +1736,9 @@ public class PlayerInputService {
 
     /**
      * "Move any number of counters": prompt {@code playerId} for how many counters of the asked slot's kind (0..{@code
-     * max}) to move from {@code fromName} onto {@code toName}. {@link ChoiceHandlerService} applies the answer through
-     * {@code PermanentCounterSupport.answerCounterMove}.
+     * max}) to move from {@code fromName} onto {@code toName}, or to remove from {@code fromName} when {@code toName} is
+     * {@code null} (a removal slot). {@link ChoiceHandlerService} applies the answer through
+     * {@code PermanentCounterSupport.answerCounterMove} or, for a removal, the removal step's handler.
      */
     public void beginMoveCountersAmountChoice(GameData gameData, UUID playerId,
                                               ChoiceContext.MoveCountersAmountChoice choiceContext,
@@ -1747,52 +1748,11 @@ public class PlayerInputService {
                 .toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, choiceContext, options,
-                choiceContext.sourceCardName() + " — choose how many " + counterName + " counters to move from "
-                        + fromName + " onto " + toName + " (0-" + Math.max(0, max) + ")."));
+                choiceContext.sourceCardName() + " — choose how many " + counterName + " counters to "
+                        + (toName == null ? "remove from " + fromName : "move from " + fromName + " onto " + toName)
+                        + " (0-" + Math.max(0, max) + ")."));
         log.info("Game {} - Awaiting {} to choose how many {} counters to move (0-{})",
                 gameData.id, gameData.playerIdToName.get(playerId), counterName, max);
-    }
-
-    /**
-     * Galloping Lizrog: prompt for the amount to remove from one of the controller's eligible
-     * permanents, then continue with the next permanent in the sequence.
-     */
-    public void beginMoveCountersFromControlledPermanentsAmountChoice(
-            GameData gameData, UUID playerId, List<UUID> fromPermanentIds, int index,
-            UUID toPermanentId, CounterType counterType, String sourceCardName, String fromCardName, int max) {
-        beginMoveCountersFromControlledPermanentsAmountChoice(gameData, playerId, fromPermanentIds, index,
-                toPermanentId, counterType, sourceCardName, fromCardName, max, 1);
-    }
-
-    public void beginMoveCountersFromControlledPermanentsAmountChoice(
-            GameData gameData, UUID playerId, List<UUID> fromPermanentIds, int index,
-            UUID toPermanentId, CounterType counterType, String sourceCardName, String fromCardName,
-            int max, int countersPerMovedCounter) {
-        beginMoveCountersFromControlledPermanentsAmountChoice(gameData, playerId, fromPermanentIds, index,
-                toPermanentId, counterType, sourceCardName, fromCardName, max, countersPerMovedCounter, 0);
-    }
-
-    public void beginMoveCountersFromControlledPermanentsAmountChoice(
-            GameData gameData, UUID playerId, List<UUID> fromPermanentIds, int index,
-            UUID toPermanentId, CounterType counterType, String sourceCardName, String fromCardName,
-            int max, int countersPerMovedCounter, int countersRemoved) {
-        ChoiceContext.MoveCountersFromControlledPermanentsAmountChoice choiceContext =
-                new ChoiceContext.MoveCountersFromControlledPermanentsAmountChoice(
-                        fromPermanentIds, index, toPermanentId, counterType, sourceCardName, fromCardName,
-                        countersPerMovedCounter, countersRemoved);
-
-        List<String> options = IntStream.rangeClosed(0, Math.max(0, max))
-                .mapToObj(Integer::toString)
-                .toList();
-        String counterName = switch (counterType) {
-            case PLUS_ONE_PLUS_ONE -> "+1/+1";
-            case MINUS_ONE_MINUS_ONE -> "-1/-1";
-            default -> counterType.name().toLowerCase().replace('_', ' ');
-        };
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                playerId, null, null, choiceContext, options,
-                sourceCardName + " — choose how many " + counterName + " counters to move from "
-                        + fromCardName + " (0-" + Math.max(0, max) + ")."));
     }
 
     /**
@@ -1961,21 +1921,6 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a counter to remove from {}", gameData.id, playerId, targetId);
     }
 
-    public void beginRemoveUpToCountersFromAllPermanentsChoice(
-            GameData gameData, StackEntry resolvingEntry, CounterType counterType, int remaining,
-            Map<String, UUID> permanentOptions) {
-        ChoiceContext.RemoveUpToCountersFromAllPermanentsChoice context =
-                new ChoiceContext.RemoveUpToCountersFromAllPermanentsChoice(
-                        resolvingEntry, counterType, remaining, permanentOptions);
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                resolvingEntry.getControllerId(), null, null, context, context.options(),
-                resolvingEntry.getCard().getName() + " - Choose a permanent from which to remove a "
-                        + counterType.name().toLowerCase().replace('_', ' ') + " counter (up to "
-                        + remaining + ")."));
-        log.info("Game {} - Awaiting {} to choose a permanent from which to remove a {} counter",
-                gameData.id, resolvingEntry.getControllerId(), counterType);
-    }
-
     public void beginRemoveCountersFromForcedCostOrElseChoice(GameData gameData,
             PendingMayAbility ability,
             com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect effect,
@@ -1990,19 +1935,6 @@ public class PlayerInputService {
                         + remaining + " remaining)."));
         log.info("Game {} - Awaiting {} to choose a permanent from which to remove a counter",
                 gameData.id, payerId);
-    }
-
-    public void beginRemoveAnyNumberOfCountersFromAllPermanentsChoice(
-            GameData gameData, StackEntry resolvingEntry,
-            Map<String, ChoiceContext.CounterSelection> counterOptions) {
-        ChoiceContext.RemoveAnyNumberOfCountersFromAllPermanentsChoice context =
-                new ChoiceContext.RemoveAnyNumberOfCountersFromAllPermanentsChoice(
-                        resolvingEntry, counterOptions);
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                resolvingEntry.getControllerId(), null, null, context, context.options(),
-                resolvingEntry.getCard().getName() + " - Choose a counter to remove (or Done)."));
-        log.info("Game {} - Awaiting {} to choose a counter to remove from a permanent",
-                gameData.id, resolvingEntry.getControllerId());
     }
 
     public void beginRemoveOneCounterChoice(GameData gameData, UUID playerId, UUID targetId,

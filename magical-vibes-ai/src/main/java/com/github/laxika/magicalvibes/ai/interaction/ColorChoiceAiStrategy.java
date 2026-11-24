@@ -211,16 +211,20 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
         }
 
         if (context instanceof ChoiceContext.MoveCountersAmountChoice move) {
-            // "Move any number of counters": options are 0..N. Move them all, except from the AI's own permanent onto
-            // one it doesn't control (Forgotten Ancient's "onto other creatures").
+            // "Move / remove any number of counters": options are 0..N. Move or remove them all, except a move from the
+            // AI's own permanent onto one it doesn't control (Forgotten Ancient's "onto other creatures"). A removal
+            // slot has no destination; what it removes is counted by the steps after it (Galloping Lizrog, Eventide's
+            // Shadow, Sensational Spider-Man).
             ChoiceContext.CounterMoveSlot slot = move.slots().get(move.index());
-            boolean givesAway = aiPlayerId.equals(ctx.gameQueryService()
+            boolean givesAway = slot.toPermanentId() != null
+                    && aiPlayerId.equals(ctx.gameQueryService()
                     .findPermanentController(gameData, slot.fromPermanentId()))
                     && !aiPlayerId.equals(ctx.gameQueryService()
                     .findPermanentController(gameData, slot.toPermanentId()));
             List<String> options = interaction.options();
             String chosenNumber = options.isEmpty() || givesAway ? "0" : options.get(options.size() - 1);
-            log.info("AI: Moving {} counters between creatures in game {}", chosenNumber, gameId);
+            log.info("AI: Choosing {} counters to {} in game {}", chosenNumber,
+                    slot.toPermanentId() == null ? "remove" : "move", gameId);
             answerWith(ctx, interaction, chosenNumber);
             return;
         }

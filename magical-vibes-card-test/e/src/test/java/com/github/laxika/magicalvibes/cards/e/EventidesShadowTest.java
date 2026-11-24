@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfDominaria;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -12,12 +13,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EventidesShadow.class, Forest.class, GrizzlyBears.class})
+@CardUsed({EventidesShadow.class, Forest.class, GrizzlyBears.class, InvasionOfDominaria.class})
 class EventidesShadowTest extends BaseCardTest {
 
     @Test
@@ -31,11 +31,10 @@ class EventidesShadowTest extends BaseCardTest {
         opponentCreature.setCounterCount(CounterType.LORE, 1);
 
         castEventidesShadow();
-        chooseCounter(ownCreature.getId(), CounterType.PLUS_ONE_PLUS_ONE);
-        chooseCounter(ownCreature.getId(), CounterType.CHARGE);
-        chooseCounter(opponentCreature.getId(), CounterType.LORE);
-        harness.handleListChoice(player1,
-                ChoiceContext.RemoveAnyNumberOfCountersFromAllPermanentsChoice.DONE);
+        answerRemovals(
+                new Removal(ownCreature.getId(), CounterType.PLUS_ONE_PLUS_ONE, 1),
+                new Removal(ownCreature.getId(), CounterType.CHARGE, 1),
+                new Removal(opponentCreature.getId(), CounterType.LORE, 1));
 
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(ownCreature.getCounterCount(CounterType.CHARGE)).isZero();
@@ -45,15 +44,14 @@ class EventidesShadowTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Choosing Done removes no counters and produces no draw or life loss")
+    @DisplayName("Choosing zero for every counter removes none and produces no draw or life loss")
     void canChooseNoCounters() {
         harness.setLibrary(player1, List.of(new Forest()));
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         castEventidesShadow();
-        harness.handleListChoice(player1,
-                ChoiceContext.RemoveAnyNumberOfCountersFromAllPermanentsChoice.DONE);
+        answerRemovals();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -74,7 +72,7 @@ class EventidesShadowTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Removing the last available counter completes the spell without choosing Done")
+    @DisplayName("Each permanent and kind is asked once, and the counters come off together after the last answer")
     void removingAllCountersCompletesResolution() {
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -85,12 +83,13 @@ class EventidesShadowTest extends BaseCardTest {
         land.setCounterCount(CounterType.CHARGE, 1);
 
         castEventidesShadow();
-        chooseCounter(first.getId(), CounterType.PLUS_ONE_PLUS_ONE);
+        answerOne(new Removal(first.getId(), CounterType.PLUS_ONE_PLUS_ONE, 1));
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        chooseCounter(second.getId(), CounterType.PLUS_ONE_PLUS_ONE);
-        chooseCounter(land.getId(), CounterType.CHARGE);
+        answerRemovals(
+                new Removal(second.getId(), CounterType.PLUS_ONE_PLUS_ONE, 1),
+                new Removal(land.getId(), CounterType.CHARGE, 1));
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -101,22 +100,50 @@ class EventidesShadowTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
 
+    @Test
+    @DisplayName("Removing a Siege's last defense counter triggers its defeat ability")
+    void removingLastDefenseCounterDefeatsSiege() {
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfDominaria());
+        battle.setCounterCount(CounterType.DEFENSE, 2);
+
+        castEventidesShadow();
+        answerRemovals(new Removal(battle.getId(), CounterType.DEFENSE, 2));
+
+        assertThat(battle.getCounterCount(CounterType.DEFENSE)).isZero();
+        assertThat(gd.stack).anyMatch(entry -> battle.getId().equals(entry.getSourcePermanentId()));
+    }
+
     private void castEventidesShadow() {
         harness.castFromHand(player1, new EventidesShadow(), "{4}{B}");
         harness.passBothPriorities();
     }
 
-    private void chooseCounter(UUID permanentId, CounterType counterType) {
+    private record Removal(UUID permanentId, CounterType counterType, int amount) {
+    }
+
+    /** Answers the asked removal question with the listed amount for its permanent and kind (zero if unlisted). */
+    private void answerOne(Removal... removals) {
         PendingInteraction.ColorChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        ChoiceContext.RemoveAnyNumberOfCountersFromAllPermanentsChoice context =
-                (ChoiceContext.RemoveAnyNumberOfCountersFromAllPermanentsChoice) choice.context();
-        String option = context.counterOptions().entrySet().stream()
-                .filter(entry -> entry.getValue().permanentId().equals(permanentId)
-                        && entry.getValue().counterType() == counterType)
-                .map(Map.Entry::getKey)
-                .findFirst()
-                .orElseThrow();
-        harness.handleListChoice(player1, option);
+        ChoiceContext.MoveCountersAmountChoice context = (ChoiceContext.MoveCountersAmountChoice) choice.context();
+        ChoiceContext.CounterMoveSlot slot = context.slots().get(context.index());
+        assertThat(slot.toPermanentId()).isNull();
+        int amount = 0;
+        for (Removal removal : removals) {
+            if (removal.permanentId().equals(slot.fromPermanentId()) && removal.counterType() == slot.counterType()) {
+                amount = removal.amount();
+            }
+        }
+        harness.handleListChoice(player1, Integer.toString(amount));
+    }
+
+    /** Answers every removal question in turn. */
+    private void answerRemovals(Removal... removals) {
+        while (gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class) != null
+                && gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context()
+                instanceof ChoiceContext.MoveCountersAmountChoice) {
+            answerOne(removals);
+        }
     }
 }

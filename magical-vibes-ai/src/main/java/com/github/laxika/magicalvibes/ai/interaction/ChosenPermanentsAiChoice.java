@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -94,6 +95,9 @@ final class ChosenPermanentsAiChoice {
                         && !(boost.powerBoost() instanceof Fixed fixed && fixed.value() < 0);
                 // "Tap any number of untapped creatures you control. [Something] for each creature tapped this way."
                 case TapPermanentsEffect tap -> chosen.equals(tap.subject());
+                // "Remove a lore counter from each of any number of Sagas you control": the chapters come again.
+                case RemoveCounterFromSourceEffect remove -> chosen.equals(remove.subject())
+                        && remove.counterType() == CounterType.LORE;
                 default -> false;
             };
             if (favors) {

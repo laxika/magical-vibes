@@ -36,11 +36,6 @@ public sealed interface MultiPermanentChoiceContext {
     record EtbGraveyardCardTargetGroup(PermanentChoiceContext.ETBTokenMultiTargetTrigger pending)
             implements MultiPermanentChoiceContext {}
 
-    record RemoveCounterFromChosenPermanents(StackEntry resolvingEntry, CounterType counterType,
-                                             PermanentPredicate permanentFilter)
-            implements MultiPermanentChoiceContext {
-    }
-
     record RemoveCounterFromTwoCreatures(StackEntry resolvingEntry, CounterType counterType,
                                          CardEffect thenEffect)
             implements MultiPermanentChoiceContext {
