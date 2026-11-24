@@ -19,11 +19,4 @@ public interface PlusOnePlusOneCountersReplacementEffect extends CounterReplacem
     default boolean appliesTo(CounterType counterType, boolean affectedPermanentIsCreature) {
         return affectedPermanentIsCreature && counterType == CounterType.PLUS_ONE_PLUS_ONE;
     }
-
-    /**
-     * Returns whether this replacement also applies to a noncreature Vehicle.
-     */
-    default boolean appliesToNonCreatureVehicles() {
-        return false;
-    }
 }

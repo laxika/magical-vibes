@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.a.ArborColossus;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IchorRats;
 import com.github.laxika.magicalvibes.cards.i.InstillInfection;
@@ -21,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({VorinclexMonstrousRaider.class, GrizzlyBears.class, IchorRats.class,
         InstillInfection.class, JundCharm.class, KayaTheInexorable.class, ThrivingTurtle.class,
-        NuclearFallout.class})
+        NuclearFallout.class, ArborColossus.class})
 class VorinclexMonstrousRaiderTest extends BaseCardTest {
 
     @Test
@@ -191,5 +192,20 @@ class VorinclexMonstrousRaiderTest extends BaseCardTest {
 
         assertThat(gd.playerRadCounters.getOrDefault(player1.getId(), 0)).isZero();
         assertThat(gd.playerRadCounters.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Doubles the +1/+1 counters its controller's monstrosity puts on their own creature without halving them")
+    void doublesItsControllersMonstrosityCounters() {
+        Permanent colossus = harness.addToBattlefieldAndReturn(player1, new ArborColossus());
+        colossus.setSummoningSick(false);
+        harness.addToBattlefield(player1, new VorinclexMonstrousRaider());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(colossus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
     }
 }

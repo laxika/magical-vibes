@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersToPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 
 import java.util.List;
@@ -15,7 +16,7 @@ import java.util.List;
 public class KamiOfWhisperedHopes extends Card {
 
     public KamiOfWhisperedHopes() {
-        addStaticEffect(new AddOnePlusOneCountersToPermanentsEffect());
+        addStaticEffect(AddOnePlusOneCountersEffect.plusOne(CounterType.PLUS_ONE_PLUS_ONE, AddOnePlusOneCountersEffect.youControl()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

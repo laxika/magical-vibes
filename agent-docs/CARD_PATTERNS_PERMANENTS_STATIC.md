@@ -45,7 +45,7 @@ All paths relative to `cards/`.
 
 | Divide combat damage among defending player and creatures | `b/ButcherOrgg.java` | STATIC `AssignCombatDamageAmongDefendingPlayerAndCreaturesEffect()` - the source may divide damage among the defending player and any number of creatures they control |
 
-| X counters + counter replacement on other creatures + counter-paid activated ability | `b/BenevolentHydra.java` | STATIC `EnterWithCountersEffect(PLUS_ONE_PLUS_ONE, XValue)` + STATIC `AddOnePlusOneCountersToOtherCreaturesEffect()` + `{T}`, remove a +1/+1 counter ability targeting another creature you control |
+| X counters + counter replacement on other creatures + counter-paid activated ability | `b/BenevolentHydra.java` | STATIC `EnterWithCountersEffect(PLUS_ONE_PLUS_ONE, XValue)` + STATIC `AddOnePlusOneCountersEffect.plusOne(PLUS_ONE_PLUS_ONE, youControl(allOf(creature, not(source))))` + `{T}`, remove a +1/+1 counter ability targeting another creature you control |
 
 ## Static permanents
 

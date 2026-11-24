@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
-import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -15,7 +16,7 @@ public class SelesnyaLoftGardens extends Card {
 
     public SelesnyaLoftGardens() {
         addStaticEffect(new MultiplyTokenCreationEffect(2));
-        addStaticEffect(new DoubleCountersOnAllPermanentsEffect());
+        addStaticEffect(AddOnePlusOneCountersEffect.twice(CounterType.ANY, AddOnePlusOneCountersEffect.anyPermanent()));
         addTrigger(Triggers.chaosEnsues(),
                 GrantStaticEffectToPlayerEffect.untilEndOfTurn(
                         new AddOneOfEachManaTypeProducedByLandEffect()));

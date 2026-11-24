@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnPermanentsOrPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.HalveCountersPutByOpponentsEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersEffect;
 
 @CardRegistration(set = "KHM", collectorNumber = "199")
 @CardRegistration(set = "KHM", collectorNumber = "320")
@@ -13,7 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.HalveCountersPutByOpponentsEf
 public class VorinclexMonstrousRaider extends Card {
 
     public VorinclexMonstrousRaider() {
-        addStaticEffect(new DoubleCountersOnPermanentsOrPlayersEffect());
-        addStaticEffect(new HalveCountersPutByOpponentsEffect());
+        addStaticEffect(AddOnePlusOneCountersEffect.twice(CounterType.ANY, AddOnePlusOneCountersEffect.anyPermanent())
+                .alsoOnPlayers().placedByYou());
+        addStaticEffect(AddOnePlusOneCountersEffect.halfRoundedDown(CounterType.ANY, AddOnePlusOneCountersEffect.anyPermanent())
+                .alsoOnPlayers().placedByAnOpponent());
     }
 }

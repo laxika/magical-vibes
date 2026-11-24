@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.a.ArborColossus;
 import com.github.laxika.magicalvibes.cards.g.GoblinGangLeader;
 import com.github.laxika.magicalvibes.cards.i.IchorRats;
 import com.github.laxika.magicalvibes.cards.t.ThrivingRhino;
@@ -8,13 +9,14 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HalvingSeason.class, GoblinGangLeader.class, IchorRats.class, ThrivingRhino.class})
+@CardUsed({HalvingSeason.class, GoblinGangLeader.class, IchorRats.class, ThrivingRhino.class, ArborColossus.class})
 class HalvingSeasonTest extends BaseCardTest {
 
     @Test
@@ -123,5 +125,36 @@ class HalvingSeasonTest extends BaseCardTest {
 
         assertThat(gd.playerEnergyCounters.getOrDefault(player2.getId(), 0)).isZero();
         assertThat(rhino.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Halves the +1/+1 counters an opponent's monstrosity puts on their own creature, rounded down")
+    void halvesAnOpponentsMonstrosityCounters() {
+        harness.addToBattlefield(player1, new HalvingSeason());
+        Permanent colossus = harness.addToBattlefieldAndReturn(player2, new ArborColossus());
+        colossus.setSummoningSick(false);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.GREEN, 3);
+        harness.forceActivePlayer(player2);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(colossus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Doesn't halve the +1/+1 counters its controller's monstrosity puts on their own creature")
+    void doesNotHalveItsControllersMonstrosityCounters() {
+        harness.addToBattlefield(player1, new HalvingSeason());
+        Permanent colossus = harness.addToBattlefieldAndReturn(player1, new ArborColossus());
+        colossus.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(colossus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 }

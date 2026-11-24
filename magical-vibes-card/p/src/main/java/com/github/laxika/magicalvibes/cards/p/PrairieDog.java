@@ -29,7 +29,7 @@ public class PrairieDog extends Card {
                 false,
                 "{4}{W}",
                 List.of(new GrantPlayerStaticEffectsUntilEndOfTurnEffect(
-                        List.of(new AddOnePlusOneCountersEffect()))),
+                        List.of(new AddOnePlusOneCountersEffect().placedByYou()))),
                 "{4}{W}: If you would put one or more +1/+1 counters on a creature you control, put "
                         + "that many plus one +1/+1 counters on it instead."
         ));

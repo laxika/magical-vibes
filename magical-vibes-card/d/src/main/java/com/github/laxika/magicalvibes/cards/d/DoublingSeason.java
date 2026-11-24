@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnControlledPermanentsEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "216")
@@ -21,6 +22,6 @@ public class DoublingSeason extends Card {
 
     public DoublingSeason() {
         addStaticEffect(new MultiplyTokenCreationEffect(2));
-        addStaticEffect(new DoubleCountersOnControlledPermanentsEffect());
+        addStaticEffect(AddOnePlusOneCountersEffect.twice(CounterType.ANY, AddOnePlusOneCountersEffect.youControl()));
     }
 }

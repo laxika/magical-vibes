@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersToPermanentsEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -14,6 +15,6 @@ public class SolidGround extends Card {
     public SolidGround() {
         target(TargetFilters.landYouControl())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new EarthbendTargetLandEffect(3));
-        addStaticEffect(new AddOnePlusOneCountersToPermanentsEffect());
+        addStaticEffect(AddOnePlusOneCountersEffect.plusOne(CounterType.PLUS_ONE_PLUS_ONE, AddOnePlusOneCountersEffect.youControl()));
     }
 }

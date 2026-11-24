@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.f.FanaticOfXenagos;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PyramidOfThePantheon;
 import com.github.laxika.magicalvibes.cards.t.TimberlandGuide;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,8 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         DocSamsonSuperPsychiatrist.class,
         GrizzlyBears.class,
         PyramidOfThePantheon.class,
-        TimberlandGuide.class
-})
+        TimberlandGuide.class, FanaticOfXenagos.class})
 class DocSamsonSuperPsychiatristTest extends BaseCardTest {
 
     @Test
@@ -111,5 +112,20 @@ class DocSamsonSuperPsychiatristTest extends BaseCardTest {
         assertThat(doc.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Doesn't add a counter to the tribute an opponent puts on a creature you control")
+    void doesNotAddToTributeAnOpponentPays() {
+        harness.addToBattlefield(player1, new DocSamsonSuperPsychiatrist());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new FanaticOfXenagos(), "{1}{R}{G}");
+        harness.passBothPriorities();
+        Permanent fanatic = findPermanent(player1, "Fanatic of Xenagos");
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(fanatic.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }

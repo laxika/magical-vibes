@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersToOtherCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
@@ -25,7 +25,9 @@ public class BenevolentHydra extends Card {
     public BenevolentHydra() {
         addStaticEffect(new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
-        addStaticEffect(new AddOnePlusOneCountersToOtherCreaturesEffect());
+        addStaticEffect(AddOnePlusOneCountersEffect.plusOne(CounterType.PLUS_ONE_PLUS_ONE,
+                AddOnePlusOneCountersEffect.youControl(new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(), new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))))));
 
         PermanentPredicateTargetFilter otherCreatureTarget = new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

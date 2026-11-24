@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.d.DragonscaleBoon;
+import com.github.laxika.magicalvibes.cards.c.CauldronsGift;
 import com.github.laxika.magicalvibes.cards.c.CourageInCrisis;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.z.ZameckGuildmage;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -16,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({MowuLoyalCompanion.class, DragonscaleBoon.class, GrizzlyBears.class, ZameckGuildmage.class,
-        CourageInCrisis.class})
+        CourageInCrisis.class, CauldronsGift.class})
 class MowuLoyalCompanionTest extends BaseCardTest {
 
     @Test
@@ -96,5 +98,22 @@ class MowuLoyalCompanionTest extends BaseCardTest {
 
         Permanent mowu = findPermanent(player1, "Mowu, Loyal Companion");
         assertThat(mowu.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Adds one counter when it is returned from a graveyard with a +1/+1 counter")
+    void addsOneCounterWhenReturnedWithACounter() {
+        MowuLoyalCompanion card = new MowuLoyalCompanion();
+        harness.setGraveyard(player1, List.of(card));
+        harness.setHand(player1, List.of(new CauldronsGift()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent mowu = findPermanent(player1, "Mowu, Loyal Companion");
+        assertThat(mowu.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 }

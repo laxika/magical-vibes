@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c (each in Findings; the fold queue marks its rows). Fold runs 22 and 17d are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                   |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22 (each in Findings; the fold queue marks its rows). Fold runs 17d, 21b and 18c are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                    |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,617 / 2,877 (after fold run 19c) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,604 / 2,877 (after fold run 22) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,674 rows over 4,439 classes (after fold run 19c). Latest verdict per class: `step-9` 762, unique 1,170, absorbed 771, split 625, blocked-other 506, survivor 307, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 762 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,690 rows over 4,440 classes (after fold run 22). Latest verdict per class: `step-9` 747, unique 1,172, absorbed 784, split 625, blocked-other 506, survivor 308, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 747 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -755,6 +755,9 @@ Delayed and global triggers:
 - `TemptingOfferEffect.of(prompt, players -> payload)`: "each opponent may [X]. For each opponent who does, [X for you]": all decide in turn order, then the payload over `acceptedPlayers()`, then `RepeatEffect(n)` over `you()` (fold run 19c).
 - `CreateTokenCopyOfTargetPermanentEffect.forController(PlayerSubject)`: each named player creates, owns and controls the copies (CR 111.2), with no Esix-style offer for them (Glimmervoid Basin, Echocasting Symposium, Fractured Identity, Tempt with Reflections; fold run 19c).
 - `PutCounterOnTargetPermanentEffect.placedByEachController()`: "target player puts / each opponent may put a counter on each creature they control"; the permanent's controller is the placer (Shadrix, Tempt with Glory; fold run 19c).
+
+- `AddOnePlusOneCountersEffect(counterType, permanents, players, placedBy, Change)`, with `plusOne` / `twice` / `halfRoundedDown` / `plusOneForYou`, `.placedByYou()` / `.placedByAnOpponent()` / `.alsoOnPlayers()`, and `youControl([filter])` / `anyPermanent()` / `creatureOr(subtypes…)`: every static counter-placement replacement. A placement naming no placer is put by the affected controller; "this permanent" applies to its own entering counters (CR 614.12) (fold run 22).
+- `GameQueryService.placementReplacementApplies` / `placementAffects`: the one applicability judge for counter-placement replacements on every placement path, planes and player grants included (fold run 22).
 
 ### Blocked causes still open
 
@@ -2697,6 +2700,43 @@ New pieces:
 - Give `TemptingOfferEffect` an "offered only to opponents who could" filter (CR 608.2d).
 - Fold Immortality and Discovery; Discovery's final shuffle needs the union of the SEARCH steps' players.
 - The four `CreateTokenFor*` records (40 and 27 cards) need their own run. Terrapact Intimidator's is a may-carrier with a target, not a one-liner.
+
+### Step 9, fold run 22 (2026-11-24, parallel worktree)
+
+`counter-place`: 13 folded (absorbed), 1 left. `token-count`: 0 folded, 1 unique. `token-add`: not started (11 left). Ratchet 3,653 / 2,914 → 3,640 / 2,914. Ledger 16 rows (survivor 1, absorbed 13, unique 2). 16 card files rewritten, Oracle text checked for all of them and for the survivor's 5 cards. CR 614.1a, 614.5, 614.12, 616.1, 702.104a and 702.104b checked.
+
+**The shape.** `AddOnePlusOneCountersEffect(counterType, permanents, players, placedBy, change)`, with Hardened Scales as `()`:
+- `counterType`: `CounterType.ANY` means "of each of those kinds".
+- `permanents`: a `PermanentPredicate` judged against the source (`youControl([filter])`, `anyPermanent()`, `creatureOr(subtypes…)`, `PermanentIsSourceCardPredicate`).
+- `players`: SELF ("you would get") or ANY ("on a permanent or player").
+- `placedBy`: ANY, SELF or OPPONENT. A placement that names no placer is put by the affected object's controller (Vorinclex and Halving Season rulings).
+- `Change`: PLUS_ONE, TWICE or HALF_ROUNDED_DOWN.
+- A replacement whose only object is its source applies to the counters that source enters with (CR 614.12; Mowu's ruling). Conclave Mentor and Winding Constrictor don't apply to themselves entering (their rulings).
+- In `GameQueryService`, one helper judges the predicate for every placement path. Type and control come from the placement's own reads (layered on the battlefield, printed while entering). Subtypes come from the layered board. Any other leaf goes to `PredicateEvaluationService`.
+- Order prompts are unchanged: `counterReplacementsFor` and the entering placement record still ask where the order changes the result (CR 616.1).
+
+| Batch | Result |
+|---|---|
+| `counter-place` | 13 folded: Doc Samson, Pir, Kami of Whispered Hopes, Solid Ground, Winding Constrictor (both lines), Ozolith, Caradora, Benevolent Hydra, Mowu, Vorinclex (both lines), Innkeeper's Talent, Loading Zone, Selesnya Loft Gardens, Doubling Season, Halving Season. Prairie Dog's grant is `.placedByYou()`. Left: Aether Refinery (energy only; player counters have no kind, so this would be a one-card option) |
+| `token-count` | 0: HalveTokenCreationEffect is `unique`. `MultiplyTokenCreationEffect` multiplies by an int, so halving and an opponents-only scope would both be Halving Season-only values. No count-change component fits both counters and tokens (tokens take ×3, counters take +1) |
+| `token-add` | not started: 11 rows stay `step-9` |
+
+**Behaviour changes.**
+- On paths that name no placer, Vorinclex doubles its controller's monstrosity and other counters instead of doubling and then halving them, and Halving Season no longer halves its controller's own counters.
+- On those paths an opponent's Halving Season or Vorinclex now halves (before, only the affected player's own battlefield was read).
+- Tribute names the paying opponent as placer (CR 702.104a): Doc Samson adds nothing, and Vorinclex halves.
+- Mowu returned with a +1/+1 counter (Cauldron's Gift) gets one more.
+- The noncreature-Vehicle path is the generic path.
+
+**Tests changed.** `GameQueryServiceTest` builds the survivor in two places; no assertion changed. 5 tests added (Vorinclex, Halving Season ×2, Doc Samson, Mowu).
+
+**Seen, not changed.**
+- Tribute's "paid" is `placed >= N`, so a halved tribute counts as unpaid (CR 702.104b says "as specified"). Code sure, rule unsure.
+- Experience counters and `MultiPermanentChoiceHandlerService`'s poison name no placer, so Vorinclex and Halving Season don't apply to them. Code, sure.
+- The entering path that names a placer (6-argument `replaceCounters`) reads `appliesToAllPermanents` replacements only for the controller's own permanents (Primal Vigor's +1/+1 doubling). Code, fairly sure.
+- Entering permanents are judged by printed types (Winding Constrictor's Mycosynth Lattice ruling, CR 614.12). Code, sure.
+
+**For the next run.** `token-add` is its own run: the per-kind counters in `TokenCreationReplacementSupport` and the fixed-order addition counts in `PermanentControlSupport` should move onto `AddTokenCreationEffect`. Corpsejack Menace's and Primal Vigor's +1/+1 doublers (ledgered `unique` in step 5e), Zabaz and Vizier of Remedies could now be the survivor's TWICE or a minus-one change in step 10.
 
 ## Prompt
 

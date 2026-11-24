@@ -181,6 +181,7 @@ import com.github.laxika.magicalvibes.model.effect.ControllerOpponentDamageBonus
 import com.github.laxika.magicalvibes.model.effect.ControllerRecipientDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterLimitEffect;
+import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureDyingDontCauseTriggersEffect;
@@ -279,7 +280,6 @@ import com.github.laxika.magicalvibes.model.effect.PermanentsMatchingLoseSuperty
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkerLoyaltyAbilitiesCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCounterReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayerCounterReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCanCastAndActivateOnlyDuringOwnTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCanCastSpellsOnlyDuringOwnTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastInstantsOrActivateNonManaAbilitiesDuringCombatEffect;
@@ -325,7 +325,17 @@ import com.github.laxika.magicalvibes.model.effect.WallOnlyTargetingRestrictionE
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -5318,56 +5328,140 @@ public class GameQueryService {
                         gameData, permanent, controllerId));
                 replacementEffects.addAll(computeStaticBonus(gameData, permanent).grantedEffects());
                 for (CardEffect effect : replacementEffects) {
-                    if (effect instanceof CounterReplacementEffect replacement
-                            && (!replacement.appliesOnlyToModularAbility() || modularAbility)
-                            && !replacement.appliesToAllPermanents()
-                            && (replacement instanceof com.github.laxika.magicalvibes.model.effect.DoubleCountersOnControlledCreaturesSpacecraftsAndPlanetsEffect
-                            ? affectedPermanentIsCreature
-                            || (affectedPermanent != null
-                            && (hasEffectiveSubtype(gameData, affectedPermanent, CardSubtype.SPACECRAFT)
-                            || hasEffectiveSubtype(gameData, affectedPermanent, CardSubtype.PLANET)))
-                            : replacement.appliesTo(counterType, affectedPermanentIsCreature,
-                            affectedPermanentIsArtifact, permanent, affectedPermanent))) {
-                        result = MaroGoneNutsSupport.apply(
-                                gameData, effect, replacement.replace(counterType, result));
+                    boolean applies;
+                    if (effect instanceof AddOnePlusOneCountersEffect placement) {
+                        applies = placementReplacementApplies(gameData, placement, permanent, controllerId,
+                                affectedPermanent, controllerId, null, counterType,
+                                affectedPermanentIsCreature, affectedPermanentIsArtifact);
+                    } else {
+                        applies = effect instanceof CounterReplacementEffect replacement
+                                && (!replacement.appliesOnlyToModularAbility() || modularAbility)
+                                && !replacement.appliesToAllPermanents()
+                                && replacement.appliesTo(counterType, affectedPermanentIsCreature,
+                                affectedPermanentIsArtifact, permanent, affectedPermanent);
+                    }
+                    if (applies) {
+                        result = MaroGoneNutsSupport.apply(gameData, effect,
+                                ((CounterReplacementEffect) effect).replace(counterType, result));
                     }
                 }
             }
         }
-        for (CardEffect effect : playerGrantedPlusOneReplacements(
-                gameData, controllerId, controllerId, counterType, affectedPermanentIsCreature, false)) {
+        result = applyOtherPlayersPlacementReplacements(gameData, controllerId, affectedPermanent, counterType,
+                result, affectedPermanentIsCreature, affectedPermanentIsArtifact);
+        for (CardEffect effect : playerGrantedPlusOneReplacements(gameData, controllerId, null, counterType,
+                affectedPermanent, affectedPermanentIsCreature, affectedPermanentIsArtifact)) {
             result = MaroGoneNutsSupport.apply(
                     gameData, effect, ((CounterReplacementEffect) effect).replace(counterType, result));
         }
         result = applyGlobalCounterReplacements(gameData, counterType, result,
                 affectedPermanentIsCreature, affectedPermanentIsArtifact);
         result = applyPlanarCounterReplacements(gameData, controllerId, counterType, result,
-                affectedPermanentIsCreature, affectedPermanentIsArtifact);
+                affectedPermanent, affectedPermanentIsCreature, affectedPermanentIsArtifact);
         if (affectedPermanentIsEntering) {
-            result = applyEnteringPermanentReplacements(gameData, counterType, result,
+            result = applyEnteringPermanentReplacements(gameData, controllerId, null, counterType, result,
                     affectedPermanent);
         }
         return limitCounters(gameData, affectedPermanent, controllerId, counterType, result);
     }
 
     /**
-     * The +1/+1 counter replacements a player was granted until end of turn (Prairie Dog): they apply
-     * only when that player puts the counters on a permanent that player controls, and outlive
-     * the permanent that granted them.
+     * Whether a counter-placement replacement applies to counters {@code placingPlayerId} puts on {@code affected}, a
+     * permanent {@code affectedControllerId} controls or will control as it enters: the kind, the permanents it names
+     * (judged against its source and the source's controller) and who puts them. A placement that names no player is
+     * put by the affected permanent's controller (Vorinclex's and Halving Season's rulings). {@code creature} and
+     * {@code artifact} are the placement's own reads of the affected permanent: layered on the battlefield, printed as
+     * it enters.
+     */
+    private boolean placementReplacementApplies(GameData gameData, AddOnePlusOneCountersEffect replacement,
+                                                Permanent source, UUID sourceControllerId, Permanent affected,
+                                                UUID affectedControllerId, UUID placingPlayerId,
+                                                CounterType counterType, boolean creature, boolean artifact) {
+        if (replacement.permanents() == null || !replacement.replacesKind(counterType)) {
+            return false;
+        }
+        UUID placer = placingPlayerId != null ? placingPlayerId : affectedControllerId;
+        return replacement.acceptsPlacer(sourceControllerId, placer)
+                && placementAffects(gameData, replacement.permanents(), source, sourceControllerId, affected,
+                affectedControllerId, creature, artifact);
+    }
+
+    /**
+     * Judges a counter-placement replacement's permanents: type and control from the placement's own reads, subtypes
+     * from the layered board (printed for a permanent that is entering), any other leaf through
+     * {@link PredicateEvaluationService}.
+     */
+    private boolean placementAffects(GameData gameData, PermanentPredicate predicate, Permanent source,
+                                     UUID sourceControllerId, Permanent affected, UUID affectedControllerId,
+                                     boolean creature, boolean artifact) {
+        return switch (predicate) {
+            case PermanentTruePredicate ignored -> true;
+            case PermanentIsCreaturePredicate ignored -> creature;
+            case PermanentIsArtifactPredicate ignored -> artifact;
+            case PermanentControlledBySourceControllerPredicate ignored ->
+                    sourceControllerId != null && sourceControllerId.equals(affectedControllerId);
+            case PermanentIsSourceCardPredicate ignored ->
+                    source != null && affected != null && source.getId().equals(affected.getId());
+            case PermanentHasSubtypePredicate has ->
+                    affected != null && hasEffectiveSubtype(gameData, affected, has.subtype());
+            case PermanentHasAnySubtypePredicate any -> affected != null
+                    && any.subtypes().stream().anyMatch(subtype -> hasEffectiveSubtype(gameData, affected, subtype));
+            case PermanentAllOfPredicate all -> all.predicates().stream().allMatch(part -> placementAffects(
+                    gameData, part, source, sourceControllerId, affected, affectedControllerId, creature, artifact));
+            case PermanentAnyOfPredicate any -> any.predicates().stream().anyMatch(part -> placementAffects(
+                    gameData, part, source, sourceControllerId, affected, affectedControllerId, creature, artifact));
+            case PermanentNotPredicate not -> !placementAffects(gameData, not.predicate(), source, sourceControllerId,
+                    affected, affectedControllerId, creature, artifact);
+            default -> affected != null && predicateEvaluationService.matchesPermanentPredicate(gameData, affected,
+                    predicate);
+        };
+    }
+
+    /**
+     * The counter-placement replacements of other players' permanents that apply to a placement on a permanent
+     * {@code controllerId} controls, put by that player (an opponent's "if an opponent would put"), in turn order.
+     */
+    private int applyOtherPlayersPlacementReplacements(GameData gameData, UUID controllerId, Permanent affected,
+                                                       CounterType counterType, int count, boolean creature,
+                                                       boolean artifact) {
+        if (count <= 0) {
+            return count;
+        }
+        final int[] result = {count};
+        gameData.forEachBattlefield((sourceControllerId, battlefield) -> {
+            if (Objects.equals(sourceControllerId, controllerId)) {
+                return;
+            }
+            for (Permanent source : battlefield) {
+                for (CardEffect effect : staticEffectsIncludingTemporary(gameData, source, sourceControllerId)) {
+                    if (effect instanceof AddOnePlusOneCountersEffect placement
+                            && placementReplacementApplies(gameData, placement, source, sourceControllerId, affected,
+                            controllerId, null, counterType, creature, artifact)) {
+                        result[0] = MaroGoneNutsSupport.apply(gameData, effect,
+                                placement.replace(counterType, result[0]));
+                    }
+                }
+            }
+        });
+        return result[0];
+    }
+
+    /**
+     * The counter-placement replacements the affected permanent's controller was granted until end of turn (Prairie
+     * Dog): that player is their "you", and they outlive the permanent that granted them.
      */
     private List<CardEffect> playerGrantedPlusOneReplacements(
             GameData gameData, UUID affectedControllerId, UUID placingPlayerId, CounterType counterType,
-            boolean creature, boolean nonCreatureVehicle) {
-        if (affectedControllerId == null || counterType != CounterType.PLUS_ONE_PLUS_ONE
-                || (placingPlayerId != null && !placingPlayerId.equals(affectedControllerId))) {
+            Permanent affected, boolean creature, boolean artifact) {
+        if (affectedControllerId == null) {
             return List.of();
         }
-        List<CardEffect> granted = gameData.floatingPlayerEffects(affectedControllerId,
-                com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect.class);
         List<CardEffect> applicable = new ArrayList<>();
-        for (CardEffect effect : granted) {
-            if (effect instanceof com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect replacement
-                    && (creature || (nonCreatureVehicle && replacement.appliesToNonCreatureVehicles()))) {
+        for (CardEffect effect : gameData.floatingPlayerEffects(affectedControllerId,
+                AddOnePlusOneCountersEffect.class)) {
+            if (effect instanceof AddOnePlusOneCountersEffect placement
+                    && placementReplacementApplies(gameData, placement, null, affectedControllerId, affected,
+                    affectedControllerId, placingPlayerId, counterType, creature, artifact)) {
                 applicable.add(effect);
             }
         }
@@ -5398,24 +5492,40 @@ public class GameQueryService {
         return result[0];
     }
 
-    private int applyEnteringPermanentReplacements(GameData gameData, CounterType counterType,
-                                                   int count,
+    private int applyEnteringPermanentReplacements(GameData gameData, UUID controllerId, UUID placingPlayerId,
+                                                   CounterType counterType, int count,
                                                    Permanent enteringPermanent) {
         if (count <= 0 || enteringPermanent == null) {
             return count;
         }
-        boolean creature = enteringPermanent.getCard().hasType(CardType.CREATURE);
-        boolean artifact = enteringPermanent.getCard().hasType(CardType.ARTIFACT);
         int result = count;
-        for (CardEffect effect : enteringPermanent.getCard().getStaticEffects()) {
-            if (effect instanceof CounterReplacementEffect replacement
-                    && replacement.appliesToWhenEntering(counterType, creature, artifact,
-                    enteringPermanent)) {
-                result = MaroGoneNutsSupport.apply(
-                        gameData, effect, replacement.replace(counterType, result));
-            }
+        for (CardEffect effect : ownEnteringPlacementReplacements(gameData, enteringPermanent, controllerId,
+                placingPlayerId, counterType)) {
+            result = MaroGoneNutsSupport.apply(gameData, effect,
+                    ((CounterReplacementEffect) effect).replace(counterType, result));
         }
         return result;
+    }
+
+    /**
+     * The entering permanent's own counter-placement replacements that apply to the counters it enters with: only one
+     * that affects nothing but its source (Mowu's ruling; Winding Constrictor's and Conclave Mentor's rulings: a
+     * "permanent you control" replacement doesn't apply to itself entering).
+     */
+    private List<CardEffect> ownEnteringPlacementReplacements(GameData gameData, Permanent enteringPermanent,
+                                                              UUID controllerId, UUID placingPlayerId,
+                                                              CounterType counterType) {
+        boolean creature = enteringPermanent.getCard().hasType(CardType.CREATURE);
+        boolean artifact = enteringPermanent.getCard().hasType(CardType.ARTIFACT);
+        List<CardEffect> own = new ArrayList<>();
+        for (CardEffect effect : enteringPermanent.getCard().getStaticEffects()) {
+            if (effect instanceof AddOnePlusOneCountersEffect placement && placement.affectsOnlyItsSource()
+                    && placementReplacementApplies(gameData, placement, enteringPermanent, controllerId,
+                    enteringPermanent, controllerId, placingPlayerId, counterType, creature, artifact)) {
+                own.add(effect);
+            }
+        }
+        return own;
     }
 
     private int replacePlusOnePlusOneCounters(
@@ -5434,46 +5544,10 @@ public class GameQueryService {
     private int replacePlusOnePlusOneCounters(
             GameData gameData, UUID controllerId, int count, boolean affectedPermanentIsNonCreatureVehicle,
             Permanent affectedPermanent, boolean affectedPermanentIsEntering) {
-        if (!affectedPermanentIsNonCreatureVehicle) {
-            return replaceCounters(gameData, controllerId, CounterType.PLUS_ONE_PLUS_ONE, count,
-                    true, false, affectedPermanent, affectedPermanentIsEntering);
-        }
-        if (count <= 0 || controllerId == null) {
-            return count;
-        }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        int result = count;
-        if (battlefield != null) {
-            for (Permanent permanent : battlefield) {
-                for (CardEffect effect : staticEffectsIncludingTemporary(
-                        gameData, permanent, controllerId)) {
-                    if (effect instanceof com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect replacement
-                            && !replacement.appliesOnlyToModularAbility()
-                            && replacement.appliesToNonCreatureVehicles()) {
-                        result = MaroGoneNutsSupport.apply(
-                                gameData, effect, replacement.replace(result));
-                    } else if (effect instanceof CounterReplacementEffect replacement
-                            && (!replacement.appliesOnlyToModularAbility())
-                            && !replacement.appliesToAllPermanents()
-                            && replacement.appliesTo(CounterType.PLUS_ONE_PLUS_ONE, false, true,
-                            permanent, affectedPermanent)) {
-                        result = MaroGoneNutsSupport.apply(
-                                gameData, effect,
-                                replacement.replace(CounterType.PLUS_ONE_PLUS_ONE, result));
-                    }
-                }
-            }
-        }
-        result = applyGlobalCounterReplacements(gameData, CounterType.PLUS_ONE_PLUS_ONE, result,
-                false, true);
-        result = applyPlanarCounterReplacements(gameData, controllerId,
-                CounterType.PLUS_ONE_PLUS_ONE, result, false, true);
-        if (affectedPermanentIsEntering) {
-            result = applyEnteringPermanentReplacements(gameData, CounterType.PLUS_ONE_PLUS_ONE,
-                    result, affectedPermanent);
-        }
-        return limitCounters(gameData, affectedPermanent, controllerId,
-                CounterType.PLUS_ONE_PLUS_ONE, result);
+        // A noncreature Vehicle is an artifact: the replacements that name artifacts or Vehicles apply to it.
+        return replaceCounters(gameData, controllerId, CounterType.PLUS_ONE_PLUS_ONE, count,
+                !affectedPermanentIsNonCreatureVehicle, affectedPermanentIsNonCreatureVehicle, affectedPermanent,
+                affectedPermanentIsEntering);
     }
 
     private List<CardEffect> staticEffectsIncludingTemporary(
@@ -5622,11 +5696,9 @@ public class GameQueryService {
             UUID placingPlayerId, boolean modularAbility) {
         UUID affectedControllerId = findPermanentController(gameData, permanent.getId());
         boolean creature = isCreature(gameData, permanent);
-        boolean nonCreatureVehicle = counterType == CounterType.PLUS_ONE_PLUS_ONE && !creature
-                && hasEffectiveSubtype(gameData, permanent, CardSubtype.VEHICLE);
         boolean artifact = isArtifact(gameData, permanent);
         return List.copyOf(collectCounterReplacements(gameData, permanent, affectedControllerId, creature,
-                artifact, nonCreatureVehicle, counterType, placingPlayerId, modularAbility));
+                artifact, counterType, placingPlayerId, modularAbility));
     }
 
     /**
@@ -5637,18 +5709,14 @@ public class GameQueryService {
             GameData gameData, Permanent permanent, UUID controllerId, CounterType counterType,
             UUID placingPlayerId, boolean modularAbility) {
         boolean creature = permanent.getCard().hasType(CardType.CREATURE);
-        boolean nonCreatureVehicle = counterType == CounterType.PLUS_ONE_PLUS_ONE && !creature
-                && permanent.getCard().getSubtypes().contains(CardSubtype.VEHICLE);
         boolean artifact = permanent.getCard().hasType(CardType.ARTIFACT);
         List<com.github.laxika.magicalvibes.model.ChoiceContext.CounterReplacement> modifiers =
                 withQueryScope(gameData, () -> collectCounterReplacements(gameData, permanent, controllerId,
-                        creature, artifact, nonCreatureVehicle, counterType, placingPlayerId, modularAbility));
-        for (CardEffect effect : permanent.getCard().getStaticEffects()) {
-            if (effect instanceof CounterReplacementEffect replacement
-                    && replacement.appliesToWhenEntering(counterType, creature, artifact, permanent)) {
-                modifiers.add(new com.github.laxika.magicalvibes.model.ChoiceContext.CounterReplacement(
-                        FaceDownVisibility.publicName(gameData, permanent) + " (" + (modifiers.size() + 1) + ")", effect));
-            }
+                        creature, artifact, counterType, placingPlayerId, modularAbility));
+        for (CardEffect effect : ownEnteringPlacementReplacements(gameData, permanent, controllerId,
+                placingPlayerId, counterType)) {
+            modifiers.add(new com.github.laxika.magicalvibes.model.ChoiceContext.CounterReplacement(
+                    FaceDownVisibility.publicName(gameData, permanent) + " (" + (modifiers.size() + 1) + ")", effect));
         }
         return List.copyOf(modifiers);
     }
@@ -5681,7 +5749,7 @@ public class GameQueryService {
 
     private List<com.github.laxika.magicalvibes.model.ChoiceContext.CounterReplacement> collectCounterReplacements(
             GameData gameData, Permanent permanent, UUID affectedControllerId, boolean creature,
-            boolean artifact, boolean nonCreatureVehicle, CounterType counterType,
+            boolean artifact, CounterType counterType,
             UUID placingPlayerId, boolean modularAbility) {
         List<com.github.laxika.magicalvibes.model.ChoiceContext.CounterReplacement> modifiers = new ArrayList<>();
         gameData.forEachBattlefield((sourceControllerId, battlefield) -> {
@@ -5693,25 +5761,16 @@ public class GameQueryService {
                     if (!(effect instanceof CounterReplacementEffect replacement)) continue;
                     if (replacement.appliesOnlyToModularAbility() && !modularAbility) continue;
                     boolean applies;
-                    if (replacement.appliesToAllPermanents()) {
+                    if (replacement instanceof AddOnePlusOneCountersEffect placement) {
+                        // Spacecraft, Planet and Vehicle are read from the layered subtypes, so a Planet turned
+                        // into a Forest no longer counts.
+                        applies = placementReplacementApplies(gameData, placement, source, sourceControllerId,
+                                permanent, affectedControllerId, placingPlayerId, counterType, creature, artifact);
+                    } else if (replacement.appliesToAllPermanents()) {
                         applies = replacement.appliesTo(counterType, creature, artifact);
-                    } else if (replacement instanceof com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect plusOneReplacement
-                            && nonCreatureVehicle && plusOneReplacement.appliesToNonCreatureVehicles()) {
-                        applies = sourceControlsAffected;
                     } else if (replacement.appliesGlobally()) {
                         applies = replacement.appliesTo(counterType, creature, sourceControlsAffected,
                                 sourceControllerIsPlacing, false);
-                    } else if (replacement instanceof com.github.laxika.magicalvibes.model.effect.DoubleCountersOnPermanentsOrPlayersEffect
-                            || replacement instanceof com.github.laxika.magicalvibes.model.effect.HalveCountersPutByOpponentsEffect) {
-                        applies = replacement.appliesTo(counterType, creature, sourceControlsAffected,
-                                sourceControllerIsPlacing, false);
-                    } else if (replacement instanceof com.github.laxika.magicalvibes.model.effect.DoubleCountersOnControlledCreaturesSpacecraftsAndPlanetsEffect) {
-                        // Spacecraft and Planet are read from the layered subtypes, so a Planet turned into
-                        // a Forest no longer counts.
-                        applies = sourceControlsAffected
-                                && (creature
-                                || hasEffectiveSubtype(gameData, permanent, CardSubtype.SPACECRAFT)
-                                || hasEffectiveSubtype(gameData, permanent, CardSubtype.PLANET));
                     } else {
                         applies = sourceControlsAffected && replacement.appliesTo(
                                 counterType, creature, artifact, source, permanent);
@@ -5724,7 +5783,7 @@ public class GameQueryService {
             }
         });
         for (CardEffect effect : playerGrantedPlusOneReplacements(
-                gameData, affectedControllerId, placingPlayerId, counterType, creature, nonCreatureVehicle)) {
+                gameData, affectedControllerId, placingPlayerId, counterType, permanent, creature, artifact)) {
             modifiers.add(new com.github.laxika.magicalvibes.model.ChoiceContext.CounterReplacement(
                     "Until end of turn (" + (modifiers.size() + 1) + ")", effect));
         }
@@ -5732,8 +5791,8 @@ public class GameQueryService {
             for (var planar : gameData.planechase.faceUp) {
                 for (CardEffect effect : planar.getCard().getStaticEffects()) {
                     if (effect instanceof CounterReplacementEffect replacement
-                            && replacement.appliesTo(counterType, creature,
-                            Objects.equals(gameData.planechase.controllerId, affectedControllerId), false, false)) {
+                            && planarPlacementReplacementApplies(gameData, replacement, permanent,
+                            affectedControllerId, placingPlayerId, counterType, creature, artifact)) {
                         modifiers.add(new com.github.laxika.magicalvibes.model.ChoiceContext.CounterReplacement(
                                 planar.getCard().getName() + " (" + (modifiers.size() + 1) + ")", effect));
                     }
@@ -5769,24 +5828,42 @@ public class GameQueryService {
 
     private int applyPlanarCounterReplacements(GameData gameData, UUID affectedControllerId,
                                                CounterType counterType, int count,
+                                               Permanent affectedPermanent,
                                                boolean affectedPermanentIsCreature,
                                                boolean affectedPermanentIsArtifact) {
         if (count <= 0 || gameData.planechase == null || affectedControllerId == null) {
             return count;
         }
         int result = count;
-        UUID planarControllerId = gameData.planechase.controllerId;
         for (var planar : gameData.planechase.faceUp) {
             for (CardEffect effect : planar.getCard().getStaticEffects()) {
                 if (effect instanceof CounterReplacementEffect replacement
-                        && replacement.appliesTo(counterType, affectedPermanentIsCreature,
-                        Objects.equals(planarControllerId, affectedControllerId), false, false)) {
+                        && planarPlacementReplacementApplies(gameData, replacement, affectedPermanent,
+                        affectedControllerId, null, counterType, affectedPermanentIsCreature,
+                        affectedPermanentIsArtifact)) {
                     result = MaroGoneNutsSupport.apply(
                             gameData, effect, replacement.replace(counterType, result));
                 }
             }
         }
         return result;
+    }
+
+    /**
+     * Whether a face-up plane's counter replacement applies (Selesnya Loft Gardens): a plane has no permanent, and its
+     * controller is the planar controller.
+     */
+    private boolean planarPlacementReplacementApplies(GameData gameData, CounterReplacementEffect replacement,
+                                                      Permanent affected, UUID affectedControllerId,
+                                                      UUID placingPlayerId, CounterType counterType,
+                                                      boolean creature, boolean artifact) {
+        UUID planarControllerId = gameData.planechase.controllerId;
+        if (replacement instanceof AddOnePlusOneCountersEffect placement) {
+            return placementReplacementApplies(gameData, placement, null, planarControllerId, affected,
+                    affectedControllerId, placingPlayerId, counterType, creature, artifact);
+        }
+        return replacement.appliesTo(counterType, creature,
+                Objects.equals(planarControllerId, affectedControllerId), false, false);
     }
 
     /** Applies all counter replacements for a permanent entering under {@code controllerId}. */
@@ -5815,9 +5892,6 @@ public class GameQueryService {
                                CounterType counterType, int count, UUID placingPlayerId,
                                boolean modularAbility) {
         boolean creature = permanent != null && permanent.getCard().hasType(CardType.CREATURE);
-        boolean nonCreatureVehicle = counterType == CounterType.PLUS_ONE_PLUS_ONE
-                && permanent != null && !creature
-                && permanent.getCard().getSubtypes().contains(CardSubtype.VEHICLE);
         boolean artifact = permanent != null && permanent.getCard().hasType(CardType.ARTIFACT);
         final int[] result = {count};
         gameData.forEachBattlefield((sourceControllerId, battlefield) -> {
@@ -5829,14 +5903,10 @@ public class GameQueryService {
                     if (!(effect instanceof CounterReplacementEffect replacement)) continue;
                     if (replacement.appliesOnlyToModularAbility() && !modularAbility) continue;
                     boolean applies;
-                    if (replacement instanceof com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect plusOneReplacement
-                            && nonCreatureVehicle && plusOneReplacement.appliesToNonCreatureVehicles()) {
-                        applies = sourceControlsAffected;
+                    if (replacement instanceof AddOnePlusOneCountersEffect placement) {
+                        applies = placementReplacementApplies(gameData, placement, source, sourceControllerId,
+                                permanent, controllerId, placingPlayerId, counterType, creature, artifact);
                     } else if (replacement.appliesGlobally()) {
-                        applies = replacement.appliesTo(counterType, creature, sourceControlsAffected,
-                                sourceControllerIsPlacing, false);
-                    } else if (replacement instanceof com.github.laxika.magicalvibes.model.effect.DoubleCountersOnPermanentsOrPlayersEffect
-                            || replacement instanceof com.github.laxika.magicalvibes.model.effect.HalveCountersPutByOpponentsEffect) {
                         applies = replacement.appliesTo(counterType, creature, sourceControlsAffected,
                                 sourceControllerIsPlacing, false);
                     } else {
@@ -5851,12 +5921,14 @@ public class GameQueryService {
             }
         });
         for (CardEffect effect : playerGrantedPlusOneReplacements(
-                gameData, controllerId, placingPlayerId, counterType, creature, nonCreatureVehicle)) {
+                gameData, controllerId, placingPlayerId, counterType, permanent, creature, artifact)) {
             result[0] = MaroGoneNutsSupport.apply(
                     gameData, effect, ((CounterReplacementEffect) effect).replace(counterType, result[0]));
         }
         result[0] = applyPlanarCounterReplacements(gameData, controllerId, counterType,
-                result[0], creature, artifact);
+                result[0], permanent, creature, artifact);
+        result[0] = applyEnteringPermanentReplacements(gameData, controllerId, placingPlayerId, counterType,
+                result[0], permanent);
         return recordEntryCounterPlacement(gameData, permanent, controllerId, counterType, count,
                 limitCounters(gameData, permanent, controllerId, counterType, result[0]),
                 placingPlayerId, modularAbility);
@@ -5933,20 +6005,16 @@ public class GameQueryService {
         }
         final int[] replaced = {result};
         gameData.forEachBattlefield((sourceControllerId, battlefield) -> {
-            boolean sourceControlsAffected = Objects.equals(sourceControllerId, playerId);
-            boolean sourceControllerIsPlacing = Objects.equals(sourceControllerId, placingPlayerId);
             for (Permanent source : battlefield) {
                 for (CardEffect effect : staticEffectsIncludingTemporary(
                         gameData, source, sourceControllerId)) {
-                    if (!(effect instanceof CounterReplacementEffect replacement)) continue;
-                    if (!(replacement instanceof com.github.laxika.magicalvibes.model.effect.DoubleCountersOnPermanentsOrPlayersEffect)
-                            && !(replacement instanceof com.github.laxika.magicalvibes.model.effect.HalveCountersPutByOpponentsEffect)) {
-                        continue;
-                    }
-                    if (replacement.appliesTo(null, false, sourceControlsAffected,
-                            sourceControllerIsPlacing, true)) {
+                    // The ones that don't care who puts them were applied with the player's own.
+                    if (effect instanceof AddOnePlusOneCountersEffect placement
+                            && placement.placedBy() != PlayerRelation.ANY
+                            && playerPlacementReplacementApplies(placement, sourceControllerId, playerId,
+                            placingPlayerId)) {
                         replaced[0] = MaroGoneNutsSupport.apply(
-                                gameData, effect, replacement.replace(null, replaced[0]));
+                                gameData, effect, placement.replace(null, replaced[0]));
                     }
                 }
             }
@@ -5984,15 +6052,12 @@ public class GameQueryService {
                 if (effect instanceof EnergyCounterReplacementEffect replacement) {
                     result = MaroGoneNutsSupport.apply(
                             gameData, effect, replacement.replaceEnergy(result));
-                } else if (effect instanceof PlayerCounterReplacementEffect replacement) {
+                } else if (effect instanceof AddOnePlusOneCountersEffect placement
+                        && playerPlacementReplacementApplies(placement, playerId, playerId, playerId)) {
+                    // A player getting energy puts the counters on themself, so they are the placing player
+                    // (Winding Constrictor, level 3 of Innkeeper's Talent, Vorinclex).
                     result = MaroGoneNutsSupport.apply(
-                            gameData, effect, replacement.replace(result));
-                } else if (effect instanceof com.github.laxika.magicalvibes.model.effect.DoubleCountersOnPermanentsOrPlayersEffect replacement
-                        && replacement.appliesTo(null, false, true, true, true)) {
-                    // Level 3 of Innkeeper's Talent / Vorinclex: the controller puts the energy counters
-                    // on themself, so they are the placing player.
-                    result = MaroGoneNutsSupport.apply(
-                            gameData, effect, replacement.replace(null, result));
+                            gameData, effect, placement.replace(null, result));
                 }
             }
         }
@@ -6003,9 +6068,9 @@ public class GameQueryService {
             }
             for (Permanent source : sourceBattlefield) {
                 for (CardEffect effect : staticEffectsIncludingTemporary(gameData, source, sourceControllerId)) {
-                    if (effect instanceof com.github.laxika.magicalvibes.model.effect.HalveCountersPutByOpponentsEffect halve
-                            && halve.appliesTo(null, false, false, false, true)) {
-                        halved[0] = MaroGoneNutsSupport.apply(gameData, effect, halve.replace(null, halved[0]));
+                    if (effect instanceof AddOnePlusOneCountersEffect placement
+                            && playerPlacementReplacementApplies(placement, sourceControllerId, playerId, playerId)) {
+                        halved[0] = MaroGoneNutsSupport.apply(gameData, effect, placement.replace(null, halved[0]));
                     }
                 }
             }
@@ -6028,13 +6093,28 @@ public class GameQueryService {
         for (Permanent permanent : battlefield) {
             for (CardEffect effect : staticEffectsIncludingTemporary(
                     gameData, permanent, playerId)) {
-                if (effect instanceof PlayerCounterReplacementEffect replacement) {
+                // Placer unknown: only the ones that don't care who puts them (Winding Constrictor).
+                if (effect instanceof AddOnePlusOneCountersEffect placement
+                        && playerPlacementReplacementApplies(placement, playerId, playerId, null)) {
                     result = MaroGoneNutsSupport.apply(
-                            gameData, effect, replacement.replace(result));
+                            gameData, effect, placement.replace(null, result));
                 }
             }
         }
         return result;
+    }
+
+    /**
+     * Whether a counter-placement replacement controlled by {@code sourceControllerId} applies to the counters
+     * {@code affectedPlayerId} would get from {@code placingPlayerId} ({@code null}: not known). A player's counters
+     * have no kind here, so only a replacement of every kind applies.
+     */
+    private static boolean playerPlacementReplacementApplies(AddOnePlusOneCountersEffect placement,
+                                                             UUID sourceControllerId, UUID affectedPlayerId,
+                                                             UUID placingPlayerId) {
+        return placement.counterType() == CounterType.ANY
+                && placement.replacesPlayer(sourceControllerId, affectedPlayerId)
+                && placement.acceptsPlacer(sourceControllerId, placingPlayerId);
     }
 
     /**

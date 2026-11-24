@@ -38,13 +38,6 @@ public interface CounterReplacementEffect extends CardEffect {
         return appliesTo(counterType, affectedPermanentIsCreature, affectedPermanentIsArtifact);
     }
 
-    default boolean appliesToWhenEntering(CounterType counterType,
-                                          boolean enteringPermanentIsCreature,
-                                          boolean enteringPermanentIsArtifact,
-                                          Permanent enteringPermanent) {
-        return false;
-    }
-
     default boolean appliesTo(CounterType counterType, boolean affectedPermanentIsCreature,
                               boolean sourceControlsAffectedPermanent,
                               boolean sourceControllerIsPlacingPlayer,

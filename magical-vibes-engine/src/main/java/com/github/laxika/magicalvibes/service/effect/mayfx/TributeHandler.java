@@ -47,7 +47,9 @@ public class TributeHandler implements MayEffectHandlerBean {
 
         boolean paid = false;
         if (source != null && accepted && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, source)) {
-            int placed = gameQueryService.doublePlusOnePlusOneCounters(gameData, source, tribute.counterCount());
+            // The chosen opponent puts the counters (CR 702.104a), so "if you / an opponent would put" judge them.
+            int placed = gameQueryService.replaceCounters(gameData, source, CounterType.PLUS_ONE_PLUS_ONE,
+                    tribute.counterCount(), player.getId());
             if (placed > 0) {
                 source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
                         source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);

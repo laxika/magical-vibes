@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.AddOneCounterToControlledPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 
 import java.util.List;
@@ -13,7 +14,7 @@ import java.util.List;
 public class DocSamsonSuperPsychiatrist extends Card {
 
     public DocSamsonSuperPsychiatrist() {
-        addStaticEffect(new AddOneCounterToControlledPermanentsEffect(true));
+        addStaticEffect(AddOnePlusOneCountersEffect.plusOne(CounterType.ANY, AddOnePlusOneCountersEffect.youControl()).placedByYou());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

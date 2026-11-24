@@ -45,8 +45,6 @@ import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.AddOneCounterToArtifactOrCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.AddOnePlayerCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOnePlusOneCountersOnAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
@@ -100,6 +98,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromEverythingEffec
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromManaValueParityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessGreaterThanPowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -1839,7 +1838,9 @@ class GameQueryServiceTest {
         @DisplayName("adds one counter on artifacts and creatures but not enchantments")
         void addsCounterOnlyOnArtifactsOrCreatures() {
             Card marker = createCreature("Winding Constrictor", 2, 3, CardColor.BLACK);
-            marker.addStaticEffect(new AddOneCounterToArtifactOrCreatureEffect());
+            marker.addStaticEffect(AddOnePlusOneCountersEffect.plusOne(CounterType.ANY,
+                    AddOnePlusOneCountersEffect.youControl(new PermanentAnyOfPredicate(List.of(
+                            new PermanentIsArtifactPredicate(), new PermanentIsCreaturePredicate())))));
             addPermanent(player1Id, marker);
             Permanent creature = addPermanent(player1Id, createCreature("Creature", 2, 2, CardColor.GREEN));
             Permanent artifact = addPermanent(player1Id, createArtifact("Artifact"));
@@ -1854,7 +1855,7 @@ class GameQueryServiceTest {
         @DisplayName("adds one player counter only to the controller's event")
         void addsPoisonCounterForController() {
             Card marker = createCreature("Winding Constrictor", 2, 3, CardColor.BLACK);
-            marker.addStaticEffect(new AddOnePlayerCounterEffect());
+            marker.addStaticEffect(AddOnePlusOneCountersEffect.plusOneForYou());
             addPermanent(player1Id, marker);
 
             assertThat(gqs.replacePoisonCounters(gd, player1Id, 1)).isEqualTo(2);
