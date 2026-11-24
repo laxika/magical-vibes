@@ -203,8 +203,8 @@ class EnslaveTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Destroying the enchanted creature in response still deals its damage to its owner (last known information)")
-    void upkeepDamageResolvesAfterEnchantedCreatureIsDestroyed() {
+    @DisplayName("Destroying the enchanted creature in response deals no damage, since Enslave was last on the battlefield enchanting nothing")
+    void noUpkeepDamageOnceEnchantedCreatureIsDestroyed() {
         SlashPanther panther = new SlashPanther();
         panther.setOwnerId(player2.getId());
         Permanent creature = addCreatureReady(player2, panther);
@@ -219,10 +219,11 @@ class EnslaveTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.assertInGraveyard(player2, "Slash Panther");
+        harness.assertInGraveyard(player1, "Enslave");
         resolveAllTriggers();
 
         harness.assertLife(player1, 20);
-        harness.assertLife(player2, 19);
+        harness.assertLife(player2, 20);
     }
 
     @Test

@@ -856,6 +856,8 @@ Delayed and global triggers:
 - `AwardManaToActivePlayerEffect.to(PlayerSubject)`: "that player / target player adds" (fold run 33).
 - `AwardHasteGrantingManaEffect.Rider` (`HASTE_UNTIL_END_OF_TURN`, `PERMANENT_HASTE`, `INSTANT_OR_SORCERY_CANT_BE_COUNTERED`) (fold run 33).
 
+- `Subjects.lastAttachedCreature()` (`PermanentSubject.Attached(creature, lastAttached)`): "the creature it was last enchanting" for a source that left unattached, read from the stack entry's recorded host; only for cards whose ruling says so (Bind the Monster). Plain `attached()` names nothing then (CR 608.2h, 704.5m; Followed Footsteps, Mechanized Production rulings) (fix after fold run 26).
+
 ### Blocked causes still open
 
 Counts are ledger rows of existing classes whose latest note names the cause (approximate, by keyword).
@@ -3227,7 +3229,7 @@ Five batches touched, two left. Ratchet 3,572 / 2,853 → 3,565 / 2,848. Ledger 
 **least-tough** (2 of 2): `PermanentHasLeastToughnessAmongOpponentCreaturesPredicate(CountScope)` with OPPONENTS, CONTROLLER or ANY_PLAYER. The least toughness is found among all creatures in scope, and the choice drops what can't be chosen.
 **random-target**: not taken (time).
 
-**Behaviour changes.** Enslave deals damage as last known, to the card's owner (test). `attached()` falls back to the recorded host when the source left unattached (Bind the Monster). Crush Underfoot chooses a lone Giant unasked. Purging Scythe no longer offers a creature that can't be chosen. Source-prevention pre-checks are dropped in the rewritten dealer handlers. Damage amounts are fixed first. Alpha Brawl's AI polarity is now HARMFUL_DAMAGE.
+**Behaviour changes.** Enslave deals damage as last known, to the card's owner (test). `attached()` falls back to the recorded host when the source left unattached (Bind the Monster). *Corrected after fold run 23c's sweep:* that fallback broke Followed Footsteps (its ruling: no copy once the Aura went to the graveyard unattached), so `attached()` names nothing again (CR 608.2h, 704.5m; Mechanized Production's ruling agrees) and only Bind the Monster reads `Subjects.lastAttachedCreature()` (`Attached(creature, lastAttached)`), per its own ruling. Enslave has no ruling, so it takes the default and deals no damage; its test was reversed. Crush Underfoot chooses a lone Giant unasked. Purging Scythe no longer offers a creature that can't be chosen. Source-prevention pre-checks are dropped in the rewritten dealer handlers. Damage amounts are fixed first. Alpha Brawl's AI polarity is now HARMFUL_DAMAGE.
 **Tests changed.** Crush Underfoot (prompt dropped per CR 608.2d, 2 rewritten, 1 added), The Dining Car (multi-permanent prompt), Enslave (+1).
 **Seen, not changed.** Several dealers still deal one dealer at a time (Rakdos Charm, Judgment of Alexander, Alpha Brawl's second step). The TargetDealsPowerDamageToTarget paths keep their source-prevention pre-checks.
 **For the next run.** `random-target` (43 cards on `SourceFightsTargetCreatureEffect`). Widespread Brutality waits for the amass step to record CHOOSE.

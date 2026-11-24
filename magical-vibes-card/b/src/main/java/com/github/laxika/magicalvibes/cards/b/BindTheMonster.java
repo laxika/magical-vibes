@@ -19,7 +19,7 @@ public class BindTheMonster extends Card {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                         new TapPermanentsEffect(Subjects.attached()),
-                        TargetCreatureDealsDamageToControllerEffect.dealtBy(Subjects.attachedCreature(), new SourcePower(),
+                        TargetCreatureDealsDamageToControllerEffect.dealtBy(Subjects.lastAttachedCreature(), new SourcePower(),
                                 Subjects.you())))
                 .addStaticEffect(DoesntUntapEffect.enchanted());
     }

@@ -104,12 +104,32 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
      * attached to. With {@code creature}, "enchanted creature" / "equipped creature": a resolving effect names the host
      * only while it is a creature. A static ability's host is judged without a type read (an Aura or Equipment on a
      * noncreature it can't be attached to leaves it as state-based actions are checked).
+     * <p>
+     * Once the source left the battlefield, the host is what the source was attached to as it last existed there (CR
+     * 608.2h). By default an Aura that went to the graveyard as a state-based action after its host left first was
+     * last attached to nothing (CR 704.5m), so it names nothing (Followed Footsteps' ruling). With
+     * {@code lastAttached}, "the creature it was last enchanting" (Bind the Monster's ruling): such an unattached
+     * last-known source still names the host the stack entry recorded as the ability triggered or was activated,
+     * whether or not that host is still on the battlefield.
+     *
+     * @param creature     "enchanted creature" / "equipped creature" rather than "enchanted permanent"
+     * @param lastAttached an unattached last-known source still names the host the entry recorded
      */
-    record Attached(boolean creature) implements PermanentSubject {
+    record Attached(boolean creature, boolean lastAttached) implements PermanentSubject {
 
         /** "Enchanted permanent": the host, whatever it is. */
         public Attached() {
             this(false);
+        }
+
+        /** "Enchanted permanent" or, with {@code creature}, "enchanted creature", read as the source last existed. */
+        public Attached(boolean creature) {
+            this(creature, false);
+        }
+
+        @Override
+        public boolean needsStackEntry() {
+            return lastAttached;
         }
     }
 

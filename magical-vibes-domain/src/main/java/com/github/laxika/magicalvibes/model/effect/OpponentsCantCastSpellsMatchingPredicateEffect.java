@@ -21,8 +21,8 @@ public record OpponentsCantCastSpellsMatchingPredicateEffect(CardPredicate predi
 
     public OpponentsCantCastSpellsMatchingPredicateEffect {
         if (!(players instanceof PlayerSubject.Each)
-                && !(players instanceof PlayerSubject.ControllerOf(PermanentSubject.Attached(boolean creature))
-                && !creature)) {
+                && !(players instanceof PlayerSubject.ControllerOf(PermanentSubject.Attached(boolean creature, boolean last))
+                && !creature && !last)) {
             throw new IllegalArgumentException("Unsupported players for a static restriction: " + players);
         }
     }

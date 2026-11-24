@@ -1133,8 +1133,8 @@ public class SubjectResolutionService {
      */
     public static boolean namesPlayer(GameData gameData, Permanent source, UUID controllerId, UUID playerId,
                                       PlayerSubject players) {
-        if (players instanceof PlayerSubject.ControllerOf(PermanentSubject.Attached(boolean creature))
-                && !creature) {
+        if (players instanceof PlayerSubject.ControllerOf(PermanentSubject.Attached(boolean creature, boolean last))
+                && !creature && !last) {
             if (playerId == null || source == null || source.getAttachedTo() == null) {
                 return false;
             }
@@ -1680,7 +1680,7 @@ public class SubjectResolutionService {
      * on the battlefield is a creature.
      */
     private List<UUID> attachedIds(Context ctx, PermanentSubject.Attached attached) {
-        UUID hostId = attachedId(ctx);
+        UUID hostId = attachedId(ctx, attached.lastAttached());
         if (attached.creature() && hostId != null && ctx.entry() != null) {
             Permanent host = gameQueryService.findPermanentById(ctx.gameData(), hostId);
             if (host != null && !gameQueryService.isCreature(ctx.gameData(), host)) {
@@ -1874,9 +1874,17 @@ public class SubjectResolutionService {
      * "Enchanted creature", "equipped creature": what the source is attached to now while it is on the battlefield
      * (nothing if it is unattached), else what it was attached to as it last existed there (CR 608.2h): the source's
      * last-known snapshot, or, when the entry recorded none, the permanent the source was attached to as the ability
-     * triggered.
+     * triggered. A snapshot left unattached because its host left first (CR 704.5m) names nothing.
      */
     private UUID attachedId(Context ctx) {
+        return attachedId(ctx, false);
+    }
+
+    /**
+     * {@link #attachedId(Context)}; with {@code lastAttached} ("the creature it was last enchanting"), a source that
+     * left the battlefield unattached still names the host the entry recorded as the ability triggered or was activated.
+     */
+    private UUID attachedId(Context ctx, boolean lastAttached) {
         if (ctx.staticSource() != null) {
             return permanentAttachment(ctx.gameData(), ctx.staticSource());
         }
@@ -1886,18 +1894,10 @@ public class SubjectResolutionService {
         if (live != null) {
             return permanentAttachment(ctx.gameData(), live);
         }
-        // A source that left is read as it last existed (CR 608.2h): its snapshot's host. A snapshot left unattached
-        // because its host left the battlefield first still names that host, the one the entry recorded as the ability
-        // triggered or was activated; one that became unattached while its recorded host stayed enchants nothing.
         Permanent snapshot = ctx.sourceSnapshot();
         Permanent attachedSnapshot = entry.getAttachedPermanentSnapshot();
-        if (snapshot != null) {
-            UUID snapshotHost = permanentAttachment(ctx.gameData(), snapshot);
-            if (snapshotHost != null || snapshot.getAttachedTo() != null || attachedSnapshot == null) {
-                return snapshotHost;
-            }
-            return gameQueryService.findPermanentById(ctx.gameData(), attachedSnapshot.getId()) == null
-                    ? attachedSnapshot.getId() : null;
+        if (snapshot != null && (!lastAttached || snapshot.getAttachedTo() != null || attachedSnapshot == null)) {
+            return permanentAttachment(ctx.gameData(), snapshot);
         }
         return attachedSnapshot == null ? null : attachedSnapshot.getId();
     }

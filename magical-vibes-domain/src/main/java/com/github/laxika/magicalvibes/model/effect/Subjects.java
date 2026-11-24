@@ -32,6 +32,7 @@ public final class Subjects {
     private static final PermanentSubject ALL_TARGETS = new PermanentSubject.AllTargets();
     private static final PermanentSubject ATTACHED = new PermanentSubject.Attached();
     private static final PermanentSubject ATTACHED_CREATURE = new PermanentSubject.Attached(true);
+    private static final PermanentSubject LAST_ATTACHED_CREATURE = new PermanentSubject.Attached(true, true);
     private static final PermanentSubject ATTACHED_OR_SOURCE = new PermanentSubject.AttachedOrSource();
     private static final PermanentSubject ATTACHED_AT_TRIGGER = new PermanentSubject.AttachedAtTrigger();
     private static final PermanentSubject TRIGGERING = new PermanentSubject.Triggering();
@@ -144,6 +145,15 @@ public final class Subjects {
      */
     public static PermanentSubject attachedCreature() {
         return ATTACHED_CREATURE;
+    }
+
+    /**
+     * "The creature it was last enchanting": {@link #attachedCreature()}, except that a source that left the
+     * battlefield unattached (its host left first) still names the host the stack entry recorded. Only for cards
+     * whose rulings say so (Bind the Monster); "enchanted creature" otherwise names nothing then.
+     */
+    public static PermanentSubject lastAttachedCreature() {
+        return LAST_ATTACHED_CREATURE;
     }
 
     /** "This creature ... If it's an Aura, enchanted creature ... instead": the host while attached, else the source. */

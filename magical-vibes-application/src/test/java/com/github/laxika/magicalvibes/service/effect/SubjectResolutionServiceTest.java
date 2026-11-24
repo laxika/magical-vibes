@@ -105,6 +105,7 @@ import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringCar
 import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringPlayer;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringSpell;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.attachedCreature;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.lastAttachedCreature;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.bandmatesOf;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.createdThisResolution;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringAttackers;
@@ -379,6 +380,81 @@ class SubjectResolutionServiceTest extends BaseCardTest {
             leaveBattlefield(bears);
 
             assertThat(permanents(entry, attached())).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Names nothing once the Aura went to the graveyard unattached after its creature left first")
+        void auraThatLeftUnattachedAfterItsHost() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            Permanent pacifism = attach(player1, new Pacifism(), bears);
+            StackEntry entry = entry(player1, null, pacifism.getId());
+            entry.setAttachedPermanentSnapshot(new Permanent(bears));
+            leaveBattlefield(bears);
+            pacifism.setAttachedTo(null);
+            leaveBattlefield(pacifism);
+
+            assertThat(subjects.permanentIds(gd, entry, EFFECT, attached())).isEmpty();
+            assertThat(subjects.permanentIds(gd, entry, EFFECT, attachedCreature())).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("lastAttachedCreature()")
+    class LastAttachedCreature {
+
+        @Test
+        @DisplayName("Is the creature the Aura is attached to while the Aura is on the battlefield")
+        void enchantedCreature() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            Permanent giant = addCreatureReady(player2, new HillGiant());
+            Permanent pacifism = attach(player1, new Pacifism(), bears);
+            StackEntry entry = entry(player1, null, pacifism.getId());
+            entry.setAttachedPermanentSnapshot(new Permanent(bears));
+
+            pacifism.setAttachedTo(giant.getId());
+
+            assertThat(permanents(entry, lastAttachedCreature())).containsExactly(giant);
+        }
+
+        @Test
+        @DisplayName("Is the creature the Aura was last enchanting once the Aura went to the graveyard unattached after that creature left")
+        void auraThatLeftUnattachedAfterItsHost() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            Permanent pacifism = attach(player1, new Pacifism(), bears);
+            StackEntry entry = entry(player1, null, pacifism.getId());
+            entry.setAttachedPermanentSnapshot(new Permanent(bears));
+            leaveBattlefield(bears);
+            pacifism.setAttachedTo(null);
+            leaveBattlefield(pacifism);
+
+            assertThat(subjects.permanentIds(gd, entry, EFFECT, lastAttachedCreature())).containsExactly(bears.getId());
+        }
+
+        @Test
+        @DisplayName("Is the creature the Aura was last enchanting when the Aura fell off it and that creature stayed")
+        void auraThatFellOffAHostThatStayed() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            Permanent pacifism = attach(player1, new Pacifism(), bears);
+            StackEntry entry = entry(player1, null, pacifism.getId());
+            entry.setAttachedPermanentSnapshot(new Permanent(bears));
+            pacifism.setAttachedTo(null);
+            leaveBattlefield(pacifism);
+
+            assertThat(permanents(entry, lastAttachedCreature())).containsExactly(bears);
+            assertThat(permanents(entry, attachedCreature())).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Is the creature the Aura was attached to as it last existed, once the Aura left still attached")
+        void auraThatLeftAttached() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            Permanent giant = addCreatureReady(player2, new HillGiant());
+            Permanent pacifism = attach(player1, new Pacifism(), bears);
+            StackEntry entry = entry(player1, null, pacifism.getId());
+            entry.setAttachedPermanentSnapshot(new Permanent(giant));
+            leaveBattlefield(pacifism);
+
+            assertThat(permanents(entry, lastAttachedCreature())).containsExactly(bears);
         }
     }
 
