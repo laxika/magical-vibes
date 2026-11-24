@@ -959,31 +959,18 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a color (target becomes chosen color)", gameData.id, playerName);
     }
 
-    public void beginColorSetChoiceForTargets(GameData gameData, UUID controllerId, List<UUID> targetIds,
-                                               String sourceCardName) {
-        ChoiceContext.ColorSetTargetsChoice ctx =
-                new ChoiceContext.ColorSetTargetsChoice(new ArrayList<>(targetIds), controllerId, sourceCardName);
-
-        List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                controllerId, null, null, ctx, colors, "Choose a color."));
-
-        String playerName = gameData.playerIdToName.get(controllerId);
-        log.info("Game {} - Awaiting {} to choose a color for target creatures", gameData.id, playerName);
-    }
-
     /**
-     * Prismwake Merrow: prompt {@code playerId} to pick a color for {@code targetId}. Colors are
-     * picked one at a time — already-chosen colors are dropped from the options, and "DONE" is
-     * offered once at least one color has been chosen. The choice handler accumulates the picks and
-     * re-invokes this until the player is done (see {@code ChoiceHandlerService}).
+     * Prompts {@code playerId} to pick the colors {@code targetIds} become. With {@code oneColor} one color is picked;
+     * otherwise colors are picked one at a time: already-chosen colors are dropped from the options, and "DONE" is
+     * offered once at least one color has been chosen. The choice handler accumulates the picks and re-invokes this
+     * until the player is done (see {@code ChoiceHandlerService}).
      */
-    public void beginBecomeChosenColorsChoice(GameData gameData, UUID playerId, UUID targetId,
+    public void beginBecomeChosenColorsChoice(GameData gameData, UUID playerId, List<UUID> targetIds,
                                               String sourceCardName, List<CardColor> chosen,
-                                              Duration duration) {
+                                              Duration duration, boolean oneColor) {
         ChoiceContext.BecomeChosenColorsChoice ctx =
-                new ChoiceContext.BecomeChosenColorsChoice(targetId, sourceCardName, new ArrayList<>(chosen),
-                        duration);
+                new ChoiceContext.BecomeChosenColorsChoice(new ArrayList<>(targetIds), sourceCardName,
+                        new ArrayList<>(chosen), duration, oneColor);
 
         List<String> options = new ArrayList<>();
         for (CardColor color : List.of(CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN)) {
@@ -991,7 +978,7 @@ public class PlayerInputService {
                 options.add(color.name());
             }
         }
-        if (!chosen.isEmpty()) {
+        if (!chosen.isEmpty() && !oneColor) {
             options.add("DONE");
         }
         String prompt = chosen.isEmpty() ? "Choose a color." : "Choose another color, or DONE.";

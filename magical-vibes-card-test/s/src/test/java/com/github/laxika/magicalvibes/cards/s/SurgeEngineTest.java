@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class SurgeEngineTest extends BaseCardTest {
 
     @Test
+    @DisplayName("{U} makes it lose defender and gain \"This creature can't be blocked.\"")
     void losesDefenderAndBecomesUnblockableIndefinitely() {
         Permanent engine = addCreatureReady(player1, new SurgeEngine());
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -31,6 +33,7 @@ class SurgeEngineTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("{2}{U} makes it blue with base power and toughness 5/4 indefinitely, only without defender")
     void becomesBlueAndSetsBasePowerAndToughnessIndefinitely() {
         Permanent engine = addCreatureReady(player1, new SurgeEngine());
         harness.addMana(player1, ManaColor.BLUE, 4);
@@ -58,6 +61,7 @@ class SurgeEngineTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("{4}{U}{U} draws three cards only while it is blue and only once")
     void drawsThreeCardsOnlyOnceAndRequiresBlue() {
         addCreatureReady(player1, new SurgeEngine());
         harness.setHand(player1, List.of());
@@ -85,6 +89,7 @@ class SurgeEngineTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The {2}{U} ability cannot be activated until the defender removal has resolved")
     void cannotUpgradeBeforeDefenderRemovalResolves() {
         Permanent engine = addCreatureReady(player1, new SurgeEngine());
         harness.addMana(player1, ManaColor.BLUE, 4);
@@ -104,6 +109,7 @@ class SurgeEngineTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The once-only draw is used up on activation and is tracked per permanent")
     void drawActivationIsConsumedBeforeResolutionAndIsSeparateForEachPermanent() {
         addCreatureReady(player1, new SurgeEngine());
         addCreatureReady(player1, new SurgeEngine());
@@ -133,6 +139,7 @@ class SurgeEngineTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Losing defender and the granted unblockability last past the cleanup step")
     void defenderRemovalAndUnblockabilitySurviveTurnCleanup() {
         Permanent engine = addCreatureReady(player1, new SurgeEngine());
         harness.addMana(player1, ManaColor.BLUE, 1);

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class HydroManFluidFelonTest extends BaseCardTest {
 
     @Test
+    @DisplayName("A blue spell you cast pumps Hydro-Man; a spell of another color does not")
     void blueSpellPumpsHydroManAndOtherColorsDoNot() {
         Permanent hydroMan = addHydroMan();
         harness.castFromHand(player1, new Opt(), "{U}");
@@ -36,6 +38,7 @@ class HydroManFluidFelonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Your end step untaps Hydro-Man and makes it only a land with a blue mana ability until your next turn")
     void endStepUntapsHydroManMakesItOnlyALandAndGrantsManaUntilNextTurn() {
         Permanent hydroMan = addHydroMan();
         hydroMan.tap();
@@ -61,6 +64,7 @@ class HydroManFluidFelonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's blue spell does not pump Hydro-Man")
     void opponentsBlueSpellDoesNotPumpHydroMan() {
         Permanent hydroMan = addHydroMan();
 
@@ -72,6 +76,7 @@ class HydroManFluidFelonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each blue spell adds another +1/+1")
     void eachBlueSpellAddsAnotherPump() {
         Permanent hydroMan = addHydroMan();
 
@@ -85,6 +90,7 @@ class HydroManFluidFelonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A blue spell does not trigger the pump while Hydro-Man is a land")
     void blueSpellDoesNotTriggerPumpWhileHydroManIsALand() {
         Permanent hydroMan = addHydroMan();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -100,6 +106,7 @@ class HydroManFluidFelonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's end step neither untaps nor changes Hydro-Man")
     void opponentsEndStepDoesNotUntapOrTransformHydroMan() {
         Permanent hydroMan = addHydroMan();
         hydroMan.tap();
@@ -115,6 +122,7 @@ class HydroManFluidFelonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The land form ends on its original controller's next turn after control changes")
     @CardUsed({Confiscate.class})
     void manaAbilityExpiresOnOriginalControllersTurnAfterControlChanges() {
         Permanent hydroMan = addHydroMan();
@@ -140,6 +148,27 @@ class HydroManFluidFelonTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player2, permanentIndex, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Permanent has no activated ability");
+    }
+
+    @Test
+    @DisplayName("While it is a land Hydro-Man has no creature types, and gets them back on your next turn")
+    void hasNoCreatureTypesWhileALand() {
+        Permanent hydroMan = addHydroMan();
+        var creatureTypes = gqs.getEffectiveSubtypes(gd, hydroMan);
+        assertThat(creatureTypes).isNotEmpty();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isLand(gd, hydroMan)).isTrue();
+        assertThat(gqs.getEffectiveSubtypes(gd, hydroMan)).isEmpty();
+
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectiveSubtypes(gd, hydroMan)).containsExactlyInAnyOrderElementsOf(creatureTypes);
     }
 
     private Permanent addHydroMan() {

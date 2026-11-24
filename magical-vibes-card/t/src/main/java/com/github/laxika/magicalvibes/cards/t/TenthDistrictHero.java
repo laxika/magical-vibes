@@ -17,10 +17,10 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetSelfKeywordIndefinitelyEffect;
-import com.github.laxika.magicalvibes.model.effect.SetSelfPermanentSupertypeIndefinitelyEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.SetTargetPermanentSupertypeEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "34")
 @CardRegistration(set = "MKM", collectorNumber = "391")
@@ -47,7 +47,7 @@ public class TenthDistrictHero extends Card {
                                 new SourceHasSubtype(CardSubtype.DETECTIVE),
                                 SequenceEffect.of(
                                         new SetBasePowerToughnessEffect(5, 5, Subjects.source(), Duration.PERMANENT),
-                                        new SetSelfPermanentSupertypeIndefinitelyEffect(CardSupertype.LEGENDARY, true),
+                                        new SetTargetPermanentSupertypeEffect(CardSupertype.LEGENDARY, true, Subjects.source()),
                                         new GrantStaticEffectToSourceEffect(
                                                 new SetNameEffect("Mileva, the Stalwart", Subjects.source())),
                                         new GrantStaticEffectToSourceEffect(

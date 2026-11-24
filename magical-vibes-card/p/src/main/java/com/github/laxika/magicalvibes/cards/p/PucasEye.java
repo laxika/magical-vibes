@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -15,13 +14,15 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 
 @CardRegistration(set = "ECL", collectorNumber = "259")
 public class PucasEye extends Card {
 
     public PucasEye() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(), new ChooseColorForSourceEffect());
-        addStaticEffect(new BecomeChosenColorEffect());
+        addStaticEffect(GrantColorEffect.chosenColor(Subjects.source()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.BecomeColorlessIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
@@ -16,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
+import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 
 @CardRegistration(set = "M13", collectorNumber = "118")
 public class XathridGorgon extends Card {
@@ -31,7 +32,7 @@ public class XathridGorgon extends Card {
                         new PutCounterOnTargetPermanentEffect(CounterType.PETRIFICATION, 1),
                         new GrantKeywordEffect(Keyword.DEFENDER, Subjects.target(), Duration.PERMANENT),
                         new AddCardTypeToTargetPermanentEffect(CardType.ARTIFACT, true),
-                        new BecomeColorlessIndefinitelyEffect(true),
+                        BecomeChosenColorsUntilEndOfTurnEffect.fixed(Set.of(), Subjects.target(), Duration.PERMANENT),
                         new LockTargetPermanentEffect(false, false, true, Duration.PERMANENT)
                 ),
                 "{2}{B}, {T}: Put a petrification counter on target creature. It gains defender and "

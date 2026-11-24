@@ -1536,12 +1536,6 @@ public sealed interface ChoiceContext {
     record ColorSetChoice(UUID targetId, UUID controllerId, String sourceCardName) implements ChoiceContext {}
 
     /**
-     * The controller chooses one color for all targeted creatures until end of turn.
-     */
-    record ColorSetTargetsChoice(List<UUID> targetIds, UUID controllerId, String sourceCardName)
-            implements ChoiceContext {}
-
-    /**
      * A single color choice that grants the chosen controller and each permanent they control
      * protection from the chosen color until end of turn (e.g. Faith's Shield fateful hour).
      */
@@ -2006,19 +2000,20 @@ public sealed interface ChoiceContext {
     record TeferisRealmTypeChoice(UUID playerId, Card sourceCard) implements ChoiceContext {}
 
     /**
-     * Controller chooses one or more colors for {@code targetId}, which then becomes those colors
-     * for {@code duration} (until end of turn for Prismwake Merrow / Scuttlemutt; indefinitely for
-     * Shyft). Colors are picked one at a time (with a "DONE" option once at least one is chosen);
-     * {@code chosen} accumulates the picks so far.
+     * The controller chooses the colors {@code targetIds} become for {@code duration}, one choice for all of them
+     * ({@code BecomeChosenColorsUntilEndOfTurnEffect}). With {@code oneColor} one color is picked ("the color of your
+     * choice"); otherwise colors are picked one at a time, with a "DONE" option once at least one is chosen ("the color
+     * or colors of your choice"), and {@code chosen} accumulates the picks so far.
      *
-     * @param targetId       the permanent that becomes the chosen colors
-     * @param sourceCardName name of the card whose ability created the effect (for display)
+     * @param targetIds      the permanents that become the chosen colors, found as the effect resolved
+     * @param sourceCardName name of the source as the players may see it (for display)
      * @param chosen         the colors picked so far
      * @param duration       how long the color set lasts
+     * @param oneColor       whether exactly one color is chosen
      */
-    record BecomeChosenColorsChoice(UUID targetId, String sourceCardName,
+    record BecomeChosenColorsChoice(List<UUID> targetIds, String sourceCardName,
                                     List<CardColor> chosen,
-                                    Duration duration) implements ChoiceContext {}
+                                    Duration duration, boolean oneColor) implements ChoiceContext {}
 
     /**
      * Quarry Hauler: "for each kind of counter on target permanent, put another counter of that kind

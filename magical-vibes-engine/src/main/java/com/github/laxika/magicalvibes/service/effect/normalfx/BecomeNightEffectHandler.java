@@ -21,6 +21,10 @@ public class BecomeNightEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        dayNightService.becomeNight(gameData);
+        switch (((BecomeNightEffect) effect).change()) {
+            case NIGHT -> dayNightService.becomeNight(gameData);
+            case DAY -> dayNightService.becomeDay(gameData);
+            case TOGGLE -> dayNightService.toggle(gameData);
+        }
     }
 }

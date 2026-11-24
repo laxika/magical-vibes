@@ -1807,6 +1807,9 @@ check it, don't copy it forward blindly.
 ### Step 24 — Colour-setting `Become*` family
 
 **Target**: `SetColorsEffect(Set<CardColor> colors, boolean chooseColors, boolean targeted, Duration duration)`.
+**Status (effect-cleanup fold run 31)**: done except `BecomeColorlessUntilEndOfTurnEffect`: the survivor
+`BecomeChosenColorsUntilEndOfTurnEffect` takes a subject, a `Duration` and a `ColorChoice` (`FIXED`, `ONE`, `ONE_OR_MORE`);
+`BecomeAllColorsUntilEndOfTurnEffect`, `BecomeChosenColorsIndefinitelyEffect` and `BecomeColorlessIndefinitelyEffect` are gone.
 **Absorbs**: `BecomeAllColorsUntilEndOfTurnEffect` (1), `BecomeChosenColorsIndefinitelyEffect` (2),
 `BecomeColorlessUntilEndOfTurnEffect` (2), `BecomeColorlessIndefinitelyEffect` (1) — surviving into
 `BecomeChosenColorsUntilEndOfTurnEffect` (3).

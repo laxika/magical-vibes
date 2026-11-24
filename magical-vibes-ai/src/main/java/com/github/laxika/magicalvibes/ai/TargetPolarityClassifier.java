@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
+import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileFaceDownPileEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetingRestrictionToTargetUntilEndOfTurnEffect;
@@ -534,6 +535,9 @@ public class TargetPolarityClassifier {
         if (effect instanceof RedirectTargetCreatureDamageFromChosenSourceToTargetEffect redirect) {
             return redirect.redirectTo().declaresTarget() ? TargetPolarity.BENEFICIAL : null;
         }
+        if (effect instanceof BecomeChosenColorsUntilEndOfTurnEffect becomes) {
+            return becomes.subject().declaresTarget() ? TargetPolarity.NEUTRAL : null;
+        }
         if (effect instanceof TargetCreatureBecomesSubtypeUntilEndOfTurnEffect becomes) {
             return becomes.subject() instanceof PermanentSubject.Source ? null : TargetPolarity.NEUTRAL;
         }
@@ -804,8 +808,6 @@ public class TargetPolarityClassifier {
             entry("ExchangeControlOfTargetSpellAndCreatureEffect", TargetPolarity.NEUTRAL),
             entry("ShuffleTargetPermanentsThenEachControllerMayCastEffect", TargetPolarity.NEUTRAL),
             entry("MustBlockEachAttackingCreatureThisTurnEffect", TargetPolarity.NEUTRAL),
-            entry("BecomeChosenColorsUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
-            entry("BecomeChosenColorsIndefinitelyEffect", TargetPolarity.NEUTRAL),
             entry("ChangeColorTextEffect", TargetPolarity.NEUTRAL),
             entry("ChooseOneForTargetPermanentEffect", TargetPolarity.NEUTRAL),
             entry("CreateTokenCopyAndLinkToSourceEffect", TargetPolarity.NEUTRAL),
@@ -838,7 +840,6 @@ public class TargetPolarityClassifier {
             entry("SetTargetPermanentNameEffect", TargetPolarity.NEUTRAL),
             entry("SetTargetPermanentSupertypeEffect", TargetPolarity.NEUTRAL),
             entry("SetCardTypesEffect", TargetPolarity.HARMFUL),
-            entry("SetChosenColorForTargetCreaturesUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("BecomeColorlessUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("SwitchPowerToughnessEffect", TargetPolarity.NEUTRAL),
             entry("SuspectTargetCreatureEffect", TargetPolarity.NEUTRAL)

@@ -204,8 +204,9 @@ public class StaticEffectSupport implements SubjectResolutionService.StaticReads
                 accumulator.addActivatedAbility(grant.ability().withGrantSource(context.sourceId()));
             }
         } else if (wrapped instanceof GrantColorEffect grant) {
-            if (names(context, grant.subject(), grant.filter())) {
-                accumulator.addGrantedColor(grant.color());
+            CardColor color = grant.ofChosenColor() ? context.source().getChosenColor() : grant.color();
+            if (color != null && names(context, grant.subject(), grant.filter())) {
+                accumulator.addGrantedColor(color);
                 if (grant.overriding()) {
                     accumulator.setColorOverriding(true);
                 }

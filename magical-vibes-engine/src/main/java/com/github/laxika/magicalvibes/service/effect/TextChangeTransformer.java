@@ -361,7 +361,7 @@ public final class TextChangeTransformer {
                         ? substitution.toColor() : grant.color();
                 PermanentPredicate filter = apply(grant.filter(), substitution);
                 yield color == grant.color() && filter == grant.filter() ? grant
-                        : new GrantColorEffect(color, grant.subject(), grant.overriding(), filter);
+                        : new GrantColorEffect(color, grant.subject(), grant.overriding(), filter, grant.ofChosenColor());
             }
             case EnchantedPermanentBecomesTypeEffect becomes -> {
                 if (substitution.fromLandType() == null) {

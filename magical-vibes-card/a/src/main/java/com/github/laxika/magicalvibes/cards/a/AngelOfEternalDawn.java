@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.TurnsTakenByController;
-import com.github.laxika.magicalvibes.model.effect.BecomeDayEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeNightEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBecomeNightEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithManaValueGreaterThanEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class AngelOfEternalDawn extends Card {
 
     public AngelOfEternalDawn() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new BecomeDayEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), BecomeNightEffect.day());
         addStaticEffect(new CantBecomeNightEffect());
         addStaticEffect(new OpponentsCantCastSpellsWithManaValueGreaterThanEffect(
                 new TurnsTakenByController()));

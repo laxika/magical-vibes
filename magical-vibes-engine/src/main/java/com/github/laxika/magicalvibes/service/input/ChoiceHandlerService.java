@@ -55,7 +55,6 @@ import com.github.laxika.magicalvibes.model.VoteChoiceContext;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.DevotionToColor;
 import com.github.laxika.magicalvibes.model.effect.LandwalkIgnoredForBlockingEffect;
-import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TextChangeEffect;
@@ -104,6 +103,7 @@ import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import com.github.laxika.magicalvibes.service.effect.ManaSourceColorSupport;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
+import com.github.laxika.magicalvibes.service.effect.normalfx.BecomeChosenColorsUntilEndOfTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesColorThenExileOtherPermanentsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesTokenEffectHandler;
@@ -235,6 +235,7 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.SeizeTheSpotlightEffectHandler
             seizeTheSpotlightEffectHandler;
     private final EachPlayerChoosesTokenEffectHandler eachPlayerChoosesTokenEffectHandler;
+    private final BecomeChosenColorsUntilEndOfTurnEffectHandler becomeChosenColorsUntilEndOfTurnEffectHandler;
     private final EachPlayerChoosesPlanarModeEffectHandler eachPlayerChoosesPlanarModeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.VoteEffectHandler voteEffectHandler;
     private final ManaSourceColorSupport manaSourceColorSupport;
@@ -1032,10 +1033,6 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.ColorSetChoice ctx) {
             handleColorSetChoice(gameData, colorName, ctx);
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.ColorSetTargetsChoice ctx) {
-            handleColorSetTargetsChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.DiscardChosenColorChoice ctx) {
@@ -4617,33 +4614,6 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handleColorSetTargetsChoice(GameData gameData, String chosenValue,
-                                              ChoiceContext.ColorSetTargetsChoice ctx) {
-        CardColor chosenColor = CardColor.valueOf(chosenValue);
-        gameData.interaction.clearAwaitingInput();
-
-        String colorName = chosenColor.name().charAt(0) + chosenColor.name().substring(1).toLowerCase();
-        for (UUID targetId : ctx.targetIds()) {
-            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-            if (target == null) {
-                continue;
-            }
-
-            gameData.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
-                    UUID.randomUUID(), ctx.sourceCardName(), null, ctx.controllerId(),
-                    new com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect(chosenColor),
-                    target.getId(), null, null,
-                    com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN, 0));
-
-            gameLogService.append(gameData,
-                    GameLog.cardThen(target.getCard(), " becomes " + colorName + " until end of turn."));
-            log.info("Game {} - {} becomes {} until end of turn", gameData.id,
-                    target.getCard().getName(), colorName);
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
     private void handleDiscardChosenColorChoice(GameData gameData, String chosenValue,
             ChoiceContext.DiscardChosenColorChoice ctx) {
         CardColor color = CardColor.valueOf(chosenValue);
@@ -4903,16 +4873,16 @@ public class ChoiceHandlerService {
     }
 
     /**
-     * Prismwake Merrow: accumulate the controller's color picks. Each color adds to the running set
-     * and re-prompts (with a "DONE" option); "DONE", a repeated color, or all five colors finalizes
-     * the choice — the target then becomes those colors until end of turn.
+     * Accumulates the controller's color picks for a {@code BecomeChosenColorsUntilEndOfTurnEffect}. A one-color choice
+     * ends at the first pick; otherwise each color adds to the running set and re-prompts (with a "DONE" option), and
+     * "DONE", a repeated color, or all five colors finalizes the choice. The permanents then become those colors.
      */
     private void handleBecomeChosenColorsChoice(GameData gameData, Player player, String chosenValue,
             ChoiceContext.BecomeChosenColorsChoice ctx) {
         // Parse before touching interaction state, as the dispatcher's own fallback does: an
         // unparseable answer must leave the prompt standing, since clearing it first destroys the
         // only thing that would resume the entry parked in pendingEffectResolutionEntry.
-        CardColor chosenColor = "DONE".equals(chosenValue) ? null : CardColor.valueOf(chosenValue);
+        CardColor chosenColor = "DONE".equals(chosenValue) && !ctx.oneColor() ? null : CardColor.valueOf(chosenValue);
         if (chosenColor == null && ctx.chosen().isEmpty()) {
             throw new IllegalArgumentException("At least one color must be chosen");
         }
@@ -4923,48 +4893,22 @@ public class ChoiceHandlerService {
         if (chosenColor != null) {
             CardColor color = chosenColor;
             // A repeated color (e.g. a naive AI re-picking the same color) ends the choice rather
-            // than looping forever; otherwise add it and, if fewer than five are chosen, re-prompt.
+            // than looping forever; otherwise add it and, if more may be chosen, re-prompt.
             if (!chosen.contains(color)) {
                 chosen.add(color);
-                if (chosen.size() < CardColor.values().length) {
+                if (!ctx.oneColor() && chosen.size() < CardColor.values().length) {
                     playerInputService.beginBecomeChosenColorsChoice(gameData, player.getId(),
-                            ctx.targetId(), ctx.sourceCardName(), chosen, ctx.duration());
+                            ctx.targetIds(), ctx.sourceCardName(), chosen, ctx.duration(), false);
                     inputCompletionService.publishStateAfterInput(gameData);
                     return;
                 }
             }
         }
 
-        applyBecomeChosenColors(gameData, ctx, player.getId(), chosen);
+        becomeChosenColorsUntilEndOfTurnEffectHandler.apply(gameData, ctx.targetIds(), ctx.sourceCardName(),
+                player.getId(), new LinkedHashSet<>(chosen), ctx.duration());
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void applyBecomeChosenColors(GameData gameData, ChoiceContext.BecomeChosenColorsChoice ctx,
-            UUID controllerId, List<CardColor> colors) {
-        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
-        if (target == null || colors.isEmpty()) {
-            return;
-        }
-
-        Set<CardColor> colorSet = new LinkedHashSet<>(colors);
-
-        // CR 613 layer engine: "becomes [colors]" is a floating layer-5 color-setting effect with
-        // its own timestamp. Duration is UNTIL_END_OF_TURN (Prismwake Merrow) or PERMANENT (Shyft).
-        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                ctx.sourceCardName(), null, controllerId,
-                new BecomeChosenColorsUntilEndOfTurnEffect(colorSet),
-                target.getId(), null, null, ctx.duration(), 0));
-
-        String colorList = colorSet.stream()
-                .map(c -> c.name().charAt(0) + c.name().substring(1).toLowerCase())
-                .reduce((a, b) -> a + " and " + b).orElse("");
-        String durationSuffix = Duration.UNTIL_END_OF_TURN.equals(ctx.duration())
-                ? " until end of turn." : ".";
-        gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
-                " becomes " + colorList + durationSuffix));
-        log.info("Game {} - {} becomes {}{}", gameData.id, target.getCard().getName(), colorList,
-                durationSuffix);
     }
 
     /**

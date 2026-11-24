@@ -147,6 +147,6 @@ class ShyftTest extends BaseCardTest {
         advanceToUpkeep(player);
         harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player, true);
-        harness.passBothPriorities(); // resolve BecomeChosenColorsIndefinitelyEffect → color choice
+        harness.passBothPriorities(); // resolve the colour change → color choice
     }
 }

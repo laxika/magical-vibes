@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.ToggleDayNightEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeNightEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -27,7 +27,7 @@ public class TheCelestus extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}",
-                List.of(new ToggleDayNightEffect()),
+                List.of(BecomeNightEffect.toggle()),
                 "{3}, {T}: If it's night, it becomes day. Otherwise, it becomes night. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED
         ));

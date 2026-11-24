@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28 (each in Findings; the fold queue marks its rows). Fold runs 31, 26 and 30 are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                             |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31 (each in Findings; the fold queue marks its rows). Fold runs 26, 30 and 23b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                              |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,532 / 2,825 (after fold run 28) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,518 / 2,810 (after fold run 31) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,792 rows over 4,443 classes (after fold run 28). Latest verdict per class: `step-9` 673, unique 1,170, absorbed 850, split 631, blocked-other 503, survivor 318, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 673 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,811 rows over 4,448 classes (after fold run 31). Latest verdict per class: `step-9` 659, unique 1,170, absorbed 864, split 631, blocked-other 503, survivor 323, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 659 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -797,6 +797,11 @@ Delayed and global triggers:
 - `SacrificeSelfEffect(Subjects.triggeringAll())`: "sacrifice them" of a delayed ability about several permanents, those you control, as one event (Depthshaker Titan; fold run 28).
 - `RegisterGlobalTriggeredAbilityEffect.nextThisTurn(ability)`: "when you next cast / activate … this turn": triggers once and is used up (CR 603.7b). It keeps the noted amount and works in a mana ability through `RegisterGlobalTriggeredAbilityManaAbilityEffectHandler` (fold run 28).
 - `AiUtils.withEffectsDelayedAboutTheTarget(effects)`: the AI's damage readers look into a delayed ability about the target (fold run 28).
+
+- `BecomeChosenColorsUntilEndOfTurnEffect.chosenColors(subject, d)` / `.chosenColor(subject, d)` / `.fixed(colors, subject, d)`: "[permanents] become the color(s) of your choice / [colors] / colorless" for a `Duration`, one prompt over the whole set, nothing asked when the subject names none (fold run 31).
+- `GrantColorEffect.chosenColor(subject[, filter])`: static "[permanents] are the chosen color" from the source's stored choice; over `source()` it is not a CDA and takes the choice's timestamp (fold run 31).
+- `BecomeNightEffect.day()` / `.toggle()`: "it becomes day", "if it's night, it becomes day; otherwise night" (fold run 31).
+- `SetCardTypesEffect` one-shot over any subject (Hydro-Man's `source()`, `UNTIL_YOUR_NEXT_TURN`) and `SetTargetPermanentSupertypeEffect(supertype, gained, subject)` (fold run 31).
 
 ### Blocked causes still open
 
@@ -3066,6 +3071,64 @@ Batches `delayed-target` and `next-time`. Ratchet 3,588 / 2,861 → 3,573 / 2,84
 **Seen, not changed.** `leave-battlefield-redesign.md` still names the deleted Spinal Embrace handler in its history; I left it, since it is a history document.
 
 **For the next run.** `value-binding` needs one binder: a resolution choice (creature type, planeswalker type, chosen player) or a source's chosen subtype or card type, written into a `PermanentPredicate` / `CardPredicate` when the trigger or rule is registered. `bindCardSubjects` and `bindAmounts` are the models, and its first users are Walking Desecration, Leori, The Black Gate, Progenitor's Icon and Apex Observatory. `ability-copy` (Gogo and the engine-built copy and retarget markers) also needs the "Unverified" queue line on `CopyControllerActivatedAbilityEffect` checked. `CopyNextSpellCastThisTurnEffect` (4 cards) and `CopyNextInstantOrSorceryCastThisTurnEffect` (21 cards) could fold onto `nextThisTurn` the same way; I did not audit them.
+
+### Step 9, fold run 31 (2026-11-24, parallel worktree)
+
+Batches `res-colour`, `static-colour`, `day-night` and `self-grants` are done: 14 folded. `pt-amount`, `base-pt-new` and `floated-name` are left untouched. Ratchet 3,576 / 2,857 → 3,562 / 2,842. Ledger 19 rows (absorbed 14, survivor 5). 15 card files rewritten, Oracle text checked for all of them. CR 105.3, 205.1a, 502.2, 604.3a, 611.2a, 611.2c, 613.1e, 613.7 and 732.1 checked.
+
+**Shape.**
+- `BecomeChosenColorsUntilEndOfTurnEffect(colors, subject, duration, ColorChoice)`, with `ColorChoice` being `FIXED`, `ONE` or `ONE_OR_MORE`. Factories: `.chosenColors(subject, d)`, `.chosenColor(subject, d)` and `.fixed(colors, subject, d)`; an empty fixed set is colorless.
+- The subject is resolved once (CR 611.2c). A subject that names nothing asks nothing.
+- One `BecomeChosenColorsChoice(targetIds, …, oneColor)` covers every permanent the subject names.
+- The floated `FIXED` instance is the layer-5 setter.
+- `ColorSetTargetsChoice` and `beginColorSetChoiceForTargets` are gone.
+- `GrantColorEffect.ofChosenColor` / `.chosenColor(subject[, filter])`: the source's stored chosen colour, which replaces the permanent's colours.
+- Over `source()` it is not a CDA (CR 604.3a; Puca's Eye's colour comes from a triggered effect). It keeps the old choice-timestamp rule.
+- The static handlers, `StaticEffectSupport`, `TextChangeTransformer` and the token-copy colour filter all read the new component.
+- `BecomeNightEffect(Change)` with `.day()` and `.toggle()` (CR 732.1, 502.2). `DayNightService` is unchanged.
+- `SetCardTypesEffect`'s one-shot handler takes any subject and floats a `target()` copy on each permanent.
+- `SetTargetPermanentSupertypeEffect` gains a `PermanentSubject` and resolves it through the subject resolver.
+
+| Member | Result |
+|---|---|
+| BecomeChosenColorsIndefinitelyEffect | absorbed: `chosenColors(target() / source(), PERMANENT)` (Prismatic Lace, Shyft) |
+| BecomeAllColorsUntilEndOfTurnEffect | absorbed: `fixed(all, source(), UNTIL_END_OF_TURN)` |
+| BecomeColorlessIndefinitelyEffect | absorbed: `fixed({}, target(), PERMANENT)` |
+| SetChosenColorForTargetCreaturesUntilEndOfTurnEffect | absorbed: `chosenColor(target(), UNTIL_END_OF_TURN)` over any number of targets |
+| SetSelfColorIndefinitelyEffect | absorbed: `fixed({BLUE}, source(), PERMANENT)` |
+| EnchantedPermanentBecomesChosenColorsIndefinitelyEffect | absorbed: `chosenColors(attachedCreature(), PERMANENT)` |
+| BecomeChosenColorEffect | absorbed: `GrantColorEffect.chosenColor(source())` |
+| EnchantedPermanentBecomesChosenColorEffect | absorbed: `chosenColor(attached())` |
+| AllNonlandPermanentsAreChosenColorEffect | absorbed: `chosenColor(allPermanents(), not land)`; both handlers gone |
+| BecomeDayEffect / ToggleDayNightEffect | absorbed: `BecomeNightEffect.day()` / `.toggle()` |
+| SetCardTypesUntilYourNextTurnEffect | absorbed: `SetCardTypesEffect({LAND}, source(), UNTIL_YOUR_NEXT_TURN)` |
+| SetSelfCantBeBlockedIndefinitelyEffect | absorbed: `GrantEffectToTargetEffect.toSource(StaticAbility.of(CantBeBlockedEffect), PERMANENT)` (same layer-6 payload) |
+| SetSelfPermanentSupertypeIndefinitelyEffect | absorbed: `SetTargetPermanentSupertypeEffect(LEGENDARY, true, source())` |
+
+**Behaviour changes.**
+- Hydro-Man loses its creature types while it is a land (CR 205.1a); new test.
+- Sway of Illusion asks for exactly one colour with no DONE; new test.
+- A floated empty colour set now makes the permanent colorless (Xathrid Gorgon, harness `setColors()`).
+- Logs are the survivors' lines: "becomes Blue.", "all colors", the grant line, "becomes legendary.".
+
+**Tests changed.** 2 added. `@DisplayName` added to all methods of `SurgeEngineTest` and `HydroManFluidFelonTest`.
+
+**Left.**
+- `pt-amount` (8): the survivor's resolution path needs four things.
+- A null side (it evaluates every amount; `evaluate(null)` would throw).
+- The live source on the target path (it passes `null`, so `SourcePower` reads the snapshot).
+- A target spec for its target forms.
+- Two last-known reads settled: Shape Stealer's combat-opponent-at-trigger fallback, and Eldrazi Mimic's departure snapshot over `TriggeringPermanentPower`'s at-trigger value. The amounts would yield 0/0 where the old handlers did nothing.
+- Riptide Mangler, Sentinel, Wall of Tombstones, Sworn Defender, Halfdane and Wolfbear/Galion are by parameters once the first three exist (`TargetPower(true)` keeps negatives).
+- `base-pt-new` (2): Cycle of Life is `SetBasePowerToughnessEffect(0, 1, target(), UNTIL_CONTROLLERS_NEXT_UPKEEP)` + `RegisterDelayedStepTriggerEffect.aboutAtNext`. Brine Hag needs the damaged-the-source predicate.
+- `floated-name` (1): removing `Permanent.persistentName` touches The Irencrag's record and two tests' setters.
+
+**Seen, not changed.**
+- `AllPermanentsGainChosenColorEffect` (Painter's Servant) and `ControlledNonlandPermanentsAreColorEffect` (Celestial Dawn) are now `GrantColorEffect` parameters.
+- `BecomeColorlessUntilEndOfTurnEffect`, `SetTargetColorEffect` (its colorless branch), `SetChosenColorUntilEndOfTurnEffect` and `GrantColorUntilEndOfTurnEffect` overlap the survivor (step 10).
+- `SetCardTypesUntilEndOfTurnEffect`'s layer case has the same subtype gap Hydro-Man had (CR 205.1a). Sure.
+
+**For the next run.** Take `pt-amount` with the four pieces above first, then `base-pt-new`. Put `floated-name` in a run of its own with The Irencrag.
 
 ## Prompt
 

@@ -32,18 +32,18 @@ public class SetCardTypesEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         SetCardTypesEffect set = (SetCardTypesEffect) effect;
-        if (!(set.subject() instanceof PermanentSubject.Target)) {
-            return;
-        }
         if (Duration.WHILE_SOURCE_REMAINS.equals(set.duration())
                 && (entry.getSourcePermanentId() == null
                 || gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) == null)) {
             return;
         }
+        // The permanents are found once, as the effect resolves (CR 611.2c); each carries the change itself.
+        SetCardTypesEffect floated = set.subject() instanceof PermanentSubject.Target ? set
+                : new SetCardTypesEffect(set.cardTypes(), Subjects.target(), set.duration());
         for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect, set.subject())) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), FaceDownVisibility.sourceName(gameData, entry), entry.getSourcePermanentId(),
-                    entry.getControllerId(), set, target.getId(), null, null,
+                    entry.getControllerId(), floated, target.getId(), null, null,
                     set.duration(), 0));
         }
     }

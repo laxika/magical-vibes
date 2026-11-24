@@ -27,7 +27,6 @@ import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEf
 import com.github.laxika.magicalvibes.model.effect.AnimateNonAuraEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BasicLandsOfChosenTypesBecomeTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -94,7 +93,6 @@ import com.github.laxika.magicalvibes.model.effect.SetTargetPermanentSupertypeEf
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilYourNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
 import com.github.laxika.magicalvibes.model.effect.SetChosenNameAndCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkersWithLoyaltyBecomeCreaturesEffect;
@@ -1376,7 +1374,8 @@ public class LayerSystemService {
      * Angel's threshold) is not one, because it sets the color only if a condition is met.
      */
     private static boolean isPrintedSelfColorDefinition(CardEffect effect) {
-        return effect instanceof GrantColorEffect color && color.subject() instanceof PermanentSubject.Source;
+        return effect instanceof GrantColorEffect color && color.subject() instanceof PermanentSubject.Source
+                && !color.ofChosenColor();
     }
 
     private static LayerClassifier.LayerClassification classifyOrNull(CardEffect effect) {
@@ -1463,7 +1462,8 @@ public class LayerSystemService {
                 // the classification of the original stands.
                 CardEffect rewritten = TextChangeTransformer.transform(
                         effect, gameData.textReplacements(slot.permanent().getId()), globalWordChange);
-                long effectTimestamp = effect instanceof BecomeChosenColorEffect
+                long effectTimestamp = effect instanceof GrantColorEffect chosen && chosen.ofChosenColor()
+                        && chosen.subject() instanceof PermanentSubject.Source
                         ? Math.max(slot.permanent().getTimestamp(), slot.permanent().getChosenColorTimestamp())
                         : slot.permanent().getTimestamp();
                 instances.add(new EffectInstance(slot, rewritten, effect, null,
@@ -2339,12 +2339,6 @@ public class LayerSystemService {
                 }
             }
             case SetCardTypesUntilEndOfTurnEffect setTypes -> {
-                if (instance.floating() == null) return;
-                for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
-                    states.get(target.permanent().getId()).overrideCardTypes(setTypes.cardTypes());
-                }
-            }
-            case SetCardTypesUntilYourNextTurnEffect setTypes -> {
                 if (instance.floating() == null) return;
                 for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
                     states.get(target.permanent().getId()).overrideCardTypes(setTypes.cardTypes());
@@ -3251,10 +3245,11 @@ public class LayerSystemService {
         }
         Map<UUID, CharacteristicState> states = board.states();
         if (instance.floating() != null) {
-            // "Becomes the color or colors of your choice" (Prismwake Merrow): a floating setter
-            // carrying a full color set, applied as an override at its own timestamp.
+            // "Becomes [colors]" (Scrapbasket, Prismwake Merrow once the colors are chosen): a floating
+            // setter carrying its full color set, none for colorless, applied as an override at its own
+            // timestamp.
             if (instance.effect() instanceof BecomeChosenColorsUntilEndOfTurnEffect becomes) {
-                if (becomes.colors().isEmpty()) return;
+                if (becomes.choice() != BecomeChosenColorsUntilEndOfTurnEffect.ColorChoice.FIXED) return;
                 for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
                     states.get(target.permanent().getId()).overrideColors(Set.copyOf(becomes.colors()));
                     board.l56Touched().add(target.permanent().getId());

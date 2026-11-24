@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
@@ -23,8 +24,9 @@ public class GrantColorEffectHandler implements StaticEffectHandlerBean {
         var grant = (GrantColorEffect) effect;
         boolean matches = support.namesBeyondSource(context,
                 grant.subject(), grant.filter());
-        if (matches) {
-            accumulator.addGrantedColor(grant.color());
+        CardColor color = grant.ofChosenColor() ? context.source().getChosenColor() : grant.color();
+        if (matches && color != null) {
+            accumulator.addGrantedColor(color);
             if (grant.overriding()) {
                 accumulator.setColorOverriding(true);
             }

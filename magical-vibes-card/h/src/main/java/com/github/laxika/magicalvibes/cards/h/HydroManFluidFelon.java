@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilYourNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
@@ -20,6 +19,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 
 @CardRegistration(set = "SPM", collectorNumber = "33")
 @CardRegistration(set = "SPM", collectorNumber = "250")
@@ -33,7 +33,8 @@ public class HydroManFluidFelon extends Card {
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 SequenceEffect.of(
                         new UntapPermanentsEffect(Subjects.source()),
-                        new SetCardTypesUntilYourNextTurnEffect(Set.of(CardType.LAND)),
+                        new SetCardTypesEffect(Set.of(CardType.LAND), Subjects.source(),
+                                Duration.UNTIL_YOUR_NEXT_TURN),
                         new GrantActivatedAbilityEffect(
                                 ManaAbilities.tapFor(ManaColor.BLUE), Subjects.source(), null,
                                 Duration.UNTIL_YOUR_NEXT_TURN)));

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromEnemyColoredMul
 import com.github.laxika.magicalvibes.model.effect.PrimevalCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.AllCardsAreColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.AllCreaturesAreTokensEffect;
-import com.github.laxika.magicalvibes.model.effect.AllNonlandPermanentsAreChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.AllPermanentsGainChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateControlledEnchantmentsEffect;
@@ -48,7 +47,6 @@ import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffec
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetWhileHasCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentToughnessBecomesLoyaltyEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesOnlyLandEffect;
@@ -72,7 +70,6 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetHauntedCre
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureWhileMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureOutsideBattlefieldEffect;
@@ -140,7 +137,6 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCreatureTypesToImprintedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilYourNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
@@ -364,7 +360,6 @@ public final class LayerClassifier {
                             return new LayerClassification(Set.copyOf(layers), false, colorSetting);
                         }));
         map.put(SetCardTypesUntilEndOfTurnEffect.class, fixed(Layer.L4_TYPE));
-        map.put(SetCardTypesUntilYourNextTurnEffect.class, fixed(Layer.L4_TYPE));
         map.put(NonbasicLandsBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(LandsOfSubtypeBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(ControlledLandsBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
@@ -405,11 +400,6 @@ public final class LayerClassifier {
         // "Target spell or permanent becomes [color]" indefinitely (Purelace) — replaces colors (CR 105.3).
         map.put(SetTargetColorEffect.class, new Entry(Set.of(Layer.L5_COLOR),
                 (effect, fromOwnStaticSlot) -> new LayerClassification(Set.of(Layer.L5_COLOR), false, true)));
-        // "All nonland permanents are the chosen color" (Shifting Sky) replaces colors (CR 105.3).
-        map.put(AllNonlandPermanentsAreChosenColorEffect.class, new Entry(Set.of(Layer.L5_COLOR),
-                (effect, fromOwnStaticSlot) -> new LayerClassification(Set.of(Layer.L5_COLOR), false, true)));
-        map.put(EnchantedPermanentBecomesChosenColorEffect.class, new Entry(Set.of(Layer.L5_COLOR),
-                (effect, fromOwnStaticSlot) -> new LayerClassification(Set.of(Layer.L5_COLOR), false, true)));
         // "All permanents are the chosen color in addition to their other colors" (Painter's Servant)
         // — additive, not replacing (CR 105.3 / 613.1e).
         map.put(AllPermanentsGainChosenColorEffect.class, new Entry(Set.of(Layer.L5_COLOR),
@@ -421,8 +411,6 @@ public final class LayerClassifier {
                 (effect, fromOwnStaticSlot) -> new LayerClassification(Set.of(Layer.L5_COLOR), false, true)));
         // "Becomes the color or colors of your choice" (Prismwake Merrow) — setting (CR 105.3).
         map.put(BecomeChosenColorsUntilEndOfTurnEffect.class, new Entry(Set.of(Layer.L5_COLOR), (effect, fromOwnStaticSlot) ->
-                new LayerClassification(Set.of(Layer.L5_COLOR), false, true)));
-        map.put(BecomeChosenColorEffect.class, new Entry(Set.of(Layer.L5_COLOR), (effect, fromOwnStaticSlot) ->
                 new LayerClassification(Set.of(Layer.L5_COLOR), false, true)));
         // "This creature becomes colorless until end of turn" (Raging Spirit) — setting (CR 105.3).
         map.put(BecomeColorlessUntilEndOfTurnEffect.class, new Entry(Set.of(Layer.L5_COLOR),

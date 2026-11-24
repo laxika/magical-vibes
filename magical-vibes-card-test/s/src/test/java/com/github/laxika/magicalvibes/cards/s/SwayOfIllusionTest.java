@@ -82,6 +82,26 @@ class SwayOfIllusionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Asks for exactly one color: no DONE option, and the first pick ends the choice")
+    void asksForExactlyOneColor() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new RagingKavu());
+        harness.setHand(player1, List.of(new SwayOfIllusion()));
+        harness.setLibrary(player1, List.of(new RagingKavu()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, List.of(creature.getId()));
+        harness.passBothPriorities();
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).containsExactly("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+        assertThat(gqs.getEffectiveColors(gd, creature)).containsExactly(CardColor.WHITE);
+        harness.assertInHand(player1, "Raging Kavu");
+    }
+
+    @Test
     @DisplayName("A target that leaves before resolution does not stop the remaining target or draw")
     void ignoresTargetThatLeavesBeforeResolution() {
         Permanent leavingCreature = harness.addToBattlefieldAndReturn(player1, new RagingKavu());
