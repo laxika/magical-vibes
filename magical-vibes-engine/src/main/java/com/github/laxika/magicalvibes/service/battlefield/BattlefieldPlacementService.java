@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.BattlefieldEntryRequest;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.AmplifyEffect;
-import com.github.laxika.magicalvibes.model.effect.AllPermanentsEnterUntappedEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -53,7 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithTokenAttachedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlledLandsEnterUntappedEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledPermanentsEnterUntappedEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
@@ -63,7 +62,6 @@ import com.github.laxika.magicalvibes.model.effect.RiotEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.TextChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentsEnterUntappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.effect.NextControlledEnchantmentCreatureEntryWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterMysticReflectionEffect;
@@ -370,9 +368,7 @@ public class BattlefieldPlacementService {
             }
             boolean enteredTappedBeforeUntappedReplacement = permanent.isTapped();
             if (instructedToEnterTapped) permanent.tap();
-            applyControlledPermanentsEnterUntapped(gameData, controllerId, permanent);
-            applyControlledLandsEnterUntapped(gameData, controllerId, permanent);
-            applyAllPermanentsEnterUntapped(gameData, permanent);
+            applyEnterUntappedEffects(gameData, controllerId, permanent);
             if (permanent.getChosenTappedEntryState() != null) {
                 if (permanent.getChosenTappedEntryState()) permanent.tap();
                 else permanent.enterUntapped();
@@ -751,9 +747,7 @@ public class BattlefieldPlacementService {
         applyFloatedEnterTappedEffects(gameData, controllerId, preview);
         boolean entersTapped = preview.isTapped();
         if (request.permanent().isTapped()) preview.tap();
-        applyControlledPermanentsEnterUntapped(gameData, controllerId, preview);
-        applyControlledLandsEnterUntapped(gameData, controllerId, preview);
-        applyAllPermanentsEnterUntapped(gameData, preview);
+        applyEnterUntappedEffects(gameData, controllerId, preview);
         if (entersTapped && !preview.isTapped()) {
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(controllerId, null, null,
                     new com.github.laxika.magicalvibes.model.ChoiceContext.TappedEntryStateChoice(request),
@@ -1585,47 +1579,31 @@ public class BattlefieldPlacementService {
         }
     }
 
-    private void applyControlledLandsEnterUntapped(GameData gameData, UUID enteringControllerId,
-                                                   Permanent enteringPermanent) {
-        if (!enteringPermanent.getCard().hasType(CardType.LAND)) {
-            return;
-        }
-        if (!gameQueryService.activeStaticEffects(gameData, enteringControllerId,
-                ControlledLandsEnterUntappedEffect.class).isEmpty()) {
-            // Entering untapped changes how the land enters; it never becomes untapped, so a stun counter it enters
-            // with stays on it (CR 122.1d replaces only becoming untapped).
-            enteringPermanent.enterUntapped();
-        }
-    }
-
-    private void applyAllPermanentsEnterUntapped(GameData gameData, Permanent enteringPermanent) {
+    /**
+     * "[Permanents] enter untapped" (CR 614.1c): an active {@link ControlledPermanentsEnterUntappedEffect}, printed or
+     * the upgrade of a {@link ConditionalReplacementEffect} whose condition holds (Archelos, Lagoon Mystic), whose
+     * players name the entering permanent's controller and whose filter matches the entering permanent. Entering
+     * untapped changes how the permanent enters; it never becomes untapped, so a stun counter it enters with stays on
+     * it (CR 122.1d replaces only becoming untapped).
+     */
+    private void applyEnterUntappedEffects(GameData gameData, UUID enteringControllerId, Permanent enteringPermanent) {
         for (GameQueryService.ActiveStaticEffect<CardEffect> active
                 : gameQueryService.activeStaticEffects(gameData, CardEffect.class)) {
             CardEffect effect = active.effect();
-            AllPermanentsEnterUntappedEffect enterUntapped = null;
-            if (effect instanceof AllPermanentsEnterUntappedEffect direct) {
+            ControlledPermanentsEnterUntappedEffect enterUntapped = null;
+            if (effect instanceof ControlledPermanentsEnterUntappedEffect direct) {
                 enterUntapped = direct;
             } else if (effect instanceof ConditionalReplacementEffect conditional
-                    && conditional.upgradedEffect() instanceof AllPermanentsEnterUntappedEffect conditionalEffect
+                    && conditional.upgradedEffect() instanceof ControlledPermanentsEnterUntappedEffect conditionalEffect
                     && conditionEvaluationService.isMet(gameData, conditional.condition(),
                     ConditionContext.forStaticEffect(active.source(), active.controllerId()))) {
                 enterUntapped = conditionalEffect;
             }
             if (enterUntapped != null
+                    && SubjectResolutionService.namesPlayer(gameData, active.source(), active.controllerId(),
+                    enteringControllerId, enterUntapped.players())
                     && predicateEvaluationService.matchesPermanentPredicate(
                     gameData, enteringPermanent, enterUntapped.filter())) {
-                enteringPermanent.enterUntapped();
-                return;
-            }
-        }
-    }
-
-    private void applyControlledPermanentsEnterUntapped(GameData gameData, UUID enteringControllerId,
-                                                        Permanent enteringPermanent) {
-        for (GameQueryService.ActiveStaticEffect<PermanentsEnterUntappedEffect> active
-                : gameQueryService.activeStaticEffects(gameData, enteringControllerId, PermanentsEnterUntappedEffect.class)) {
-            if (predicateEvaluationService.matchesPermanentPredicate(
-                    gameData, enteringPermanent, active.effect().filter())) {
                 enteringPermanent.enterUntapped();
                 return;
             }
@@ -2504,6 +2482,8 @@ public class BattlefieldPlacementService {
         if (!permanent.getCard().hasType(CardType.CREATURE)) return;
 
         if (gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
+        // The ability functions from the graveyard, so it is lost with the graveyard's abilities (Yixlid Jailer).
+        if (gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) return;
 
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         if (graveyard == null || graveyard.isEmpty()) return;

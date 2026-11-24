@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnControlledCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class SheHulkAttorneyAtLaw extends Card {
                 "{6}{G/W}",
                 List.of(
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                        new DoublePlusOneCountersOnControlledCreaturesEffect()
+                        new DoubleCountersOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, Subjects.creaturesYouControl())
                 ),
                 "Power-up — {6}{G/W}: Put a +1/+1 counter on She-Hulk. Then double the number of +1/+1 counters on each creature you control. "
                         + "(Activate each power-up ability only once. Reduce the cost by her mana cost if she entered this turn.)"

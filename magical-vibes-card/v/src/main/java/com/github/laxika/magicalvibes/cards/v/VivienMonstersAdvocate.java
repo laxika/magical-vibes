@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnCreatedPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -52,6 +53,6 @@ public class VivienMonstersAdvocate extends Card {
     private static ChooseOneEffect.ChooseOneOption counterChoice(String label, CounterType counterType) {
         return new ChooseOneEffect.ChooseOneOption(label, List.of(
                 new CreateTokenEffect("Beast", 3, 3, CardColor.GREEN, List.of(CardSubtype.BEAST), Set.of(), Set.of()),
-                new PutCountersOnCreatedPermanentsEffect(counterType, new Fixed(1))));
+                new PutCounterOnTargetPermanentEffect(Subjects.createdThisResolution(), counterType, new Fixed(1))));
     }
 }

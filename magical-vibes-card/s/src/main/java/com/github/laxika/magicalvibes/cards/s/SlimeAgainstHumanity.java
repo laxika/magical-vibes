@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -12,7 +14,6 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnCreatedPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -38,7 +39,7 @@ public class SlimeAgainstHumanity extends Card {
         addSpellEffect(new CreateTokenEffect(
                 1, "Ooze", 0, 0, CardColor.GREEN, List.of(CardSubtype.OOZE),
                 Set.of(Keyword.TRAMPLE), Set.of()));
-        addSpellEffect(new PutCountersOnCreatedPermanentsEffect(
+        addSpellEffect(new PutCounterOnTargetPermanentEffect(Subjects.createdThisResolution(),
                 CounterType.PLUS_ONE_PLUS_ONE, counterAmount));
     }
 }

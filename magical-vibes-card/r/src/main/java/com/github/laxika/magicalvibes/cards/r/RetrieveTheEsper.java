@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -12,7 +14,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnCreatedPermanentsEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -25,7 +26,7 @@ public class RetrieveTheEsper extends Card {
                 "Robot Warrior", 3, 3, CardColor.BLUE,
                 List.of(CardSubtype.ROBOT, CardSubtype.WARRIOR), Set.of(), Set.of(CardType.ARTIFACT)));
         addSpellEffect(new ConditionalEffect(new CastFromZone(Zone.GRAVEYARD),
-                new PutCountersOnCreatedPermanentsEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));
+                new PutCounterOnTargetPermanentEffect(Subjects.createdThisResolution(), CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));
         addCastingOption(new FlashbackCast("{5}{U}"));
     }
 }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.a.AllWillBeOne;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HardbristleBandit;
+import com.github.laxika.magicalvibes.cards.k.KnightOfWundagore;
 import com.github.laxika.magicalvibes.cards.o.OzolithTheShatteredSpire;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -64,6 +65,24 @@ class BristlyBillSpineSowerTest extends BaseCardTest {
 
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @CardUsed({BristlyBillSpineSower.class, HardbristleBandit.class, KnightOfWundagore.class})
+    @DisplayName("Doubling counters on another creature is putting +1/+1 counters on it")
+    void doublingCountsAsPuttingCountersOnAnotherCreature() {
+        addCreatureReady(player1, new BristlyBillSpineSower());
+        Permanent knight = addCreatureReady(player1, new KnightOfWundagore());
+        Permanent creature = addCreatureReady(player1, new HardbristleBandit());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(knight.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test

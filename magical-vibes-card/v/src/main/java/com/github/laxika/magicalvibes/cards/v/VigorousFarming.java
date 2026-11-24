@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.ControlledLandsEnterUntappedEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledPermanentsEnterUntappedEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAbilitiesEffect;
@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class VigorousFarming extends Card {
 
     public VigorousFarming() {
-        addStaticEffect(new ControlledLandsEnterUntappedEffect());
+        addStaticEffect(ControlledPermanentsEnterUntappedEffect.lands());
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new PerpetuallyGrantAbilitiesEffect(
                         Subjects.topmostCardInYourLibrary(new CardTypePredicate(CardType.LAND)),

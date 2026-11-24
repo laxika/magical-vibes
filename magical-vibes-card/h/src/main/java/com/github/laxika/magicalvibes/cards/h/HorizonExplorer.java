@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.effect.ControlledLandsEnterUntappedEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledPermanentsEnterUntappedEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -35,7 +35,7 @@ public class HorizonExplorer extends Card {
     );
 
     public HorizonExplorer() {
-        addStaticEffect(new ControlledLandsEnterUntappedEffect());
+        addStaticEffect(ControlledPermanentsEnterUntappedEffect.lands());
         addTrigger(Triggers.youAttackPlayer(), LANDER);
     }
 }

@@ -12,7 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeSacrificedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBecomeSuspectedEffect;
-import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromNonSubtypeCreaturesEffect;
@@ -57,7 +58,7 @@ class GrantedAbilityViewFactoryTest {
                 TargetingRestrictionEffect.hexproof(),
                 TargetingRestrictionEffect.spells(),
                 new CantBeEnchantedByOtherAurasEffect(),
-                new CantHaveMinusOneMinusOneCountersEffect());
+                CantHaveCountersEffect.ofKind(CounterType.MINUS_ONE_MINUS_ONE));
 
         List<GrantedAbilityView> views =
                 factory.create(gameData, permanent("Creature"), bonus(Set.of(), effects), List.of(), false);

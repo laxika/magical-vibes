@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -9,7 +11,6 @@ import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.amount.ChosenNumberOnCreatedPermanent;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNumberForCreatedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnCreatedPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndStepEffect;
@@ -54,7 +55,7 @@ public class EsperTerra extends Card {
                 copyEnchantmentEffect(),
                 new ChooseNumberForCreatedPermanentEffect(
                         0, 3, new PermanentHasSubtypePredicate(CardSubtype.SAGA)),
-                new PutCountersOnCreatedPermanentsEffect(
+                new PutCounterOnTargetPermanentEffect(Subjects.createdThisResolution(),
                         CounterType.LORE, new ChosenNumberOnCreatedPermanent()),
                 new SacrificeCreatedPermanentsAtEndStepEffect(true));
         setSagaChapterTargetGroups(chapter, List.of(new SagaChapterTargetGroup(

@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.CantHavePlusOnePlusOneCountersEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -14,6 +15,7 @@ public class Blightbeetle extends Card {
 
     public Blightbeetle() {
         addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.GREEN)));
-        addStaticEffect(new CantHavePlusOnePlusOneCountersEffect(Subjects.creaturesYourOpponentsControl()));
+        addStaticEffect(new CantHaveCountersEffect(Subjects.creaturesYourOpponentsControl(),
+                CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

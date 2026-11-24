@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.i.Imbraham;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -11,7 +13,6 @@ import com.github.laxika.magicalvibes.model.amount.DistinctManaValuesAmongStudyC
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardToHandOrStudyCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnCreatedPermanentsEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -31,7 +32,7 @@ public class Kianne extends Card {
         addActivatedAbility(new ActivatedAbility(false, "{4}{G}", List.of(
                 new CreateTokenEffect(1, "Fractal", 0, 0, CardColor.GREEN,
                         Set.of(CardColor.GREEN, CardColor.BLUE), List.of(CardSubtype.FRACTAL)),
-                new PutCountersOnCreatedPermanentsEffect(CounterType.PLUS_ONE_PLUS_ONE,
+                new PutCounterOnTargetPermanentEffect(Subjects.createdThisResolution(), CounterType.PLUS_ONE_PLUS_ONE,
                         new DistinctManaValuesAmongStudyCounterCardsInExile())),
                 "{4}{G}: Create a 0/0 green and blue Fractal creature token. Put a +1/+1 counter on it "
                         + "for each different mana value among nonland cards you own in exile with study "

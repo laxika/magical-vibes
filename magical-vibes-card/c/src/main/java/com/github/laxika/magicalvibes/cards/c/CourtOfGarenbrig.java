@@ -7,8 +7,9 @@ import com.github.laxika.magicalvibes.model.condition.ControllerIsMonarch;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
-import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnControlledCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -26,6 +27,6 @@ public class CourtOfGarenbrig extends Card {
                         DistributeCountersAmongTargetsEffect.evenlyAmongTargets(
                                 CounterType.PLUS_ONE_PLUS_ONE, 2),
                         new ConditionalEffect(new ControllerIsMonarch(),
-                                new DoublePlusOneCountersOnControlledCreaturesEffect())));
+                                new DoubleCountersOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, Subjects.creaturesYouControl()))));
     }
 }

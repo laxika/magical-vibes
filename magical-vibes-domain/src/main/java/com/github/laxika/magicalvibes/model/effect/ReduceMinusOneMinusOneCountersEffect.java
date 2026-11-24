@@ -5,7 +5,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * many -1/-1 counters minus one are put on it instead."
  *
  * <p>A STATIC replacement-effect marker placed on the source permanent itself (not granted to
- * creatures, unlike {@link CantHaveMinusOneMinusOneCountersEffect}). Every site that puts -1/-1
+ * creatures, unlike {@link CantHaveCountersEffect} of -1/-1 counters). Every site that puts -1/-1
  * counters on a creature routes the count through
  * {@code GameQueryService.reduceMinusOneMinusOneCounters}, which counts how many permanents carrying
  * this marker the affected creature's controller controls and subtracts one per marker (floored at

@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnControlledCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,7 +24,7 @@ public class BristlyBillSpineSower extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{G}{G}",
-                List.of(new DoublePlusOneCountersOnControlledCreaturesEffect()),
+                List.of(new DoubleCountersOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, Subjects.creaturesYouControl())),
                 "{3}{G}{G}: Double the number of +1/+1 counters on each creature you control."));
     }
 }

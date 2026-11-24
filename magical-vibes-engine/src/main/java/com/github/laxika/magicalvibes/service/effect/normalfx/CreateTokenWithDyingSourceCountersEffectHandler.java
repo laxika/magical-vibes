@@ -2,17 +2,17 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnCreatedPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link CreateTokenWithDyingSourceCountersEffect} (Ambitious Augmenter): the token and then a
- * {@link PutCountersOnCreatedPermanentsEffect} for each counter type the stack entry's triggering permanent had as it
+ * {@link PutCounterOnTargetPermanentEffect} over {@link Subjects#createdThisResolution()} for each counter type the stack entry's triggering permanent had as it
  * last existed on the battlefield (CR 608.2h) resolve next on the entry, in that order, so the token's creation can
  * pause for a replacement choice before the counters go on it.
  */
@@ -30,7 +30,7 @@ public class CreateTokenWithDyingSourceCountersEffectHandler implements NormalEf
         steps.add(((CreateTokenWithDyingSourceCountersEffect) effect).tokenTemplate());
         entry.triggeringPermanentCounters().forEach((type, count) -> {
             if (count > 0) {
-                steps.add(new PutCountersOnCreatedPermanentsEffect(type, new Fixed(count)));
+                steps.add(new PutCounterOnTargetPermanentEffect(Subjects.createdThisResolution(), type, count));
             }
         });
         entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, steps);

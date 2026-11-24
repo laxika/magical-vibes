@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEf
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeSacrificedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBecomeSuspectedEffect;
-import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.CantHavePlusOnePlusOneCountersEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
@@ -159,9 +159,9 @@ public class GrantedAbilityViewFactory {
             case TargetingRestrictionEffect restriction -> formatTargetingRestriction(restriction);
             case CantBeEnchantedByOtherAurasEffect restriction -> restriction.auraSpellsOnly()
                     ? "Can't be the target of Aura spells" : "Can't be enchanted by other Auras";
-            case CantHaveMinusOneMinusOneCountersEffect ignored ->
+            case CantHaveCountersEffect restriction when restriction.counterType() == CounterType.MINUS_ONE_MINUS_ONE ->
                     "Can't have \u22121/\u22121 counters put on it";
-            case CantHavePlusOnePlusOneCountersEffect ignored ->
+            case CantHaveCountersEffect restriction when restriction.counterType() == CounterType.PLUS_ONE_PLUS_ONE ->
                     "Can't have +1/+1 counters put on it";
             case CantBeSacrificedEffect ignored -> "Can't be sacrificed";
             case CantBecomeSuspectedEffect ignored -> "Can't become suspected";

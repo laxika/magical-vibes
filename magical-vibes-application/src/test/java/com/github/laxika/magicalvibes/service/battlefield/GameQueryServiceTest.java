@@ -41,7 +41,6 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOnePlusOneCountersEffect;
@@ -1732,7 +1731,8 @@ class GameQueryServiceTest {
         @DisplayName("returns true when granted by static effect from another permanent")
         void returnsTrueWhenGrantedByStaticEffect() {
             addLordWithHandler(player1Id,
-                    (ctx, eff, acc) -> acc.addGrantedEffect(new CantHaveMinusOneMinusOneCountersEffect()));
+                    (ctx, eff, acc) -> acc.addGrantedEffect(
+                            CantHaveCountersEffect.ofKind(CounterType.MINUS_ONE_MINUS_ONE)));
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
 
             assertThat(gqs.cantHaveMinusOneMinusOneCounters(gd, perm)).isTrue();

@@ -108,9 +108,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBecomeUntappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsAnyColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.StunCountersCantBeRemovedFromOpponentsPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveOrGainKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.CantHavePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameFromLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantWinGameEffect;
@@ -4826,12 +4824,13 @@ public class GameQueryService {
         if (!hasLostPrintedAbilities(gameData, permanent)
                 && permanent.getCard().getStaticEffects().stream()
                 .anyMatch(effect -> effect instanceof CantHaveCountersEffect restriction
+                        && restriction.counterType() == null
                         && restriction.subject() instanceof PermanentSubject.Source)) {
             return true;
         }
         if (hasAttachmentRestriction(gameData, permanent, CantHaveCountersEffect.class)) return true;
         StaticBonus bonus = computeStaticBonusForController(gameData, permanent, controllerId);
-        if (bonus.grantedEffects().stream().anyMatch(CantHaveCountersEffect.class::isInstance)) {
+        if (bonus.grantedEffects().stream().anyMatch(effect -> cantHaveCountersOfKind(effect, null))) {
             return true;
         }
         if (gameData.hasFloatingEffectOnPermanent(permanent.getId(),
@@ -4852,6 +4851,9 @@ public class GameQueryService {
                 if (!permanent.getId().equals(source.getAttachedTo())
                         || hasLostPrintedAbilities(gameData, source)) continue;
                 for (CardEffect effect : source.getCard().getStaticEffects()) {
+                    if (effect instanceof CantHaveCountersEffect restriction && restriction.counterType() != null) {
+                        continue;
+                    }
                     PermanentSubject subject = effect instanceof CantHaveCountersEffect restriction
                             ? restriction.subject()
                             : effect instanceof CantBecomeUntappedEffect restriction ? restriction.subject() : null;
@@ -5234,7 +5236,7 @@ public class GameQueryService {
             for (ActiveStaticEffect<GrantEffectEffect> active
                     : activeStaticEffects(gameData, recipientController, GrantEffectEffect.class)) {
                 GrantEffectEffect grant = active.effect();
-                if (grant.effect() instanceof CantHaveMinusOneMinusOneCountersEffect
+                if (cantHaveCountersOfKind(grant.effect(), CounterType.MINUS_ONE_MINUS_ONE)
                         && grant.subject() instanceof PermanentSubject.ControlledBy
                         && staticSubjectNames(gameData, active.source(), active.controllerId(),
                         recipientController, permanent, grant.subject())) {
@@ -5242,7 +5244,16 @@ public class GameQueryService {
                 }
             }
         }
-        return hasGrantedEffect(gameData, permanent, CantHaveMinusOneMinusOneCountersEffect.class);
+        return computeStaticBonus(gameData, permanent).grantedEffects().stream()
+                .anyMatch(effect -> cantHaveCountersOfKind(effect, CounterType.MINUS_ONE_MINUS_ONE));
+    }
+
+    /**
+     * Whether {@code effect} is a {@link CantHaveCountersEffect} for counters of {@code counterType} ({@code null}: the
+     * restriction on every kind).
+     */
+    private static boolean cantHaveCountersOfKind(CardEffect effect, CounterType counterType) {
+        return effect instanceof CantHaveCountersEffect restriction && restriction.counterType() == counterType;
     }
 
     /**
@@ -5268,15 +5279,16 @@ public class GameQueryService {
             return true;
         }
         if (getActiveStaticEffects(gameData, permanent).stream()
-                .anyMatch(effect -> effect instanceof CantHavePlusOnePlusOneCountersEffect restriction
-                        && restriction.subject() instanceof PermanentSubject.Source)) {
+                .anyMatch(effect -> cantHaveCountersOfKind(effect, CounterType.PLUS_ONE_PLUS_ONE)
+                        && ((CantHaveCountersEffect) effect).subject() instanceof PermanentSubject.Source)) {
             return true;
         }
         UUID recipientController = controllerId != null ? controllerId
                 : findPermanentController(gameData, permanent.getId());
         if (recipientController != null && isCreature(gameData, permanent)) {
-            if (activeStaticEffects(gameData, CantHavePlusOnePlusOneCountersEffect.class).stream()
-                    .anyMatch(active -> active.effect().subject() instanceof PermanentSubject.ControlledBy
+            if (activeStaticEffects(gameData, CantHaveCountersEffect.class).stream()
+                    .anyMatch(active -> active.effect().counterType() == CounterType.PLUS_ONE_PLUS_ONE
+                            && active.effect().subject() instanceof PermanentSubject.ControlledBy
                             && staticSubjectNames(gameData, active.source(), active.controllerId(),
                             recipientController, permanent, active.effect().subject()))) {
                 return true;
@@ -5284,7 +5296,7 @@ public class GameQueryService {
         }
         StaticBonus bonus = computeStaticBonusForController(gameData, permanent, controllerId);
         return bonus.grantedEffects().stream()
-                .anyMatch(CantHavePlusOnePlusOneCountersEffect.class::isInstance);
+                .anyMatch(effect -> cantHaveCountersOfKind(effect, CounterType.PLUS_ONE_PLUS_ONE));
     }
 
     /**

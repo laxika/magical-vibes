@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -77,6 +77,7 @@ class UltimateSpiderMan extends Card {
                 "Camouflage — {2}: Put a +1/+1 counter on Ultimate Spider-Man. He gains hexproof and becomes colorless until end of turn."
         ));
         addTrigger(Triggers.youAttack(),
-                new DoubleCountersOnEachControlledPermanentEffect(SPIDER_OR_LEGENDARY_CREATURE));
+                new DoubleCountersOnTargetPermanentEffect(null,
+                        Subjects.controlledBy(Subjects.you(), SPIDER_OR_LEGENDARY_CREATURE)));
     }
 }

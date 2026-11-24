@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AbbeyGriffin;
+import com.github.laxika.magicalvibes.cards.y.YixlidJailer;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DearlyDeparted.class, DoomedTraveler.class, AbbeyGriffin.class})
+@CardUsed({DearlyDeparted.class, DoomedTraveler.class, AbbeyGriffin.class, YixlidJailer.class})
 class DearlyDepartedTest extends BaseCardTest {
 
     @Test
@@ -155,5 +156,21 @@ class DearlyDepartedTest extends BaseCardTest {
         assertThat(travelers).hasSize(2);
         assertThat(travelers.getFirst().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(travelers.getLast().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("No counter while cards in graveyards lose all abilities")
+    void noCounterWhileGraveyardCardsLoseAllAbilities() {
+        harness.setGraveyard(player1, List.of(new DearlyDeparted()));
+        harness.addToBattlefield(player2, new YixlidJailer());
+
+        harness.setHand(player1, List.of(new DoomedTraveler()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent traveler = findPermanent(player1, "Doomed Traveler");
+        assertThat(traveler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

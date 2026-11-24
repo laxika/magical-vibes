@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49 (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 24, 30b, 7b; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                            |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24 (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 30b, 7b, 6c, 47b; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                             |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,094 / 2,501 (after fold run 49) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,086 / 2,497 (after fold run 24) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,551 rows over 4,550 classes (after fold run 49). Latest verdict per class: `step-9` 114, unique 1,186, absorbed 1,285, split 670, blocked-other 548, survivor 438, blocked-step-model 139, blocked-player-loop 96, dead 74. Waiting: 114 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,570 rows over 4,553 classes (after fold run 24). Latest verdict per class: `step-9` 102, unique 1,190, absorbed 1,294, split 670, blocked-other 548, survivor 440, blocked-step-model 139, blocked-player-loop 96, dead 74. Waiting: 102 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1054,6 +1054,11 @@ Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671
 - `ActivatedAbilityKind.EQUIP`, `CYCLING`, `UNEARTH` (fold run 49).
 - `PutCounterOnControlledCreatureCost(CounterType, DynamicAmount amount, boolean optional)` / `.blight(n)` / `.blightX()`: blight on spells and abilities (CR 701.68a, 701.68b) (fold run 49).
 - `ActivatedAbility.withMaximumXValue(DynamicAmount)`: "X can't be greater than …" on an activated ability, checked as it is activated (fold run 49).
+
+- `CantHaveCountersEffect(subject, counterType)` / `.ofKind(type)`: "can't have [kind] counters put on it" (null is every kind); read by `cantHaveCounters`, `cantHavePlusOnePlusOneCounters` and `cantHaveMinusOneMinusOneCounters` (fold run 24).
+- `DoubleCountersOnTargetPermanentEffect(type, controlledBy(...) | creaturesYouControl())`: "double the counters on each [permanent] you control", each placement through the shared pipeline (fold run 24).
+- `ControlledPermanentsEnterUntappedEffect(filter, PlayerSubject players)`, `.lands()`, `.forEveryPlayer(filter)`: every "[permanents] enter untapped", printed or as the upgrade of a `ConditionalReplacementEffect` (fold run 24).
+- `PutCounterOnTargetPermanentEffect(createdThisResolution() | returnedThisResolution(), …)`: "put counters on it / each of them" after a token or return step; a source-relative amount is noted first (`NoteAmountEffect` + `AmountThisWay.noted()`) (fold run 24).
 
 ### Blocked causes still open
 
@@ -4755,6 +4760,29 @@ Seen, not changed:
 - Hand-ability availability may not show a free cycle as playable without mana. Unverified.
 
 For the next run: 49b takes `modal-cost` (EscalateCost plus the ExtractedCosts reshape), `sac-all-cost` (find out why Soulblast is excluded from the target branches first) and `SacrificePermanentOrDiscardCardCost` (match the validation and payment, then point the free-cast readers at the survivor).
+
+### Step 9, fold run 24 (2026-11-24, parallel worktree)
+- **counters-subject**: 2 of 4 folded.
+- `PutCounterOnReturnedPermanentsEffect` → `PutCounterOnTargetPermanentEffect(returnedThisResolution(), type, n)` (Rise and Shine, Scout for Survivors, Smile at Death).
+- `PutCountersOnCreatedPermanentsEffect` → `PutCounterOnTargetPermanentEffect(createdThisResolution(), type, amount)` (23 cards plus two engine inserts). The survivor counts a non-target amount against each named permanent, and I checked every amount. All are controller-, X- or entry-relative except Lattice Library's `CountersOnSource(STUDY)`. That one, and the paused `CreateXTokenWithXCountersEffect` insert (whose amounts include `CountersOnSource`), now note the amount first: `NoteAmountEffect` + `AmountThisWay.noted()`. The survivor's guards now apply to these cards: PUT_COUNTERS is recorded and the CR 616.1 replacement order is asked.
+- Left for 24b:
+  - `PutCountersOnChosenPermanentEffect`: the manifest-dread completion must record MANIFEST (the Rooms), Swallow Whole's spell tap cost must reach `chosenCostPermanentIds` (`paidAsCost()`), and Emergent Sequence moves to `searched()`.
+  - `PutCounterOnChosenOwnPermanentEffect` (21 cards): `GrantSubtypeToChosenPermanentEffect`, `GrantKeywordToChosenCreatureUntilEndOfTurnEffect` and the Dragon handler must move to `thisWay(CHOOSE)` before `ChoosePermanentsEffect.exactly(1, …)` can replace it.
+- **counter-adjust**: 0 folded, both `unique`. "Choose a counter" (one kind, one action) and "for each kind" are different prompt flows. Timebug's time-only, "may" and own-only target would be one-card options.
+- **double-counters-set**: 2 folded. `DoubleCountersOnTargetPermanentEffect` takes any subject: `creaturesYouControl()`, `controlledBy(you(), filter)`. Placements now fire the "you put +1/+1 counters on another creature" and other-Hero triggers with the real count (CR 701.10e). The log is the survivor's, one line per permanent.
+- **cant-have-counters**: 2 folded into `CantHaveCountersEffect(subject, counterType)` / `ofKind`. The three `GameQueryService` readers keep their asymmetry: Melira's grant is still read as a rule of its source. `cantHaveCounters` reads only the every-kind form.
+- **lose-protection**: 0 folded, both `unique`. The from-colour option would be Cephalid Snitch's alone (guard rail).
+- **enter-counters**: 0 folded, all 5 left for 24b. The mana-value, artifact-mana and Treasure-mana records need amounts evaluated against the entering permanent. Master Biomancer needs an entry-time subtype grant. Dearly Departed's closest survivor is `ControlledCreaturesEnterWithAdditionalCountersEffect` (subtype lookahead), not the queue's `ControlledPermanentsEnterWithAdditionalCountersEffect`, and a graveyard form would be a one-card option.
+- **enter-untapped**: 1 folded, plus the unaudited 3-card `ControlledLandsEnterUntappedEffect`. Survivor is `ControlledPermanentsEnterUntappedEffect(filter, PlayerSubject players)` with `lands()` and `forEveryPlayer`. One reader, `applyEnterUntappedEffects`, handles the printed and `ConditionalReplacementEffect` forms, with players judged by `namesPlayer`. The `PermanentsEnterUntappedEffect` interface is gone.
+- **Defect fixed**: Dearly Departed's reader now asks `graveyardCardsHaveLostAllAbilities`. New Yixlid Jailer test.
+- **Seen, not changed**:
+- Dearly Departed's reader still judges the printed creature type (CR 614.12).
+- Clockspinning offers "skip", but its text has no "may".
+- Quarry Hauler's and Dramatist's Puppet's removal never sends last-counter-removed (vanishing, CR 702.63a).
+- Non-mandatory amass choices accept an empty answer (CR 701.47a).
+- `resolveReplacementOrder` resumes later named permanents with the first permanent's count.
+- **Ratchet**: 3,127 / 2,537 → 3,119 / 2,533.
+- **For the next run**: 24b. Record MANIFEST in the manifest-dread completion, then fold the chosen-counter pair, then enter-counters with an entering-permanent amount context.
 
 ## Prompt
 
