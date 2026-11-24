@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyMakeSelectedSpellbookCardArtifactCreatureEffect;
@@ -38,39 +40,54 @@ public class DraftCardFromSpellbookEffectHandler implements NormalEffectHandlerB
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var draft = (DraftCardFromSpellbookEffect) effect;
+        entry.recordStep(StepKind.CONJURE, StepOutcome.NONE);
+        UUID draftPlayerId = subjectResolutionService.player(gameData, entry, effect, draft.player());
+        if (draftPlayerId == null) {
+            return;
+        }
+        offer(gameData, draft, draftPlayerId, entry.getControllerId(), entry.getCard().getName(),
+                draft.drafts() - 1);
+    }
+
+    /**
+     * Offers {@code draft}'s cards to {@code draftPlayerId}, the draft's prompt ending its step; {@code draftsLeft} more
+     * drafts follow from {@code SpellbookDraftChoiceInteractionHandler} as each is answered. A spellbook with no
+     * implemented card offers nothing.
+     *
+     * @return whether a prompt began
+     */
+    public boolean offer(GameData gameData, DraftCardFromSpellbookEffect draft, UUID draftPlayerId, UUID controllerId,
+                      String sourceCardName, int draftsLeft) {
         List<Card> spellbook = draft.spellbook().stream()
                 .map(reference -> cardCatalog.createCardIfImplemented(
                         reference.setCode(), reference.collectorNumber()))
                 .filter(card -> card != null)
                 .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
         if (spellbook.isEmpty()) {
-            return;
+            return false;
         }
 
         Collections.shuffle(spellbook);
         List<Card> offeredCards = draft.conjure()
                 ? spellbook
                 : new ArrayList<>(spellbook.subList(0, Math.min(3, spellbook.size())));
-        UUID draftPlayerId = subjectResolutionService.player(gameData, entry, effect, draft.player());
-        if (draftPlayerId == null) {
-            return;
-        }
 
         if (draft.makeSelectedArtifactCreature() || draft.battlefieldSelectionFollowUp() != null) {
             beginSelectionWithFollowUp(gameData, draft, draftPlayerId, offeredCards);
-            return;
+            return true;
         }
 
         offeredCards.forEach(card -> card.setOwnerId(draftPlayerId));
 
         gameLogService.append(gameData, GameLog.text(
-                gameData.playerIdToName.get(entry.getControllerId())
+                gameData.playerIdToName.get(controllerId)
                         + (draft.conjure() ? " conjures" : " drafts") + " a card from "
-                        + entry.getCard().getName() + "'s spellbook."));
+                        + sourceCardName + "'s spellbook."));
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.SpellbookDraftChoice(
-                draftPlayerId, offeredCards, entry.getCard().getName(), draft.revealChosenCard(),
+                draftPlayerId, offeredCards, sourceCardName, draft.revealChosenCard(),
                 draft.exileChosenCard(), draft.putChosenCardOntoBattlefield(), draft.chosenCardEffects(),
-                draft.conjure()));
+                draft.conjure(), draft, draftsLeft));
+        return true;
     }
 
     private void beginSelectionWithFollowUp(GameData gameData, DraftCardFromSpellbookEffect draft,

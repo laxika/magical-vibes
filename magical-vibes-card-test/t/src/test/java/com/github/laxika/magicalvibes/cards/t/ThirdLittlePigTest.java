@@ -86,9 +86,7 @@ class ThirdLittlePigTest extends BaseCardTest {
                 .filter(card -> !card.getName().equals("Third Little Pig"))
                 .toList();
         harness.handleMultipleCardsChosen(player, cards.stream().map(Card::getId).toList());
-        PendingInteraction.RevealedHandChoice battlefieldChoice =
-                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
-        harness.handleCardChosen(player, battlefieldChoice.validIndices().getFirst());
+        chooseOfferedCards(player, 0);
         resolveAllTriggers();
     }
 }

@@ -786,7 +786,6 @@ public class TargetPolarityClassifier {
             entry("ChooseOneForTargetPermanentEffect", TargetPolarity.NEUTRAL),
             entry("CreateTokenCopyAndLinkToSourceEffect", TargetPolarity.NEUTRAL),
             entry("CreateTokenCopyOfTargetCreatureForTargetPlayerEffect", TargetPolarity.NEUTRAL),
-            entry("ConjureDuplicatesOfTargetPermanentsIntoHandEffect", TargetPolarity.NEUTRAL),
             entry("TemptingOfferCreateTokenCopyEffect", TargetPolarity.BENEFICIAL),
             entry("RegisterMysticReflectionEffect", TargetPolarity.NEUTRAL),
             // Fell the Mighty uses the target's power as a threshold and spares the target itself.

@@ -84,6 +84,6 @@ public class DraftFromSpellbookEffectHandler implements NormalEffectHandlerBean 
                 entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId(),
                 offeredCards,
                 "Choose a card from " + entry.getCard().getName() + "'s spellbook.",
-                draft.mode(), 1, 1, null, draft.conjure()));
+                draft.mode(), 1, 1, draft.conjure()));
     }
 }

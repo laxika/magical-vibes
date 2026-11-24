@@ -94,11 +94,19 @@ public class ExileTopCardOfOwnLibraryEffectHandler implements NormalEffectHandle
             gameData.setImprintedCard(entry.getCard(), topCard);
         } else if (e.linkedToSource() && entry.getSourcePermanentId() != null) {
             exileService.exileCard(gameData, playerId, topCard, entry.getSourcePermanentId());
+        } else if (e.faceDown()) {
+            exileService.exileCardFaceDown(gameData, playerId, topCard, null, playerId);
         } else {
             exileService.exileCard(gameData, playerId, topCard);
         }
 
         entry.addToStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(topCard.getId()), List.of(playerId)));
+        if (e.faceDown()) {
+            // A card exiled face down is seen by nobody (CR 406.3): the line doesn't name it.
+            gameLogService.append(gameData, GameLog.text(playerName
+                    + " exiles the top card of their library face down."));
+            return;
+        }
         gameLogService.append(gameData, GameLog.textCardText(playerName + " exiles ", topCard,
                 " from the top of their library."));
         log.info("Game {} - {} exiles {} from library top", gameData.id, playerName, topCard.getName());

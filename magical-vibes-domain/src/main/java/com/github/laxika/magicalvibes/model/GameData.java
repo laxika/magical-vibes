@@ -691,8 +691,6 @@ public class GameData {
      * graveyard simultaneously (CR 601.2h), so a rules event batch stays open until the last card.
      */
     public boolean discardCostBatchOpen;
-    /** Spellbook cards drafted but not yet put onto the battlefield (The Hourglass Coven). */
-    public final List<Card> heldSpellbookCards = Collections.synchronizedList(new ArrayList<>());
     /** Permanents chosen to be sacrificed for the activated ability whose costs are being paid. They
      *  stay on the battlefield until every cost choice is made, then leave together with any
      *  sacrificed source as one simultaneous event (CR 603.10a look-back for their dies triggers). */
@@ -11036,7 +11034,6 @@ public class GameData {
         copy.discardCostBatchOpen = this.discardCostBatchOpen;
         copy.beholdCostWaivedCardId = this.beholdCostWaivedCardId;
         copy.beholdCostRevealedCard = this.beholdCostRevealedCard;
-        copy.heldSpellbookCards.addAll(this.heldSpellbookCards);
         copy.timeVaultsDeclinedThisTurnStart.addAll(this.timeVaultsDeclinedThisTurnStart);
         copy.permanentsEnteringSimultaneously.addAll(this.permanentsEnteringSimultaneously);
         copy.castCostMinimumManaOffset = this.castCostMinimumManaOffset;

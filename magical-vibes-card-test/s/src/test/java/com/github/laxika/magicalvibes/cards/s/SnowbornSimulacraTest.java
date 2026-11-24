@@ -4,24 +4,29 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.p.PropheticPrism;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SnowbornSimulacra.class, GrizzlyBears.class, PropheticPrism.class, ThayanEvokers.class})
+@CardUsed({SnowbornSimulacra.class, GrizzlyBears.class, PropheticPrism.class, ThayanEvokers.class,
+        ShivanDragon.class})
 class SnowbornSimulacraTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Conjures a duplicate of each target into hand, castable with mana of any color")
     void conjuresDuplicatesWithPerpetualAnyColorCastingPermission() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -52,6 +57,7 @@ class SnowbornSimulacraTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With X of 5 or more, one of the duplicates may be put onto the battlefield")
     void atFiveOrMoreOffersOneNewDuplicateForBattlefieldEntry() {
         List<Permanent> targets = List.of(
                 harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()),
@@ -66,14 +72,14 @@ class SnowbornSimulacraTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 5, targets.stream().map(Permanent::getId).toList());
         harness.passBothPriorities();
 
-        PendingInteraction.RevealedHandChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIndices()).hasSize(5);
-        UUID chosenCardId = gd.playerHands.get(player1.getId())
-                .get(choice.validIndices().getFirst()).getId();
+        assertThat(choice.cards()).hasSize(5);
+        assertThat(choice.maxCount()).isEqualTo(1);
+        UUID chosenCardId = choice.cards().getFirst().getId();
 
-        harness.handleCardChosen(player1, choice.validIndices().getFirst());
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(Card::getName)
@@ -86,6 +92,7 @@ class SnowbornSimulacraTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Targets only nontoken permanents, an opponent's included")
     void targetsMustBeNontokenPermanentsAndMayBeControlledByAnOpponent() {
         Card tokenCard = new GrizzlyBears();
         tokenCard.setToken(true);
@@ -107,6 +114,7 @@ class SnowbornSimulacraTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With X of 0 nothing is conjured or offered")
     void zeroTargetsResolvesWithoutConjuringOrOfferingAChoice() {
         harness.setHand(player1, List.of(new SnowbornSimulacra()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -119,6 +127,7 @@ class SnowbornSimulacraTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The put may be declined and offers only the duplicates")
     void atFiveMayDeclineAndCannotChooseAPreexistingHandCard() {
         List<Permanent> targets = java.util.stream.IntStream.range(0, 5)
                 .mapToObj(i -> harness.addToBattlefieldAndReturn(player2, new PropheticPrism()))
@@ -131,13 +140,13 @@ class SnowbornSimulacraTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 5, targets.stream().map(Permanent::getId).toList());
         harness.passBothPriorities();
 
-        PendingInteraction.RevealedHandChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIndices()).containsExactly(1, 2, 3, 4, 5);
-        assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
+        assertThat(choice.cards()).hasSize(5).doesNotContain(preexisting);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(preexisting.getId())))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handleCardChosen(player1, -1);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(6).contains(preexisting);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
@@ -146,6 +155,7 @@ class SnowbornSimulacraTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With one legal target left, its duplicate is still offered, and the put still may be declined")
     void fiveStillOffersBattlefieldEntryWhenOnlyOneTargetRemainsLegal() {
         List<Permanent> targets = java.util.stream.IntStream.range(0, 5)
                 .mapToObj(i -> harness.addToBattlefieldAndReturn(player2, new PropheticPrism()))
@@ -159,15 +169,16 @@ class SnowbornSimulacraTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        PendingInteraction.RevealedHandChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIndices()).containsExactly(0);
-        harness.handleCardChosen(player1, -1);
+        assertThat(choice.cards()).containsExactlyElementsOf(gd.playerHands.get(player1.getId()));
+        chooseOfferedCards(player1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
     @Test
+    @DisplayName("With no legal target left nothing is conjured or offered")
     void allTargetsLeavingPreventsConjuringAndBattlefieldChoice() {
         List<Permanent> targets = java.util.stream.IntStream.range(0, 5)
                 .mapToObj(i -> harness.addToBattlefieldAndReturn(player2, new PropheticPrism()))
@@ -186,6 +197,7 @@ class SnowbornSimulacraTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A duplicate put onto the battlefield gets its enter ability")
     void puttingConjuredArtifactOntoBattlefieldTriggersItsEnterAbility() {
         List<Permanent> targets = java.util.stream.IntStream.range(0, 5)
                 .mapToObj(i -> harness.addToBattlefieldAndReturn(player2, new PropheticPrism()))
@@ -198,10 +210,8 @@ class SnowbornSimulacraTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 5, targets.stream().map(Permanent::getId).toList());
         harness.passBothPriorities();
-        PendingInteraction.RevealedHandChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
-        assertThat(choice).isNotNull();
-        harness.handleCardChosen(player1, choice.validIndices().getFirst());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNotNull();
+        chooseOfferedCards(player1, 0);
 
         harness.assertOnBattlefield(player1, "Prophetic Prism");
         harness.passBothPriorities();
@@ -211,6 +221,7 @@ class SnowbornSimulacraTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The chosen duplicate enters from the hand")
     void chosenDuplicateEntersFromHand() {
         List<Permanent> targets = java.util.stream.IntStream.range(0, 5)
                 .mapToObj(i -> harness.addToBattlefieldAndReturn(player2, new PropheticPrism()))
@@ -221,11 +232,11 @@ class SnowbornSimulacraTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 5, targets.stream().map(Permanent::getId).toList());
         harness.passBothPriorities();
-        PendingInteraction.RevealedHandChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        UUID chosenId = gd.playerHands.get(player1.getId()).get(choice.validIndices().getFirst()).getId();
-        harness.handleCardChosen(player1, choice.validIndices().getFirst());
+        UUID chosenId = choice.cards().getFirst().getId();
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().getId().equals(chosenId))
@@ -234,6 +245,7 @@ class SnowbornSimulacraTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Conjuring several duplicates is one conjure event")
     void conjuringSeveralDuplicatesTriggersConjureAbilitiesOnce() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -247,5 +259,25 @@ class SnowbornSimulacraTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A duplicate of a face-down target has only its face-down values, and the log names no card")
+    void duplicateOfAFaceDownTargetIsANamelessTwoTwo() {
+        Permanent faceDown = harness.addToBattlefieldAndReturn(player2, new ShivanDragon());
+        faceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setHand(player1, List.of(new SnowbornSimulacra()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castSorcery(player1, 0, 1, List.of(faceDown.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).singleElement().satisfies(duplicate -> {
+            assertThat(duplicate.getName()).isEmpty();
+            assertThat(duplicate.getPower()).isEqualTo(2);
+            assertThat(duplicate.getToughness()).isEqualTo(2);
+        });
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("Shivan Dragon"));
     }
 }

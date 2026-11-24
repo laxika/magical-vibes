@@ -4,8 +4,11 @@ import com.github.laxika.magicalvibes.cards.o.Owlbear;
 import com.github.laxika.magicalvibes.cards.w.WyllPactBoundDuelist;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -16,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TheHourglassCovenTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Drafts twice before putting either drafted card onto the battlefield")
     void draftsTwiceBeforePuttingEitherHagOntoTheBattlefield() {
         harness.enterBattlefieldAndReturn(player1, new TheHourglassCoven());
         harness.passBothPriorities();
@@ -40,6 +44,7 @@ class TheHourglassCovenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Doesn't boost itself")
     void doesNotBuffItself() {
         TheHourglassCoven card = new TheHourglassCoven();
         int basePower = card.getPower();
@@ -51,6 +56,7 @@ class TheHourglassCovenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Boosts only the other Warlocks you control")
     void buffsOtherWarlocksYouControlOnly() {
         Permanent ownWarlock = harness.addToBattlefieldAndReturn(player1, new WyllPactBoundDuelist());
         Permanent ownNonWarlock = harness.addToBattlefieldAndReturn(player1, new Owlbear());
@@ -71,5 +77,25 @@ class TheHourglassCovenTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, ownNonWarlock)).isEqualTo(ownNonWarlockToughness);
         assertThat(gqs.getEffectivePower(gd, opposingWarlock)).isEqualTo(opposingWarlockPower);
         assertThat(gqs.getEffectiveToughness(gd, opposingWarlock)).isEqualTo(opposingWarlockToughness);
+    }
+
+    @Test
+    @DisplayName("The drafted cards go into the hand, then enter the battlefield together from it")
+    void draftedCardsEnterFromTheHand() {
+        harness.setHand(player1, List.of());
+        harness.enterBattlefieldAndReturn(player1, new TheHourglassCoven());
+        harness.passBothPriorities();
+
+        Card first = gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class).cards().getFirst();
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
+        Card second = gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class).cards().getFirst();
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard() == first || permanent.getCard() == second)
+                .hasSize(2)
+                .allSatisfy(permanent -> assertThat(permanent.getEnteredFromZone()).isEqualTo(Zone.HAND));
     }
 }

@@ -2,10 +2,14 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAnyColorManaAndSelfCastAbilityToCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAnyColorManaToCastEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
@@ -35,13 +39,15 @@ public class OminousTraveler extends Card {
             new DraftFromSpellbookEffect.SpellbookCard("MID", "212"));
 
     public OminousTraveler() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DraftCardFromSpellbookEffect(SPELLBOOK, List.of(
-                        new PerpetuallyGrantAnyColorManaAndSelfCastAbilityToCardEffect(
-                                new ReturnPermanentControlledByPlayerToHandEffect(
-                                        new PermanentAllOfPredicate(List.of(
-                                                new PermanentIsCreaturePredicate(),
-                                                new PermanentNamedPredicate("Ominous Traveler"))),
-                                        "creature")))));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
+                new DraftCardFromSpellbookEffect(SPELLBOOK),
+                new PerpetuallyGrantAnyColorManaToCastEffect(Subjects.cardsThisWay(StepKind.CONJURE)),
+                new PerpetuallyGrantAbilitiesEffect(Subjects.cardsThisWay(StepKind.CONJURE),
+                        Triggers.youCastThisSpell(),
+                        new ReturnPermanentControlledByPlayerToHandEffect(
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentNamedPredicate("Ominous Traveler"))),
+                                "creature"))));
     }
 }

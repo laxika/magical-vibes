@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
-import com.github.laxika.magicalvibes.model.effect.HoldDraftedSpellbookCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutHeldSpellbookCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -33,9 +33,8 @@ public class TheHourglassCoven extends Card {
 
     public TheHourglassCoven() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
-                new DraftCardFromSpellbookEffect(SPELLBOOK, List.of(new HoldDraftedSpellbookCardEffect())),
-                new DraftCardFromSpellbookEffect(SPELLBOOK, List.of(new HoldDraftedSpellbookCardEffect())),
-                new PutHeldSpellbookCardsOntoBattlefieldEffect()));
+                new DraftCardFromSpellbookEffect(SPELLBOOK).times(2),
+                new PutCardsOntoBattlefieldEffect(Subjects.cardsThisWay(StepKind.CONJURE))));
         addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(),
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.WARLOCK))));
     }

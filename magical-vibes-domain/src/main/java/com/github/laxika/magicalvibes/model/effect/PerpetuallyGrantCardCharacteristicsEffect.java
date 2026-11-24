@@ -9,7 +9,8 @@ import java.util.Set;
 
 /**
  * Records card types, subtypes, and activated abilities that follow the source's card identity between zones. A grant
- * to the card a choice selected is {@link PerpetuallyGrantChosenCardCharacteristicsEffect}.
+ * to a drafted or chosen card is {@link #to} over {@code Subjects.cardsThisWay(StepKind.CONJURE)} or
+ * {@code cardsThisWay(StepKind.CHOOSE)}.
  *
  * <p>When {@code replacesCreatureTypes} is set the granted subtypes are the card's new creature types,
  * replacing the ones it had ("perpetually becomes a Dragon"); otherwise they are added to the existing

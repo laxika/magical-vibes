@@ -24,9 +24,11 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  *                        (the entry's, even after it left), which "when you play a card exiled with this creature"
  *                        and "you may play cards exiled with this enchantment" read (Voltaic Visionary, Pick Up the
  *                        Pace); {@code trackWithSource} links and also imprints
+ * @param faceDown        "exiles the top card of their library face down" (CR 406.3): nobody may look at the card and
+ *                        no line names it; neither tracked nor linked
  */
 public record ExileTopCardOfOwnLibraryEffect(boolean trackWithSource, PlayerSubject player, DynamicAmount count,
-                                             boolean linkedToSource)
+                                             boolean linkedToSource, boolean faceDown)
         implements CardEffect {
 
     public ExileTopCardOfOwnLibraryEffect {
@@ -42,6 +44,14 @@ public record ExileTopCardOfOwnLibraryEffect(boolean trackWithSource, PlayerSubj
         if (trackWithSource && linkedToSource) {
             throw new IllegalArgumentException("trackWithSource already links the card to the source");
         }
+        if (faceDown && (trackWithSource || linkedToSource)) {
+            throw new IllegalArgumentException("A face-down exile here is neither tracked nor linked");
+        }
+    }
+
+    public ExileTopCardOfOwnLibraryEffect(boolean trackWithSource, PlayerSubject player, DynamicAmount count,
+                                          boolean linkedToSource) {
+        this(trackWithSource, player, count, linkedToSource, false);
     }
 
     public ExileTopCardOfOwnLibraryEffect(boolean trackWithSource, PlayerSubject player, DynamicAmount count) {
@@ -74,6 +84,11 @@ public record ExileTopCardOfOwnLibraryEffect(boolean trackWithSource, PlayerSubj
     /** "[Player] exiles the top X cards of their library", untracked. */
     public static ExileTopCardOfOwnLibraryEffect of(PlayerSubject player, DynamicAmount count) {
         return new ExileTopCardOfOwnLibraryEffect(false, player, count);
+    }
+
+    /** This exile "face down". */
+    public ExileTopCardOfOwnLibraryEffect exiledFaceDown() {
+        return new ExileTopCardOfOwnLibraryEffect(trackWithSource, player, count, linkedToSource, true);
     }
 
     @Override

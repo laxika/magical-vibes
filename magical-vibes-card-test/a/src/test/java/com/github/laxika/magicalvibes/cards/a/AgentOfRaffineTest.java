@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class AgentOfRaffineTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Conjures a duplicate of the target opponent's top card, castable with any color, then that card is exiled face down")
     void conjuresTheTopCardThenExilesThatCardFaceDown() {
         harness.setHand(player1, List.of());
         addReadyAgent(player1);
@@ -54,6 +55,7 @@ class AgentOfRaffineTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Targets only an opponent")
     void canOnlyTargetAnOpponent() {
         addReadyAgent(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -70,6 +72,7 @@ class AgentOfRaffineTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Conjuring the duplicate triggers conjure abilities")
     void conjuringTheTopCardTriggersConjureAbilities() {
         harness.setHand(player1, List.of());
         addReadyAgent(player1);
@@ -99,5 +102,19 @@ class AgentOfRaffineTest extends BaseCardTest {
         assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("Shock"));
         assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals(
                 player1.getUsername() + " conjures a card into their hand."));
+    }
+
+    @Test
+    @DisplayName("With an empty library nothing is conjured or exiled")
+    void emptyLibraryConjuresNothing() {
+        harness.setHand(player1, List.of());
+        addReadyAgent(player1);
+        harness.setLibrary(player2, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }

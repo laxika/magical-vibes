@@ -4,9 +4,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -15,11 +20,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumSet;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.IntStream;
 
 /** Resolves a mandatory one-card draft from a spellbook. */
 @Component
@@ -29,7 +32,6 @@ public class SpellbookCardChoiceInteractionHandler
 
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
-    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<PendingInteraction.SpellbookCardChoice> handledType() {
@@ -82,20 +84,12 @@ public class SpellbookCardChoiceInteractionHandler
                 ActionEvents.conjured(
                         gameData, player.getId(), selectedCards.size());
             }
-            if (interaction.chosenCardThenEffect() != null) {
-                List<Card> hand = gameData.playerHands.get(player.getId());
-                List<Integer> validIndices = IntStream.range(0, hand.size())
-                        .filter(index -> cardIds.contains(hand.get(index).getId()))
-                        .boxed()
-                        .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
-                interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
-                        player.getId(), player.getId(), validIndices, 1,
-                        false, false, List.of(), null,
-                        "Choose one of those cards to put onto the battlefield.",
-                        false, false, false, 0, null,
-                        false, false, false, false, false, 0, false,
-                        null, null, interaction.chosenCardThenEffect(), 0).withKeepInHand());
-                return;
+            StackEntry choosing = gameData.pendingEffectResolutionEntry;
+            if (choosing != null) {
+                // The conjure step's result (StepKind.CONJURE): "then put one of them onto the battlefield" reads it.
+                List<UUID> chosenIds = selectedCards.stream().map(Card::getId).toList();
+                choosing.recordStep(StepKind.CONJURE, StepOutcome.ofObjects(chosenIds, List.of(player.getId()),
+                        chosenIds.stream().map(id -> new MovedCard(id, id, Zone.HAND, player.getId())).toList()));
             }
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             return;

@@ -74,7 +74,8 @@ package com.github.laxika.magicalvibes.model;
  *       ({@link StepOutcome#votes()}): "for each [option] vote" ({@code VotesFor}), "if [option] gets more votes"
  *       ({@code VoteResult}).</li>
  *   <li>{@link #CONJURE}: the number of cards conjured into a hand, a library, a graveyard or exile
- *       ({@code ConjureCardsEffect}), those cards, the player whose zone they went to, each one's
+ *       ({@code ConjureCardsEffect}; a spellbook draft or choice, {@code DraftCardFromSpellbookEffect} and
+ *       {@code ConjureCardFromSpellbookToHandEffect}, recording as it is answered), those cards, the player whose zone they went to, each one's
  *       {@link StepOutcome#movedCards()} entry naming the zone it is in after the step (a replacement's zone, when one
  *       sent it elsewhere), so "you may cast it" and "it perpetually gets" find it there (digital only).</li>
  *   <li>{@link #TAP}: the number of permanents the step tapped ({@code TapPermanentsEffect}; one already tapped, or

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardFromSpellbookToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
@@ -34,6 +36,7 @@ public class ConjureCardFromSpellbookToHandEffectHandler implements NormalEffect
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ConjureCardFromSpellbookToHandEffect conjure =
                 (ConjureCardFromSpellbookToHandEffect) effect;
+        entry.recordStep(StepKind.CONJURE, StepOutcome.NONE);
         List<Card> spellbookCards = new ArrayList<>();
         for (ConjureCardFromSpellbookToHandEffect.CardPrintingReference reference : conjure.spellbook()) {
             CardSet set = CardSet.findByCode(reference.setCode());
@@ -49,9 +52,11 @@ public class ConjureCardFromSpellbookToHandEffectHandler implements NormalEffect
             spellbookCards.add(card);
         }
 
+        String spellbookName = entry.getCard().getName() + "'s spellbook.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.SpellbookCardChoice(
                 entry.getControllerId(), spellbookCards,
-                "Choose a card from Charged Conjuration's spellbook.",
-                DraftFromSpellbookEffect.DraftMode.CONJURE_TO_HAND, 1, 1, null, true));
+                conjure.count() == 1 ? "Choose a card from " + spellbookName
+                        : "Choose " + conjure.count() + " cards from " + spellbookName,
+                DraftFromSpellbookEffect.DraftMode.CONJURE_TO_HAND, conjure.count(), conjure.count(), true));
     }
 }

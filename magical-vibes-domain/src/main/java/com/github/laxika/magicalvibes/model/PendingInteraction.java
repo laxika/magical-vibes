@@ -146,7 +146,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.PerpetualHandOrGraveyardCardChoice,
         PendingInteraction.LibraryRevealChoice,
         PendingInteraction.SpellbookCardChoice,
-        PendingInteraction.DraftTwiceSpellbookChoice,
         PendingInteraction.VividCardChoice,
         PendingInteraction.LibrarySearch,
         PendingInteraction.SearchOutsideGameOrExileCardChoice,
@@ -695,13 +694,26 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     /**
      * The controller chooses one of the cards offered from a spellbook. {@code conjure} marks the
      * chosen card as conjured rather than drafted, so "whenever you conjure" abilities trigger.
+     * {@code draftsLeft} more drafts of {@code draft} follow this one before the resolution goes on.
      */
     record SpellbookDraftChoice(UUID playerId, java.util.List<Card> cards,
                                 String sourceCardName, boolean revealChosenCard,
                                 boolean exileChosenCard,
                                 boolean putChosenCardOntoBattlefield,
                                 java.util.List<CardEffect> chosenCardEffects,
-                                boolean conjure) implements PendingInteraction {
+                                boolean conjure,
+                                com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect draft,
+                                int draftsLeft) implements PendingInteraction {
+
+        public SpellbookDraftChoice(UUID playerId, java.util.List<Card> cards,
+                                    String sourceCardName, boolean revealChosenCard,
+                                    boolean exileChosenCard,
+                                    boolean putChosenCardOntoBattlefield,
+                                    java.util.List<CardEffect> chosenCardEffects,
+                                    boolean conjure) {
+            this(playerId, cards, sourceCardName, revealChosenCard, exileChosenCard, putChosenCardOntoBattlefield,
+                    chosenCardEffects, conjure, null, 0);
+        }
 
         public SpellbookDraftChoice(UUID playerId, java.util.List<Card> cards, String sourceCardName) {
             this(playerId, cards, sourceCardName, false, false, false, java.util.List.of(), false);
@@ -723,6 +735,9 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public SpellbookDraftChoice {
             cards = java.util.List.copyOf(cards);
             chosenCardEffects = java.util.List.copyOf(chosenCardEffects);
+            if (draftsLeft > 0 && draft == null) {
+                throw new IllegalArgumentException("A further draft needs the draft step it repeats");
+            }
         }
 
         public java.util.List<UUID> validCardIds() {
@@ -5293,18 +5308,17 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record SpellbookCardChoice(UUID playerId, java.util.List<Card> cards, String prompt,
                                DraftFromSpellbookEffect.DraftMode draftMode,
-                               int minCount, int maxCount, CardEffect chosenCardThenEffect,
-                               boolean conjure)
+                               int minCount, int maxCount, boolean conjure)
             implements PendingInteraction {
 
         public SpellbookCardChoice(UUID playerId, java.util.List<Card> cards, String prompt) {
             this(playerId, cards, prompt, DraftFromSpellbookEffect.DraftMode.CONJURE_TO_HAND,
-                    1, 1, null, false);
+                    1, 1, false);
         }
 
         public SpellbookCardChoice(UUID playerId, java.util.List<Card> cards, String prompt,
                                    DraftFromSpellbookEffect.DraftMode draftMode) {
-            this(playerId, cards, prompt, draftMode, 1, 1, null, false);
+            this(playerId, cards, prompt, draftMode, 1, 1, false);
         }
 
         public SpellbookCardChoice {
@@ -5329,39 +5343,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds(), minCount, maxCount);
-        }
-    }
-
-    /** One of the two sequential drafts from a spellbook. */
-    record DraftTwiceSpellbookChoice(
-            UUID playerId,
-            java.util.List<Card> cards,
-            java.util.List<Card> draftedCards,
-            java.util.List<DraftFromSpellbookEffect.SpellbookCard> spellbook,
-            String sourceCardName,
-            int draftNumber) implements PendingInteraction {
-
-        public DraftTwiceSpellbookChoice {
-            cards = java.util.List.copyOf(cards);
-            draftedCards = java.util.List.copyOf(draftedCards);
-            spellbook = java.util.List.copyOf(spellbook);
-            if (draftNumber < 1 || draftNumber > 2) {
-                throw new IllegalArgumentException("Draft number must be one or two");
-            }
-        }
-
-        public java.util.List<UUID> validCardIds() {
-            return cards.stream().map(Card::getId).toList();
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
         }
     }
 

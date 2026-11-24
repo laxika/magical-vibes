@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21 (each in Findings; the fold queue marks its rows). Fold runs 19c and 22 are running in worktrees; 12e waits to merge. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                 |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e (each in Findings; the fold queue marks its rows). Fold runs 19c, 22 and 17d are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                  |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,632 / 2,895 (after fold run 21) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,623 / 2,886 (after fold run 12e) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,645 rows over 4,437 classes (after fold run 21). Latest verdict per class: `step-9` 778, unique 1,169, absorbed 762, split 618, blocked-other 507, survivor 305, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 778 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,661 rows over 4,438 classes (after fold run 12e). Latest verdict per class: `step-9` 767, unique 1,169, absorbed 765, split 624, blocked-other 509, survivor 306, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 767 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -745,6 +745,12 @@ Delayed and global triggers:
 - `PutOnTopOfLibraryInsteadOfDyingEffect.onBottom()` / `.shuffledIn()` (Position TOP, BOTTOM, SHUFFLED): the dying-library replacements (fold run 21).
 - `SearchOutsideGameForCardToHandEffect(filter, reveals, destination)`, `.unrevealed(filter)`, `.onTopOfLibrary()` (fold run 21).
 - `SearchLibraryForOneCardOfEachSubtypeEffect.ofEachColor(colors, HAND | GRAVEYARD)` (fold run 21).
+
+- `DraftCardFromSpellbookEffect` records `StepKind.CONJURE` as each draft is answered; `.times(n)`: "draft a card from [its] spellbook twice", one result (fold run 12e).
+- `ConjureCardFromSpellbookToHandEffect(spellbook, count)`: "conjure two cards of your choice from [a] spellbook", records CONJURE (fold run 12e).
+- `ExileTopCardOfOwnLibraryEffect.exiledFaceDown()`: "[they] exile the top card of their library face down" (CR 406.3), unnamed, records EXILE (fold run 12e).
+- `new CardSubject.TopmostInLibrary(players, null)` for another player's top card, e.g. "a duplicate of the top card of their library" (fold run 12e).
+- A card chosen by `ChooseCardEffect` while it is in a hand is logged without its name (fold run 12e).
 
 ### Blocked causes still open
 
@@ -2626,6 +2632,23 @@ Five of seven batches done. Ratchet 3,690 / 2,954 → 3,674 / 2,940. Ledger 25 r
 - `perm-shuffle`: `ShuffleTargetPermanentIntoLibraryEffect` over a `PermanentSubject` recording `SHUFFLE_INTO_LIBRARY` with the owners, so `playersThisWay` can replace `ThenEffectRecipient`; also Teferi's −12 as one event, and Mirror-Mad Phantasm through the entry batch.
 - `multi-zone` with Research: one outside-the-game card subject.
 - Serene Remembrance / Turn the Earth: a `targetCards` subject.
+
+### Step 9, fold run 12e (2026-11-24, parallel worktree)
+
+Rows: `dup-hand` leftovers (5) and `drafted-step` (7). Ratchet 3,690 / 2,954 → 3,681 / 2,945. Ledger: 16 rows (absorbed 3, split 6, blocked-other 2, `step-9` re-batched 1, survivor 3, Necropotence re-noted 1). 8 card files rewritten, Oracle text checked for all and for Viconia, Huntmaster and Skyforge. CR 205.1a, 400.2, 406.3, 608.2b, 608.2d, 608.2h, 707.2 and 708.2a checked.
+
+**The drafted step.** `DraftCardFromSpellbookEffect` records `StepKind.CONJURE` (begun as NONE) as each draft is answered: the card in the hand or exile it went to, or the permanent it became. `.times(n)` drafts one after another into the hand, each from three new random cards, as one result. `ConjureCardFromSpellbookToHandEffect(spellbook, count)` records CONJURE as its choice is answered. A drafted card going into a hand is named only to its drafter.
+
+| Batch | Result |
+|---|---|
+| `dup-hand` | 3 folded. Ace: `duplicateOf(triggeringSpell())` + perpetual flying. Snowborn: `duplicateOfTarget` + any-colour grant + `SpellXAtLeast(5)` choose-and-put. Agent: `TopmostInLibrary(targetPlayer())` + any-colour grant + `exiledFaceDown()`. Left: Viconia (re-batched to `specialize`; the faces are built by hand), Grizzled Huntmaster (`blocked-other`: no card subject outside the game) |
+| `drafted-step` | 6 folded. Hourglass (Hold + PutHeld; the held store gone), Relics (`DraftTwiceSpellbookChoice` gone), Swine, Ominous, Chef. Left: Support Skyforge (`blocked-other`: "becomes an artifact creature" replaces types, CR 205.1a, and no perpetual step does that for a hand card) |
+
+**Behaviour changes.** Snowborn's duplicate of a face-down target is a nameless 2/2 (CR 707.2, 708.2a; defect-queue line fixed, new test). Snowborn's put goes through the entry batch. Ace's flying is perpetual. Hourglass's drafted cards pass through the hand. A card chosen from a hand by `ChooseCardEffect` is logged unnamed (CR 400.2). The spellbook-conjure prompt names its own source. Logs are the survivors' lines. "It" across zone changes keeps today's reading.
+
+**Seen, not changed.** `TargetPolarityClassifier` has the duplicated `ConjureCardsEffect` BENEFICIAL block twice (harmless). The selection-follow-up drafts (`LibraryRevealChoice`: Skyforge, Adaptive Armorer, Dragon Typhoon, Masterpiece Vault) record no CONJURE.
+
+**For the next run.** Viconia in `specialize`. Necropotence's exile half is `ExileTopCardOfOwnLibraryEffect.of(you()).exiledFaceDown()`. A types-replacing perpetual option would fold Skyforge and Housemeld together.
 
 ## Prompt
 

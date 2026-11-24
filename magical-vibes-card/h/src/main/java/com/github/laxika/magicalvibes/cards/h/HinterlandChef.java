@@ -5,10 +5,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantChosenCardCharacteristicsEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantCardCharacteristicsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -37,8 +40,9 @@ public class HinterlandChef extends Card {
             new DraftFromSpellbookEffect.SpellbookCard("VOW", "209"));
 
     public HinterlandChef() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DraftCardFromSpellbookEffect(SPELLBOOK, List.of(
-                new PerpetuallyGrantChosenCardCharacteristicsEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
+                new DraftCardFromSpellbookEffect(SPELLBOOK),
+                new PerpetuallyGrantCardCharacteristicsEffect(
                         Set.of(CardType.ARTIFACT),
                         Set.of(CardSubtype.FOOD),
                         List.of(new ActivatedAbility(
@@ -46,6 +50,6 @@ public class HinterlandChef extends Card {
                                 "{2}",
                                 List.of(new SacrificeSelfCost(), new GainLifeEffect(3)),
                                 "{2}, {T}, Sacrifice this creature: You gain 3 life."
-                        ))))));
+                        ))).to(Subjects.cardsThisWay(StepKind.CONJURE))));
     }
 }

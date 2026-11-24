@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SwineRebellionTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Three Boars with different names conjure the whole spellbook onto the battlefield")
     void threeDistinctBoarsConjureTheWholeSpellbookOntoTheBattlefield() {
         harness.addToBattlefield(player1, new FirstLittlePig());
         harness.addToBattlefield(player1, new SecondLittlePig());
@@ -34,6 +35,7 @@ class SwineRebellionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Otherwise conjures two chosen cards into hand and puts one of them onto the battlefield")
     void fewerThanThreeDistinctBoarsConjureTwoChoicesAndPutOneOntoTheBattlefield() {
         castSwineRebellion();
 
@@ -46,10 +48,11 @@ class SwineRebellionTest extends BaseCardTest {
         List<Card> chosenCards = spellbookChoice.cards().subList(0, 2);
         harness.handleMultipleCardsChosen(player1, chosenCards.stream().map(Card::getId).toList());
 
-        PendingInteraction.RevealedHandChoice battlefieldChoice =
-                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        PendingInteraction.MultiGraveyardChoice battlefieldChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(battlefieldChoice).isNotNull();
-        harness.handleCardChosen(player1, battlefieldChoice.validIndices().getFirst());
+        assertThat(battlefieldChoice.minCount()).isEqualTo(1);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -58,6 +61,7 @@ class SwineRebellionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Boars with the same name count once")
     void duplicateBoarsDoNotMeetTheDistinctNameThreshold() {
         harness.addToBattlefield(player1, new FirstLittlePig());
         harness.addToBattlefield(player1, new FirstLittlePig());
@@ -68,6 +72,7 @@ class SwineRebellionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Three Boars with two names take the hand branch")
     void threeBoarsWithOnlyTwoNamesUseTheHandBranch() {
         harness.addToBattlefield(player1, new FirstLittlePig());
         harness.addToBattlefield(player1, new FirstLittlePig());
@@ -80,6 +85,7 @@ class SwineRebellionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's Boars don't count")
     void opponentsBoarsDoNotCountTowardsTheThreshold() {
         harness.addToBattlefield(player1, new FirstLittlePig());
         harness.addToBattlefield(player1, new SecondLittlePig());
@@ -93,6 +99,7 @@ class SwineRebellionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only the two conjured cards are offered to put onto the battlefield")
     void battlefieldChoiceIsRestrictedToTheTwoNewlyConjuredCards() {
         harness.setHand(player1, List.of(new SwineRebellion(), new ThirdLittlePig()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -106,15 +113,11 @@ class SwineRebellionTest extends BaseCardTest {
                 .toList();
         harness.handleMultipleCardsChosen(player1, chosenCards.stream().map(Card::getId).toList());
 
-        PendingInteraction.RevealedHandChoice battlefieldChoice =
-                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
-        assertThat(battlefieldChoice.validIndices()).hasSize(2);
-        assertThat(battlefieldChoice.validIndices())
-                .allSatisfy(index -> assertThat(gd.playerHands.get(player1.getId()).get(index).getId())
-                        .isIn(chosenCards.stream().map(Card::getId).toList()));
-        int selectedIndex = battlefieldChoice.validIndices().getLast();
-        String selectedName = gd.playerHands.get(player1.getId()).get(selectedIndex).getName();
-        harness.handleCardChosen(player1, selectedIndex);
+        PendingInteraction.MultiGraveyardChoice battlefieldChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(battlefieldChoice.cards()).containsExactlyInAnyOrderElementsOf(chosenCards);
+        String selectedName = battlefieldChoice.cards().getLast().getName();
+        chooseOfferedCards(player1, 1);
 
         harness.assertOnBattlefield(player1, selectedName);
         harness.assertInHand(player1, "Third Little Pig");
@@ -130,6 +133,7 @@ class SwineRebellionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Conjuring two cards into hand is one conjure event")
     void conjuringTwoCardsIntoHandTriggersConjureAbilitiesOnce() {
         Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
         castSwineRebellion();
@@ -138,9 +142,7 @@ class SwineRebellionTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.SpellbookCardChoice.class);
         harness.handleMultipleCardsChosen(player1, spellbookChoice.cards().subList(0, 2).stream()
                 .map(Card::getId).toList());
-        PendingInteraction.RevealedHandChoice battlefieldChoice =
-                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
-        harness.handleCardChosen(player1, battlefieldChoice.validIndices().getFirst());
+        chooseOfferedCards(player1, 0);
         resolveAllTriggers();
 
         assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
@@ -156,7 +158,7 @@ class SwineRebellionTest extends BaseCardTest {
         Card second = spellbookChoice.cards().stream()
                 .filter(card -> !card.getName().equals(first.getName())).findFirst().orElseThrow();
         harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
-        harness.handleCardChosen(player1, gd.playerHands.get(player1.getId()).indexOf(first));
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
         assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains(second.getName()));

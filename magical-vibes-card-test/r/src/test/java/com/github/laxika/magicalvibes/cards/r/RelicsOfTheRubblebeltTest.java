@@ -30,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class RelicsOfTheRubblebeltTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Drafts twice into hand, then puts one of the drafted cards onto the battlefield tapped")
     void draftsTwiceAndPutsOneDraftedSignetOntoTheBattlefieldTapped() {
         harness.setHand(player1, List.of(new RelicsOfTheRubblebelt()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -38,31 +39,31 @@ class RelicsOfTheRubblebeltTest extends BaseCardTest {
         harness.castSorcery(player1, 0);
         harness.passBothPriorities();
 
-        PendingInteraction.DraftTwiceSpellbookChoice firstDraft =
-                gd.interaction.activeInteraction(PendingInteraction.DraftTwiceSpellbookChoice.class);
+        PendingInteraction.SpellbookDraftChoice firstDraft =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
         assertThat(firstDraft).isNotNull();
         assertThat(firstDraft.cards()).hasSize(3);
 
         Card firstChoice = firstDraft.cards().getFirst();
         harness.handleMultipleCardsChosen(player1, List.of(firstChoice.getId()));
 
-        PendingInteraction.DraftTwiceSpellbookChoice secondDraft =
-                gd.interaction.activeInteraction(PendingInteraction.DraftTwiceSpellbookChoice.class);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstChoice);
+        PendingInteraction.SpellbookDraftChoice secondDraft =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
         assertThat(secondDraft).isNotNull();
-        assertThat(secondDraft.draftedCards()).containsExactly(firstChoice);
         assertThat(secondDraft.cards()).hasSize(3);
 
         Card secondChoice = secondDraft.cards().getFirst();
         harness.handleMultipleCardsChosen(player1, List.of(secondChoice.getId()));
 
-        PendingInteraction.RevealedHandChoice battlefieldChoice =
-                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        PendingInteraction.MultiGraveyardChoice battlefieldChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(battlefieldChoice).isNotNull();
-        assertThat(battlefieldChoice.validIndices()).hasSize(2);
+        assertThat(battlefieldChoice.cards()).containsExactlyInAnyOrder(firstChoice, secondChoice);
+        assertThat(battlefieldChoice.minCount()).isEqualTo(1);
 
-        int selectedHandIndex = battlefieldChoice.validIndices().getFirst();
-        UUID selectedCardId = gd.playerHands.get(player1.getId()).get(selectedHandIndex).getId();
-        harness.handleCardChosen(player1, selectedHandIndex);
+        UUID selectedCardId = battlefieldChoice.cards().getFirst().getId();
+        chooseOfferedCards(player1, 0);
 
         Permanent draftedPermanent = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(selectedCardId))
@@ -73,7 +74,7 @@ class RelicsOfTheRubblebeltTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The log names the drafted card put onto the battlefield, not the one left in hand")
+    @DisplayName("The log names the drafted card put onto the battlefield, not the one left in hand or the choice")
     void logNamesNoDraftedCardLeftInHand() {
         harness.setHand(player1, List.of(new RelicsOfTheRubblebelt()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -81,19 +82,20 @@ class RelicsOfTheRubblebeltTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0);
         harness.passBothPriorities();
-        Card firstChoice = gd.interaction.activeInteraction(PendingInteraction.DraftTwiceSpellbookChoice.class)
+        Card firstChoice = gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class)
                 .cards().getFirst();
         harness.handleMultipleCardsChosen(player1, List.of(firstChoice.getId()));
-        Card secondChoice = gd.interaction.activeInteraction(PendingInteraction.DraftTwiceSpellbookChoice.class)
+        Card secondChoice = gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class)
                 .cards().stream().filter(card -> !card.getName().equals(firstChoice.getName()))
                 .findFirst().orElseThrow();
         harness.handleMultipleCardsChosen(player1, List.of(secondChoice.getId()));
-        List<Card> hand = gd.playerHands.get(player1.getId());
-        int battlefieldIndex = hand.indexOf(firstChoice);
-        harness.handleCardChosen(player1, battlefieldIndex);
+        harness.handleMultipleCardsChosen(player1, List.of(firstChoice.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(secondChoice);
         assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains(secondChoice.getName()));
         assertThat(gd.gameLog).anyMatch(line -> line.plainText().contains(firstChoice.getName()));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals(
+                "A card in " + player1.getUsername() + "'s hand is chosen."));
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().startsWith(player1.getUsername() + " chooses "));
     }
 }

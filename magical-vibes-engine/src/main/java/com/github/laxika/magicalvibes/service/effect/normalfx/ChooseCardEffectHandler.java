@@ -180,7 +180,16 @@ public class ChooseCardEffectHandler implements NormalEffectHandlerBean {
             logHiddenChoice(gameData, choose, chosen, chooserId);
             return;
         }
+        // A card an earlier step put into a hand ("one of the conjured cards", "one of those drafted cards") is as hidden
+        // as the hand it is in (CR 400.2): its choice names no card.
+        List<LocatedCard> inHand = chosen.stream().filter(card -> card.zone() == Zone.HAND).toList();
+        if (!inHand.isEmpty()) {
+            logHiddenChoice(gameData, choose, inHand, chooserId);
+        }
         for (LocatedCard card : chosen) {
+            if (card.zone() == Zone.HAND) {
+                continue;
+            }
             if (chooserId == null) {
                 gameLogService.append(gameData, gameData.isExiledFaceDown(card.card().getId())
                         ? GameLog.text("A face-down card in exile is chosen at random.")

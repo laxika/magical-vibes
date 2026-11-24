@@ -4,7 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfTriggeringCreatureToHandEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordsToTriggeringCardEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -24,6 +29,9 @@ public class AceFlockbringer extends Card {
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardNotPredicate(new CardKeywordPredicate(Keyword.FLYING))))),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
-                new ConjureDuplicateOfTriggeringCreatureToHandEffect());
+                SequenceEffect.of(
+                        ConjureCardsEffect.duplicateOf(Subjects.triggeringSpell(), ConjureDestination.intoHand()),
+                        PerpetuallyGrantKeywordsToTriggeringCardEffect.toCards(
+                                Subjects.cardsThisWay(StepKind.CONJURE), Keyword.FLYING)));
     }
 }

@@ -3,7 +3,11 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
-import com.github.laxika.magicalvibes.model.effect.DraftTwiceFromSpellbookEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -23,6 +27,9 @@ public class RelicsOfTheRubblebelt extends Card {
             new DraftFromSpellbookEffect.SpellbookCard("DIS", "166"));
 
     public RelicsOfTheRubblebelt() {
-        addSpellEffect(new DraftTwiceFromSpellbookEffect(SPELLBOOK));
+        addSpellEffect(new DraftCardFromSpellbookEffect(SPELLBOOK).times(2));
+        addSpellEffect(ChooseCardEffect.oneOf(Subjects.cardsThisWay(StepKind.CONJURE),
+                "one of those cards to put onto the battlefield tapped"));
+        addSpellEffect(new PutCardsOntoBattlefieldEffect(Subjects.cardsThisWay(StepKind.CHOOSE)).enteringTapped());
     }
 }

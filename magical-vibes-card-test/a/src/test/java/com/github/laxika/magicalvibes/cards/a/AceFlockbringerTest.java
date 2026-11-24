@@ -10,9 +10,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AceFlockbringerTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Conjures one duplicate that perpetually flies, for the first creature spell without flying each turn")
     void conjuresOneFlyingDuplicateOfTheFirstNonFlyingCreatureSpellEachTurn() {
         addCreatureReady(player1, new AceFlockbringer());
         harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
@@ -32,10 +35,11 @@ class AceFlockbringerTest extends BaseCardTest {
         List<Card> hand = gd.playerHands.get(player1.getId());
         assertThat(hand).hasSize(1);
         assertThat(hand.getFirst().getName()).isEqualTo("Grizzly Bears");
-        assertThat(hand.getFirst().hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(perpetuallyFlies(hand.getFirst())).isTrue();
     }
 
     @Test
+    @DisplayName("A creature spell with flying doesn't trigger it")
     void doesNotTriggerForACreatureSpellWithFlying() {
         addCreatureReady(player1, new AceFlockbringer());
         harness.setHand(player1, List.of(new AirElemental()));
@@ -53,6 +57,7 @@ class AceFlockbringerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A countered creature spell is still duplicated as it last existed")
     void stillConjuresTheDuplicateWhenTheCreatureSpellIsCountered() {
         addCreatureReady(player1, new AceFlockbringer());
         GrizzlyBears bears = new GrizzlyBears();
@@ -68,11 +73,12 @@ class AceFlockbringerTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerHands.get(player1.getId())).singleElement().satisfies(card -> {
             assertThat(card.getName()).isEqualTo("Grizzly Bears");
-            assertThat(card.hasKeyword(Keyword.FLYING)).isTrue();
+            assertThat(perpetuallyFlies(card)).isTrue();
         });
     }
 
     @Test
+    @DisplayName("Casting a creature with flying doesn't use up the once-each-turn trigger")
     void castingAFlyingCreatureDoesNotUseTheOncePerTurnTrigger() {
         addCreatureReady(player1, new AceFlockbringer());
         harness.setHand(player1, List.of(new AirElemental(), new GrizzlyBears()));
@@ -85,11 +91,12 @@ class AceFlockbringerTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).singleElement().satisfies(card -> {
             assertThat(card.getName()).isEqualTo("Grizzly Bears");
-            assertThat(card.hasKeyword(Keyword.FLYING)).isTrue();
+            assertThat(perpetuallyFlies(card)).isTrue();
         });
     }
 
     @Test
+    @DisplayName("An opponent's creature spell doesn't trigger it")
     void anOpponentsCreatureSpellDoesNotTriggerAce() {
         addCreatureReady(player1, new AceFlockbringer());
         harness.setHand(player1, List.of());
@@ -106,6 +113,7 @@ class AceFlockbringerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The cast duplicate has flying and the original doesn't")
     void conjuredDuplicateRetainsFlyingWhenCastButTheOriginalDoesNotGainIt() {
         addCreatureReady(player1, new AceFlockbringer());
         harness.setHand(player1, List.of(new GrizzlyBears()));
@@ -121,6 +129,7 @@ class AceFlockbringerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Triggers again on a later turn")
     void canTriggerAgainOnALaterTurn() {
         addCreatureReady(player1, new AceFlockbringer());
         harness.setHand(player1, List.of(new GrizzlyBears()));
@@ -138,11 +147,12 @@ class AceFlockbringerTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).singleElement().satisfies(card -> {
             assertThat(card.getName()).isEqualTo("Grizzly Bears");
-            assertThat(card.hasKeyword(Keyword.FLYING)).isTrue();
+            assertThat(perpetuallyFlies(card)).isTrue();
         });
     }
 
     @Test
+    @DisplayName("Each Ace conjures its own duplicate")
     void eachAceConjuresItsOwnDuplicate() {
         addCreatureReady(player1, new AceFlockbringer());
         addCreatureReady(player1, new AceFlockbringer());
@@ -153,11 +163,12 @@ class AceFlockbringerTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2).allSatisfy(card -> {
             assertThat(card.getName()).isEqualTo("Grizzly Bears");
-            assertThat(card.hasKeyword(Keyword.FLYING)).isTrue();
+            assertThat(perpetuallyFlies(card)).isTrue();
         });
     }
 
     @Test
+    @DisplayName("Conjuring the duplicate triggers conjure abilities")
     void conjuringTheFlyingDuplicateTriggersConjureAbilities() {
         addCreatureReady(player1, new AceFlockbringer());
         Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
@@ -169,5 +180,21 @@ class AceFlockbringerTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The log names the duplicated creature spell, which is public")
+    void logNamesTheDuplicatedSpell() {
+        addCreatureReady(player1, new AceFlockbringer());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        castGrizzlyBears();
+
+        assertThat(gameLogContains("conjures a duplicate of Grizzly Bears into their hand")).isTrue();
+    }
+
+    private boolean perpetuallyFlies(Card card) {
+        return gd.perpetualCardKeywords.getOrDefault(card.getId(), Set.of()).contains(Keyword.FLYING);
     }
 }
