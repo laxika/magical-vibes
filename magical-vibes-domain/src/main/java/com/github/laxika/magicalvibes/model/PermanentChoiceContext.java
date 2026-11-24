@@ -403,25 +403,24 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** The chosen creature is destroyed, or exiled instead when {@code exile} is true (Doomfall). */
     record DestroyChosenCreature(UUID choosingPlayerId, String sourceCardName, boolean exile,
-                                 boolean cannotBeRegenerated, UUID sourcePermanentId, Card sourceCard,
-                                 boolean shuffleIntoOwnersLibrary)
+                                 boolean cannotBeRegenerated, UUID sourcePermanentId, Card sourceCard)
             implements PermanentChoiceContext {
         public DestroyChosenCreature(UUID choosingPlayerId, String sourceCardName) {
-            this(choosingPlayerId, sourceCardName, false, false, null, null, false);
+            this(choosingPlayerId, sourceCardName, false, false, null, null);
         }
 
         public DestroyChosenCreature(UUID choosingPlayerId, String sourceCardName, boolean exile) {
-            this(choosingPlayerId, sourceCardName, exile, false, null, null, false);
+            this(choosingPlayerId, sourceCardName, exile, false, null, null);
         }
 
         public DestroyChosenCreature(UUID choosingPlayerId, String sourceCardName, boolean exile,
                                      boolean cannotBeRegenerated) {
-            this(choosingPlayerId, sourceCardName, exile, cannotBeRegenerated, null, null, false);
+            this(choosingPlayerId, sourceCardName, exile, cannotBeRegenerated, null, null);
         }
 
         public DestroyChosenCreature(UUID choosingPlayerId, String sourceCardName, boolean exile,
                                      UUID sourcePermanentId, Card sourceCard) {
-            this(choosingPlayerId, sourceCardName, exile, false, sourcePermanentId, sourceCard, false);
+            this(choosingPlayerId, sourceCardName, exile, false, sourcePermanentId, sourceCard);
         }
 
     }

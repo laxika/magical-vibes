@@ -406,7 +406,7 @@ public class PermanentChoiceHandlerService {
                 || context instanceof PermanentChoiceContext.LandCasualty casualty
                         && !casualty.controllerId().equals(permanentId)
                 || context instanceof PermanentChoiceContext.DestroyChosenCreature destroy
-                        && !destroy.exile() && !destroy.shuffleIntoOwnersLibrary()
+                        && !destroy.exile()
                 || context instanceof PermanentChoiceContext.EachOpponentChoosesGreatestPowerCreatureToDestroy
                 || context instanceof PermanentChoiceContext.EachPlayerChoosesCreatureToDestroy
                 || context instanceof PermanentChoiceContext.TargetPlayerSacrificesCreatureThenDrawsPower

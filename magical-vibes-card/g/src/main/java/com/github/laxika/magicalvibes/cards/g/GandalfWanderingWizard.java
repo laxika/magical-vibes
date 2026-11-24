@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPermanentIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleSelfIntoOwnerLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,7 +19,7 @@ public class GandalfWanderingWizard extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{6}",
-                List.of(new ShuffleSelfIntoOwnerLibraryEffect(
+                List.of(ShuffleTargetPermanentIntoLibraryEffect.sourceThen(
                         new DrawCardEffect(3), ThenEffectRecipient.TARGET_OWNER)),
                 "{6}: Gandalf's owner shuffles him into their library and draws three cards."
         ));

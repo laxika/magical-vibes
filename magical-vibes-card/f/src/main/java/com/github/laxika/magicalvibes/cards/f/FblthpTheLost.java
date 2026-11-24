@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.EnteredFromZone;
+import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPermanentIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleSelfIntoOwnerLibraryEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,6 +21,6 @@ public class FblthpTheLost extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(),
                 new ConditionalEffect(
                 new EnteredFromZone(Zone.LIBRARY, true), new DrawCardEffect()));
-        addTrigger(Triggers.becomesTargetOfSpell(), new ShuffleSelfIntoOwnerLibraryEffect());
+        addTrigger(Triggers.becomesTargetOfSpell(), ShuffleTargetPermanentIntoLibraryEffect.of(Subjects.source()));
     }
 }

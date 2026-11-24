@@ -19,7 +19,10 @@ import java.util.Objects;
  * grants) or {@code thisWay(StepKind.CHOOSE)} ("that player sacrifices one of them of their choice" after a
  * {@link ChoosePermanentsEffect}, sacrificed by {@code controllerOf(thisWay(CHOOSE))}: Incriminate, Barrin's Spite;
  * "that player sacrifices all permanents in the pile of their choice" after a {@link SeparateIntoPilesEffect}, every
- * chosen permanent the sacrificer controls, as one event: Liliana of the Veil).
+ * chosen permanent the sacrificer controls, as one event: Liliana of the Veil) or {@link Subjects#allTargets()} ("for each
+ * player, choose target permanent that player controls. Those players sacrifice those permanents", sacrificed by
+ * {@code controllerOf(allTargets())}: each still legal target its controller sacrifices, all as one event; Vaevictis
+ * Asmadi, the Dire).
  *
  * <p>"Sacrifice it. If you do, ..." is this effect followed by a {@code ConditionalEffect} of
  * {@code HappenedThisWay.sacrificed()} (in a {@link SequenceEffect} where the steps must stay one effect); "when you
@@ -50,16 +53,18 @@ public record SacrificeSelfEffect(PermanentSubject subject,
         Objects.requireNonNull(sacrificer, "sacrificer");
         if (!(subject instanceof PermanentSubject.Source || subject instanceof PermanentSubject.Triggering
                 || subject instanceof PermanentSubject.Attached || subject instanceof PermanentSubject.AttachedAtTrigger
-                || subject instanceof PermanentSubject.Target || subject instanceof PermanentSubject.TriggeringOrSource
+                || subject instanceof PermanentSubject.Target || subject instanceof PermanentSubject.AllTargets
+                || subject instanceof PermanentSubject.TriggeringOrSource
                 || subject instanceof PermanentSubject.Granter
                 || subject instanceof PermanentSubject.ThisWay thisWay && thisWay.kind() == StepKind.CHOOSE)) {
             throw new IllegalArgumentException("Sacrifices the source, the triggering (or else the source), the "
                     + "attached (now or at trigger), the granting, the chosen or the target permanent: " + subject);
         }
-        if (targetFilter != null && !(subject instanceof PermanentSubject.Target)) {
+        if (targetFilter != null && !subject.declaresTarget()) {
             throw new IllegalArgumentException("A target filter needs a target subject: " + subject);
         }
-        if (tokenForSacrificingPlayer != null && subject instanceof PermanentSubject.ThisWay) {
+        if (tokenForSacrificingPlayer != null
+                && (subject instanceof PermanentSubject.ThisWay || subject instanceof PermanentSubject.AllTargets)) {
             throw new IllegalArgumentException("A token rider follows one named permanent: " + subject);
         }
     }

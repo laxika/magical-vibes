@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleSelfIntoOwnerLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPermanentIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -37,8 +36,7 @@ public class FloodpitsDrowner extends Card {
                 true,
                 "{1}{U}",
                 List.of(
-                        new ShuffleTargetPermanentIntoLibraryEffect(creatureWithStunCounter),
-                        new ShuffleSelfIntoOwnerLibraryEffect()
+                        ShuffleTargetPermanentIntoLibraryEffect.sourceAndTarget(creatureWithStunCounter)
                 ),
                 "{1}{U}, {T}: Shuffle this creature and target creature with a stun counter on it into their owners' libraries.",
                 new PermanentPredicateTargetFilter(

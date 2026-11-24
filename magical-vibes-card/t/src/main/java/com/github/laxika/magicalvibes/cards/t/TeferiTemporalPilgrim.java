@@ -12,7 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPlayerPermanentsIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPermanentIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -50,8 +51,8 @@ public class TeferiTemporalPilgrim extends Card {
                 -12,
                 List.of(
                         new ReturnPermanentControlledByPlayerToHandEffect(new PermanentTruePredicate(), "permanent"),
-                        new ShuffleTargetPlayerPermanentsIntoLibraryEffect(
-                                new PermanentNotPredicate(new PermanentIsLandPredicate()))
+                        ShuffleTargetPermanentIntoLibraryEffect.of(Subjects.controlledBy(Subjects.targetPlayer(),
+                                new PermanentNotPredicate(new PermanentIsLandPredicate())))
                 ),
                 "\u221212: Target opponent chooses a permanent they control and returns it to its owner's hand. "
                         + "Then they shuffle each nonland permanent they control into its owner's library.",

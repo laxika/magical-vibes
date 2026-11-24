@@ -50,7 +50,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCreatureThenOwnerFacesVillainousChoiceEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
@@ -438,7 +437,7 @@ class LichsDuelMasteryPunisherTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        harness.handleListChoice(player2, ShuffleTargetCreatureThenOwnerFacesVillainousChoiceEffect.LOSE_LIFE_OPTION);
+        harness.handleListChoice(player2, ThisIsHowItEnds.LOSE_LIFE_OPTION);
 
         assertMasteryAskedLibraryOrExile();
         harness.assertLife(player2, 20);

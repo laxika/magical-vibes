@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCreatureThenOwnerFacesVillainousChoiceEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ThisIsHowItEndsTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Shuffles the target, then its owner may choose to lose 5 life")
     void shufflesTargetThenOwnerCanChooseLifeLoss() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setLibrary(player2, List.of(new Forest()));
@@ -27,17 +28,18 @@ class ThisIsHowItEndsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
-                .containsExactly(ShuffleTargetCreatureThenOwnerFacesVillainousChoiceEffect.LOSE_LIFE_OPTION,
-                        ShuffleTargetCreatureThenOwnerFacesVillainousChoiceEffect.SHUFFLE_CREATURE_OPTION);
+                .containsExactly(ThisIsHowItEnds.LOSE_LIFE_OPTION,
+                        ThisIsHowItEnds.SHUFFLE_CREATURE_OPTION);
 
         harness.handleListChoice(player2,
-                ShuffleTargetCreatureThenOwnerFacesVillainousChoiceEffect.LOSE_LIFE_OPTION);
+                ThisIsHowItEnds.LOSE_LIFE_OPTION);
 
         harness.assertLife(player2, 15);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
     }
 
     @Test
+    @DisplayName("The owner may choose another creature they own to shuffle in")
     void ownerCanShuffleAnotherOwnedCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent firstOther = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -46,7 +48,7 @@ class ThisIsHowItEndsTest extends BaseCardTest {
         castAt(target);
 
         harness.handleListChoice(player2,
-                ShuffleTargetCreatureThenOwnerFacesVillainousChoiceEffect.SHUFFLE_CREATURE_OPTION);
+                ThisIsHowItEnds.SHUFFLE_CREATURE_OPTION);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactlyInAnyOrder(firstOther.getId(), secondOther.getId());
@@ -64,13 +66,14 @@ class ThisIsHowItEndsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The shuffle option may be chosen with no other creature owned")
     void canChooseToShuffleWhenNoOtherCreatureIsOwned() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setLibrary(player2, List.of(new Forest()));
         castAt(target);
 
         harness.handleListChoice(player2,
-                ShuffleTargetCreatureThenOwnerFacesVillainousChoiceEffect.SHUFFLE_CREATURE_OPTION);
+                ThisIsHowItEnds.SHUFFLE_CREATURE_OPTION);
 
         harness.assertLife(player2, 20);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
@@ -78,6 +81,7 @@ class ThisIsHowItEndsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The only other owned creature is shuffled in without a prompt")
     void automaticallyShufflesTheOnlyOtherOwnedCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -85,7 +89,7 @@ class ThisIsHowItEndsTest extends BaseCardTest {
         castAt(target);
 
         harness.handleListChoice(player2,
-                ShuffleTargetCreatureThenOwnerFacesVillainousChoiceEffect.SHUFFLE_CREATURE_OPTION);
+                ThisIsHowItEnds.SHUFFLE_CREATURE_OPTION);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
@@ -94,6 +98,7 @@ class ThisIsHowItEndsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The target's owner, not its controller, faces the choice")
     void ownerRatherThanControllerFacesTheChoice() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         gd.stolenCreatures.put(target.getId(), player2.getId());
@@ -101,7 +106,7 @@ class ThisIsHowItEndsTest extends BaseCardTest {
         castAt(target);
 
         harness.handleListChoice(player2,
-                ShuffleTargetCreatureThenOwnerFacesVillainousChoiceEffect.LOSE_LIFE_OPTION);
+                ThisIsHowItEnds.LOSE_LIFE_OPTION);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
@@ -110,6 +115,7 @@ class ThisIsHowItEndsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A creature the owner owns but another player controls can be shuffled in")
     void canShuffleAnOwnedCreatureControlledByOpponent() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent borrowed = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -119,7 +125,7 @@ class ThisIsHowItEndsTest extends BaseCardTest {
         castAt(target);
 
         harness.handleListChoice(player2,
-                ShuffleTargetCreatureThenOwnerFacesVillainousChoiceEffect.SHUFFLE_CREATURE_OPTION);
+                ThisIsHowItEnds.SHUFFLE_CREATURE_OPTION);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(unrelated);
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
@@ -128,6 +134,7 @@ class ThisIsHowItEndsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Valeyard repeats the choice after a creature was chosen")
     void valeyardRepeatsChoiceAfterChoosingAmongMultipleCreatures() {
         harness.addToBattlefield(player1, new TheValeyard());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -137,12 +144,12 @@ class ThisIsHowItEndsTest extends BaseCardTest {
         castAt(target);
 
         harness.handleListChoice(player2,
-                ShuffleTargetCreatureThenOwnerFacesVillainousChoiceEffect.SHUFFLE_CREATURE_OPTION);
+                ThisIsHowItEnds.SHUFFLE_CREATURE_OPTION);
         harness.handlePermanentChosen(player2, firstOther.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
         harness.handleListChoice(player2,
-                ShuffleTargetCreatureThenOwnerFacesVillainousChoiceEffect.LOSE_LIFE_OPTION);
+                ThisIsHowItEnds.LOSE_LIFE_OPTION);
 
         harness.assertLife(player2, 15);
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(secondOther);
@@ -150,6 +157,7 @@ class ThisIsHowItEndsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.setHand(player1, List.of(new ThisIsHowItEnds()));

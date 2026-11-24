@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPermanentIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleReferencedPermanentIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -25,6 +25,6 @@ public class DragonsoulProdigy extends Card {
                 ConjureDuplicateOntoBattlefieldEffect.of(Subjects.triggeringSpell()),
                 new GrantKeywordEffect(Keyword.HASTE, Subjects.createdThisResolution(), Duration.PERMANENT),
                 RegisterDelayedStepTriggerEffect.aboutCreated(Triggers.endStep(ActivePlayer.ANY),
-                        new ShuffleReferencedPermanentIntoLibraryEffect(Subjects.createdThisResolution())));
+                        ShuffleTargetPermanentIntoLibraryEffect.of(Subjects.createdThisResolution())));
     }
 }

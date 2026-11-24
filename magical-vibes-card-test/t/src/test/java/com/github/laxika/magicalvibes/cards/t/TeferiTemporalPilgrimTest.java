@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.a.ArgothianSprite;
 import com.github.laxika.magicalvibes.cards.a.Audacity;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.i.ImperialCosmographer;
 import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.cards.s.ScrapworkMutt;
 import com.github.laxika.magicalvibes.model.Card;
@@ -22,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TeferiTemporalPilgrim.class, ArgothianSprite.class, ScrapworkMutt.class,
-        Forest.class, Audacity.class, PsychogenicProbe.class})
+        Forest.class, Audacity.class, PsychogenicProbe.class, ImperialCosmographer.class})
 class TeferiTemporalPilgrimTest extends BaseCardTest {
 
     @Test
@@ -269,6 +270,24 @@ class TeferiTemporalPilgrimTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
         harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("The ultimate shuffles the nonland permanents away as one event, so each sees the other leave")
+    void ultimateShufflesTheNonlandsAwayAsOneEvent() {
+        addReadyTeferi(player1, 12);
+        Permanent chosen = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new ImperialCosmographer());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new ImperialCosmographer());
+
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, chosen.getId());
+
+        assertThat(gd.playerDecks.get(player2.getId())).contains(first.getCard(), second.getCard());
+        assertThat(gd.stack)
+                .filteredOn(entry -> entry.getCard().getName().equals("Imperial Cosmographer"))
+                .hasSize(2);
     }
 
     private Permanent addReadyTeferi(Player player, int loyalty) {

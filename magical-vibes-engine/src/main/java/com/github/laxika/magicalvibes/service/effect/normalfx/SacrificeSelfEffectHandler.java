@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,7 +36,8 @@ import java.util.UUID;
  * ({@link DepartureService#departAsStep}). The form with a token for the sacrificing player creates it for the
  * player who controlled the permanent as it was sacrificed, once it has left. A {@code thisWay(CHOOSE)} subject names
  * every permanent chosen ("that player sacrifices all permanents in the pile of their choice"): those of them the
- * sacrificer controls leave as one event (CR 101.4).
+ * sacrificer controls leave as one event (CR 101.4); an {@code allTargets()} subject names every still legal target,
+ * each sacrificed by its controller when that player is one of the sacrificers, as one event.
  */
 @Component
 @RequiredArgsConstructor
@@ -65,6 +67,10 @@ public class SacrificeSelfEffectHandler implements NormalEffectHandlerBean, Asks
         }
         if (sacrifice.subject() instanceof PermanentSubject.ThisWay) {
             sacrificeAllChosen(gameData, entry, sacrifice);
+            return;
+        }
+        if (sacrifice.subject() instanceof PermanentSubject.AllTargets) {
+            sacrificeAllTargets(gameData, entry, sacrifice);
             return;
         }
         Permanent sacrificed = subjectResolutionService.permanent(gameData, entry, effect, sacrifice.subject());
@@ -103,6 +109,31 @@ public class SacrificeSelfEffectHandler implements NormalEffectHandlerBean, Asks
                         .filter(permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent))
                         .map(permanent -> DepartureIntent.sacrifice(permanent.getId()))
                         .toList();
+        if (intents.isEmpty()) {
+            entry.recordDepartures(List.of());
+            return;
+        }
+        departureService.departAsStep(gameData, entry, sacrifice, DepartureBatch.of(intents));
+    }
+
+    /**
+     * Every still legal target whose controller is one of the sacrificers, sacrificed by that controller, as one batch
+     * ("those players sacrifice those permanents").
+     */
+    private void sacrificeAllTargets(GameData gameData, StackEntry entry, SacrificeSelfEffect sacrifice) {
+        List<UUID> sacrificers = subjectResolutionService.players(gameData, entry, sacrifice, sacrifice.sacrificer());
+        List<DepartureIntent> intents = new ArrayList<>();
+        for (Permanent target : subjectResolutionService.permanents(gameData, entry, sacrifice, sacrifice.subject())) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+            if (controllerId == null || !sacrificers.contains(controllerId)
+                    || !isStillLegalTarget(gameData, entry, sacrifice, target)
+                    || gameQueryService.cantBeSacrificed(gameData, target)
+                    || !gameQueryService.canEffectCauseSacrifice(gameData, controllerId, entry.getControllerId())) {
+                continue;
+            }
+            rememberTarget(gameData, entry, target, controllerId);
+            intents.add(DepartureIntent.sacrifice(target.getId()));
+        }
         if (intents.isEmpty()) {
             entry.recordDepartures(List.of());
             return;

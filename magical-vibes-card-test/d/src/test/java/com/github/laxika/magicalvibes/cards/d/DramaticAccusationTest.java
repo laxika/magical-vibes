@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.ForumFamiliar;
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.cards.u.UnauthorizedExit;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DramaticAccusation.class, ForumFamiliar.class, UnauthorizedExit.class})
+@CardUsed({DramaticAccusation.class, ForumFamiliar.class, UnauthorizedExit.class, PsychogenicProbe.class})
 class DramaticAccusationTest extends BaseCardTest {
 
     @Test
@@ -93,6 +94,30 @@ class DramaticAccusationTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Forum Familiar");
         assertThat(gd.playerDecks.get(player2.getId())).contains(creature.getCard());
+    }
+
+    @Test
+    @DisplayName("The owner's library is still shuffled when the enchanted creature left before the ability resolves")
+    void ownersLibraryIsShuffledWhenTheCreatureLeft() {
+        harness.addToBattlefield(player1, new PsychogenicProbe());
+        Permanent creature = addCreatureReady(player2, new ForumFamiliar());
+        Permanent aura = new Permanent(new DramaticAccusation());
+        aura.setAttachedTo(creature.getId());
+        gd.playerBattlefields.get(player1.getId()).add(aura);
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player2, List.of(new UnauthorizedExit()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.assertInHand(player2, "Forum Familiar");
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertInHand(player2, "Forum Familiar");
+        harness.assertLife(player2, 18);
     }
 
     @Test

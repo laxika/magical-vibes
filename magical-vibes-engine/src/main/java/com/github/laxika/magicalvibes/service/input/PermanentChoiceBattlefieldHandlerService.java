@@ -164,7 +164,6 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final InputCompletionService inputCompletionService;
 
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.VillainousChoiceSupport villainousChoiceSupport;
 
     private final ExquisiteArchangelLossReplacer exquisiteArchangelLossReplacer;
 
@@ -796,27 +795,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Target creature no longer exists");
         }
 
-        if (context.shuffleIntoOwnersLibrary()) {
-            String name = target.getCard().getName();
-            if (permanentRemovalService.removePermanentToLibraryShuffled(gameData, target)) {
-                gameLogService.append(gameData, GameLog.text(name + " is shuffled into its owner's library."));
-                log.info("Game {} - {} shuffles {} into its owner's library", gameData.id,
-                        context.sourceCardName(), name);
-            }
-            permanentRemovalService.removeOrphanedAuras(gameData);
-            // The Valeyard: the villainous choice is faced an additional time, so reopen it instead of
-            // ending the sequence.
-            if (villainousChoiceSupport.repeatIfNeeded(gameData)) {
-                // The effect was parked past itself when this creature choice opened; step back so the
-                // reopened choice's answer resumes the same effect.
-                if (gameData.pendingEffectResolutionEntry != null && gameData.pendingEffectResolutionIndex > 0) {
-                    gameData.pendingEffectResolutionIndex--;
-                }
-            } else {
-                gameData.villainousChoice.reset();
-                gameData.rerunCurrentEffectAfterInteraction = false;
-            }
-        } else if (context.exile()) {
+        if (context.exile()) {
             Card exiledCard = target.getCard();
             if (context.sourcePermanentId() != null && context.sourceCard() != null) {
                 exileSupport.exilePermanentAndTrackWithSource(

@@ -14,8 +14,10 @@ import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.library.ZoneToLibraryService;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,6 +63,10 @@ public class EachPlayerShufflesZonesIntoLibraryEffectHandler implements NormalEf
                 }
             }
         }
+        // A library an earlier effect left unshuffled for this one is shuffled here, once (Elixir of Immortality).
+        Set<UUID> deferred = new LinkedHashSet<>(entry.getDeferredLibraryShuffleOwnerIds());
+        entry.getDeferredLibraryShuffleOwnerIds().clear();
+        deferred.removeAll(players);
         for (UUID playerId : players) {
             List<String> zoneTexts = new ArrayList<>();
             if (shuffle.zones().contains(Zone.HAND)) {
@@ -79,6 +85,9 @@ public class EachPlayerShufflesZonesIntoLibraryEffectHandler implements NormalEf
                     ? playerName + "'s library is shuffled."
                     : playerName + " shuffles their " + String.join(" and ", zoneTexts)
                             + " into their library (" + cardName + ")."));
+        }
+        for (UUID ownerId : deferred) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
         }
         entry.recordStep(StepKind.SHUFFLE_INTO_LIBRARY, StepOutcome.ofAmounts(shuffledAway));
     }

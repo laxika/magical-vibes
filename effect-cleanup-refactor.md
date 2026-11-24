@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c (each in Findings; the fold queue marks its rows). Fold runs 21b, 19d and 22b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                      |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b (each in Findings; the fold queue marks its rows). Fold runs 19d, 22b and 21c are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                       |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,595 / 2,868 (after fold run 18c) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,588 / 2,861 (after fold run 21b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,702 rows over 4,440 classes (after fold run 18c). Latest verdict per class: `step-9` 740, unique 1,172, absorbed 792, split 626, blocked-other 503, survivor 309, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 740 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,713 rows over 4,440 classes (after fold run 21b). Latest verdict per class: `step-9` 731, unique 1,173, absorbed 795, split 630, blocked-other 503, survivor 310, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 731 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -765,6 +765,10 @@ Delayed and global triggers:
 - `BecomeCopyOfSubjectEffect.lasting(WHILE_ATTACHED)`: the "as this Equipment becomes attached" copy kept while attached (Dinosaur Headdress; fold run 17d).
 
 - `LookAtTopCardsAndMayCastEffect.lookAt(n | DynamicAmount)` / `.reveal(DynamicAmount)` + `.matching(filter)`, `.withSpellManaValueAtMost(bound)` ("less than X" = `Sum(X, Fixed(-1))`), `.leavingTheRest()`: "look at / reveal the top N, you may cast a spell from among them without paying its mana cost". The cards wait in the library and the spell is cast from it; a split card is judged by its half (CR 709.3a); choosing to cast takes a do-only-once action (CR 603.2h) (fold run 18c).
+
+- `ShuffleTargetPermanentIntoLibraryEffect.of(subject)` / `.sourceAndTarget(f)` / `.sourceThen(effect, recipient)`: "shuffle [this / enchanted creature / each nonland permanent target player controls / the chosen creature] into its owner's library". One leave event, each library shuffled once (deferred to a following shuffle), CR 701.24c for a departed specific object. Records SHUFFLE_INTO_LIBRARY per owner for `playersThisWay` / `HappenedThisWay` (fold run 21b).
+- `RevealTopCardPermanentToBattlefieldEffect(PlayerSubject)`: "each player who [did X] reveals the top card … puts it onto the battlefield if it's a permanent card", one entry batch (fold run 21b).
+- `SacrificeSelfEffect(allTargets(), controllerOf(allTargets()), filter)`: "those players sacrifice those permanents", one event (fold run 21b).
 
 ### Blocked causes still open
 
@@ -2813,6 +2817,38 @@ Batch `look-cast`. Ratchet 3,623 / 2,886 → 3,618 / 2,881. Ledger 6 rows (survi
 - A refused cast (Teferi, Rule of Law) logs "has no legal targets". Low.
 
 **For the next run.** `LookAtTopCardsMayCastExiledNonlandCardEffect` (Duelist's Flame, Keldon Flamesage, The Key to the Vault) could join the survivor with an exile-first option. The cost-increase gap above needs a defect run over the two free-cast flows.
+
+### Step 9, fold run 21b (2026-11-24, parallel worktree)
+
+Only the `perm-shuffle` batch. Ratchet 3,623 / 2,886 → 3,616 / 2,879. Ledger: 11 rows (absorbed 3, split 4, survivor 3, unique 1). 16 card files rewritten, Oracle text checked for all. Rulings read for Vaevictis, Mirror-Mad, Elixir, This Is How It Ends and Teferi TP. CR 111.7, 400.7, 603.10a, 608.2b, 608.2c, 608.2h, 701.24a–e checked.
+
+**The shape.** `ShuffleTargetPermanentIntoLibraryEffect(subject, predicate, thenEffect, recipient)`:
+- Subjects: `target()` by default; `.of(subject)` for `source()`, `attached()`, `thisWay(CHOOSE)`, `createdThisResolution()` and `controlledBy(targetPlayer(), f)` (declares the player target); `.sourceAndTarget(f)`; `.sourceThen(...)`.
+- The permanents leave as one batch and each library is shuffled once.
+- A specific non-target object that left still has its owner's library shuffled (CR 701.24c). For an Aura that left with its host, the host is the target captured at activation.
+- It records SHUFFLE_INTO_LIBRARY per owner. Tokens and exile replacements count, as the StepKind doc says.
+- When the next effect is the same record or `EachPlayerShufflesZonesIntoLibraryEffect`, the libraries go into `deferredLibraryShuffleOwnerIds` and that effect shuffles them.
+- The then-effect stays for riders that take no player subject: Zoyowa's Discover, Audacious Swap's cast, Blink, Chaos Warp, Oblation, Gandalf.
+
+| Batch | Result |
+|---|---|
+| perm-shuffle | 3 absorbed: shuffle-self (7 cards), referenced (4 cards), Teferi TP's set record. 4 split: Elixir, Mirror-Mad, This Is How It Ends, Vaevictis. `RevealTopCardPermanentToBattlefieldEffect` gains a `PlayerSubject`. `SacrificeSelfEffect` takes `allTargets()` with several sacrificers. Audacious Swap's rider is `unique`. |
+| multi-zone, outside-game (Research), card-shuffle (Serene) | not reached |
+
+**Behaviour changes.**
+- Teferi's −12 is one leave event (Cosmographer test).
+- Dramatic Accusation, Watery Grasp and Stay Hidden shuffle the owner's library when the enchanted creature left (CR 701.24c; Probe test).
+- Mirror-Mad's found card and Vaevictis's revealed cards enter through the entry batch.
+- Vaevictis's sacrifices are one event.
+- Shuffle log lines use `publicName`. The survivors' log lines win.
+
+**Also gone:** `DestroyChosenCreature.shuffleIntoOwnersLibrary` and its branch; This Is How It Ends's `VillainousChoiceState` rerun.
+
+**Seen, not changed.**
+- `SubjectResolutionService.attachedId` loses the host of an Aura that left with it when the entry has no source snapshot; the survivor reads the captured target instead. Sure of the code.
+- Elixir's 2011 ruling ("shuffle just your graveyard") predates CR 701.24c; the current rule was followed.
+
+**For the next run.** `multi-zone` with Research: a zone set (hand, library, graveyard, outside the game, face-up exile) on the to-hand / to-battlefield multi-zone search. `SearchLibraryAndOrGraveyardChoice` already carries the outside-the-game and hand id sets, but `SearchHandAndOrLibraryChoice` and `SearchOutsideGameOrExileCardChoice` are separate interactions to merge. Research needs an outside-the-game card subject. Serene Remembrance needs a `targetCards` subject.
 
 ## Prompt
 
