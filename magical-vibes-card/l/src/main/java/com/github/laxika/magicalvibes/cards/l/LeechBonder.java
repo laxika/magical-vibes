@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.MoveCounterFromTargetCreatureToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -23,7 +24,7 @@ public class LeechBonder extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,  // {Q} untaps rather than taps
                 "{U}",
-                List.of(new MoveCounterFromTargetCreatureToTargetCreatureEffect()),
+                List.of(MoveCounterFromSourceToTargetCreatureEffect.move(CounterType.ANY, Subjects.target(0), Subjects.target(1))),
                 "{U}, {Q}: Move a counter from target creature onto a second target creature.",
                 List.of(
                         new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "First target must be a creature"),

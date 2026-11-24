@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
@@ -531,6 +532,130 @@ public class PermanentCounterSupport {
             fireCounterPutOnControlledCreatureTriggers(gameData, target, count, counterPlacingPlayerId);
         }
         return count;
+    }
+
+    /**
+     * Whether a counter of {@code counterType} could be put on {@code permanent}: the second half of a move, checked
+     * before the first half removes anything (CR 122.5).
+     */
+    public boolean canReceiveCounter(GameData gameData, Permanent permanent, CounterType counterType) {
+        if (gameQueryService.cantHaveCounters(gameData, permanent)) {
+            return false;
+        }
+        return switch (counterType) {
+            case PLUS_ONE_PLUS_ONE -> !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent);
+            case MINUS_ONE_MINUS_ONE -> !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent);
+            default -> true;
+        };
+    }
+
+    /**
+     * Moves up to {@code amount} counters of {@code counterType} from {@code from} onto {@code to}, put by the
+     * entry's controller (CR 122.5): nothing when both are one permanent, {@code from} has none, or {@code to} can't
+     * have it. Returns how many were removed from {@code from}.
+     */
+    public int moveCounters(GameData gameData, StackEntry entry, Permanent from, Permanent to,
+                            CounterType counterType, int amount) {
+        int moved = removeCountersForMove(gameData, from, to, counterType, amount);
+        if (moved > 0) {
+            placeCounterOnPermanent(gameData, entry, to, counterType, moved);
+        }
+        return moved;
+    }
+
+    /**
+     * The removal half of a move: up to {@code amount} counters of {@code counterType} leave {@code from} when
+     * {@code to} could have them put on it (CR 122.5), with what a removal of those counters sends (an oil removal, the
+     * last time counter of a vanishing permanent). Returns how many were removed.
+     */
+    public int removeCountersForMove(GameData gameData, Permanent from, Permanent to,
+                                     CounterType counterType, int amount) {
+        if (from == null || to == null || from.getId().equals(to.getId()) || amount <= 0
+                || !canReceiveCounter(gameData, to, counterType)) {
+            return 0;
+        }
+        int current = from.getCounterCount(counterType);
+        int moved = Math.min(amount, current);
+        if (moved <= 0) {
+            return 0;
+        }
+        from.setCounterCount(counterType, current - moved);
+        if (counterType == CounterType.OIL) {
+            gameData.recordOilCounterRemoved(from, moved);
+        }
+        checkLastTimeCounterRemoved(gameData, from, counterType, current);
+        return moved;
+    }
+
+    /** The kinds of counter {@code permanent} has, in {@link CounterType} order. */
+    public static List<CounterType> counterKindsOn(Permanent permanent) {
+        return removableCounterKinds(permanent, 1);
+    }
+
+    /**
+     * Asks the controller the first slot from {@code index} on that can still move a counter (its first permanent has
+     * one of the kind, its second can have it), or puts what was moved and returns {@code false} when none is left.
+     */
+    public boolean askNextCounterMove(GameData gameData, StackEntry entry, UUID controllerId,
+                                      List<ChoiceContext.CounterMoveSlot> slots, int index, List<Integer> moved,
+                                      String sourceCardName) {
+        for (int i = index; i < slots.size(); i++) {
+            ChoiceContext.CounterMoveSlot slot = slots.get(i);
+            Permanent from = gameQueryService.findPermanentById(gameData, slot.fromPermanentId());
+            Permanent to = gameQueryService.findPermanentById(gameData, slot.toPermanentId());
+            if (from == null || to == null || from.getId().equals(to.getId())
+                    || from.getCounterCount(slot.counterType()) <= 0
+                    || !canReceiveCounter(gameData, to, slot.counterType())) {
+                continue;
+            }
+            List<Integer> answered = new ArrayList<>(moved);
+            while (answered.size() < i) {
+                answered.add(0);
+            }
+            int max = from.getCounterCount(slot.counterType());
+            playerInputService.beginMoveCountersAmountChoice(gameData, controllerId,
+                    new ChoiceContext.MoveCountersAmountChoice(slots, i, answered, sourceCardName),
+                    FaceDownVisibility.publicName(gameData, from), FaceDownVisibility.publicName(gameData, to),
+                    counterTypeName(slot.counterType()), max);
+            return true;
+        }
+        putMovedCounters(gameData, entry, slots, moved);
+        return false;
+    }
+
+    /**
+     * Applies the answer to the slot {@code ctx} asked: removes that many counters (at most what is there now), then
+     * asks the next slot or puts everything moved. Returns whether another slot was asked.
+     */
+    public boolean answerCounterMove(GameData gameData, StackEntry entry, UUID controllerId,
+                                     ChoiceContext.MoveCountersAmountChoice ctx, int chosen) {
+        ChoiceContext.CounterMoveSlot slot = ctx.slots().get(ctx.index());
+        Permanent from = gameQueryService.findPermanentById(gameData, slot.fromPermanentId());
+        Permanent to = gameQueryService.findPermanentById(gameData, slot.toPermanentId());
+        int removed = removeCountersForMove(gameData, from, to, slot.counterType(), chosen);
+        List<Integer> moved = new ArrayList<>(ctx.moved());
+        moved.add(removed);
+        return askNextCounterMove(gameData, entry, controllerId, ctx.slots(), ctx.index() + 1, moved,
+                ctx.sourceCardName());
+    }
+
+    /** Puts the counters the answered slots removed on their destinations: one placement per destination and kind. */
+    private void putMovedCounters(GameData gameData, StackEntry entry, List<ChoiceContext.CounterMoveSlot> slots,
+                                  List<Integer> moved) {
+        Map<UUID, Map<CounterType, Integer>> placements = new LinkedHashMap<>();
+        for (int i = 0; i < moved.size() && i < slots.size(); i++) {
+            if (moved.get(i) > 0) {
+                ChoiceContext.CounterMoveSlot slot = slots.get(i);
+                placements.computeIfAbsent(slot.toPermanentId(), id -> new java.util.EnumMap<>(CounterType.class))
+                        .merge(slot.counterType(), moved.get(i), Integer::sum);
+            }
+        }
+        placements.forEach((toId, kinds) -> {
+            Permanent to = gameQueryService.findPermanentById(gameData, toId);
+            if (to != null) {
+                kinds.forEach((kind, count) -> placeCounterOnPermanent(gameData, entry, to, kind, count));
+            }
+        });
     }
 
     public String counterTypeName(CounterType counterType) {

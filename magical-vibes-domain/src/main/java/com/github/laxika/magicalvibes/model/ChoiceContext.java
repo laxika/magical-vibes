@@ -1711,49 +1711,25 @@ public sealed interface ChoiceContext {
             implements ChoiceContext {}
 
     /**
-     * "Move any number of {@code counterType} counters from target creature onto another target
-     * creature" (Bioshift): the spell's controller chooses how many (0..the count on
-     * {@code fromPermanentId}); on the answer that many counters are moved onto
-     * {@code toPermanentId}.
+     * "Move any number of counters": the controller answers one slot at a time how many counters of the slot's kind to
+     * move from its first permanent onto its second (0..what is there now). Each answer removes the counters at once;
+     * {@code moved} holds the answered counts, slot by slot, and once every slot is answered the counters are put on
+     * each destination together, one placement per destination and kind.
      */
-    record MoveCountersAmountChoice(UUID fromPermanentId, UUID toPermanentId, CounterType counterType,
-                                    String sourceCardName) implements ChoiceContext {}
-
-    /** Chooses how many counters of one successive kind to move between two permanents. */
-    record MoveAnyNumberOfCountersAmountChoice(UUID fromPermanentId, UUID toPermanentId,
-                                               List<CounterType> counterTypes, int index,
-                                               String sourceCardName) implements ChoiceContext {
-        public MoveAnyNumberOfCountersAmountChoice {
-            counterTypes = List.copyOf(counterTypes);
+    record MoveCountersAmountChoice(List<CounterMoveSlot> slots, int index, List<Integer> moved,
+                                    String sourceCardName) implements ChoiceContext {
+        public MoveCountersAmountChoice {
+            slots = List.copyOf(slots);
+            moved = List.copyOf(moved);
         }
     }
 
-    /**
-     * Slippery Bogbonder: the controller chooses how many counters of each concrete kind to move
-     * from each controlled creature onto the target creature. {@code movedSoFar} holds the counters
-     * already taken from earlier sources; they are put on the target together as one placement once
-     * every choice has been made.
-     */
-    record MoveAnyCountersFromControlledCreaturesAmountChoice(List<CounterSource> sources, int index,
-                                                               UUID toPermanentId, String sourceCardName,
-                                                               Map<CounterType, Integer> movedSoFar)
-            implements ChoiceContext {
-        public MoveAnyCountersFromControlledCreaturesAmountChoice {
-            sources = List.copyOf(sources);
-            movedSoFar = Map.copyOf(movedSoFar);
-        }
-
-        public MoveAnyCountersFromControlledCreaturesAmountChoice(List<CounterSource> sources, int index,
-                                                                   UUID toPermanentId, String sourceCardName) {
-            this(sources, index, toPermanentId, sourceCardName, Map.of());
-        }
-    }
-
-    record CounterSource(UUID permanentId, CounterType counterType, String cardName) {}
+    /** One "how many" question of a {@link MoveCountersAmountChoice}: counters of {@code counterType} from one permanent onto another. */
+    record CounterMoveSlot(UUID fromPermanentId, UUID toPermanentId, CounterType counterType) {}
 
     /**
-     * Aetherborn Marauder: the controller chooses how many counters to move from each selected
-     * eligible permanent onto the source. The sequence advances to the next permanent after every
+     * Galloping Lizrog: the controller chooses how many counters to remove from each eligible permanent,
+     * then the source gets {@code countersPerMovedCounter} for each one removed. The sequence advances to the next permanent after every
      * answer, so zero is a valid choice for each one.
      */
     record MoveCountersFromControlledPermanentsAmountChoice(List<UUID> fromPermanentIds, int index,
@@ -2324,7 +2300,7 @@ public sealed interface ChoiceContext {
         }
     }
 
-    /** Agent's Toolkit's choice of which counter to move onto an entering creature. */
+    /** "Move a counter": the choice of which kind moves from one permanent onto the other (CR 608.2d). */
     record MoveOneCounterChoice(UUID sourcePermanentId, UUID targetId, UUID controllerId,
                                 String sourceCardName, List<CounterType> counterTypes)
             implements ChoiceContext {

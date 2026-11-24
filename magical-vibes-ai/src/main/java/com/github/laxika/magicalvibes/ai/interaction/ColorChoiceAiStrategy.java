@@ -210,11 +210,16 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
-        if (context instanceof ChoiceContext.MoveCountersAmountChoice) {
-            // Bioshift: options are 0..N counters. Move them all — the AI only casts it when it
-            // wants the counters on the second creature.
+        if (context instanceof ChoiceContext.MoveCountersAmountChoice move) {
+            // "Move any number of counters": options are 0..N. Move them all, except from the AI's own permanent onto
+            // one it doesn't control (Forgotten Ancient's "onto other creatures").
+            ChoiceContext.CounterMoveSlot slot = move.slots().get(move.index());
+            boolean givesAway = aiPlayerId.equals(ctx.gameQueryService()
+                    .findPermanentController(gameData, slot.fromPermanentId()))
+                    && !aiPlayerId.equals(ctx.gameQueryService()
+                    .findPermanentController(gameData, slot.toPermanentId()));
             List<String> options = interaction.options();
-            String chosenNumber = options.isEmpty() ? "0" : options.get(options.size() - 1);
+            String chosenNumber = options.isEmpty() || givesAway ? "0" : options.get(options.size() - 1);
             log.info("AI: Moving {} counters between creatures in game {}", chosenNumber, gameId);
             answerWith(ctx, interaction, chosenNumber);
             return;

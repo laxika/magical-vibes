@@ -54,6 +54,25 @@ class AetherbornMarauderTest extends BaseCardTest {
         assertThat(harness.getGameData().interaction.isAwaitingInput()).isFalse();
     }
 
+    @Test
+    @DisplayName("Moves nothing once Aetherborn Marauder has left the battlefield (CR 122.5)")
+    void movesNothingWhenMarauderHasLeft() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        land.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player1, List.of(new AetherbornMarauder()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent marauder = findPermanent(player1, "Aetherborn Marauder");
+        gd.playerBattlefields.get(player1.getId()).remove(marauder);
+
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
     private void cast() {
         harness.setHand(player1, List.of(new AetherbornMarauder()));
         harness.addMana(player1, ManaColor.BLACK, 1);

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AetherSnap;
 import com.github.laxika.magicalvibes.cards.c.Clockspinning;
+import com.github.laxika.magicalvibes.cards.v.VampireHexmage;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -176,6 +177,23 @@ class DivineInterventionTest extends BaseCardTest {
         harness.castAndResolveInstant(player, 0, intervention.getId());
         harness.handleListChoice(player, "intervention counters");
         harness.handleListChoice(player, "REMOVE");
+    }
+
+    @Test
+    @CardUsed(VampireHexmage.class)
+    @DisplayName("Declares a draw when its controller removes all its counters with Vampire Hexmage")
+    void declaresDrawWhenControllerRemovesAllCountersWithHexmage() {
+        Permanent intervention = addIntervention();
+        intervention.setCounterCount(CounterType.INTERVENTION, 2);
+        addCreatureReady(player1, new VampireHexmage());
+
+        harness.activateAbility(player1, 1, null, intervention.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(intervention.getCounterCount(CounterType.INTERVENTION)).isZero();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.gameResult).isEqualTo(GameEventFact.GameResult.DRAW);
     }
 
     private Permanent addIntervention() {

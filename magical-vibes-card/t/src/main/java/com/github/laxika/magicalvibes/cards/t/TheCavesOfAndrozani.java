@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.AddAnotherCounterOfChosenTypeToTargetEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
-import com.github.laxika.magicalvibes.model.effect.AddAnotherCounterOfChosenTypeToEachNonSagaPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -22,6 +25,11 @@ import java.util.List;
 @CardRegistration(set = "WHO", collectorNumber = "620")
 public class TheCavesOfAndrozani extends Card {
 
+    /** "For each non-Saga permanent, choose a counter on it. You may put an additional counter of that kind on it." */
+    private static final AddAnotherCounterOfChosenTypeToTargetEffect EACH_NON_SAGA_PERMANENT =
+            new AddAnotherCounterOfChosenTypeToTargetEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                    new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.SAGA))));
+
     public TheCavesOfAndrozani() {
         addTrigger(Triggers.chapter(1),
                 new PutCounterOnTargetPermanentEffect(CounterType.STUN, 2));
@@ -35,9 +43,9 @@ public class TheCavesOfAndrozani extends Card {
                 2)));
 
         addTrigger(Triggers.chapter(2),
-                new AddAnotherCounterOfChosenTypeToEachNonSagaPermanentEffect());
+                EACH_NON_SAGA_PERMANENT);
         addTrigger(Triggers.chapter(3),
-                new AddAnotherCounterOfChosenTypeToEachNonSagaPermanentEffect());
+                EACH_NON_SAGA_PERMANENT);
 
         addTrigger(Triggers.chapter(4),
                 new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.DOCTOR),

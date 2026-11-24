@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.ControlledCommanderAsCast;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MoveCounterFromTargetCreatureToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -27,7 +28,7 @@ public class NexusMentality extends Card {
         addSpellEffect(ChooseOneEffect.oneOrMoreWhen(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Move all counters from target nonland permanent you control onto another target nonland permanent you control",
-                        List.of(new MoveCounterFromTargetCreatureToTargetCreatureEffect(true)),
+                        List.of(MoveCounterFromSourceToTargetCreatureEffect.all(Subjects.target(0), Subjects.target(1))),
                         List.<TargetFilter>of(nonlandPermanentYouControl, nonlandPermanentYouControl)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Remove all counters from target nonland permanent you control. Draw a card for each counter removed this way",

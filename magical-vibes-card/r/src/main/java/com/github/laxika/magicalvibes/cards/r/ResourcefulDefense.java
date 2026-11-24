@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.MoveAnyNumberOfCountersFromTargetPermanentToTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetForEachLeavingSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -39,7 +40,7 @@ public class ResourcefulDefense extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{W}",
-                List.of(new MoveAnyNumberOfCountersFromTargetPermanentToTargetPermanentEffect()),
+                List.of(MoveCounterFromSourceToTargetCreatureEffect.anyNumber(CounterType.ANY, Subjects.target(0), Subjects.target(1))),
                 "{4}{W}: Move any number of counters from target permanent you control onto a second target permanent you control.",
                 List.of(TargetFilters.permanentYouControl(), TargetFilters.permanentYouControl()),
                 2,

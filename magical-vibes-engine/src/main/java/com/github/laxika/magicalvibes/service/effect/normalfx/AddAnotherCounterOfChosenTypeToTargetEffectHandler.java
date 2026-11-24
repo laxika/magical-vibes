@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AddAnotherCounterOfChosenTypeToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -21,7 +23,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 
-/** Resolves Animation Module's counter-kind choice and delegates placement to shared support. */
+/**
+ * Resolves {@link AddAnotherCounterOfChosenTypeToTargetEffect}: asks which kind of counter on the target permanent or
+ * player gets another one, or, over a set, asks for each permanent in turn (or skip).
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -30,6 +35,7 @@ public class AddAnotherCounterOfChosenTypeToTargetEffectHandler implements Norma
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
+    private final SubjectResolutionService subjectResolutionService;
     @Autowired private InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -39,6 +45,11 @@ public class AddAnotherCounterOfChosenTypeToTargetEffectHandler implements Norma
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        PermanentSubject subject = ((AddAnotherCounterOfChosenTypeToTargetEffect) effect).subject();
+        if (!subject.declaresTarget()) {
+            askEach(gameData, entry, effect, subject);
+            return;
+        }
         List<UUID> targetIds = entry.targetsForEffect(effect);
         UUID targetId = !targetIds.isEmpty() ? targetIds.getFirst() : entry.getTargetId();
         if (targetId == null) {
@@ -75,5 +86,22 @@ public class AddAnotherCounterOfChosenTypeToTargetEffectHandler implements Norma
                     entry.getControllerId(), null, null, context, context.options(),
                     entry.getCard().getName() + " — Choose a counter to add another of."));
         }
+    }
+
+    /** "For each [permanent], choose a counter on it. You may put an additional counter of that kind on it." */
+    private void askEach(GameData gameData, StackEntry entry, CardEffect effect, PermanentSubject subject) {
+        List<UUID> remaining = new ArrayList<>();
+        for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect, subject)) {
+            if (!PermanentCounterSupport.counterKindsOn(permanent).isEmpty()) {
+                remaining.add(permanent.getId());
+            }
+        }
+        if (remaining.isEmpty()) {
+            return;
+        }
+        UUID first = remaining.removeFirst();
+        Permanent permanent = gameQueryService.findPermanentById(gameData, first);
+        playerInputService.beginAddAnotherCounterTypeOnEachNonSagaPermanentChoice(gameData, entry.getControllerId(),
+                first, entry.getCard().getName(), remaining, PermanentCounterSupport.counterKindsOn(permanent));
     }
 }

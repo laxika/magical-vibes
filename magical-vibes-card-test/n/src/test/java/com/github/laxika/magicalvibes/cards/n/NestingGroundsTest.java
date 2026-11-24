@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MelirasKeepers;
+import com.github.laxika.magicalvibes.cards.v.VorinclexMonstrousRaider;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -173,6 +174,22 @@ class NestingGroundsTest extends BaseCardTest {
 
         assertThat(source.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
         assertThat(destination.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    @CardUsed(VorinclexMonstrousRaider.class)
+    @DisplayName("The counter moved onto an opponent's permanent is put by Nesting Grounds' controller (Vorinclex halves it)")
+    void moverIsThePlacerOfTheMovedCounter() {
+        addReadyGrounds(player1);
+        harness.addToBattlefield(player2, new VorinclexMonstrousRaider());
+        Permanent source = addCreatureReady(player1, new GrizzlyBears());
+        Permanent destination = addCreatureReady(player2, new GrizzlyBears());
+        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        activateMoveAbility(source, destination);
+
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(destination.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     private Permanent addReadyGrounds(Player player) {

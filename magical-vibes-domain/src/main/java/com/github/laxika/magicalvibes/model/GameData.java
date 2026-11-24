@@ -3398,8 +3398,7 @@ public class GameData {
 
     /**
      * Scratch of the resolution-time divisions a handler asks for one target at a time (the counters of
-     * {@code DistributeCountersAmongControlledCreaturesEffect}, {@code MoveCountersFromSourceToOtherCreaturesEffect},
-     * a restricted {@code DealDividedDamageEffect} resolving with targets but no division). A triggered ability's
+     * {@code DistributeCountersAmongControlledCreaturesEffect}, a restricted {@code DealDividedDamageEffect} resolving with targets but no division). A triggered ability's
      * division is never staged here: it is announced as the ability is put on the stack (CR 603.3d) and kept on its
      * entry.
      */

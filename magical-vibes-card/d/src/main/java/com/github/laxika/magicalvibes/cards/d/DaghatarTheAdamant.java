@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.MoveCounterFromTargetCreatureToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -20,8 +21,8 @@ public class DaghatarTheAdamant extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{B/G}{B/G}",
-                List.of(MoveCounterFromTargetCreatureToTargetCreatureEffect.single(
-                        CounterType.PLUS_ONE_PLUS_ONE)),
+                List.of(MoveCounterFromSourceToTargetCreatureEffect.move(CounterType.PLUS_ONE_PLUS_ONE,
+                        Subjects.target(0), Subjects.target(1))),
                 "{1}{B/G}{B/G}: Move a +1/+1 counter from target creature onto a second target creature.",
                 List.of(TargetFilters.creature(), TargetFilters.creature()),
                 2,

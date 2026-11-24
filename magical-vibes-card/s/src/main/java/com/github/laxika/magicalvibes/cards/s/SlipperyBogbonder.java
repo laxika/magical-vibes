@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.MoveAnyCountersFromControlledCreaturesToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -19,6 +20,6 @@ public class SlipperyBogbonder extends Card {
         target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 PutCounterOnTargetPermanentEffect.withTargetRestriction(
                         CounterType.HEXPROOF, 1, new PermanentIsCreaturePredicate()),
-                new MoveAnyCountersFromControlledCreaturesToTargetCreatureEffect()));
+                MoveCounterFromSourceToTargetCreatureEffect.anyNumber(CounterType.ANY, Subjects.creaturesYouControl(), Subjects.target())));
     }
 }

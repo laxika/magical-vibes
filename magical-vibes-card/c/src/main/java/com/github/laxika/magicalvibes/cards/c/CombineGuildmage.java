@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.MoveCounterFromTargetCreatureToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -26,7 +27,8 @@ public class CombineGuildmage extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{U}",
-                List.of(MoveCounterFromTargetCreatureToTargetCreatureEffect.single(CounterType.PLUS_ONE_PLUS_ONE)),
+                List.of(MoveCounterFromSourceToTargetCreatureEffect.move(CounterType.PLUS_ONE_PLUS_ONE,
+                        Subjects.target(0), Subjects.target(1))),
                 "{1}{U}, {T}: Move a +1/+1 counter from target creature you control onto another target creature you control.",
                 List.of(TargetFilters.creatureYouControl(), TargetFilters.creatureYouControl()),
                 2,

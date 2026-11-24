@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleSelfPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectTargetCreatureDamageFromChosenSourceToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTargetFromCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
@@ -468,6 +469,13 @@ public class TargetPolarityClassifier {
                     : TargetPolarity.NEUTRAL;
         }
 
+        // A move between two targets or from a set onto a target swings both ways; one to or from this permanent
+        // has no polarity.
+        if (effect instanceof MoveCounterFromSourceToTargetCreatureEffect move) {
+            return move.from() instanceof PermanentSubject.Source || move.to() instanceof PermanentSubject.Source
+                    ? null : TargetPolarity.NEUTRAL;
+        }
+
         if (effect instanceof DoubleSelfPowerToughnessEffect doubling) {
             return doubling.subject().declaresTarget() ? TargetPolarity.BENEFICIAL : null;
         }
@@ -797,7 +805,6 @@ public class TargetPolarityClassifier {
             entry("GrantSubtypeEffect", TargetPolarity.NEUTRAL),
             entry("GrantSubtypeUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("GrantSubtypeToTargetCreatureEffect", TargetPolarity.HARMFUL),
-            entry("MoveCounterFromTargetCreatureToTargetCreatureEffect", TargetPolarity.NEUTRAL),
             entry("RemoveCounterFromTargetPermanentEffect", TargetPolarity.NEUTRAL),
             entry("RegisterControlLossUnattachTriggerEffect", TargetPolarity.NEUTRAL),
             entry("SearchLibraryForTargetCreatureNameToBattlefieldEffect", TargetPolarity.NEUTRAL),

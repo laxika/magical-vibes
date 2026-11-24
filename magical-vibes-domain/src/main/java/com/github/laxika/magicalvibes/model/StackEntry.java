@@ -2651,8 +2651,8 @@ public class StackEntry {
      * group in any earlier position the flat wire format would be ambiguous (no such card
      * exists; the DSL assumes declaration-order filling).</p>
      *
-     * <p>When the card declares no spell targets (e.g. activated abilities with their own
-     * multi-target filter list), the flat list is treated as positional: group {@code g} is
+     * <p>For an activated ability (its own multi-target filter list), and when the card declares no
+     * spell targets, the flat list is treated as positional: group {@code g} is
      * {@code targetIds.get(g)}.</p>
      *
      * <p>Some entries store the first target separately in {@link #targetId}: Auras keep their
@@ -2669,7 +2669,10 @@ public class StackEntry {
             return primaryTarget != null ? List.of(primaryTarget) : List.of();
         }
         Card targeting = getTargetingCard();
-        List<TargetGroup> groups = targeting == null ? List.of() : targeting.getTargetGroups();
+        // A card's target(...) groups belong to its spell and triggered abilities; an activated ability's targets
+        // come from its own filter list, by position.
+        List<TargetGroup> groups = targeting == null || entryType == StackEntryType.ACTIVATED_ABILITY
+                ? List.of() : targeting.getTargetGroups();
         if (groups.isEmpty()) {
             return group >= 0 && group < targetIds.size() && !illegalTargetIndices.contains(group)
                     ? List.of(targetIds.get(group)) : List.of();

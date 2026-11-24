@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MoveCountersFromSourceToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -30,7 +31,7 @@ public class ScroungingBandar extends Card {
                 )),
                 "Target must be another creature"
         )).addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
-                new MoveCountersFromSourceToTargetCreatureEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                MoveCounterFromSourceToTargetCreatureEffect.anyNumber(CounterType.PLUS_ONE_PLUS_ONE, Subjects.source(), Subjects.target()),
                 "Move any number of +1/+1 counters onto the target creature?"
         ));
     }

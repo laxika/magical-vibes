@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,6 +31,7 @@ class ForgottenAncientTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Moves the chosen number of counters onto each other creature, asked creature by creature")
     void movesChosenCountersAmongOtherCreatures() {
         Permanent ancient = addCreatureReady(player1, new ForgottenAncient());
         Permanent ownCreature = addCreatureReady(player1, new ScornfulEgotist());
@@ -41,9 +43,8 @@ class ForgottenAncientTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleXValueChosen(player1, 3);
-        harness.handleXValueChosen(player1, 1);
-        harness.handleXValueChosen(player1, 2);
+        harness.handleListChoice(player1, "1");
+        harness.handleListChoice(player1, "2");
 
         assertThat(ancient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -51,6 +52,7 @@ class ForgottenAncientTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing zero leaves the counters on Forgotten Ancient")
     void choosingZeroLeavesCountersOnTheAncient() {
         Permanent ancient = addCreatureReady(player1, new ForgottenAncient());
         addCreatureReady(player1, new ScornfulEgotist());
@@ -61,7 +63,7 @@ class ForgottenAncientTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleXValueChosen(player1, 0);
+        harness.handleListChoice(player1, "0");
 
         assertThat(ancient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
@@ -113,6 +115,7 @@ class ForgottenAncientTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can move only some of its counters onto the one other creature")
     void canMoveOnlyPartOfTheChosenCountersToOneOtherCreature() {
         Permanent ancient = addCreatureReady(player1, new ForgottenAncient());
         Permanent otherCreature = addCreatureReady(player1, new ScornfulEgotist());
@@ -123,14 +126,14 @@ class ForgottenAncientTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleXValueChosen(player1, 1);
-        harness.handleXValueChosen(player1, 1);
+        harness.handleListChoice(player1, "1");
 
         assertThat(ancient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(otherCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
+    @DisplayName("Can skip its controller's creature and move every counter onto an opponent's creature")
     void canSkipOwnCreatureAndMoveAllCountersToOpposingCreature() {
         Permanent ancient = addCreatureReady(player1, new ForgottenAncient());
         Permanent ownCreature = addCreatureReady(player1, new ScornfulEgotist());
@@ -141,9 +144,8 @@ class ForgottenAncientTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleXValueChosen(player1, 3);
-        harness.handleXValueChosen(player1, 0);
-        harness.handleXValueChosen(player1, 3);
+        harness.handleListChoice(player1, "0");
+        harness.handleListChoice(player1, "3");
 
         assertThat(ancient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

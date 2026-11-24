@@ -46,6 +46,21 @@ class StackEntryTargetGroupsTest {
     }
 
     @Test
+    @DisplayName("An activated ability's targets are positional even when its card declares target groups")
+    void activatedAbilityTargetsArePositional() {
+        Card card = new Card();
+        card.target(1, 1).addSpellEffect(new BoostTargetCreatureEffect(1, 1));
+
+        UUID a = UUID.randomUUID();
+        UUID b = UUID.randomUUID();
+        StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, card, CONTROLLER, "test", List.of(), 0,
+                List.of(a, b));
+
+        assertThat(entry.targetsForGroup(0)).containsExactly(a);
+        assertThat(entry.targetsForGroup(1)).containsExactly(b);
+    }
+
+    @Test
     @DisplayName("Updating the current target during resolution does not shift flat target groups")
     void currentResolutionTargetDoesNotShiftFlatTargetGroups() {
         Card card = new Card();

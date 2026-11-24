@@ -1748,56 +1748,26 @@ public class PlayerInputService {
     }
 
     /**
-     * Bioshift: prompt {@code playerId} for how many {@code counterType} counters (0..{@code max})
-     * to move from one target creature onto the other. {@link ChoiceHandlerService} performs the
-     * move on the answer.
+     * "Move any number of counters": prompt {@code playerId} for how many counters of the asked slot's kind (0..{@code
+     * max}) to move from {@code fromName} onto {@code toName}. {@link ChoiceHandlerService} applies the answer through
+     * {@code PermanentCounterSupport.answerCounterMove}.
      */
-    public void beginMoveCountersAmountChoice(GameData gameData, UUID playerId, UUID fromPermanentId,
-                                              UUID toPermanentId, CounterType counterType,
-                                              String sourceCardName, int max) {
-        ChoiceContext.MoveCountersAmountChoice choiceContext = new ChoiceContext.MoveCountersAmountChoice(
-                fromPermanentId, toPermanentId, counterType, sourceCardName);
-
-        List<String> options = java.util.stream.IntStream.rangeClosed(0, Math.max(0, max))
-                .mapToObj(Integer::toString)
-                .toList();
-        String counterName = switch (counterType) {
-            case PLUS_ONE_PLUS_ONE -> "+1/+1";
-            case MINUS_ONE_MINUS_ONE -> "-1/-1";
-            default -> counterType.name().toLowerCase().replace('_', ' ');
-        };
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                playerId, null, null, choiceContext, options,
-                sourceCardName + " — move how many " + counterName + " counters (0-" + Math.max(0, max) + ")?"));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose how many {} counters to move (0-{})",
-                gameData.id, playerName, counterType, max);
-    }
-
-    /** Prompts for how many counters of the current kind to move between two permanents. */
-    public void beginMoveAnyNumberOfCountersAmountChoice(
-            GameData gameData, UUID playerId, UUID fromPermanentId, UUID toPermanentId,
-            List<CounterType> counterTypes, int index, String sourceCardName, int max) {
-        ChoiceContext.MoveAnyNumberOfCountersAmountChoice choiceContext =
-                new ChoiceContext.MoveAnyNumberOfCountersAmountChoice(
-                        fromPermanentId, toPermanentId, counterTypes, index, sourceCardName);
+    public void beginMoveCountersAmountChoice(GameData gameData, UUID playerId,
+                                              ChoiceContext.MoveCountersAmountChoice choiceContext,
+                                              String fromName, String toName, String counterName, int max) {
         List<String> options = IntStream.rangeClosed(0, Math.max(0, max))
                 .mapToObj(Integer::toString)
                 .toList();
-        CounterType counterType = counterTypes.get(index);
-        String counterName = switch (counterType) {
-            case PLUS_ONE_PLUS_ONE -> "+1/+1";
-            case MINUS_ONE_MINUS_ONE -> "-1/-1";
-            default -> counterType.name().toLowerCase().replace('_', ' ');
-        };
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, choiceContext, options,
-                sourceCardName + " — move how many " + counterName + " counters (0-" + Math.max(0, max) + ")?"));
+                choiceContext.sourceCardName() + " — choose how many " + counterName + " counters to move from "
+                        + fromName + " onto " + toName + " (0-" + Math.max(0, max) + ")."));
+        log.info("Game {} - Awaiting {} to choose how many {} counters to move (0-{})",
+                gameData.id, gameData.playerIdToName.get(playerId), counterName, max);
     }
 
     /**
-     * Aetherborn Marauder: prompt for the amount to move from one of the controller's eligible
+     * Galloping Lizrog: prompt for the amount to remove from one of the controller's eligible
      * permanents, then continue with the next permanent in the sequence.
      */
     public void beginMoveCountersFromControlledPermanentsAmountChoice(
@@ -1836,40 +1806,6 @@ public class PlayerInputService {
                 playerId, null, null, choiceContext, options,
                 sourceCardName + " — choose how many " + counterName + " counters to move from "
                         + fromCardName + " (0-" + Math.max(0, max) + ")."));
-    }
-
-    /**
-     * Slippery Bogbonder: prompt for the amount of one concrete counter kind from one controlled
-     * creature, then continue through the remaining creature/counter-kind pairs.
-     */
-    public void beginMoveAnyCountersFromControlledCreaturesAmountChoice(
-            GameData gameData, UUID playerId, List<ChoiceContext.CounterSource> sources, int index,
-            UUID toPermanentId, String sourceCardName, int max) {
-        beginMoveAnyCountersFromControlledCreaturesAmountChoice(gameData, playerId, sources, index,
-                toPermanentId, sourceCardName, max, java.util.Map.of());
-    }
-
-    public void beginMoveAnyCountersFromControlledCreaturesAmountChoice(
-            GameData gameData, UUID playerId, List<ChoiceContext.CounterSource> sources, int index,
-            UUID toPermanentId, String sourceCardName, int max,
-            java.util.Map<com.github.laxika.magicalvibes.model.CounterType, Integer> movedSoFar) {
-        ChoiceContext.CounterSource source = sources.get(index);
-        ChoiceContext.MoveAnyCountersFromControlledCreaturesAmountChoice choiceContext =
-                new ChoiceContext.MoveAnyCountersFromControlledCreaturesAmountChoice(
-                        sources, index, toPermanentId, sourceCardName, movedSoFar);
-
-        List<String> options = IntStream.rangeClosed(0, Math.max(0, max))
-                .mapToObj(Integer::toString)
-                .toList();
-        String counterName = switch (source.counterType()) {
-            case PLUS_ONE_PLUS_ONE -> "+1/+1";
-            case MINUS_ONE_MINUS_ONE -> "-1/-1";
-            default -> source.counterType().name().toLowerCase().replace('_', ' ');
-        };
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                playerId, null, null, choiceContext, options,
-                sourceCardName + " — choose how many " + counterName + " counters to move from "
-                        + source.cardName() + " (0-" + Math.max(0, max) + ")."));
     }
 
     /**

@@ -7,35 +7,64 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 /**
- * "Move a [type] counter from this permanent onto target creature" (e.g. Afiya Grove), and the
- * "move X counters" form (e.g. Tester of the Tangential, whose
- * reflexive ability reads the X paid). The other direction, "move a counter from target creature onto this
- * creature" (Cytoplast Root-Kin), is {@link #fromTargetOntoSource}.
+ * The counter move: "move a [kind] counter from this permanent onto target creature" (Afiya Grove), "move X counters"
+ * (Tester of the Tangential, whose reflexive ability reads the X paid), "move a counter from target creature onto this
+ * creature" ({@link #fromTargetOntoSource}), "move a counter from target creature onto a second target creature"
+ * ({@link #move} over {@code target(0)} and {@code target(1)}), "move all counters" ({@link #all}) and "move any number
+ * of counters" ({@link #anyNumber}), also from or onto a set ("from among creatures you control", "onto other
+ * creatures").
  *
- * <p>Moving is a removal plus a placement: if the source permanent is gone or has no counter of the
- * type left, nothing is removed and nothing is placed. When the source has fewer counters than
- * {@code amount}, only the counters it has are moved. The moved counters are placed in one event.</p>
+ * <p>Moving is a removal plus a placement (CR 122.5): nothing is removed or put when either permanent is gone, both
+ * are one permanent, the first has no such counter, or the second can't have it put on it. The counters are put by
+ * the ability's controller, so counter-placement replacements judge the mover as their placer.</p>
  *
- * @param counterType the kind of counter moved
- * @param amount      the number of counters to move, evaluated as the effect resolves
+ * <ul>
+ *   <li>{@link Quantity#AMOUNT}: {@code amount} counters of {@code counterType}, or fewer when fewer are there. With
+ *   {@link CounterType#ANY} it is one counter of a kind the controller chooses as the effect resolves, unasked when
+ *   only one kind can move (CR 608.2d).</li>
+ *   <li>{@link Quantity#ALL}: every counter of {@code counterType}, every kind for {@link CounterType#ANY}.</li>
+ *   <li>{@link Quantity#ANY_NUMBER}: for each permanent {@code from} names, each permanent {@code to} names and each
+ *   kind ({@code counterType}, or every kind on it for {@link CounterType#ANY}), the controller chooses how many to
+ *   move (zero included); the counters are put on each destination together once every choice is made.</li>
+ * </ul>
+ *
+ * @param counterType   the kind of counter moved, {@link CounterType#ANY} for any kind
+ * @param amount        the number of counters to move for {@link Quantity#AMOUNT}, evaluated as the effect resolves
  * @param anotherTarget whether the target is "another target creature", never the source itself
- * @param from          whose counters move: {@link Subjects#source()} or the target
- * @param to            where they are put: the target or {@link Subjects#source()}, whichever {@code from} is not
+ * @param from          whose counters move
+ * @param to            where they are put
  * @param anyPermanent  whether the target is any permanent rather than a creature (the ability's filter narrows it)
+ * @param quantity      how many counters move
  */
 public record MoveCounterFromSourceToTargetCreatureEffect(CounterType counterType, DynamicAmount amount,
                                                           boolean anotherTarget, PermanentSubject from,
-                                                          PermanentSubject to, boolean anyPermanent)
+                                                          PermanentSubject to, boolean anyPermanent,
+                                                          Quantity quantity)
         implements CardEffect {
 
+    /** How many counters a move moves. */
+    public enum Quantity { AMOUNT, ALL, ANY_NUMBER }
+
     public MoveCounterFromSourceToTargetCreatureEffect {
-        if (!(from.equals(Subjects.source()) && to.equals(Subjects.target()))
-                && !(from.equals(Subjects.target()) && to.equals(Subjects.source()))) {
-            throw new IllegalArgumentException("Counters move between the source and the target: " + from + ", " + to);
+        if (from == null || to == null || quantity == null || counterType == null) {
+            throw new IllegalArgumentException("A counter move needs a kind, both subjects and a quantity");
         }
         if (anotherTarget && anyPermanent) {
             throw new IllegalArgumentException("\"Another target\" is a creature here");
         }
+        if (quantity == Quantity.AMOUNT && counterType == CounterType.ANY
+                && !(amount instanceof Fixed fixed && fixed.value() == 1)) {
+            throw new IllegalArgumentException("A move of a chosen kind moves one counter");
+        }
+        if (quantity == Quantity.AMOUNT && amount == null) {
+            throw new IllegalArgumentException("A move of an amount needs the amount");
+        }
+    }
+
+    public MoveCounterFromSourceToTargetCreatureEffect(CounterType counterType, DynamicAmount amount,
+                                                       boolean anotherTarget, PermanentSubject from,
+                                                       PermanentSubject to, boolean anyPermanent) {
+        this(counterType, amount, anotherTarget, from, to, anyPermanent, Quantity.AMOUNT);
     }
 
     public MoveCounterFromSourceToTargetCreatureEffect(CounterType counterType, DynamicAmount amount,
@@ -74,12 +103,51 @@ public record MoveCounterFromSourceToTargetCreatureEffect(CounterType counterTyp
         return new MoveCounterFromSourceToTargetCreatureEffect(counterType, amount, true);
     }
 
+    /**
+     * "Move a [kind] counter from [from] onto [to]"; {@link CounterType#ANY} for "a counter" of the controller's
+     * choice ("from target creature onto a second target creature", Leech Bonder; "from this artifact onto that
+     * creature", Agent's Toolkit).
+     */
+    public static MoveCounterFromSourceToTargetCreatureEffect move(CounterType counterType, PermanentSubject from,
+                                                                  PermanentSubject to) {
+        return new MoveCounterFromSourceToTargetCreatureEffect(counterType, new Fixed(1), false, from, to, false,
+                Quantity.AMOUNT);
+    }
+
+    /** "Move all counters from [from] onto [to]" (Fate Transfer). */
+    public static MoveCounterFromSourceToTargetCreatureEffect all(PermanentSubject from, PermanentSubject to) {
+        return new MoveCounterFromSourceToTargetCreatureEffect(CounterType.ANY, null, false, from, to, false,
+                Quantity.ALL);
+    }
+
+    /**
+     * "Move any number of [kind] counters from [from] onto [to]" ({@link CounterType#ANY}: of any kinds): Bioshift,
+     * Scrounging Bandar, Resourceful Defense, Slippery Bogbonder ("from among creatures you control"), Aetherborn
+     * Marauder ("from other permanents you control"), Forgotten Ancient ("onto other creatures").
+     */
+    public static MoveCounterFromSourceToTargetCreatureEffect anyNumber(CounterType counterType,
+                                                                       PermanentSubject from, PermanentSubject to) {
+        return new MoveCounterFromSourceToTargetCreatureEffect(counterType, null, false, from, to, false,
+                Quantity.ANY_NUMBER);
+    }
+
     @Override
     public TargetSpec targetSpec() {
-        if (anotherTarget) {
-            return TargetSpec.benign(TargetPredicates.creature(),
-                    new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()));
+        boolean plainTarget = isPlainTarget(from) || isPlainTarget(to);
+        if (plainTarget) {
+            if (anotherTarget) {
+                return TargetSpec.benign(TargetPredicates.creature(),
+                        new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()));
+            }
+            return TargetSpec.benign(anyPermanent ? TargetPredicates.permanent() : TargetPredicates.creature());
         }
-        return TargetSpec.benign(anyPermanent ? TargetPredicates.permanent() : TargetPredicates.creature());
+        if (from.declaresTarget() || to.declaresTarget()) {
+            return TargetSpec.benign(TargetPredicates.permanent());
+        }
+        return TargetSpec.NONE;
+    }
+
+    private static boolean isPlainTarget(PermanentSubject subject) {
+        return subject instanceof PermanentSubject.Target target && target.group() == null;
     }
 }

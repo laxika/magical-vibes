@@ -17,8 +17,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link RemoveAllCountersFromTargetPermanentEffect}: removes every counter of every kind from each
- * permanent the effect's subject names, then runs the vanishing last-time-counter check and the battle's
- * defense check for it, and records the total removed as the entry's event value.
+ * permanent the effect's subject names ("all permanents" too, Aether Snap), then sends the last-counter-removed event
+ * for each kind it had ("when you remove the last [kind] counter from it"), runs the vanishing last-time-counter check
+ * and the battle's defense check for it, and records the total removed as the entry's event value.
  */
 @Slf4j
 @Component
@@ -50,14 +51,21 @@ public class RemoveAllCountersFromTargetPermanentEffectHandler implements Normal
         int oilRemoved = target.getCounterCount(CounterType.OIL);
         int timeCountersBefore = target.getCounterCount(CounterType.TIME);
         boolean hadDefenseCounters = target.getCounterCount(CounterType.DEFENSE) > 0;
+        java.util.Map<CounterType, Integer> removedByKind = new java.util.EnumMap<>(CounterType.class);
         for (CounterType counterType : CounterType.values()) {
             if (counterType == CounterType.ANY || counterType == CounterType.SILVER) {
                 continue;
             }
-            removed += target.getCounterCount(counterType);
+            int count = target.getCounterCount(counterType);
+            removed += count;
+            if (count > 0) {
+                removedByKind.put(counterType, count);
+            }
             target.setCounterCount(counterType, 0);
         }
         gameData.recordOilCounterRemoved(target, oilRemoved);
+        removedByKind.forEach((counterType, count) -> permanentCounterSupport.notifyLastCounterRemoved(
+                gameData, target, counterType, count, entry.getControllerId()));
         permanentCounterSupport.checkLastTimeCounterRemoved(gameData, target, CounterType.TIME, timeCountersBefore);
         if (hadDefenseCounters) {
             battleDefeatSupport.checkAfterDefenseRemoved(gameData, target);

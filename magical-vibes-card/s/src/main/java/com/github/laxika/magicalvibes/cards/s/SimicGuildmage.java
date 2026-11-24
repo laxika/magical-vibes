@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToAnotherPermanentWithSameControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.MoveCounterFromTargetCreatureToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -19,7 +20,8 @@ public class SimicGuildmage extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{G}",
-                List.of(MoveCounterFromTargetCreatureToTargetCreatureEffect.single(CounterType.PLUS_ONE_PLUS_ONE)),
+                List.of(MoveCounterFromSourceToTargetCreatureEffect.move(CounterType.PLUS_ONE_PLUS_ONE,
+                        Subjects.target(0), Subjects.target(1))),
                 "{1}{G}: Move a +1/+1 counter from target creature onto another target creature with the same controller.",
                 List.of(TargetFilters.creature(), TargetFilters.creature()),
                 2,
