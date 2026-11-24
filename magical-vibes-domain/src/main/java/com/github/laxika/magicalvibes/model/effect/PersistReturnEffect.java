@@ -1,14 +1,36 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CounterType;
+
+import java.util.Objects;
+
 /**
- * Persist (CR 702.79): "When this creature dies, if it had no -1/-1 counters on it, return it to the
- * battlefield under its owner's control with a -1/-1 counter on it."
+ * The resolution half of the keyword dies-returns: persist (CR 702.79a, a -1/-1 counter, the no-argument form) and
+ * undying (CR 702.93a, a +1/+1 counter, {@link #undying()}): "return it to the battlefield under its owner's control
+ * with a [counter] counter on it."
  *
- * <p>This effect is the resolution half of the Persist triggered ability. The "if it had no -1/-1
- * counters" intervening-if check is evaluated when the trigger is collected (the creature has already
- * left the battlefield by then, so it uses last-known information). On resolution this effect finds the
- * dying card in its owner's graveyard and, if still there, returns it to the battlefield from the
- * graveyard with a single -1/-1 counter.
+ * <p>The "if it had no [counter] counters on it" intervening if is judged as the ability is collected, on the
+ * creature as it last existed. On resolution the dying card is returned only from the graveyard stay its death put it
+ * in (CR 400.7), with one {@link #counterType()} counter through the counter replacements.
  */
-public record PersistReturnEffect() implements CardEffect {
+public record PersistReturnEffect(CounterType counterType) implements CardEffect {
+
+    public PersistReturnEffect {
+        Objects.requireNonNull(counterType, "counterType");
+    }
+
+    /** Persist: returns with a -1/-1 counter. */
+    public PersistReturnEffect() {
+        this(CounterType.MINUS_ONE_MINUS_ONE);
+    }
+
+    /** Undying: returns with a +1/+1 counter. */
+    public static PersistReturnEffect undying() {
+        return new PersistReturnEffect(CounterType.PLUS_ONE_PLUS_ONE);
+    }
+
+    /** The keyword this return belongs to, as the log names it. */
+    public String keywordName() {
+        return counterType == CounterType.PLUS_ONE_PLUS_ONE ? "undying" : "persist";
+    }
 }

@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.b.BeastWithin;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.RingState;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -11,13 +13,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({InTheDarknessBindThem.class, GrizzlyBears.class, BeastWithin.class})
+@CardUsed({InTheDarknessBindThem.class, GrizzlyBears.class, BeastWithin.class, Forest.class})
 class InTheDarknessBindThemTest extends BaseCardTest {
 
     @Test
@@ -39,7 +42,7 @@ class InTheDarknessBindThemTest extends BaseCardTest {
             resolveAllTriggers();
         }
 
-        assertThat(gd.ringLevels.get(player1.getId())).isEqualTo(3);
+        assertThat(gd.ringLevel(player1.getId())).isEqualTo(3);
         assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(3);
     }
 
@@ -70,7 +73,7 @@ class InTheDarknessBindThemTest extends BaseCardTest {
 
         chooseRingBearer(opponentCreature);
         resolveAllTriggers();
-        assertThat(gd.ringLevels.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.ringLevel(player1.getId())).isEqualTo(1);
         assertThat(saga).isNotIn(gd.playerBattlefields.get(player1.getId()));
 
         harness.forceStep(TurnStep.END_STEP);
@@ -90,8 +93,8 @@ class InTheDarknessBindThemTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent wraith = findPermanent(player1, "Wraith");
-        assertThat(gd.ringLevels.get(player1.getId())).isEqualTo(1);
-        assertThat(gd.ringBearerIds.get(player1.getId())).isEqualTo(wraith.getId());
+        assertThat(gd.ringLevel(player1.getId())).isEqualTo(1);
+        assertThat(gd.ringBearerId(player1.getId())).isEqualTo(wraith.getId());
         assertThat(findPermanent(player1, "In the Darkness Bind Them")
                 .getCounterCount(CounterType.LORE)).isEqualTo(1);
     }
@@ -103,8 +106,8 @@ class InTheDarknessBindThemTest extends BaseCardTest {
         advanceToNextChapter();
         resolveAllTriggers();
 
-        assertThat(gd.ringLevels.get(player1.getId())).isEqualTo(1);
-        assertThat(gd.ringBearerIds).doesNotContainKey(player1.getId());
+        assertThat(gd.ringLevel(player1.getId())).isEqualTo(1);
+        assertThat(gd.ringBearerId(player1.getId())).isNull();
         assertThat(saga).isNotIn(gd.playerBattlefields.get(player1.getId()));
     }
 
@@ -121,7 +124,7 @@ class InTheDarknessBindThemTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
         assertThat(opponentCreature.isTapped()).isTrue();
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.HASTE)).isFalse();
-        assertThat(gd.ringLevels.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.ringLevel(player1.getId())).isEqualTo(1);
     }
 
     @Test
@@ -139,7 +142,7 @@ class InTheDarknessBindThemTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(second).doesNotContain(first);
         assertThat(second.isTapped()).isTrue();
         assertThat(gqs.hasKeyword(gd, second, Keyword.HASTE)).isFalse();
-        assertThat(gd.ringBearerIds.get(player1.getId())).isEqualTo(first.getId());
+        assertThat(gd.ringBearerId(player1.getId())).isEqualTo(first.getId());
     }
 
     @Test
@@ -156,10 +159,24 @@ class InTheDarknessBindThemTest extends BaseCardTest {
         harness.castInstant(player2, 0, opponentCreature.getId());
         resolveAllTriggers();
 
-        assertThat(gd.ringLevels.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.ringLevel(player1.getId())).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(findPermanents(player2, "Beast")).hasSize(1);
         assertThat(saga).isNotIn(gd.playerBattlefields.get(player1.getId()));
+    }
+
+    @Test
+    @DisplayName("Keeps the Ring-bearer when the Ring tempts you and no creature can be chosen")
+    void keepsTheRingBearerWhenNoCreatureCanBeChosen() {
+        Permanent formerCreature = harness.addToBattlefieldAndReturn(player1, new Forest());
+        gd.ringStates.put(player1.getId(), new RingState(1, formerCreature.getId()));
+        addSagaWithLore(3);
+
+        advanceToNextChapter();
+        resolveAllTriggers();
+
+        assertThat(gd.ringLevel(player1.getId())).isEqualTo(2);
+        assertThat(gd.ringBearerId(player1.getId())).isEqualTo(formerCreature.getId());
     }
 
     private Permanent addSagaWithLore(int loreCounters) {

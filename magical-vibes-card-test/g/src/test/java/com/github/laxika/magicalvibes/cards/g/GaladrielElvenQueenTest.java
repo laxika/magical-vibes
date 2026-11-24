@@ -4,6 +4,9 @@ import com.github.laxika.magicalvibes.cards.a.ArborElf;
 import com.github.laxika.magicalvibes.cards.b.BirdsOfParadise;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.MaskwoodNexus;
+import com.github.laxika.magicalvibes.cards.s.SlipOnTheRing;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.RingState;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,13 +14,15 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GaladrielElvenQueen.class, ArborElf.class, Forest.class, BirdsOfParadise.class, MaskwoodNexus.class})
+@CardUsed({GaladrielElvenQueen.class, ArborElf.class, Forest.class, BirdsOfParadise.class, MaskwoodNexus.class,
+        SlipOnTheRing.class})
 class GaladrielElvenQueenTest extends BaseCardTest {
 
     @Test
@@ -35,8 +40,8 @@ class GaladrielElvenQueenTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
         harness.handlePermanentChosen(player1, galadriel.getId());
 
-        assertThat(gd.ringLevels).containsEntry(player1.getId(), 1);
-        assertThat(gd.ringBearerIds).containsEntry(player1.getId(), galadriel.getId());
+        assertThat(gd.ringLevel(player1.getId())).isEqualTo(1);
+        assertThat(gd.ringBearerId(player1.getId())).isEqualTo(galadriel.getId());
         assertThat(galadriel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -55,7 +60,7 @@ class GaladrielElvenQueenTest extends BaseCardTest {
         harness.handleListChoice(player2, GaladrielElvenQueen.GUIDANCE);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(forest).hasSize(handSizeBefore + 1);
-        assertThat(gd.ringLevels).doesNotContainKey(player1.getId());
+        assertThat(gd.ringStates).doesNotContainKey(player1.getId());
     }
 
     @Test
@@ -83,7 +88,7 @@ class GaladrielElvenQueenTest extends BaseCardTest {
         harness.handleListChoice(player2, GaladrielElvenQueen.GUIDANCE);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard).hasSize(handSizeBefore + 1);
-        assertThat(gd.ringLevels).doesNotContainKey(player1.getId());
+        assertThat(gd.ringStates).doesNotContainKey(player1.getId());
     }
 
     @Test
@@ -148,8 +153,7 @@ class GaladrielElvenQueenTest extends BaseCardTest {
     void dominionCountersNewRingBearerInsteadOfPreviousRingBearer() {
         Permanent galadriel = harness.addToBattlefieldAndReturn(player1, new GaladrielElvenQueen());
         Permanent elf = harness.enterBattlefieldAndReturn(player1, new ArborElf());
-        gd.ringLevels.put(player1.getId(), 4);
-        gd.ringBearerIds.put(player1.getId(), galadriel.getId());
+        gd.ringStates.put(player1.getId(), new RingState(4, galadriel.getId()));
 
         advanceToBeginningOfCombat(player1);
         harness.passBothPriorities();
@@ -157,8 +161,8 @@ class GaladrielElvenQueenTest extends BaseCardTest {
         harness.handleListChoice(player2, GaladrielElvenQueen.DOMINION);
         harness.handlePermanentChosen(player1, elf.getId());
 
-        assertThat(gd.ringLevels).containsEntry(player1.getId(), 4);
-        assertThat(gd.ringBearerIds).containsEntry(player1.getId(), elf.getId());
+        assertThat(gd.ringLevel(player1.getId())).isEqualTo(4);
+        assertThat(gd.ringBearerId(player1.getId())).isEqualTo(elf.getId());
         assertThat(elf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(galadriel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
@@ -178,6 +182,29 @@ class GaladrielElvenQueenTest extends BaseCardTest {
         harness.handleListChoice(player1, GaladrielElvenQueen.GUIDANCE);
         harness.handleListChoice(player2, GaladrielElvenQueen.GUIDANCE);
         assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);
+    }
+
+    @Test
+    @DisplayName("Tempts the same Ring that Slip On the Ring gave, raising its level and moving its one Ring-bearer")
+    void temptsTheRingThatSlipOnTheRingGave() {
+        Permanent galadriel = harness.addToBattlefieldAndReturn(player1, new GaladrielElvenQueen());
+        Permanent elf = harness.enterBattlefieldAndReturn(player1, new ArborElf());
+        harness.setHand(player1, List.of(new SlipOnTheRing()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, elf.getId());
+        harness.handlePermanentChosen(player1, galadriel.getId());
+        Permanent returnedElf = findPermanent(player1, "Arbor Elf");
+
+        advanceToBeginningOfCombat(player1);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, GaladrielElvenQueen.DOMINION);
+        harness.handleListChoice(player2, GaladrielElvenQueen.DOMINION);
+        harness.handlePermanentChosen(player1, returnedElf.getId());
+
+        assertThat(gd.ringLevel(player1.getId())).isEqualTo(2);
+        assertThat(gd.ringBearerId(player1.getId())).isEqualTo(returnedElf.getId());
+        assertThat(gqs.isRingBearer(gd, galadriel)).isFalse();
+        assertThat(returnedElf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     private PendingInteraction.ColorChoice activeVote() {

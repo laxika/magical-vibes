@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.RingState;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
@@ -253,9 +252,7 @@ public class CreatureControlService {
 
     private void moveControl(GameData gameData, Permanent permanent, UUID current, UUID derived) {
         gameData.ringStates.replaceAll((playerId, ringState) ->
-                permanent.getId().equals(ringState.bearerId())
-                        ? new RingState(ringState.level(), null)
-                        : ringState);
+                permanent.getId().equals(ringState.bearerId()) ? ringState.withBearer(null) : ringState);
         queueSelfControlLossTriggers(gameData, permanent, current);
         boolean revertedToDefault = gameData.newestControlEffectFor(permanent.getId()) == null;
 

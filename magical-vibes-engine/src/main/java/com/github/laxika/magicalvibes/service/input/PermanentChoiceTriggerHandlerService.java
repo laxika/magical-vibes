@@ -453,16 +453,6 @@ public class PermanentChoiceTriggerHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    public void handleReselectedAttackTarget(GameData gameData, UUID attackTargetId,
-                                             PermanentChoiceContext.ReselectAttackTarget context) {
-        Permanent permanent = gameQueryService.findPermanentById(gameData, context.permanentId());
-        if (permanent != null && permanent.isAttacking() && gameQueryService.isCreature(gameData, permanent)) {
-            permanent.setAttackTarget(attackTargetId);
-            permanent.setAttackTargetReselected(true);
-        }
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
     public void handleExileReturnAttackTarget(GameData gameData, UUID attackTargetId,
                                                PermanentChoiceContext.ExileReturnAttackTarget context) {
         turnProgressionService.completePendingExileReturnAttackTarget(gameData, attackTargetId, context);

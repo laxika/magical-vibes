@@ -28,7 +28,7 @@ public class PutCounterOnRingBearerEffectHandler implements NormalEffectHandlerB
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         PutCounterOnRingBearerEffect counterEffect = (PutCounterOnRingBearerEffect) effect;
         UUID controllerId = entry.getControllerId();
-        UUID ringBearerId = controllerId == null ? null : gameData.ringBearerIds.get(controllerId);
+        UUID ringBearerId = controllerId == null ? null : gameData.ringBearerId(controllerId);
         Permanent ringBearer = ringBearerId == null
                 ? null : gameQueryService.findPermanentById(gameData, ringBearerId);
         if (ringBearer == null || !controllerId.equals(

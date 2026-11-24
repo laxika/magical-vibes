@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.RingState;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
@@ -323,6 +324,22 @@ class KarnLiberatedTest extends BaseCardTest {
             // The restarted game ended (CR 728.1); the new one has none of its delayed abilities.
             assertThat(gd.status).isEqualTo(GameStatus.MULLIGAN);
             assertThat(gd.temporaryGlobalTriggeredAbilities).isEmpty();
+        }
+
+        @Test
+        @DisplayName("−14 removes every player's Ring emblem and Ring-bearer")
+        void restartRemovesTheRing() {
+            Permanent karn = addReadyKarn(player1);
+            karn.setCounterCount(CounterType.LOYALTY, 14);
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            gd.ringStates.put(player2.getId(), new RingState(3, bears.getId()));
+
+            harness.activateAbility(player1, 0, 2, null, null);
+            harness.passBothPriorities();
+
+            assertThat(gd.status).isEqualTo(GameStatus.MULLIGAN);
+            assertThat(gd.ringLevel(player2.getId())).isZero();
+            assertThat(gd.ringBearerId(player2.getId())).isNull();
         }
 
         @Test

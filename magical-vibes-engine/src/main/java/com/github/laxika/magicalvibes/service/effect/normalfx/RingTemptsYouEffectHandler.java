@@ -18,7 +18,13 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
-/** Resolves The Ring's level and Ring-bearer designation. */
+/**
+ * "The Ring tempts you" (CR 701.54a, 701.54c): the controller gets the Ring emblem if they lack it and its level
+ * rises, then they choose a creature they control as their Ring-bearer (unasked when only one can be chosen; with
+ * none, their Ring-bearer stays as it was). The Ring has tempted them once that is done, even if no creature could
+ * be chosen (CR 701.54d), which raises the tempted event; a chosen Ring-bearer also raises the bearer-chosen event.
+ * Everything is kept in the one Ring store, {@link GameData#ringStates}.
+ */
 @Component
 @RequiredArgsConstructor
 public class RingTemptsYouEffectHandler implements NormalEffectHandlerBean {
@@ -40,11 +46,9 @@ public class RingTemptsYouEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        int previousLevel = gameData.ringLevels.getOrDefault(controllerId, 0);
-        gameData.ringLevels.put(controllerId, Math.min(4, previousLevel + 1));
+        gameData.temptByRing(controllerId);
         gameLogService.append(gameData, GameLog.text(
                 gameData.playerIdToName.get(controllerId) + " is tempted by the Ring."));
-        ActionEvents.temptedByRing(gameData, controllerId);
 
         List<UUID> creatureIds = gameData.playerBattlefields
                 .getOrDefault(controllerId, List.of())
@@ -54,9 +58,9 @@ public class RingTemptsYouEffectHandler implements NormalEffectHandlerBean {
                 .map(Permanent::getId)
                 .toList();
         if (creatureIds.isEmpty()) {
-            gameData.ringBearerIds.remove(controllerId);
+            ActionEvents.temptedByRing(gameData, controllerId);
         } else if (creatureIds.size() == 1) {
-            gameData.ringBearerIds.put(controllerId, creatureIds.getFirst());
+            becomeRingBearer(gameData, controllerId, gameQueryService.findPermanentById(gameData, creatureIds.getFirst()));
         } else {
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.RingBearerChoice(controllerId));
@@ -71,11 +75,9 @@ public class RingTemptsYouEffectHandler implements NormalEffectHandlerBean {
         if (chosen != null
                 && gameQueryService.isCreature(gameData, chosen)
                 && context.controllerId().equals(gameQueryService.findPermanentController(gameData, permanentId))) {
-            gameData.ringBearerIds.put(context.controllerId(), permanentId);
-            gameLogService.append(gameData, GameLog.cardThen(chosen.getCard(),
-                    " becomes the Ring-bearer."));
+            becomeRingBearer(gameData, context.controllerId(), chosen);
         } else {
-            gameData.ringBearerIds.remove(context.controllerId());
+            ActionEvents.temptedByRing(gameData, context.controllerId());
         }
 
         if (gameData.pendingEffectResolutionEntry != null) {
@@ -83,5 +85,12 @@ public class RingTemptsYouEffectHandler implements NormalEffectHandlerBean {
                     gameData.pendingEffectResolutionEntry,
                     gameData.pendingEffectResolutionIndex);
         }
+    }
+
+    private void becomeRingBearer(GameData gameData, UUID controllerId, Permanent chosen) {
+        gameData.setRingBearer(controllerId, chosen.getId());
+        gameLogService.append(gameData, GameLog.cardThen(chosen.getCard(), " becomes the Ring-bearer."));
+        ActionEvents.ringBearerChosen(gameData, controllerId, chosen.getId());
+        ActionEvents.temptedByRing(gameData, controllerId);
     }
 }

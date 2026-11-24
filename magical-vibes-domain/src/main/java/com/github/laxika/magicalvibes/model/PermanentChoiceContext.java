@@ -1276,10 +1276,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    /** Misleading Signpost: choose a new player or permanent for the attacking creature to attack. */
+    /** {@code ReselectAttackingCreatureAttackTargetEffect}: choose a new player or permanent for the attacking creature to attack. */
     record ReselectAttackingCreatureTarget(UUID permanentId) implements PermanentChoiceContext {}
-    /** Portal Mage: choose a new player or permanent for an attacking creature to attack. */
-    record ReselectAttackTarget(UUID permanentId) implements PermanentChoiceContext {}
 
     /** Meandering Towershell: choose the opponent or opposing planeswalker it attacks on return. */
     record ExileReturnAttackTarget(PendingExileReturn pending, List<PendingExileReturn> remaining)
@@ -2783,9 +2781,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** The controller is choosing the creature that will be their Ring-bearer. */
     record RingBearerChoice(UUID controllerId) implements PermanentChoiceContext {}
-
-    /** Ring-bearer choice for TemptTheRingEffect and its separate RingState model. */
-    record TemptTheRingBearerChoice(UUID controllerId) implements PermanentChoiceContext {}
 
     /** Chooses a controlled permanent from which a counter will be removed. */
     record RemoveCounterFromChosenOwnPermanent(PermanentPredicate permanentFilter)

@@ -90,10 +90,8 @@ import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEf
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.CantWinGameEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerSpellsCantBeCounteredEffect;
-import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellsCantBeCounteredEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageDealtByEnchantedCreatureEffect;
@@ -2534,7 +2532,8 @@ class GameQueryServiceTest {
         void globalPredicateRestrictedProtection() {
             addPermanent(player1Id, createCreatureWithStaticEffect(
                     "Root Sliver", 2, 2, CardColor.GREEN,
-                    new SpellsCantBeCounteredEffect(new CardSubtypePredicate(CardSubtype.SLIVER))));
+                    new ControllerSpellsCantBeCounteredEffect(Subjects.eachPlayer(), Set.of(),
+                            new CardSubtypePredicate(CardSubtype.SLIVER))));
             Card sliver = createCreatureWithSubtypes("Metallic Sliver", 1, 1, null,
                     List.of(CardSubtype.SLIVER));
             Card nonSliver = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN,
@@ -2549,9 +2548,9 @@ class GameQueryServiceTest {
         }
 
         @Test
-        @DisplayName("returns true when CreatureSpellsCantBeCounteredEffect on battlefield")
+        @DisplayName("returns true while a permanent says creature spells can't be countered")
         void returnsTrueWithEffect() {
-            addPermanent(player1Id, createCreatureWithStaticEffect("Gaea's Herald", 1, 1, CardColor.GREEN, new CreatureSpellsCantBeCounteredEffect()));
+            addPermanent(player1Id, createCreatureWithStaticEffect("Gaea's Herald", 1, 1, CardColor.GREEN, new ControllerSpellsCantBeCounteredEffect(Subjects.eachPlayer(), Set.of(CardType.CREATURE), null)));
             Card creature = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR));
 
             assertThat(gqs.isUncounterable(gd, creature)).isTrue();
@@ -2576,7 +2575,7 @@ class GameQueryServiceTest {
         @Test
         @DisplayName("works even if effect is on opponent's battlefield")
         void worksWithOpponentEffect() {
-            addPermanent(player2Id, createCreatureWithStaticEffect("Gaea's Herald", 1, 1, CardColor.GREEN, new CreatureSpellsCantBeCounteredEffect()));
+            addPermanent(player2Id, createCreatureWithStaticEffect("Gaea's Herald", 1, 1, CardColor.GREEN, new ControllerSpellsCantBeCounteredEffect(Subjects.eachPlayer(), Set.of(CardType.CREATURE), null)));
             Card creature = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR));
 
             assertThat(gqs.isUncounterable(gd, creature)).isTrue();
@@ -2615,7 +2614,8 @@ class GameQueryServiceTest {
         void controllerHighPowerCreatureSpellProtected() {
             addPermanent(player1Id, createCreatureWithStaticEffect(
                     "Spellbreaker Behemoth", 5, 5, CardColor.RED,
-                    new ControllerCreatureSpellsCantBeCounteredEffect(5)));
+                    new ControllerSpellsCantBeCounteredEffect(false, null, Set.of(CardType.CREATURE),
+                            new CardPowerAtLeastPredicate(5))));
             Card creature = creatureOnStack("Big Beast", 5, player1Id);
 
             assertThat(gqs.isUncounterable(gd, creature)).isTrue();
@@ -2626,8 +2626,22 @@ class GameQueryServiceTest {
         void controllerLowPowerCreatureSpellNotProtected() {
             addPermanent(player1Id, createCreatureWithStaticEffect(
                     "Spellbreaker Behemoth", 5, 5, CardColor.RED,
-                    new ControllerCreatureSpellsCantBeCounteredEffect(5)));
+                    new ControllerSpellsCantBeCounteredEffect(false, null, Set.of(CardType.CREATURE),
+                            new CardPowerAtLeastPredicate(5))));
             Card creature = creatureOnStack("Small Beast", 4, player1Id);
+
+            assertThat(gqs.isUncounterable(gd, creature)).isFalse();
+        }
+
+        @Test
+        @DisplayName("a face-down permanent has no can't-be-countered ability (CR 708.2)")
+        void faceDownBehemothDoesNotProtect() {
+            Permanent behemoth = addPermanent(player1Id, createCreatureWithStaticEffect(
+                    "Spellbreaker Behemoth", 5, 5, CardColor.RED,
+                    new ControllerSpellsCantBeCounteredEffect(false, null, Set.of(CardType.CREATURE),
+                            new CardPowerAtLeastPredicate(5))));
+            behemoth.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+            Card creature = creatureOnStack("Big Beast", 6, player1Id);
 
             assertThat(gqs.isUncounterable(gd, creature)).isFalse();
         }
@@ -2637,7 +2651,8 @@ class GameQueryServiceTest {
         void opponentBehemothDoesNotProtect() {
             addPermanent(player2Id, createCreatureWithStaticEffect(
                     "Spellbreaker Behemoth", 5, 5, CardColor.RED,
-                    new ControllerCreatureSpellsCantBeCounteredEffect(5)));
+                    new ControllerSpellsCantBeCounteredEffect(false, null, Set.of(CardType.CREATURE),
+                            new CardPowerAtLeastPredicate(5))));
             Card creature = creatureOnStack("Big Beast", 8, player1Id);
 
             assertThat(gqs.isUncounterable(gd, creature)).isFalse();

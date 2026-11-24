@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MoonlitMeditation.class, GrizzlyBears.class, JadeMage.class, PowerstoneShard.class, DevastatingOnslaught.class})
+@CardUsed({MoonlitMeditation.class, GrizzlyBears.class, JadeMage.class, PowerstoneShard.class, DevastatingOnslaught.class,
+        MutableExplorer.class})
 class MoonlitMeditationTest extends BaseCardTest {
 
     @Test
@@ -202,6 +204,48 @@ class MoonlitMeditationTest extends BaseCardTest {
         activateJadeMage();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+    }
+
+    @Test
+    @DisplayName("Copies replacing tokens that would enter tapped enter tapped")
+    void copiesReplacingTappedTokensEnterTapped() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent moonlit = harness.addToBattlefieldAndReturn(player1, new MoonlitMeditation());
+        moonlit.setAttachedTo(enchanted.getId());
+        harness.setHand(player1, List.of(new MutableExplorer()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .singleElement()
+                .satisfies(token -> {
+                    assertThat(token.getCard().getName()).isEqualTo("Grizzly Bears");
+                    assertThat(token.isTapped()).isTrue();
+                });
+    }
+
+    @Test
+    @DisplayName("An Aura that lost its abilities offers no replacement")
+    void auraThatLostItsAbilitiesOffersNothing() {
+        setupMoonlitMeditation(new GrizzlyBears());
+        Permanent moonlit = findPermanent(player1, "Moonlit Meditation");
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, moonlit);
+        addJadeMageActivationMana();
+
+        activateJadeMage();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .singleElement()
+                .satisfies(token -> assertThat(token.getCard().getName()).isEqualTo("Saproling"));
     }
 
     private Permanent setupMoonlitMeditation(com.github.laxika.magicalvibes.model.Card enchantedCard) {

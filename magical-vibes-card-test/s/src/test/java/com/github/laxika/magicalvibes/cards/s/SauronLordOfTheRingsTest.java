@@ -71,8 +71,8 @@ class SauronLordOfTheRingsTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(commander);
-        assertThat(gd.ringLevels).containsEntry(player1.getId(), 1);
-        assertThat(gd.ringBearerIds).containsKey(player1.getId());
+        assertThat(gd.ringLevel(player1.getId())).isEqualTo(1);
+        assertThat(gd.ringBearerId(player1.getId())).isNotNull();
     }
 
     @Test
@@ -88,7 +88,7 @@ class SauronLordOfTheRingsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
-        assertThat(gd.ringLevels).doesNotContainKey(player1.getId());
+        assertThat(gd.ringStates).doesNotContainKey(player1.getId());
     }
 
     @Test
@@ -175,7 +175,7 @@ class SauronLordOfTheRingsTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(commanderCard);
-        assertThat(gd.ringLevels).containsEntry(player1.getId(), 1);
+        assertThat(gd.ringLevel(player1.getId())).isEqualTo(1);
     }
 
     @Test
@@ -194,7 +194,7 @@ class SauronLordOfTheRingsTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(commander);
-        assertThat(gd.ringLevels).doesNotContainKey(player1.getId());
+        assertThat(gd.ringStates).doesNotContainKey(player1.getId());
     }
 
     @Test
@@ -216,7 +216,7 @@ class SauronLordOfTheRingsTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
-        assertThat(gd.ringLevels).containsEntry(player1.getId(), 1);
+        assertThat(gd.ringLevel(player1.getId())).isEqualTo(1);
     }
 
     @Test

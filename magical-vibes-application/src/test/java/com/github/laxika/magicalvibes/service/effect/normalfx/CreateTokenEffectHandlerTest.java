@@ -132,7 +132,11 @@ class CreateTokenEffectHandlerTest {
                 List.of(effect), 0);
 
         when(amountEvaluationService.evaluate(eq(gd), any(), any())).thenReturn(1);
-        when(gameQueryService.findPermanentById(gd, enchanted.getId())).thenReturn(enchanted);
+        when(esixTokenReplacementSupport.offerAttachedCopy(gd, playerId, 1, 1, 1)).thenAnswer(invocation -> {
+            gd.pendingTokenCreationReplacement = new com.github.laxika.magicalvibes.model.PendingTokenCreationReplacement(
+                    moonlit.getId(), 1, 1, 1, false);
+            return true;
+        });
 
         handler.resolve(gd, entry, effect);
         gd.resolvedMayAccepted = true;

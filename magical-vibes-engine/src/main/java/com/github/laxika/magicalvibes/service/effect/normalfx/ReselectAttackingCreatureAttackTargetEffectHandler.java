@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -9,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReselectAttackingCreatureAttackTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -17,6 +17,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Offers the new attack targets of {@link ReselectAttackingCreatureAttackTargetEffect}: the players and permanents
+ * {@code AttackLegalityService.getValidReselectionTargetIds} allows (every attack requirement, restriction and cost
+ * ignored), in turn order. The answer is checked again and applied by
+ * {@code PermanentChoiceTriggerHandlerService.handleReselectAttackingCreatureTarget}.
+ */
 @Component
 @RequiredArgsConstructor
 public class ReselectAttackingCreatureAttackTargetEffectHandler implements NormalEffectHandlerBean {
@@ -24,6 +30,7 @@ public class ReselectAttackingCreatureAttackTargetEffectHandler implements Norma
     private final GameQueryService gameQueryService;
     private final AttackLegalityService attackLegalityService;
     private final PlayerInputService playerInputService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,55 +39,40 @@ public class ReselectAttackingCreatureAttackTargetEffectHandler implements Norma
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        ReselectAttackingCreatureAttackTargetEffect reselectEffect =
-                (ReselectAttackingCreatureAttackTargetEffect) effect;
-        UUID attackerId = entry.getTargetIds().isEmpty()
-                ? entry.getTargetId()
-                : entry.getTargetIds().getFirst();
-        Permanent attacker = gameQueryService.findPermanentById(gameData, attackerId);
+        ReselectAttackingCreatureAttackTargetEffect reselect = (ReselectAttackingCreatureAttackTargetEffect) effect;
+        Permanent attacker = subjectResolutionService.permanent(gameData, entry, effect, reselect.attacker());
         if (attacker == null || !attacker.isAttacking() || !gameQueryService.isCreature(gameData, attacker)) {
             return;
         }
-
-        UUID attackerControllerId = gameData.findControllerOf(attacker);
+        UUID attackerControllerId = gameQueryService.findPermanentController(gameData, attacker.getId());
         if (attackerControllerId == null) {
             return;
         }
 
-        // Reselecting what a creature attacks ignores all attack requirements, restrictions and
-        // costs; only the kinds of objects it could attack at all are offered.
         Set<UUID> validAttackTargetIds =
-                attackLegalityService.getValidAttackTargetIds(gameData, attackerControllerId);
+                attackLegalityService.getValidReselectionTargetIds(gameData, attackerControllerId);
         List<UUID> validPlayerIds = gameData.orderedPlayerIds.stream()
                 .filter(validAttackTargetIds::contains)
                 .filter(playerId -> !playerId.equals(attackerControllerId))
                 .toList();
-        List<UUID> validPermanentIds = reselectEffect.playersOnly()
+        List<UUID> validPermanentIds = reselect.playersOnly()
                 ? List.of()
                 : gameData.orderedPlayerIds.stream()
                         .flatMap(playerId -> gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream())
-                        .filter(permanent -> validAttackTargetIds.contains(permanent.getId()))
-                        .filter(permanent -> !attackerControllerId.equals(gameData.findControllerOf(permanent))
-                                || isSiegeBattle(gameData, permanent))
                         .map(Permanent::getId)
+                        .filter(validAttackTargetIds::contains)
                         .toList();
-
         if (validPlayerIds.isEmpty() && validPermanentIds.isEmpty()) {
             return;
         }
 
         gameData.interaction.setPermanentChoiceContext(
-                new PermanentChoiceContext.ReselectAttackTarget(attacker.getId()));
+                new PermanentChoiceContext.ReselectAttackingCreatureTarget(attacker.getId()));
         playerInputService.beginAnyTargetChoice(
                 gameData,
                 entry.getControllerId(),
                 validPermanentIds,
                 validPlayerIds,
                 "Choose the player or permanent for the attacking creature to attack.");
-    }
-
-    private boolean isSiegeBattle(GameData gameData, Permanent permanent) {
-        return gameQueryService.isBattle(gameData, permanent)
-                && permanent.getCard().getSubtypes().contains(CardSubtype.SIEGE);
     }
 }

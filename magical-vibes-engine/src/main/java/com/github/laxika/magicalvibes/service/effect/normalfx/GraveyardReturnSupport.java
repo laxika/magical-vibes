@@ -2659,13 +2659,6 @@ public class GraveyardReturnSupport {
      */
 
     /**
-     * Resolves an {@link UndyingReturnEffect} (CR 702.93) by returning the dying card from its owner's
-     * graveyard to the battlefield under its owner's control with a +1/+1 counter on it. The entry is
-     * flagged as entering from the owner's graveyard so "enters from your graveyard" triggers (e.g.
-     * Flayer of the Hatebound) fire. Fizzles silently if the card is no longer in a graveyard.
-     */
-
-    /**
      * Returns {@code true} if the given card is currently barred from entering the battlefield from
      * {@code zone} (e.g. a creature card while Grafdigger's Cage is on the battlefield).
      */

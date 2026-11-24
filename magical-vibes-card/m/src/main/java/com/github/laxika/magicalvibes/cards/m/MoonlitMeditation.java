@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.MoonlitMeditationEffect;
+import com.github.laxika.magicalvibes.model.effect.FirstTokenCreationCopiesAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -23,6 +23,6 @@ public class MoonlitMeditation extends Card {
                                 new PermanentIsCreaturePredicate())),
                         new PermanentControlledBySourceControllerPredicate())),
                 "Target must be an artifact or creature you control"))
-                .addStaticEffect(new MoonlitMeditationEffect());
+                .addStaticEffect(new FirstTokenCreationCopiesAttachedPermanentEffect());
     }
 }

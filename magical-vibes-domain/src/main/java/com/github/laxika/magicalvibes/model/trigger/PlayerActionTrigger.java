@@ -61,8 +61,9 @@ public record PlayerActionTrigger(PlayerAction action, PlayerRelation player, Ca
         /** The players finish a vote. */
         FINISH_VOTING,
         /**
-         * The Ring tempts the player and they choose their Ring-bearer. Kept apart from {@link #TEMPTED_BY_RING}
-         * because the two tempt effects of the engine each fire one of them.
+         * The Ring tempts the player and they choose a creature as their Ring-bearer; raised beside
+         * {@link #TEMPTED_BY_RING}, and only when a creature was chosen ("if you chose a creature … as your
+         * Ring-bearer").
          */
         CHOOSES_RING_BEARER,
         /** The Ring tempts the player. */

@@ -262,8 +262,7 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
             return false;
         }
         int replacedAmount = (int) (copyCount * existingTargets);
-        return esixTokenReplacementSupport.offerMirrormindCrown(gameData, entry.getControllerId(), replacedAmount)
-                || esixTokenReplacementSupport.offerMoonlitMeditation(gameData, entry.getControllerId(), replacedAmount)
+        return esixTokenReplacementSupport.offerAttachedCopy(gameData, entry.getControllerId(), replacedAmount, 0, 0)
                 || esixTokenReplacementSupport.offer(gameData, entry.getControllerId(), replacedAmount, 0, 0);
     }
 

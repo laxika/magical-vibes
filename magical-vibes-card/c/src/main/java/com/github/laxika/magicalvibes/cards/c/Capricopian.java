@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReselectAttackingCreatureAttackTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -28,7 +29,7 @@ public class Capricopian extends Card {
                 List.of(
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
                         new MayEffect(
-                                new ReselectAttackingCreatureAttackTargetEffect(true, true),
+                                new ReselectAttackingCreatureAttackTargetEffect(Subjects.source(), true),
                                 "Reselect which player this creature is attacking?")),
                 "{2}: Put a +1/+1 counter on this creature, then you may reselect which player this creature is attacking."
         ).withActivatableByAnyPlayer().withActivationCondition(

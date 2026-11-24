@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b (each in Findings; the fold queue marks its rows). Fold runs 8 to 20 run in parallel worktrees from 2026-11-24. Next: fold runs 18b, 19b and 20 (running), 19 (merging), 17c, 12e, 15c, `drafted-step`. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                           |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19 (each in Findings; the fold queue marks its rows). Fold runs 18b, 19b and 20 are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                            |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,690 / 2,954 (after fold run 17b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,683 / 2,951 (after fold run 19) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,548 rows over 4,426 classes (after fold run 17b). Latest verdict per class: `step-9` 844, unique 1,167, absorbed 715, split 605, blocked-other 502, survivor 294, blocked-step-model 141, blocked-player-loop 96, dead 62. Waiting: 844 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,561 rows over 4,429 classes (after fold run 19). Latest verdict per class: `step-9` 834, unique 1,167, absorbed 723, split 605, blocked-other 502, survivor 299, blocked-step-model 141, blocked-player-loop 96, dead 62. Waiting: 834 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -716,6 +716,12 @@ Delayed and global triggers:
 - `CopyExceptions.named(n)`, `.alsoLegendary()`, `withBasePowerToughness(p, t)` / `.alsoWithBasePowerToughness`, `.alsoWithKeywords`,
   `.alsoACreatureOfTypes(...)`: name, added supertype, base P/T (CR 707.9d) and replaced types (CR 205.1a) as copiable values (fold run
   17b).
+
+- `GameData.ringStates` (`RingState`) + `ringLevel` / `ringBearerId` / `temptByRing` / `setRingBearer`: the one Ring store (fold run 19).
+- `PersistReturnEffect(CounterType)` / `.undying()`: the keyword dies-return (fold run 19).
+- `ReselectAttackingCreatureAttackTargetEffect(PermanentSubject attacker, boolean playersOnly)`; `FirstTokenCreationCopiesAttachedPermanentEffect`
+  + `EsixTokenReplacementSupport.offerAttachedCopy`; `ControllerSpellsCantBeCounteredEffect(PlayerSubject players, Set<CardType>,
+  CardPredicate)` read over active static abilities (fold run 19).
 
 ### Blocked causes still open
 
@@ -2416,6 +2422,35 @@ line wins.
 triggeringCards(creature))` + the survivor over `cardsThisWay(CHOOSE)`. Spirit: a CHOOSE over last-known event cards. Then
 `cost-paid-copy` and `copy-on-enter`. `BecomeCopyOfTargetPermanentUntilYourNextTurnEffect` (Absorbing Man, Crystalline Resonance,
 Volrath; unaudited) can fold onto `CopyExceptions`.
+
+### Step 9, fold run 19 (2026-11-24, parallel worktree)
+
+Batches `ring`, `undying`, `reselect`, `attached-copy-token`, `cant-be-countered`; `opp-mode` and `tempting` left (19b). Ratchet in its
+worktree 3,731 / 2,995 → 3,724 / 2,992. Ledger 13 rows (absorbed 9, survivor 4). 14 card files rewritten, Oracle text checked for all.
+CR 701.54a, 701.54c, 701.54d, 701.54e, 702.79a, 702.93a, 400.7, 700.2e, 708.2, 613.1f checked.
+
+| Batch | Result |
+|---|---|
+| ring | `TemptTheRingEffect` into `RingTemptsYouEffect`. One store `GameData.ringStates` (`RingState`; `ringLevel`, `ringBearerId`, `temptByRing`, `setRingBearer`); `ringLevels`, `ringBearerIds` and `TemptTheRingBearerChoice` deleted. The tempt logs, raises `TEMPTED_BY_RING` and, when a creature was chosen, `CHOOSES_RING_BEARER`. Deep-copy test |
+| undying | `UndyingReturnEffect` into `PersistReturnEffect(CounterType)` / `.undying()`, with the stay check (CR 400.7). +1/+1 placement stays on `doublePlusOnePlusOneCounters` (its can't-have check); -1/-1 on `replaceCounters` |
+| reselect | `ReselectAttackingCreatureEffect` into `ReselectAttackingCreatureAttackTargetEffect(PermanentSubject attacker, boolean playersOnly)` (`target()` for Portal Mage and Signpost, `source()` for Capricopian); one reselection query and completion |
+| attached-copy-token | Mirrormind Crown's and Moonlit Meditation's records into the new marker `FirstTokenCreationCopiesAttachedPermanentEffect`; one offer `EsixTokenReplacementSupport.offerAttachedCopy` over `activeStaticEffects` |
+| cant-be-countered | `SpellsCantBeCounteredEffect`, `CreatureSpellsCantBeCounteredEffect` and `ControllerCreatureSpellsCantBeCounteredEffect` into `ControllerSpellsCantBeCounteredEffect` with a `PlayerSubject players` (`you()` default, `eachPlayer()`); Spellbreaker Behemoth uses `CardPowerAtLeastPredicate(5)`; one reader `spellsCantBeCounteredProtects` over active static abilities |
+
+**Behaviour changes.** The Ring is stored once (the queue's most serious defect): Slip On the Ring triggers "whenever the Ring tempts
+you", logs the temptation and shares the Ring with the other tempt cards (CR 701.54c, 701.54d); `RingTemptsYouEffect` cards raise the
+bearer-chosen event (Gandalf, Friend of the Shire draws on any tempt). A tempt with no choosable creature keeps the bearer (CR
+701.54a). Ring-bearers can be sacrificed again: `cantBeSacrificed` had a Ring-bearer ban no rule supports. Karn's restart clears every
+Ring. Undying checks the stay. Portal Mage may reselect a planeswalker that can't be attacked (ruling). Moonlit Meditation's copies of
+tapped tokens enter tapped (ruling); it and Mirrormind Crown do nothing once they've lost their abilities (CR 613.1f). A face-down or
+ability-less can't-be-countered permanent protects nothing (CR 708.2, 613.1f). New test for each.
+
+**Found.** The Ring's second, third and fourth abilities (loot on attack, the blocker sacrificed at end of combat, each opponent
+losing 3) aren't implemented (CR 701.54c): `missing-features-to-do.md` entry 82.
+
+**For the next run (19b).** `opp-mode`: an opponent chooser on `ChooseOneEffect` at cast (CR 700.2e: the controller picks which
+opponent chooses), with `FatalLoreEffect` and the targets-after-mode-choice context, replacing `SpellCastingService.queueOpponentModeChoice`.
+`tempting`: `TemptingOfferEffect(payload)`, all opponents deciding in turn order, then the payloads (C13 ruling).
 
 ## Prompt
 

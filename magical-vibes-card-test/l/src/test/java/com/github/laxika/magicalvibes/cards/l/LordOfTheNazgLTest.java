@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.e.Earthquake;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.RingState;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -67,8 +68,7 @@ class LordOfTheNazgLTest extends BaseCardTest {
         Permanent wraith = findPermanent(player1, "Wraith");
         Permanent ringBearer = addCreatureReady(player2, new GrizzlyBears());
 
-        gd.ringLevels.put(player2.getId(), 1);
-        gd.ringBearerIds.put(player2.getId(), ringBearer.getId());
+        gd.ringStates.put(player2.getId(), new RingState(1, ringBearer.getId()));
 
         assertThat(gqs.hasProtectionFromSource(gd, wraith, ringBearer)).isTrue();
         assertThat(gqs.hasProtectionFromSource(gd, lord, ringBearer)).isTrue();
@@ -171,12 +171,11 @@ class LordOfTheNazgLTest extends BaseCardTest {
         Permanent firstBearer = addCreatureReady(player2, new GrizzlyBears());
         Permanent secondBearer = addCreatureReady(player2, new GrizzlyBears());
         Permanent opponentWraith = harness.addToBattlefieldAndReturn(player2, wraith.getCard());
-        gd.ringLevels.put(player2.getId(), 1);
-        gd.ringBearerIds.put(player2.getId(), firstBearer.getId());
+        gd.ringStates.put(player2.getId(), new RingState(1, firstBearer.getId()));
         assertThat(gqs.hasProtectionFromSource(gd, wraith, firstBearer)).isTrue();
         assertThat(gqs.hasProtectionFromSource(gd, ownBear, firstBearer)).isFalse();
         assertThat(gqs.hasProtectionFromSource(gd, opponentWraith, firstBearer)).isFalse();
-        gd.ringBearerIds.put(player2.getId(), secondBearer.getId());
+        gd.setRingBearer(player2.getId(), secondBearer.getId());
         assertThat(gqs.hasProtectionFromSource(gd, wraith, firstBearer)).isFalse();
         assertThat(gqs.hasProtectionFromSource(gd, wraith, secondBearer)).isTrue();
         gd.playerBattlefields.get(player1.getId()).remove(lord);

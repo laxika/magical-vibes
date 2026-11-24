@@ -176,7 +176,6 @@ import com.github.laxika.magicalvibes.model.effect.ChosenPlayersDamageMultiplyin
 import com.github.laxika.magicalvibes.model.effect.CombatTaxKind;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesMatchingCantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledNonlandPermanentsAreColorEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerOpponentDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerRecipientDamageMultiplyingEffect;
@@ -186,7 +185,6 @@ import com.github.laxika.magicalvibes.model.effect.CounterReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureDyingDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTriggersEffect;
-import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewAndSaddlePowerModifierEffect;
 import com.github.laxika.magicalvibes.model.effect.DamagePreventionBySelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageToPlayersAndBattlesBonusEffect;
@@ -313,7 +311,6 @@ import com.github.laxika.magicalvibes.model.effect.SourceDamageMultiplyingEffect
 import com.github.laxika.magicalvibes.model.effect.SourceOpponentDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellDamageBonusEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SubtypeSourceDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
@@ -948,11 +945,7 @@ public class GameQueryService {
             return false;
         }
         UUID controllerId = findPermanentController(gameData, permanent.getId());
-        return controllerId != null
-                && ((gameData.ringLevels.getOrDefault(controllerId, 0) > 0
-                    && permanent.getId().equals(gameData.ringBearerIds.get(controllerId)))
-                    || (gameData.ringStates.get(controllerId) != null
-                        && permanent.getId().equals(gameData.ringStates.get(controllerId).bearerId())));
+        return controllerId != null && permanent.getId().equals(gameData.ringBearerId(controllerId));
     }
 
     /** Returns the permanent's subtypes after continuous effects are applied in one layer pass. */
@@ -1082,20 +1075,6 @@ public class GameQueryService {
             /** {@link #anyManaAbilityLock}. */
             MANA_ABILITY_LOCK
         }
-    }
-
-    private boolean anyBattlefieldSpellsCantBeCountered(GameData gameData, Card card) {
-        StackEntry spell = findStackEntryByCardId(gameData, card.getId());
-        UUID controllerId = spell == null ? card.getOwnerId() : spell.getControllerId();
-        return gameData.anyPermanentMatches(permanent ->
-                !permanent.isFaceDown()
-                        && !hasLostAllAbilities(gameData, permanent)
-                        && permanent.getCard().getStaticEffects().stream()
-                        .filter(SpellsCantBeCounteredEffect.class::isInstance)
-                        .map(SpellsCantBeCounteredEffect.class::cast)
-                        .anyMatch(effect -> effect.predicate() == null
-                                || predicateEvaluationService.matchesCardPredicate(
-                                        card, effect.predicate(), null, gameData, controllerId)));
     }
 
     // --- Permanent / Card lookups ---
@@ -4794,9 +4773,6 @@ public class GameQueryService {
 
     /** Returns whether the permanent cannot be sacrificed. */
     public boolean cantBeSacrificed(GameData gameData, Permanent permanent) {
-        if (isRingBearer(gameData, permanent)) {
-            return true;
-        }
         // Call for Aid: the player its effect names can't sacrifice it this turn.
         UUID controllerId = findPermanentController(gameData, permanent.getId());
         if (gameData.floatingEffectsOnPermanent(permanent.getId(), ControllerCantSacrificeTargetThisTurnEffect.class)
@@ -10368,9 +10344,7 @@ public class GameQueryService {
      * its own "can't be countered" ability ({@link CantBeCounteredEffect}), because it was
      * individually made uncounterable while on the stack (e.g. Vexing Shusher), or because
      * its controller has turn-scoped protection for creature spells, or because
-     * a {@link CreatureSpellsCantBeCounteredEffect} on the battlefield protects creature spells, or
-     * a {@link ControllerSpellsCantBeCounteredEffect} protects spells controlled by the spell's controller,
-     * or a {@link SpellsCantBeCounteredEffect} protects every spell or every matching spell.
+     * a {@link ControllerSpellsCantBeCounteredEffect} on the battlefield protects it.
      */
     /** Whether abilities on the stack can't be countered (Spider-Punk's "Spells and abilities can't be countered"). */
     public boolean areAbilitiesUncounterable(GameData gameData) {
@@ -10410,43 +10384,34 @@ public class GameQueryService {
                 GrantControllerCreatureSpellsCantBeCounteredThisTurnEffect.class)) {
             return true;
         }
-        if (stackEntry != null && controllerSpellsCantBeCountered(gameData, stackEntry, card)) {
-            return true;
-        }
-        if (anyBattlefieldSpellsCantBeCountered(gameData, card)) {
-            return true;
-        }
-        if (!hasCardType(card, CardType.CREATURE)) {
-            return false;
-        }
-        if (anyBattlefieldHasStaticEffect(gameData, CreatureSpellsCantBeCounteredEffect.class)) {
-            return true;
-        }
-        return controllerProtectsHighPowerCreatureSpell(gameData, card);
+        return spellsCantBeCounteredProtects(gameData, card, stackEntry != null ? stackEntry : spell);
     }
 
-    private boolean controllerSpellsCantBeCountered(GameData gameData, StackEntry stackEntry, Card card) {
-        UUID controllerId = stackEntry.getControllerId();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return false;
-        }
+    /**
+     * Whether an active {@link ControllerSpellsCantBeCounteredEffect} protects {@code card}: its players name the
+     * spell's controller (its owner when it is on no stack entry) and the spell matches its restrictions. Only active
+     * static abilities count, so a face-down permanent or one that lost its abilities protects nothing (CR 708.2,
+     * 613.1f).
+     */
+    private boolean spellsCantBeCounteredProtects(GameData gameData, Card card, StackEntry stackEntry) {
+        UUID controllerId = stackEntry != null ? stackEntry.getControllerId() : card.getOwnerId();
         boolean creatureSpell = hasCardType(card, CardType.CREATURE);
-        int manaValue = StackEntry.spellManaValue(card, stackEntry.getXValue());
-        return battlefield.stream()
-                .filter(permanent -> !permanent.isFaceDown()
-                        && !hasLostAllAbilities(gameData, permanent))
-                .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
-                .filter(ControllerSpellsCantBeCounteredEffect.class::isInstance)
-                .map(ControllerSpellsCantBeCounteredEffect.class::cast)
-                .anyMatch(effect -> (!effect.castOnly() || !stackEntry.isCopy())
-                        && (!effect.noncreatureOnly() || !creatureSpell)
-                        && (effect.cardTypes().isEmpty()
-                        || effect.cardTypes().stream().anyMatch(card::hasType))
-                        && (effect.predicate() == null
-                        || predicateEvaluationService.matchesCardPredicate(card, effect.predicate(), null, gameData, controllerId))
-                        && (effect.minimumManaValue() == null
-                        || manaValue >= effect.minimumManaValue()));
+        int manaValue = StackEntry.spellManaValue(card, stackEntry == null ? 0 : stackEntry.getXValue());
+        for (ActiveStaticEffect<ControllerSpellsCantBeCounteredEffect> active
+                : activeStaticEffects(gameData, ControllerSpellsCantBeCounteredEffect.class)) {
+            ControllerSpellsCantBeCounteredEffect effect = active.effect();
+            if (SubjectResolutionService.namesPlayer(active.source(), active.controllerId(), controllerId,
+                    effect.players())
+                    && (!effect.castOnly() || stackEntry != null && !stackEntry.isCopy())
+                    && (!effect.noncreatureOnly() || !creatureSpell)
+                    && (effect.cardTypes().isEmpty() || effect.cardTypes().stream().anyMatch(card::hasType))
+                    && (effect.predicate() == null || predicateEvaluationService.matchesCardPredicate(
+                            card, effect.predicate(), null, gameData, controllerId))
+                    && (effect.minimumManaValue() == null || manaValue >= effect.minimumManaValue())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean isSpellStackEntry(StackEntryType entryType) {
@@ -10457,34 +10422,6 @@ public class GameQueryService {
                 || entryType == StackEntryType.ARTIFACT_SPELL
                 || entryType == StackEntryType.PLANESWALKER_SPELL
                 || entryType == StackEntryType.BATTLE_SPELL;
-    }
-
-    /**
-     * Returns {@code true} if the given creature spell's controller has a permanent whose
-     * {@link ControllerCreatureSpellsCantBeCounteredEffect} protects it â€” i.e. the spell's power is
-     * at least that effect's threshold (Spellbreaker Behemoth: "Creature spells you control with
-     * power 5 or greater can't be countered"). Read via {@code Class::isInstance}/{@code cast}, the
-     * sanctioned way to poll static marker effects here.
-     */
-    private boolean controllerProtectsHighPowerCreatureSpell(GameData gameData, Card card) {
-        Integer power = characteristicPowerToughness(gameData, card, true);
-        if (power == null) {
-            return false;
-        }
-        StackEntry entry = findStackEntryByCardId(gameData, card.getId());
-        if (entry == null) {
-            return false;
-        }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
-        if (battlefield == null) {
-            return false;
-        }
-        return battlefield.stream()
-                .filter(perm -> !hasLostAllAbilities(gameData, perm))
-                .flatMap(perm -> perm.getCard().getStaticEffects().stream())
-                .filter(ControllerCreatureSpellsCantBeCounteredEffect.class::isInstance)
-                .map(ControllerCreatureSpellsCantBeCounteredEffect.class::cast)
-                .anyMatch(effect -> effect.minimumPower() == null || power >= effect.minimumPower());
     }
 
     /**

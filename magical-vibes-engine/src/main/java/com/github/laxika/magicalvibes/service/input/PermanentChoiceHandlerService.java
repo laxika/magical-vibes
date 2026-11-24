@@ -42,7 +42,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenAttache
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnAurasFromGraveyardAttachedToCreaturesEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RedHerringExchangeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RingTemptsYouEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.TemptTheRingEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.InfernalOfferingEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ToymakersTrapEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ZndrsplatsJudgmentEffectHandler;
@@ -124,7 +123,6 @@ public class PermanentChoiceHandlerService {
             returnAurasFromGraveyardAttachedToCreaturesEffectHandler;
     private final RedHerringExchangeEffectHandler redHerringExchangeEffectHandler;
     private final RingTemptsYouEffectHandler ringTemptsYouEffectHandler;
-    private final TemptTheRingEffectHandler temptTheRingEffectHandler;
     private final SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffectHandler descendantsFuryEffectHandler;
     private final InfernalOfferingEffectHandler infernalOfferingEffectHandler;
     private final MayEffectHandlerRegistry mayEffectHandlerRegistry;
@@ -946,8 +944,6 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleChosenPermanentAttackTarget(gameData, permanentId, chosenAttackTarget);
         } else if (context instanceof PermanentChoiceContext.ReselectAttackingCreatureTarget reselectAttackTarget) {
             triggerHandler.handleReselectAttackingCreatureTarget(gameData, permanentId, reselectAttackTarget);
-        } else if (context instanceof PermanentChoiceContext.ReselectAttackTarget reselectAttackTarget) {
-            triggerHandler.handleReselectedAttackTarget(gameData, permanentId, reselectAttackTarget);
         } else if (context instanceof PermanentChoiceContext.ExileReturnAttackTarget erat) {
             triggerHandler.handleExileReturnAttackTarget(gameData, permanentId, erat);
         } else if (context instanceof PermanentChoiceContext.EntersTriggerTarget ett) {
@@ -1029,9 +1025,6 @@ public class PermanentChoiceHandlerService {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof PermanentChoiceContext.RingBearerChoice ringBearerChoice) {
             ringTemptsYouEffectHandler.completeChoice(gameData, permanentId, ringBearerChoice);
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-        } else if (context instanceof PermanentChoiceContext.TemptTheRingBearerChoice ringBearerChoice) {
-            temptTheRingEffectHandler.completeChoice(gameData, permanentId, ringBearerChoice);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof PermanentChoiceContext.CreateTokenCopyOfOneOfTriggeringPermanents) {
             createTokenCopyOfTargetPermanentEffectHandler.completeTriggeringPermanentChoice(gameData, permanentId);

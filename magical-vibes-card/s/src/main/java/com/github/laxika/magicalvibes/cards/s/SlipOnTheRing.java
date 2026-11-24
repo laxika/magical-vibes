@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
-import com.github.laxika.magicalvibes.model.effect.TemptTheRingEffect;
+import com.github.laxika.magicalvibes.model.effect.RingTemptsYouEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
@@ -22,6 +22,6 @@ public class SlipOnTheRing extends Card {
                 )),
                 "Target must be a creature you own"
         )).addSpellEffect(FlickerEffect.flickerTargetUnderYourControl())
-                .addSpellEffect(new TemptTheRingEffect());
+                .addSpellEffect(new RingTemptsYouEffect());
     }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.s.SamLoyalAttendant;
+import com.github.laxika.magicalvibes.model.RingState;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -38,8 +39,7 @@ class FrodoAdventurousHobbitTest extends BaseCardTest {
     @Test
     void attackingAfterSecondRingTemptationDrawsIfFrodoIsRingBearer() {
         Permanent frodo = addCreatureReady(player1, new FrodoAdventurousHobbit());
-        gd.ringLevels.put(player1.getId(), 1);
-        gd.ringBearerIds.put(player1.getId(), frodo.getId());
+        gd.ringStates.put(player1.getId(), new RingState(1, frodo.getId()));
         gd.lifeGainedThisTurn.put(player1.getId(), 3);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new SamLoyalAttendant()));
@@ -47,7 +47,7 @@ class FrodoAdventurousHobbitTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(gd.ringLevels).containsEntry(player1.getId(), 2);
+        assertThat(gd.ringLevel(player1.getId())).isEqualTo(2);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
@@ -61,7 +61,7 @@ class FrodoAdventurousHobbitTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(gd.ringLevels).doesNotContainKey(player1.getId());
+        assertThat(gd.ringStates).doesNotContainKey(player1.getId());
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -107,8 +107,8 @@ class FrodoAdventurousHobbitTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(gd.ringLevels).containsEntry(player1.getId(), 1);
-        assertThat(gd.ringBearerIds).containsEntry(player1.getId(), frodo.getId());
+        assertThat(gd.ringLevel(player1.getId())).isEqualTo(1);
+        assertThat(gd.ringBearerId(player1.getId())).isEqualTo(frodo.getId());
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(sam);
     }
@@ -117,8 +117,7 @@ class FrodoAdventurousHobbitTest extends BaseCardTest {
     void choosingFrodoAsNewRingBearerDrawsAfterTheChoice() {
         Permanent frodo = addCreatureReady(player1, new FrodoAdventurousHobbit());
         Permanent sam = addCreatureReady(player1, new SamLoyalAttendant());
-        gd.ringLevels.put(player1.getId(), 1);
-        gd.ringBearerIds.put(player1.getId(), sam.getId());
+        gd.ringStates.put(player1.getId(), new RingState(1, sam.getId()));
         gd.lifeGainedThisTurn.put(player1.getId(), 3);
         harness.setHand(player1, List.of());
         Card drawnCard = new SamLoyalAttendant();
@@ -133,8 +132,8 @@ class FrodoAdventurousHobbitTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, frodo.getId());
         resolveAllTriggers();
 
-        assertThat(gd.ringLevels).containsEntry(player1.getId(), 2);
-        assertThat(gd.ringBearerIds).containsEntry(player1.getId(), frodo.getId());
+        assertThat(gd.ringLevel(player1.getId())).isEqualTo(2);
+        assertThat(gd.ringBearerId(player1.getId())).isEqualTo(frodo.getId());
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
     }
 
@@ -142,8 +141,7 @@ class FrodoAdventurousHobbitTest extends BaseCardTest {
     void choosingAnotherRingBearerPreventsFrodosDraw() {
         Permanent frodo = addCreatureReady(player1, new FrodoAdventurousHobbit());
         Permanent sam = addCreatureReady(player1, new SamLoyalAttendant());
-        gd.ringLevels.put(player1.getId(), 1);
-        gd.ringBearerIds.put(player1.getId(), frodo.getId());
+        gd.ringStates.put(player1.getId(), new RingState(1, frodo.getId()));
         gd.lifeGainedThisTurn.put(player1.getId(), 3);
         harness.setHand(player1, List.of());
         Card libraryCard = new SamLoyalAttendant();
@@ -155,8 +153,8 @@ class FrodoAdventurousHobbitTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, sam.getId());
         resolveAllTriggers();
 
-        assertThat(gd.ringLevels).containsEntry(player1.getId(), 2);
-        assertThat(gd.ringBearerIds).containsEntry(player1.getId(), sam.getId());
+        assertThat(gd.ringLevel(player1.getId())).isEqualTo(2);
+        assertThat(gd.ringBearerId(player1.getId())).isEqualTo(sam.getId());
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
     }
@@ -166,7 +164,7 @@ class FrodoAdventurousHobbitTest extends BaseCardTest {
         gd.lifeGainedThisTurn.put(player1.getId(), 9);
         harness.setLife(player1, 10);
         addCreatureReady(player1, new FrodoAdventurousHobbit());
-        gd.ringLevels.put(player1.getId(), 1);
+        gd.ringStates.put(player1.getId(), new RingState(1, null));
         harness.setHand(player1, List.of());
         Card drawnCard = new SamLoyalAttendant();
         harness.setLibrary(player1, List.of(drawnCard));
@@ -174,7 +172,7 @@ class FrodoAdventurousHobbitTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(gd.ringLevels).containsEntry(player1.getId(), 2);
+        assertThat(gd.ringLevel(player1.getId())).isEqualTo(2);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
     }
 
@@ -188,7 +186,7 @@ class FrodoAdventurousHobbitTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.ringLevels).doesNotContainKey(player1.getId());
+        assertThat(gd.ringStates).doesNotContainKey(player1.getId());
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }

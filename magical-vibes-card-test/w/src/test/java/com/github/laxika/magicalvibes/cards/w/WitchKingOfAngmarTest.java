@@ -46,8 +46,8 @@ class WitchKingOfAngmarTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(attackerTwo);
-        assertThat(gd.ringLevels).containsEntry(player1.getId(), 1);
-        assertThat(gd.ringBearerIds).containsEntry(player1.getId(), witchKing.getId());
+        assertThat(gd.ringLevel(player1.getId())).isEqualTo(1);
+        assertThat(gd.ringBearerId(player1.getId())).isEqualTo(witchKing.getId());
         assertThat(gqs.hasEffectiveSupertype(gd, witchKing,
                 com.github.laxika.magicalvibes.model.CardSupertype.LEGENDARY)).isTrue();
     }
@@ -65,7 +65,7 @@ class WitchKingOfAngmarTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, witchKing.getId());
 
-        assertThat(gd.ringBearerIds).containsEntry(player1.getId(), witchKing.getId());
+        assertThat(gd.ringBearerId(player1.getId())).isEqualTo(witchKing.getId());
         assertThat(gqs.hasEffectiveSupertype(gd, witchKing,
                 com.github.laxika.magicalvibes.model.CardSupertype.LEGENDARY)).isTrue();
         assertThat(gqs.hasEffectiveSupertype(gd, otherCreature,
@@ -134,7 +134,7 @@ class WitchKingOfAngmarTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(nonattacker);
         harness.assertInGraveyard(player2, "Grizzly Bears");
-        assertThat(gd.ringLevels).containsEntry(player1.getId(), 1);
-        assertThat(gd.ringBearerIds).containsEntry(player1.getId(), witchKing.getId());
+        assertThat(gd.ringLevel(player1.getId())).isEqualTo(1);
+        assertThat(gd.ringBearerId(player1.getId())).isEqualTo(witchKing.getId());
     }
 }

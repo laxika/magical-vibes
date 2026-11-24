@@ -450,6 +450,26 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    @DisplayName("Deep copy keeps the Ring in its one store, and the copy's temptations stay its own")
+    void deepCopyPreservesTheRingIndependently() {
+        UUID bearer = UUID.randomUUID();
+        UUID otherBearer = UUID.randomUUID();
+        gd.temptByRing(player1.getId());
+        gd.setRingBearer(player1.getId(), bearer);
+
+        GameData copy = gd.simulationCopy();
+        copy.temptByRing(player1.getId());
+        copy.setRingBearer(player1.getId(), otherBearer);
+        copy.temptByRing(player2.getId());
+
+        assertThat(copy.ringLevel(player1.getId())).isEqualTo(2);
+        assertThat(copy.ringBearerId(player1.getId())).isEqualTo(otherBearer);
+        assertThat(gd.ringLevel(player1.getId())).isEqualTo(1);
+        assertThat(gd.ringBearerId(player1.getId())).isEqualTo(bearer);
+        assertThat(gd.ringStates).doesNotContainKey(player2.getId());
+    }
+
+    @Test
     @DisplayName("Deep copy keeps perpetual alternative costs in their one store, and the copy's grants stay its own")
     void deepCopyPreservesPerpetualAlternateCastsIndependently() {
         Card card = new GrizzlyBears();

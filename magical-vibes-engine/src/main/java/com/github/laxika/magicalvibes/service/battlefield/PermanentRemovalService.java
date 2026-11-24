@@ -68,7 +68,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturesUntilSour
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolvePendingExileReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutOnTopOfLibraryInsteadOfDyingEffect;
-import com.github.laxika.magicalvibes.model.effect.UndyingReturnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -120,7 +119,7 @@ public class PermanentRemovalService {
 
     /** Undying (CR 702.93a), the ability a creature with the keyword has once for each instance of it. */
     private static final TriggeredAbility UNDYING_ABILITY = new TriggeredAbility(
-            Triggers.dies(ObjectRelation.THIS), new UndyingReturnEffect());
+            Triggers.dies(ObjectRelation.THIS), PersistReturnEffect.undying());
 
     /** Persist (CR 702.79a), the ability a creature with the keyword has once for each instance of it. */
     private static final TriggeredAbility PERSIST_ABILITY = new TriggeredAbility(

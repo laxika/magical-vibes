@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.DuringDeclareAttackers;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReselectAttackingCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ReselectAttackingCreatureAttackTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -22,7 +22,7 @@ public class MisleadingSignpost extends Card {
         target(TargetFilters.attackingCreature()).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new DuringDeclareAttackers()),
                 new MayEffect(
-                        new ReselectAttackingCreatureEffect(),
+                        new ReselectAttackingCreatureAttackTargetEffect(),
                         "Reselect which player or permanent the attacking creature is attacking?"));
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLUE));
     }

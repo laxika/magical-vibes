@@ -431,6 +431,44 @@ approval before changing the protocol or the frontend. Start with failing tests.
 
 ---
 
+## 82. The Ring's second, third and fourth abilities don't exist
+
+**Status:** open · **Found:** 2026-11-24, effect-cleanup step 9 fold run 19 (one Ring store), by reading the code
+
+**Failing tests:**
+- None yet. Add: a player tempted twice whose Ring-bearer attacks draws a card, then discards a card; tempted three
+  times, a creature that blocks the Ring-bearer is sacrificed by its controller at end of combat; tempted four times,
+  the Ring-bearer dealing combat damage to a player makes each opponent lose 3 life. Each with fewer temptations does
+  nothing.
+
+**What the rules require.** CR 701.54c: the player's emblem named The Ring has "Your Ring-bearer is legendary and can't
+be blocked by creatures with greater power"; as long as the Ring has tempted that player two or more times, "Whenever
+your Ring-bearer attacks, draw a card, then discard a card"; three or more, "Whenever your Ring-bearer becomes blocked by
+a creature, the blocking creature's controller sacrifices it at end of combat"; four or more, "Whenever your Ring-bearer
+deals combat damage to a player, each opponent loses 3 life." The engine has only the first: `GameQueryService` makes a
+Ring-bearer legendary and `BlockLegalityService` applies the blocking restriction. The level is stored
+(`GameData.ringStates`, fold run 19) and read by `ControllerRingLevelAtLeast` conditions, but no trigger exists for
+levels 2 to 4, so every "the Ring tempts you" card plays as if its controller had been tempted once.
+
+**Why it's large.** The three abilities are triggered abilities of an emblem in the command zone, controlled by the
+tempted player, so they need the emblem's triggers in the trigger pipeline (attack, becomes-blocked per blocker, combat
+damage to a player), a delayed end-of-combat sacrifice per blocking creature, and the right controller and source for
+logs, "whenever an ability you control" readers and the AI. Two players can each have a Ring.
+
+**Prompt to start it:**
+
+```
+Do missing-features-to-do.md entry 82: give the Ring emblem its second, third and fourth abilities (CR 701.54c). First
+read agent-docs/ARCHITECTURE.md and the trigger topic file it names, GameData.ringStates / RingState, RingTemptsYouEffect
+and its handler, GameQueryService.isRingBearer, BlockLegalityService's Ring-bearer check, and the Ring card tests; verify
+CR 701.54a-e with get_rule. Decide how an emblem's triggered abilities reach the trigger pipeline (the command zone has
+other emblems), then add the three triggers, gated on the player's Ring level, with RegisterDelayedStepTriggerEffect for
+the end-of-combat sacrifice. Start with failing tests for each level and for two players with a Ring each. Don't commit
+until I say so.
+```
+
+---
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

@@ -909,7 +909,7 @@ public class ConditionEvaluationService {
                             && gameData.getLifeGainedThisTurn(ctx.controllerId()) >= gainedLife.minimumAmount();
             case ControllerRingLevelAtLeast ringLevel ->
                     ctx.controllerId() != null
-                            && gameData.ringLevels.getOrDefault(ctx.controllerId(), 0) >= ringLevel.minimumLevel();
+                            && gameData.ringLevel(ctx.controllerId()) >= ringLevel.minimumLevel();
             case CommittedCrimeThisTurn ignored ->
                     ctx.controllerId() != null && gameData.hasCommittedCrimeThisTurn(ctx.controllerId());
             case ControlledMountAsCast ignored -> ctx.controlledMountAsCast();
@@ -1917,7 +1917,7 @@ public class ConditionEvaluationService {
             case SourceIsRingBearer ignored ->
                     ctx.controllerId() != null
                             && ctx.sourcePermanentId() != null
-                            && ctx.sourcePermanentId().equals(gameData.ringBearerIds.get(ctx.controllerId()));
+                            && ctx.sourcePermanentId().equals(gameData.ringBearerId(ctx.controllerId()));
             case SourceCanSoulbond ignored ->
                     canSoulbond(gameData, ctx);
             case SourceIsRenowned ignored -> {

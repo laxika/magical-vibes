@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.b.BlazingArchon;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.n.NicolBolasPlaneswalker;
+import com.github.laxika.magicalvibes.cards.t.TheAetherspark;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({PortalMage.class, GrizzlyBears.class, NicolBolasPlaneswalker.class,
-        BlazingArchon.class, InvasionOfZendikar.class})
+        BlazingArchon.class, InvasionOfZendikar.class, TheAetherspark.class})
 class PortalMageTest extends BaseCardTest {
 
     @Test
@@ -41,7 +42,7 @@ class PortalMageTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.ReselectAttackTarget.class);
+                .isInstanceOf(PermanentChoiceContext.ReselectAttackingCreatureTarget.class);
         harness.handlePermanentChosen(player1, planeswalker.getId());
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
@@ -109,9 +110,33 @@ class PortalMageTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.ReselectAttackTarget.class);
+                .isInstanceOf(PermanentChoiceContext.ReselectAttackingCreatureTarget.class);
         harness.handlePermanentChosen(player1, player2.getId());
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("May reselect a planeswalker that can't be attacked, as reselection ignores attack restrictions")
+    void mayReselectAPlaneswalkerThatCantBeAttacked() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent equippedCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent aetherspark = harness.addToBattlefieldAndReturn(player2, new TheAetherspark());
+        aetherspark.setCounterCount(CounterType.LOYALTY, 4);
+        aetherspark.setAttachedTo(equippedCreature.getId());
+        equippedCreature.tap();
+        preparePortalMage();
+        declareAttackers(List.of(0));
+
+        castPortalMage(attacker.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).contains(aetherspark.getId());
+        harness.handlePermanentChosen(player1, aetherspark.getId());
+        assertThat(aetherspark.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
     }
 
     @Test

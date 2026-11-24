@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.a.ArborElf;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.s.SlipOnTheRing;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -14,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GandalfFriendOfTheShire.class, Divination.class, SlipOnTheRing.class,
-        GrizzlyBears.class})
+        GrizzlyBears.class, GaladrielElvenQueen.class, ArborElf.class})
 class GandalfFriendOfTheShireTest extends BaseCardTest {
 
     @Test
@@ -50,6 +52,30 @@ class GandalfFriendOfTheShireTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Draws when another card's \"the Ring tempts you\" makes another creature the Ring-bearer")
+    void drawsWhenAnotherCardsTemptChoosesAnotherCreature() {
+        harness.addToBattlefield(player1, new GandalfFriendOfTheShire());
+        harness.addToBattlefield(player1, new GaladrielElvenQueen());
+        Permanent elf = harness.enterBattlefieldAndReturn(player1, new ArborElf());
+        Divination drawn = new Divination();
+        harness.setLibrary(player1, List.of(drawn));
+        harness.setHand(player1, List.of());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, com.github.laxika.magicalvibes.model.TurnStep.BEGINNING_OF_COMBAT);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, GaladrielElvenQueen.DOMINION);
+        harness.handleListChoice(player2, GaladrielElvenQueen.DOMINION);
+        harness.handlePermanentChosen(player1, elf.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.ringBearerId(player1.getId())).isEqualTo(elf.getId());
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
     }
 
     @Test

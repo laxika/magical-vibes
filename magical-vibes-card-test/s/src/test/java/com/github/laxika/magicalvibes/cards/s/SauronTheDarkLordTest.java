@@ -78,8 +78,8 @@ class SauronTheDarkLordTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, sauron.getId());
         resolveAllTriggers();
 
-        assertThat(gd.ringLevels).containsEntry(player1.getId(), 1);
-        assertThat(gd.ringBearerIds).containsEntry(player1.getId(), sauron.getId());
+        assertThat(gd.ringLevel(player1.getId())).isEqualTo(1);
+        assertThat(gd.ringBearerId(player1.getId())).isEqualTo(sauron.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -149,7 +149,7 @@ class SauronTheDarkLordTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertLife(player2, 18);
-        assertThat(gd.ringLevels.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.ringLevel(player1.getId())).isZero();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -193,6 +193,6 @@ class SauronTheDarkLordTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(heldCard);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.ringLevels).containsEntry(player1.getId(), 1);
+        assertThat(gd.ringLevel(player1.getId())).isEqualTo(1);
     }
 }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.AbilityEffects;
-import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingTokenCreationReplacement;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -12,17 +11,12 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardSubject;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MirrormindCrownEffect;
-import com.github.laxika.magicalvibes.model.effect.MoonlitMeditationEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -157,10 +151,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
             gameData.resolvedMayAccepted = null;
             if (Boolean.TRUE.equals(accepted)) {
                 // The player who would have created the tokens creates the copies instead.
-                if (pending.copyEnchantedPermanent()) {
-                    tokenCopyHandler.createCopiesOfHost(gameData, entry, pending.replacementPermanentId(),
-                            pending.amount(), controllerId);
-                } else if (pending.copyChosenCreature()) {
+                if (pending.copyChosenCreature()) {
                     chosenCreatureTokenCopyHandler.resolveFor(gameData, entry,
                             new CreateTokenCopyOfChosenCreatureEffect(
                                     pending.amount(), pending.replacementPermanentId()), controllerId);
@@ -184,34 +175,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
                 toughness = pending.toughness();
             }
         } else {
-            Permanent crown = availableMirrormindCrown(gameData, controllerId);
-            if (crown != null) {
-                gameData.tokenCreationReplacementUsedThisTurn.add(crown.getId());
-                gameData.pendingTokenCreationReplacement = new PendingTokenCreationReplacement(
-                        crown.getId(), amount, power, toughness, false, false);
-                gameData.resolvingMayEffectFromStack = true;
-                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                        crown.getCard(),
-                        controllerId,
-                        List.of(new CreateTokenCopyOfTargetPermanentEffect(new Fixed(amount))
-                                .ofNamed(crown.getAttachedTo())),
-                        FaceDownVisibility.publicName(gameData, crown)
-                                + " — You may create that many tokens that are copies of the equipped creature."));
-                return;
-            }
-            Permanent moonlit = availableMoonlitMeditation(gameData, controllerId);
-            if (moonlit != null) {
-                gameData.tokenCreationReplacementUsedThisTurn.add(moonlit.getId());
-                gameData.pendingTokenCreationReplacement = new PendingTokenCreationReplacement(
-                        moonlit.getId(), amount, power, toughness, true, false);
-                gameData.resolvingMayEffectFromStack = true;
-                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                        moonlit.getCard(),
-                        controllerId,
-                        List.of(new CreateTokenCopyOfTargetPermanentEffect(new Fixed(amount))
-                                .ofNamed(moonlit.getAttachedTo())),
-                        FaceDownVisibility.publicName(gameData, moonlit)
-                                + " — You may create that many tokens that are copies of the enchanted permanent."));
+            if (esixTokenReplacementSupport.offerAttachedCopy(gameData, controllerId, amount, power, toughness)) {
                 return;
             }
             if (esixTokenReplacementSupport.offer(gameData, controllerId, amount, power, toughness)) {
@@ -254,53 +218,8 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
     }
 
     private boolean hasAvailableTokenCreationReplacement(GameData gameData, UUID controllerId) {
-        return availableMirrormindCrown(gameData, controllerId) != null
-                || availableMoonlitMeditation(gameData, controllerId) != null
+        return esixTokenReplacementSupport.isAttachedCopyAvailable(gameData, controllerId)
                 || esixTokenReplacementSupport.isAvailable(gameData, controllerId);
-    }
-
-    private Permanent availableMirrormindCrown(GameData gameData, UUID controllerId) {
-        if (gameData.playersWhoCreatedTokensThisTurn.contains(controllerId)) {
-            return null;
-        }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return null;
-        }
-        for (Permanent permanent : battlefield) {
-            if (gameData.tokenCreationReplacementUsedThisTurn.contains(permanent.getId())
-                    || permanent.getAttachedTo() == null
-                    || permanent.getCard().getStaticEffects().stream()
-                    .noneMatch(MirrormindCrownEffect.class::isInstance)) {
-                continue;
-            }
-            if (gameQueryService.findPermanentById(gameData, permanent.getAttachedTo()) != null) {
-                return permanent;
-            }
-        }
-        return null;
-    }
-
-    private Permanent availableMoonlitMeditation(GameData gameData, UUID controllerId) {
-        if (gameData.playersWhoCreatedTokensThisTurn.contains(controllerId)) {
-            return null;
-        }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return null;
-        }
-        for (Permanent permanent : battlefield) {
-            if (gameData.tokenCreationReplacementUsedThisTurn.contains(permanent.getId())
-                    || permanent.getAttachedTo() == null
-                    || permanent.getCard().getStaticEffects().stream()
-                    .noneMatch(MoonlitMeditationEffect.class::isInstance)) {
-                continue;
-            }
-            if (gameQueryService.findPermanentById(gameData, permanent.getAttachedTo()) != null) {
-                return permanent;
-            }
-        }
-        return null;
     }
 
     /**

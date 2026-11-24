@@ -8,8 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenCreatu
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EsixFractalBloomEffect;
-import com.github.laxika.magicalvibes.model.effect.MirrormindCrownEffect;
-import com.github.laxika.magicalvibes.model.effect.MoonlitMeditationEffect;
+import com.github.laxika.magicalvibes.model.effect.FirstTokenCreationCopiesAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -19,8 +18,9 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Esix, Fractal Bloom's and Mirrormind Crown's "first time you would create one or more tokens"
- * replacements, shared by the token-copy effects that offer them.
+ * The "first time you would create one or more tokens" replacements, shared by the token-creating effects that
+ * offer them: Esix, Fractal Bloom's, and {@link FirstTokenCreationCopiesAttachedPermanentEffect} (Mirrormind Crown,
+ * Moonlit Meditation).
  */
 @Component
 @RequiredArgsConstructor
@@ -45,7 +45,7 @@ public class EsixTokenReplacementSupport {
         }
         gameData.tokenCreationReplacementUsedThisTurn.add(esix.getId());
         gameData.pendingTokenCreationReplacement = new PendingTokenCreationReplacement(
-                esix.getId(), amount, power, toughness, false, true);
+                esix.getId(), amount, power, toughness, true);
         gameData.resolvingMayEffectFromStack = true;
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 esix.getCard(),
@@ -57,79 +57,55 @@ public class EsixTokenReplacementSupport {
     }
 
     /**
-     * Offers Mirrormind Crown's replacement for {@code amount} tokens if an unused, attached Crown is
-     * available and the controller has not created tokens yet this turn, parking the original creation
-     * in {@code pendingTokenCreationReplacement} for the re-run of the resolving effect.
-     *
-     * @return {@code true} when the optional replacement was offered and the caller must stop resolving
+     * Whether an Aura or Equipment of {@code controllerId}'s with {@link FirstTokenCreationCopiesAttachedPermanentEffect}
+     * could replace their next token creation (Mirrormind Crown, Moonlit Meditation).
      */
-    public boolean offerMirrormindCrown(GameData gameData, UUID controllerId, int amount) {
-        if (gameData.playersWhoCreatedTokensThisTurn.contains(controllerId)) {
-            return false;
-        }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return false;
-        }
-        for (Permanent crown : battlefield) {
-            if (gameData.tokenCreationReplacementUsedThisTurn.contains(crown.getId())
-                    || crown.getAttachedTo() == null
-                    || crown.getCard().getStaticEffects().stream()
-                    .noneMatch(MirrormindCrownEffect.class::isInstance)
-                    || gameQueryService.findPermanentById(gameData, crown.getAttachedTo()) == null) {
-                continue;
-            }
-            gameData.tokenCreationReplacementUsedThisTurn.add(crown.getId());
-            gameData.pendingTokenCreationReplacement = new PendingTokenCreationReplacement(
-                    crown.getId(), amount, 0, 0, false, false);
-            gameData.resolvingMayEffectFromStack = true;
-            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                    crown.getCard(),
-                    controllerId,
-                    List.of(new CreateTokenCopyOfTargetPermanentEffect(new Fixed(amount)).ofNamed(crown.getAttachedTo())),
-                    FaceDownVisibility.publicName(gameData, crown)
-                            + " — You may create that many tokens that are copies of the equipped creature."));
-            return true;
-        }
-        return false;
+    public boolean isAttachedCopyAvailable(GameData gameData, UUID controllerId) {
+        return availableAttachedCopy(gameData, controllerId) != null;
     }
 
     /**
-     * Offers Moonlit Meditation's replacement for {@code amount} tokens if an unused, attached Aura is
-     * available and the controller has not created tokens yet this turn, parking the original creation
-     * in {@code pendingTokenCreationReplacement} for the re-run of the resolving effect.
+     * Offers the replacement of {@link FirstTokenCreationCopiesAttachedPermanentEffect} for {@code amount} tokens if
+     * one of {@code controllerId}'s Auras or Equipment has it, still has its abilities (CR 613.1f), is attached, has not
+     * offered it this turn and the controller has not created tokens yet this turn, parking the original creation in
+     * {@code pendingTokenCreationReplacement} for the re-run of the resolving effect.
      *
      * @return {@code true} when the optional replacement was offered and the caller must stop resolving
      */
-    public boolean offerMoonlitMeditation(GameData gameData, UUID controllerId, int amount) {
+    public boolean offerAttachedCopy(GameData gameData, UUID controllerId, int amount, int power, int toughness) {
+        Permanent source = availableAttachedCopy(gameData, controllerId);
+        if (source == null) {
+            return false;
+        }
+        Permanent attached = gameQueryService.findPermanentById(gameData, source.getAttachedTo());
+        gameData.tokenCreationReplacementUsedThisTurn.add(source.getId());
+        gameData.pendingTokenCreationReplacement = new PendingTokenCreationReplacement(
+                source.getId(), amount, power, toughness, false);
+        gameData.resolvingMayEffectFromStack = true;
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                source.getCard(),
+                controllerId,
+                List.of(new CreateTokenCopyOfTargetPermanentEffect(new Fixed(amount)).ofNamed(attached.getId())),
+                FaceDownVisibility.publicName(gameData, source)
+                        + " — You may instead create that many tokens that are copies of "
+                        + FaceDownVisibility.publicName(gameData, attached) + "."));
+        return true;
+    }
+
+    private Permanent availableAttachedCopy(GameData gameData, UUID controllerId) {
         if (gameData.playersWhoCreatedTokensThisTurn.contains(controllerId)) {
-            return false;
+            return null;
         }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return false;
-        }
-        for (Permanent aura : battlefield) {
-            if (gameData.tokenCreationReplacementUsedThisTurn.contains(aura.getId())
-                    || aura.getAttachedTo() == null
-                    || aura.getCard().getStaticEffects().stream()
-                    .noneMatch(MoonlitMeditationEffect.class::isInstance)
-                    || gameQueryService.findPermanentById(gameData, aura.getAttachedTo()) == null) {
-                continue;
+        for (var active : gameQueryService.activeStaticEffects(gameData, controllerId,
+                FirstTokenCreationCopiesAttachedPermanentEffect.class)) {
+            Permanent source = active.source();
+            if (!gameData.tokenCreationReplacementUsedThisTurn.contains(source.getId())
+                    && source.getAttachedTo() != null
+                    && gameQueryService.findPermanentById(gameData, source.getAttachedTo()) != null) {
+                return source;
             }
-            gameData.tokenCreationReplacementUsedThisTurn.add(aura.getId());
-            gameData.pendingTokenCreationReplacement = new PendingTokenCreationReplacement(
-                    aura.getId(), amount, 0, 0, true, false);
-            gameData.resolvingMayEffectFromStack = true;
-            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                    aura.getCard(),
-                    controllerId,
-                    List.of(new CreateTokenCopyOfTargetPermanentEffect(new Fixed(amount)).ofNamed(aura.getAttachedTo())),
-                    FaceDownVisibility.publicName(gameData, aura)
-                            + " — You may create that many tokens that are copies of the enchanted permanent."));
-            return true;
         }
-        return false;
+        return null;
     }
 
     private Permanent availableEsix(GameData gameData, UUID controllerId) {

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.cards.t.TeysaKarlov;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -42,6 +43,26 @@ class ButcherGhoulTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(2);
         harness.assertNotInGraveyard(player1, "Butcher Ghoul");
+    }
+
+    @Test
+    @DisplayName("Undying does not return a Ghoul card that left the graveyard and came back, a new object")
+    void undyingDoesNotReturnACardThatLeftTheGraveyard() {
+        Permanent ghoul = harness.addToBattlefieldAndReturn(player1, new ButcherGhoul());
+        Card ghoulCard = ghoul.getOriginalCard();
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, ghoul.getId());
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerGraveyards.get(player1.getId()).remove(ghoulCard);
+        gd.markGraveyardExit(ghoulCard.getId());
+        gd.playerGraveyards.get(player1.getId()).add(ghoulCard);
+        gd.markGraveyardEntry(ghoulCard);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Butcher Ghoul");
+        harness.assertInGraveyard(player1, "Butcher Ghoul");
     }
 
     @Test

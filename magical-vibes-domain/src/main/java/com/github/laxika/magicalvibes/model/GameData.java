@@ -449,10 +449,6 @@ public class GameData {
     public UUID monarchPlayerId;
     /** The player who currently has the initiative, or {@code null} when no player has it. */
     public UUID initiativePlayerId;
-    /** The Ring's current ability level for each player; presence means that player has The Ring emblem. */
-    public final Map<UUID, Integer> ringLevels = new ConcurrentHashMap<>();
-    /** The permanent currently designated as each player's Ring-bearer. */
-    public final Map<UUID, UUID> ringBearerIds = new ConcurrentHashMap<>();
     /** Tracks which players declared at least one attacker this turn (for Angelic Arbiter etc.). */
     public final Set<UUID> playersDeclaredAttackersThisTurn = ConcurrentHashMap.newKeySet();
     /** Tracks which players declared at least one token as an attacker this turn. */
@@ -1645,7 +1641,10 @@ public class GameData {
             Collections.synchronizedList(new ArrayList<>());
     /** Draw count before the current Kwain-style optional draw instruction. */
     public Integer pendingEachPlayerMayDrawThenGainLifeInitialCount;
-    /** The Ring emblem state for players who have been tempted by the Ring. */
+    /**
+     * The one Ring store: the Ring emblem of each player the Ring has tempted (CR 701.54c), with its level and that
+     * player's Ring-bearer (CR 701.54a). A player with no entry has no emblem.
+     */
     public final Map<UUID, RingState> ringStates = new ConcurrentHashMap<>();
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
 
@@ -7016,6 +7015,31 @@ public class GameData {
         return candidates != null && candidates.contains(entry);
     }
 
+    /** How many times the Ring has tempted {@code playerId}, up to 4; 0 when they have no Ring emblem. */
+    public int ringLevel(UUID playerId) {
+        RingState state = playerId == null ? null : ringStates.get(playerId);
+        return state == null ? 0 : state.level();
+    }
+
+    /**
+     * The permanent last designated {@code playerId}'s Ring-bearer, or {@code null}. Whether it still is their
+     * Ring-bearer also needs it on the battlefield under their control (CR 701.54e).
+     */
+    public UUID ringBearerId(UUID playerId) {
+        RingState state = playerId == null ? null : ringStates.get(playerId);
+        return state == null ? null : state.bearerId();
+    }
+
+    /** The Ring tempts {@code playerId} once more, giving them the emblem first if they lack it (CR 701.54c). */
+    public void temptByRing(UUID playerId) {
+        ringStates.merge(playerId, new RingState(1, null), (current, ignored) -> current.tempted());
+    }
+
+    /** {@code bearerId} becomes {@code playerId}'s Ring-bearer; the player already has the emblem. */
+    public void setRingBearer(UUID playerId, UUID bearerId) {
+        ringStates.computeIfPresent(playerId, (id, state) -> state.withBearer(bearerId));
+    }
+
     public boolean hasCommittedCrimeThisTurn(UUID playerId) {
         List<StackEntry> candidates = crimeCandidatesThisTurn.get(playerId);
         return candidates != null && candidates.stream().anyMatch(entry -> !entry.isNonTargeting());
@@ -10241,8 +10265,6 @@ public class GameData {
         copy.dayNight = this.dayNight;
         copy.monarchPlayerId = this.monarchPlayerId;
         copy.initiativePlayerId = this.initiativePlayerId;
-        copy.ringLevels.putAll(this.ringLevels);
-        copy.ringBearerIds.putAll(this.ringBearerIds);
         copy.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn
                 .addAll(this.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn);
         copy.playersWithCityBlessing.addAll(this.playersWithCityBlessing);

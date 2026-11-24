@@ -2,7 +2,11 @@ package com.github.laxika.magicalvibes.model;
 
 import java.util.UUID;
 
-/** The Ring emblem's level and its current Ring-bearer for one player. */
+/**
+ * One player's Ring emblem (CR 701.54c): how many times the Ring has tempted them, counted up to 4 (the most its
+ * abilities read), and their Ring-bearer (CR 701.54a), or {@code null} when they have none. Kept in the one store
+ * {@link GameData#ringStates}.
+ */
 public record RingState(int level, UUID bearerId) {
 
     public RingState {
@@ -11,7 +15,13 @@ public record RingState(int level, UUID bearerId) {
         }
     }
 
-    public RingState tempt(UUID newBearerId) {
-        return new RingState(Math.min(4, level + 1), newBearerId);
+    /** The emblem after the Ring tempts its player once more, the Ring-bearer unchanged. */
+    public RingState tempted() {
+        return new RingState(Math.min(4, level + 1), bearerId);
+    }
+
+    /** The emblem with {@code newBearerId} as the Ring-bearer ({@code null}: none). */
+    public RingState withBearer(UUID newBearerId) {
+        return new RingState(level, newBearerId);
     }
 }
