@@ -12,9 +12,12 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
@@ -26,7 +29,8 @@ import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveVhalStudyCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -36,7 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardMaxManaValueXPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostEventValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -99,11 +103,18 @@ public class VhalEagerScholar extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED));
     }
 
+    /**
+     * What the face does with the study counters its "when this creature specializes" ability removed: the white, black
+     * and red faces' "when you do" ability, whose "that many" is its event value, and the blue and green faces' next
+     * instruction of the same ability, reading the removal step.
+     */
     public static CardEffect specializedTrigger(CardColor color) {
+        AmountThisWay removed = new AmountThisWay(StepKind.REMOVE_COUNTERS);
         return switch (color) {
             case WHITE -> DistributeCountersAmongTargetsEffect.chosenAmongAnyNumberOfTargetCreatures(
                     CounterType.PLUS_ONE_PLUS_ONE, new EventValue(), null);
-            case BLUE -> LookAtTopCardsEffect.chooseNToHandRestOnBottomRandom(new EventValue(), 1);
+            // "Look at that many cards from the top of your library."
+            case BLUE -> LookAtTopCardsEffect.chooseNToHandRestOnBottomRandom(removed, 1);
             case BLACK -> new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                     new CardTypePredicate(CardType.CREATURE), 1, false, false,
                     null, 0, new EventValue(), null, null, null, 0,
@@ -115,7 +126,7 @@ public class VhalEagerScholar extends Card {
             // way. Put one of them onto the battlefield and shuffle the other into your library."
             case GREEN -> SequenceEffect.of(
                     new SeekLibraryEffect(new Fixed(2), new CardTypePredicate(CardType.CREATURE),
-                            LibrarySearchDestination.HAND, new ManaValueBound(new EventValue(), false, 0)),
+                            LibrarySearchDestination.HAND, new ManaValueBound(removed, false, 0)),
                     ChooseCardEffect.oneOf(Subjects.cardsThisWay(StepKind.SEEK),
                             "a sought creature card to put onto the battlefield"),
                     new PutCardsOntoBattlefieldEffect(Subjects.cardsThisWay(StepKind.CHOOSE)),
@@ -146,8 +157,9 @@ public class VhalEagerScholar extends Card {
     }
 
     /**
-     * Writes Vhal's specialized face for {@code color}; returns its "when this creature specializes" ability, which
-     * removes the study counters and then puts the face's "when you do" ability on the stack.
+     * Writes Vhal's specialized face for {@code color}; returns its "when this creature specializes" ability: "remove all
+     * study counters from it", then the face's next instruction, which for the white, black and red faces is a "when you
+     * do" ability (CR 603.12) made only if counters were removed, its "that many" the number removed.
      */
     public static List<CardEffect> specializedFace(Card face, CardColor color) {
         setSpecializedBaseCharacteristics(face);
@@ -155,15 +167,17 @@ public class VhalEagerScholar extends Card {
         face.setPower(4);
         face.setToughness(4);
         setFaceCharacteristics(face, color);
-        installSpecializedTargets(face, color);
-        return List.of(new RemoveVhalStudyCountersEffect(color));
-    }
-
-    private static void installSpecializedTargets(Card specialized, CardColor color) {
-        installSpecializedTargetGroup(specialized, color);
-        if (!specialized.getTargetGroups().isEmpty()) {
-            specialized.registerEffectTargetIndex(specializedTrigger(color), 0);
+        CardEffect next = specializedTrigger(color);
+        installSpecializedTargetGroup(face, color);
+        if (!face.getTargetGroups().isEmpty()) {
+            face.registerEffectTargetIndex(next, 0);
         }
+        CardEffect removeStudyCounters = new RemoveCounterFromSourceEffect(CounterType.STUDY, Integer.MAX_VALUE);
+        return switch (color) {
+            case BLUE, GREEN -> List.of(removeStudyCounters, next);
+            default -> List.of(removeStudyCounters, new ConditionalEffect(HappenedThisWay.removedCounters(),
+                    QueueReflexiveAbilityEffect.withEventValue(next, new AmountThisWay(StepKind.REMOVE_COUNTERS))));
+        };
     }
 
     private static void installSpecializedTargetGroup(Card specialized, CardColor color) {
@@ -174,7 +188,7 @@ public class VhalEagerScholar extends Card {
                     new GraveyardCardPredicateTargetFilter(
                             new CardAllOfPredicate(List.of(
                                     new CardTypePredicate(CardType.CREATURE),
-                                    new CardMaxManaValueXPredicate())),
+                                    new CardManaValueAtMostEventValuePredicate())),
                             GraveyardSearchScope.ALL_GRAVEYARDS));
             case RED -> specialized.target(new PermanentPredicateTargetFilter(
                     creatureOrPlaneswalkerAnOpponentControls(),
@@ -233,7 +247,7 @@ public class VhalEagerScholar extends Card {
                 card.setColorIdentity(List.of(CardColor.GREEN, CardColor.BLUE));
                 card.setColor(CardColor.GREEN);
                 card.setCardText("When this creature specializes, remove all study counters from it. "
-                        + "When you do, seek two creature cards with mana value less than or equal to the number "
+                        + "Seek two creature cards with mana value less than or equal to the number "
                         + "of study counters removed this way. Put one of them onto the battlefield and shuffle the "
                         + "other into your library.\n{T}: Draw a card, then discard a card.");
             }

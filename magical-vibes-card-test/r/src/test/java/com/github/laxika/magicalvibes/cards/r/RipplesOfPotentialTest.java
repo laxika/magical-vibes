@@ -68,6 +68,7 @@ class RipplesOfPotentialTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing nothing to proliferate leaves nothing to phase out")
     void choosingNoPermanentsToProliferateSkipsPhasing() {
         Permanent bear = addCounteredBear(player1);
 
@@ -81,6 +82,7 @@ class RipplesOfPotentialTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can phase out only some of the permanents that got counters")
     void canPhaseOutOnlyASubsetOfPermanentsThatReceivedCounters() {
         Permanent chosen = addCounteredBear(player1);
         Permanent unchosen = addCounteredBear(player1);
@@ -96,6 +98,7 @@ class RipplesOfPotentialTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Phases out a creature proliferate made 0/0 before state-based actions")
     void phasesOutBeforeZeroToughnessStateBasedAction() {
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bear.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
@@ -108,6 +111,22 @@ class RipplesOfPotentialTest extends BaseCardTest {
         assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(bear);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(bear.getCard());
         assertThat(bear.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A permanent you control that proliferate gave no counter is not offered to phase out")
+    void permanentNotProliferatedIsNotOffered() {
+        Permanent proliferated = addCounteredBear(player1);
+        Permanent skipped = addCounteredBear(player1);
+
+        cast();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(proliferated.getId()));
+
+        PendingInteraction.MultiPermanentChoice phaseOutChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(phaseOutChoice.validIds()).containsExactly(proliferated.getId());
+        assertThat(skipped.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     private Permanent addCounteredBear(com.github.laxika.magicalvibes.model.Player player) {

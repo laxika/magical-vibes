@@ -776,24 +776,6 @@ class GameDataDeepCopyTest {
     }
 
     @Test
-    @DisplayName("Deep copy gives a queued two-target choice the stack door parked a record of its own")
-    void deepCopyKeepsParkedCounterMoveRecordIndependently() {
-        StackEntry record = TestStackDoor.triggered(new SerraAngel(), player1.getId(), "Attack trigger", List.of());
-        record.setParkedAtStackDoor(true);
-        gd.queueInteraction(new com.github.laxika.magicalvibes.model.PermanentChoiceContext.AttackCounterMoveFirstTarget(
-                new SerraAngel(), player1.getId(), List.of(), null, player2.getId(), record));
-
-        GameData copy = gd.simulationCopy();
-        var copied = copy.peekPendingInteraction(
-                com.github.laxika.magicalvibes.model.PermanentChoiceContext.AttackCounterMoveFirstTarget.class);
-
-        assertThat(copied.triggerRecord()).isNotSameAs(record);
-        assertThat(copied.triggerRecord().isParkedAtStackDoor()).isTrue();
-        copied.triggerRecord().setParkedAtStackDoor(false);
-        assertThat(record.isParkedAtStackDoor()).isTrue();
-    }
-
-    @Test
     @DisplayName("Deep copy keeps whether a parked ability's attacking source caused it, independently")
     void deepCopyKeepsTriggeredBySourceAttacking() {
         StackEntry record = TestStackDoor.triggered(new SerraAngel(), player1.getId(), "Attack trigger", List.of());

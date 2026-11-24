@@ -1224,36 +1224,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    /** Decimator Beetle attack trigger, stage 1: choose the creature you control to remove a counter
-     *  from. Only this stage is parked on the pending-interaction queue; stage 2 is begun directly by
-     *  the stage-1 handler. {@code defendingPlayerId} is the player whose creatures are legal stage-2
-     *  targets (null when the attack has no defending player). {@code triggerRecord} is the entry the stack door
-     *  parked for the two targets, which the last answer finishes. */
-    record AttackCounterMoveFirstTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                        UUID sourcePermanentId, UUID defendingPlayerId, StackEntry triggerRecord)
-            implements PermanentChoiceContext {
-
-        /** This choice with its own copy of its record, for a copy of the game. */
-        public AttackCounterMoveFirstTarget withTriggerRecordCopy() {
-            return new AttackCounterMoveFirstTarget(sourceCard, controllerId, effects, sourcePermanentId,
-                    defendingPlayerId, triggerRecord == null ? null : new StackEntry(triggerRecord));
-        }
-    }
-
-    /** Decimator Beetle attack trigger, stage 2: choose up to one creature the defending player
-     *  controls to put a counter on. Choosing {@code controllerId} means "no second target".
-     *  {@code firstTargetId} is the stage-1 choice; {@code triggerRecord} the entry the stack door parked. */
-    record AttackCounterMoveSecondTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                         UUID sourcePermanentId, UUID defendingPlayerId, UUID firstTargetId,
-                                         StackEntry triggerRecord) implements PermanentChoiceContext {
-
-        /** This choice with its own copy of its record, for a copy of the game. */
-        public AttackCounterMoveSecondTarget withTriggerRecordCopy() {
-            return new AttackCounterMoveSecondTarget(sourceCard, controllerId, effects, sourcePermanentId,
-                    defendingPlayerId, firstTargetId, triggerRecord == null ? null : new StackEntry(triggerRecord));
-        }
-    }
-
     /** Targeted "whenever a permanent enters" trigger (e.g. Reaper King — "Whenever another Scarecrow
      *  you control enters, destroy target permanent."). The controller chooses the target when the
      *  enter trigger is serviced; mirrors {@link AttackTriggerTarget}'s any-permanent target flow.

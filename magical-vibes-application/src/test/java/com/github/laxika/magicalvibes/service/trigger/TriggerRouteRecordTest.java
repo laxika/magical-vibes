@@ -228,7 +228,6 @@ class TriggerRouteRecordTest extends BaseCardTest {
      * pumps followed by the door's next choice.
      */
     private static final List<Pump> QUEUE_PUMPS = List.of(
-            (queue, etb, game) -> queue.processNextAttackCounterMoveFirstTarget(game),
             (queue, etb, game) -> queue.processNextAttackTriggerTarget(game),
             (queue, etb, game) -> {
                 queue.processNextDayNightTriggerTarget(game);

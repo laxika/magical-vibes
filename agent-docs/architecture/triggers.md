@@ -599,7 +599,7 @@ The door also stamps `TriggeredAbility.targetFilter()`, read by the target choic
   `MayChoicePlayer.ACTIVE_PLAYER` or `TargetFilter.activePlayerChoosesTarget`; an opponent for
   `targetChosenByAnOpponent` (Karplusan Minotaur: parked with no chooser, its pump naming the opponent or asking,
   `ChooseOpponentToChooseTriggerTarget`); else the controller.
-- **Other.** `AttackCounterMoveEffect` (Decimator Beetle) parks for two choices. A random permanent or player target
+- **Other.** A random permanent or player target
   (Witch Hunt, Furnace Layer) is picked among legal ones (CR 603.3d); it is a target, so "becomes the target" abilities
   trigger and targeting an opponent is a crime (CR 700.13). A spell-or-ability target is offered what its
   `StackEntryPredicateTargetFilter` admits (`TargetLegalityService.checkSpellTargetOnStack`). Choices offer players as

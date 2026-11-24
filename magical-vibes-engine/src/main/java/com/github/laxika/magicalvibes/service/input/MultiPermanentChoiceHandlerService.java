@@ -23,6 +23,8 @@ import com.github.laxika.magicalvibes.model.PendingWhimsOfTheFates;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -145,8 +147,6 @@ public class MultiPermanentChoiceHandlerService {
     private final PhaseOutUpToNControlledPermanentsEffectHandler phaseOutUpToNControlledPermanentsEffectHandler;
     private final EachPlayerChoosesPermanentsThenPhaseOutRestEffectHandler
             eachPlayerChoosesPermanentsThenPhaseOutRestEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx
-            .PhaseOutPermanentsThatReceivedCountersThisWayEffectHandler phaseOutPermanentsThatReceivedCountersThisWayEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .CreateTokenCopiesOfChosenDistinctControlledTokensEffectHandler distinctTokenCopyHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
@@ -824,8 +824,6 @@ public class MultiPermanentChoiceHandlerService {
             handlePhaseOutUpToNControlledPermanents(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesPermanentsThenPhaseOutRestChoice ctx) {
             handleEachPlayerChoosesPermanentsThenPhaseOutRest(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.PhaseOutPermanentsThatReceivedCountersThisWay) {
-            handlePhaseOutPermanentsThatReceivedCountersThisWay(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.FlickerAnyNumber ctx) {
             if (flickerEffectHandler.completeAnyNumberChoice(gameData, permanentIds, ctx)
                     && !gameData.interaction.isAwaitingInput()) {
@@ -1548,16 +1546,6 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
-    private void handlePhaseOutPermanentsThatReceivedCountersThisWay(
-            GameData gameData, List<UUID> permanentIds) {
-        StackEntry entry = gameData.pendingEffectResolutionEntry;
-        if (entry == null) {
-            throw new IllegalStateException("No pending effect resolution entry");
-        }
-        phaseOutPermanentsThatReceivedCountersThisWayEffectHandler.completeChoice(gameData, permanentIds, entry);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
     /**
      * Returns {@code true} for the multi-permanent choice contexts whose completion changes nothing
      * before it sacrifices: it only reads (power, toughness, the chosen cards) or prompts the next
@@ -2243,16 +2231,8 @@ public class MultiPermanentChoiceHandlerService {
             Permanent target = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
             if (target != null) {
                 gameData.pendingEffectResolutionEntry.setChosenPermanentId(target.getId());
-                int placed = permanentCounterSupport.placeCounterOnPermanent(gameData,
+                permanentCounterSupport.placeCounterOnPermanent(gameData,
                         gameData.pendingEffectResolutionEntry, target, context.counterType(), context.count());
-                if (context.recordPlacement() && placed > 0
-                        && !gameData.pendingEffectResolutionEntry.getCounteredPermanentIdsThisResolution()
-                        .contains(target.getId())) {
-                    gameData.pendingEffectResolutionEntry.getCounteredPermanentIdsThisResolution()
-                            .add(target.getId());
-                    gameData.pendingEffectResolutionEntry.setEventValue(
-                            gameData.pendingEffectResolutionEntry.getEventValue() + 1);
-                }
             }
         }
 
@@ -2279,37 +2259,12 @@ public class MultiPermanentChoiceHandlerService {
                     }
                     proliferatedCards.add(perm.getCard());
                 } else if (gameData.playerIds.contains(permId)) {
-                    if (gameData.playerExperienceCounters.getOrDefault(permId, 0) > 0) {
-                        gameData.playerExperienceCounters.merge(permId, 1, Integer::sum);
-                        gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(
-                                CounterChangeEvent.Kind.YOU_PUT_COUNTERS, playerId, 1));
-                        proliferatedPlayers.add(gameData.playerIdToName.get(permId));
-                    }
-                    if (gameData.playerEnergyCounters.getOrDefault(permId, 0) > 0) {
-                        int added = gameQueryService.replaceEnergyCounters(gameData, permId, 1);
-                        if (added > 0) {
-                            gameData.setPlayerEnergyCounters(permId,
-                                    gameData.playerEnergyCounters.get(permId) + added);
-                            gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.ENERGY,
-                                    permId, added));
-                            gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(
-                                    CounterChangeEvent.Kind.YOU_PUT_COUNTERS, playerId, added));
-                            proliferatedPlayers.add(gameData.playerIdToName.get(permId));
-                        }
-                    }
-                    if (gameData.playerRadCounters.getOrDefault(permId, 0) > 0) {
-                        lifeSupport.applyRadCounters(gameData, permId, 1, "Proliferate", playerId);
-                        proliferatedPlayers.add(gameData.playerIdToName.get(permId));
-                    }
-                    if (gameData.playerPoisonCounters.getOrDefault(permId, 0) <= 0) continue;
-                    int placed = gameQueryService.applyPoisonCounterReplacement(gameData, permId, 1);
-                    placed = gameQueryService.replacePoisonCounters(gameData, permId, placed);
-                    if (placed > 0) {
-                        int currentPoison = gameData.playerPoisonCounters.getOrDefault(permId, 0);
-                        gameData.playerPoisonCounters.put(permId, currentPoison + placed);
-                        gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(
-                                CounterChangeEvent.Kind.YOU_PUT_COUNTERS, playerId, placed));
-                        proliferatedPlayers.add(gameData.playerIdToName.get(permId));
+                    int playerCountersBefore = playerCounterTotal(gameData, permId);
+                    proliferatePlayer(gameData, playerId, permId, proliferatedPlayers);
+                    int playerCountersPut = playerCounterTotal(gameData, permId) - playerCountersBefore;
+                    if (playerCountersPut > 0 && gameData.pendingEffectResolutionEntry != null) {
+                        gameData.pendingEffectResolutionEntry.addToStep(StepKind.PUT_COUNTERS,
+                                new StepOutcome(playerCountersPut, List.of(), List.of(permId)));
                     }
                 }
             }
@@ -2382,6 +2337,51 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
+    /** Gives player {@code permId} another counter of each tracked kind the player already has. */
+    private void proliferatePlayer(GameData gameData, UUID playerId, UUID permId, List<String> proliferatedPlayers) {
+        if (gameData.playerExperienceCounters.getOrDefault(permId, 0) > 0) {
+            gameData.playerExperienceCounters.merge(permId, 1, Integer::sum);
+            gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(
+                    CounterChangeEvent.Kind.YOU_PUT_COUNTERS, playerId, 1));
+            proliferatedPlayers.add(gameData.playerIdToName.get(permId));
+        }
+        if (gameData.playerEnergyCounters.getOrDefault(permId, 0) > 0) {
+            int added = gameQueryService.replaceEnergyCounters(gameData, permId, 1);
+            if (added > 0) {
+                gameData.setPlayerEnergyCounters(permId,
+                        gameData.playerEnergyCounters.get(permId) + added);
+                gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.ENERGY,
+                        permId, added));
+                gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(
+                        CounterChangeEvent.Kind.YOU_PUT_COUNTERS, playerId, added));
+                proliferatedPlayers.add(gameData.playerIdToName.get(permId));
+            }
+        }
+        if (gameData.playerRadCounters.getOrDefault(permId, 0) > 0) {
+            lifeSupport.applyRadCounters(gameData, permId, 1, "Proliferate", playerId);
+            proliferatedPlayers.add(gameData.playerIdToName.get(permId));
+        }
+        if (gameData.playerPoisonCounters.getOrDefault(permId, 0) <= 0) {
+            return;
+        }
+        int placed = gameQueryService.applyPoisonCounterReplacement(gameData, permId, 1);
+        placed = gameQueryService.replacePoisonCounters(gameData, permId, placed);
+        if (placed > 0) {
+            int currentPoison = gameData.playerPoisonCounters.getOrDefault(permId, 0);
+            gameData.playerPoisonCounters.put(permId, currentPoison + placed);
+            gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(
+                    CounterChangeEvent.Kind.YOU_PUT_COUNTERS, playerId, placed));
+            proliferatedPlayers.add(gameData.playerIdToName.get(permId));
+        }
+    }
+
+    private static int playerCounterTotal(GameData gameData, UUID playerId) {
+        return gameData.playerExperienceCounters.getOrDefault(playerId, 0)
+                + gameData.playerEnergyCounters.getOrDefault(playerId, 0)
+                + gameData.playerRadCounters.getOrDefault(playerId, 0)
+                + gameData.playerPoisonCounters.getOrDefault(playerId, 0);
+    }
+
     private void proliferatePermanent(GameData gameData, StackEntry entry, UUID playerId, Permanent permanent,
                                       Map<UUID, Integer> loyaltyCountersPlacedByController) {
         int totalPlaced = 0;
@@ -2420,9 +2420,11 @@ public class MultiPermanentChoiceHandlerService {
             }
         }
         if (totalPlaced > 0) {
-            // Proliferatelink proliferates outside any resolving ability, so there is no entry to note it on.
-            if (entry != null && !entry.getCounteredPermanentIdsThisResolution().contains(permanent.getId())) {
-                entry.getCounteredPermanentIdsThisResolution().add(permanent.getId());
+            // Proliferatelink proliferates outside any resolving ability, so there is no entry to record it on.
+            if (entry != null) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+                entry.addToStep(StepKind.PUT_COUNTERS, new StepOutcome(totalPlaced, List.of(permanent.getId()),
+                        controllerId == null ? List.of() : List.of(controllerId)));
             }
             gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.YOU_PUT_COUNTERS,
                     playerId, totalPlaced));

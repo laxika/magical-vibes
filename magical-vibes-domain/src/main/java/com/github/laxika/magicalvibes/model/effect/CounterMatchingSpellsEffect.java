@@ -25,7 +25,7 @@ public record CounterMatchingSpellsEffect(StackEntryPredicate filter, Set<StackE
 
     /** Every spell kind of stack entry. */
     public static final Set<StackEntryType> SPELL_TYPES = Set.copyOf(EnumSet.complementOf(
-            EnumSet.of(StackEntryType.ACTIVATED_ABILITY, StackEntryType.TRIGGERED_ABILITY)));
+            EnumSet.copyOf(StackEntryType.ABILITIES)));
 
     public CounterMatchingSpellsEffect {
         Objects.requireNonNull(filter, "filter is required");

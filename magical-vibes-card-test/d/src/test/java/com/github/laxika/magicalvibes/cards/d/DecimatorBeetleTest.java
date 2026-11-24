@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -55,7 +54,7 @@ class DecimatorBeetleTest extends BaseCardTest {
 
 
     @Test
-    @DisplayName("Attacking queues the two-step counter-move target selection")
+    @DisplayName("Attacking asks for the creature you control first, among your creatures only")
     void attackQueuesCounterMoveTargetSelection() {
         addCreatureReady(player1, new DecimatorBeetle());
         addCreatureReady(player1, new GrizzlyBears());
@@ -64,8 +63,9 @@ class DecimatorBeetleTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.AttackCounterMoveFirstTarget.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .containsExactlyInAnyOrderElementsOf(gd.playerBattlefields.get(player1.getId()).stream()
+                        .map(Permanent::getId).toList());
     }
 
     @Test

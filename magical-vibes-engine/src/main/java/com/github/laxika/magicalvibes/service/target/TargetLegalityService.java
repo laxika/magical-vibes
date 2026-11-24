@@ -41,7 +41,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
-import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
 import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AggregateManaValueTargetEffect;
@@ -88,6 +87,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerHasFewerCreatureCardsIn
 import com.github.laxika.magicalvibes.model.filter.PlayerHasMoreCardsInHandThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerHasMoreLifeThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerHasMostLifePredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerLifeExactlyPredicate;
 import com.github.laxika.magicalvibes.service.effect.CreatureCountSupport;
 import com.github.laxika.magicalvibes.model.filter.PlayerSeatedInDirectionPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerHasMostCardsInHandPredicate;
@@ -3572,19 +3572,6 @@ public class TargetLegalityService {
             }
         }
 
-        if (entry.getEffectsToResolve().stream().anyMatch(AttackCounterMoveEffect.class::isInstance)) {
-            List<UUID> targetIds = entry.getDeclaredTargetIds();
-            boolean anyLegalTarget = false;
-            for (int i = 0; i < targetIds.size(); i++) {
-                if (isAttackCounterMoveTargetLegal(gameData, entry, i, targetIds.get(i))) {
-                    anyLegalTarget = true;
-                } else {
-                    entry.markTargetIllegal(i);
-                }
-            }
-            return !anyLegalTarget;
-        }
-
         if (entry.getTargetId() == null && entry.getTargetIds().isEmpty()
                 && !entry.getTargetCardIds().isEmpty()) {
             return entry.getTargetCardIds().stream()
@@ -4038,24 +4025,6 @@ public class TargetLegalityService {
         }
 
         return targetFizzled;
-    }
-
-    /**
-     * Attack counter-move targets (Decimator Beetle): the first target must still be a creature the
-     * attacking player's trigger controller controls, the second a creature the defending player still
-     * controls (the defending player is recorded as the entry's required target controller).
-     */
-    private boolean isAttackCounterMoveTargetLegal(GameData gameData, StackEntry entry, int targetIndex,
-                                                   UUID targetId) {
-        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        if (target == null || !gameQueryService.isCreature(gameData, target)) {
-            return false;
-        }
-        UUID requiredControllerId = targetIndex == 0
-                ? entry.getControllerId()
-                : entry.getRequiredTargetControllerId();
-        return requiredControllerId != null
-                && requiredControllerId.equals(gameQueryService.findPermanentController(gameData, targetId));
     }
 
     private boolean isExiledCardLegalOnResolution(GameData gameData, StackEntry entry, UUID targetId,
@@ -6361,6 +6330,8 @@ public class TargetLegalityService {
                     targetPlayerId != null
                             && gameData.orderedPlayerIds.stream()
                             .noneMatch(candidateId -> gameData.getLife(candidateId) > gameData.getLife(targetPlayerId));
+            case PlayerLifeExactlyPredicate lifeExactly ->
+                    targetPlayerId != null && gameData.getLife(targetPlayerId) == lifeExactly.life();
             case PlayerHasMoreLifeThanControllerPredicate ignored ->
                     controllerId != null
                             && !controllerId.equals(targetPlayerId)

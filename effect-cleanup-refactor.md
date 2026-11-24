@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48 (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 8d, 7c, 50; merge queue 8c. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                        |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 8d, 7c, 50, 48b; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                         |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,046 / 2,470 (after fold run 48) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,041 / 2,465 (after fold run 8c) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,664 rows over 4,567 classes (after fold run 48). Latest verdict per class: `step-9` 48, unique 1,194, absorbed 1,335, split 670, blocked-other 554, survivor 455, blocked-step-model 140, blocked-player-loop 96, dead 75. Waiting: 48 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,672 rows over 4,568 classes (after fold run 8c). Latest verdict per class: `step-9` 42, unique 1,194, absorbed 1,335, split 675, blocked-other 555, survivor 455, blocked-step-model 140, blocked-player-loop 96, dead 76. Waiting: 42 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1115,6 +1115,11 @@ Ledger rows are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cd
 - `MayPayLifeEffect`: a payer who can't pay that much life isn't asked; its else effect follows (CR 119.4, 608.2d) (fold run 48).
 - `MayEffect` over a `controllerOf(...)` `SacrificePermanentsEffect` (any count) isn't asked when its chooser can't sacrifice that many (CR 608.2d; Archfiend of Spite) (fold run 48).
 - "[Abandon this scheme] unless you discard a card or pay N life" is `MayEffect(DiscardEffect, …, MayPayLifeEffect(N, null, …, CONTROLLER, SacrificeSelfEffect()))`; on a scheme, `SacrificeSelfEffect` abandons it (CR 701.33b) (fold run 48).
+
+- `ProliferateEffect` is a PUT_COUNTERS step: each answered proliferate adds the permanents (and their controllers) and players it gave counters to; "that had a counter put on them this way" is `thisWay(PUT_COUNTERS)` (Ripples of Potential; fold run 8c).
+- `PlayerLifeExactlyPredicate(int life)`: "each player with exactly N life", with `matching(eachPlayer(), …)` (Triskaidekaphobia; fold run 8c).
+- `ControllerLosesGameEffect` over several players: all lose at once, and a draw when every remaining player loses (CR 104.4a); a resolution stops once the game has ended (CR 104.1) (fold run 8c).
+- Several targets in one triggered ability: plain `target(...)` groups plus `addTrigger(trigger, e1, e2)` with `registerEffectTargetIndex(e, group)` for each effect; the stack door walks the groups (Decimator Beetle; fold run 8c).
 
 ### Blocked causes still open
 
@@ -5118,6 +5123,43 @@ For the next run: fold `EntwineManaCost` (5 cards) onto `EscalateCost.entwine` o
 - attack-tax: floating `RequirePaymentToAttackEffect` / `RequirePaymentToBlockEffect` on a player needs the amount fixed at resolution (War Tax's and War Cadence's X); `GrantStaticEffectToPlayerEffect` fixes no `DynamicAmount`. The readers are `CastingCostService.getAttackPaymentPerCreature` (~2715) and `getAttackLifePaymentPerCreature`, and `GameQueryService.getGlobalBlockManaTax` / `getGlobalBlockLifeTax` (~11660). Fix the `getOpponentId` defender on the way.
 - alt-cost: Dream Halls and web-slinging use their own flags in `SpellCastingService` (~3900–4760), `GameViewProjectionFactory` (~1232) and `CastingCostService` (~1788, ~2154).
 - Then Magmasaur and the ante pair.
+
+### Step 9, fold run 8c (2026-11-24, parallel worktree)
+Batch `splits`, first half (11 rows): 5 split onto existing steps, 1 `blocked-other`, 5 not taken. Ratchet 3,067 / 2,480 → 3,062 / 2,475. CR 101.4, 104.1, 104.4a, 603.12, 608.2c, 608.2h, 701.34a checked. 5 card files rewritten, Oracle text checked for all.
+
+| Folded | Into |
+|---|---|
+| Ripples of Potential | `ProliferateEffect` (a PUT_COUNTERS step now) + `ChoosePermanentsEffect.anyNumber(thisWay(PUT_COUNTERS, PermanentControlledBySourceControllerPredicate))` + `PhaseOutEffect(thisWay(CHOOSE))` |
+| Decimator Beetle | two plain target groups + `addTrigger(attacks(), RemoveUpToCountersFromAllPermanentsEffect.exactly(-1/-1, 1, target()), PutCounterOnTargetPermanentEffect(-1/-1, 1))`, each bound by `registerEffectTargetIndex` |
+| Vhal, Eager Scholar | `RemoveCounterFromSourceEffect(STUDY, MAX_VALUE)` + white/black/red `ConditionalEffect(removedCounters(), QueueReflexiveAbilityEffect.withEventValue(face, AmountThisWay(REMOVE_COUNTERS)))`, blue/green the face's step over `AmountThisWay(REMOVE_COUNTERS)` |
+| Consuming Ferocity | `PutCounterOnTargetPermanentEffect(attachedCreature(), +1/+0)` + `ConditionalEffect(EnchantedPermanentMatches(PermanentCounterCountAtLeastPredicate(+1/+0, 3)), dealtBy(attachedCreature(), SourcePower, controllerOf(…)) + DestroyTargetPermanentEffect(attachedCreature(), true))` |
+| Triskaidekaphobia | per mode `ControllerLosesGameEffect(matching(eachPlayer(), PlayerLifeExactlyPredicate(13)))` + `GainLifeEffect` / `LoseLifeEffect(1, eachPlayer())` |
+
+**Where the triage was wrong.**
+- Decimator: `PutCounterOnTargetPermanentEffect` ignores a `target(n)` group, and a `SequenceEffect` bound to one group lost the second group. The fix is two effects, each bound to its own group.
+- Vhal: the blue and green faces have no "when you do" (HBG 8u, 8g). The old handler made a reflexive ability for every face, even with nothing removed.
+- Triskaidekaphobia: the survivor ended the game at its first loser. It now resolves every loss before deciding the result.
+
+**Behaviour changes.**
+- Vhal: blue and green act in the specialize ability itself; the white, black and red reflexive abilities need counters to have been removed (CR 603.12). Black's target filter reads the event value. New tests.
+- `ControllerLosesGameEffect`: simultaneous losses, and a draw when all remaining players lose (CR 104.4a).
+- `EffectResolutionService` stops resolving once `gameResult` is set (CR 104.1). This is what keeps Triskaidekaphobia's life step from running after a loss, as the old handler did.
+- Decimator's targets are now chosen by the generic stack door. Its counter removal fires the counter-removed events.
+- Ripples' phase-out log line is the survivor's.
+
+**Deleted.**
+- The 5 records and handlers.
+- `AttackCounterMoveEffect`, the `AttackCounterMoveFirstTarget` / `SecondTarget` contexts, their queue pump, handlers and `TargetLegalityService` branch, and `targetableCreaturesControlledBy`.
+- `MultiPermanentChoiceContext.PhaseOutPermanentsThatReceivedCountersThisWay` and `StackEntry.counteredPermanentIdsThisResolution`.
+- The dead `recordPlacement` component of `OwnPermanentCounterPlacementWithChosenReference`.
+
+**Blocked.** Necropotence: the AI reads `CardDrawingEffect` to value an activated ability's draw, and neither replacement step has it.
+
+**For the next run (8d).**
+- Unexpected Results and Rashmi share one missing piece. `LookAtTopCardsAndMayCastEffect.reveal(1).matching(…).leavingTheRest()` would need to record REVEAL, and its `CAST_WITHOUT_PAYING` answer would need to resume the remaining steps. The second point is unverified: no card has a step after it.
+- Separately, `LibrarySearchDestination.CAST_WITHOUT_PAYING_OR_PUT_INTO_HAND` already exists and fits Rashmi.
+- After that, the land branch of Unexpected Results is `ConditionalEffect(toACard(REVEAL, land), MayEffect(put onto battlefield + return the spell))`, and Rashmi's is `PutCardsIntoHandEffect(revealedThisWay())`.
+- Specter's Shriek, The Master and Danse Macabre were not read in depth.
 
 ## Prompt
 

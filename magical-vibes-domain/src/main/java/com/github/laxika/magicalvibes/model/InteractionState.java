@@ -133,12 +133,6 @@ public class InteractionState {
             return new PermanentChoiceContext.ChooseOpponentToChooseTriggerTarget(
                     choice.target().withTriggerRecordCopy());
         }
-        if (context instanceof PermanentChoiceContext.AttackCounterMoveFirstTarget first) {
-            return first.withTriggerRecordCopy();
-        }
-        if (context instanceof PermanentChoiceContext.AttackCounterMoveSecondTarget second) {
-            return second.withTriggerRecordCopy();
-        }
         if (context instanceof PermanentChoiceContext.PucasMischiefOwnTarget own) return own.withTriggerRecordCopy();
         if (context instanceof PermanentChoiceContext.PucasMischiefOpponentTarget opponent) {
             return opponent.withTriggerRecordCopy();

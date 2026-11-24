@@ -224,6 +224,10 @@ public class EffectResolutionService {
         }
         List<CardEffect> effects = entry.getEffectsToResolve();
         for (int i = startIndex; i < effects.size(); i++) {
+            // A game that ended (a player won, it is a draw) ends at once (CR 104.1): no later step happens.
+            if (gameData.gameResult != null) {
+                return;
+            }
             // A new damage event ends the open one first; held simultaneous damage that prompts its
             // player brings the resolution back to this effect once answered.
             if (!damageSupport.beginDamageEvent(gameData, entry, i)) {

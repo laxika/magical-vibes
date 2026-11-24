@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -19,6 +21,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+/**
+ * Resolves {@link ProliferateEffect}: its controller chooses permanents and players with counters, each getting another
+ * counter of each kind already there (CR 701.34a). It is a {@code PUT_COUNTERS} step: as each proliferate is answered
+ * the permanents that got a counter, their controllers, the players that got one and the counters put are added to
+ * it, so "the permanents that had a counter put on them this way" is {@code thisWay(PUT_COUNTERS)}.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -45,6 +53,8 @@ public class ProliferateEffectHandler implements NormalEffectHandlerBean {
                 ? 1
                 : Math.max(0, amountEvaluationService.evaluate(gameData, typedEffect.amount(),
                         AmountContext.forStackEntry(entry, null)));
+        // A PUT_COUNTERS step: each answered proliferate adds the permanents and players it gave counters to.
+        entry.recordStep(StepKind.PUT_COUNTERS, StepOutcome.NONE);
         begin(gameData, controllerId, totalProliferates);
     }
 

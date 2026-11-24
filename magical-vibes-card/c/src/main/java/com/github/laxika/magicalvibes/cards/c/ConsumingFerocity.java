@@ -4,10 +4,17 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.AddCounterToEnchantedCreatureThenDestroyAtThresholdEffect;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentCounterCountAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -34,7 +41,15 @@ public class ConsumingFerocity extends Card {
         // At the beginning of your upkeep, put a +1/+0 counter on enchanted creature. If that creature
         // has three or more +1/+0 counters on it, it deals damage equal to its power to its controller,
         // then destroy that creature and it can't be regenerated.
-        .addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new AddCounterToEnchantedCreatureThenDestroyAtThresholdEffect(CounterType.PLUS_ONE_PLUS_ZERO, 3));
+        .addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
+                new PutCounterOnTargetPermanentEffect(Subjects.attachedCreature(), CounterType.PLUS_ONE_PLUS_ZERO, 1),
+                new ConditionalEffect(
+                        new EnchantedPermanentMatches(
+                                new PermanentCounterCountAtLeastPredicate(CounterType.PLUS_ONE_PLUS_ZERO, 3),
+                                "that creature has three or more +1/+0 counters on it"),
+                        SequenceEffect.of(
+                                TargetCreatureDealsDamageToControllerEffect.dealtBy(Subjects.attachedCreature(),
+                                        new SourcePower(), Subjects.controllerOf(Subjects.attachedCreature())),
+                                new DestroyTargetPermanentEffect(Subjects.attachedCreature(), true)))));
     }
 }

@@ -457,62 +457,6 @@ public class TriggeredAbilityQueueService {
         return gameQueryService.findPermanentController(gameData, attackedTargetId);
     }
 
-    /**
-     * Stage 1 of Decimator Beetle's attack trigger: prompt the controller to choose the creature they
-     * control that a counter is removed from. The stage-2 (defending-player) choice is begun by the
-     * stage-1 response handler in {@code PermanentChoiceTriggerHandlerService}.
-     */
-    public void processNextAttackCounterMoveFirstTarget(GameData gameData) {
-        while (gameData.hasPendingInteraction(PermanentChoiceContext.AttackCounterMoveFirstTarget.class)) {
-            PermanentChoiceContext.AttackCounterMoveFirstTarget pending =
-                    gameData.peekPendingInteraction(PermanentChoiceContext.AttackCounterMoveFirstTarget.class);
-
-            List<UUID> validTargets = targetableCreaturesControlledBy(
-                    gameData, pending.controllerId(), pending.sourceCard(), pending.controllerId());
-            if (validTargets.isEmpty()) {
-                gameData.pollPendingInteraction(PermanentChoiceContext.AttackCounterMoveFirstTarget.class);
-                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
-                        "'s attack trigger has no valid targets."));
-                log.info("Game {} - {} attack trigger skipped (no valid targets)",
-                        gameData.id, pending.sourceCard().getName());
-                continue;
-            }
-
-            gameData.pollPendingInteraction(PermanentChoiceContext.AttackCounterMoveFirstTarget.class);
-            gameData.interaction.setPermanentChoiceContext(pending);
-            playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validTargets,
-                    pending.sourceCard().getName() + "'s ability - Choose target creature you control.");
-
-            gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
-                    "'s attack trigger - choose target creature you control."));
-            log.info("Game {} - {} attack trigger awaiting first target selection",
-                    gameData.id, pending.sourceCard().getName());
-            return;
-        }
-    }
-
-    /**
-     * Ids of every creature the given player controls that {@code sourceCard}, controlled by
-     * {@code choosingPlayerId}, may legally target (excludes shroud / opponent-hexproof / protection).
-     * Shared by both stages of the attack counter-move target choices.
-     */
-    public List<UUID> targetableCreaturesControlledBy(GameData gameData, UUID playerId,
-                                                      Card sourceCard, UUID choosingPlayerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return List.of();
-        }
-        List<UUID> result = new ArrayList<>();
-        for (Permanent permanent : battlefield) {
-            if (gameQueryService.isCreature(gameData, permanent)
-                    && targetLegalityService.checkTriggeredPermanentTargetableReason(
-                            gameData, permanent, sourceCard, choosingPlayerId).isEmpty()) {
-                result.add(permanent.getId());
-            }
-        }
-        return result;
-    }
-
     public void processNextEntersTriggerTarget(GameData gameData) {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
             PermanentChoiceContext.EntersTriggerTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class);

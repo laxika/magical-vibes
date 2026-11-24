@@ -343,10 +343,6 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
-    /** Phase out any number of controlled permanents that received counters during this resolution. */
-    record PhaseOutPermanentsThatReceivedCountersThisWay() implements MultiPermanentChoiceContext {
-    }
-
     /** Resolve one choice in a repeated immediate controller-creature flicker. */
     record FlickerAnyNumber(StackEntry resolvingEntry,
                             com.github.laxika.magicalvibes.model.effect.FlickerEffect effect,
@@ -696,17 +692,11 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /** Put counters on the chosen permanent and remember it for a following effect. */
-    record OwnPermanentCounterPlacementWithChosenReference(CounterType counterType, int count,
-                                                            boolean recordPlacement, boolean mandatory)
+    record OwnPermanentCounterPlacementWithChosenReference(CounterType counterType, int count, boolean mandatory)
             implements MultiPermanentChoiceContext {
 
         public OwnPermanentCounterPlacementWithChosenReference(CounterType counterType, int count) {
-            this(counterType, count, false, false);
-        }
-
-        public OwnPermanentCounterPlacementWithChosenReference(CounterType counterType, int count,
-                                                               boolean recordPlacement) {
-            this(counterType, count, recordPlacement, false);
+            this(counterType, count, false);
         }
     }
 

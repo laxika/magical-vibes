@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.EntryFactCondition;
 import com.github.laxika.magicalvibes.model.condition.EventFactCondition;
-import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
 import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -1043,12 +1042,6 @@ public class TriggeredAbilityStackService extends StackDoor {
                 modeChoice = modeChoice.withModeCount(0, maximumModes);
             }
             gameData.queueInteraction(modeChoice);
-        } else if (choosing.stream().anyMatch(AttackCounterMoveEffect.class::isInstance)) {
-            // Two targets chosen one after the other, the second "up to one" among the defending player's creatures
-            // (Decimator Beetle).
-            entry.setParkedAtStackDoor(true);
-            gameData.queueInteraction(new PermanentChoiceContext.AttackCounterMoveFirstTarget(
-                    card, controllerId, effects, entry.getSourcePermanentId(), entry.getDefendingPlayerId(), entry));
         } else if (choosing.stream().anyMatch(CardEffect::targetChosenByAnOpponent)) {
             // "Any target of an opponent's choice" (Karplusan Minotaur): the target choice has no chooser yet; its
             // controller chooses which of their opponents makes it as it is taken from the queue.

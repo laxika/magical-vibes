@@ -229,6 +229,58 @@ class VhalEagerScholarTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getCard().getId().equals(chosen.getId()));
         assertThat(gd.playerDecks.get(player1.getId())).contains(other);
     }
+    @Test
+    @DisplayName("The blue face looks at the cards in the same ability that removes the counters, with no reflexive ability")
+    void blueFaceLooksWithinTheSpecializeAbility() {
+        Permanent vhal = addCreatureReady(player1, new VhalEagerScholar());
+        vhal.setCounterCount(CounterType.STUDY, 2);
+        harness.setHand(player1, List.of(new Island()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+
+        activateSpecialization(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(vhal.getCounterCount(CounterType.STUDY)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(com.github.laxika.magicalvibes.model.PendingInteraction.LibraryRevealChoice.class);
+    }
+
+    @Test
+    @DisplayName("The red face's \"when you do\" ability doesn't trigger when no study counters were removed")
+    void redFaceDoesNotTriggerWithoutStudyCounters() {
+        Permanent vhal = addCreatureReady(player1, new VhalEagerScholar());
+        addCreatureReady(player2, new SylvanShepherd());
+        harness.setHand(player1, List.of(new Mountain()));
+
+        activateSpecialization(4);
+        resolveAllTriggers();
+
+        assertThat(vhal.getCard().getName()).isEqualTo("Vhal, Scholar of Elements");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The black face can't return a creature card with mana value above the study counters removed")
+    void blackFaceReturnsOnlyCreaturesWithinTheRemovedCount() {
+        Permanent vhal = addCreatureReady(player1, new VhalEagerScholar());
+        vhal.setCounterCount(CounterType.STUDY, 1);
+        Ornithopter cheap = new Ornithopter();
+        GrizzlyBears expensive = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(cheap, expensive));
+        harness.setHand(player1, List.of(new Swamp()));
+
+        activateSpecialization(3);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(
+                com.github.laxika.magicalvibes.model.PendingInteraction.MultiGraveyardChoice.class).cards())
+                .contains(cheap)
+                .doesNotContain(expensive);
+    }
+
     private void activateSpecialization(int abilityIndex) {
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.activateAbility(player1, 0, abilityIndex, null, null);

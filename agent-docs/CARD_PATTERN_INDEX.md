@@ -403,7 +403,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | counter a spell, then may free-cast one eligible own-graveyard spell at or below its mana value | `c/Counterpoint.java` + `CounterSpellAndMayCastCardFromGraveyardWithTargetSpellManaValueEffect` |
 | counter target spell; creature spells perpetually get -2/-0; counter unless pays | CARD_PATTERNS_LANDS_SPELLS.md |
 | remove any number of counters from among permanents | CARD_PATTERNS_LANDS_SPELLS.md |
-| proliferate, then phase out permanents that received counters | `r/RipplesOfPotential.java` + `PhaseOutPermanentsThatReceivedCountersThisWayEffect` |
+| proliferate, then phase out permanents that received counters | `r/RipplesOfPotential.java` (`ProliferateEffect` + `ChoosePermanentsEffect.anyNumber(thisWay(PUT_COUNTERS, …))` + `PhaseOutEffect(thisWay(CHOOSE))`) |
 | ETB: starting with you each player chooses up to five permanents; all other permanents except the source phase out and permanents can't phase in | `d/DiscipleOfCaelusNin.java` + `EachPlayerChoosesPermanentsThenPhaseOutRestEffect` + `PermanentsCantPhaseInEffect` |
 | cast a spell from among cards put into your hand this turn | `q/QuicksilverServitor.java` + `.withFilter(new CardPutIntoHandThisTurnPredicate())` on the cast trigger with `new ProliferateEffect()` |
 | bounce, unsummon, return to hand | CARD_PATTERNS_LANDS_SPELLS.md |

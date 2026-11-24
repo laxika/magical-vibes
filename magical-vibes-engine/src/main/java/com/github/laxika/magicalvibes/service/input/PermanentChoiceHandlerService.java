@@ -922,10 +922,6 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleETBSpellTargetTrigger(gameData, permanentId, etbStt);
         } else if (context instanceof PermanentChoiceContext.ETBTokenMultiTargetTrigger etbMtt) {
             triggerHandler.handleETBTokenMultiTargetTrigger(gameData, permanentId, etbMtt);
-        } else if (context instanceof PermanentChoiceContext.AttackCounterMoveFirstTarget acmf) {
-            triggerHandler.handleAttackCounterMoveFirstTarget(gameData, permanentId, acmf);
-        } else if (context instanceof PermanentChoiceContext.AttackCounterMoveSecondTarget acms) {
-            triggerHandler.handleAttackCounterMoveSecondTarget(gameData, permanentId, acms);
         } else if (context instanceof PermanentChoiceContext.SagaChapterTarget sct) {
             triggerHandler.handleSagaChapterTarget(gameData, permanentId, sct);
         } else if (context instanceof PermanentChoiceContext.SagaChapterPlayerTarget scpt) {

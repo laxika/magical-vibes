@@ -24,7 +24,6 @@ public class EndTurnEffectHandler implements NormalEffectHandlerBean {
     private static final List<Class<? extends PermanentChoiceContext>> STACK_DOOR_CHOICES = List.of(
             PermanentChoiceContext.TriggeredModalTrigger.class,
             PermanentChoiceContext.AttackTriggerTarget.class,
-            PermanentChoiceContext.AttackCounterMoveFirstTarget.class,
             PermanentChoiceContext.PucasMischiefOwnTarget.class,
             PermanentChoiceContext.SpellGraveyardTargetTrigger.class,
             PermanentChoiceContext.ETBTokenMultiTargetTrigger.class,

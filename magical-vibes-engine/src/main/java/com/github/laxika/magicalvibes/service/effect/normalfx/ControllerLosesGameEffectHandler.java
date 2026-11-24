@@ -16,6 +16,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -33,18 +35,31 @@ public class ControllerLosesGameEffectHandler implements NormalEffectHandlerBean
         return ControllerLosesGameEffect.class;
     }
 
+    /**
+     * Each player the subject names loses the game at once (CR 104.4a: if every remaining player loses, the game is a
+     * draw). A player who can't lose, or whose loss a replacement changed, is not among them.
+     */
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        List<UUID> losers = new ArrayList<>();
         for (UUID losingPlayerId : subjectResolutionService.players(gameData, entry, effect,
                 ((ControllerLosesGameEffect) effect).player())) {
-            if (gameData.playerIds.contains(losingPlayerId) && lose(gameData, entry, losingPlayerId)) {
-                return;
+            if (gameData.playerIds.contains(losingPlayerId) && loses(gameData, entry, losingPlayerId)) {
+                losers.add(losingPlayerId);
             }
         }
+        if (losers.isEmpty()) {
+            return;
+        }
+        if (losers.size() >= gameData.playerIds.size()) {
+            gameOutcomeService.declareDraw(gameData);
+            return;
+        }
+        gameOutcomeService.declareWinner(gameData, gameQueryService.getOpponentId(gameData, losers.getFirst()));
     }
 
-    /** Whether the loss ended the game. */
-    private boolean lose(GameData gameData, StackEntry entry, UUID losingPlayerId) {
+    /** Whether {@code losingPlayerId} loses: neither prevented nor replaced. */
+    private boolean loses(GameData gameData, StackEntry entry, UUID losingPlayerId) {
         LossOutcome outcome = gameOutcomeService.resolveLoss(gameData, losingPlayerId, LossReason.EFFECT);
         if (outcome == LossOutcome.PREVENTED) {
             String logEntry = gameData.playerIdToName.get(losingPlayerId) + " can't lose the game.";
@@ -58,13 +73,9 @@ public class ControllerLosesGameEffectHandler implements NormalEffectHandlerBean
             return false;
         }
 
-        UUID winnerId = gameQueryService.getOpponentId(gameData, losingPlayerId);
         String loserName = gameData.playerIdToName.get(losingPlayerId);
-
-        gameLogService.append(gameData, GameLog.textCardText(loserName + " loses the game from " , entry.getCard(), "."));
+        gameLogService.append(gameData, GameLog.textCardText(loserName + " loses the game from ", entry.getCard(), "."));
         log.info("Game {} - {} loses the game from {}", gameData.id, loserName, entry.getCard().getName());
-
-        gameOutcomeService.declareWinner(gameData, winnerId);
         return true;
     }
 }

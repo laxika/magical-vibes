@@ -1571,23 +1571,6 @@ class TriggeredAbilityStackServiceTest {
     }
 
     @Test
-    @DisplayName("A counter moved between two targets chosen one after the other waits with the record parked")
-    void counterMoveTargetsWaitWithTheRecordParked() {
-        Card card = createCreature("Beetle", 1, 1);
-        Permanent source = new Permanent(card);
-        var ability = new TriggeredAbility(Triggers.attacks(),
-                new com.github.laxika.magicalvibes.model.effect.RemoveAndPutCounterOnAttackEffect());
-
-        stackService.put(gd, new TriggeredAbilityRequest(ability, card, source, PLAYER1_ID, "attack",
-                ConditionContext.forPermanent(source, PLAYER1_ID), TriggerRecord.NONE));
-
-        assertThat(gd.stack).isEmpty();
-        var choice = gd.peekPendingInteraction(PermanentChoiceContext.AttackCounterMoveFirstTarget.class);
-        assertThat(choice.triggerRecord().isParkedAtStackDoor()).isTrue();
-        assertThat(choice.triggerRecord().getSourcePermanentId()).isEqualTo(source.getId());
-    }
-
-    @Test
     @DisplayName("The continuation puts a chosen mode's ability on the stack with the card its modes' targets are declared on")
     void finishParkedOnTheModesCardKeepsTheRecord() {
         Card card = createCreature("Command", 2, 2);

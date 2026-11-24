@@ -10967,8 +10967,6 @@ public class GameData {
                                 drain.delayedColorless())
                         : original instanceof PendingInteraction.ColorChoice choice
                         ? choice.copyCardTypeOnEnterPermanent()
-                        : original instanceof PermanentChoiceContext.AttackCounterMoveFirstTarget trigger
-                        ? trigger.withTriggerRecordCopy()
                         : original instanceof PermanentChoiceContext.PucasMischiefOwnTarget trigger
                         ? trigger.withTriggerRecordCopy()
                         : original instanceof PermanentChoiceContext.ETBTokenMultiTargetTrigger trigger

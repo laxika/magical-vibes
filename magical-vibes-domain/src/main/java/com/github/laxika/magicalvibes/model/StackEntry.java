@@ -574,8 +574,6 @@ public class StackEntry {
      * Forest". {@code null} while it is on the battlefield, or when this entry has no triggering permanent.
      */
     @Setter private Card triggeringPermanentLastKnownCard;
-    /** Permanent ids that received counters during the current effect resolution. */
-    private final List<UUID> counteredPermanentIdsThisResolution = new ArrayList<>();
     /** Controller of the spell targeted by a counter effect, retained after that spell leaves the stack. */
     @Setter private UUID counteredSpellControllerId;
     /**
@@ -1502,7 +1500,6 @@ public class StackEntry {
         this.heldForManaAbility = source.heldForManaAbility;
         this.acceptedPlayerIds = source.acceptedPlayerIds;
         this.modeChooserId = source.modeChooserId;
-        this.counteredPermanentIdsThisResolution.addAll(source.counteredPermanentIdsThisResolution);
         this.counteredSpellControllerId = source.counteredSpellControllerId;
         this.counteredAbilitySourceId = source.counteredAbilitySourceId;
         this.resolutionExiledCardIds = source.resolutionExiledCardIds;

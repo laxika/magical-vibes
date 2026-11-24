@@ -178,11 +178,6 @@ public class AutoPassService {
             triggeredAbilityQueueService.processNextAttackTriggerTarget(gameData);
         }
 
-        // Process any pending two-target attack counter-move triggers (Decimator Beetle)
-        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.AttackCounterMoveFirstTarget.class)) {
-            triggeredAbilityQueueService.processNextAttackCounterMoveFirstTarget(gameData);
-        }
-
         // Process any pending targeted enter triggers (e.g. Reaper King's "destroy target permanent")
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
             triggeredAbilityQueueService.processNextEntersTriggerTarget(gameData);

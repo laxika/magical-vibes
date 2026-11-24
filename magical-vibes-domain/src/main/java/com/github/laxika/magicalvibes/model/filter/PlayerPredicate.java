@@ -23,6 +23,7 @@ public sealed interface PlayerPredicate permits
         PlayerHasMoreLifeThanControllerPredicate,
         PlayerHasMostLifePredicate,
         PlayerHasLeastLifePredicate,
+        PlayerLifeExactlyPredicate,
         PlayerHasMostCardsInHandPredicate,
         PlayerSeatedInDirectionPredicate,
         PlayerLostLifeThisTurnPredicate,
