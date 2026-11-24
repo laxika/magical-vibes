@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.MultiplyControllerDamageToOpponentsAndTheirPermanentsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageToOpponentsAndTheirPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 
 @CardRegistration(set = "LTC", collectorNumber = "495")
 @CardRegistration(set = "LTC", collectorNumber = "539")
@@ -12,7 +13,8 @@ public class IsengardUnleashed extends Card {
 
     public IsengardUnleashed() {
         addSpellEffect(new DamageCantBePreventedThisTurnEffect());
-        addSpellEffect(new MultiplyControllerDamageToOpponentsAndTheirPermanentsThisTurnEffect(3));
+        addSpellEffect(GrantStaticEffectToPlayerEffect.untilEndOfTurn(
+                new DoubleControllerDamageToOpponentsAndTheirPermanentsEffect(3, false, true)));
         addCastingOption(new FlashbackCast("{4}{R}{R}{R}"));
     }
 }

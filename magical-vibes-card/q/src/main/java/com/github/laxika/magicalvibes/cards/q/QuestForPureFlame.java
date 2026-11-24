@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
@@ -27,7 +28,7 @@ public class QuestForPureFlame extends Card {
                 List.of(
                         new RemoveCounterFromSourceCost(4, CounterType.QUEST),
                         new SacrificeSelfCost(),
-                        new DoubleControllerDamageThisTurnEffect()
+                        GrantStaticEffectToPlayerEffect.untilEndOfTurn(new DoubleControllerDamageEffect(null, true))
                 ),
                 "Remove four quest counters from Quest for Pure Flame and sacrifice it: If any source "
                         + "you control would deal damage to a permanent or player this turn, it deals "

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
@@ -19,7 +19,7 @@ public interface SourceDamageMultiplyingEffect extends DoublingEffect {
         return true;
     }
 
-    /** Whether this multiplier applies to combat damage aimed at the supplied permanent. */
+    /** Whether this multiplier applies to combat damage aimed at the supplied permanent ({@code null}: a player). */
     default boolean appliesToCombatDamageTarget(Permanent target) {
         return true;
     }
@@ -29,7 +29,11 @@ public interface SourceDamageMultiplyingEffect extends DoublingEffect {
         return true;
     }
 
-    default boolean matchesStackEntrySource(StackEntry entry, Permanent effectSource) {
-        return false;
+    /**
+     * What a spell dealing damage itself must match, judged on its card with its X, to be a matching source; {@code null}
+     * when no spell is.
+     */
+    default CardPredicate spellSourceFilter() {
+        return null;
     }
 }

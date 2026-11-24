@@ -5,9 +5,10 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.DoubleEnchantedCreatureCombatDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -22,7 +23,8 @@ public class TheSoundOfDrums extends Card {
     public TheSoundOfDrums() {
         target(TargetFilters.creature())
                 .addStaticEffect(new GoadEquippedCreatureEffect())
-                .addStaticEffect(new DoubleEnchantedCreatureCombatDamageEffect());
+                .addStaticEffect(new DoubleDamageFromCreaturesEffect(Subjects.attachedCreature())
+                        .onlyDoubling(DoubleDamageFromCreaturesEffect.DamageScope.COMBAT));
 
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,

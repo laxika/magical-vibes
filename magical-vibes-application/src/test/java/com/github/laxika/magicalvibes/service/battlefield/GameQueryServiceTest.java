@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromCreaturesEffect;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 
 
-import com.github.laxika.magicalvibes.model.effect.DoubleDamageToDamagedPlayerUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerCreatureSpellsCantBeCounteredThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LandManaProducesFixedColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
@@ -58,10 +58,9 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageToO
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToOpponentsFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageFromColorSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostColorSourceDamageThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostControllerNoncombatDamageThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostControllerDamageThisTurnEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromTargetPermanentThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
@@ -73,8 +72,6 @@ import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToOpponentsAndTheirPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.DoubleDamageToEnchantedPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.DoubleSelfCombatDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaReflectionEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
@@ -2864,7 +2861,7 @@ class GameQueryServiceTest {
 
         private void addDamageDoubling(UUID damagedPlayerId, UUID controllerId) {
             gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, controllerId,
-                    new DoubleDamageToDamagedPlayerUntilNextTurnEffect(), damagedPlayerId,
+                    new DoubleDamageToOpponentsAndTheirPermanentsEffect(Subjects.you()), damagedPlayerId,
                     Duration.UNTIL_YOUR_NEXT_TURN));
         }
 
@@ -2977,7 +2974,7 @@ class GameQueryServiceTest {
 
         private void addCurseEnchanting(UUID controllerId, UUID enchantedPlayerId) {
             Permanent curse = addPermanent(controllerId,
-                    createEnchantmentWithStaticEffect("Curse of Bloodletting", new DoubleDamageToEnchantedPlayerEffect()));
+                    createEnchantmentWithStaticEffect("Curse of Bloodletting", DoubleDamageToOpponentsAndTheirPermanentsEffect.toPlayersOnly(Subjects.enchantedPlayer())));
             curse.setAttachedTo(enchantedPlayerId);
         }
     }
@@ -3118,7 +3115,7 @@ class GameQueryServiceTest {
         @DisplayName("returns 2 from a turn-scoped controller doubling for combat and noncombat")
         void returnsTwoFromTurnScopedDoubling() {
             gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1Id,
-                    new DoubleControllerDamageThisTurnEffect(), player1Id, Duration.UNTIL_END_OF_TURN));
+                    new DoubleControllerDamageEffect(null, true), player1Id, Duration.UNTIL_END_OF_TURN));
 
             assertThat(gqs.getControllerDamageMultiplier(gd, player1Id, null, true)).isEqualTo(2);
 
@@ -3141,7 +3138,8 @@ class GameQueryServiceTest {
         void limitsSelfCombatDoublingToPlayerDamage() {
             Permanent source = addPermanent(player1Id,
                     createCreatureWithStaticEffect("Charging Tuskodon", 4, 4, CardColor.RED,
-                            new DoubleSelfCombatDamageToPlayersEffect()));
+                            new DoubleDamageFromCreaturesEffect(Subjects.source()).onlyDoubling(
+                                    DoubleDamageFromCreaturesEffect.DamageScope.COMBAT_TO_PLAYERS)));
             Permanent creatureTarget = addPermanent(player2Id, createCreature("Creature", 5, 5, CardColor.GREEN));
 
             assertThat(gqs.getCombatSourceDamageMultiplier(gd, source, null, player2Id)).isEqualTo(2);
@@ -3329,7 +3327,7 @@ class GameQueryServiceTest {
 
         private void setBonus(UUID playerId, CardColor color, int bonus) {
             gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("The Flame of Keld", null, playerId,
-                    new BoostColorSourceDamageThisTurnEffect(color, bonus), playerId, Duration.UNTIL_END_OF_TURN));
+                    BoostControllerDamageThisTurnEffect.fromSourcesOfColor(color, bonus), playerId, Duration.UNTIL_END_OF_TURN));
         }
 
         @Test
@@ -3392,9 +3390,9 @@ class GameQueryServiceTest {
         @DisplayName("lists each noncombat grant as its own bonus")
         void listsEachNoncombatGrantSeparately() {
             gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Taii Wakeen, Perfect Shot", null, player1Id,
-                    new BoostControllerNoncombatDamageThisTurnEffect(1), player1Id, Duration.UNTIL_END_OF_TURN));
+                    new BoostControllerDamageThisTurnEffect(new Fixed(1), null, true), player1Id, Duration.UNTIL_END_OF_TURN));
             gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Taii Wakeen, Perfect Shot", null, player1Id,
-                    new BoostControllerNoncombatDamageThisTurnEffect(2), player1Id, Duration.UNTIL_END_OF_TURN));
+                    new BoostControllerDamageThisTurnEffect(new Fixed(2), null, true), player1Id, Duration.UNTIL_END_OF_TURN));
 
             assertThat(gqs.getControllerNoncombatDamageBonuses(gd, player1Id))
                     .extracting(GameQueryService.DamageBonus::amount).containsExactly(1, 2);

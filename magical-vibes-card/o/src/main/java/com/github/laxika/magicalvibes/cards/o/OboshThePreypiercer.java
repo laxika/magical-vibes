@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaValueParity;
-import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromManaValueParityEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromCreaturesEffect;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueParityPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueParityPredicate;
 
 @CardRegistration(set = "IKO", collectorNumber = "228")
 @CardRegistration(set = "MUL", collectorNumber = "54")
@@ -12,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromManaValuePari
 public class OboshThePreypiercer extends Card {
 
     public OboshThePreypiercer() {
-        addStaticEffect(new DoubleDamageFromManaValueParityEffect(ManaValueParity.ODD));
+        addStaticEffect(DoubleDamageFromCreaturesEffect.fromSourcesYouControl(
+                new PermanentManaValueParityPredicate(ManaValueParity.ODD),
+                new CardManaValueParityPredicate(ManaValueParity.ODD)));
     }
 }

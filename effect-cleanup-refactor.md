@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23 (each in Findings; the fold queue marks its rows). Fold runs 28, 31 and 26 are running in worktrees; 25 waits to merge. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                           |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25 (each in Findings; the fold queue marks its rows). Fold runs 31, 26 and 30 are running in worktrees; 28 waits to merge. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                            |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,564 / 2,845 (after fold run 23) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,547 / 2,839 (after fold run 25) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,750 rows over 4,442 classes (after fold run 23). Latest verdict per class: `step-9` 705, unique 1,172, absorbed 818, split 631, blocked-other 503, survivor 315, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 705 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,775 rows over 4,443 classes (after fold run 25). Latest verdict per class: `step-9` 688, unique 1,170, absorbed 835, split 631, blocked-other 503, survivor 318, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 688 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -787,6 +787,11 @@ Delayed and global triggers:
 - `StackEntry.targetsForGroup`: an activated ability's target groups are positional (fold run 23).
 - `AddAnotherCounterOfChosenTypeToTargetEffect(PermanentSubject)`: "for each [permanent], choose a counter on it; you may put another" (fold run 23).
 - `RemoveAllCountersFromTargetPermanentEffect(Subjects.allPermanents())`: "remove all counters from all permanents"; every form sends the last-counter-removed event (fold run 23).
+
+- `DoubleDamageFromCreaturesEffect.fromSourcesYouControl(permanentFilter, spellFilter)` / `.onlyDoubling(DamageScope.COMBAT | COMBAT_TO_PLAYERS)`: "a [quality] source you control would deal damage", spells judged on their card with their X (`SourceDamageMultiplyingEffect.spellSourceFilter`) (fold run 25).
+- `DoubleDamageToOpponentsAndTheirPermanentsEffect(players, permanents)` / `.toPlayersOnly(players)`: recipient doublers over `eachOpponent()`, `chosenPlayer()`, `you()` + `source()`, `enchantedPlayer()`; floated over `you()` on a player by `GrantStaticEffectToPlayerEffect` (fold run 25).
+- `DoubleControllerDamageEffect(multiplier, …)` and `DoubleControllerDamageToOpponentsAndTheirPermanentsEffect(multiplier, noncombatOnly, toTheirPermanents)`, floated by `GrantStaticEffectToPlayerEffect.untilEndOfTurn` and read as floating copies on the source's controller (fold run 25).
+- `BoostControllerDamageThisTurnEffect(DynamicAmount, color, noncombatOnly)` / `.fromSourcesOfColor` / `.noncombatPlusX()`: "+N this turn" for your sources, fixed on resolution (fold run 25).
 
 ### Blocked causes still open
 
@@ -3009,6 +3014,30 @@ Batches `counter-move`, `counter-kind` and part of `all-counters`. `chosen-count
 - Moving counters raises no counters-removed event (the Scrounging Bandar ruling says such abilities apply). The old handlers didn't either. Fairly sure.
 
 **For the next run.** `player-counters` with Suncleanser: one player-counter removal over a `PlayerSubject` and a kind, recording REMOVE_COUNTERS, plus one counter-lock floating rule for a permanent or a player. Then Lizrog joins `counters-among` as `controlledBy(you(), creature)` + `PutCountersOnSelfEffect(Scaled(AmountThisWay(REMOVE_COUNTERS), 2))`. A slot with no destination can reuse the `CounterMoveSlot` question.
+
+### Step 9, fold run 25 (2026-11-24, parallel worktree)
+Ratchet 3,595 / 2,868 → 3,578 / 2,862. Ledger 25 rows (survivor 4, absorbed 18, step-9 3). 20 card files rewritten, Oracle text checked for all. CR 202.3e, 608.2h, 611.2c, 614.1a, 616.1 checked.
+
+| Batch | Result |
+|---|---|
+| `src-doublers` | 6 folded, plus The Sound of Drums' unique record (the second user of `DamageScope`). `DoubleDamageFromCreaturesEffect` gains `permanentsYouControl()` sources, `spellSourceFilter` (a `CardPredicate` on a spell's card, X counted) and `DamageScope` ALL / COMBAT / COMBAT_TO_PLAYERS. All members already shared its reader. |
+| `rcpt-doublers` | 4 folded. `DoubleDamageToOpponentsAndTheirPermanentsEffect(players, permanents)`, permanents being `controlledBy(players)`, `source()` or null. The Curse stays its own whole-event option (`getEnchantedPlayerDamageMultiplier`), so the order prompt does not lose a step. Lightning floats the survivor over `you()` on the damaged player. |
+| `floated-doublers` | 4 folded, 3 left. Fiery Emancipation / City on Fire → `DoubleControllerDamageEffect(3, …)`. Insult / Quest float `DoubleControllerDamageEffect(null, true)`. Goliath / Isengard float `DoubleControllerDamageToOpponentsAndTheirPermanentsEffect(multiplier, noncombatOnly, toTheirPermanents)`. The triage note named the any-source recipient doubler; the texts say "a source you control". Left: Overblaze, Jeska (a doubler granted to a target permanent; Jeska's "your opponents" is the caster's), Blind Fury (any creature to a creature). |
+| `floated-dmg-bonus` | 2 folded into `BoostControllerDamageThisTurnEffect(DynamicAmount, color, noncombatOnly)`, the amount fixed on resolution (CR 608.2h). Each floating reader keeps its family, so option keys and order are unchanged. |
+| `add-dmg` | Not started. Eight readers with different guards (`hasLostAllAbilities`, `hasLostPrintedAbilities`, `losesAllAbilitiesByEffect` + `computeStaticBonus`, none) and colour reads (Ghostly Flame's `getDamageSourceColors` vs effective colours). Folding them needs one bonus-reader design. |
+
+**Behaviour changes:**
+- Obosh counts each X of an XX spell (CR 202.3e). Untested.
+- Spell subtypes count perpetual and all-zone subtypes.
+- Curse of Bloodletting stops doubling once it has lost its abilities (the survivor's guard).
+- Goblin Goliath takes Maro's Gone Nuts (test).
+- Insult, Quest, Goliath, Isengard and Lightning log nothing on resolution; the survivor's log wins.
+
+**Seen, not changed:**
+- All recipient multipliers are one option, and all controller and source multipliers another. A "plus N" can't be applied between Gisela and Goldnight Castigator (CR 616.1). Sure of the code.
+- Blind Fury's doubling skips Maro's Gone Nuts. Sure.
+
+**For the next run.** `add-dmg` needs one bonus reader with source and recipient filters, judged like `getAdditionalDamageToOpponentsBonuses` (Ghostly Flame colours). The add-dmg "Fold:" defect (Sulfuric Vapors, Disciples, Enhanced Surveillance guards) goes with it. Overblaze and Jeska need a timed grant of `DoubleDamageFromCreaturesEffect(source())` onto a permanent, read by `getSourceDamageMultiplier`.
 
 ## Prompt
 

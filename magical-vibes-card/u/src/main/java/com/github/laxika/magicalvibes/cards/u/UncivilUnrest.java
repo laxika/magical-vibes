@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromCreaturesWithCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -18,6 +19,6 @@ public class UncivilUnrest extends Card {
     public UncivilUnrest() {
         addStaticEffect(new GrantKeywordEffect(Keyword.RIOT, Subjects.creaturesYouControl(),
                 new PermanentNotPredicate(new PermanentIsTokenPredicate())));
-        addStaticEffect(new DoubleDamageFromCreaturesWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE));
+        addStaticEffect(new DoubleDamageFromCreaturesEffect(new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)));
     }
 }

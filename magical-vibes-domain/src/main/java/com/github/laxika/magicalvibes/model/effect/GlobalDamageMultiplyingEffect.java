@@ -7,7 +7,7 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * <p>Deliberately narrow: this is the <em>global, unconditional</em> damage multiplier only. The
  * selective doublers — per-controller ({@code DoubleControllerDamageEffect}), per-enchanted-player
- * ({@code DoubleDamageToEnchantedPlayerEffect}), and per-equipped-creature
+ * ({@code DoubleDamageToOpponentsAndTheirPermanentsEffect} over the enchanted player), and per-equipped-creature
  * ({@code DoubleEquippedCreatureCombatDamageEffect}) — each pick out a different subset of
  * permanents and therefore do <em>not</em> implement this interface; a shared marker would make the
  * global multiplier method wrongly count them.

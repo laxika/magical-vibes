@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentToughnessEqualsEventValue;
-import com.github.laxika.magicalvibes.model.effect.BoostControllerNoncombatDamageThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostControllerDamageThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,7 +19,7 @@ public class TaiiWakeenPerfectShot extends Card {
                 TriggerOptions.DEFAULT.withEventCondition(new TriggeringPermanentToughnessEqualsEventValue()),
                 new DrawCardEffect(1));
         addActivatedAbility(new ActivatedAbility(true, "{X}",
-                List.of(new BoostControllerNoncombatDamageThisTurnEffect()),
+                List.of(BoostControllerDamageThisTurnEffect.noncombatPlusX()),
                 "{X}, {T}: If a source you control would deal noncombat damage to a permanent or player this turn, it deals that much damage plus X instead."));
     }
 }

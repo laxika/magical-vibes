@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MultiplyControllerDamageToOpponentsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageToOpponentsAndTheirPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,7 +28,8 @@ public class GoblinGoliath extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}{R}",
-                List.of(new MultiplyControllerDamageToOpponentsThisTurnEffect(2)),
+                List.of(GrantStaticEffectToPlayerEffect.untilEndOfTurn(
+                        new DoubleControllerDamageToOpponentsAndTheirPermanentsEffect(2, false, false))),
                 "{3}{R}, {T}: If a source you control would deal damage to an opponent this turn, it deals double that damage to that player instead."
         ));
     }

@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.OutsideGamePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipChosenStepOrPhaseEffect;
 import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
-import com.github.laxika.magicalvibes.model.effect.MultiplyControllerDamageToOpponentsThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.MultiplyControllerDamageToOpponentsAndTheirPermanentsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextInstantOrSorceryDamageToControllerEffect;
@@ -1504,8 +1503,8 @@ class RunedTerrorTest extends BaseCardTest {
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(gd.floatingEffectsOfTypes(MultiplyControllerDamageToOpponentsAndTheirPermanentsThisTurnEffect.class,
-                MultiplyControllerDamageToOpponentsThisTurnEffect.class)).containsExactly(multiplier);
+        assertThat(gd.floatingEffectsOfTypes(DoubleControllerDamageToOpponentsAndTheirPermanentsEffect.class))
+                .containsExactly(multiplier);
         assertThat(gd.floatingEffectsOfTypes(RedirectDrawsEffect.class)).singleElement()
                 .satisfies(redirect -> {
                     assertThat(redirect.affectedPlayerId()).isEqualTo(player1.getId());
@@ -1513,8 +1512,8 @@ class RunedTerrorTest extends BaseCardTest {
                 });
 
         harness.passUntil(player2, TurnStep.CLEANUP);
-        assertThat(gd.floatingEffectsOfTypes(MultiplyControllerDamageToOpponentsAndTheirPermanentsThisTurnEffect.class,
-                MultiplyControllerDamageToOpponentsThisTurnEffect.class)).isEmpty();
+        assertThat(gd.floatingEffectsOfTypes(DoubleControllerDamageToOpponentsAndTheirPermanentsEffect.class))
+                .isEmpty();
         assertThat(gd.floatingEffectsOfTypes(RedirectDrawsEffect.class)).isEmpty();
     }
 
@@ -1673,8 +1672,7 @@ class RunedTerrorTest extends BaseCardTest {
 
     private FloatingContinuousEffect addMultiplier(Player controller, boolean withPermanents) {
         return gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, controller.getId(),
-                withPermanents ? new MultiplyControllerDamageToOpponentsAndTheirPermanentsThisTurnEffect(2)
-                        : new MultiplyControllerDamageToOpponentsThisTurnEffect(2),
+                new DoubleControllerDamageToOpponentsAndTheirPermanentsEffect(2, false, withPermanents),
                 controller.getId(), Duration.UNTIL_END_OF_TURN));
     }
 }

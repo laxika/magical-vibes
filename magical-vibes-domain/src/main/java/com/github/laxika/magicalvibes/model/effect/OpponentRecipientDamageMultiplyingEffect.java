@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Static effect that multiplies damage dealt to the players {@link #players()} names: the opponents of the effect's
- * controller unless an implementation names others. Implementations can limit the multiplier to player recipients or
- * include permanents controlled by those players.
+ * Static effect that multiplies damage dealt to the players {@link #players()} names and to the permanents
+ * {@link #permanents()} names: the opponents of the effect's controller and their permanents unless an implementation
+ * names others.
  */
 public interface OpponentRecipientDamageMultiplyingEffect extends CardEffect {
 
@@ -14,8 +14,11 @@ public interface OpponentRecipientDamageMultiplyingEffect extends CardEffect {
         return Subjects.eachOpponent();
     }
 
-    /** Whether this multiplier also applies to permanents controlled by the opponent. */
-    default boolean appliesToPermanents() {
-        return true;
+    /**
+     * Which permanents' damage is multiplied: {@code controlledBy(players())} (the permanents those players control),
+     * {@link Subjects#source()} (the permanent with the effect) or {@code null} (none).
+     */
+    default PermanentSubject permanents() {
+        return Subjects.controlledBy(players());
     }
 }

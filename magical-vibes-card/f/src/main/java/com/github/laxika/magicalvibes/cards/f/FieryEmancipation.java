@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControllerDamageMultiplierEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 
 @CardRegistration(set = "M21", collectorNumber = "143")
 @CardRegistration(set = "M21", collectorNumber = "366")
@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.ControllerDamageMultiplierEff
 public class FieryEmancipation extends Card {
 
     public FieryEmancipation() {
-        addStaticEffect(new ControllerDamageMultiplierEffect(3, null, true));
+        addStaticEffect(new DoubleControllerDamageEffect(3, null, true));
     }
 }

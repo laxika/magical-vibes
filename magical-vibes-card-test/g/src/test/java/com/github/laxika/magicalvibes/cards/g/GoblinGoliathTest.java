@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.m.MarosGoneNuts;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GoblinGoliath.class, Shock.class, SerraAngel.class, GrizzlyBears.class})
+@CardUsed({GoblinGoliath.class, MarosGoneNuts.class, Shock.class, SerraAngel.class, GrizzlyBears.class})
 class GoblinGoliathTest extends BaseCardTest {
 
     @Test
@@ -185,6 +186,20 @@ class GoblinGoliathTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
         harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Maro's Gone Nuts makes the activated doubling quadruple the damage")
+    void marosGoneNutsUpgradesTheDoubling() {
+        activateDamageDoubling();
+        harness.addToBattlefield(player1, new MarosGoneNuts());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 12);
     }
 
     private void activateDamageDoubling() {

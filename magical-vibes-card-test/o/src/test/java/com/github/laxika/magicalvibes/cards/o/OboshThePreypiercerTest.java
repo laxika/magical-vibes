@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.b.Blaze;
 import com.github.laxika.magicalvibes.cards.g.GrayOgre;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
@@ -10,13 +11,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OboshThePreypiercer.class, GrayOgre.class, GrizzlyBears.class, Incinerate.class,
+@CardUsed({OboshThePreypiercer.class, Blaze.class, GrayOgre.class, GrizzlyBears.class, Incinerate.class,
         SerraAngel.class, Shock.class, MysticSubdual.class})
 class OboshThePreypiercerTest extends BaseCardTest {
 
@@ -111,5 +113,21 @@ class OboshThePreypiercerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Counts a spell's X in its mana value on the stack")
+    void countsXOfSpellInManaValue() {
+        harness.addToBattlefield(player1, new OboshThePreypiercer());
+        harness.setHand(player1, List.of(new Blaze(), new Blaze()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castSorcery(player1, 0, 2, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+
+        harness.castSorcery(player1, 0, 1, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(15);
     }
 }

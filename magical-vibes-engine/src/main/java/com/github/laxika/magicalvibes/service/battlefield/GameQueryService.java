@@ -4,9 +4,6 @@ import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyCombatDamageFromTargetCreatureToOpponentsUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.MultiplyControllerDamageToOpponentsAndTheirPermanentsThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.MultiplyControllerDamageToOpponentsThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.DoubleDamageToDamagedPlayerUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetCreatureFromTargetingSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.CraftyCutpurseEffect;
 import com.github.laxika.magicalvibes.model.effect.GatherSpecimensEffect;
@@ -96,9 +93,7 @@ import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect
 import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadStatusEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostColorSourceDamageThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostControllerDamageThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostControllerNoncombatDamageThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LethalDamageModifierEffect;
@@ -191,10 +186,8 @@ import com.github.laxika.magicalvibes.model.effect.DamagePreventionBySelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageToPlayersAndBattlesBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleCombatDamageToCreaturesThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromTargetPermanentThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.DoubleDamageToControllerAndSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.DoubleDamageToEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleEquippedCreatureCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ETBDoubleTriggerEffect;
@@ -226,6 +219,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantDeathtouchToControllerSp
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetPermanentSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
@@ -12003,22 +11997,46 @@ public class GameQueryService {
     }
 
     /**
-     * Returns the damage multiplier that applies to damage dealt to a specific player based on
-     * {@link DoubleDamageToEnchantedPlayerEffect} Curse Auras enchanting that player (e.g. Curse
-     * of Bloodletting). Each Curse enchanting the player doubles the multiplier; multiple instances
-     * stack multiplicatively. Returns {@code 1} when no such Curse enchants the player.
+     * Returns the damage multiplier that applies to damage dealt to a specific player by the Curse Auras enchanting
+     * that player ({@link DoubleDamageToOpponentsAndTheirPermanentsEffect} over {@code enchantedPlayer()}, Curse of
+     * Bloodletting). Each Curse enchanting the player doubles the multiplier; multiple instances stack
+     * multiplicatively. Returns {@code 1} when no such Curse enchants the player. An Aura that lost its abilities
+     * doubles nothing.
      */
     public int getEnchantedPlayerDamageMultiplier(GameData gameData, UUID playerId) {
         int[] multiplier = {1};
         gameData.forEachPermanent((controllerId, p) -> {
-            if (!p.isAttached() || !playerId.equals(p.getAttachedTo())) return;
+            if (!p.isAttached() || !playerId.equals(p.getAttachedTo())
+                    || !printsStaticEffect(gameData, p, OpponentRecipientDamageMultiplyingEffect.class)
+                    || hasLostAllAbilities(gameData, p)) return;
             for (CardEffect effect : p.getCard().getStaticEffects()) {
-                if (effect instanceof DoubleDamageToEnchantedPlayerEffect) {
-                    multiplier[0] *= MaroGoneNutsSupport.apply(gameData, effect, 2);
+                if (effect instanceof OpponentRecipientDamageMultiplyingEffect multiplyingEffect
+                        && multiplyingEffect.players() instanceof PlayerSubject.EnchantedPlayer
+                        && multipliesDamageTo(p, controllerId, playerId, null, multiplyingEffect)) {
+                    multiplier[0] *= MaroGoneNutsSupport.apply(gameData, effect, multiplyingEffect.damageMultiplier());
                 }
             }
         });
         return multiplier[0];
+    }
+
+    /**
+     * Whether {@code effect} of {@code source}, controlled by {@code controllerId}, multiplies damage dealt to the
+     * player {@code recipientPlayerId} or, when {@code recipientPermanentId} is given, to that permanent, which
+     * {@code recipientPlayerId} controls.
+     */
+    private static boolean multipliesDamageTo(Permanent source, UUID controllerId, UUID recipientPlayerId,
+                                              UUID recipientPermanentId, OpponentRecipientDamageMultiplyingEffect effect) {
+        if (recipientPermanentId == null) {
+            return SubjectResolutionService.namesPlayer(source, controllerId, recipientPlayerId, effect.players());
+        }
+        return switch (effect.permanents()) {
+            case null -> false;
+            case PermanentSubject.Source ignored -> source.getId().equals(recipientPermanentId);
+            case PermanentSubject.ControlledBy their ->
+                    SubjectResolutionService.namesPlayer(source, controllerId, recipientPlayerId, their.players());
+            default -> throw new IllegalStateException("Unsupported damaged permanents: " + effect.permanents());
+        };
     }
 
     /**
@@ -12074,37 +12092,34 @@ public class GameQueryService {
         if (recipientPlayerId == null) return 1;
 
         int[] multiplier = {1};
-        for (int i = gameData.floatingEffectsOnPlayer(recipientPlayerId,
-                DoubleDamageToDamagedPlayerUntilNextTurnEffect.class).size(); i > 0; i--) {
-            multiplier[0] *= MaroGoneNutsSupport.doublingFactor(gameData) * 2;
+        for (CardEffect floated : gameData.floatingPlayerEffects(recipientPlayerId,
+                DoubleDamageToOpponentsAndTheirPermanentsEffect.class)) {
+            // Floated on the player it names ("you"): damage to that player, or to a permanent they control.
+            OpponentRecipientDamageMultiplyingEffect multiplyingEffect = (OpponentRecipientDamageMultiplyingEffect) floated;
+            if (recipientPermanentId == null || multiplyingEffect.permanents() instanceof PermanentSubject.ControlledBy) {
+                multiplier[0] *= MaroGoneNutsSupport.apply(gameData, floated, multiplyingEffect.damageMultiplier());
+            }
         }
         if (sourceControllerId != null && !recipientPlayerId.equals(sourceControllerId)) {
-            for (CardEffect multiplication : gameData.floatingPlayerEffects(sourceControllerId,
-                    MultiplyControllerDamageToOpponentsThisTurnEffect.class,
-                    MultiplyControllerDamageToOpponentsAndTheirPermanentsThisTurnEffect.class)) {
-                if (multiplication instanceof MultiplyControllerDamageToOpponentsThisTurnEffect playersOnly
-                        && recipientPermanentId == null) {
-                    multiplier[0] *= playersOnly.multiplier();
-                } else if (multiplication instanceof MultiplyControllerDamageToOpponentsAndTheirPermanentsThisTurnEffect
-                        withPermanents) {
-                    multiplier[0] *= withPermanents.multiplier();
+            for (CardEffect floated : gameData.floatingPlayerEffects(sourceControllerId,
+                    DoubleControllerDamageToOpponentsAndTheirPermanentsEffect.class)) {
+                ControllerRecipientDamageMultiplyingEffect multiplyingEffect =
+                        (ControllerRecipientDamageMultiplyingEffect) floated;
+                if ((recipientPermanentId == null || multiplyingEffect.appliesToOpponentPermanents())
+                        && (!combatDamage || !multiplyingEffect.noncombatOnly())) {
+                    multiplier[0] *= MaroGoneNutsSupport.apply(gameData, floated, multiplyingEffect.damageMultiplier());
                 }
             }
         }
         gameData.forEachPermanent((controllerId, p) -> {
-            if (!printsStaticEffect(gameData, p, DoubleDamageToControllerAndSelfEffect.class,
-                    OpponentRecipientDamageMultiplyingEffect.class, ControllerRecipientDamageMultiplyingEffect.class,
-                    ChosenPlayersDamageMultiplyingEffect.class)
+            if (!printsStaticEffect(gameData, p, OpponentRecipientDamageMultiplyingEffect.class,
+                    ControllerRecipientDamageMultiplyingEffect.class, ChosenPlayersDamageMultiplyingEffect.class)
                     || hasLostAllAbilities(gameData, p)) return;
             for (CardEffect effect : p.getCard().getStaticEffects()) {
-                if (effect instanceof DoubleDamageToControllerAndSelfEffect
-                        && ((recipientPermanentId == null && recipientPlayerId.equals(controllerId))
-                        || p.getId().equals(recipientPermanentId))) {
-                    multiplier[0] *= MaroGoneNutsSupport.apply(gameData, effect, 2);
-                } else if (effect instanceof OpponentRecipientDamageMultiplyingEffect multiplyingEffect
-                        && SubjectResolutionService.namesPlayer(
-                                p, controllerId, recipientPlayerId, multiplyingEffect.players())
-                        && (recipientPermanentId == null || multiplyingEffect.appliesToPermanents())) {
+                if (effect instanceof OpponentRecipientDamageMultiplyingEffect multiplyingEffect
+                        && !(multiplyingEffect.players() instanceof PlayerSubject.EnchantedPlayer)
+                        && multipliesDamageTo(p, controllerId, recipientPlayerId, recipientPermanentId,
+                        multiplyingEffect)) {
                     multiplier[0] *= MaroGoneNutsSupport.apply(
                             gameData, effect, multiplyingEffect.damageMultiplier());
                 } else if (!recipientPlayerId.equals(controllerId)
@@ -12881,15 +12896,13 @@ public class GameQueryService {
 
     /**
      * Returns the per-controller damage multiplier based on {@link DoubleControllerDamageEffect}
-     * permanents on the battlefield and turn-scoped {@link DoubleControllerDamageThisTurnEffect} floating effects
-     * (Insult). Only applies when the source is controlled by the same player who controls the
-     * permanent with the effect / who resolved the turn-scoped effect.
+     * permanents on the battlefield and the copies floated on the controller (Insult). Only applies when the source
+     * is controlled by the same player who controls the permanent with the effect / has the floated copy.
      *
-     * <p>Each static effect has a {@code stackFilter} predicate and an {@code appliesToCombatDamage} flag.
+     * <p>Each effect has a {@code stackFilter} predicate and an {@code appliesToCombatDamage} flag.
      * For stack-based damage, the effect applies if the filter is {@code null} (matches all) or if
      * the entry matches the filter. For combat damage ({@code isCombat=true}), the effect applies
-     * only if {@code appliesToCombatDamage} is {@code true}. Turn-scoped doublings apply to both
-     * combat and noncombat damage.
+     * only if {@code appliesToCombatDamage} is {@code true}.
      *
      * <p>Multiple instances stack multiplicatively.
      *
@@ -12944,7 +12957,8 @@ public class GameQueryService {
                     }
                 } else if (!isCombat && entry != null && damageSource == null
                         && effect instanceof SourceDamageMultiplyingEffect multiplyingEffect
-                        && multiplyingEffect.matchesStackEntrySource(entry, p)) {
+                        && multiplyingEffect.appliesToNonCombatDamage()
+                        && matchesSpellDamageSource(gameData, entry, multiplyingEffect.spellSourceFilter(), p)) {
                     multiplier[0] *= MaroGoneNutsSupport.apply(
                             gameData, effect, multiplyingEffect.damageMultiplier());
                 }
@@ -12954,13 +12968,31 @@ public class GameQueryService {
                 || controllerId.equals(findPermanentController(gameData, damageSource.getId())))) {
             multiplier[0] *= getSourceDamageMultiplier(gameData, controllerId, damageSource);
         }
-        // Insult: "if a source you control would deal damage this turn, it deals double instead"
-        int turnDoublings = gameData.floatingEffectsOnPlayer(controllerId,
-                DoubleControllerDamageThisTurnEffect.class).size();
-        for (int i = 0; i < turnDoublings; i++) {
-            multiplier[0] *= MaroGoneNutsSupport.doublingFactor(gameData) * 2;
+        for (CardEffect floated : gameData.floatingPlayerEffects(controllerId, DoubleControllerDamageEffect.class)) {
+            ControllerDamageMultiplyingEffect multiplyingEffect = (ControllerDamageMultiplyingEffect) floated;
+            if (isCombat ? multiplyingEffect.appliesToCombatDamage()
+                    : entry != null && (multiplyingEffect.stackFilter() == null
+                    || predicateEvaluationService.matchesStackEntryPredicate(entry, multiplyingEffect.stackFilter(), null))) {
+                multiplier[0] *= MaroGoneNutsSupport.apply(gameData, floated, multiplyingEffect.damageMultiplier());
+            }
         }
         return multiplier[0];
+    }
+
+    /**
+     * Whether the spell {@code entry} deals damage as a source matching {@code spellFilter}, judged on its card as effects
+     * see it, with its X counted in its mana value while it is a spell (CR 202.3e); the chosen type of
+     * {@code effectSource} answers "the chosen type".
+     */
+    private boolean matchesSpellDamageSource(GameData gameData, StackEntry entry, CardPredicate spellFilter,
+                                             Permanent effectSource) {
+        Card sourceCard = entry.getEffectiveDamageSourceCard();
+        if (spellFilter == null || sourceCard == null) {
+            return false;
+        }
+        int xValue = isSpellEntry(entry.getEntryType()) ? entry.getXValue() : 0;
+        return predicateEvaluationService.matchesCardPredicate(sourceCard, spellFilter, effectSource.getCard().getId(),
+                gameData, sourceCard.getOwnerId(), effectSource.getId(), null, xValue, effectSource);
     }
 
     public int getSourceDamageMultiplier(GameData gameData, UUID controllerId, Permanent damageSource) {
@@ -13178,10 +13210,10 @@ public class GameQueryService {
         }
         List<DamageBonus> bonuses = new ArrayList<>();
         for (FloatingContinuousEffect floating
-                : gameData.floatingEffectsOnPlayer(controllerId, BoostColorSourceDamageThisTurnEffect.class)) {
-            BoostColorSourceDamageThisTurnEffect boost = (BoostColorSourceDamageThisTurnEffect) floating.effect();
-            if (boost.bonus() != 0 && sourceColors.contains(boost.color())) {
-                bonuses.add(new DamageBonus(String.valueOf(floating.id()), floating.sourceCardName(), boost.bonus()));
+                : gameData.floatingEffectsOnPlayer(controllerId, BoostControllerDamageThisTurnEffect.class)) {
+            BoostControllerDamageThisTurnEffect boost = (BoostControllerDamageThisTurnEffect) floating.effect();
+            if (boost.color() != null && boost.fixedBonus() != 0 && sourceColors.contains(boost.color())) {
+                bonuses.add(new DamageBonus(String.valueOf(floating.id()), floating.sourceCardName(), boost.fixedBonus()));
             }
         }
         return bonuses;
@@ -13195,8 +13227,9 @@ public class GameQueryService {
         List<DamageBonus> bonuses = new ArrayList<>();
         for (FloatingContinuousEffect floating
                 : gameData.floatingEffectsOnPlayer(controllerId, BoostControllerDamageThisTurnEffect.class)) {
-            int amount = ((BoostControllerDamageThisTurnEffect) floating.effect()).amount();
-            if (amount != 0) {
+            BoostControllerDamageThisTurnEffect boost = (BoostControllerDamageThisTurnEffect) floating.effect();
+            int amount = boost.fixedBonus();
+            if (boost.color() == null && !boost.noncombatOnly() && amount != 0) {
                 bonuses.add(new DamageBonus(String.valueOf(floating.id()), floating.sourceCardName(), amount));
             }
         }
@@ -13210,9 +13243,10 @@ public class GameQueryService {
         }
         List<DamageBonus> bonuses = new ArrayList<>();
         for (FloatingContinuousEffect floating : gameData.floatingEffectsOnPlayer(controllerId,
-                BoostControllerNoncombatDamageThisTurnEffect.class)) {
-            int amount = ((BoostControllerNoncombatDamageThisTurnEffect) floating.effect()).amount();
-            if (amount != 0) {
+                BoostControllerDamageThisTurnEffect.class)) {
+            BoostControllerDamageThisTurnEffect boost = (BoostControllerDamageThisTurnEffect) floating.effect();
+            int amount = boost.fixedBonus();
+            if (boost.noncombatOnly() && amount != 0) {
                 bonuses.add(new DamageBonus(String.valueOf(floating.id()), floating.sourceCardName(), amount));
             }
         }

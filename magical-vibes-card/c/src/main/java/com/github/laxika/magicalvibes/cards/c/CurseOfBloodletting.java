@@ -2,12 +2,13 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DoubleDamageToEnchantedPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleDamageToOpponentsAndTheirPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DKA", collectorNumber = "85")
 public class CurseOfBloodletting extends Card {
 
     public CurseOfBloodletting() {
-        addStaticEffect(new DoubleDamageToEnchantedPlayerEffect());
+        addStaticEffect(DoubleDamageToOpponentsAndTheirPermanentsEffect.toPlayersOnly(Subjects.enchantedPlayer()));
     }
 }

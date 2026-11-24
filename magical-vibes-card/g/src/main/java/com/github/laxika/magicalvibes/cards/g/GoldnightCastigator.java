@@ -2,13 +2,14 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DoubleDamageToControllerAndSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleDamageToOpponentsAndTheirPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SOI", collectorNumber = "162")
 @CardRegistration(set = "SIR", collectorNumber = "160")
 public class GoldnightCastigator extends Card {
 
     public GoldnightCastigator() {
-        addStaticEffect(new DoubleDamageToControllerAndSelfEffect());
+        addStaticEffect(new DoubleDamageToOpponentsAndTheirPermanentsEffect(Subjects.you(), Subjects.source()));
     }
 }

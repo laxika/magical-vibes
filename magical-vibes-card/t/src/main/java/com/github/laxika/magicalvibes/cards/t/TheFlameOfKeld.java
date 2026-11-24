@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.BoostColorSourceDamageThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostControllerDamageThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,6 +28,6 @@ public class TheFlameOfKeld extends Card {
         addTrigger(Triggers.chapter(2), new DrawCardEffect(2));
 
         // Chapter III: Red sources you control deal +2 damage this turn
-        addTrigger(Triggers.chapter(3), new BoostColorSourceDamageThisTurnEffect(CardColor.RED, 2));
+        addTrigger(Triggers.chapter(3), BoostControllerDamageThisTurnEffect.fromSourcesOfColor(CardColor.RED, 2));
     }
 }
