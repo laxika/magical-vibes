@@ -26,8 +26,10 @@ import java.util.Objects;
  *                           "When you lose control of the artifact, tap it"). Only meaningful for
  *                           {@code END_OF_TURN} duration.
  * @param targetPredicate optional additional restriction on the target permanent
- * @param maintainTargetPredicate when true, the target predicate is also maintained for the
- *                           duration of the control effect (e.g. Old Man of the Sea's power check)
+ * @param maintainTargetPredicate when true, {@code targetPredicate} is also the "for as long as" condition: control is
+ *                           gained only of a permanent that matches it as the effect begins, and ends for good once
+ *                           it stops matching (CR 611.2b; Old Man of the Sea's power check, Shield Broker's shield
+ *                           counter, Kaya, Ghost Haunter's "for as long as it remains haunted")
  * @param subject            {@code target()}, the declared target, or permanents that are no target: {@code triggering()}
  *                           (Treasure Nabber's "gain control of that artifact"), the ones an earlier step chose
  *                           ("choose a creature at random. You gain control of that creature")
@@ -106,6 +108,16 @@ public record GainControlOfTargetEffect(Duration duration, CardSubtype grantedSu
             PermanentPredicate targetPredicate) {
         return new GainControlOfTargetEffect(Duration.WHILE_SOURCE_REMAINS_TAPPED,
                 null, false, targetPredicate, false, true);
+    }
+
+    /**
+     * "Gain control of [subject] for as long as it [matches]", with no other duration: Shield Broker's "for as long as
+     * it has a shield counter on it" over {@code targetDeclaredElsewhere()}, Kaya's emblem's "target haunted creature for
+     * as long as it remains haunted" over {@code target()} (the predicate then also restricts the target).
+     */
+    public static GainControlOfTargetEffect whileMatches(PermanentSubject subject, PermanentPredicate maintained) {
+        return new GainControlOfTargetEffect(Duration.PERMANENT, null, false,
+                Objects.requireNonNull(maintained, "maintained"), false, true, subject);
     }
 
     /** Control of a creature chosen by an opponent who was chosen by the spell's controller. */

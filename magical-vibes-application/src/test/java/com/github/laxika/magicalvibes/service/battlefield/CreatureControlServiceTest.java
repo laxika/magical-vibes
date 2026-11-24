@@ -13,10 +13,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetWhileHasCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -287,9 +287,12 @@ class CreatureControlServiceTest {
         void counterConditionedStealEndsWhenCounterIsRemoved() {
             Permanent bear = addCreature(player2Id, "Grizzly Bears");
             bear.setCounterCount(CounterType.SHIELD, 1);
+            PermanentHasCountersPredicate hasShield = new PermanentHasCountersPredicate(CounterType.SHIELD);
+            lenient().when(predicateEvaluationService.matchesPermanentPredicate(eq(bear), eq(hasShield), any()))
+                    .thenAnswer(invocation -> bear.getCounterCount(CounterType.SHIELD) > 0);
 
             creatureControlService.applyControlEffect(gd, player1Id, bear,
-                    new GainControlOfTargetWhileHasCounterEffect(CounterType.SHIELD),
+                    GainControlOfTargetEffect.whileMatches(Subjects.targetDeclaredElsewhere(), hasShield),
                     Duration.PERMANENT, null, "Shield Broker");
             assertThat(gd.playerBattlefields.get(player1Id)).contains(bear);
 

@@ -332,6 +332,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCanBecomeTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsHauntedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTargetCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTransformedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTriggeringPermanentPredicate;
@@ -1995,6 +1996,8 @@ public class PredicateEvaluationService {
                     permanent.isSuspected();
             case PermanentIsTokenPredicate ignored ->
                     permanent.getCard().isToken();
+            case PermanentIsHauntedPredicate ignored ->
+                    gameData != null && gameData.hauntingCardToPermanentId.containsValue(permanent.getId());
             case PermanentIsTransformedPredicate ignored ->
                     permanent.isTransformed();
             case PermanentIsAttackingPredicate ignored ->
@@ -4128,6 +4131,8 @@ public class PredicateEvaluationService {
             case PermanentCanBecomeTappedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsTokenPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsTransformedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsHauntedPredicate ignored -> context != null && context.gameData() != null
+                    && context.gameData().hauntingCardToPermanentId.containsValue(permanent.getId());
             case PermanentNamedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasNoNamePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentNameInPredicate ignored -> matchesStaticLeaf(permanent, predicate);

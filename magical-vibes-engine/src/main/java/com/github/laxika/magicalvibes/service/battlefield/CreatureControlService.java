@@ -9,9 +9,7 @@ import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterConditionedControlEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetHauntedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadStatusEffect;
@@ -436,6 +434,25 @@ public class CreatureControlService {
     }
 
     /**
+     * Whether {@code affected} matches the "for as long as" predicate a control effect maintains
+     * ({@link GainControlOfTargetEffect#maintainTargetPredicate()}), judged for the effect's source when it has one
+     * (Old Man of the Sea's power) and its controller: read as the effect begins (CR 611.2b) and each time control is
+     * reconciled.
+     */
+    public boolean maintainedPredicateHolds(GameData gameData, GainControlOfTargetEffect control, Permanent affected,
+                                            UUID sourcePermanentId, UUID controllerId) {
+        if (predicateEvaluationService == null) {
+            return false;
+        }
+        Permanent source = sourcePermanentId == null ? null
+                : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        FilterContext context = source == null
+                ? FilterContext.of(gameData).withSourceControllerId(controllerId)
+                : new FilterContext(gameData, source.getCard().getId(), controllerId, null, source, source.getId());
+        return predicateEvaluationService.matchesPermanentPredicate(affected, control.targetPredicate(), context);
+    }
+
+    /**
      * Ends the source-controller-dependent floating effects whose condition stopped holding; an ended
      * effect doesn't resume if the condition holds again:
      * <ul>
@@ -443,8 +460,8 @@ public class CreatureControlService {
      *       state changes end these through the clock already, and this catches a change made
      *       without telling it.</li>
      *   <li>{@link GainControlOfTargetEffect} that maintains its target's predicate (Old Man of the
-     *       Sea), a counter-conditioned control effect, {@link GainControlOfEnchantedTargetEffect}
-     *       (Rootwater Matriarch), a haunted creature and a monarch-bound control effect.</li>
+     *       Sea, Shield Broker, Kaya's haunted creature), {@link GainControlOfEnchantedTargetEffect}
+     *       (Rootwater Matriarch) and a monarch-bound control effect.</li>
      * </ul>
      */
     private void expireStaleControlEffects(GameData gameData) {
@@ -460,29 +477,13 @@ public class CreatureControlService {
             boolean stale = !durationClock.holds(gameData, fe);
             if (!stale && fe.effect() instanceof GainControlOfTargetEffect control
                     && control.maintainTargetPredicate()) {
-                Permanent source = fe.sourcePermanentId() == null ? null
-                        : gameQueryService.findPermanentById(gameData, fe.sourcePermanentId());
                 Permanent affected = gameQueryService.findPermanentById(gameData, fe.affectedPermanentId());
-                FilterContext context = source == null ? null : new FilterContext(
-                        gameData, source.getCard().getId(), fe.controllerId(), null, source, source.getId());
-                // A permanent that stops being a creature has power 0, so Old Man of the Sea's
-                // "power remains less than or equal" condition still holds and control continues.
-                stale = affected == null || source == null || predicateEvaluationService == null
-                        || (gameQueryService.isCreature(gameData, affected)
-                        && !predicateEvaluationService.matchesPermanentPredicate(
-                        affected, control.targetPredicate(), context));
-            }
-            if (!stale && fe.effect() instanceof CounterConditionedControlEffect counterConditioned) {
-                Permanent affected = gameQueryService.findPermanentById(gameData, fe.affectedPermanentId());
-                stale = affected == null
-                        || affected.getCounterCount(counterConditioned.counterType()) <= 0;
+                stale = affected == null || !maintainedPredicateHolds(gameData, control, affected,
+                        fe.sourcePermanentId(), fe.controllerId());
             }
             if (!stale && fe.effect() instanceof GainControlOfEnchantedTargetEffect) {
                 Permanent affected = gameQueryService.findPermanentById(gameData, fe.affectedPermanentId());
                 stale = affected == null || !gameQueryService.isEnchanted(gameData, affected);
-            }
-            if (!stale && fe.effect() instanceof GainControlOfTargetHauntedCreatureEffect) {
-                stale = !gameData.hauntingCardToPermanentId.containsValue(fe.affectedPermanentId());
             }
             if (!stale && fe.effect() instanceof MonarchBoundControlEffect) {
                 stale = !Objects.equals(gameData.monarchPlayerId, fe.affectedPlayerId());

@@ -197,6 +197,7 @@ public sealed interface PermanentPredicate permits
         PermanentIsTappedPredicate,
         PermanentCanBecomeTappedPredicate,
         PermanentIsTokenPredicate,
+        PermanentIsHauntedPredicate,
         PermanentIsTransformedPredicate,
         PermanentManaValueEqualsTriggeringPermanentPredicate,
         PermanentManaValueEqualsTriggeringSpellPredicate,

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -9,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerExilesPermanentsOrCardsFromHandEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLoyaltyAbilitiesOfOtherPlaneswalkersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -28,7 +28,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerControlsPermanentPredic
 public class NicolBolasDragonGod extends Card {
 
     public NicolBolasDragonGod() {
-        addStaticEffect(new GainLoyaltyAbilitiesOfOtherPlaneswalkersEffect());
+        addStaticEffect(GainActivatedAbilitiesOfOwnCreaturesEffect.loyaltyAbilitiesOfOtherPlaneswalkers());
 
         addActivatedAbility(new ActivatedAbility(
                 +1,

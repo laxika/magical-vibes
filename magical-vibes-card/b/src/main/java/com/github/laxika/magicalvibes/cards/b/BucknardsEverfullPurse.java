@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.filter.PlayerSeatedInDirectionPredicate;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.NextPlayerGainsControlOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerDirection;
 import com.github.laxika.magicalvibes.model.effect.RollD4Effect;
 
@@ -20,7 +23,9 @@ public class BucknardsEverfullPurse extends Card {
                 "{1}",
                 List.of(
                         new RollD4Effect(null, CreateTokenEffect.ofTreasureToken(new EventValue())),
-                        new NextPlayerGainsControlOfSourceEffect(PlayerDirection.RIGHT)),
+                        GainControlOfTargetEffect.of(Subjects.source(), Duration.PERMANENT).gainedBy(
+                                Subjects.matching(Subjects.eachPlayer(),
+                                        new PlayerSeatedInDirectionPredicate(PlayerDirection.RIGHT)))),
                 "{1}, {T}: Roll a d4 and create a number of Treasure tokens equal to the result. "
                         + "The player to your right gains control of this artifact."));
     }

@@ -87,6 +87,10 @@ import com.github.laxika.magicalvibes.model.filter.PlayerHasFewerCreatureCardsIn
 import com.github.laxika.magicalvibes.model.filter.PlayerHasMoreCardsInHandThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerHasMoreLifeThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerHasMostLifePredicate;
+import com.github.laxika.magicalvibes.service.effect.CreatureCountSupport;
+import com.github.laxika.magicalvibes.model.filter.PlayerSeatedInDirectionPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerHasMostCardsInHandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerHasLeastLifePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerOtherThanSourceOwnerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerIsActiveOpponentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerChosenBySourcePredicate;
@@ -6217,6 +6221,24 @@ public class TargetLegalityService {
      * the relation. A {@code null} controller matches no relation, which is what a source with no
      * known controller should do.
      */
+    /**
+     * How many creatures matching {@code filter} {@code playerId} controls, judged for the effect's source, a permanent
+     * that counts as several creatures counting that many times (the count "the most Wizards" compares).
+     */
+    private int matchingCreatureCount(GameData gameData, UUID playerId, PermanentPredicate filter, UUID controllerId,
+                                      UUID sourcePermanentId) {
+        FilterContext context = FilterContext.of(gameData).withSourceControllerId(controllerId)
+                .withSourcePermanentId(sourcePermanentId);
+        int count = 0;
+        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+            if (predicateEvaluationService.matchesPermanentPredicate(permanent, filter, context)) {
+                count += CreatureCountSupport.countsCreatures(filter)
+                        ? CreatureCountSupport.creatureCount(gameData, permanent, gameQueryService) : 1;
+            }
+        }
+        return count;
+    }
+
     public boolean matchesPlayerPredicate(GameData gameData, UUID controllerId, UUID targetPlayerId, PlayerPredicate predicate) {
         return matchesPlayerPredicate(gameData, controllerId, targetPlayerId, predicate, null);
     }
@@ -6315,8 +6337,26 @@ public class TargetLegalityService {
             case PlayerHasNoCardsInHandPredicate ignored ->
                     targetPlayerId != null
                             && gameData.playerHands.getOrDefault(targetPlayerId, List.of()).isEmpty();
-            case PlayerControlsMostCreaturesPredicate ignored ->
-                    gameQueryService.controlsMostCreaturesOrTied(gameData, targetPlayerId);
+            case PlayerControlsMostCreaturesPredicate most -> most.creatureFilter() == null
+                    ? gameQueryService.controlsMostCreaturesOrTied(gameData, targetPlayerId)
+                    : targetPlayerId != null && gameData.orderedPlayerIds.stream().noneMatch(candidateId ->
+                    matchingCreatureCount(gameData, candidateId, most.creatureFilter(), controllerId, sourcePermanentId)
+                            > matchingCreatureCount(gameData, targetPlayerId, most.creatureFilter(), controllerId,
+                            sourcePermanentId));
+            case PlayerHasMostCardsInHandPredicate ignored -> targetPlayerId != null
+                    && gameData.orderedPlayerIds.stream().noneMatch(candidateId ->
+                    gameData.playerHands.getOrDefault(candidateId, List.of()).size()
+                            > gameData.playerHands.getOrDefault(targetPlayerId, List.of()).size());
+            case PlayerHasLeastLifePredicate ignored -> targetPlayerId != null
+                    && gameData.orderedPlayerIds.stream()
+                    .noneMatch(candidateId -> gameData.getLife(candidateId) < gameData.getLife(targetPlayerId));
+            case PlayerSeatedInDirectionPredicate seated -> {
+                int controllerIndex = controllerId == null ? -1 : gameData.orderedPlayerIds.indexOf(controllerId);
+                yield controllerIndex >= 0 && targetPlayerId != null && targetPlayerId.equals(
+                        gameData.orderedPlayerIds.get(Math.floorMod(
+                                controllerIndex + seated.direction().turnOrderOffset(),
+                                gameData.orderedPlayerIds.size())));
+            }
             case PlayerControlsPermanentPredicate controls ->
                     targetPlayerId != null
                             && gameData.playerBattlefields.getOrDefault(targetPlayerId, List.of()).stream()

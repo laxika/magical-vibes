@@ -3,12 +3,10 @@ package com.github.laxika.magicalvibes.model.layer;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterConditionedControlEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetHauntedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAuraAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MonarchBoundControlEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -118,9 +116,7 @@ public record FloatingContinuousEffect(
     /** Whether this is a CR 613 layer-2 control-changing effect. All floating control effects
      *  wrap one of these effect types (see {@code CreatureControlService}). */
     public boolean isControlEffect() {
-        return effect instanceof CounterConditionedControlEffect
-                || effect instanceof GainControlOfTargetEffect
-                || effect instanceof GainControlOfTargetHauntedCreatureEffect
+        return effect instanceof GainControlOfTargetEffect
                 || effect instanceof ControlEnchantedCreatureEffect
                 || effect instanceof GainControlOfEnchantedTargetEffect
                 || effect instanceof GainControlOfEnchantedPermanentEffect

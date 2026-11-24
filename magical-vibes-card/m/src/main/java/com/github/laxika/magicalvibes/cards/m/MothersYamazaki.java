@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleWhenExactlyTwoSameNameEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -13,7 +14,6 @@ import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleWhenControllerControlsExactlyTwoSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetPlayerLibraryForNamedCardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -64,7 +64,7 @@ public class MothersYamazaki extends Card {
                 null,
                 MayChoicePlayer.TARGET_PLAYER));
 
-        addStaticEffect(new IgnoreLegendRuleWhenControllerControlsExactlyTwoSameNameEffect());
+        addStaticEffect(new IgnoreLegendRuleWhenExactlyTwoSameNameEffect(Subjects.permanentsYouControl()));
 
         var exactlyTwo = new AllConditions(List.of(
                 new ControlsPermanentCount(2, new PermanentNamedPredicate(CARD_NAME)),

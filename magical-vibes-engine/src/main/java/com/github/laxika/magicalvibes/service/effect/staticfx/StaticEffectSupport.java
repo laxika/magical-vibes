@@ -113,6 +113,17 @@ public class StaticEffectSupport implements SubjectResolutionService.StaticReads
         return !(subject instanceof PermanentSubject.Source) && names(context, subject, filter);
     }
 
+    /**
+     * Whether a static ability of the context's source names {@code permanent}, which is on the battlefield of
+     * {@code permanentControllerId}: the membership form for a handler that scans permanents other than the one
+     * being assembled (an ability borrower), with this support's recursion-safe reads.
+     */
+    public boolean namesOnBattlefieldOf(StaticEffectContext context, Permanent permanent, UUID permanentControllerId,
+                                        PermanentSubject subject) {
+        return subjectResolutionService.names(context.gameData(), context.source(), context.sourceControllerId(),
+                permanentControllerId, permanent, subject, this);
+    }
+
     @Override
     public boolean isCreature(GameData gameData, Permanent permanent) {
         return isEffectivelyCreature(gameData, permanent, hasAnimateArtifactEffect(gameData));

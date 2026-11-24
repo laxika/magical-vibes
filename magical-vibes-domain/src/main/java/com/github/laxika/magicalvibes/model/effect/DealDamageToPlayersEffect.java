@@ -187,7 +187,8 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, PlayerSubject play
 
     /**
      * A declared {@code targetPlayer()} targets a player. "That creature's controller" ({@code controllerOf(target())})
-     * and "that spell's controller" ({@code controllerOf(targetSpell())}) declare the permanent or spell they read, so
+     * "that spell's controller" ({@code controllerOf(targetSpell())}) and "the owner of target [permanent]"
+     * ({@code ownerOf(target())}, Kaya, Ghost Haunter's emblem) declare the permanent or spell they read, so
      * the target is chosen even when no companion effect declares it (Fodder Launch, Ionize). Benign: the damage lands
      * on a player, not the permanent or spell; the kept {@code @ValidatesTarget} validator enforces "must be a player"
      * for the player target, which the no-op player spec cannot express.
@@ -197,6 +198,10 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, PlayerSubject play
         if (player.declaresTarget()) {
             TargetSpec spec = TargetSpec.benign(TargetPredicates.player());
             return player.targetChosenAtRandom() ? spec.atRandom() : spec;
+        }
+        if (player instanceof PlayerSubject.OwnerOf ownerOf && ownerOf.permanent() instanceof PermanentSubject.Target) {
+            // "The owner of target [permanent]": the permanent is the target, not the player.
+            return TargetSpec.benign(TargetPredicates.permanent());
         }
         if (player instanceof PlayerSubject.ControllerOf controllerOf) {
             if (controllerOf.permanent() instanceof PermanentSubject.Target) {

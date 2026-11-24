@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MultiplyCombatDamageFromTarge
 import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetCreatureFromTargetingSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.CraftyCutpurseEffect;
+import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GatherSpecimensEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerCreatureSpellsCantBeCounteredThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerSpellsCantBeCounteredByColorsEffect;
@@ -3106,20 +3107,17 @@ public class GameQueryService {
                 return true;
             }
         }
-        if (!hasLostAllAbilities(gameData, source)
-                && source.getCard().getStaticEffects().stream()
+        List<SpendManaAsAnyColorForActivatedAbilitiesEffect> ownPermissions = hasLostAllAbilities(gameData, source)
+                ? List.of()
+                : source.getCard().getStaticEffects().stream()
                 .filter(SpendManaAsAnyColorForActivatedAbilitiesEffect.class::isInstance)
                 .map(SpendManaAsAnyColorForActivatedAbilitiesEffect.class::cast)
-                .anyMatch(effect -> effect.subject() instanceof PermanentSubject.Source)) {
-            boolean borrowsOpponentAbilities = source.getCard().getStaticEffects().stream()
-                    .anyMatch(com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreaturesOpponentsControlEffect.class::isInstance);
-            if (!borrowsOpponentAbilities || ability == null || isBorrowedOpponentAbility(gameData, controllerId, ability)) {
-                boolean copiesChosenPermanent = source.getCard().getStaticEffects().stream()
-                        .anyMatch(com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfChosenPermanentEffect.class::isInstance);
-                if (!copiesChosenPermanent || ability == null || isAbilityOfSourceOrChosenPermanent(gameData, source, ability)) {
-                    return true;
-                }
-            }
+                .filter(effect -> effect.subject() instanceof PermanentSubject.Source)
+                .toList();
+        if (ownPermissions.stream().anyMatch(effect -> !effect.borrowedAbilitiesOnly())
+                || !ownPermissions.isEmpty() && (ability == null || isBorrowedAbility(gameData, source, controllerId,
+                ability))) {
+            return true;
         }
         if (!isCreature(gameData, source)) {
             return false;
@@ -3139,30 +3137,33 @@ public class GameQueryService {
     }
 
     /**
-     * Whether {@code ability} is one of the source's own abilities or one the source copies from its chosen
-     * permanent (Scheming Fence). Abilities granted to the source by other effects, such as an Aura, are not.
+     * Whether {@code ability} is one the source has from its {@link GainActivatedAbilitiesOfOwnCreaturesEffect}: an
+     * activated ability of another permanent the borrower names, of the kind it gains. Abilities granted to the source
+     * by other effects, such as an Aura, are not.
      */
-    private boolean isAbilityOfSourceOrChosenPermanent(GameData gameData, Permanent source, ActivatedAbility ability) {
-        if (source.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream().anyMatch(candidate -> candidate == ability)) {
-            return true;
-        }
-        Permanent chosen = source.getChosenPermanentId() == null
-                ? null : findPermanentById(gameData, source.getChosenPermanentId());
-        if (chosen == null) {
+    private boolean isBorrowedAbility(GameData gameData, Permanent source, UUID controllerId, ActivatedAbility ability) {
+        List<GainActivatedAbilitiesOfOwnCreaturesEffect> borrowers = source.getCard().getStaticEffects().stream()
+                .filter(GainActivatedAbilitiesOfOwnCreaturesEffect.class::isInstance)
+                .map(GainActivatedAbilitiesOfOwnCreaturesEffect.class::cast)
+                .filter(borrower -> borrower.abilities().includes(ability))
+                .toList();
+        if (borrowers.isEmpty() || controllerId == null) {
             return false;
         }
-        return chosen.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream().anyMatch(candidate -> candidate == ability)
-                || computeStaticBonus(gameData, chosen).grantedActivatedAbilities().stream()
-                .anyMatch(candidate -> candidate == ability);
-    }
-
-    private boolean isBorrowedOpponentAbility(GameData gameData, UUID controllerId, ActivatedAbility ability) {
-        for (UUID opponentId : gameData.orderedPlayerIds) {
-            if (opponentId.equals(controllerId)) continue;
-            for (Permanent creature : gameData.playerBattlefields.getOrDefault(opponentId, List.of())) {
-                if (!isCreature(gameData, creature)) continue;
-                var supplied = com.github.laxika.magicalvibes.service.effect.staticfx.GainActivatedAbilitiesOfCreaturesOpponentsControlSelfEffectHandler
-                        .effectiveActivatedAbilities(gameData, creature, this);
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(source.getCard().getId())
+                .withSourceControllerId(controllerId)
+                .withSourcePermanentSnapshot(source);
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            for (Permanent lender : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                if (lender.getId().equals(source.getId()) || borrowers.stream().noneMatch(borrower ->
+                        staticSubjectNames(gameData, source, controllerId, playerId, lender, borrower.permanents())
+                                && (borrower.filter() == null || predicateEvaluationService.matchesPermanentPredicate(
+                                lender, borrower.filter(), filterContext)))) {
+                    continue;
+                }
+                var supplied = com.github.laxika.magicalvibes.service.effect.staticfx.GainActivatedAbilitiesOfOwnCreaturesSelfEffectHandler
+                        .effectiveActivatedAbilities(gameData, lender, this);
                 if (supplied.stream().anyMatch(candidate -> candidate == ability
                         || java.util.Objects.equals(candidate.getManaCost(), ability.getManaCost())
                         && candidate.isRequiresTap() == ability.isRequiresTap()
@@ -7299,6 +7300,14 @@ public class GameQueryService {
      */
     private static final ThreadLocal<Set<UUID>> ASSEMBLY_IN_PROGRESS =
             ThreadLocal.withInitial(HashSet::new);
+
+    /**
+     * Whether the static bonus of the permanent {@code permanentId} is being assembled further up this thread, so a
+     * read of it would re-enter that assembly (two ability borrowers lending to each other).
+     */
+    public static boolean isAssemblingStaticBonus(UUID permanentId) {
+        return ASSEMBLY_IN_PROGRESS.get().contains(permanentId);
+    }
 
     /**
      * The permanents whose P/T leaves must answer from the layered board alone. Populated by

@@ -41,27 +41,20 @@ import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CountAsCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetWhileHasCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentToughnessBecomesLoyaltyEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfAllLandsEffect;
-import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreaturesWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAndTriggeredAbilitiesOfExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainAbilitiesOfLastChosenExiledCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreaturesOpponentsControlEffect;
-import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfChosenPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLoyaltyAbilitiesOfOtherPlaneswalkersEffect;
 import com.github.laxika.magicalvibes.model.effect.ShareLoyaltyAbilitiesWithOtherPlaneswalkersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetHauntedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureWhileMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
@@ -248,9 +241,7 @@ public final class LayerClassifier {
 
         // Layer 2 — control-changing effects (CR 613.2b).
         map.put(GainControlOfTargetEffect.class, fixed(Layer.L2_CONTROL));
-        map.put(GainControlOfTargetHauntedCreatureEffect.class, fixed(Layer.L2_CONTROL));
         map.put(GainControlOfTargetCreatureWhileMonarchEffect.class, fixed(Layer.L2_CONTROL));
-        map.put(GainControlOfTargetWhileHasCounterEffect.class, fixed(Layer.L2_CONTROL));
         map.put(GainControlOfEnchantedTargetEffect.class, fixed(Layer.L2_CONTROL));
         map.put(GainControlOfEnchantedPermanentEffect.class, fixed(Layer.L2_CONTROL));
         map.put(GainControlOfTargetAuraEffect.class, fixed(Layer.L2_CONTROL));
@@ -462,23 +453,14 @@ public final class LayerClassifier {
                 (effect, fromOwnStaticSlot) -> new LayerClassification(Set.of(Layer.L6_ABILITIES),
                         ((GainKeywordsOfCreatureCardsExiledWithSourceEffect) effect).recipient()
                                 instanceof PermanentSubject.Source, false)));
-        map.put(GainActivatedAbilitiesOfAllLandsEffect.class,
-                fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainActivatedAbilitiesOfExiledCardsEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainActivatedAndTriggeredAbilitiesOfExiledCardsEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainAbilitiesOfLastChosenExiledCardEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
-        map.put(GainActivatedAbilitiesOfCreaturesOpponentsControlEffect.class,
-                fixedCharacteristicDefining(Layer.L6_ABILITIES));
-        map.put(GainActivatedAbilitiesOfChosenPermanentEffect.class,
-                fixedCharacteristicDefining(Layer.L6_ABILITIES));
-        map.put(GainActivatedAbilitiesOfCreaturesWithCounterEffect.class,
-                fixed(Layer.L6_ABILITIES));
         map.put(GainActivatedAbilitiesOfOwnCreaturesEffect.class,
                 fixed(Layer.L6_ABILITIES));
-        map.put(GainLoyaltyAbilitiesOfOtherPlaneswalkersEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(ShareLoyaltyAbilitiesWithOtherPlaneswalkersEffect.class, fixed(Layer.L6_ABILITIES));
 
         // Sublayers 7a/7b — P/T setting. A "P/T equal to [amount]" static in the creature's

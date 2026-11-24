@@ -12,14 +12,11 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
-import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService;
@@ -58,7 +55,6 @@ public class PermanentChoiceTriggerHandlerService {
     private final EffectResolutionService effectResolutionService;
     private final InputCompletionService inputCompletionService;
     private final ETBTokenTargetService etbTokenTargetService;
-    private final CreatureControlService creatureControlService;
     private final DemonstrateEffectHandler demonstrateEffectHandler;
     private final TokenCopySupport tokenCopySupport;
     private final RevealUntilCardPredicateRestOnBottomRandomEffectHandler revealUntilCardHandler;
@@ -474,38 +470,10 @@ public class PermanentChoiceTriggerHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    public void handlePlayerWithLowestLifeChoice(GameData gameData, UUID playerId,
-                                                  PermanentChoiceContext.PlayerWithLowestLifeChoice context) {
-        Permanent source = context.sourcePermanentId() != null
-                ? gameQueryService.findPermanentById(gameData, context.sourcePermanentId())
-                : findPermanentByCardId(gameData, context.sourceCard().getId());
-        if (source != null) {
-            creatureControlService.applyControlEffect(gameData, playerId, source,
-                    new GainControlOfTargetEffect(Duration.PERMANENT),
-                    Duration.PERMANENT, null, context.sourceCard().getName());
-        }
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
     public void handleTheMasterMostLifeChoice(GameData gameData, UUID playerId,
                                                PermanentChoiceContext.TheMasterMostLifeChoice context) {
         theMasterHandler.completeMostLifeChoice(gameData, playerId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) {
-                continue;
-            }
-            for (Permanent permanent : battlefield) {
-                if (permanent.getCard().getId().equals(cardId)) {
-                    return permanent;
-                }
-            }
-        }
-        return null;
     }
 
     public void handlePucasMischiefOwnTarget(GameData gameData, UUID permanentId,

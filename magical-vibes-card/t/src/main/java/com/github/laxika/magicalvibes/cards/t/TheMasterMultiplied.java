@@ -1,11 +1,17 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect;
-import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleForControlledTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeredAbilitiesCantCauseSacrificeOrExileCreatureTokensEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "146")
 @CardRegistration(set = "WHO", collectorNumber = "429")
@@ -18,7 +24,8 @@ public class TheMasterMultiplied extends Card {
     public TheMasterMultiplied() {
         addTrigger(Triggers.attacks(),
                 CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect.myriad());
-        addStaticEffect(new IgnoreLegendRuleForControlledTokensEffect());
+        addStaticEffect(new IgnoreLegendRuleEffect(Subjects.controlledBy(Subjects.you(),
+                new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), new PermanentIsTokenPredicate())))));
         addStaticEffect(new TriggeredAbilitiesCantCauseSacrificeOrExileCreatureTokensEffect());
     }
 }

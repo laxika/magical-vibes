@@ -941,8 +941,6 @@ public class PermanentChoiceHandlerService {
             removeAllMireCountersFromChosenLandEffectHandler.completeChoice(gameData, permanentId, cyclopean);
         } else if (context instanceof PermanentChoiceContext.DayNightTransformAttachment dnta) {
             triggerHandler.handleDayNightTransformAttachment(gameData, permanentId, dnta);
-        } else if (context instanceof PermanentChoiceContext.PlayerWithLowestLifeChoice pwll) {
-            triggerHandler.handlePlayerWithLowestLifeChoice(gameData, permanentId, pwll);
         } else if (context instanceof PermanentChoiceContext.TheMasterMostLifeChoice tmml) {
             triggerHandler.handleTheMasterMostLifeChoice(gameData, permanentId, tmml);
         } else if (context instanceof PermanentChoiceContext.PucasMischiefOwnTarget pmot) {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.c.CaptainSisay;
+import com.github.laxika.magicalvibes.cards.m.MarvinMurderousMimic;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RobaranMercenaries.class, CaptainSisay.class, ProdigalPyromancer.class})
+@CardUsed({RobaranMercenaries.class, CaptainSisay.class, ProdigalPyromancer.class, MarvinMurderousMimic.class})
 class RobaranMercenariesTest extends BaseCardTest {
 
     @Test
@@ -100,5 +101,17 @@ class RobaranMercenariesTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Robaran and Marvin, Murderous Mimic lending to each other still gain the donor's ability")
+    void borrowersLendingToEachOtherDoNotLoop() {
+        Permanent robaran = addCreatureReady(player1, new RobaranMercenaries());
+        addCreatureReady(player1, new MarvinMurderousMimic());
+        addCreatureReady(player1, new CaptainSisay());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(robaran.isTapped()).isTrue();
     }
 }

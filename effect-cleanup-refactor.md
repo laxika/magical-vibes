@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d (each in Findings; the fold queue marks its rows). Fold runs 38 and 36b are reported and wait to merge; 35c, 39 and 40 are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                       |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38 (each in Findings; the fold queue marks its rows). Fold runs 36b and 35c are reported and wait to merge; 39, 40 and 41 are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                        |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,318 / 2,672 (after fold run 29d) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,300 / 2,659 (after fold run 38) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,155 rows over 4,495 classes (after fold run 29d). Latest verdict per class: `step-9` 414, unique 1,174, absorbed 1,055, split 654, blocked-other 524, survivor 373, blocked-step-model 140, blocked-player-loop 96, dead 65. Waiting: 414 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,187 rows over 4,503 classes (after fold run 38). Latest verdict per class: `step-9` 391, unique 1,176, absorbed 1,080, split 655, blocked-other 524, survivor 376, blocked-step-model 140, blocked-player-loop 96, dead 65. Waiting: 391 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -929,6 +929,15 @@ Delayed and global triggers:
 
 - `CastCardWithoutPayingManaCostIfAbleEffect(CardSubject)`: "[the player] casts it without paying its mana cost if able", the mandatory cast of one exiled or hand card by the player whose zone it is in. After `PutCardsOntoBattlefieldEffect(cardsThisWay(kind, land))` for "if it's a land card … Otherwise" (Omen Machine, Wild Evocation; fold run 29d).
 - `SpellCastingService.payFreeCastCostIncreases` / `canPayFreeCastCostIncreases(gd, player, card, zone)`: the one cost-increase payment of a free cast (CR 601.2f), used by the exile, queue and library free casts (fold run 29d).
+
+- `GainActivatedAbilitiesOfOwnCreaturesEffect(PermanentSubject, PermanentPredicate, Abilities)` / `.of(subject[, filter])` / `.loyaltyAbilitiesOfOtherPlaneswalkers()` / `.exceptLoyaltyAbilities()`: every "has all [loyalty] activated abilities of [permanents]" (fold run 38).
+- `GainActivatedAbilitiesOfOwnCreaturesSelfEffectHandler.effectiveActivatedAbilities`: the one borrower read, moved from the deleted opponents' handler; a permanent being assembled lends only its card's abilities. `GameQueryService.isAssemblingStaticBonus(id)` (fold run 38).
+- `SpendManaAsAnyColorForActivatedAbilitiesEffect.forBorrowedAbilities()`, read by `GameQueryService.isBorrowedAbility` (fold run 38).
+- `StaticEffectSupport.namesOnBattlefieldOf(context, permanent, controllerId, subject)`: static membership for a scan of other permanents (fold run 38).
+- `GainControlOfTargetEffect.whileMatches(subject, predicate)` and `CreatureControlService.maintainedPredicateHolds`: "for as long as it [matches]" (CR 611.2b) (fold run 38).
+- `PermanentIsHauntedPredicate`; `DealDamageToPlayersEffect` over `ownerOf(target())` declares the permanent target (fold run 38).
+- `PlayerHasLeastLifePredicate`, `PlayerHasMostCardsInHandPredicate`, `PlayerSeatedInDirectionPredicate(direction)`, `PlayerControlsMostCreaturesPredicate(creatureFilter)` (fold run 38).
+- `IgnoreLegendRuleEffect(PermanentSubject)` and `IgnoreLegendRuleWhenExactlyTwoSameNameEffect(PermanentSubject counted)`, read by LegendRuleService per permanent (fold run 38).
 
 ### Blocked causes still open
 
@@ -4033,6 +4042,37 @@ Five members done, plus Ashling's haste grant. Ratchet 3,355 / 2,699 → 3,349 /
 - `ExileTopCardPutLandOntoBattlefieldOrMayCastFreeEffect` looks like the "may" twin of this batch (`PutCardsOntoBattlefieldEffect` + a may cast step). Not checked.
 
 **Follow-up (same run, after review).** The first version paid free-cast cost increases from the pool only, so a cascade hit under Thalia was bottomed even with untapped lands (CR 601.2g, 608.2g). Now a free cast whose increase the pool doesn't cover, but the pool plus untapped sources would, pauses on the existing mid-resolution mana window (`PendingMayAbility` with a mana cost, `GameService.isMayCostManaPayment`): "Pay {N} to cast X (its cost increase)?". Accepted with enough mana, the cast continues; declined, the card follows its flow's uncast path (cascade: bottom; Omen: stays in exile; Wild Evocation: stays in hand). New `PayFreeCastCostIncreaseEffect` (engine-made, `unique`) + `FreeCastCostIncreaseSupport`, asked by `ExileFreeCastSupport`, `ExileFreeCastQueueSupport` (before taking the next card) and the hand cast. `LibraryChoiceHandlerService` is back to HEAD: its search casts (Knowledge Exploitation, Sunbird-style, cascade's non-queue branch) still cast free, because each caller needs its own uncast destination. Ratchet after the follow-up 3,376 / 2,710 (the new record and handler offset the two removed). 5 new tests (Bloodbraid Elf ×2, Omen Machine ×2, Wild Evocation). Seen: the Hard AI likely scores the payment "may" at 0 and declines; the queue asks for mana before modes and targets, so a spell left with no legal target leaves the mana in the pool.
+
+### Step 9, fold run 38 (2026-11-24, parallel worktree)
+Four of five batches done. Ratchet 3,355 / 2,699 → 3,337 / 2,686. Ledger 32 rows: absorbed 25 (8 interfaces), split 1, survivor 4, unique 2. 25 card files rewritten; Oracle text checked for 27. CR 604.3, 611.2b, 611.2c, 613.1b, 613.8b, 704.5j, 724.1 and 800.4a were checked.
+
+| Batch | Result |
+|---|---|
+| perm-borrowers | 5 folded. `GainActivatedAbilitiesOfOwnCreaturesEffect(PermanentSubject, filter, Abilities ALL/NON_LOYALTY/LOYALTY)` never counts its source. The one read `effectiveActivatedAbilities` moved to the survivor's handler. A permanent whose bonus is being assembled further up the thread lends only its card's abilities, which ends the Marvin/Robaran recursion. The "those abilities" mana permission is `SpendManaAsAnyColorForActivatedAbilitiesEffect.forBorrowedAbilities()`, read by `GameQueryService.isBorrowedAbility`. |
+| maintained-control | 3 folded. `GainControlOfTargetEffect.whileMatches(subject, predicate)`: nothing happens if the predicate fails as the effect begins (CR 611.2b), and control ends for good once it stops holding. Both are judged by `CreatureControlService.maintainedPredicateHolds`, with no source needed. Old Man of the Sea's noncreature exemption moved into its own `anyOf(not creature, power)` predicate. New `PermanentIsHauntedPredicate`. Kaya's emblems carry a haunted-creature ability target filter, which replaced the validator class. |
+| leader-control | 5 folded. `.of(source(), PERMANENT).gainedBy(matching(eachPlayer(), …))` sits after each card's intervening "if" (CR 603.4 not cited; it was not checked), which leaves one player. New `PlayerHasLeastLifePredicate`, `PlayerHasMostCardsInHandPredicate`, `PlayerSeatedInDirectionPredicate`; `PlayerControlsMostCreaturesPredicate` gains a creature filter. Loxodon's tie is `ChoosePlayerEffect`, unasked with one candidate. All are judged on resolution, as the cards say. |
+| legend-rule | 7 folded. `IgnoreLegendRuleEffect(PermanentSubject)` and `IgnoreLegendRuleWhenExactlyTwoSameNameEffect(PermanentSubject counted)`. LegendRuleService exempts each permanent an active effect's static set names, then asks only when two or more same-named legends are left. |
+| player-control | Left, 2 `unique`. Secret of Bloodbending would need a next-combat Duration, and Cruel Entertainment a controlling subject plus positional targets inside one two-target group. Each option has one user (guard rail). Two target groups would also change Cruel Entertainment's cast-time prompt. |
+
+**Behaviour changes.**
+- Borrowers lending to each other no longer recurse (Robaran test).
+- The Master, Multiplied exempts only creature tokens (Oracle; the Fold: defect).
+- Mothers Yamazaki counts every permanent named it that you control, not only legendary ones (Oracle; test).
+- Nicol Bolas gains granted loyalty abilities and nothing from a face-down or ability-less planeswalker; his borrowed abilities are no longer stamped with Bolas as grant source.
+- Kraj drops the abilities a land-type change removed.
+- The token exemption reads active statics.
+- Drana, Manascape and Fence are plain layer 6, no CDA flag (CR 604.3).
+- Sokenzan finds its trigger's object (CR 400.7).
+- The handoffs are not steals for the AI.
+- Logs: Loxodon's prompt label; Kaya's damage emblem logs the survivor's damage line.
+
+**Tests changed.** CreatureControlServiceTest, LayerClassifierTest and StepTriggerServiceTest fixtures; FuzzInvariants; LegendRuleServiceTest (stub plus 3 cases); Robaran (1 case).
+
+**Seen, not changed.**
+- Borrowers in a dependency loop (CR 613.8b) are approximated by assembly order. In a three-borrower cycle a lender's borrowed abilities can be missed. Sure of the code, rare.
+- No test of their own: Kraj's printed-ability loss, Bolas's granted loyalty abilities, the token scan's active statics.
+
+**For the next run.** Take Secret of Bloodbending and Cruel Entertainment together with ControlTargetPlayerNextTurnEffect's six cards, once a second user needs a Duration or a controller subject.
 
 ## Prompt
 

@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.filter.PlayerSeatedInDirectionPredicate;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.CantBeSacrificedEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.NextPlayerGainsControlOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerDirection;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -27,7 +30,9 @@ public class HithlainRope extends Card {
                         new SearchLibraryEffect(
                                 CardPredicateUtils.basicLand(),
                                 LibrarySearchDestination.BATTLEFIELD_TAPPED),
-                        new NextPlayerGainsControlOfSourceEffect(PlayerDirection.RIGHT)),
+                        GainControlOfTargetEffect.of(Subjects.source(), Duration.PERMANENT).gainedBy(
+                                Subjects.matching(Subjects.eachPlayer(),
+                                        new PlayerSeatedInDirectionPredicate(PlayerDirection.RIGHT)))),
                 "{1}, {T}: Search your library for a basic land card, put it onto the battlefield tapped, "
                         + "then shuffle. The player to your right gains control of this artifact."));
 
@@ -36,7 +41,9 @@ public class HithlainRope extends Card {
                 "{2}",
                 List.of(
                         new DrawCardEffect(),
-                        new NextPlayerGainsControlOfSourceEffect(PlayerDirection.RIGHT)),
+                        GainControlOfTargetEffect.of(Subjects.source(), Duration.PERMANENT).gainedBy(
+                                Subjects.matching(Subjects.eachPlayer(),
+                                        new PlayerSeatedInDirectionPredicate(PlayerDirection.RIGHT)))),
                 "{2}, {T}: Draw a card. The player to your right gains control of this artifact."));
     }
 }

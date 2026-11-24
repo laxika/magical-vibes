@@ -10,8 +10,9 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.GlobalLegendRuleExemptionEffect;
-import com.github.laxika.magicalvibes.model.effect.LegendRuleExemptionEffect;
+import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleEffect;
+import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleWhenExactlyTwoSameNameEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.ArrayList;
@@ -331,7 +332,8 @@ final class FuzzInvariants {
         return gd.playerBattlefields.values().stream()
                 .flatMap(List::stream)
                 .anyMatch(perm -> perm.getCard().getStaticEffects().stream()
-                        .anyMatch(GlobalLegendRuleExemptionEffect.class::isInstance));
+                        .anyMatch(effect -> effect instanceof IgnoreLegendRuleEffect ignore
+                                && ignore.permanents().equals(Subjects.allPermanents())));
     }
 
     private boolean allLegendRuleExempt(GameData gd, List<Permanent> battlefield, String name) {
@@ -339,9 +341,10 @@ final class FuzzInvariants {
         return battlefield.stream()
                 .filter(perm -> name.equals(perm.getCard().getName()))
                 .allMatch(perm -> perm.getCard().getStaticEffects().stream()
-                        .filter(LegendRuleExemptionEffect.class::isInstance)
-                        .map(LegendRuleExemptionEffect.class::cast)
-                        .anyMatch(exemption -> exemption.exemptFromLegendRule(totalWithName)));
+                        .filter(IgnoreLegendRuleWhenExactlyTwoSameNameEffect.class::isInstance)
+                        .map(IgnoreLegendRuleWhenExactlyTwoSameNameEffect.class::cast)
+                        .anyMatch(exemption -> exemption.counted().equals(Subjects.allPermanents())
+                                && totalWithName == 2));
     }
 
     private int countOnBattlefield(GameData gd, String name) {

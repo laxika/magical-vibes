@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.model.filter.PlayerControlsMostCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
@@ -58,7 +61,6 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
@@ -667,7 +669,8 @@ class StepTriggerServiceTest {
         void uniqueCreatureCountLeaderTriggers() {
             Card card = createCardWithName("Wild Mammoth");
             card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), TriggerOptions.DEFAULT.withInterveningIf(new APlayerControlsMoreCreaturesThanEachOtherPlayer()),
-                    new PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect());
+                    GainControlOfTargetEffect.of(Subjects.source(), Duration.PERMANENT).gainedBy(
+                            Subjects.matching(Subjects.eachPlayer(), new PlayerControlsMostCreaturesPredicate())));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             gd.playerBattlefields.get(player2Id).add(new Permanent(createCardWithName("Bear 1")));
             gd.playerBattlefields.get(player2Id).add(new Permanent(createCardWithName("Bear 2")));
@@ -707,7 +710,8 @@ class StepTriggerServiceTest {
         void tiedCreatureCountsDoNotTrigger() {
             Card card = createCardWithName("Wild Mammoth");
             card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), TriggerOptions.DEFAULT.withInterveningIf(new APlayerControlsMoreCreaturesThanEachOtherPlayer()),
-                    new PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect());
+                    GainControlOfTargetEffect.of(Subjects.source(), Duration.PERMANENT).gainedBy(
+                            Subjects.matching(Subjects.eachPlayer(), new PlayerControlsMostCreaturesPredicate())));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             gd.playerBattlefields.get(player2Id).add(new Permanent(createCardWithName("Bear")));
             when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);

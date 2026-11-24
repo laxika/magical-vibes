@@ -91,6 +91,11 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
      */
     private boolean apply(GameData gameData, StackEntry entry, GainControlOfTargetEffect e, Gain gain,
                           Permanent target, UUID sourcePermanentId) {
+        // A "for as long as it [matches]" that no longer holds as the effect begins does nothing (CR 611.2b).
+        if (e.maintainTargetPredicate() && !creatureControlService.maintainedPredicateHolds(gameData, e, target,
+                entry.getSourcePermanentId(), entry.getControllerId())) {
+            return false;
+        }
         UUID before = gameQueryService.findPermanentController(gameData, target.getId());
         boolean applied = creatureControlService.applyControlEffect(gameData, gain.playerId(), target,
                 e, e.duration(), sourcePermanentId, FaceDownVisibility.sourceName(gameData, entry));

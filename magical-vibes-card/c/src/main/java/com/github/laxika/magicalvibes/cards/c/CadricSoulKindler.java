@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnteringPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleForControlledTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -20,7 +21,8 @@ import java.util.List;
 public class CadricSoulKindler extends Card {
 
     public CadricSoulKindler() {
-        addStaticEffect(new IgnoreLegendRuleForControlledTokensEffect());
+        addStaticEffect(new IgnoreLegendRuleEffect(
+                Subjects.controlledBy(Subjects.you(), new PermanentIsTokenPredicate())));
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),

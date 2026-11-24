@@ -1582,8 +1582,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Soulbond self-enter: choose another unpaired creature you control to pair with the source. */
     record SoulbondChoosePartner(UUID sourcePermanentId, UUID controllerId) implements PermanentChoiceContext {}
 
-    record PlayerWithLowestLifeChoice(Card sourceCard, UUID sourcePermanentId) implements PermanentChoiceContext {}
-
     /** The Master's choice of an opponent tied for most life. */
     record TheMasterMostLifeChoice(Card sourceCard, UUID controllerId,
                                    List<UUID> eligiblePlayerIds)

@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.filter.PlayerControlsMostCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.APlayerControlsMoreCreaturesThanEachOtherPlayer;
-import com.github.laxika.magicalvibes.model.effect.PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -24,6 +27,7 @@ public class ThoughtboundPrimoc extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.WIZARD)));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new APlayerControlsMoreCreaturesThanEachOtherPlayer(wizards)),
-                new PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect(wizards));
+                GainControlOfTargetEffect.of(Subjects.source(), Duration.PERMANENT)
+                        .gainedBy(Subjects.matching(Subjects.eachPlayer(), new PlayerControlsMostCreaturesPredicate(wizards))));
     }
 }

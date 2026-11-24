@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
-import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreaturesOpponentsControlEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendManaAsAnyColorForActivatedAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -23,7 +24,7 @@ public class DranaAndLinvala extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 ))
         ));
-        addStaticEffect(new GainActivatedAbilitiesOfCreaturesOpponentsControlEffect());
-        addStaticEffect(new SpendManaAsAnyColorForActivatedAbilitiesEffect());
+        addStaticEffect(GainActivatedAbilitiesOfOwnCreaturesEffect.of(Subjects.creaturesYourOpponentsControl()));
+        addStaticEffect(SpendManaAsAnyColorForActivatedAbilitiesEffect.forBorrowedAbilities());
     }
 }

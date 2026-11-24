@@ -8,8 +8,14 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleEffect;
-import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleForControlledCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleForControlledTokensEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleWhenExactlyTwoSameNameEffect;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -83,9 +89,34 @@ class LegendRuleServiceTest {
                 .thenAnswer(invocation -> ((Permanent) invocation.getArgument(1)).getCard().getStaticEffects());
         lenient().when(gameQueryService.activeStaticEffects(any(), any(Class.class)))
                 .thenAnswer(invocation -> activeStaticEffects(gd.orderedPlayerIds, invocation.getArgument(1)));
+        lenient().when(gameQueryService.staticSubjectNames(any(), any(), any(), any(), any(), any()))
+                .thenAnswer(invocation -> staticSubjectNames(invocation.getArgument(2), invocation.getArgument(3),
+                        invocation.getArgument(4), invocation.getArgument(5)));
         lenient().when(gameQueryService.activeStaticEffects(any(), any(UUID.class), any(Class.class)))
                 .thenAnswer(invocation -> activeStaticEffects(List.of(invocation.<UUID>getArgument(1)),
                         invocation.getArgument(2)));
+    }
+
+    /**
+     * A static set's membership as the resolver judges it, for the sets these tests use: "you" or "each player" with a
+     * true, creature, token or all-of filter read from the printed cards.
+     */
+    private boolean staticSubjectNames(UUID sourceControllerId, UUID targetControllerId, Permanent target,
+                                       PermanentSubject subject) {
+        PermanentSubject.ControlledBy set = (PermanentSubject.ControlledBy) subject;
+        boolean onBattlefield = !(set.players() instanceof PlayerSubject.You)
+                || sourceControllerId.equals(targetControllerId);
+        return onBattlefield && matches(target, set.filter());
+    }
+
+    private boolean matches(Permanent target, PermanentPredicate filter) {
+        return switch (filter) {
+            case PermanentTruePredicate ignored -> true;
+            case PermanentIsCreaturePredicate ignored -> gameQueryService.isCreature(gd, target);
+            case PermanentIsTokenPredicate ignored -> target.getCard().isToken();
+            case PermanentAllOfPredicate allOf -> allOf.predicates().stream().allMatch(part -> matches(target, part));
+            default -> throw new UnsupportedOperationException(filter.toString());
+        };
     }
 
     /** The static effects of {@code type} printed on the given players' permanents, as GameQueryService walks them. */
@@ -239,6 +270,37 @@ class LegendRuleServiceTest {
     }
 
     @Nested
+    @DisplayName("Controlled exactly-two legend rule exemption (Mothers Yamazaki)")
+    class ControlledExactlyTwoExemption {
+
+        private Card mothers() {
+            Card card = createLegendaryCreature("Mothers Yamazaki");
+            card.addStaticEffect(new IgnoreLegendRuleWhenExactlyTwoSameNameEffect(Subjects.permanentsYouControl()));
+            return card;
+        }
+
+        @Test
+        @DisplayName("Exactly two permanents with the name you control are exempt")
+        void exactlyTwoControlledAreExempt() {
+            addPermanent(player1Id, mothers());
+            addPermanent(player1Id, mothers());
+            addPermanent(player2Id, mothers());
+
+            assertThat(svc.checkLegendRule(gd, player1Id)).isFalse();
+        }
+
+        @Test
+        @DisplayName("A third permanent with the name you control counts even if it isn't legendary")
+        void nonlegendaryThirdCopyCounts() {
+            addPermanent(player1Id, mothers());
+            addPermanent(player1Id, mothers());
+            addPermanent(player1Id, createCreature("Mothers Yamazaki"));
+
+            assertThat(svc.checkLegendRule(gd, player1Id)).isTrue();
+        }
+    }
+
+    @Nested
     @DisplayName("Global legend rule exemption")
     class GlobalExemption {
 
@@ -281,7 +343,7 @@ class LegendRuleServiceTest {
         @DisplayName("Protects duplicate legendary creatures")
         void protectsDuplicateLegendaryCreatures() {
             Card source = createCreature("Council of Reeds");
-            source.addStaticEffect(new IgnoreLegendRuleForControlledCreaturesEffect());
+            source.addStaticEffect(new IgnoreLegendRuleEffect(Subjects.creaturesYouControl()));
             addPermanent(player1Id, source);
             addPermanent(player1Id, createLegendaryCreature("Test Legend"));
             addPermanent(player1Id, createLegendaryCreature("Test Legend"));
@@ -300,7 +362,8 @@ class LegendRuleServiceTest {
         @DisplayName("Protects duplicate legendary tokens")
         void protectsDuplicateLegendaryTokens() {
             Card source = createCreature("Cadric, Soul Kindler");
-            source.addStaticEffect(new IgnoreLegendRuleForControlledTokensEffect());
+            source.addStaticEffect(new IgnoreLegendRuleEffect(
+                    Subjects.controlledBy(Subjects.you(), new PermanentIsTokenPredicate())));
             addPermanent(player1Id, source);
 
             Card firstToken = createLegendaryCreature("Test Legend");
@@ -312,6 +375,34 @@ class LegendRuleServiceTest {
 
             assertThat(svc.checkLegendRule(gd, player1Id)).isFalse();
             verify(playerInputService, never()).beginPermanentChoice(any(), any(), anyList(), anyString());
+        }
+    }
+
+    @Nested
+    @DisplayName("Controlled creature-token legend rule exemption (The Master, Multiplied)")
+    class ControlledCreatureTokenExemption {
+
+        @Test
+        @DisplayName("Legendary noncreature tokens are still subject to the legend rule")
+        void noncreatureTokensAreNotExempt() {
+            Card source = createCreature("The Master, Multiplied");
+            source.addStaticEffect(new IgnoreLegendRuleEffect(Subjects.controlledBy(Subjects.you(),
+                    new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                            new PermanentIsTokenPredicate())))));
+            addPermanent(player1Id, source);
+            Card firstToken = createLegendaryCreature("Test Relic");
+            firstToken.setType(CardType.ARTIFACT);
+            firstToken.setToken(true);
+            Card secondToken = createLegendaryCreature("Test Relic");
+            secondToken.setType(CardType.ARTIFACT);
+            secondToken.setToken(true);
+            addPermanent(player1Id, firstToken);
+            addPermanent(player1Id, secondToken);
+            when(gameQueryService.isCreature(eq(gd), any(Permanent.class)))
+                    .thenAnswer(invocation -> ((Permanent) invocation.getArgument(1)).getCard()
+                            .hasType(CardType.CREATURE));
+
+            assertThat(svc.checkLegendRule(gd, player1Id)).isTrue();
         }
     }
 

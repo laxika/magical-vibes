@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
@@ -26,7 +28,10 @@ public class OldManOfTheSea extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(GainControlOfTargetEffect.whileSourceRemainsTappedAndTargetMatches(targetPredicate)),
+                // A permanent that stops being a creature has no power, so the power condition still holds.
+                List.of(GainControlOfTargetEffect.whileSourceRemainsTappedAndTargetMatches(new PermanentAnyOfPredicate(
+                        List.of(new PermanentNotPredicate(new PermanentIsCreaturePredicate()),
+                                new PermanentPowerAtMostSourcePowerPredicate())))),
                 "{T}: Gain control of target creature with power less than or equal to this creature's power "
                         + "for as long as this creature remains tapped and that creature's power remains less "
                         + "than or equal to this creature's power.",

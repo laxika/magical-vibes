@@ -26,7 +26,6 @@ import com.github.laxika.magicalvibes.model.condition.APlayerHasMoreCardsInHandT
 import com.github.laxika.magicalvibes.model.condition.APlayerHasMoreLifeThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.effect.RemoveDamageFromTargetLandInsteadOfNextDestructionEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayerWithMostLifeGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.FirstUpkeepThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ActivationCount;
@@ -2280,7 +2279,7 @@ public class ConditionEvaluationService {
             case APlayerHasMoreCardsInHandThanEachOtherPlayer ignored ->
                     aPlayerHasMoreCardsInHandThanEachOtherPlayer(gameData);
             case APlayerHasMoreLifeThanEachOtherPlayer ignored ->
-                    PlayerWithMostLifeGainsControlOfSourceCreatureEffect.hasUniqueLifeLeader(gameData);
+                    aPlayerHasMoreLifeThanEachOtherPlayer(gameData);
             case FirstUpkeepThisTurn ignored -> !gameData.currentUpkeepIsAdditional;
             case ActivePlayerIsMonarch ignored ->
                     gameData.activePlayerId != null && gameData.activePlayerId.equals(gameData.monarchPlayerId);
@@ -2811,6 +2810,15 @@ public class ConditionEvaluationService {
             }
         }
         return count;
+    }
+
+    /** Whether one player has more life than each other player (Ghazbán Ogre's intervening "if"). */
+    private static boolean aPlayerHasMoreLifeThanEachOtherPlayer(GameData gameData) {
+        int highestLife = gameData.orderedPlayerIds.stream().mapToInt(gameData::getLife).max().orElse(0);
+        return gameData.orderedPlayerIds.stream()
+                .filter(playerId -> gameData.getLife(playerId) == highestLife)
+                .limit(2)
+                .count() == 1;
     }
 
     private boolean aPlayerHasMoreCardsInHandThanEachOtherPlayer(GameData gameData) {

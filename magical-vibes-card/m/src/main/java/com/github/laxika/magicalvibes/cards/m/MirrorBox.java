@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
-import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleForControlledPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class MirrorBox extends Card {
 
     public MirrorBox() {
-        addStaticEffect(new IgnoreLegendRuleForControlledPermanentsEffect());
+        addStaticEffect(new IgnoreLegendRuleEffect(Subjects.permanentsYouControl()));
         addStaticEffect(new StaticBoostEffect(
                 1, 1, Subjects.creaturesYouControl(),
                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)));
