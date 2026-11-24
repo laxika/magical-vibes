@@ -16,6 +16,9 @@ import java.util.UUID;
  *                           fused spell) the permission lets it be cast as, or null for any. A
  *                           permission for a spell with certain characteristics considers only the
  *                           half being cast (CR 709.3a).
+ * @param nextOffers for "up to N" / "any number of spells": the next round of offers, put into the resolving ability
+ *                   once this card's cast begins, so the caster casts the spells in the order of their choice
+ *                   (CR 608.2g); {@code null} for a single spell
  */
 public record MayCastFromHandWithoutPayingManaCostEffect(
         boolean revealCardOnDecline,
@@ -24,7 +27,8 @@ public record MayCastFromHandWithoutPayingManaCostEffect(
         boolean exileInsteadOfGraveyard,
         CardEffect afterSuccessfulCastEffect,
         List<Integer> castableSplitModes,
-        boolean castAsAdventure
+        boolean castAsAdventure,
+        CardEffect nextOffers
 ) implements CardEffect {
 
     public MayCastFromHandWithoutPayingManaCostEffect {
@@ -37,7 +41,7 @@ public record MayCastFromHandWithoutPayingManaCostEffect(
                                                        boolean exileInsteadOfGraveyard,
                                                        CardEffect afterSuccessfulCastEffect) {
         this(revealCardOnDecline, choiceGroupId, declineEffect, exileInsteadOfGraveyard,
-                afterSuccessfulCastEffect, null, false);
+                afterSuccessfulCastEffect, null, false, null);
     }
 
     public MayCastFromHandWithoutPayingManaCostEffect() {
@@ -67,12 +71,18 @@ public record MayCastFromHandWithoutPayingManaCostEffect(
     /** This permission letting a split card be cast only as {@code modes}. */
     public MayCastFromHandWithoutPayingManaCostEffect withCastableSplitModes(List<Integer> modes) {
         return new MayCastFromHandWithoutPayingManaCostEffect(revealCardOnDecline, choiceGroupId, declineEffect,
-                exileInsteadOfGraveyard, afterSuccessfulCastEffect, modes, castAsAdventure);
+                exileInsteadOfGraveyard, afterSuccessfulCastEffect, modes, castAsAdventure, nextOffers);
     }
 
     /** This permission casting the adventurer card as its Adventure (CR 716.3). */
     public MayCastFromHandWithoutPayingManaCostEffect asAdventure() {
         return new MayCastFromHandWithoutPayingManaCostEffect(revealCardOnDecline, choiceGroupId, declineEffect,
-                exileInsteadOfGraveyard, afterSuccessfulCastEffect, castableSplitModes, true);
+                exileInsteadOfGraveyard, afterSuccessfulCastEffect, castableSplitModes, true, nextOffers);
+    }
+
+    /** This offer followed, once its cast begins, by {@code offers} (the next round of an "up to N" choice). */
+    public MayCastFromHandWithoutPayingManaCostEffect thenOffering(CardEffect offers) {
+        return new MayCastFromHandWithoutPayingManaCostEffect(revealCardOnDecline, choiceGroupId, declineEffect,
+                exileInsteadOfGraveyard, afterSuccessfulCastEffect, castableSplitModes, castAsAdventure, offers);
     }
 }

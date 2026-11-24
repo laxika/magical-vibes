@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c (each in Findings; the fold queue marks its rows). Fold runs 8 to 19 run in parallel worktrees from 2026-11-24. Next: fold runs 15b, 16b and 19 (running), 18 (merging), 17b, 18b, 12e, `drafted-step`. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                       |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18 (each in Findings; the fold queue marks its rows). Fold runs 8 to 19 run in parallel worktrees from 2026-11-24. Next: fold runs 15b, 17b and 19 (running), 16b (merging), 18b, 12e, `drafted-step`. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                        |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,711 / 2,975 (after fold run 16c) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,704 / 2,967 (after fold run 18) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,511 rows over 4,424 classes (after fold run 16c). Latest verdict per class: `step-9` 872, unique 1,166, absorbed 697, split 601, blocked-other 497, survivor 292, blocked-step-model 141, blocked-player-loop 96, dead 62. Waiting: 872 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,523 rows over 4,425 classes (after fold run 18). Latest verdict per class: `step-9` 862, unique 1,166, absorbed 703, split 603, blocked-other 499, survivor 293, blocked-step-model 141, blocked-player-loop 96, dead 62. Waiting: 862 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -693,6 +693,11 @@ Delayed and global triggers:
   ability (CR 607.2a, 607.5) (fold run 16c).
 - `GainActivatedAbilitiesOfExiledCardsEffect(cards, filter, oncePerTurn)` and `GainKeywordsOfCreatureCardsExiledWithSourceEffect(cards,
   cardFilter, watched, copiesProtection, recipient)` (`COMMON_KEYWORDS`): borrowers over any static card subject (fold run 16c).
+
+- `CastCardsWithoutPayingManaCostEffect.anyNumber(cards)` / `.upTo(n, cards)` / `.withTotalManaValueAtMost(amount)`: the cast-now step
+  over a `CardSubject`: face-up exiled spell cards, one ordered choice (CR 608.2g), uncast cards stay (fold run 18).
+- `MayCastAnySpellFromHandWithoutPayingManaCostEffect.anyNumber()` / `.upTo(n)`: hand free casts with a count, each cast followed by a
+  new round of offers (`MayCastFromHandWithoutPayingManaCostEffect.nextOffers`) (fold run 18).
 
 ### Blocked causes still open
 
@@ -2274,6 +2279,37 @@ Merged with fold run 17, which had added the same `Subjects.exiledWithSourceMatc
 **For the next run.** Give the linkless printed exiles of Myr Welder, Territory Forge and Idris a link, and rewrite gained readers
 (`ReturnCardExiledWithSourceToBattlefieldEffect`, Valki's copy) onto the gained link as Koh does; Valki's copy can take
 `exiledWithSourceBy`.
+
+### Step 9, fold run 18 (2026-11-24, parallel worktree)
+
+Batches `free-cast` and `hand-free-cast` taken; `gy-cast-now`, `exile-markers`, `look-cast` not taken (18b). Ratchet in its worktree
+3,754 / 3,018 → 3,747 / 3,010. Ledger 12 rows (survivor 2, absorbed 6, split 2, blocked-other 2). 9 card files rewritten, Oracle text
+checked for 9. CR 608.2g, 608.2h, 601.3, 118.9, 118.9a, 118.8, 709.3a, 716.3, 716.3a, 406.3a checked.
+
+**Record shape.** `CastCardsWithoutPayingManaCostEffect(CardSubject cards, int maxCount, DynamicAmount totalManaValue)` (`anyNumber(cards)`,
+`upTo(n, cards)`, `.withTotalManaValueAtMost(amount)`): it offers the face-up spell cards in exile the subject names (a land can't be
+cast; a face-down card has no characteristics, CR 406.3a); one `ImprovisationCapstoneCastChoice` answers the spells and their order
+(CR 608.2g); `ExileFreeCastQueueSupport` casts them, asking `castableFromExile` (`canCastDuringResolution`) first; additional costs
+are paid (CR 118.8), the free cast being the alternative cost (CR 118.9, 118.9a); the total cap is evaluated once (CR 608.2h), each
+split card counting its half (CR 709.3a); a card not cast stays where it is. No caster component yet (Allure of the Unknown and
+Possibility Storm would be its two users, both waiting on other parts).
+
+| Batch | Result |
+|---|---|
+| `free-cast` | 5 folded: Izzet Chemister, Forger's Foundry (`exiledWithSource()`), Rod of Absorption (`XValue` cap), Ashiok (`upTo(3, exiledCards(eachOpponent(), null))`), Improvisation Capstone and Etali split onto the exile steps + `cardsThisWay(EXILE)`. Invoke Calamity's two records `blocked-other` (hand-and-graveyard casts under one cap) |
+| `hand-free-cast` | 3 folded into `MayCastAnySpellFromHandWithoutPayingManaCostEffect.maxCount` (`anyNumber()`, `upTo(n)`); each offer carries `MayCastFromHandWithoutPayingManaCostEffect.nextOffers`, inserted into the parked resolution when a cast begins, so a declined card is offered again (CR 608.2g) |
+
+**Behaviour changes.** Improvisation Capstone offers battle cards (CR 601.3; test). Aetherflux Conduit and The Great Synthesis offer
+a declined card again after each cast, so the caster picks the order (CR 608.2g; test). Power Without Equal offers a card castable only
+from a graveyard (refused when accepted, as before). Face-down exiled cards are never offered. Etali's and Capstone's logs are the
+survivors' lines.
+
+**For the next run (18b).** `gy-cast-now`: `CastCardFromGraveyardEffect` with a `CardSubject` (`sourceCard()`, `triggeringCards(nonland)`,
+`targetCard`), and Chandra Ablaze's any-number graveyard record onto the ordered choice. `look-cast`: one `LookAtTopCardsAndMayCastEffect`
+with a `DynamicAmount` count, a reveal flag and one place for the looked-at cards to wait (Kiora keeps them in exile, paying additional
+costs; Aetherworks leaves them in the library; Sunbird uses a split-half cap). `exile-markers`: suspend's haste "until you lose
+control" (CR 702.62a) on `MayPlayExiledCardWithoutPayingManaCostEffect`. Invoke Calamity: a hand-and-graveyard source on the cast-now
+queue.
 
 ## Prompt
 

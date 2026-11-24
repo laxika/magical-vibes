@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.CastCardsWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
@@ -10,7 +11,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.CastUpToNSpellsFromOpponentsExileEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandThenEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesFromHandEffect;
@@ -52,7 +52,7 @@ public class AshiokNightmareMuse extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -7,
-                List.of(new CastUpToNSpellsFromOpponentsExileEffect(3)),
+                List.of(CastCardsWithoutPayingManaCostEffect.upTo(3, Subjects.exiledCards(Subjects.eachOpponent(), null))),
                 "\u22127: You may cast up to three spells from among face-up cards your opponents own from exile without paying their mana costs."));
     }
 }

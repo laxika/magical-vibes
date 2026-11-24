@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.d.Divination;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AetherfluxConduit.class, Divination.class, GrizzlyBears.class, Ornithopter.class})
+@CardUsed({AetherfluxConduit.class, Divination.class, GrizzlyBears.class, Ornithopter.class, Forest.class})
 class AetherfluxConduitTest extends BaseCardTest {
 
     @Test
@@ -57,6 +59,31 @@ class AetherfluxConduitTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(
                 permanent -> permanent.getCard().getId().equals(ornithopter.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(conduit);
+    }
+
+    @Test
+    @DisplayName("The free spells are cast in the order the caster chooses: a declined card is offered again")
+    void castsTheFreeSpellsInTheChosenOrder() {
+        harness.addToBattlefield(player1, new AetherfluxConduit());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+        Ornithopter ornithopter = new Ornithopter();
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(ornithopter, bears));
+        gd.playerEnergyCounters.put(player1.getId(), 50);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getId().equals(ornithopter.getId())
+                        || entry.getCard().getId().equals(bears.getId()))
+                .extracting(entry -> entry.getCard().getId())
+                .containsExactly(bears.getId(), ornithopter.getId());
+        assertThat(gd.playerHands.get(player1.getId())).noneMatch(card -> !card.getName().equals("Forest"));
     }
 
     @Test

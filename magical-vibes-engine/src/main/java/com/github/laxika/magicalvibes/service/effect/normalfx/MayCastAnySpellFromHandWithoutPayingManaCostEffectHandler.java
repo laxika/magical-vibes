@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -124,13 +125,14 @@ public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implement
             return;
         }
         UUID choiceGroupId = UUID.randomUUID();
+        CardEffect nextOffers = e.maxCount() > 1 ? furtherOffers(e, spellFilter, maxManaValue) : null;
         for (int i = eligibleAdventures.size() - 1; i >= 0; i--) {
             Card c = eligibleAdventures.get(i);
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     c, controllerId,
                     List.of(new MayCastFromHandWithoutPayingManaCostEffect(
                             e.revealDrawnCards(), choiceGroupId, e.declineEffect(), false, e.afterSuccessfulCastEffect())
-                            .asAdventure()),
+                            .asAdventure().thenOffering(nextOffers)),
                     "Cast " + c.getBackFaceCard().getName() + " without paying its mana cost?",
                     entry.getSourcePermanentId(), (Integer) null
             ));
@@ -142,11 +144,22 @@ public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implement
                     c, controllerId,
                     List.of(new MayCastFromHandWithoutPayingManaCostEffect(
                             e.revealDrawnCards(), choiceGroupId, e.declineEffect(), false, e.afterSuccessfulCastEffect())
-                            .withCastableSplitModes(eligible.get(c))),
+                            .withCastableSplitModes(eligible.get(c)).thenOffering(nextOffers)),
                     "Cast " + c.getName() + " without paying its mana cost?",
                     entry.getSourcePermanentId(), (Integer) null
             ));
         }
+    }
+
+    /**
+     * "Up to N" / "any number of spells": the next round of offers, made as part of this ability once a spell's cast
+     * begins (CR 608.2g), for one spell fewer, with this round's filter and mana-value limit (CR 608.2h).
+     */
+    private static CardEffect furtherOffers(MayCastAnySpellFromHandWithoutPayingManaCostEffect e,
+                                            CardPredicate boundFilter, int maxManaValue) {
+        return new MayCastAnySpellFromHandWithoutPayingManaCostEffect(boundFilter,
+                maxManaValue == Integer.MAX_VALUE ? null : new Fixed(maxManaValue), null, e.drawnCardsOnly(), false,
+                null, e.maxCount() == Integer.MAX_VALUE ? Integer.MAX_VALUE : e.maxCount() - 1);
     }
 
     /**

@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.CastAnyNumberOfSpellsFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
@@ -34,7 +34,7 @@ public class TheGreatSynthesis extends Card {
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.PHYREXIAN))
                 ))));
         addTrigger(Triggers.chapter(3), SequenceEffect.of(
-                new CastAnyNumberOfSpellsFromHandWithoutPayingManaCostEffect(),
+                MayCastAnySpellFromHandWithoutPayingManaCostEffect.anyNumber(),
                 new FlickerEffect(Subjects.source(), null, ReturnTiming.IMMEDIATE, TurnStep.END_STEP,
                         false, null, null, 0, false, false)));
     }

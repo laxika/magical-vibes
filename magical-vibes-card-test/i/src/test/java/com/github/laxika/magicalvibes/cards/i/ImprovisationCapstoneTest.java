@@ -21,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ImprovisationCapstone.class, Forest.class, GiantGrowth.class, GrizzlyBears.class,
-        Shock.class, Twincast.class, RuleOfLaw.class})
+        Shock.class, Twincast.class, RuleOfLaw.class, InvasionOfKaldheim.class})
 class ImprovisationCapstoneTest extends BaseCardTest {
 
     @Test
@@ -244,6 +244,21 @@ class ImprovisationCapstoneTest extends BaseCardTest {
         assertThat(gd.exiledCards.stream().map(e -> e.card().getId()))
                 .contains(land.getId(), declined.getId()).doesNotContain(chosen.getId());
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Offers an exiled battle card, which is a spell card")
+    void offersAnExiledBattleCard() {
+        InvasionOfKaldheim battle = new InvasionOfKaldheim();
+        harness.setLibrary(player1, List.of(battle));
+        harness.setHand(player1, List.of(new ImprovisationCapstone()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ImprovisationCapstoneCastChoice.class)
+                .validCardIds()).containsExactly(battle.getId());
     }
 
     @Test

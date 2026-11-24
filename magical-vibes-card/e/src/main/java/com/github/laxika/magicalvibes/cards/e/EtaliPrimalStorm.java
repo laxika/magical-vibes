@@ -1,8 +1,12 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.CastCardsWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfEachLibraryAndMayCastSpellsEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FDN", collectorNumber = "194")
@@ -23,6 +27,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class EtaliPrimalStorm extends Card {
 
     public EtaliPrimalStorm() {
-        addTrigger(Triggers.attacks(), new ExileTopCardOfEachLibraryAndMayCastSpellsEffect());
+        addTrigger(Triggers.attacks(), SequenceEffect.of(
+                ExileTopCardOfOwnLibraryEffect.of(Subjects.eachPlayer()),
+                CastCardsWithoutPayingManaCostEffect.anyNumber(Subjects.cardsThisWay(StepKind.EXILE))));
     }
 }

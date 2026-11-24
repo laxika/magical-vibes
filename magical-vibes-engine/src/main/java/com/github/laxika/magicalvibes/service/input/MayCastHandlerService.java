@@ -2867,6 +2867,14 @@ public class MayCastHandlerService {
             gameData.pendingMayAbilities.removeIf(pma ->
                     pma.effects().stream().anyMatch(pendingEffectType::isInstance));
         }
+        // "Up to N" / "any number": the rest of the hand is offered again once this spell is cast (CR 608.2g).
+        ability.effects().stream()
+                .filter(MayCastFromHandWithoutPayingManaCostEffect.class::isInstance)
+                .map(MayCastFromHandWithoutPayingManaCostEffect.class::cast)
+                .map(MayCastFromHandWithoutPayingManaCostEffect::nextOffers)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .ifPresent(nextOffers -> queueEffectAfterMayChoice(gameData, nextOffers));
 
         if (splitCard) {
             List<Card> sourceHand = hand;

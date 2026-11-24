@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.CastCardsWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.CastAllCardsExiledWithSourceWithoutPayingEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringSpellExile;
@@ -45,7 +46,7 @@ public class ForgersFoundry extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}{U}{U}",
-                List.of(new CastAllCardsExiledWithSourceWithoutPayingEffect(null)),
+                List.of(CastCardsWithoutPayingManaCostEffect.anyNumber(Subjects.exiledWithSource())),
                 "{3}{U}{U}, {T}: You may cast any number of spells from among cards exiled with this artifact without paying their mana costs. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED
         ));

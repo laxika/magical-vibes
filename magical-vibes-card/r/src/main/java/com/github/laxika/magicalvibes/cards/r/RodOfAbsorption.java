@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.CastCardsWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.CastSpellsExiledWithSourceWithinTotalManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringSpellExile;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -26,7 +28,8 @@ public class RodOfAbsorption extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{X}",
-                List.of(new SacrificeSelfCost(), new CastSpellsExiledWithSourceWithinTotalManaValueEffect()),
+                List.of(new SacrificeSelfCost(), CastCardsWithoutPayingManaCostEffect.anyNumber(Subjects.exiledWithSource())
+                        .withTotalManaValueAtMost(new XValue())),
                 "{X}, {T}, Sacrifice this artifact: You may cast any number of spells from among cards exiled "
                         + "with this artifact with total mana value X or less without paying their mana costs."));
     }

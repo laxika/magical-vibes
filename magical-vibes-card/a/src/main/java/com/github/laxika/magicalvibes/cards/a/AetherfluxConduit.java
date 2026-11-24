@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
-import com.github.laxika.magicalvibes.model.effect.CastAnyNumberOfSpellsFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
@@ -26,7 +26,7 @@ public class AetherfluxConduit extends Card {
                 List.of(
                         new PayEnergyCost(50),
                         new DrawCardEffect(7),
-                        new CastAnyNumberOfSpellsFromHandWithoutPayingManaCostEffect()
+                        MayCastAnySpellFromHandWithoutPayingManaCostEffect.anyNumber()
                 ),
                 "{T}, Pay fifty {E}: Draw seven cards. You may cast any number of spells from your hand without paying their mana costs."
         ).withActivationCondition(new ControllerEnergyAtLeast(50),
