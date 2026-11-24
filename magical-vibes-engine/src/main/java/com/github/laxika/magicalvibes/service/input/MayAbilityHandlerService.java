@@ -28,7 +28,6 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEff
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RagingRiverEffectHandler;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -56,10 +55,8 @@ public class MayAbilityHandlerService {
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final EffectResolutionService effectResolutionService;
-    private final DestructionSupport destructionSupport;
     private final BendOrBreakEffectHandler bendOrBreakEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.FightOrFlightSupport fightOrFlightSupport;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.StandOrFallSupport standOrFallSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.SeparateIntoPilesEffectHandler separateIntoPilesEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MakeAnExampleEffectHandler makeAnExampleEffectHandler;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BrilliantUltimatumSupport brilliantUltimatumSupport;
@@ -80,10 +77,8 @@ public class MayAbilityHandlerService {
                                     GameQueryService gameQueryService,
                                     GameLogService gameLogService,
                                     EffectResolutionService effectResolutionService,
-                                    DestructionSupport destructionSupport,
                                     BendOrBreakEffectHandler bendOrBreakEffectHandler,
-                                    com.github.laxika.magicalvibes.service.effect.normalfx.FightOrFlightSupport fightOrFlightSupport,
-                                    com.github.laxika.magicalvibes.service.effect.normalfx.StandOrFallSupport standOrFallSupport,
+                                    com.github.laxika.magicalvibes.service.effect.normalfx.SeparateIntoPilesEffectHandler separateIntoPilesEffectHandler,
                                     com.github.laxika.magicalvibes.service.effect.normalfx.MakeAnExampleEffectHandler makeAnExampleEffectHandler,
                                     GraveyardReturnSupport graveyardReturnSupport,
                                     com.github.laxika.magicalvibes.service.effect.normalfx.BrilliantUltimatumSupport brilliantUltimatumSupport,
@@ -97,10 +92,8 @@ public class MayAbilityHandlerService {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
         this.effectResolutionService = effectResolutionService;
-        this.destructionSupport = destructionSupport;
         this.bendOrBreakEffectHandler = bendOrBreakEffectHandler;
-        this.fightOrFlightSupport = fightOrFlightSupport;
-        this.standOrFallSupport = standOrFallSupport;
+        this.separateIntoPilesEffectHandler = separateIntoPilesEffectHandler;
         this.makeAnExampleEffectHandler = makeAnExampleEffectHandler;
         this.graveyardReturnSupport = graveyardReturnSupport;
         this.brilliantUltimatumSupport = brilliantUltimatumSupport;
@@ -110,29 +103,17 @@ public class MayAbilityHandlerService {
     }
 
     /**
-     * Completes a pile separation whose chosen pile is destroyed or sacrificed (Make an Example, Liliana of the Veil,
-     * Do or Die). It changes nothing before the pile leaves, so a creature in it with competing death replacements is
-     * asked about first (CR 616.1) and the answer is completed again once its controller has chosen.
+     * Completes Make an Example's pile choice, whose chosen piles are sacrificed. It changes nothing before the piles
+     * leave, so a creature in them with competing death replacements is asked about first (CR 616.1) and the answer
+     * is completed again once its controller has chosen.
      */
     public void completeKillingPileChoice(GameData gameData, boolean accepted) {
-        Runnable completion = gameData.peekPendingInteraction(PendingPileSeparation.class).disposition()
-                == CardPileDisposition.MAKE_AN_EXAMPLE
-                ? () -> makeAnExampleEffectHandler.completePileSeparationStep2(gameData, accepted)
-                : () -> destructionSupport.completePileSeparationStep2(gameData, accepted);
+        Runnable completion = () -> makeAnExampleEffectHandler.completePileSeparationStep2(gameData, accepted);
         if (permanentChoiceHandlerService.runAskingDeathReplacementsFirst(gameData, completion,
                 new GameData.PileChoiceReplay(accepted))) {
             return;
         }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /** Whether the chosen pile of {@code separation} is sacrificed or destroyed rather than moved or kept. */
-    private static boolean killsChosenPile(PendingPileSeparation separation) {
-        CardPileDisposition disposition = separation.disposition();
-        return disposition == CardPileDisposition.MAKE_AN_EXAMPLE
-                || !separation.cardPileMode() && disposition != CardPileDisposition.ATTACKERS
-                        && disposition != CardPileDisposition.BLOCKERS
-                        && disposition != CardPileDisposition.PLAY_FROM_EXILE;
     }
 
     /**
@@ -176,24 +157,26 @@ public class MayAbilityHandlerService {
             return;
         }
 
-        // Pile separation: permanent-pile (Liliana) vs card-pile (Boneyard Parley, Brilliant Ultimatum,
+        if (gameData.hasPendingInteraction(com.github.laxika.magicalvibes.model.PendingPileStep.class)) {
+            separateIntoPilesEffectHandler.completePileChoice(gameData, accepted);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+
+        // Pile separation: Make an Example's permanent piles vs card piles (Boneyard Parley, Brilliant Ultimatum,
         // Unesh, Curator of Destinies)
         PendingPileSeparation pileSeparation = gameData.peekPendingInteraction(PendingPileSeparation.class);
         if (pileSeparation != null) {
-            if (killsChosenPile(pileSeparation)) {
+            if (pileSeparation.disposition() == CardPileDisposition.MAKE_AN_EXAMPLE) {
                 completeKillingPileChoice(gameData, accepted);
                 return;
-            } else if (pileSeparation.disposition() == CardPileDisposition.ATTACKERS) {
-                fightOrFlightSupport.completePileSeparationStep2(gameData, accepted);
-            } else if (pileSeparation.disposition() == CardPileDisposition.BLOCKERS) {
-                standOrFallSupport.completePileSeparationStep2(gameData, accepted);
             } else if (pileSeparation.disposition() == CardPileDisposition.PLAY_FROM_EXILE) {
                 brilliantUltimatumSupport.completePileSeparationStep2(gameData, accepted);
-            } else if (pileSeparation.cardPileMode()) {
+            } else {
                 // BATTLEFIELD (Boneyard Parley) and HAND (Unesh) both flow through step 2, which branches on disposition.
                 graveyardReturnSupport.completeCardPileSeparationStep2(gameData, accepted);
-            } else {
-                destructionSupport.completePileSeparationStep2(gameData, accepted);
             }
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             return;

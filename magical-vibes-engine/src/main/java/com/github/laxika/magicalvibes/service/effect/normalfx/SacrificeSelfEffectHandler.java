@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -32,7 +33,9 @@ import java.util.UUID;
  * {@link com.github.laxika.magicalvibes.model.DepartureResult} (none when it couldn't sacrifice anything) for an "if
  * you do" step after it, and a CR 616.1 question about how the permanent leaves ends the step
  * ({@link DepartureService#departAsStep}). The form with a token for the sacrificing player creates it for the
- * player who controlled the permanent as it was sacrificed, once it has left.
+ * player who controlled the permanent as it was sacrificed, once it has left. A {@code thisWay(CHOOSE)} subject names
+ * every permanent chosen ("that player sacrifices all permanents in the pile of their choice"): those of them the
+ * sacrificer controls leave as one event (CR 101.4).
  */
 @Component
 @RequiredArgsConstructor
@@ -60,6 +63,10 @@ public class SacrificeSelfEffectHandler implements NormalEffectHandlerBean, Asks
             schemeAbandonSupport.abandon(gameData, entry.getCard(), entry.getSourcePermanentId());
             return;
         }
+        if (sacrifice.subject() instanceof PermanentSubject.ThisWay) {
+            sacrificeAllChosen(gameData, entry, sacrifice);
+            return;
+        }
         Permanent sacrificed = subjectResolutionService.permanent(gameData, entry, effect, sacrifice.subject());
         UUID currentControllerId = sacrificed == null ? null
                 : gameQueryService.findPermanentController(gameData, sacrificed.getId());
@@ -82,6 +89,25 @@ public class SacrificeSelfEffectHandler implements NormalEffectHandlerBean, Asks
             return;
         }
         stepDepartureSupport.sacrificeThenContinue(gameData, entry, effect, sacrificed.getId(), this);
+    }
+
+    /** Every chosen permanent the sacrificer controls and can sacrifice, as one batch. */
+    private void sacrificeAllChosen(GameData gameData, StackEntry entry, SacrificeSelfEffect sacrifice) {
+        UUID sacrificerId = subjectResolutionService.player(gameData, entry, sacrifice, sacrifice.sacrificer());
+        List<DepartureIntent> intents = sacrificerId == null
+                || !gameQueryService.canEffectCauseSacrifice(gameData, sacrificerId, entry.getControllerId())
+                ? List.of()
+                : subjectResolutionService.permanents(gameData, entry, sacrifice, sacrifice.subject()).stream()
+                        .filter(permanent -> sacrificerId.equals(
+                                gameQueryService.findPermanentController(gameData, permanent.getId())))
+                        .filter(permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent))
+                        .map(permanent -> DepartureIntent.sacrifice(permanent.getId()))
+                        .toList();
+        if (intents.isEmpty()) {
+            entry.recordDepartures(List.of());
+            return;
+        }
+        departureService.departAsStep(gameData, entry, sacrifice, DepartureBatch.of(intents));
     }
 
     /**

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.TapPermanentsEffec
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DepartureResult;
@@ -133,8 +132,7 @@ public class MultiPermanentChoiceHandlerService {
     private final DestructionSupport destructionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport basicLandSearchQueueSupport;
     private final DamageSupport damageSupport;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.FightOrFlightSupport fightOrFlightSupport;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.StandOrFallSupport standOrFallSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.SeparateIntoPilesEffectHandler separateIntoPilesEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RagingRiverEffectHandler ragingRiverEffectHandler;
     private final CreatureControlService creatureControlService;
     private final PermanentCounterSupport permanentCounterSupport;
@@ -1038,8 +1036,10 @@ public class MultiPermanentChoiceHandlerService {
             handleCounterDistribution(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.StackedDividedDamageTargets ctx) {
             stackedDividedDamageTriggerService.handleTargetsChosen(gameData, permanentIds, ctx);
+        } else if (gameData.hasPendingInteraction(com.github.laxika.magicalvibes.model.PendingPileStep.class)) {
+            separateIntoPilesEffectHandler.completeSeparation(gameData, permanentIds);
         } else if (gameData.hasPendingInteraction(PendingPileSeparation.class)) {
-            handlePileSeparation(gameData, permanentIds);
+            makeAnExampleEffectHandler.completePileSeparationStep1(gameData, permanentIds);
         } else if (gameData.hasPendingInteraction(PendingRagingRiver.class)) {
             ragingRiverEffectHandler.completeDefendingPlayerChoice(gameData, permanentIds);
         } else if (gameData.hasPendingInteraction(PendingBendOrBreak.class)) {
@@ -3454,19 +3454,6 @@ public class MultiPermanentChoiceHandlerService {
         // bookkeeping and turn advance proceed as normal.
         turnProgressionService.resumeStaticOrbUntap(gameData, activePlayerId, new HashSet<>(permanentIds),
                 context.filter(), context.remainingRestrictions(), context.excludedIds());
-    }
-
-    private void handlePileSeparation(GameData gameData, List<UUID> permanentIds) {
-        PendingPileSeparation state = gameData.peekPendingInteraction(PendingPileSeparation.class);
-        if (state.disposition() == CardPileDisposition.MAKE_AN_EXAMPLE) {
-            makeAnExampleEffectHandler.completePileSeparationStep1(gameData, permanentIds);
-        } else if (state.disposition() == CardPileDisposition.ATTACKERS) {
-            fightOrFlightSupport.completePileSeparationStep1(gameData, permanentIds);
-        } else if (state.disposition() == CardPileDisposition.BLOCKERS) {
-            standOrFallSupport.completePileSeparationStep1(gameData, permanentIds);
-        } else {
-            destructionSupport.completePileSeparationStep1(gameData, permanentIds);
-        }
     }
 
     /** Appends {@code cards} as comma-separated card segments (each hoverable) to {@code builder}. */

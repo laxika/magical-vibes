@@ -5,11 +5,14 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SeparatePermanentsIntoPilesAndSacrificeEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SeparateIntoPilesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 import java.util.List;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ISD", collectorNumber = "105")
 @CardRegistration(set = "INR", collectorNumber = "475")
@@ -38,7 +41,9 @@ public class LilianaOfTheVeil extends Card {
         //     That player sacrifices all permanents in the pile of their choice.
         addActivatedAbility(new ActivatedAbility(
                 -6,
-                List.of(new SeparatePermanentsIntoPilesAndSacrificeEffect()),
+                List.of(SeparateIntoPilesEffect.permanents(
+                                Subjects.controlledBy(Subjects.targetPlayer(), new PermanentTruePredicate()), "permanents"),
+                        new SacrificeSelfEffect(Subjects.thisWay(StepKind.CHOOSE), Subjects.targetPlayer())),
                 "\u22126: Separate all permanents target player controls into two piles. That player sacrifices all permanents in the pile of their choice."
         ));
     }

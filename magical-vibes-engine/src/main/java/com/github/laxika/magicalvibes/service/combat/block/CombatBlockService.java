@@ -1021,6 +1021,15 @@ public class CombatBlockService {
             int attackerIdx = assignment.attackerIndex();
 
             if (!blockable.contains(blockerIdx)) {
+                if (blockerIdx >= 0 && blockerIdx < defenderBattlefield.size()
+                        && attackerIdx >= 0 && attackerIdx < attackerBattlefield.size()
+                        && blockLegalityService.cantBlockAnyCreature(blockContext, defenderBattlefield.get(blockerIdx))) {
+                    // A board-wide "can't block" names itself, as it does against each attacker.
+                    blockLegalityService.getBlockingIllegalityReason(blockContext, defenderBattlefield.get(blockerIdx),
+                            attackerBattlefield.get(attackerIdx)).ifPresent(reason -> {
+                                throw new IllegalStateException(reason);
+                            });
+                }
                 if (blockerIdx >= 0 && blockerIdx < defenderBattlefield.size()) {
                     throw new IllegalStateException("Invalid blocker index: " + blockerIdx + " ("
                             + FaceDownVisibility.publicName(gameData, defenderBattlefield.get(blockerIdx)) + " can't block)");

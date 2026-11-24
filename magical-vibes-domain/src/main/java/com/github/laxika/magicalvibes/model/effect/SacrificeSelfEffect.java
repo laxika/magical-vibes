@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.Objects;
 
 /**
- * Sacrifices one named permanent: by default the stack entry's source permanent ("sacrifice this creature"). The
+ * Sacrifices one named permanent, or every chosen one: by default the stack entry's source permanent ("sacrifice this creature"). The
  * {@code subject} names the permanent: {@link Subjects#source()}, {@link Subjects#triggering()} ("sacrifice that
  * permanent", read from the stack entry's triggering permanent; Grafted Wargear, Stitcher's Graft, the delayed
  * "sacrifice it at the beginning of the next end step" triggers), {@link Subjects#attached()} ("sacrifice it" after
@@ -17,7 +17,9 @@ import java.util.Objects;
  * {@link Subjects#triggeringOrSource()} ("sacrifice it" after "whenever this creature or equipped creature deals
  * combat damage", Ogre-Head Helm), {@link Subjects#granter()} ("sacrifice Spare Dagger" in an ability the Equipment
  * grants) or {@code thisWay(StepKind.CHOOSE)} ("that player sacrifices one of them of their choice" after a
- * {@link ChoosePermanentsEffect}, sacrificed by {@code controllerOf(thisWay(CHOOSE))}: Incriminate, Barrin's Spite).
+ * {@link ChoosePermanentsEffect}, sacrificed by {@code controllerOf(thisWay(CHOOSE))}: Incriminate, Barrin's Spite;
+ * "that player sacrifices all permanents in the pile of their choice" after a {@link SeparateIntoPilesEffect}, every
+ * chosen permanent the sacrificer controls, as one event: Liliana of the Veil).
  *
  * <p>"Sacrifice it. If you do, ..." is this effect followed by a {@code ConditionalEffect} of
  * {@code HappenedThisWay.sacrificed()} (in a {@link SequenceEffect} where the steps must stay one effect); "when you
@@ -56,6 +58,9 @@ public record SacrificeSelfEffect(PermanentSubject subject,
         }
         if (targetFilter != null && !(subject instanceof PermanentSubject.Target)) {
             throw new IllegalArgumentException("A target filter needs a target subject: " + subject);
+        }
+        if (tokenForSacrificingPlayer != null && subject instanceof PermanentSubject.ThisWay) {
+            throw new IllegalArgumentException("A token rider follows one named permanent: " + subject);
         }
     }
 

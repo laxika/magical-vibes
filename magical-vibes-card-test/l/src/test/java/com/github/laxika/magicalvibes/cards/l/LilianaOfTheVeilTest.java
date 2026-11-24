@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.PendingPileSeparation;
+import com.github.laxika.magicalvibes.model.PendingPileStep;
 import com.github.laxika.magicalvibes.cards.f.FortressCrab;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -152,7 +152,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(0); // 6 - 6
         // Controller should be prompted to choose permanents for pile 1
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isTrue();
+        assertThat(gd.hasPendingInteraction(PendingPileStep.class)).isTrue();
     }
 
     @Test
@@ -238,7 +238,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isFalse();
+        assertThat(gd.hasPendingInteraction(PendingPileStep.class)).isFalse();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no permanents to separate"));
     }
 
@@ -387,6 +387,33 @@ class LilianaOfTheVeilTest extends BaseCardTest {
             assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(entry.getCard()).isInstanceOf(UnrulyMob.class);
         });
+    }
+
+    @Test
+    @DisplayName("-6 names a face-down permanent in the piles only by its public description")
+    void minusSixHidesFaceDownPermanentInPiles() {
+        Permanent liliana = addReadyLiliana(player1);
+        liliana.setCounterCount(CounterType.LOYALTY, 6);
+        Permanent hidden = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
+        hidden.setFaceDown(2, 2, java.util.Set.of(com.github.laxika.magicalvibes.model.CardType.CREATURE));
+        harness.addToBattlefield(player2, new FortressCrab());
+
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(hidden.getId()));
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).description())
+                .contains("Fortress Crab")
+                .doesNotContain("Walking Corpse");
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains("separates permanents into two piles"))
+                .noneMatch(log -> log.contains("Walking Corpse"));
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertInGraveyard(player2, "Walking Corpse");
+        harness.assertOnBattlefield(player2, "Fortress Crab");
     }
 
     private Permanent addReadyLiliana(Player player) {

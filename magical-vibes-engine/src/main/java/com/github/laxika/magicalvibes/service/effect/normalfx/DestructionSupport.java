@@ -4,15 +4,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.DepartureResult;
-import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingForcedSacrifice;
-import com.github.laxika.magicalvibes.model.PendingMayAbility;
-import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -1115,95 +1112,5 @@ public class DestructionSupport {
                 .applyCreateToken(gameData, controllerId, token, tokenCount, sourceSetCode);
         log.info("Game {} - {} creates {} token(s) for {}", gameData.id, sourceName, createdIds.size(),
                 gameData.playerIdToName.get(controllerId));
-    }
-
-    public void completePileSeparationStep1(GameData gameData, List<UUID> pile1Ids) {
-        PendingPileSeparation state = gameData.pollPendingInteraction(PendingPileSeparation.class);
-        UUID targetPlayerId = state.targetPlayerId();
-
-        List<UUID> pile1 = new ArrayList<>(state.pile1Ids());
-        pile1.addAll(pile1Ids);
-        // Pile 2 is everything not in pile 1
-        List<UUID> pile2 = new ArrayList<>(state.pile2Ids());
-        for (UUID permId : state.allPermanentIds()) {
-            if (!pile1Ids.contains(permId)) {
-                pile2.add(permId);
-            }
-        }
-
-        // Re-queue with the piles filled — step 2 (the pile-choice may prompt) polls it.
-        gameData.queueInteraction(new PendingPileSeparation(state.controllerId(), targetPlayerId,
-                state.allPermanentIds(), state.cards(), state.cardOwners(), pile1, pile2, state.disposition()));
-
-        // Build pile descriptions for the prompt
-        String pile1Desc = buildPileDescription(gameData, pile1);
-        String pile2Desc = buildPileDescription(gameData, pile2);
-
-        String controllerName = gameData.playerIdToName.get(state.controllerId());
-        gameLogService.append(gameData, GameLog.text(controllerName + " separates permanents into two piles. Pile 1: " + pile1Desc + ". Pile 2: " + pile2Desc + "."));
-
-        String action = state.disposition() == CardPileDisposition.DESTROY ? "destroy" : "sacrifice";
-        String prompt = "Choose a pile to " + action + ". Yes = Pile 1 (" + pile1Desc + "), No = Pile 2 (" + pile2Desc + ").";
-        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(null, targetPlayerId, List.of(), prompt));
-        playerInputService.processNextMayAbility(gameData);
-    }
-
-    /**
-     * The target player has chosen which pile to destroy or sacrifice. The pile leaves as one event; the separation
-     * stays pending until it has, so a completion stopped for a CR 616.1 question is completed again unchanged.
-     */
-    public void completePileSeparationStep2(GameData gameData, boolean accepted) {
-        PendingPileSeparation state = gameData.peekPendingInteraction(PendingPileSeparation.class);
-        List<UUID> pileToSacrifice = accepted
-                ? new ArrayList<>(state.pile1Ids())
-                : new ArrayList<>(state.pile2Ids());
-        String pileName = accepted ? "Pile 1" : "Pile 2";
-
-        UUID targetPlayerId = state.targetPlayerId();
-        String playerName = gameData.playerIdToName.get(targetPlayerId);
-
-        String pileDescription = buildPileDescription(gameData, pileToSacrifice);
-        if (state.disposition() == CardPileDisposition.DESTROY) {
-            List<Permanent> creaturesToDestroy = pileToSacrifice.stream()
-                    .map(permId -> gameQueryService.findPermanentById(gameData, permId))
-                    .filter(perm -> perm != null && gameQueryService.isCreature(gameData, perm))
-                    .toList();
-            destroyBatch(gameData, creaturesToDestroy, "Do or Die", true, () -> {
-                gameData.pollPendingInteraction(PendingPileSeparation.class);
-                gameLogService.append(gameData,
-                        GameLog.text(playerName + " destroys " + pileName + ": " + pileDescription + "."));
-            });
-        } else {
-            List<DepartureIntent> intents = pileToSacrifice.stream()
-                    .filter(permId -> gameQueryService.findPermanentById(gameData, permId) != null)
-                    .distinct()
-                    .map(DepartureIntent::sacrifice)
-                    .toList();
-            departureService.departNow(gameData, DepartureBatch.of(intents), new DepartureService.Hooks(() -> {
-                gameData.pollPendingInteraction(PendingPileSeparation.class);
-                gameLogService.append(gameData,
-                        GameLog.text(playerName + " sacrifices " + pileName + ": " + pileDescription + "."));
-            }, (intent, perm, snapshot, removed) -> {
-                if (removed) {
-                    gameData.recordSacrificedPermanent(targetPlayerId, perm.getCard());
-                }
-            }));
-        }
-
-        gameOutcomeService.checkWinCondition(gameData);
-    }
-
-    private String buildPileDescription(GameData gameData, List<UUID> permanentIds) {
-        if (permanentIds.isEmpty()) {
-            return "empty";
-        }
-        List<String> names = new ArrayList<>();
-        for (UUID permId : permanentIds) {
-            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-            if (perm != null) {
-                names.add(FaceDownVisibility.publicName(gameData, perm));
-            }
-        }
-        return String.join(", ", names);
     }
 }

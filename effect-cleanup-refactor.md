@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b (each in Findings; the fold queue marks its rows). Fold runs 8 to 14b run in parallel worktrees from 2026-11-24. Next: fold runs 13b and 14b (running), 12c (`dup-hand` leftovers, cards-you-own step), 11c, `drafted-step`, 8b, 15. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).             |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b (each in Findings; the fold queue marks its rows). Fold runs 8 to 14b run in parallel worktrees from 2026-11-24. Next: fold run 13b (running), 12c, 14c (`auction`), 11c, `drafted-step`, 8b, 15. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).              |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,787 / 3,049 (after fold run 12b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,782 / 3,045 (after fold run 14b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,367 rows over 4,414 classes (after fold run 12b). Latest verdict per class: `step-9` 965, unique 1,166, absorbed 645, split 571, blocked-other 488, survivor 281, blocked-step-model 140, blocked-player-loop 97, dead 61. Waiting: 965 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,374 rows over 4,415 classes (after fold run 14b). Latest verdict per class: `step-9` 960, unique 1,165, absorbed 650, split 571, blocked-other 488, survivor 282, blocked-step-model 140, blocked-player-loop 97, dead 62. Waiting: 960 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -615,6 +615,14 @@ Delayed and global triggers:
   logged by `PerpetualChangeLog` (fold run 12b).
 - `GameData.grantPerpetualKeywords(cardId, keywords)`: the one write into the merged `perpetualCardKeywords`; P/T changes live in
   `perpetualCardPowerToughnessModifiers` only (fold run 12b).
+
+- `SeparateIntoPilesEffect.permanents(controlledBy(players, filter), label)` / `.cards(graveyardCards, chooser, label)`: "separate …
+  into two piles … the pile of [player]'s choice"; the CHOOSE step is the chosen piles, the other pile is `except(set,
+  thisWay(CHOOSE))`; each player of a permanent set separates and chooses on their own (fold run 14b).
+- `CantAttackThisTurnEffect(except(controlledBy(...), thisWay(CHOOSE)))`: "only creatures in the chosen pile can attack this turn"
+  (fold run 14b).
+- `SacrificeSelfEffect(thisWay(CHOOSE), player)`: "that player sacrifices all permanents in the pile of their choice", as one event
+  (fold run 14b).
 
 ### Blocked causes still open
 
@@ -1883,6 +1891,40 @@ changes (CR 400.7) keeps today's behaviour.
 
 **For the next run.** The cards-you-own step (Tend, Scalar, `PerpetuallyBoostOwnedCardsEffect`), a static evoke ability (Aquatic
 Subtlety), and merging the three cast-cost stores.
+
+### Step 9, fold run 14b (2026-11-24, parallel worktree)
+
+Batch `piles` (5) taken; `auction` (3) not taken (fold run 14c). Ratchet in its worktree 3,814 / 3,076 → 3,809 / 3,072. Ledger 7 rows
+(survivor 1, absorbed 5, dead 1). 5 card files rewritten, Oracle and rulings checked for all. CR 700.3a, 700.3c, 700.3d, 506.2a,
+509.1b, 608.2c, 101.4, 611.2c, 708.2 checked.
+
+**The pile step.** `SeparateIntoPilesEffect.permanents(controlledBy(players, filter), label)` / `.cards(cardsInGraveyards(...),
+chooser, label)`. The controller separates each group into Pile 1 and the rest; either pile may be empty (CR 700.3d), and nothing
+moves (CR 700.3c). Then the group's chooser takes a pile through a yes/no prompt (Yes = Pile 1). Permanents are grouped by
+controller, and each of those players chooses their own pile ("for each defending player"). A `targetPlayer()` set declares the
+benign player target. The step records CHOOSE with the chosen piles; the other pile is `except(set, thisWay(CHOOSE))`. Between prompts
+the state rides on the queue-only `PendingPileStep`; the step pauses at its end. `separator` (always the controller) and `faceDown`
+are left out (no member sets them; Make an Example and the Fact-or-Fiction family when they fold). `PendingPileSeparation` stays for
+the card dispositions and Make an Example; ATTACKERS, BLOCKERS, DESTROY and OPPONENT_CHOOSES_EXILE are gone, as are
+`FightOrFlightSupport`, `StandOrFallSupport`, and DestructionSupport's and GraveyardReturnSupport's pile code.
+
+| Batch | Result |
+|---|---|
+| `piles` | 5 folded: Fight or Flight (+ `CantAttackThisTurnEffect(except(controlledBy(activePlayer(), creature), thisWay(CHOOSE)))`), Stand or Fall (over `eachOpponent()` + `CantBlockThisTurnEffect(except(...))`), Do or Die (+ `DestroyTargetPermanentEffect(thisWay(CHOOSE, creature), true)`), Liliana of the Veil (+ `SacrificeSelfEffect(thisWay(CHOOSE), targetPlayer())`), Death or Glory (`ChoosePlayerEffect.opponent()` + `.cards` + exile + `PutCardsOntoBattlefieldEffect(except(...))`); `OnlyChosenCreaturesCanBlockEffect` dead |
+| `auction` | not taken: one bid step needs the three bid prompts (`IllicitAuctionBidChoice`, `MagesContestBidChoice`, `PainsRewardBidChoice`), their projections, AI strategies and interaction handlers merged, with the prize on the prompt |
+
+**Behaviour changes.** Stand or Fall separates each opponent's creatures, each choosing their own (it was `getOpponentId` only; CR
+506.2a). Death or Glory's controller chooses the opponent who picks the pile (it was the first other seat); the exile and the return
+are two steps (CR 608.2c). The two restrictions carry their source's name (`refactors-to-do.md` entry 9 marked done).
+`BlockLegalityService.canBlock` rejects a creature under a board-wide "can't block" whose attackers are every creature (CR 509.1b):
+it was offered as a blocker and refused only per attacker (Bedlam-style statics, Goblin War Cry); `CombatBlockService` keeps that
+restriction's message. A face-down permanent in a pile is named by its public description (tested). Prompts and logs are the
+survivor's.
+
+**For the next run.** `auction` (14c): one bid step recording the high bidder (`playersThisWay`) and the bid (`AmountThisWay`), the
+death-replacement asks kept, the three bid prompts and AI strategies merged with the prize kind on the prompt. Make an Example
+(`blocked-player-loop`) now fits the pile step with a `separator` option and `you()` choosing, then one sacrifice batch, which also fixes
+its "sacrifices each opponent's piles before the next separates" defect.
 
 ## Prompt
 

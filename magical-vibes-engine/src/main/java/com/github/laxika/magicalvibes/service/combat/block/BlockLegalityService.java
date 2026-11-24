@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.combat.block;
 
-import com.github.laxika.magicalvibes.model.effect.OnlyChosenCreaturesCanBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisCombatEffect;
 
 import com.github.laxika.magicalvibes.model.effect.RagingRiverEffect;
@@ -27,6 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityContext.GlobalAttackOrBlockRestriction;
@@ -235,15 +235,31 @@ public class BlockLegalityService {
                 || context.gameData.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class,
                         CantBlockThisCombatEffect.class)
                 || gameQueryService.isLockedFromBlocking(context.gameData, creature.getId())
-                || gameQueryService.hasSuspectedAbilities(context.gameData, creature)
-                || isOutsideChosenBlockers(context.gameData, creature)) {
+                || gameQueryService.hasSuspectedAbilities(context.gameData, creature)) {
             return false;
         }
-        if (blockerFacts(context, creature).prohibitedFromBlocking()) {
+        if (blockerFacts(context, creature).prohibitedFromBlocking() || cantBlockAnyCreature(context, creature)) {
             return false;
         }
         return !context.blockRequirementUnmet.computeIfAbsent(
                 creature.getId(), id -> hasUnmetBlockRequirement(context, creature));
+    }
+
+    /**
+     * Whether a board-wide restriction says {@code creature} can't block whatever attacks ("creatures can't block",
+     * "other creatures they control can't block this turn"): one whose attackers are every creature makes it no legal
+     * blocker at all (CR 509.1b), not only against each attacker.
+     */
+    boolean cantBlockAnyCreature(BlockLegalityContext context, Permanent creature) {
+        for (GlobalBlockRestriction restriction : context.globalBlockRestrictions) {
+            BlockingRestrictionEffect effect = restriction.effect();
+            if (effect.globalCantBlockAttackerMatcher() instanceof PermanentTruePredicate
+                    && predicateEvaluationService.matchesPermanentPredicate(
+                    creature, effect.globalCantBlockBlockerMatcher(), restriction.filterContext())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -322,9 +338,6 @@ public class BlockLegalityService {
         GameData gameData = context.gameData;
         if (!ignoreTapped && blocker.isTapped() && !canBlockAsThoughUntapped(context, blocker)) {
             return BlockDenial.CANT_BLOCK;
-        }
-        if (isOutsideChosenBlockers(gameData, blocker)) {
-            return BlockDenial.CANT_BLOCK_THIS_TURN;
         }
         BlockLegalityContext.AttackerFacts atk = context.attackerFacts.computeIfAbsent(
                 attacker.getId(), id -> buildAttackerFacts(context, attacker));
@@ -455,16 +468,6 @@ public class BlockLegalityService {
             return BlockDenial.PROTECTION;
         }
         return null;
-    }
-
-    private boolean isOutsideChosenBlockers(GameData gameData, Permanent creature) {
-        for (FloatingContinuousEffect restriction
-                : gameData.floatingEffectsOnPlayer(null, OnlyChosenCreaturesCanBlockEffect.class)) {
-            if (!((OnlyChosenCreaturesCanBlockEffect) restriction.effect()).permanentIds().contains(creature.getId())) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /** Whether a static permission lets this tapped creature block as though it were untapped. */

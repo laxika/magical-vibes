@@ -46,14 +46,6 @@ public enum CardPileDisposition {
     GIFTS_UNGIVEN_BATTLEFIELD_TAPPED,
     /** Deliver Unto Evil: the opponent chooses cards to leave in the controller's graveyard. */
     DELIVER_UNTO_EVIL,
-    /** Death or Glory: the opponent chooses which pile is exiled; the other returns to the battlefield. */
-    OPPONENT_CHOOSES_EXILE,
-    /** Fight or Flight: the chosen pile contains the only creatures that can attack this turn. */
-    ATTACKERS,
-    /** Stand or Fall: the chosen pile contains the only creatures that can block this turn. */
-    BLOCKERS,
-    /** Do or Die: target player chooses the pile whose creatures are destroyed without regeneration. */
-    DESTROY,
     /** Make an Example: the spell controller chooses the pile each opponent sacrifices. */
     MAKE_AN_EXAMPLE,
     /** Abstract Performance: the chosen pile goes to the controller's graveyard; the other is offered for one free spell cast and then the rest go to hand. */

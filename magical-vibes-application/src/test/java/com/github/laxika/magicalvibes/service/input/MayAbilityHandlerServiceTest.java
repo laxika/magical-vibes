@@ -32,12 +32,10 @@ import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.MayEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BrilliantUltimatumSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.FightOrFlightSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.MakeAnExampleEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RagingRiverEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.StandOrFallSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SeparateIntoPilesEffectHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -88,10 +86,8 @@ class MayAbilityHandlerServiceTest {
                 gameQueryService,
                 mock(GameLogService.class),
                 effectResolutionService,
-                mock(DestructionSupport.class),
                 mock(BendOrBreakEffectHandler.class),
-                mock(FightOrFlightSupport.class),
-                mock(StandOrFallSupport.class),
+                mock(SeparateIntoPilesEffectHandler.class),
                 mock(MakeAnExampleEffectHandler.class),
                 mock(GraveyardReturnSupport.class),
                 mock(BrilliantUltimatumSupport.class),

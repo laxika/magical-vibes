@@ -102,7 +102,7 @@ public class AttackLegalityService {
     /**
      * Whether a floating restriction on which creatures can attack keeps {@code creature} from attacking: "during that
      * combat" of an added combat phase only land creatures, only the restriction's source, only the chosen creatures or
-     * only matching creatures (the aggressive combat) can attack in it; "this turn" only the creatures of a chosen pile.
+     * only matching creatures (the aggressive combat) can attack in it.
      */
     private boolean isExcludedFromThisCombat(GameData gameData, Permanent creature) {
         for (FloatingContinuousEffect restriction : gameData.floatingEffectsOnPlayer(null,

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.PendingDubiousChallengeChoice;
 import com.github.laxika.magicalvibes.model.PendingBendOrBreak;
 import com.github.laxika.magicalvibes.model.PendingGuildFeud;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
+import com.github.laxika.magicalvibes.model.PendingPileStep;
 import com.github.laxika.magicalvibes.model.PendingRagingRiver;
 import com.github.laxika.magicalvibes.model.PendingPortalPileSearch;
 import com.github.laxika.magicalvibes.model.PendingPsychoticEpisodeChoice;
@@ -97,6 +98,7 @@ class PendingInteractionContractTest {
             PendingKnowledgePoolCast.class,
             PendingHostileNegotiations.class,
             PendingPileSeparation.class,
+            PendingPileStep.class,
             PendingRagingRiver.class,
             PendingEachPlayerLibraryExile.class,
             PendingBendOrBreak.class,

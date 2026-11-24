@@ -4,14 +4,19 @@ import com.github.laxika.magicalvibes.cards.a.ArdentSoldier;
 import com.github.laxika.magicalvibes.cards.c.CrimsonAcolyte;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.PendingPileSeparation;
+import com.github.laxika.magicalvibes.model.PendingPileStep;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -48,7 +53,7 @@ class DeathOrGloryTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Crimson Acolyte");
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(soldier);
         harness.assertInGraveyard(player1, "Drake-Skull Cameo");
-        assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isFalse();
+        assertThat(gd.hasPendingInteraction(PendingPileStep.class)).isFalse();
     }
 
     @Test
@@ -86,7 +91,7 @@ class DeathOrGloryTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Crimson Acolyte");
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Drake-Skull Cameo");
-        assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isFalse();
+        assertThat(gd.hasPendingInteraction(PendingPileStep.class)).isFalse();
     }
 
     @Test
@@ -99,7 +104,7 @@ class DeathOrGloryTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isFalse();
+        assertThat(gd.hasPendingInteraction(PendingPileStep.class)).isFalse();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertInGraveyard(player1, "Drake-Skull Cameo");
     }
@@ -124,7 +129,7 @@ class DeathOrGloryTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Crimson Acolyte");
         harness.assertInGraveyard(player1, "Death or Glory");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isFalse();
+        assertThat(gd.hasPendingInteraction(PendingPileStep.class)).isFalse();
     }
 
     @Test
@@ -152,6 +157,51 @@ class DeathOrGloryTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isFalse();
+        assertThat(gd.hasPendingInteraction(PendingPileStep.class)).isFalse();
+    }
+
+    @Test
+    @DisplayName("With several opponents, the controller chooses which opponent chooses the pile to exile")
+    void controllerChoosesTheOpponentWhoChooses() {
+        Player player3 = addOpponent();
+        Card soldier = new ArdentSoldier();
+        Card acolyte = new CrimsonAcolyte();
+        harness.setGraveyard(player1, List.of(soldier, acolyte));
+        harness.setHand(player1, List.of(new DeathOrGlory()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        PendingInteraction.PermanentChoice opponentChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(opponentChoice.playerId()).isEqualTo(player1.getId());
+        assertThat(opponentChoice.validPlayerIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(soldier.getId()));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player3.getId());
+        harness.handleMayAbilityChosen(player3, true);
+
+        harness.assertOnBattlefield(player1, "Crimson Acolyte");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(soldier);
+    }
+
+    private Player addOpponent() {
+        UUID playerId = UUID.randomUUID();
+        Player opponent = new Player(playerId, "Charlie");
+        gd.playerIds.add(playerId);
+        gd.orderedPlayerIds.add(playerId);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(playerId, "Charlie");
+        gd.playerDecks.put(playerId, new ArrayList<>());
+        gd.playerHands.put(playerId, new ArrayList<>());
+        gd.playerBattlefields.put(playerId, new ArrayList<>());
+        gd.playerGraveyards.put(playerId, new ArrayList<>());
+        gd.playerCommandZones.put(playerId, new ArrayList<>());
+        gd.playerManaPools.put(playerId, new ManaPool());
+        gd.playerLifeTotals.put(playerId, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), playerId, "Charlie");
+        return opponent;
     }
 }

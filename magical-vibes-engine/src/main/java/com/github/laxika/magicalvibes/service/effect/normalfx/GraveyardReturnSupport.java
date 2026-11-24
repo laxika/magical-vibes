@@ -3440,7 +3440,6 @@ public class GraveyardReturnSupport {
                     HAND_AND_BOTTOM, HAND_AND_BOTTOM_WITH_FACE_DOWN_PILE -> "put into your hand";
             case ONE_FROM_CHOSEN_HAND_AND_BOTTOM -> "put one card into your hand";
             case SEARCH_ONE_TO_HAND -> "search (the other pile is exiled)";
-            case OPPONENT_CHOOSES_EXILE -> "exile";
             default -> "put onto the battlefield";
         };
         String prompt = onePileFaceDown
@@ -3480,11 +3479,6 @@ public class GraveyardReturnSupport {
         gameLogService.append(gameData, GameLog.text(chooserName + " chooses " + chosenPileName + "."));
         if (state.disposition() == CardPileDisposition.GRAVEYARD_AND_FREE_CAST_ONE_REST_TO_HAND) {
             completeAbstractPerformancePileChoice(gameData, state, chosenPileCardIds, otherPileCardIds, allCards);
-            return;
-        }
-        if (state.disposition() == CardPileDisposition.OPPONENT_CHOOSES_EXILE) {
-            completeDeathOrGloryPileChoice(gameData, state, chosenPileCardIds, otherPileCardIds, allCards, cardOwners,
-                    accepted);
             return;
         }
 
@@ -3760,64 +3754,6 @@ public class GraveyardReturnSupport {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
                 controllerId, toBottom, true, controllerId,
                 "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."));
-    }
-
-    private void completeDeathOrGloryPileChoice(GameData gameData, PendingPileSeparation state,
-                                                List<UUID> exilePileCardIds, List<UUID> battlefieldPileCardIds,
-                                                List<Card> allCards, Map<UUID, UUID> cardOwners,
-                                                boolean accepted) {
-        UUID controllerId = state.controllerId();
-        UUID chooserId = state.targetPlayerId();
-        String chooserName = gameData.playerIdToName.get(chooserId);
-        String exilePileName = accepted ? "Pile 1" : "Pile 2";
-        gameLogService.append(gameData, GameLog.text(chooserName + " chooses " + exilePileName + " to exile."));
-
-        Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
-        List<Permanent> simultaneouslyEntered = new ArrayList<>();
-        Map<Permanent, UUID> controllersByPermanent = new LinkedHashMap<>();
-
-        graveyardService.beginGraveyardLeaveBatch(gameData);
-        try {
-            for (UUID cardId : exilePileCardIds) {
-                Card card = findCard(allCards, cardId);
-                if (card != null && exileCardFromAnyGraveyard(gameData, cardId, card)) {
-                    gameLogService.append(gameData, GameLog.cardThen(card, " is exiled."));
-                }
-            }
-
-            for (UUID cardId : battlefieldPileCardIds) {
-                Card card = findCard(allCards, cardId);
-                UUID ownerId = cardOwners.get(cardId);
-                if (card == null || ownerId == null
-                        || gameQueryService.findCardInGraveyardById(gameData, cardId) == null) {
-                    continue;
-                }
-                if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
-                    gameLogService.append(gameData, GameLog.textCardText(
-                            gameData.playerIdToName.get(controllerId) + " can't return ", card,
-                            " from the graveyard; it remains there."));
-                    continue;
-                }
-
-                permanentRemovalService.removeCardFromGraveyardById(gameData, cardId);
-                Permanent permanent = new Permanent(card);
-                permanent.setEnteredFromGraveyardOwnerId(ownerId);
-                battlefieldEntryService.putPermanentOntoBattlefield(
-                        gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered);
-                simultaneouslyEntered.add(permanent);
-                controllersByPermanent.put(permanent, controllerId);
-                gameLogService.append(gameData, GameLog.textCardText(
-                        gameData.playerIdToName.get(controllerId) + " returns ", card,
-                        " to the battlefield."));
-            }
-        } finally {
-            graveyardService.endGraveyardLeaveBatch(gameData);
-        }
-
-        for (Map.Entry<Permanent, UUID> permanentEntry : controllersByPermanent.entrySet()) {
-            Permanent permanent = permanentEntry.getKey();
-            handleCreatureEtbAndLegendRule(gameData, permanentEntry.getValue(), permanent, permanent.getCard());
-        }
     }
 
     private Card findCard(List<Card> cards, UUID cardId) {

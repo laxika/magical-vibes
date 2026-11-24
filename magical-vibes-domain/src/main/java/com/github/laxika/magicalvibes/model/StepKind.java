@@ -39,7 +39,9 @@ package com.github.laxika.magicalvibes.model;
  *       choice that keeps the card in the hand), those cards, their owners, each one's {@link StepOutcome#movedCards()}
  *       entry naming the zone and stay it was chosen in; or of a player chosen at random
  *       ({@code ChoosePlayerAtRandomEffect}) or by the controller ({@code ChoosePlayerEffect}), that player; or of
- *       permanents ({@code ChoosePermanentsEffect}): the number chosen, those permanents, their controllers;</li>
+ *       permanents ({@code ChoosePermanentsEffect}): the number chosen, those permanents, their controllers; or of the
+ *       chosen piles of a pile separation ({@code SeparateIntoPilesEffect}): those permanents and their controllers, or
+ *       those cards, their owners and each one's {@link StepOutcome#movedCards()} entry;</li>
  *   <li>{@link #PUT_INTO_GRAVEYARD}: the number of exiled cards put into a graveyard ({@code
  *       PutExiledCardsIntoOwnersGraveyardEffect}; a card a replacement sent elsewhere is not counted), those cards,
  *       their owners;</li>

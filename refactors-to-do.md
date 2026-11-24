@@ -211,7 +211,7 @@ new field is flagged. Don't commit until I say so.
 
 ## 9. Pile-separation restrictions have no source name
 
-**Status:** open · **Found:** 2026-11-19, closing the durations refactor
+**Status:** done 2026-11-24 (effect cleanup step 9, fold run 14b): the restrictions are now `CantAttackThisTurnEffect` and `CantBlockThisTurnEffect` steps after `SeparateIntoPilesEffect`, named by their stack entry's source · **Found:** 2026-11-19, closing the durations refactor
 
 **Problem.** Fight or Flight's and Stand or Fall's "until end of turn" pile restrictions are floating effects recorded
 with an empty source card name, because `PendingPileSeparation` carries no source card.

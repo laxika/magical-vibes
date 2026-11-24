@@ -5,17 +5,16 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Pile-separation flow state, shared by permanent-pile effects (Liliana of the Veil) and
- * card-pile effects (Boneyard Parley, Brilliant Ultimatum, Unesh's reveal-and-separate). The flow
- * spans two interaction windows — the pile-1 selection (a multi-permanent / multi-graveyard choice)
- * and the pile-choice may prompt — so it waits on the unified queue rather than riding a single
- * interaction record; step 1 polls it and re-queues it with the piles filled, step 2 polls it to
- * completion.
+ * Pile-separation flow state, shared by Make an Example's permanent piles and the card-pile effects (Boneyard Parley,
+ * Brilliant Ultimatum, Unesh's reveal-and-separate). The flow spans two interaction windows — the pile-1 selection (a
+ * multi-permanent / multi-graveyard choice) and the pile-choice may prompt — so it waits on the unified queue rather
+ * than riding a single interaction record; step 1 polls it and re-queues it with the piles filled, step 2 polls it to
+ * completion. A pile step of a resolution is {@code SeparateIntoPilesEffect} ({@link PendingPileStep}).
  *
  * <p>Card-pile mode when {@code cards} is non-empty: the pile IDs then refer to card UUIDs and
  * {@code cardOwners} maps card UUID → original owner UUID (for returning the unchosen pile to
  * owners' graveyards). Otherwise the pile IDs refer to permanent UUIDs drawn from
- * {@code allPermanentIds}.
+ * {@code allPermanentIds} (Make an Example).
  *
  * <p>{@code disposition} distinguishes the card-pile dispositions (see {@link CardPileDisposition}):
  * {@code BATTLEFIELD} (Boneyard Parley) puts the chosen pile onto the battlefield and returns the
@@ -26,8 +25,7 @@ import java.util.UUID;
  * the number of cards put into that graveyard;
  * {@code HAND_WITH_FACE_DOWN_PILE} puts the chosen pile into the controller's hand and the other
  * into their graveyard. Curator of Destinies uses a face-up Pile 1 and a face-down Pile 2;
- * Fortune's Favor reverses those pile identities. The other dispositions are ignored for
- * permanent-pile mode.
+ * Fortune's Favor reverses those pile identities.
  * {@code HAND_AND_BOTTOM_WITH_FACE_DOWN_PILE} puts the chosen pile into the controller's hand and
  * the other on the bottom of their library in any order, with one pile face down during the choice.
  * {@code HAND_AND_EXILE_WITH_FACE_DOWN_PILE} puts the chosen pile into the controller's hand and
@@ -36,13 +34,6 @@ import java.util.UUID;
  * <p>{@code controllerChoosesPile} is true for the usual Fact-or-Fiction-style flow, where the
  * opponent separates and the controller chooses. It is false for Steam Augury, where the
  * controller separates and the opponent chooses.
- * puts the chosen pile into the controller's hand and the other into their graveyard;
- * {@code OPPONENT_CHOOSES_EXILE} (Death or Glory) lets the opponent choose the pile to exile and
- * returns the other pile to the battlefield; {@code ATTACKERS} (Fight or Flight) makes the chosen
- * pile the only creatures that can attack this turn; {@code BLOCKERS} (Stand or Fall) makes the
- * chosen pile the only creatures that can block this turn; {@code DESTROY} (Do or Die) destroys
- * the creatures in the chosen pile without allowing regeneration. The other dispositions are
- * ignored for permanent-pile mode.
  */
 public record PendingPileSeparation(UUID controllerId, UUID targetPlayerId,
                                     List<UUID> allPermanentIds,
@@ -60,7 +51,7 @@ public record PendingPileSeparation(UUID controllerId, UUID targetPlayerId,
         pile2Ids = List.copyOf(pile2Ids);
     }
 
-    /** Battlefield-disposition card-pile / permanent-pile variant (the pre-existing call sites). */
+    /** Battlefield-disposition card-pile variant (the pre-existing call sites). */
     public PendingPileSeparation(UUID controllerId, UUID targetPlayerId,
                                  List<UUID> allPermanentIds,
                                  List<Card> cards, Map<UUID, UUID> cardOwners,

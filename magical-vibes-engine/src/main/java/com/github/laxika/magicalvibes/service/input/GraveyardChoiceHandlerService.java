@@ -111,6 +111,7 @@ public class GraveyardChoiceHandlerService {
     private final ExileService exileService;
     private final GraveyardService graveyardService;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.SeparateIntoPilesEffectHandler separateIntoPilesEffectHandler;
     private final PermanentCounterSupport permanentCounterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BrilliantUltimatumSupport brilliantUltimatumSupport;
     private final InputCompletionService inputCompletionService;
@@ -1670,6 +1671,12 @@ public class GraveyardChoiceHandlerService {
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
             }
+            return;
+        }
+
+        if (gameData.hasPendingInteraction(com.github.laxika.magicalvibes.model.PendingPileStep.class)) {
+            gameData.interaction.clearAwaitingInput();
+            separateIntoPilesEffectHandler.completeSeparation(gameData, cardIds);
             return;
         }
 
