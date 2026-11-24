@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GenesisWaveEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect;
+import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 @CardRegistration(set = "SOM", collectorNumber = "122")
 @CardRegistration(set = "IMA", collectorNumber = "164")
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GenesisWaveEffect;
 public class GenesisWave extends Card {
 
     public GenesisWave() {
-        addSpellEffect(new GenesisWaveEffect());
+        addSpellEffect(LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect.revealing(
+                null, new CardIsPermanentPredicate()));
     }
 }

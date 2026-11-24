@@ -1496,12 +1496,15 @@ public class LibraryChoiceHandlerService {
                                 .filter(c -> predicateEvaluationService.matchesCardPredicate(
                                         c, filterPredicate, null, gameData, playerId))
                                 .toList());
-                newSearchCards = newSearchCards.stream().filter(searchCards::contains).toList();
+                newSearchCards = newSearchCards.stream().filter(searchCards::contains)
+                        .filter(c -> !requireDifferentNames || !excludedCardNames.contains(c.getName()))
+                        .toList();
                 if (newSearchCards.isEmpty()) {
                     if (shuffleAfterSelection) {
                         LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
                     }
-                    gameLogService.append(gameData, GameLog.text(exileLog + " Library is shuffled."));
+                    gameLogService.append(gameData, GameLog.text(shuffleAfterSelection
+                            ? exileLog + " Library is shuffled." : exileLog));
                     finishSearchAndResume(gameData);
                     return;
                 }
@@ -1516,6 +1519,8 @@ public class LibraryChoiceHandlerService {
                                 .destination(LibrarySearchDestination.EXILE)
                                 .filterPredicate(filterPredicate)
                                 .shuffleAfterSelection(shuffleAfterSelection)
+                                .requireDifferentNames(requireDifferentNames)
+                                .excludedCardNames(excludedCardNames)
                                 .build(),
                         exilePrompt, canFailToFind));
                 gameLogService.append(gameData, GameLog.text(exileLog));

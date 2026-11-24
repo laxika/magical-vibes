@@ -315,7 +315,7 @@ class TargetPolarityGuardTest {
                 com.github.laxika.magicalvibes.model.effect.BalduvianWarlordEffect.thenMayReblock(), aiPlayerId))
                 .isEqualTo(TargetPolarity.NEUTRAL);
         assertThat(classifier.classify(gd,
-                new com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetSpellAndCreatureEffect(),
+                com.github.laxika.magicalvibes.model.effect.ExchangeControlOfPermanentAndSpellEffect.targetCreatureAndTargetSpell(),
                 aiPlayerId)).isEqualTo(TargetPolarity.NEUTRAL);
         assertThat(classifier.classify(gd,
                 new com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect(

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -158,6 +159,60 @@ class PerplexingChimeraTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Declining the exchange offers no new targets for the spell")
+    void decliningTheExchangeOffersNoNewTargets() {
+        harness.addToBattlefield(player1, new PerplexingChimera());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        preparePlayerTwoMainPhase();
+
+        harness.castInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).extracting(entry -> entry.getCard().getName()).containsExactly("Shock");
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("After the exchange the Chimera's controller is asked about new targets")
+    void exchangeAsksTheChimerasControllerAboutNewTargets() {
+        harness.addToBattlefield(player1, new PerplexingChimera());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        preparePlayerTwoMainPhase();
+
+        harness.castInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        assertThat(gd.stack).extracting(entry -> entry.getCard().getName()).containsExactly("Shock");
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        harness.assertOnBattlefield(player2, "Perplexing Chimera");
+    }
+
+    @Test
+    @DisplayName("An exchanged spell with no targets asks nothing about new targets")
+    void exchangedSpellWithoutTargetsAsksNothing() {
+        harness.addToBattlefield(player1, new PerplexingChimera());
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        preparePlayerTwoMainPhase();
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
     }
 
     private void preparePlayerTwoMainPhase() {

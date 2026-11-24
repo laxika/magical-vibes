@@ -71,8 +71,9 @@ package com.github.laxika.magicalvibes.model;
  *       nothing, no player; a delayed ability the same resolution makes keeps it ("where X is the noted number",
  *       {@code TemporaryGlobalTriggeredAbility.keepingNotedAmount}).</li>
  *   <li>{@link #GAIN_CONTROL}: the number of permanents whose controller the step changed
- *       ({@code GainControlOfTargetEffect}; one the gaining player already controlled is not counted), those
- *       permanents, the gaining player.</li>
+ *       ({@code GainControlOfTargetEffect}; one the gaining player already controlled is not counted;
+ *       {@code ExchangeControlOfPermanentAndSpellEffect}: the exchanged permanent), those permanents, the gaining
+ *       player.</li>
  *   <li>{@link #VOTE}: the number of votes cast ({@code VoteEffect}: an additional vote counts, CR 701.38d), nothing,
  *       the voters in the order they voted, and each vote, who cast it and for what
  *       ({@link StepOutcome#votes()}): "for each [option] vote" ({@code VotesFor}), "if [option] gets more votes"

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class SaheelisDirective extends Card {
 
     public SaheelisDirective() {
-        addSpellEffect(new LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect(
+        addSpellEffect(LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect.revealing(
                 null, new CardTypePredicate(CardType.ARTIFACT)));
     }
 }

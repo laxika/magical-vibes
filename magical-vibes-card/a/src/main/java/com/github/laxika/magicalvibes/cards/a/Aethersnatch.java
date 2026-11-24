@@ -3,7 +3,10 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
@@ -23,6 +26,8 @@ public class Aethersnatch extends Card {
                         StackEntryType.PLANESWALKER_SPELL,
                         StackEntryType.BATTLE_SPELL)),
                 "Target must be a spell."
-        )).addSpellEffect(new GainControlOfTargetSpellEffect());
+        )).addSpellEffect(new GainControlOfTargetSpellEffect())
+                .addSpellEffect(new MayEffect(ChooseNewTargetsForTargetSpellEffect.ifItHasTargets(Subjects.targetSpell()),
+                        "Choose new targets for the spell?"));
     }
 }

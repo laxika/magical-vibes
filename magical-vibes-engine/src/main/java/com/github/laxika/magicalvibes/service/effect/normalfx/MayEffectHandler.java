@@ -100,14 +100,13 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             // The targeted library is empty, so there is no top card to look at and no choice is offered.
             return;
         }
-        if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.ExchangeControlOfSourceAndTriggeringSpellEffect) {
+        if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.ExchangeControlOfPermanentAndSpellEffect exchange) {
             // Both objects are already controlled by the same player, so the exchange does nothing and no choice is offered.
-            Permanent exchangeSource = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-            StackEntry exchangeSpell = entry.getTriggeringCardId() == null ? null
-                    : gameQueryService.findStackEntryByCardId(gameData, entry.getTriggeringCardId());
-            if (exchangeSource != null && exchangeSpell != null
+            List<UUID> exchangedIds = subjectResolutionService.permanentIds(gameData, entry, exchange, exchange.permanent());
+            StackEntry exchangeSpell = subjectResolutionService.spellOnStack(gameData, entry, exchange.spell());
+            if (!exchangedIds.isEmpty() && exchangeSpell != null
                     && java.util.Objects.equals(
-                    gameQueryService.findPermanentController(gameData, exchangeSource.getId()),
+                    gameQueryService.findPermanentController(gameData, exchangedIds.getFirst()),
                     exchangeSpell.getControllerId())) {
                 return;
             }
@@ -252,6 +251,20 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 && hand.looksAtHandBeforeMayChoice() && targetId != null && gameData.playerIds.contains(targetId)
                 && e.choicePlayer() == MayChoicePlayer.CONTROLLER) {
             cardRevealService.lookAtHand(gameData, entry.getControllerId(), targetId);
+        }
+
+        if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect retarget) {
+            // "May choose new targets for [spell]": the offer names the spell its subject names while it is on the
+            // stack; the retarget flow says so when there is nothing to change. After a control change nothing is
+            // asked for a spell with no targets.
+            StackEntry retargeted = subjectResolutionService.spellOnStack(gameData, entry, retarget.spell());
+            if (retarget.onlyIfItHasTargets() && (retargeted == null || (retargeted.getTargetId() == null
+                    && retargeted.getDeclaredTargetIds().isEmpty() && retargeted.getTargetCardIds().isEmpty()))) {
+                return;
+            }
+            if (retargeted != null) {
+                targetId = retargeted.getTargetableId();
+            }
         }
 
         // CR 603.5 — "you may" choice happens at resolution time.

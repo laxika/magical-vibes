@@ -54,13 +54,13 @@ public class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler 
         int count = Math.min(xValue, deck.size());
         if (count <= 0) {
             
-            gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(": " + playerName + (deck.isEmpty() ? "'s library is empty." : toBottomRandom ? " reveals 0 cards (0 damage dealt)." : " looks at 0 cards (X is 0).")).build());
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(": " + playerName + (deck.isEmpty() ? "'s library is empty." : toBottomRandom ? " reveals 0 cards (0 damage dealt)." : e.reveals() ? " reveals 0 cards (X is 0)." : " looks at 0 cards (X is 0).")).build());
             return;
         }
 
         List<Card> revealedCards = LibraryRevealSupport.takeTopCards(deck, count);
 
-        String logMsg = toBottomRandom
+        String logMsg = e.reveals()
                 ? playerName + " reveals the top " + LibraryRevealSupport.pluralCards(count) + " of their library."
                 : playerName + " looks at the top " + LibraryRevealSupport.pluralCards(count) + " of their library.";
         gameLogService.append(gameData, GameLog.text(logMsg));

@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 45b, 46b, 47; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                        |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 46b, 47, 49; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                         |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,127 / 2,537 (after fold run 44b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,124 / 2,534 (after fold run 45b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,495 rows over 4,541 classes (after fold run 44b). Latest verdict per class: `step-9` 152, unique 1,187, absorbed 1,251, split 669, blocked-other 546, survivor 431, blocked-step-model 139, blocked-player-loop 96, dead 70. Waiting: 152 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,505 rows over 4,544 classes (after fold run 45b). Latest verdict per class: `step-9` 146, unique 1,187, absorbed 1,254, split 670, blocked-other 548, survivor 434, blocked-step-model 139, blocked-player-loop 96, dead 70. Waiting: 146 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1036,6 +1036,11 @@ Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671
 - `DurationClock.waitsForSpell(gd, floatingEffect, spellCard, castingPlayer, castFaceDown)`: the one judge of whether a cast is the "next matching spell" a `NextMatchingSpellEffect` waits for (fold run 44b).
 - `GrantFlashToNextMatchingSpellEffectHandler.spellDescription(CardPredicate)`: log noun for a next-spell filter ("spell", "creature spell", "instant or sorcery spell") (fold run 44b).
 - "You may destroy target X. If you do, …" is `MayEffect(SequenceEffect.of(destroy, ConditionalEffect(TargetPermanentMatches(not indestructible), …)))`; "you may pay {c}. If you do, destroy … and …" is `MayPayManaEffect(c, SequenceEffect.of(destroy, …))` with no gate (CR 118.12) (fold run 44b).
+
+- `ExchangeControlOfPermanentAndSpellEffect(PermanentSubject permanent, PermanentSubject spell)` / `.sourceAndTriggeringSpell()` / `.targetCreatureAndTargetSpell()`: exchange control of a permanent and a spell, all or nothing (CR 701.12a), records GAIN_CONTROL (fold run 45b).
+- `ChooseNewTargetsForTargetSpellEffect(mustChangeAll, PermanentSubject spell, onlyIfItHasTargets)` / `.ifItHasTargets(targetSpell() | triggeringSpell())`: the one "[player] may choose new targets for [spell]" step inside a `MayEffect` (CR 115.7d) (fold run 45b).
+- `SubjectResolutionService.spellOnStack(gd, entry, targetSpell() | triggeringSpell())`: the spell a spell subject names while it is on the stack, from any target group (fold run 45b).
+- `LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect.revealing(always, mvCapped)`: "reveal the top X … put the rest into your graveyard" (Genesis Wave, Saheeli's Directive) (fold run 45b).
 
 ### Blocked causes still open
 
@@ -4616,6 +4621,27 @@ All of these have tests that would fail on the old code by reasoning. Prompts an
 **Tests changed.** RunedTerrorTest (class rename). Added: InsistTest perpetual creature, GoblinVandalTest indestructible.
 **Seen, not changed.** None new.
 **For the next run.** Nothing is left in these batches; the Laccolith Rig Disarm half stays with `unattach`.
+
+### Step 9, fold run 45b (2026-11-24, parallel worktree)
+3 absorbed, 1 split, 3 survivors (1 new, 2 widened), 1 unique kept, 2 blocked-other. Ratchet 3,147 / 2,563 → 3,144 / 2,560. 7 card files rewritten, Oracle text checked for 7 of 7, rulings read for 6. CR 115.7d, 400.7j, 608.2b, 608.2d, 701.12a, 701.12b, 701.20a checked.
+
+| Batch | Result |
+|---|---|
+| rest-of-set | 2 folded, 2 left. Genesis Wave absorbed into `LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect.revealing(null, CardIsPermanentPredicate())`: Saheeli's Directive's template, and the triage note's reveal + choose + except chain wasn't needed. Emergent Ultimatum split: `SearchLibraryEffect(Fixed(3), CardHasExactlyNColorsPredicate(1), EXILE, null, true).withoutShuffle()` + `ChoosePlayerEffect.opponent()` + `ChooseCardEffect.oneOf(cardsThisWay(SEARCH)).by(playersThisWay(CHOOSE))` + `PutCardsIntoLibraryEffect.shuffledIn(cardsThisWay(CHOOSE))` + `CastCardsWithoutPayingManaCostEffect.anyNumber(cardsThisWay(SEARCH))`. The shuffled card has left exile, so no except is needed. Deliver Unto Evil: blocked-other (no non-target subject over all target graveyard cards; cast branch keyed by class; Wake to Slaughter's `opponentChoosesOneForHand` would be the second user). Dubious Challenge: blocked-other (no look-top-N, exile-up-to-M, rest-stays step that records EXILE). |
+| spell-perm-exchange | 2 folded into the new `ExchangeControlOfPermanentAndSpellEffect(permanent, spell)` (`sourceAndTriggeringSpell()`, `targetCreatureAndTargetSpell()`): all or nothing (CR 701.12a), nothing for one controller, records GAIN_CONTROL. The new-targets offer is `MayEffect(ChooseNewTargetsForTargetSpellEffect.ifItHasTargets(spell))`. Sudden Substitution puts it on the spell's target group with `TARGET_SPELL_CONTROLLER`. Chimera uses `SequenceEffect.of(MayEffect(exchange), ConditionalEffect(HappenedThisWay(GAIN_CONTROL, 1), MayEffect(…triggeringSpell())))`. Commandeer and Aethersnatch use it on their target. `GainControlOfTargetSpellEffect` no longer queues the offer. |
+
+**Guard rail.** The control-change offers skipped spells with no targets, and about 20 steal tests rely on that. Redirect's family asks anyway, and 5 tests assert it. Both behaviours are kept: `onlyIfItHasTargets` is set by the 4 control-change cards.
+**Behaviour changes.**
+- Saheeli's Directive logs a reveal (Oracle text "Reveal"; CR 701.20a; failing-first).
+- The EXILE multi-pick library search keeps `requireDifferentNames` and no longer logs a shuffle that didn't happen.
+- Emergent Ultimatum asks for cards pick by pick; a lone found card is chosen unasked (CR 608.2d).
+- Chimera applies the creature's control first, so a refused change gives no spell (CR 701.12a; untestable, only Guardian Beast grants the ability).
+- Log lines are the survivors'.
+**Tests.** EmergentUltimatumTest rewritten for the new prompts. New: PerplexingChimeraTest +3, SaheelisDirectiveTest +1, SubjectResolutionServiceTest +1. Ran 73 classes, 848 cases, 0 failures.
+**Seen, not changed.**
+- Transcantation queues its own new-targets offer through a `CopySpellEffect` payload (`TargetSpellBecomesCopyOfCardEffectHandler`). Sure.
+- Deliver Unto Evil still gives the choice to `getOpponentId` (multiplayer chooser; existing defect). Sure.
+**For the next run.** Build the multi-target-card subject and a generic graveyard up-to-N cast path (Deliver Unto Evil, Wake to Slaughter), and a look-top-N exile step (Dubious Challenge).
 
 ## Prompt
 

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
- * Looks at the top X cards of the controller's library ({@code count}: the spell's X value, or "that many" of a
+ * Looks at (or reveals) the top X cards of the controller's library ({@code count}: the spell's X value, or "that many" of a
  * trigger event, e.g. the combat damage dealt, read from the stack entry as the ability resolves),
  * lets the controller choose any number of eligible cards to put onto the battlefield,
  * and puts the rest into the graveyard (or bottom of library in random order).
@@ -27,6 +27,9 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *       {@code remainingToBottomRandom = false}</li>
  *   <li>Gishath, Sun's Avatar: {@code alwaysEligible = CardAllOfPredicate(CREATURE, DINOSAUR)},
  *       {@code mvCapped = null}, {@code remainingToBottomRandom = true}, {@code count = EventValue}</li>
+ *   <li>Genesis Wave, Saheeli's Directive ({@link #revealing}): "reveal the top X cards … any number of
+ *       [permanent / artifact] cards with mana value X or less … all cards revealed this way that weren't put onto the
+ *       battlefield into your graveyard"</li>
  * </ul>
  *
  * @param alwaysEligiblePredicate cards matching this are eligible regardless of mana value (nullable)
@@ -34,13 +37,35 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param remainingToBottomRandom if true, remaining cards go to the bottom of library in random order;
  *                                if false, remaining cards go to the graveyard
  * @param count                   X, the number of cards looked at ({@link XValue} by default)
+ * @param reveals                 whether the cards are revealed (CR 701.20a) rather than looked at; the
+ *                                constructors without it reveal exactly when the rest go to the bottom
  */
 public record LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect(
         CardPredicate alwaysEligiblePredicate,
         CardPredicate mvCappedEligiblePredicate,
         boolean remainingToBottomRandom,
-        DynamicAmount count
+        DynamicAmount count,
+        boolean reveals
 ) implements CardEffect {
+
+    public LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect(
+            CardPredicate alwaysEligiblePredicate,
+            CardPredicate mvCappedEligiblePredicate,
+            boolean remainingToBottomRandom,
+            DynamicAmount count) {
+        this(alwaysEligiblePredicate, mvCappedEligiblePredicate, remainingToBottomRandom, count,
+                remainingToBottomRandom);
+    }
+
+    /**
+     * "Reveal the top X cards of your library … put all cards revealed this way that weren't put onto the battlefield
+     * into your graveyard": the X cards are revealed and the rest go to the graveyard.
+     */
+    public static LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect revealing(
+            CardPredicate alwaysEligiblePredicate, CardPredicate mvCappedEligiblePredicate) {
+        return new LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect(alwaysEligiblePredicate,
+                mvCappedEligiblePredicate, false, new XValue(), true);
+    }
 
     public LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect(
             CardPredicate alwaysEligiblePredicate,

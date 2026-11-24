@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.FlightSpellbomb;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WornPowerstone;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -72,6 +73,18 @@ class SaheelisDirectiveTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Flight Spellbomb");
         harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The top X cards are revealed, not looked at")
+    void revealsTheTopXCards() {
+        setupLibrary(List.of(new FlightSpellbomb(), new GrizzlyBears()));
+
+        castAndResolve(2);
+
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(line -> line.contains("reveals the top 2 cards"))
+                .noneMatch(line -> line.contains("looks at the top"));
     }
 
     private void setupLibrary(List<Card> cards) {

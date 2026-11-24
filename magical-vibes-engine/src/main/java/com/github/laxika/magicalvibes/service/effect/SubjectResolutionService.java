@@ -144,6 +144,42 @@ public class SubjectResolutionService {
     }
 
     /**
+     * The spell a spell subject names while it is on the stack, or {@code null}: for {@code Subjects.triggeringSpell()}
+     * the spell the trigger event was about, for {@code Subjects.targetSpell()} the spell among the entry's targets (of
+     * any target group, so "target spell" of a spell that also targets a creature).
+     */
+    public StackEntry spellOnStack(GameData gameData, StackEntry entry, PermanentSubject spell) {
+        if (spell instanceof PermanentSubject.TriggeringSpell) {
+            UUID spellCardId = entry.getTriggeringCardId();
+            return spellCardId == null ? null : gameData.stack.stream()
+                    .filter(candidate -> candidate != entry && spellCardId.equals(candidate.getTargetableId()))
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (!(spell instanceof PermanentSubject.TargetSpell)) {
+            throw new IllegalArgumentException("Not a spell subject: " + spell);
+        }
+        List<UUID> candidates = new ArrayList<>();
+        if (entry.getTargetId() != null) {
+            candidates.add(entry.getTargetId());
+        }
+        Card targeting = entry.getTargetingCard();
+        int groups = targeting == null ? 0 : targeting.getTargetGroups().size();
+        for (int group = 0; group < groups; group++) {
+            candidates.addAll(entry.targetsForGroup(group));
+        }
+        candidates.addAll(entry.getTargetIds());
+        for (UUID candidate : candidates) {
+            for (StackEntry onStack : gameData.stack) {
+                if (onStack != entry && candidate.equals(onStack.getTargetableId())) {
+                    return onStack;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
      * The ids of the sources of damage {@code subject} names for a resolving effect (CR 609.7a): as
      * {@link #permanentIds}, a chosen source that is a spell or another object included by the id the choice recorded,
      * and the target spell ({@code Subjects.targetSpell()}) by its card's id while it is on the stack.

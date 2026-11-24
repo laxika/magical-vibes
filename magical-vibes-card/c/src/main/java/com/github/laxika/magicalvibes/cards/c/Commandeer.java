@@ -6,7 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
@@ -33,7 +36,8 @@ public class Commandeer extends Card {
                         StackEntryType.PLANESWALKER_SPELL,
                         StackEntryType.BATTLE_SPELL)),
                 "Target must be a noncreature spell."
-        ));
-        addSpellEffect(new GainControlOfTargetSpellEffect(true));
+        )).addSpellEffect(new GainControlOfTargetSpellEffect(true))
+                .addSpellEffect(new MayEffect(ChooseNewTargetsForTargetSpellEffect.ifItHasTargets(Subjects.targetSpell()),
+                        "Choose new targets for the spell?"));
     }
 }

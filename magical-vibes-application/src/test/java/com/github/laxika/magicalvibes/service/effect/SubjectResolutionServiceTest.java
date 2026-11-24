@@ -1462,6 +1462,26 @@ class SubjectResolutionServiceTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("The spell a spell subject names is the target spell or the triggering spell while it is on the stack")
+        void spellOnStackVariants() {
+            Card spellCard = new HillGiant();
+            StackEntry spell = new StackEntry(StackEntryType.CREATURE_SPELL, spellCard, player2.getId(),
+                    spellCard.getName(), List.of());
+            gd.stack.add(spell);
+            StackEntry targeting = entry(player1, spell.getTargetableId(), null);
+            StackEntry triggered = entry(player1, null, null);
+            triggered.setTriggeringCardId(spellCard.getId());
+
+            assertThat(subjects.spellOnStack(gd, targeting, targetSpell())).isSameAs(spell);
+            assertThat(subjects.spellOnStack(gd, triggered, triggeringSpell())).isSameAs(spell);
+            assertThat(subjects.spellOnStack(gd, entry(player1, null, null), triggeringSpell())).isNull();
+
+            gd.stack.remove(spell);
+            assertThat(subjects.spellOnStack(gd, targeting, targetSpell())).isNull();
+            assertThat(subjects.spellOnStack(gd, triggered, triggeringSpell())).isNull();
+        }
+
+        @Test
         @DisplayName("The chosen players are every player the source remembered, and the other one excludes that player")
         void chosenPlayersAndExcept() {
             Permanent bears = addCreatureReady(player1, new GrizzlyBears());

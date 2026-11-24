@@ -39,14 +39,11 @@ class EmergentUltimatumTest extends BaseCardTest {
         harness.castFromHand(player1, spell, "{B}{B}{G}{G}{G}{U}{U}");
         harness.passBothPriorities();
 
-        PendingInteraction.EmergentUltimatumSearchChoice search =
-                gd.interaction.activeInteraction(PendingInteraction.EmergentUltimatumSearchChoice.class);
-        assertThat(search.pool()).containsExactly(bears, elves, goblin);
+        assertThat(offeredCards()).containsExactlyInAnyOrder(bears, elves, goblin);
 
-        harness.handleMultipleCardsChosen(player1,
-                List.of(bears.getId(), elves.getId(), goblin.getId()));
-        assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.EmergentUltimatumOpponentChoice.class);
+        find(bears, elves, goblin);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).playerId())
+                .isEqualTo(player2.getId());
 
         harness.handleMultipleCardsChosen(player2, List.of(bears.getId()));
         PendingInteraction.ImprovisationCapstoneCastChoice castChoice =
@@ -68,17 +65,18 @@ class EmergentUltimatumTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Rejects duplicate names in the controller's selection")
-    void rejectsDuplicateNames() {
+    @DisplayName("A card with the name of an already found card is not offered again")
+    void offersOnlyDifferentNames() {
         Card first = new GrizzlyBears();
         Card second = new GrizzlyBears();
-        harness.setLibrary(player1, List.of(first, second));
+        Card elves = new LlanowarElves();
+        harness.setLibrary(player1, List.of(first, second, elves));
         harness.castFromHand(player1, new EmergentUltimatum(), "{B}{B}{G}{G}{G}{U}{U}");
         harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(
-                player1, List.of(first.getId(), second.getId())))
-                .hasMessageContaining("different names");
+        harness.handleCardChosen(player1, offeredCards().indexOf(first));
+
+        assertThat(offeredCards()).containsExactly(elves);
     }
 
     @Test
@@ -90,7 +88,7 @@ class EmergentUltimatumTest extends BaseCardTest {
         harness.castFromHand(player1, spell, "{B}{B}{G}{G}{G}{U}{U}");
         harness.passBothPriorities();
 
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(brushwagg);
@@ -114,16 +112,15 @@ class EmergentUltimatumTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Finding only one card returns it to the library without a free cast")
+    @DisplayName("Finding only one card shuffles it into the library unasked, without a free cast")
     void findingOneCardOffersNoSpells() {
         Card brushwagg = new AlmightyBrushwagg();
         EmergentUltimatum spell = new EmergentUltimatum();
         harness.setLibrary(player1, List.of(brushwagg));
         harness.castFromHand(player1, spell, "{B}{B}{G}{G}{G}{U}{U}");
         harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player1, List.of(brushwagg.getId()));
 
-        harness.handleMultipleCardsChosen(player2, List.of(brushwagg.getId()));
+        find(brushwagg);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(brushwagg);
@@ -140,7 +137,7 @@ class EmergentUltimatumTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(brushwagg, dolphin));
         harness.castFromHand(player1, spell, "{B}{B}{G}{G}{G}{U}{U}");
         harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player1, List.of(brushwagg.getId(), dolphin.getId()));
+        find(brushwagg, dolphin);
         harness.handleMultipleCardsChosen(player2, List.of(brushwagg.getId()));
 
         harness.handleMultipleCardsChosen(player1, List.of());
@@ -161,8 +158,7 @@ class EmergentUltimatumTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(brushwagg, dolphin, reunion));
         harness.castFromHand(player1, spell, "{B}{B}{G}{G}{G}{U}{U}");
         harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player1,
-                List.of(brushwagg.getId(), dolphin.getId(), reunion.getId()));
+        find(brushwagg, dolphin, reunion);
         harness.handleMultipleCardsChosen(player2, List.of(reunion.getId()));
 
         harness.handleMultipleCardsChosen(player1, List.of(dolphin.getId(), brushwagg.getId()));
@@ -188,7 +184,7 @@ class EmergentUltimatumTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EmergentUltimatum(), firstDiscard, secondDiscard));
         addEmergentUltimatumMana();
         harness.castAndResolveSorcery(player1, 0, 0);
-        harness.handleMultipleCardsChosen(player1, List.of(reunion.getId(), brushwagg.getId()));
+        find(reunion, brushwagg);
         harness.handleMultipleCardsChosen(player2, List.of(brushwagg.getId()));
 
         harness.handleMultipleCardsChosen(player1, List.of(reunion.getId()));
@@ -206,7 +202,7 @@ class EmergentUltimatumTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(neutralize, brushwagg));
         harness.castFromHand(player1, spell, "{B}{B}{G}{G}{G}{U}{U}");
         harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player1, List.of(neutralize.getId(), brushwagg.getId()));
+        find(neutralize, brushwagg);
         harness.handleMultipleCardsChosen(player2, List.of(brushwagg.getId()));
 
         harness.handleMultipleCardsChosen(player1, List.of(neutralize.getId()));
@@ -219,6 +215,36 @@ class EmergentUltimatumTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell).doesNotContain(neutralize);
         harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Neutralize");
+    }
+
+    @Test
+    @DisplayName("The opponent chooses which found card is shuffled away")
+    void opponentChoosesTheShuffledCard() {
+        Card brushwagg = new AlmightyBrushwagg();
+        Card dolphin = new PhaseDolphin();
+        harness.setLibrary(player1, List.of(brushwagg, dolphin));
+        harness.castFromHand(player1, new EmergentUltimatum(), "{B}{B}{G}{G}{G}{U}{U}");
+        harness.passBothPriorities();
+        find(brushwagg, dolphin);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(dolphin.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    private List<Card> offeredCards() {
+        return gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
+    }
+
+    private void find(Card... cards) {
+        for (Card card : cards) {
+            harness.handleCardChosen(player1, offeredCards().indexOf(card));
+        }
+        if (gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class) != null) {
+            harness.handleCardChosen(player1, -1);
+        }
     }
 
     private void addEmergentUltimatumMana() {

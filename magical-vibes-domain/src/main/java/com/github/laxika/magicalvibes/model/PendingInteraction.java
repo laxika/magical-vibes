@@ -93,9 +93,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.TurtlesForeverOpponentChoice,
         PendingInteraction.EcologicalAppreciationSearchChoice,
         PendingInteraction.EcologicalAppreciationOpponentChoice,
-        PendingInteraction.EmergentUltimatumSearchChoice,
-        PendingInteraction.EmergentUltimatumOpponentSelectionChoice,
-        PendingInteraction.EmergentUltimatumOpponentChoice,
         PendingInteraction.VerdantMasterySearchChoice,
         PendingInteraction.VerdantMasteryLandChoice,
         PendingInteraction.GuidedPassageChoice,
@@ -247,70 +244,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds(), 2, 2);
-        }
-    }
-
-    record EmergentUltimatumSearchChoice(UUID playerId, java.util.List<Card> pool)
-            implements PendingInteraction {
-        public EmergentUltimatumSearchChoice {
-            pool = java.util.List.copyOf(pool);
-        }
-
-        public java.util.List<UUID> validCardIds() {
-            return pool.stream().map(Card::getId).toList();
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds(), 0, Math.min(3, pool.size()));
-        }
-    }
-
-    record EmergentUltimatumOpponentChoice(UUID playerId, UUID controllerId,
-                                            java.util.List<Card> cards)
-            implements PendingInteraction {
-        public EmergentUltimatumOpponentChoice {
-            cards = java.util.List.copyOf(cards);
-        }
-
-        public java.util.List<UUID> validCardIds() {
-            return cards.stream().map(Card::getId).toList();
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
-        }
-    }
-
-    record EmergentUltimatumOpponentSelectionChoice(UUID controllerId,
-                                                     java.util.List<UUID> opponentIds,
-                                                     java.util.List<Card> cards)
-            implements PendingInteraction {
-        public EmergentUltimatumOpponentSelectionChoice {
-            opponentIds = java.util.List.copyOf(opponentIds);
-            cards = java.util.List.copyOf(cards);
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return controllerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiPermanentPick(
-                    java.util.List.of(), opponentIds, 1, 1);
         }
     }
 
