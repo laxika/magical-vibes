@@ -1922,7 +1922,7 @@ Do these individually; each is self-contained. Reassess before starting — seve
 | `CreateTokenWithCountersEffect` | 2 classes | Needs a new `CardsDrawnThisTurn` `DynamicAmount` |
 | `CounterSpellIf*` trio → `ConditionalEffect(...)` | 3 classes | Needs 2 new `StackEntryPredicate`s. **Do Hisoka last** — `PredicateEvaluationService:1359` hardcodes `StackEntryManaValueEqualsXPredicate -> false` in the resolution path |
 | `CounterMatchingSpellsEffect` | `CounterSpellsNamedLikeCardsExiledWithSourceEffect` (1) | The new predicate needs the resolving entry's `sourcePermanentId`, which the current call site doesn't pass |
-| `CantAttackOrBlockUnlessCountAlsoDoesEffect(1)` | `CantAttackOrBlockAloneEffect` (5) | Also **fixes a gap**: only the "alone" form has the `CombatAttackService:125-129` pre-filter. Read by `magical-vibes-ai` |
+| `CantAttackOrBlockUnlessCountAlsoDoesEffect(1)` | `CantAttackOrBlockAloneEffect` (5) | **Done** the other way round (effect-cleanup step 9, fold run 36): `CantAttackOrBlockAloneEffect` took the count and a companion filter; Okk, Orcish Conscripts and Scarred Puma moved onto it, read by `CombatCompanionRestrictions` |
 | `CantHaveCountersEffect(Set<CounterType>)` | `CantHaveMinusOneMinusOneCountersEffect` | Readers are asymmetric (own+granted vs granted-only) — preserve or deliberately unify |
 | `BlockerCountRestrictionEffect(Integer min, Integer max)` | 2 classes | Fold in `EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect` in the same pass |
 | `AdditionalCombatPhaseEffect(count, withMainPhase)` | `AdditionalCombatMainPhaseEffect` (3) | Records identical; the engine still needs both `GameData` counters. Modest payoff |

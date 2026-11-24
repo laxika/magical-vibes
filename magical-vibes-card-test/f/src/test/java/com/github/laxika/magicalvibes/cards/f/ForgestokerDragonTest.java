@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.model.effect.CantBlockThisCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -124,7 +124,7 @@ class ForgestokerDragonTest extends BaseCardTest {
         });
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockThisCombatEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -144,7 +144,7 @@ class ForgestokerDragonTest extends BaseCardTest {
         });
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockThisCombatEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
     }
 
     @Test
@@ -180,13 +180,13 @@ class ForgestokerDragonTest extends BaseCardTest {
             harness.activateAbility(player1, 0, null, target.getId());
             harness.passBothPriorities();
         });
-        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockThisCombatEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
-        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockThisCombatEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isFalse();
     }
 
     private void setUpAttacking(Permanent attacker) {

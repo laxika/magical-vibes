@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueParityPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasChosenParityPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasCardTypeChosenThisResolutionPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenCardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
@@ -255,6 +257,8 @@ public class SubjectResolutionService {
      * applies, so a rule or delayed ability the effect registers keeps it when it is judged later without the entry
      * (CR 608.2h, 611.2c): {@link PermanentHasTypeChosenThisResolutionPredicate} becomes "has that subtype" ("creatures
      * of the creature type of your choice attack this turn if able", Walking Desecration);
+     * {@link PermanentHasChosenParityPredicate} of mana value "has mana value of that parity" (Twins of Discord; the power
+     * form stays as it is, judged while the entry resolves);
      * {@link PermanentControlledByPlayersPredicate} "controlled by one of those players", its players found now ("creatures
      * that player controls", The Black Gate). A leaf with nothing chosen, or no player, matches nothing. A filter
      * without them is returned as it is.
@@ -266,6 +270,10 @@ public class SubjectResolutionService {
             case PermanentHasTypeChosenThisResolutionPredicate ignored -> entry.getChosenCreatureType() == null
                     ? new PermanentNotPredicate(new PermanentTruePredicate())
                     : new PermanentHasSubtypePredicate(entry.getChosenCreatureType());
+            case PermanentHasChosenParityPredicate parity when parity.of() == PermanentHasChosenParityPredicate.Quality.MANA_VALUE ->
+                    entry.getChosenParity() == null
+                            ? new PermanentNotPredicate(new PermanentTruePredicate())
+                            : new PermanentManaValueParityPredicate(entry.getChosenParity());
             case PermanentControlledByPlayersPredicate controlled -> {
                 List<UUID> players = players(gameData, entry, effect, controlled.players());
                 yield players.isEmpty() ? new PermanentNotPredicate(new PermanentTruePredicate())
@@ -968,14 +976,16 @@ public class SubjectResolutionService {
      * The rule a resolving effect that changes no characteristics makes of a set ("creatures target player controls
      * can't block this turn"): it is not locked to the permanents found now but covers whatever matches whenever it is
      * checked, those arriving later included (CR 611.2c). What the set's words fix as the effect resolves is bound now:
-     * its players ({@code eachPlayer()} binds none), and a {@link PermanentIsTargetCardPredicate} leaf becomes the
-     * effect's target permanent ("other creatures that player controls"). The returned predicate is judged later
-     * without a stack entry. {@code null} when the set names no player.
+     * its players ({@code eachPlayer()} binds none), a {@link PermanentIsTargetCardPredicate} leaf becomes the
+     * effect's target permanent ("other creatures that player controls"), and the values this resolution chose
+     * ({@link #bindChosenValues(GameData, StackEntry, CardEffect, PermanentPredicate)}: "creatures with mana value of
+     * that quality", Twins of Discord). The returned predicate is judged later without a stack entry. {@code null} when
+     * the set names no player.
      */
     public PermanentPredicate lastingRule(GameData gameData, StackEntry entry, CardEffect effect,
                                           PermanentSubject.ControlledBy set) {
         Context ctx = new Context(gameData, entry, effect, null, entry.getControllerId());
-        PermanentPredicate filter = bindTarget(ctx, set.filter());
+        PermanentPredicate filter = bindChosenValues(gameData, entry, effect, bindTarget(ctx, set.filter()));
         if (set.players() instanceof PlayerSubject.Each each && each.relation() == PlayerSubject.Relation.ALL) {
             return filter;
         }

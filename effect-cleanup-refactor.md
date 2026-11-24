@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b (each in Findings; the fold queue marks its rows). Fold runs 36, 29c, 27b and 32b are reported and wait to merge; 29d, 38 and 35b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                 |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36 (each in Findings; the fold queue marks its rows). Fold runs 29c, 27b and 32b are reported and wait to merge; 29d, 38 and 35b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                  |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,351 / 2,695 (after fold run 33b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,334 / 2,685 (after fold run 36) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,083 rows over 4,486 classes (after fold run 33b). Latest verdict per class: `step-9` 456, unique 1,174, absorbed 1,027, split 646, blocked-other 521, survivor 363, blocked-step-model 140, blocked-player-loop 96, dead 63. Waiting: 456 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,115 rows over 4,489 classes (after fold run 36). Latest verdict per class: `step-9` 437, unique 1,173, absorbed 1,044, split 646, blocked-other 521, survivor 367, blocked-step-model 140, blocked-player-loop 96, dead 65. Waiting: 437 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -898,6 +898,15 @@ Delayed and global triggers:
 - `AddManaOfTypeProducedByTappedPermanentEffect` (`()`, `(ManaColor)`, `ofSourceChosenColor()`, `.toItsController()`): every "whenever you tap / a land is tapped for [type / the chosen colour] mana, add one [more] of it"; reads only the produced types and waits for the land's own mana choice (fold run 33b).
 - `AwardPersistentManaEffect` (`(ManaColor, amount[, Recipient])`, `anyOneColor(amount)`, `inAnyCombinationOf(colors, amount)`, `.spendOnlyToCastSpells()`): every "until end of turn, you don't lose this mana as steps and phases end" (fold run 33b).
 - `ChoiceHandlerService.handleSpellOnlyManaColorChosen` resolves the tap triggers waiting on the produced mana type (Piracy) (fold run 33b).
+
+- `CantBlockThisTurnEffect(subject, Duration)`: `UNTIL_END_OF_COMBAT` is "can't block this combat" (fold run 36).
+- `CantAttackThisTurnEffect(triggering(), DURING_AFFECTED_PLAYERS_NEXT_TURN)`: "that creature can't attack during its controller's next turn". `except(allCreatures(), targetDeclaredElsewhere())`: "other creatures can't attack this turn" (fold run 36).
+- `SubjectResolutionService.lastingRule` binds chosen values; `bindChosenValues` binds `PermanentHasChosenParityPredicate(MANA_VALUE)` (fold run 36).
+- `GrantEffectToTargetUntilEndOfTurnEffect(ability, withCreaturesSharingAColor(target()))` (fold run 36).
+- `CantAttackOrBlockAloneEffect` (`unlessOthersAlsoDo`, `unlessGreaterPowerAlsoDoes`, `cantAttackUnlessAlsoAttacks`) plus `CombatCompanionRestrictions`, also exposed as `CombatAttackService.hasUnmetCompanionRestriction` (fold run 36).
+- `CreaturesCantAttackControllerUntilNextTurnEffect(PlayerSubject attackers, PlayerSubject protectedPlayers, boolean protectsPlaneswalkers, Duration)` (fold run 36).
+- `OpponentsMustAttackControllerEffect.attackingAnyone()` (fold run 36).
+- `CreaturesWithCounterAttackTogetherEffect(attackers, required)`: `ifSourceAttacks()`, `ifAnotherYouControlAttacks()`, `opponentsAttackTogether()` (fold run 36).
 
 ### Blocked causes still open
 
@@ -3819,6 +3828,40 @@ Batches `produced-mana` and `persistent-mana` are done. Ratchet 3,414 / 2,737 �
 - The tap family's "its controller adds" uses `TappedLandManaSupport.tappedPermanentController`, not a `PlayerSubject`. `controllerOf(triggering())` would lose a departed land, because the tap request records no controller.
 
 **For the next run.** Step 10 can move the tap family's recipients (`AddManaWhenTappedForManaEffect`, `AddManaOnEnchantedLandTapEffect`, this survivor) onto a `PlayerSubject` once `TapTriggers.tapRequest` records the tapped permanent's controller.
+
+### Step 9, fold run 36 (2026-11-24, parallel worktree)
+Five of seven batches done (`oneshot-combat`, `companion`, `attack-ban`, `attack-req`, `attack-together`); `defender-cond` and
+`attack-target` left. Ratchet 3,414 / 2,737 → 3,397 / 2,727 (17 records, 10 handlers; the `MatchingAttackerRestrictionEffect` and
+`OpponentsMustAttackRequirementEffect` interfaces went too). Ledger 32 rows: absorbed 17, survivor 6, dead 2, `step-9` 7 (re-noted).
+22 card files rewritten, Oracle text checked for all 22; rulings for Intimidation Bolt, Immobilizer Eldrazi, Twins of Discord,
+Okk, Champions of Minas Tirith, Call for Aid, Seeker of Slaanesh, Viashino Bey, War's Toll. CR 506.4, 506.5, 508.1c, 508.1d,
+509.1b, 509.1c, 611.2c checked.
+
+| Batch | Result |
+|---|---|
+| oneshot-combat | 7 folded. `CantBlockThisTurnEffect` gains a `Duration` (`UNTIL_END_OF_COMBAT`: Forgestoker `target()`, Flummoxed Cyclops `source()`); Twins of Discord and Immobilizer Eldrazi are `narrowed(allCreatures(), …)` rules; `CantAttackThisTurnEffect` takes Festival / Orim's Chant (`allCreatures()`), Intimidation Bolt (`except(allCreatures(), targetDeclaredElsewhere())`) and Wall of Dust (`triggering()`, `DURING_AFFECTED_PLAYERS_NEXT_TURN`). Incite Hysteria grants an ability ("gain 'This creature can't block'"), so it went onto `GrantEffectToTargetUntilEndOfTurnEffect(StaticAbility.of(CantBlockEffect), withCreaturesSharingAColor(target()))`, not the triage's survivor. |
+| companion | 3 folded onto `CantAttackOrBlockAloneEffect(…, otherCount, companion, description)` (`unlessOthersAlsoDo(2)`, `unlessGreaterPowerAlsoDoes()`, `cantAttackUnlessAlsoAttacks`), read by one engine component, `CombatCompanionRestrictions`, in the attack and block declarations and the AI. |
+| defender-cond | not taken: the three need a `Condition` judged for the defending (blocking) player in `CombatHelper`'s three scans and `BlockLegalityService`; fold run 34b builds player-judged conditions and is not on this tree. |
+| attack-target | not taken (time): two attacker-side readers (granted vs printed statics) and the Aura path with Vow floating copies must become one restricted-`PlayerSubject` reader. |
+| attack-ban | 3 folded onto `CreaturesCantAttackControllerUntilNextTurnEffect(PlayerSubject attackers, PlayerSubject protectedPlayers, protectsPlaneswalkers, Duration)`. Champions' payment stays in `MayPayManaEffect.dynamic` (step 10 needs nothing for it). |
+| attack-req | 1 folded: `OpponentsMustAttackControllerEffect.attackingAnyone()` (Seeker of Slaanesh), fixing the Fold: defect. |
+| attack-together | 3 folded plus Ekundu Cyclops (its `unique` row was the queue's "check"): `CreaturesWithCounterAttackTogetherEffect(attackers, required)` judged with the source as attackers are declared; one validator and the alongside reader. |
+
+**Behaviour changes.**
+- Seeker of Slaanesh: an attack on a battle (or another opponent) obeys it (Oracle: "attack with at least one creature"). Test.
+- A lone Okk, Orcish Conscripts or Scarred Puma is no longer offered as an attacker (or Okk, Conscripts as a blocker): each restriction is disobeyed alone (CR 508.1c, 509.1b); the declaration names the restriction as before.
+- Okk, Conscripts, Puma, War's Toll, Magnetic Web, Viashino Bey, Ekundu, Seeker and Trove are read through active static abilities (face down or lost abilities: no restriction or requirement; War's Toll, Magnetic Web and Trove/Seeker read printed statics before). No new test.
+- Viashino Bey is in `getMustAttackAlongsideIndices` (AI, prompt); the attack-together requirements waive a creature with its own attack tax (CR 508.1d), Viashino's guard before. No new test.
+- `lastingRule` binds chosen values (`bindChosenValues`, now with mana-value parity): a resolved rule with a chosen type or chosen players keeps them.
+- Logs and denials (the survivors'): Twins/Immobilizer "Matching creatures can't block this turn." and "can't block this turn"; Forgestoker/Cyclops "can't block this combat"; Wall of Dust "can't attack during its controller's next turn"; Festival/Orim's/Intimidation Bolt per-player lines; Incite Hysteria the grant line.
+
+**Tests changed.** `ImmobilizerEldraziTest` (4 asserts: the survivor's denial "can't block this turn", not "toughness greater than power"); `FlummoxedCyclopsTest`, `ForgestokerDragonTest`, `WallOfDustTest`, `AttackLegalityServiceTest` (named deleted records; the two service fixtures now resolve the survivor through its handler). Added: the Seeker battle test.
+
+**Tests run.** 133 classes (every test class naming a rewritten card, `git grep -lwF`; the 14 "alone" cards; samples of the survivors' cards; combat, block, attack-legality, subject and AI decision-engine tests; `EffectCountRatchetTest`): 193 XML files, 1,899 cases; two message assertions failed and were fixed (Immobilizer's denial, Viashino's "must attack"), then the 10 touched classes again: 169 cases, 0 failures.
+
+**Seen, not changed.** `CantAttackThisTurnEffectHandler`'s set branch floats `entry.getCard().getName()` (no face-down redaction) and doesn't bind its filter's chosen values (only the except branch goes through `lastingRule`). Sure of the code, no card hits it today.
+
+**For the next run.** `defender-cond` after fold run 34b lands (defending-player conditions), then `attack-target` as its own run.
 
 ## Prompt
 

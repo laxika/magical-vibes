@@ -2,19 +2,23 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.DarksteelMutation;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SeekerOfSlaanesh.class, GrizzlyBears.class, DarksteelMutation.class})
+@CardUsed({SeekerOfSlaanesh.class, GrizzlyBears.class, DarksteelMutation.class, InvasionOfZendikar.class})
 class SeekerOfSlaaneshTest extends BaseCardTest {
 
     @Test
@@ -110,5 +114,24 @@ class SeekerOfSlaaneshTest extends BaseCardTest {
         declareAttackers(player2, List.of());
 
         assertThat(bears.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An attack on a battle obeys the requirement, which names no defender")
+    void attackingABattleObeysTheRequirement() {
+        harness.addToBattlefield(player1, new SeekerOfSlaanesh());
+        Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfZendikar());
+        battle.setProtectorPlayerId(player1.getId());
+        battle.setCounterCount(CounterType.DEFENSE, 3);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        int bearsIndex = gd.playerBattlefields.get(player2.getId()).indexOf(bears);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player2, List.of(bearsIndex), Map.of(bearsIndex, battle.getId()));
+
+        assertThat(bears.isAttacking()).isTrue();
     }
 }

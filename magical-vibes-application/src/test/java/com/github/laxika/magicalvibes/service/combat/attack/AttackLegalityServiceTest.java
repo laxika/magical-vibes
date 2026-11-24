@@ -11,8 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
 
 import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
-import com.github.laxika.magicalvibes.model.effect.OtherCreaturesCantAttackThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.a.AngelicArbiter;
 import com.github.laxika.magicalvibes.cards.a.AnimateWall;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
@@ -258,13 +256,18 @@ class AttackLegalityServiceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A global turn-scoped restriction stops every creature from attacking")
+    @DisplayName("A resolved \"creatures can't attack this turn\" stops every player's creatures from attacking")
     void globalCantAttackThisTurnRestrictionStopsAttacking() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
-                new CreaturesCantAttackThisTurnEffect(), null, Duration.UNTIL_END_OF_TURN));
+        Permanent giant = addCreatureReady(player2, new HillGiant());
+        var effect = new CantAttackThisTurnEffect(Subjects.allCreatures());
+        StackEntry entry = TestStackDoor.triggered(new GrizzlyBears(), player2.getId(), "Test", List.of(effect),
+                null, (UUID) null);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CantAttackThisTurnEffectHandler.class)
+                .resolve(gd, entry, effect));
 
         assertThat(als.canAttack(gd, bears, player1.getId())).isFalse();
+        assertThat(als.canAttack(gd, giant, player2.getId())).isFalse();
     }
 
     @Test
@@ -406,17 +409,19 @@ class AttackLegalityServiceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("\"Other creatures can't attack this turn\" spares only the creatures it exempted")
+    @DisplayName("\"Other creatures can't attack this turn\" spares only the creature the spell targeted")
     void otherCreaturesCantAttackLockSparesOnlyTheExemptCreature() {
-        // Intimidation Bolt: "Creatures other than the targeted one can't attack this turn."
         Permanent spared = addCreatureReady(player1, new GrizzlyBears());
         Permanent other = addCreatureReady(player1, new HillGiant());
 
         assertThat(als.canAttack(gd, other, player1.getId())).isTrue();
 
-        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
-                new OtherCreaturesCantAttackThisTurnEffect(spared.getId()), null,
-                Duration.UNTIL_END_OF_TURN));
+        var effect = new CantAttackThisTurnEffect(
+                Subjects.except(Subjects.allCreatures(), Subjects.targetDeclaredElsewhere()));
+        StackEntry entry = TestStackDoor.triggered(new GrizzlyBears(), player2.getId(), "Test", List.of(effect),
+                spared.getId(), (UUID) null);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CantAttackThisTurnEffectHandler.class)
+                .resolve(gd, entry, effect));
 
         assertThat(als.canAttack(gd, spared, player1.getId())).isTrue();
         assertThat(als.canAttack(gd, other, player1.getId())).isFalse();

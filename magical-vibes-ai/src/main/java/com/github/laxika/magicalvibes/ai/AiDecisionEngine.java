@@ -26,9 +26,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTimeCreatureTypeChoiceEffect;
@@ -38,7 +35,6 @@ import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.CombatTapCostEffect;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.effect.EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.MatchingAttackerRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.RemoveCountersFromControlledCreaturesCastingCost;
@@ -1064,7 +1060,8 @@ public abstract class AiDecisionEngine {
             return attackerIndices;
         }
         Permanent sole = battlefield.get(attackerIndices.getFirst());
-        return hasCantAttackOrBlockAlone(sole) ? List.of() : attackerIndices;
+        return combatAttackService.hasUnmetCompanionRestriction(gameData, sole, true, List.of(sole))
+                ? List.of() : attackerIndices;
     }
 
     /**
@@ -1159,9 +1156,11 @@ public abstract class AiDecisionEngine {
         Set<Integer> uniqueBlockers = kept.stream()
                 .map(BlockerAssignment::blockerIndex)
                 .collect(Collectors.toSet());
-        if (uniqueBlockers.size() == 1 && hasCantAttackOrBlockAlone(
-                defenderBattlefield.get(uniqueBlockers.iterator().next()))) {
-            return List.of();
+        if (uniqueBlockers.size() == 1) {
+            Permanent sole = defenderBattlefield.get(uniqueBlockers.iterator().next());
+            if (combatAttackService.hasUnmetCompanionRestriction(gameData, sole, false, List.of(sole))) {
+                return List.of();
+            }
         }
         return kept;
     }
@@ -1209,11 +1208,6 @@ public abstract class AiDecisionEngine {
                 .count();
         return assignedBlockCount == defendingCreatureIndices.size()
                 && assignedBlockers.equals(new HashSet<>(defendingCreatureIndices));
-    }
-
-    private boolean hasCantAttackOrBlockAlone(Permanent creature) {
-        return creature.getCard().getStaticEffects().stream()
-                .anyMatch(CantAttackOrBlockAloneEffect.class::isInstance);
     }
 
     /**
@@ -1735,40 +1729,11 @@ public abstract class AiDecisionEngine {
     private boolean hasUnmetAttackRestriction(GameData gameData, List<Permanent> battlefield,
                                               List<Integer> attackerIndices, int attackerIndex) {
         Permanent attacker = battlefield.get(attackerIndex);
-        if (attackerIndices.size() == 1 && hasCantAttackOrBlockAlone(attacker)) {
-            return true;
-        }
         if (attackerIndices.size() > 1 && combatAttackService.canOnlyAttackAlone(gameData, attacker)) {
             return true;
         }
-
-        for (CardEffect effect : attacker.getCard().getStaticEffects()) {
-            if (effect instanceof CantAttackOrBlockUnlessCountAlsoDoesEffect restriction
-                    && attackerIndices.size() - 1 < restriction.otherCount()) {
-                return true;
-            }
-            if (effect instanceof CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect) {
-                int power = gameQueryService.getEffectivePower(gameData, attacker);
-                boolean hasGreaterPowerAttacker = attackerIndices.stream()
-                        .filter(other -> other != attackerIndex)
-                        .map(battlefield::get)
-                        .anyMatch(other -> gameQueryService.getEffectivePower(gameData, other) > power);
-                if (!hasGreaterPowerAttacker) {
-                    return true;
-                }
-            }
-            if (effect instanceof MatchingAttackerRestrictionEffect restriction) {
-                boolean hasMatchingAttacker = attackerIndices.stream()
-                        .filter(other -> other != attackerIndex)
-                        .map(battlefield::get)
-                        .anyMatch(other -> predicateEvaluationService.matchesPermanentPredicate(
-                                gameData, other, restriction.matchingAttackerPredicate()));
-                if (!hasMatchingAttacker) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return combatAttackService.hasUnmetCompanionRestriction(gameData, attacker, true,
+                attackerIndices.stream().map(battlefield::get).toList());
     }
 
     /** Returns the rejection reason, or null when the declaration was accepted or the game is over. */
@@ -1999,23 +1964,8 @@ public abstract class AiDecisionEngine {
     private boolean hasUnmetBlockPartnerRequirement(
             GameData gameData, List<Permanent> battlefield, Set<Integer> selectedBlockers, int blockerIdx) {
         Permanent blocker = battlefield.get(blockerIdx);
-        for (CardEffect effect : blocker.getCard().getStaticEffects()) {
-            if (effect instanceof CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect) {
-                int blockerPower = gameQueryService.getEffectivePower(gameData, blocker);
-                boolean hasGreaterPowerPartner = selectedBlockers.stream()
-                        .filter(otherIdx -> otherIdx != blockerIdx)
-                        .map(battlefield::get)
-                        .anyMatch(other -> gameQueryService.getEffectivePower(gameData, other) > blockerPower);
-                if (!hasGreaterPowerPartner) {
-                    return true;
-                }
-            }
-            if (effect instanceof CantAttackOrBlockUnlessCountAlsoDoesEffect restriction
-                    && selectedBlockers.size() - 1 < restriction.otherCount()) {
-                return true;
-            }
-        }
-        return false;
+        return combatAttackService.hasUnmetCompanionRestriction(gameData, blocker, false,
+                selectedBlockers.stream().map(battlefield::get).toList());
     }
 
     /**

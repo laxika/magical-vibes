@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "255")
 @CardRegistration(set = "ICE", collectorNumber = "206")
@@ -10,8 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountA
 public class OrcishConscripts extends Card {
 
     public OrcishConscripts() {
-        // Can't attack unless at least two other creatures attack;
-        // can't block unless at least two other creatures block.
-        addStaticEffect(new CantAttackOrBlockUnlessCountAlsoDoesEffect(2));
+        addStaticEffect(CantAttackOrBlockAloneEffect.unlessOthersAlsoDo(2));
     }
 }

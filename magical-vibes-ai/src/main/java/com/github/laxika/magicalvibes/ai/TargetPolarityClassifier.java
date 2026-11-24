@@ -720,7 +720,6 @@ public class TargetPolarityClassifier {
 
             // Other harm: fights, steals, strips, debuffs, forced blocks.
             entry("DestroyAttachmentsOnTargetCreatureEffect", TargetPolarity.HARMFUL),
-            entry("CantBlockTargetAndSharingCreaturesUntilEndOfTurnEffect", TargetPolarity.HARMFUL),
             entry("EnchantedCreatureFightsTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("EnteringCreatureFightsTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("FightTargetsEffect", TargetPolarity.HARMFUL),

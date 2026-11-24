@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CantAttackNextTurnCombatOpponentEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "4ED", collectorNumber = "229")
@@ -13,6 +15,7 @@ public class WallOfDust extends Card {
         // Defender is auto-loaded from Scryfall (enforced in CombatAttackService).
         // Whenever this creature blocks a creature, that creature can't attack during its
         // controller's next turn.
-        addTrigger(Triggers.blocks(), new CantAttackNextTurnCombatOpponentEffect());
+        addTrigger(Triggers.blocks(), new CantAttackThisTurnEffect(Subjects.triggering(),
+                Duration.DURING_AFFECTED_PLAYERS_NEXT_TURN));
     }
 }

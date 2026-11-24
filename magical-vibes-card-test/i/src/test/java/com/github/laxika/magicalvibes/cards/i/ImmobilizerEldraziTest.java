@@ -38,7 +38,7 @@ class ImmobilizerEldraziTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 1))))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("toughness greater than power");
+                .hasMessageContaining("can't block this turn");
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 1)));
         assertThat(bears.isBlocking()).isTrue();
@@ -62,7 +62,7 @@ class ImmobilizerEldraziTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 1))))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("toughness greater than power");
+                .hasMessageContaining("can't block this turn");
     }
 
     @Test
@@ -94,7 +94,7 @@ class ImmobilizerEldraziTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("toughness greater than power");
+                .hasMessageContaining("can't block this turn");
     }
 
     @Test
@@ -126,7 +126,7 @@ class ImmobilizerEldraziTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player1,
                 List.of(new BlockerAssignment(1, 0))))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("toughness greater than power");
+                .hasMessageContaining("can't block this turn");
     }
 
     @Test

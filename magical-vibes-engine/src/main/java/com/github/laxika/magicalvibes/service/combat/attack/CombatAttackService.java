@@ -34,22 +34,17 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CanOnlyAttackAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatCreatureLimitEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithCounterAttackTogetherEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanOnlyAttackAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockAloneEffect;
-import com.github.laxika.magicalvibes.model.effect.MatchingAttackerRestrictionEffect;
-import com.github.laxika.magicalvibes.model.effect.MustAttackIfAnotherCreatureAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentCreaturesAttackTogetherEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsMustAttackRequirementEffect;
-import com.github.laxika.magicalvibes.model.effect.OtherCreaturesMustAttackIfSourceAttacksEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsMustAttackControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.TrainEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMostLifePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -60,6 +55,7 @@ import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.combat.CombatCompanionRestrictions;
 import com.github.laxika.magicalvibes.service.combat.CombatHelper;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.CombatTriggerService;
@@ -157,6 +153,7 @@ public class CombatAttackService {
     private final StaticEffectConditionResolver staticEffectConditionResolver;
     private final CardCatalog cardCatalog;
     private final TriggeredAbilityStackService triggeredAbilityStackService;
+    private final CombatCompanionRestrictions combatCompanionRestrictions;
 
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.trigger.pipeline.AttackTriggers attackTriggers;
@@ -356,37 +353,8 @@ public class CombatAttackService {
         if (attackerIndices.size() > 1 && canOnlyAttackAlone(gameData, attacker)) {
             return true;
         }
-        if (gameQueryService.hasLostPrintedAbilities(gameData, attacker)) {
-            return false;
-        }
-
-        for (CardEffect effect : attacker.getCard().getStaticEffects()) {
-            if (effect instanceof CantAttackOrBlockUnlessCountAlsoDoesEffect restriction
-                    && attackerIndices.size() - 1 < restriction.otherCount()) {
-                return true;
-            }
-            if (effect instanceof CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect) {
-                int power = gameQueryService.getEffectivePower(gameData, attacker);
-                boolean hasGreaterPowerAttacker = attackerIndices.stream()
-                        .filter(other -> other != attackerIndex)
-                        .map(battlefield::get)
-                        .anyMatch(other -> gameQueryService.getEffectivePower(gameData, other) > power);
-                if (!hasGreaterPowerAttacker) {
-                    return true;
-                }
-            }
-            if (effect instanceof MatchingAttackerRestrictionEffect restriction) {
-                boolean hasMatchingAttacker = attackerIndices.stream()
-                        .filter(other -> other != attackerIndex)
-                        .map(battlefield::get)
-                        .anyMatch(other -> predicateEvaluationService.matchesPermanentPredicate(
-                                gameData, other, restriction.matchingAttackerPredicate()));
-                if (!hasMatchingAttacker) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return combatCompanionRestrictions.firstUnmet(gameData, attacker, true,
+                attackerIndices.stream().map(battlefield::get).toList()) != null;
     }
 
     /**
@@ -413,85 +381,57 @@ public class CombatAttackService {
 
         Set<Integer> mustAttack = new LinkedHashSet<>();
         Set<Integer> attackingIndices = new LinkedHashSet<>(declaredAttackerIndices);
-        for (int idx : attackableIndices) {
-            if (idx < 0 || idx >= battlefield.size() || attackingIndices.contains(idx)) {
-                continue;
-            }
-            Permanent creature = battlefield.get(idx);
-            boolean conditional = creature.getCard().getStaticEffects().stream()
-                    .anyMatch(MustAttackIfAnotherCreatureAttacksEffect.class::isInstance);
-            if (conditional && attackingIndices.stream().anyMatch(other -> other != idx)) {
-                mustAttack.add(idx);
-                attackingIndices.add(idx);
-            }
-        }
-
-        if (hasOpponentCreaturesAttackTogetherEffect(gameData, playerId)) {
-            for (int idx : attackableIndices) {
-                if (attackingIndices.add(idx)) {
-                    mustAttack.add(idx);
-                }
-            }
-        }
-
-        Set<CounterType> attackTogetherCounterTypes = getAttackTogetherCounterTypes(gameData);
-        boolean addedCounterBearer;
+        List<GameQueryService.ActiveStaticEffect<CreaturesWithCounterAttackTogetherEffect>> requirements =
+                gameQueryService.activeStaticEffects(gameData, CreaturesWithCounterAttackTogetherEffect.class);
+        boolean added;
         do {
-            addedCounterBearer = false;
-            for (CounterType counterType : attackTogetherCounterTypes) {
-                boolean bearerAttacking = attackingIndices.stream()
-                        .filter(idx -> idx >= 0 && idx < battlefield.size())
-                        .anyMatch(idx -> battlefield.get(idx).getCounterCount(counterType) > 0);
-                if (!bearerAttacking) {
+            added = false;
+            for (var requirement : requirements) {
+                if (!attackTogetherApplies(gameData, battlefield, attackingIndices, requirement)) {
                     continue;
                 }
                 for (int idx : attackableIndices) {
-                    if (attackingIndices.contains(idx)) {
+                    if (idx < 0 || idx >= battlefield.size() || attackingIndices.contains(idx)) {
                         continue;
                     }
-                    Permanent creature = battlefield.get(idx);
-                    if (creature.getCounterCount(counterType) > 0) {
+                    if (attackTogetherRequires(gameData, battlefield.get(idx), requirement)
+                            && gameQueryService.getCreatureAttackTax(gameData, battlefield.get(idx)) == 0) {
                         mustAttack.add(idx);
                         attackingIndices.add(idx);
-                        addedCounterBearer = true;
+                        added = true;
                     }
                 }
             }
-        } while (addedCounterBearer);
+        } while (added);
         return new ArrayList<>(mustAttack);
     }
 
-    private boolean hasOpponentCreaturesAttackTogetherEffect(GameData gameData, UUID playerId) {
-        for (UUID sourceControllerId : gameData.orderedPlayerIds) {
-            if (sourceControllerId.equals(playerId)) {
-                continue;
-            }
-            List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
-            if (battlefield == null) {
-                continue;
-            }
-            for (Permanent permanent : battlefield) {
-                if (permanent.getCard().getStaticEffects().stream()
-                        .anyMatch(OpponentCreaturesAttackTogetherEffect.class::isInstance)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+    /**
+     * Whether a declared attacker among {@code attackingIndices} matches the attacker filter of an
+     * {@link CreaturesWithCounterAttackTogetherEffect} requirement, judged with the requirement's permanent as source.
+     */
+    private boolean attackTogetherApplies(GameData gameData, List<Permanent> battlefield, Collection<Integer> attackingIndices,
+                                          GameQueryService.ActiveStaticEffect<CreaturesWithCounterAttackTogetherEffect> requirement) {
+        FilterContext context = attackTogetherContext(gameData, requirement);
+        return attackingIndices.stream()
+                .filter(idx -> idx >= 0 && idx < battlefield.size())
+                .anyMatch(idx -> predicateEvaluationService.matchesPermanentPredicate(battlefield.get(idx),
+                        requirement.effect().attackers(), context));
     }
 
-    private Set<CounterType> getAttackTogetherCounterTypes(GameData gameData) {
-        Set<CounterType> counterTypes = EnumSet.noneOf(CounterType.class);
-        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
-            for (Permanent permanent : battlefield) {
-                for (CardEffect effect : permanent.getCard().getStaticEffects()) {
-                    if (effect instanceof CreaturesWithCounterAttackTogetherEffect together) {
-                        counterTypes.add(together.counterType());
-                    }
-                }
-            }
-        }
-        return counterTypes;
+    /** Whether {@code creature} is one the requirement says attacks if able. */
+    private boolean attackTogetherRequires(GameData gameData, Permanent creature,
+                                           GameQueryService.ActiveStaticEffect<CreaturesWithCounterAttackTogetherEffect> requirement) {
+        return predicateEvaluationService.matchesPermanentPredicate(creature, requirement.effect().required(),
+                attackTogetherContext(gameData, requirement));
+    }
+
+    private static FilterContext attackTogetherContext(GameData gameData,
+                                                       GameQueryService.ActiveStaticEffect<?> requirement) {
+        return FilterContext.of(gameData)
+                .withSourceCardId(requirement.source().getCard().getId())
+                .withSourcePermanentId(requirement.source().getId())
+                .withSourceControllerId(requirement.controllerId());
     }
 
     /**
@@ -635,28 +575,15 @@ public class CombatAttackService {
         // may only be declared if it is the sole attacker
         validateCanOnlyAttackAlone(gameData, battlefield, attackerIndices);
 
-        // Okk: "can't attack unless a creature with greater power also attacks"
-        validateGreaterPowerAlsoAttacks(gameData, battlefield, attackerIndices);
-
-        // Orcish Conscripts: "can't attack unless at least N other creatures also attack"
-        validateCountAlsoAttacks(gameData, battlefield, attackerIndices);
-
-        validateMatchingCreatureAlsoAttacks(gameData, battlefield, attackerIndices);
+        // "can't attack unless at least N other [creatures matching a filter] also attack" (Okk, Orcish Conscripts)
+        validateCompanionsAlsoAttack(gameData, battlefield, attackerIndices);
 
         // Validate attack requirements (CR 508.1d: satisfy as many as possible)
         validateMaximumAttackRequirements(gameData, playerId, attackable, uniqueIndices, attackTargets);
 
-        // Ekundu Cyclops: "if a creature you control attacks, this creature also attacks if able"
-        validateAttacksAlongsideOtherCreature(gameData, playerId, attackable, uniqueIndices, attackTargets);
-
-        // War's Toll: if one of the active player's creatures attacks, all of that player's
-        // creatures attack if able.
-        validateOpponentCreaturesAttackTogether(gameData, playerId, attackable, uniqueIndices, attackTargets);
-        validateOtherCreaturesAttackWithSource(gameData, playerId, attackable, uniqueIndices, attackTargets);
-
-        // Magnetic Web: "if a creature with a magnet counter attacks, all creatures with magnet
-        // counters attack if able"
-        validateCounterBearersAttackTogether(gameData, playerId, attackable, uniqueIndices, attackTargets);
+        // "If [a creature] attacks, [these creatures] attack if able" (Ekundu Cyclops, Viashino Bey, War's Toll,
+        // Magnetic Web)
+        validateAttackTogetherRequirements(gameData, playerId, attackable, uniqueIndices, attackTargets);
 
         // Validate "must attack with at least one creature" (e.g. Trove of Temptation)
         validateOpponentRequiredAttackTargets(gameData, playerId, attackable, attackerIndices, attackTargets);
@@ -1625,30 +1552,64 @@ public class CombatAttackService {
     }
 
     /**
-     * Returns true if an opponent controls a permanent with
-     * {@link OpponentsMustAttackRequirementEffect} and at least one of this player's attackable
-     * creatures can attack a required target without paying any attack cost. CR 508.1d: the player
-     * is not required to pay optional attack costs to satisfy the requirement, so a requirement whose
-     * only satisfying attacks are taxed is not enforced.
+     * Returns true if an opponent's {@link OpponentsMustAttackControllerEffect} applies to this player's declaration:
+     * at least one of this player's attackable creatures can attack a target that obeys it without paying any attack
+     * cost. CR 508.1d: the player is not required to pay optional attack costs to obey a requirement, so a requirement
+     * only taxed attacks would obey is not enforced.
      */
     public boolean isOpponentForcedToAttack(GameData gameData, UUID playerId) {
-        return isOpponentRequirementEnforced(gameData, playerId,
-                getAttackableCreatureIndices(gameData, playerId));
+        return enforcedOpponentRequirementTargets(gameData, playerId,
+                getAttackableCreatureIndices(gameData, playerId)) != null;
     }
 
-    private boolean isOpponentRequirementEnforced(GameData gameData, UUID playerId, List<Integer> attackableIndices) {
+    /**
+     * The attack targets an attack must go to for every enforced opponent requirement to be obeyed, or {@code null}
+     * when none is enforced. "Attack you or a planeswalker you control" (Trove of Temptation) names its controller and
+     * their planeswalkers; "attack with at least one creature" (Seeker of Slaanesh) any target, so an attack obeying the
+     * first obeys the second too. When no free attack can obey the named targets, only the any-target requirement is
+     * left to enforce.
+     */
+    private Set<UUID> enforcedOpponentRequirementTargets(GameData gameData, UUID playerId,
+                                                         List<Integer> attackableIndices) {
         if (attackableIndices.isEmpty()
                 || !castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
-            return false;
+            return null;
         }
-        Set<UUID> requiredTargetIds = getOpponentRequiredAttackTargetIds(gameData, playerId);
-        if (requiredTargetIds.isEmpty()) {
-            return false;
+        Set<UUID> namedTargetIds = new HashSet<>();
+        boolean anyDefender = false;
+        for (var active : gameQueryService.activeStaticEffects(gameData, OpponentsMustAttackControllerEffect.class)) {
+            if (active.controllerId().equals(playerId)) {
+                continue;
+            }
+            if (active.effect().anyDefender()) {
+                anyDefender = true;
+                continue;
+            }
+            namedTargetIds.add(active.controllerId());
+            for (Permanent target : gameData.playerBattlefields.getOrDefault(active.controllerId(), List.of())) {
+                if (gameQueryService.isPlaneswalker(gameData, target)) {
+                    namedTargetIds.add(target.getId());
+                }
+            }
         }
+        if (!namedTargetIds.isEmpty() && canAttackForFree(gameData, playerId, attackableIndices, namedTargetIds)) {
+            return namedTargetIds;
+        }
+        if (anyDefender) {
+            Set<UUID> anyTargetIds = attackLegalityService.getValidAttackTargetIds(gameData, playerId);
+            if (canAttackForFree(gameData, playerId, attackableIndices, anyTargetIds)) {
+                return anyTargetIds;
+            }
+        }
+        return null;
+    }
+
+    private boolean canAttackForFree(GameData gameData, UUID playerId, List<Integer> attackableIndices,
+                                     Set<UUID> targetIds) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         for (int idx : attackableIndices) {
             Permanent creature = battlefield.get(idx);
-            for (UUID targetId : requiredTargetIds) {
+            for (UUID targetId : targetIds) {
                 if (attackLegalityService.canAttackDefender(gameData, creature, targetId)
                         && castingCostService.getAttackPaymentPerCreature(gameData, playerId, targetId, creature) == 0
                         && castingCostService.getAttackLifePaymentPerCreature(gameData, playerId, targetId, creature) == 0) {
@@ -1659,43 +1620,14 @@ public class CombatAttackService {
         return false;
     }
 
-    /**
-     * Returns the attack targets named by opponents' {@link OpponentsMustAttackRequirementEffect}
-     * permanents: the controller of each such permanent and the planeswalkers that controller controls.
-     */
-    private Set<UUID> getOpponentRequiredAttackTargetIds(GameData gameData, UUID playerId) {
-        Set<UUID> requiredTargetIds = new HashSet<>();
-        for (UUID pid : gameData.orderedPlayerIds) {
-            if (pid.equals(playerId)) continue;
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf == null) continue;
-            for (Permanent perm : bf) {
-                if (gameData.losesAllAbilitiesByEffect(perm)
-                        || gameQueryService.computeStaticBonus(gameData, perm).losesAllAbilities()) {
-                    continue;
-                }
-                boolean requiresAttack = perm.getCard().getStaticEffects().stream()
-                        .anyMatch(OpponentsMustAttackRequirementEffect.class::isInstance);
-                if (!requiresAttack) continue;
-                requiredTargetIds.add(pid);
-                for (Permanent target : bf) {
-                    if (gameQueryService.isPlaneswalker(gameData, target)) {
-                        requiredTargetIds.add(target.getId());
-                    }
-                }
-            }
-        }
-        return requiredTargetIds;
-    }
-
     private void validateOpponentRequiredAttackTargets(GameData gameData, UUID playerId,
                                                        List<Integer> attackableIndices,
                                                        List<Integer> attackerIndices,
                                                        Map<Integer, UUID> attackTargets) {
-        if (!isOpponentRequirementEnforced(gameData, playerId, attackableIndices)) {
+        Set<UUID> requiredTargetIds = enforcedOpponentRequirementTargets(gameData, playerId, attackableIndices);
+        if (requiredTargetIds == null) {
             return;
         }
-        Set<UUID> requiredTargetIds = getOpponentRequiredAttackTargetIds(gameData, playerId);
         UUID defaultTargetId = gameQueryService.getOpponentId(gameData, playerId);
         for (int idx : attackerIndices) {
             UUID targetId = attackTargets != null ? attackTargets.get(idx) : null;
@@ -1710,119 +1642,26 @@ public class CombatAttackService {
     }
 
     /**
-     * Ekundu Cyclops (CR 508.1d): a creature with a conditional "if a creature you control
-     * attacks, this creature also attacks if able" requirement must be declared whenever any
-     * other creature its controller controls is declared as an attacker. The requirement is
-     * waived when attacking would cost the player mana (CR 508.1d — optional attack costs are
-     * never mandatory), matching {@code validateMaximumAttackRequirements}. The requirement is also
-     * waived when the Cyclops has lost all abilities, or when declaring it beside the other attackers would
+     * CR 508.1d: a declaration with an attacker that turns on an {@link CreaturesWithCounterAttackTogetherEffect}
+     * requirement ("if a creature you control attacks, this creature also attacks if able", Ekundu Cyclops; "if this
+     * creature attacks, all creatures you control attack if able", Viashino Bey; War's Toll; Magnetic Web) must hold
+     * every attackable creature the requirement names. Waived while any attack would cost the player something and for
+     * a creature with its own attack cost (CR 508.1d never forces a payment), and for a creature whose joining would
      * disobey a restriction (one of them can only attack alone, or no more creatures may attack).
      */
-    private void validateAttacksAlongsideOtherCreature(GameData gameData, UUID playerId,
-                                                       List<Integer> attackableIndices,
-                                                       Set<Integer> declaredAttackerIndices,
-                                                       Map<Integer, UUID> attackTargets) {
-        if (castingCostService.hasAttackPaymentForAnyCreature(gameData, playerId)
-                || !castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
-            return;
-        }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        for (int idx : attackableIndices) {
-            if (declaredAttackerIndices.contains(idx)) {
-                continue;
-            }
-            Permanent creature = battlefield.get(idx);
-            boolean conditional = !gameQueryService.hasLostAllAbilities(gameData, creature)
-                    && creature.getCard().getStaticEffects().stream()
-                    .anyMatch(MustAttackIfAnotherCreatureAttacksEffect.class::isInstance);
-            if (conditional && declaredAttackerIndices.stream().anyMatch(other -> other != idx)
-                    && canAttackAlongside(gameData, playerId, battlefield, declaredAttackerIndices, attackTargets,
-                    idx)) {
-                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, creature)
-                        + " must also attack when another creature you control attacks");
-            }
-        }
-    }
-
-    private void validateOpponentCreaturesAttackTogether(GameData gameData, UUID playerId,
-                                                         List<Integer> attackableIndices,
-                                                         Set<Integer> declaredAttackerIndices,
-                                                         Map<Integer, UUID> attackTargets) {
+    private void validateAttackTogetherRequirements(GameData gameData, UUID playerId,
+                                                    List<Integer> attackableIndices,
+                                                    Set<Integer> declaredAttackerIndices,
+                                                    Map<Integer, UUID> attackTargets) {
         if (declaredAttackerIndices.isEmpty()
                 || castingCostService.hasAttackPaymentForAnyCreature(gameData, playerId)
-                || !castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()
-                || !hasOpponentCreaturesAttackTogetherEffect(gameData, playerId)) {
-            return;
-        }
-
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        // CR 508.1d: a creature whose attacking beside the others would disobey a restriction (one of them can only
-        // attack alone, or no more creatures may attack) isn't required to join them.
-        for (int idx : attackableIndices) {
-            if (!declaredAttackerIndices.contains(idx)
-                    && canAttackAlongside(gameData, playerId, battlefield, declaredAttackerIndices, attackTargets,
-                    idx)) {
-                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, battlefield.get(idx))
-                        + " must also attack when another creature you control attacks");
-            }
-        }
-    }
-
-    private void validateOtherCreaturesAttackWithSource(GameData gameData, UUID playerId,
-                                                       List<Integer> attackableIndices,
-                                                       Set<Integer> declaredAttackerIndices,
-                                                       Map<Integer, UUID> attackTargets) {
-        if (castingCostService.hasAttackPaymentForAnyCreature(gameData, playerId)
                 || !castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
             return;
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        boolean sourceAttacks = declaredAttackerIndices.stream().map(battlefield::get)
-                .anyMatch(source -> !source.isFaceDown() && !gameQueryService.hasLostAllAbilities(gameData, source)
-                        && source.getCard().getStaticEffects().stream()
-                        .anyMatch(OtherCreaturesMustAttackIfSourceAttacksEffect.class::isInstance));
-        if (!sourceAttacks) return;
-        for (int index : attackableIndices) {
-            Permanent other = battlefield.get(index);
-            if (!declaredAttackerIndices.contains(index)
-                    && canAttackAlongside(gameData, playerId, battlefield, declaredAttackerIndices, attackTargets,
-                    index)
-                    && gameQueryService.getCreatureAttackTax(gameData, other) == 0) {
-                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, other)
-                        + " must attack when the source creature attacks");
-            }
-        }
-    }
-
-    /**
-     * Magnetic Web (CR 508.1d): while a permanent with a
-     * {@link CreaturesWithCounterAttackTogetherEffect} is on the battlefield, declaring an attacker
-     * that carries the named counter turns "attacks if able" on for every other creature the active
-     * player controls with such a counter. Waived under an attack tax for the same reason as
-     * {@link #validateAttacksAlongsideOtherCreature} (CR 508.1d never forces a player to pay a cost).
-     */
-    private void validateCounterBearersAttackTogether(GameData gameData, UUID playerId,
-                                                      List<Integer> attackableIndices,
-                                                      Set<Integer> declaredAttackerIndices,
-                                                      Map<Integer, UUID> attackTargets) {
-        if (declaredAttackerIndices.isEmpty()) {
-            return;
-        }
-        if (castingCostService.hasAttackPaymentForAnyCreature(gameData, playerId)
-                || !castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
-            return;
-        }
-
-        Set<CounterType> activeCounterTypes = getAttackTogetherCounterTypes(gameData);
-        if (activeCounterTypes.isEmpty()) {
-            return;
-        }
-
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        for (CounterType counterType : activeCounterTypes) {
-            boolean bearerAttacking = declaredAttackerIndices.stream()
-                    .anyMatch(idx -> battlefield.get(idx).getCounterCount(counterType) > 0);
-            if (!bearerAttacking) {
+        for (var requirement : gameQueryService.activeStaticEffects(gameData,
+                CreaturesWithCounterAttackTogetherEffect.class)) {
+            if (!attackTogetherApplies(gameData, battlefield, declaredAttackerIndices, requirement)) {
                 continue;
             }
             for (int idx : attackableIndices) {
@@ -1830,11 +1669,12 @@ public class CombatAttackService {
                     continue;
                 }
                 Permanent creature = battlefield.get(idx);
-                if (creature.getCounterCount(counterType) > 0
-                        && canAttackAlongside(gameData, playerId, battlefield, declaredAttackerIndices,
-                        attackTargets, idx)) {
+                if (attackTogetherRequires(gameData, creature, requirement)
+                        && gameQueryService.getCreatureAttackTax(gameData, creature) == 0
+                        && canAttackAlongside(gameData, playerId, battlefield, declaredAttackerIndices, attackTargets,
+                        idx)) {
                     throw new IllegalStateException(FaceDownVisibility.publicName(gameData, creature)
-                            + " must also attack when a creature with such a counter attacks");
+                            + " must attack if able: it must also attack beside the declared attackers");
                 }
             }
         }
@@ -1844,9 +1684,10 @@ public class CombatAttackService {
                                          List<Integer> attackerIndices) {
         if (attackerIndices.size() == 1) {
             Permanent sole = battlefield.get(attackerIndices.getFirst());
-            if (hasCantAttackOrBlockAlone(gameData, sole)) {
+            if (gameQueryService.hasAuraWithEffect(gameData, sole, EnchantedCreatureCantAttackOrBlockAloneEffect.class)) {
                 throw new IllegalStateException(FaceDownVisibility.publicName(gameData, sole) + " can't attack alone");
             }
+            validateCompanionsAlsoAttack(gameData, battlefield, attackerIndices);
         }
     }
 
@@ -1863,89 +1704,37 @@ public class CombatAttackService {
         }
     }
 
+    /**
+     * Whether {@code creature} disobeys a "can't attack / block alone" or "unless [others] also attack / block"
+     * restriction of its own when {@code declared} (the creature among them, or not) are the declared attackers
+     * ({@code attacking}) or blockers (CR 508.1c, 509.1b); for the AI, which builds declarations before they are made.
+     */
+    public boolean hasUnmetCompanionRestriction(GameData gameData, Permanent creature, boolean attacking,
+                                                Collection<Permanent> declared) {
+        return combatCompanionRestrictions.firstUnmet(gameData, creature, attacking, declared) != null;
+    }
+
     private boolean hasCantAttackOrBlockAlone(GameData gameData, Permanent creature) {
-        return gameQueryService.getActiveStaticEffects(gameData, creature).stream()
-                .anyMatch(effect -> effect instanceof CantAttackOrBlockAloneEffect restriction
-                        && restriction.restrictsAttacking())
+        return combatCompanionRestrictions.isRestricted(gameData, creature, true)
                 || gameQueryService.hasAuraWithEffect(gameData, creature,
                         EnchantedCreatureCantAttackOrBlockAloneEffect.class);
     }
 
     /**
-     * Okk (CR 508.1a): a creature with "can't attack unless a creature with greater power also
-     * attacks" may only be declared as an attacker if another declared attacker has strictly
-     * greater power. The comparison is checked only at declaration time.
+     * CR 508.1c: every declared attacker with "can't attack alone" or "can't attack unless [N other creatures, a
+     * creature with greater power, a black or green creature] also attack" has those others beside it, judged as the
+     * attackers are declared.
      */
-    private void validateGreaterPowerAlsoAttacks(GameData gameData, List<Permanent> battlefield,
-                                                 List<Integer> attackerIndices) {
-        for (int idx : attackerIndices) {
-            Permanent restricted = battlefield.get(idx);
-            if (!hasGreaterPowerRestriction(restricted)
-                    || gameQueryService.hasLostPrintedAbilities(gameData, restricted)) {
-                continue;
+    private void validateCompanionsAlsoAttack(GameData gameData, List<Permanent> battlefield,
+                                              List<Integer> attackerIndices) {
+        List<Permanent> attackers = attackerIndices.stream().map(battlefield::get).toList();
+        for (Permanent attacker : attackers) {
+            CantAttackOrBlockAloneEffect unmet = combatCompanionRestrictions.firstUnmet(gameData, attacker, true,
+                    attackers);
+            if (unmet != null) {
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, attacker) + " "
+                        + unmet.unmetText(true));
             }
-            int power = gameQueryService.getEffectivePower(gameData, restricted);
-            boolean greaterPowerAlsoAttacks = attackerIndices.stream()
-                    .filter(other -> other != idx)
-                    .map(battlefield::get)
-                    .anyMatch(other -> gameQueryService.getEffectivePower(gameData, other) > power);
-            if (!greaterPowerAlsoAttacks) {
-                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, restricted)
-                        + " can't attack unless a creature with greater power also attacks");
-            }
-        }
-    }
-
-    private boolean hasGreaterPowerRestriction(Permanent creature) {
-        return creature.getCard().getStaticEffects().stream()
-                .anyMatch(CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect.class::isInstance);
-    }
-
-    /**
-     * Orcish Conscripts (CR 508.1a): a creature with "can't attack unless at least N other
-     * creatures also attack" may only be declared as an attacker if at least N other creatures
-     * are declared as attackers in the same combat. Checked only at declaration time.
-     */
-    private void validateCountAlsoAttacks(GameData gameData, List<Permanent> battlefield,
-                                          List<Integer> attackerIndices) {
-        for (int idx : attackerIndices) {
-            Permanent restricted = battlefield.get(idx);
-            if (gameQueryService.hasLostPrintedAbilities(gameData, restricted)) continue;
-            restricted.getCard().getStaticEffects().stream()
-                    .filter(CantAttackOrBlockUnlessCountAlsoDoesEffect.class::isInstance)
-                    .map(CantAttackOrBlockUnlessCountAlsoDoesEffect.class::cast)
-                    .findFirst()
-                    .ifPresent(effect -> {
-                        long otherAttackers = attackerIndices.stream().filter(other -> other != idx).count();
-                        if (otherAttackers < effect.otherCount()) {
-                            throw new IllegalStateException(FaceDownVisibility.publicName(gameData, restricted)
-                                    + " can't attack unless at least " + effect.otherCount()
-                                    + " other creatures attack");
-                        }
-                    });
-        }
-    }
-
-    private void validateMatchingCreatureAlsoAttacks(GameData gameData, List<Permanent> battlefield,
-                                                     List<Integer> attackerIndices) {
-        for (int idx : attackerIndices) {
-            Permanent restricted = battlefield.get(idx);
-            if (gameQueryService.hasLostPrintedAbilities(gameData, restricted)) continue;
-            restricted.getCard().getStaticEffects().stream()
-                    .filter(MatchingAttackerRestrictionEffect.class::isInstance)
-                    .map(MatchingAttackerRestrictionEffect.class::cast)
-                    .findFirst()
-                    .ifPresent(effect -> {
-                        boolean matchingAttacker = attackerIndices.stream()
-                                .filter(other -> other != idx)
-                                .map(battlefield::get)
-                                .anyMatch(other -> predicateEvaluationService.matchesPermanentPredicate(
-                                        gameData, other, effect.matchingAttackerPredicate()));
-                        if (!matchingAttacker) {
-                            throw new IllegalStateException(FaceDownVisibility.publicName(gameData, restricted)
-                                    + " can't attack unless " + effect.restrictionDescription());
-                        }
-                    });
         }
     }
 

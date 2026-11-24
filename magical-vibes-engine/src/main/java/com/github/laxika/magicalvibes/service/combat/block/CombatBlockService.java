@@ -31,8 +31,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentCreatureBlocksThisTurnIfAbleEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByFewerThanNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect;
@@ -49,6 +47,7 @@ import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
+import com.github.laxika.magicalvibes.service.combat.CombatCompanionRestrictions;
 import com.github.laxika.magicalvibes.service.combat.CombatHelper;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.CombatTriggerService;
@@ -98,6 +97,7 @@ public class CombatBlockService {
     private final com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
     private final PlayerInputService playerInputService;
     private final TriggeredAbilityStackService triggeredAbilityStackService;
+    private final CombatCompanionRestrictions combatCompanionRestrictions;
 
     @Autowired @Lazy
     private LifeSupport lifeSupport;
@@ -1031,6 +1031,10 @@ public class CombatBlockService {
                             });
                 }
                 if (blockerIdx >= 0 && blockerIdx < defenderBattlefield.size()) {
+                    // A lone creature that can't block alone is left out of the blockable set: its restriction names it.
+                    if (blockerAssignments.stream().allMatch(other -> other.blockerIndex() == blockerIdx)) {
+                        validateCompanionsAlsoBlock(gameData, defenderBattlefield, blockerAssignments);
+                    }
                     throw new IllegalStateException("Invalid blocker index: " + blockerIdx + " ("
                             + FaceDownVisibility.publicName(gameData, defenderBattlefield.get(blockerIdx)) + " can't block)");
                 }
@@ -1104,15 +1108,9 @@ public class CombatBlockService {
             }
         }
 
-        // CR 509.1b: validate "can't block alone" — if any declared blocker has this restriction,
-        // there must be at least 2 total blockers
-        validateCantBlockAlone(gameData, defenderBattlefield, blockerAssignments);
-
-        // Okk: "can't block unless a creature with greater power also blocks"
-        validateGreaterPowerAlsoBlocks(gameData, defenderBattlefield, blockerAssignments);
-
-        // Orcish Conscripts: "can't block unless at least N other creatures also block"
-        validateCountAlsoBlocks(gameData, defenderBattlefield, blockerAssignments);
+        // CR 509.1b: "can't block alone", "can't block unless [N other creatures, a creature with greater power] also
+        // block" (Okk, Orcish Conscripts)
+        validateCompanionsAlsoBlock(gameData, defenderBattlefield, blockerAssignments);
 
         validateAllDefendingCreaturesMustBlockRequirements(
                 gameData, blockContext, attackerBattlefield, defenderBattlefield, blockerAssignments);
@@ -2041,30 +2039,22 @@ public class CombatBlockService {
                 gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
                 assignedAttackerIdx, blockerIdx);
 
-        if (hasCantAttackOrBlockAlone(gameData, blocker) && maximumAdditionalBlockers < 1) {
-            return false;
-        }
-        if (gameQueryService.hasLostPrintedAbilities(gameData, blocker)) {
-            return true;
-        }
-
-        int blockerPower = gameQueryService.getEffectivePower(gameData, blocker);
-        for (CardEffect effect : blocker.getCard().getStaticEffects()) {
-            if (effect instanceof CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect
-                    && !hasGreaterPowerAdditionalBlocker(
-                    gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
-                    assignedAttackerIdx, blockerIdx, blockerPower)) {
-                return false;
-            }
-            if (effect instanceof CantAttackOrBlockUnlessCountAlsoDoesEffect restriction
-                    && maximumAdditionalBlockers < restriction.otherCount()) {
+        for (CantAttackOrBlockAloneEffect restriction : combatCompanionRestrictions.restrictions(gameData, blocker, false)) {
+            if (restriction.companion() == null
+                    ? maximumAdditionalBlockers < restriction.otherCount()
+                    : companionBlockers(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
+                            assignedAttackerIdx, blockerIdx, restriction) < restriction.otherCount()) {
                 return false;
             }
         }
         return true;
     }
 
-    private boolean hasGreaterPowerAdditionalBlocker(
+    /**
+     * How many other possible blockers match {@code restriction}'s companion filter ("a creature with greater power")
+     * and could block beside {@code blockerIdx}'s block.
+     */
+    private long companionBlockers(
             GameData gameData,
             BlockLegalityContext blockContext,
             List<Permanent> attackerBattlefield,
@@ -2072,25 +2062,19 @@ public class CombatBlockService {
             List<Integer> blockable,
             int assignedAttackerIdx,
             int blockerIdx,
-            int blockerPower) {
+            CantAttackOrBlockAloneEffect restriction) {
         if (CombatHelper.getMaximumBlockers(gameData,
                 controllerIdOf(gameData, defenderBattlefield), staticEffectConditionResolver) <= 1) {
-            return false;
+            return 0;
         }
-        for (int otherBlockerIdx : blockable) {
-            if (otherBlockerIdx == blockerIdx) {
-                continue;
-            }
-            Permanent otherBlocker = defenderBattlefield.get(otherBlockerIdx);
-            if (gameQueryService.getEffectivePower(gameData, otherBlocker) <= blockerPower
-                    || !canBeAssignedAsAdditionalBlocker(
-                    gameData, blockContext, attackerBattlefield,
-                    defenderBattlefield, otherBlocker, assignedAttackerIdx)) {
-                continue;
-            }
-            return true;
-        }
-        return false;
+        Permanent blocker = defenderBattlefield.get(blockerIdx);
+        return blockable.stream()
+                .filter(otherBlockerIdx -> otherBlockerIdx != blockerIdx)
+                .map(defenderBattlefield::get)
+                .filter(other -> combatCompanionRestrictions.isCompanion(gameData, blocker, restriction, other)
+                        && canBeAssignedAsAdditionalBlocker(gameData, blockContext, attackerBattlefield,
+                        defenderBattlefield, other, assignedAttackerIdx))
+                .count();
     }
 
     private boolean canBeAssignedAsAdditionalBlocker(
@@ -2234,87 +2218,25 @@ public class CombatBlockService {
                 || gameQueryService.isNamedByStaticMustBlockSet(gameData, blocker);
     }
 
-    private void validateCantBlockAlone(GameData gameData, List<Permanent> defenderBattlefield,
-                                         List<BlockerAssignment> blockerAssignments) {
-        if (blockerAssignments.isEmpty()) return;
-        Set<Integer> uniqueBlockerIndices = new HashSet<>();
+    private void validateCompanionsAlsoBlock(GameData gameData, List<Permanent> defenderBattlefield,
+                                             List<BlockerAssignment> blockerAssignments) {
+        Set<Integer> uniqueBlockerIndices = new LinkedHashSet<>();
         for (BlockerAssignment assignment : blockerAssignments) {
             uniqueBlockerIndices.add(assignment.blockerIndex());
         }
-        if (uniqueBlockerIndices.size() == 1) {
-            int soleIdx = uniqueBlockerIndices.iterator().next();
-            Permanent sole = defenderBattlefield.get(soleIdx);
-            if (hasCantAttackOrBlockAlone(gameData, sole)) {
-                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, sole) + " can't block alone");
+        List<Permanent> blockers = uniqueBlockerIndices.stream().map(defenderBattlefield::get).toList();
+        for (Permanent blocker : blockers) {
+            CantAttackOrBlockAloneEffect unmet = combatCompanionRestrictions.firstUnmet(gameData, blocker, false,
+                    blockers);
+            if (unmet != null) {
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, blocker) + " "
+                        + unmet.unmetText(false));
             }
         }
     }
 
     private boolean hasCantAttackOrBlockAlone(GameData gameData, Permanent creature) {
-        return gameQueryService.getActiveStaticEffects(gameData, creature).stream()
-                .filter(CantAttackOrBlockAloneEffect.class::isInstance)
-                .map(CantAttackOrBlockAloneEffect.class::cast)
-                .anyMatch(CantAttackOrBlockAloneEffect::restrictsBlocking);
-    }
-
-    /**
-     * Okk (CR 509.1a): a creature with "can't block unless a creature with greater power also
-     * blocks" may only be declared as a blocker if another declared blocker has strictly greater
-     * power. The comparison is checked only at declaration time.
-     */
-    private void validateGreaterPowerAlsoBlocks(GameData gameData, List<Permanent> defenderBattlefield,
-                                                List<BlockerAssignment> blockerAssignments) {
-        Set<Integer> uniqueBlockerIndices = new HashSet<>();
-        for (BlockerAssignment assignment : blockerAssignments) {
-            uniqueBlockerIndices.add(assignment.blockerIndex());
-        }
-        for (int idx : uniqueBlockerIndices) {
-            Permanent restricted = defenderBattlefield.get(idx);
-            boolean hasRestriction = restricted.getCard().getStaticEffects().stream()
-                    .anyMatch(CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect.class::isInstance)
-                    && !gameQueryService.hasLostPrintedAbilities(gameData, restricted);
-            if (!hasRestriction) {
-                continue;
-            }
-            int power = gameQueryService.getEffectivePower(gameData, restricted);
-            boolean greaterPowerAlsoBlocks = uniqueBlockerIndices.stream()
-                    .filter(other -> other != idx)
-                    .map(defenderBattlefield::get)
-                    .anyMatch(other -> gameQueryService.getEffectivePower(gameData, other) > power);
-            if (!greaterPowerAlsoBlocks) {
-                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, restricted)
-                        + " can't block unless a creature with greater power also blocks");
-            }
-        }
-    }
-
-    /**
-     * Orcish Conscripts (CR 509.1a): a creature with "can't block unless at least N other creatures
-     * also block" may only be declared as a blocker if at least N other creatures are declared as
-     * blockers in the same combat. Checked only at declaration time.
-     */
-    private void validateCountAlsoBlocks(GameData gameData, List<Permanent> defenderBattlefield,
-                                         List<BlockerAssignment> blockerAssignments) {
-        Set<Integer> uniqueBlockerIndices = new HashSet<>();
-        for (BlockerAssignment assignment : blockerAssignments) {
-            uniqueBlockerIndices.add(assignment.blockerIndex());
-        }
-        for (int idx : uniqueBlockerIndices) {
-            Permanent restricted = defenderBattlefield.get(idx);
-            if (gameQueryService.hasLostPrintedAbilities(gameData, restricted)) continue;
-            restricted.getCard().getStaticEffects().stream()
-                    .filter(CantAttackOrBlockUnlessCountAlsoDoesEffect.class::isInstance)
-                    .map(CantAttackOrBlockUnlessCountAlsoDoesEffect.class::cast)
-                    .findFirst()
-                    .ifPresent(effect -> {
-                        long otherBlockers = uniqueBlockerIndices.stream().filter(other -> other != idx).count();
-                        if (otherBlockers < effect.otherCount()) {
-                            throw new IllegalStateException(FaceDownVisibility.publicName(gameData, restricted)
-                                    + " can't block unless at least " + effect.otherCount()
-                                    + " other creatures block");
-                        }
-                    });
-        }
+        return combatCompanionRestrictions.isRestricted(gameData, creature, false);
     }
 
     /**

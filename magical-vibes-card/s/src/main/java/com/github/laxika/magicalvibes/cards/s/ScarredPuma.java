@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessMatchingCreatureAlsoAttacksEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -15,12 +15,12 @@ import java.util.Set;
 public class ScarredPuma extends Card {
 
     public ScarredPuma() {
-        addStaticEffect(new CantAttackUnlessMatchingCreatureAlsoAttacksEffect(
+        addStaticEffect(CantAttackOrBlockAloneEffect.cantAttackUnlessAlsoAttacks(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentColorInPredicate(Set.of(CardColor.BLACK, CardColor.GREEN))
                 )),
-                "a black or green creature also attacks"
+                "a black or green creature"
         ));
     }
 }

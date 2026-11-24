@@ -7,25 +7,31 @@ package com.github.laxika.magicalvibes.model.effect;
  * that match the set's filter whenever attackers are declared, those arriving later included (CR 611.2c). The set
  * but the permanents another subject names ({@code except(controlledBy(activePlayer(), creature), thisWay(CHOOSE))}:
  * "only creatures in the pile of their choice can attack this turn", Fight or Flight) is the same rule without those
- * permanents, found as it resolves and left out whatever they become. Attack-side
+ * permanents, found as it resolves and left out whatever they become ({@code except(allCreatures(), target())}: "other
+ * creatures can't attack this turn" beside a damage step's target, Intimidation Bolt; a target that died leaves no
+ * creature out). {@code triggering()} with {@code DURING_AFFECTED_PLAYERS_NEXT_TURN} is "that creature can't attack
+ * during its controller's next turn" (Wall of Dust: the creature it blocked, not targeted). Attack-side
  * sibling of {@link CantBlockThisTurnEffect}; combine the two for "target creature can't attack or block this turn".
  *
  * <p>Not to be confused with the static restriction effects ({@code CantAttackUnlessEffect},
- * {@code EnchantedCreatureCantAttackEffect}) or with {@link OtherCreaturesCantAttackThisTurnEffect},
- * which installs a turn-scoped lock exempting only the target.
+ * {@code EnchantedCreatureCantAttackEffect}).
  *
  * @param subject  which creature(s) can't attack
- * @param duration how long ({@code UNTIL_END_OF_TURN} or {@code UNTIL_YOUR_NEXT_TURN})
+ * @param duration how long ({@code UNTIL_END_OF_TURN}, {@code UNTIL_YOUR_NEXT_TURN}, or for a named creature
+ *                 {@code DURING_AFFECTED_PLAYERS_NEXT_TURN}: its controller's next turn)
  */
 public record CantAttackThisTurnEffect(PermanentSubject subject, Duration duration) implements CardEffect {
 
     public CantAttackThisTurnEffect {
-        if (!(subject instanceof PermanentSubject.Target || subject instanceof PermanentSubject.ControlledBy
+        if (!(subject instanceof PermanentSubject.Target || subject instanceof PermanentSubject.Triggering
+                || subject instanceof PermanentSubject.ControlledBy
                 || subject instanceof PermanentSubject.Except except
                         && except.permanents() instanceof PermanentSubject.ControlledBy)) {
             throw new IllegalArgumentException("Unsupported can't-attack subject: " + subject);
         }
-        if (duration != Duration.UNTIL_END_OF_TURN && duration != Duration.UNTIL_YOUR_NEXT_TURN) {
+        boolean named = subject instanceof PermanentSubject.Target || subject instanceof PermanentSubject.Triggering;
+        if (duration != Duration.UNTIL_END_OF_TURN && duration != Duration.UNTIL_YOUR_NEXT_TURN
+                && !(named && duration == Duration.DURING_AFFECTED_PLAYERS_NEXT_TURN)) {
             throw new IllegalArgumentException("Unsupported attack restriction duration: " + duration);
         }
     }

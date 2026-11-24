@@ -15,8 +15,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
@@ -1295,31 +1293,14 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
     }
 
     /**
-     * CR 509.1a: whether a declared blocker's own "can't block unless …" partner restriction is
-     * disobeyed by the rest of the declaration — Okk needs a co-blocker with strictly greater
-     * power, Orcish Conscripts needs a minimum number of other creatures blocking. Both are
-     * checked only at declaration time, against the blockers declared alongside it.
+     * CR 509.1b: whether a declared blocker's own "can't block alone" or "can't block unless …" partner restriction is
+     * disobeyed by the rest of the declaration (Okk needs a co-blocker with strictly greater power, Orcish Conscripts
+     * a minimum number of other creatures blocking), checked against the blockers declared alongside it.
      */
     private boolean hasUnmetBlockPartnerRequirement(GameData gameData, List<Permanent> battlefield,
                                                     Set<Integer> selectedBlockers, int blockerIdx) {
-        Permanent blocker = battlefield.get(blockerIdx);
-        for (CardEffect effect : blocker.getCard().getStaticEffects()) {
-            if (effect instanceof CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect) {
-                int blockerPower = gameQueryService.getEffectivePower(gameData, blocker);
-                boolean hasGreaterPowerPartner = selectedBlockers.stream()
-                        .filter(otherIdx -> otherIdx != blockerIdx)
-                        .map(battlefield::get)
-                        .anyMatch(other -> gameQueryService.getEffectivePower(gameData, other) > blockerPower);
-                if (!hasGreaterPowerPartner) {
-                    return true;
-                }
-            }
-            if (effect instanceof CantAttackOrBlockUnlessCountAlsoDoesEffect restriction
-                    && selectedBlockers.size() - 1 < restriction.otherCount()) {
-                return true;
-            }
-        }
-        return false;
+        return combatAttackService.hasUnmetCompanionRestriction(gameData, battlefield.get(blockerIdx), false,
+                selectedBlockers.stream().map(battlefield::get).toList());
     }
 
     /**

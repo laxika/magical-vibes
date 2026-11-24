@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 
 /**
  * Resolves {@link CantBlockThisTurnEffect}: each permanent a named subject finds gets a floating {@link CantBlockEffect}
- * until end of turn; a set becomes a floating rule over the predicate {@link SubjectResolutionService#lastingRule}
+ * for the effect's duration (this turn or this combat); a set becomes a floating rule over the predicate {@link SubjectResolutionService#lastingRule}
  * makes of it, which also reaches creatures entering later (CR 611.2c).
  */
 @Slf4j
@@ -63,14 +63,19 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, e, e.subject())) {
-            resolveForTarget(gameData, entry, permanent);
+            resolveForTarget(gameData, entry, permanent, e.duration());
         }
     }
 
-    void resolveForTarget(GameData gameData, StackEntry entry, Permanent target) {
-        gameData.addEffectOnPermanent(entry, new CantBlockEffect(), target.getId(), Duration.UNTIL_END_OF_TURN);
-        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " can't block this turn."));
-        log.info("Game {} - {} can't block this turn", gameData.id, target.getCard().getName());
+    private void resolveForTarget(GameData gameData, StackEntry entry, Permanent target, Duration duration) {
+        String when = when(duration);
+        gameData.addEffectOnPermanent(entry, new CantBlockEffect(), target.getId(), duration);
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " can't block " + when + "."));
+        log.info("Game {} - {} can't block {}", gameData.id, target.getCard().getName(), when);
+    }
+
+    private static String when(Duration duration) {
+        return duration == Duration.UNTIL_END_OF_COMBAT ? "this combat" : "this turn";
     }
 
     private void resolveRule(GameData gameData, StackEntry entry, CantBlockThisTurnEffect effect,
@@ -79,21 +84,22 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         predicate = lockCounterThresholds(gameData, entry.getControllerId(), predicate);
+        String when = when(effect.duration());
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), FaceDownVisibility.sourceName(gameData, entry),
                 entry.getSourcePermanentId(), entry.getControllerId(),
                 new MatchingCreaturesCantBlockMatchingCreaturesEffect(predicate,
-                        new PermanentTruePredicate(), "can't block this turn"),
-                null, null, predicate, Duration.UNTIL_END_OF_TURN, 0));
+                        new PermanentTruePredicate(), "can't block " + when),
+                null, null, predicate, effect.duration(), 0));
 
         if (set.players() instanceof PlayerSubject.Each each && each.relation() == PlayerSubject.Relation.ALL) {
-            gameLogService.append(gameData, GameLog.text("Matching creatures can't block this turn."));
+            gameLogService.append(gameData, GameLog.text("Matching creatures can't block " + when + "."));
             return;
         }
         String playerNames = subjectResolutionService.players(gameData, entry, effect, set.players()).stream()
                 .map(gameData.playerIdToName::get)
                 .collect(Collectors.joining(" and "));
         String text = (others || excludesTarget(set.filter()) ? "Other creatures" : "Creatures") + " controlled by "
-                + playerNames + " can't block this turn.";
+                + playerNames + " can't block " + when + ".";
         gameLogService.append(gameData, GameLog.text(text));
         log.info("Game {} - {}", gameData.id, text);
     }

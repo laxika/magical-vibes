@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.combat.block;
 
-import com.github.laxika.magicalvibes.model.effect.CantBlockThisCombatEffect;
 
 import com.github.laxika.magicalvibes.model.effect.RagingRiverEffect;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -232,8 +231,7 @@ public class BlockLegalityService {
     public boolean canBlock(BlockLegalityContext context, Permanent creature) {
         if (!gameQueryService.isCreature(context.gameData, creature)
                 || (creature.isTapped() && !canBlockAsThoughUntapped(context, creature))
-                || context.gameData.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class,
-                        CantBlockThisCombatEffect.class)
+                || context.gameData.hasFloatingEffectOnPermanent(creature.getId(), CantBlockEffect.class)
                 || gameQueryService.isLockedFromBlocking(context.gameData, creature.getId())
                 || gameQueryService.hasSuspectedAbilities(context.gameData, creature)) {
             return false;
@@ -438,9 +436,6 @@ public class BlockLegalityService {
         }
         if (gameData.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)) {
             return BlockDenial.CANT_BLOCK_THIS_TURN;
-        }
-        if (gameData.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockThisCombatEffect.class)) {
-            return BlockDenial.CANT_BLOCK;
         }
         if (gameQueryService.hasSuspectedAbilities(gameData, blocker)) {
             return BlockDenial.CANT_BLOCK;

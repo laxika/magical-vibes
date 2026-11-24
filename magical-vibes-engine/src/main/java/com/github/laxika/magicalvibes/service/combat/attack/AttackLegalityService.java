@@ -1,13 +1,10 @@
 package com.github.laxika.magicalvibes.service.combat.attack;
 
-import com.github.laxika.magicalvibes.model.effect.CantAttackNextTurnCombatOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
 
 import com.github.laxika.magicalvibes.model.effect.OnlyChosenCreaturesCanAttackEffect;
-import com.github.laxika.magicalvibes.model.effect.OtherCreaturesCantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayForArtifactsOrCreaturesCantAttackThisCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.AttackDirection;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -140,12 +137,9 @@ public class AttackLegalityService {
         }
         if (creature.isTapped()) return false;
         if (isCantAttackByPlayerCreaturesRestriction(gameData, creature)) return false;
-        if (gameData.hasFloatingEffectOnPermanent(creature.getId(), CantAttackThisTurnEffect.class,
-                CantAttackNextTurnCombatOpponentEffect.class)) return false;
-        if (gameData.hasFloatingEffectOnPlayer(null, CreaturesCantAttackThisTurnEffect.class)) return false;
+        if (gameData.hasFloatingEffectOnPermanent(creature.getId(), CantAttackThisTurnEffect.class)) return false;
         if (gameQueryService.isLockedFromAttacking(gameData, creature.getId())) return false;
         if (gameQueryService.isPeaceTalksActive(gameData)) return false;
-        if (isRestrictedByOtherCreaturesCantAttack(gameData, creature)) return false;
         if (isOutsideChosenAttackers(gameData, creature)) return false;
         if (creature.isSummoningSick() && !gameQueryService.hasKeyword(gameData, creature, Keyword.HASTE)
                 && !gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCanAttackAsThoughHasteEffect.class)
@@ -653,23 +647,6 @@ public class AttackLegalityService {
                 .filter(AttackTargetRestrictionEffect.class::isInstance)
                 .map(AttackTargetRestrictionEffect.class::cast)
                 .anyMatch(AttackTargetRestrictionEffect::preventsBeingAttacked);
-    }
-
-    /**
-     * Intimidation Bolt lock ("Other creatures can't attack this turn"). While
-     * a resolved Intimidation Bolt names an exemption, a creature may
-     * attack only if its ID equals every one of them — i.e. it is the creature every Intimidation Bolt
-     * resolved this turn targeted. Evaluated at declaration time, so it also bars creatures that entered
-     * after the spell resolved. Empty list = no restriction.
-     */
-    private boolean isRestrictedByOtherCreaturesCantAttack(GameData gameData, Permanent creature) {
-        for (FloatingContinuousEffect lock
-                : gameData.floatingEffectsOfTypes(OtherCreaturesCantAttackThisTurnEffect.class)) {
-            if (!creature.getId().equals(((OtherCreaturesCantAttackThisTurnEffect) lock.effect()).exemptCreatureId())) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**

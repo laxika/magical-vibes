@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.OpponentCreaturesAttackTogetherEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesWithCounterAttackTogetherEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -22,6 +22,6 @@ public class WarsToll extends Card {
                         new PermanentControlledByTriggeringPlayerPredicate())))));
 
         // If a creature an opponent controls attacks, all creatures that opponent controls attack if able.
-        addStaticEffect(new OpponentCreaturesAttackTogetherEffect());
+        addStaticEffect(CreaturesWithCounterAttackTogetherEffect.opponentsAttackTogether());
     }
 }

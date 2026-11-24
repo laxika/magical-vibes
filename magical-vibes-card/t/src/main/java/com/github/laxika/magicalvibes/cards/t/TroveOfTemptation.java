@@ -11,10 +11,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class TroveOfTemptation extends Card {
 
     public TroveOfTemptation() {
-        // Each opponent must attack you or a planeswalker you control with at least one creature each combat if able.
         addStaticEffect(new OpponentsMustAttackControllerEffect());
 
-        // At the beginning of your end step, create a Treasure token.
         addTrigger(Triggers.endStep(ActivePlayer.YOU), CreateTokenEffect.ofTreasureToken(1));
     }
 }

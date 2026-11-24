@@ -15,8 +15,10 @@ import com.github.laxika.magicalvibes.model.AbilityEffects;
  * @param delayedTrigger registers a spell-sourced delayed trigger watching the target instead
  *                       of granting that permanent an ability; target only
  * @param anyPermanent   whether the target is any permanent rather than a creature; target only
- * @param subject        who gains the ability: the target, {@link Subjects#source()}, or a set ("creatures you
- *                       control"), which is found once as the effect resolves (CR 611.2c)
+ * @param subject        who gains the ability: the target, {@link Subjects#source()}, a set ("creatures you
+ *                       control"), which is found once as the effect resolves (CR 611.2c), or
+ *                       {@code withCreaturesSharingAColor(target())} ("target creature and each other creature that
+ *                       shares a color with it gain ...", Incite Hysteria), found the same way
  */
 public record GrantEffectToTargetUntilEndOfTurnEffect(
         Ability grantedAbility,
@@ -27,7 +29,10 @@ public record GrantEffectToTargetUntilEndOfTurnEffect(
 
     public GrantEffectToTargetUntilEndOfTurnEffect {
         if (!subject.equals(Subjects.target())) {
-            if (!subject.isSet() && !(subject instanceof PermanentSubject.Source) || subject.declaresTarget()) {
+            boolean sharingTarget = subject instanceof PermanentSubject.WithCreaturesSharingAColor sharing
+                    && sharing.permanent().equals(Subjects.target());
+            if (!sharingTarget && (!subject.isSet() && !(subject instanceof PermanentSubject.Source)
+                    || subject.declaresTarget())) {
                 throw new IllegalArgumentException("Unsupported grant subject: " + subject);
             }
             if (delayedTrigger || anyPermanent) {

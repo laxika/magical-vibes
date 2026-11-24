@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -71,10 +72,12 @@ public class CantAttackThisTurnEffectHandler implements NormalEffectHandlerBean 
             }
             return;
         }
+        String when = e.duration() == Duration.DURING_AFFECTED_PLAYERS_NEXT_TURN
+                ? "during its controller's next turn" : "this turn";
         for (Permanent target : subjectResolutionService.permanents(gameData, entry, e, e.subject())) {
             gameData.addEffectOnPermanent(entry, e, target.getId(), e.duration());
-            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " can't attack this turn."));
-            log.info("Game {} - {} can't attack this turn", gameData.id, target.getCard().getName());
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " can't attack " + when + "."));
+            log.info("Game {} - {} can't attack {}", gameData.id, target.getCard().getName(), when);
         }
     }
 }

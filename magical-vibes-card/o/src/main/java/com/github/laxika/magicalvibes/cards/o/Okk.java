@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 
 @CardRegistration(set = "8ED", collectorNumber = "206")
 @CardRegistration(set = "7ED", collectorNumber = "204")
@@ -10,8 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreate
 public class Okk extends Card {
 
     public Okk() {
-        // Can't attack unless a creature with greater power also attacks;
-        // can't block unless a creature with greater power also blocks.
-        addStaticEffect(new CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect());
+        addStaticEffect(CantAttackOrBlockAloneEffect.unlessGreaterPowerAlsoDoes());
     }
 }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
@@ -38,7 +39,7 @@ public class GrantEffectToTargetUntilEndOfTurnEffectHandler implements NormalEff
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantEffectToTargetUntilEndOfTurnEffect) effect;
 
-        if (!e.subject().declaresTarget()) {
+        if (!e.subject().equals(Subjects.target())) {
             for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect, e.subject())) {
                 grantTo(gameData, entry, e, permanent);
             }

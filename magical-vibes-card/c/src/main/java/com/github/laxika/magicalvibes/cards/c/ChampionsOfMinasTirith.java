@@ -6,9 +6,11 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.condition.ControllerIsMonarch;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
-import com.github.laxika.magicalvibes.model.effect.OpponentCantAttackSourceControllerThisCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -29,6 +31,7 @@ public class ChampionsOfMinasTirith extends Card {
                         null,
                         "Pay {X}, where X is the number of cards in your hand?",
                         MayPayPayer.ACTIVE_PLAYER,
-                        new OpponentCantAttackSourceControllerThisCombatEffect()));
+                        new CreaturesCantAttackControllerUntilNextTurnEffect(Subjects.activePlayer(), Subjects.you(),
+                                false, Duration.UNTIL_END_OF_COMBAT)));
     }
 }

@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.model.effect.CantAttackNextTurnCombatOpponentEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 import com.github.laxika.magicalvibes.cards.a.AnimateArtifact;
@@ -30,16 +31,16 @@ class WallOfDustTest extends BaseCardTest {
 
     private boolean restrictionWaits(Permanent creature) {
         return gd.scheduledFloatingEffects.stream().anyMatch(fe -> creature.getId().equals(fe.affectedPermanentId())
-                && fe.effect() instanceof CantAttackNextTurnCombatOpponentEffect);
+                && fe.effect() instanceof CantAttackThisTurnEffect);
     }
 
     private boolean restrictionApplies(Permanent creature) {
-        return gd.hasFloatingEffectOnPermanent(creature.getId(), CantAttackNextTurnCombatOpponentEffect.class);
+        return gd.hasFloatingEffectOnPermanent(creature.getId(), CantAttackThisTurnEffect.class);
     }
 
     private void restrictForNextTurn(Permanent creature) {
         gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("Wall of Dust", null, player2.getId(),
-                new CantAttackNextTurnCombatOpponentEffect(), creature.getId(),
+                new CantAttackThisTurnEffect(Subjects.triggering(), Duration.DURING_AFFECTED_PLAYERS_NEXT_TURN), creature.getId(),
                 Duration.DURING_AFFECTED_PLAYERS_NEXT_TURN));
     }
 
