@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 8d, 7c, 50, 48b; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                         |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 50, 48b; merge queue 8d. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                          |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,041 / 2,465 (after fold run 8c) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,037 / 2,461 (after fold run 7c) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,672 rows over 4,568 classes (after fold run 8c). Latest verdict per class: `step-9` 42, unique 1,194, absorbed 1,335, split 675, blocked-other 555, survivor 455, blocked-step-model 140, blocked-player-loop 96, dead 76. Waiting: 42 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,679 rows over 4,569 classes (after fold run 7c). Latest verdict per class: `step-9` 39, unique 1,193, absorbed 1,339, split 675, blocked-other 555, survivor 456, blocked-step-model 140, blocked-player-loop 96, dead 76. Waiting: 39 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1120,6 +1120,10 @@ Ledger rows are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cd
 - `PlayerLifeExactlyPredicate(int life)`: "each player with exactly N life", with `matching(eachPlayer(), …)` (Triskaidekaphobia; fold run 8c).
 - `ControllerLosesGameEffect` over several players: all lose at once, and a draw when every remaining player loses (CR 104.4a); a resolution stops once the game has ended (CR 104.1) (fold run 8c).
 - Several targets in one triggered ability: plain `target(...)` groups plus `addTrigger(trigger, e1, e2)` with `registerEffectTargetIndex(e, group)` for each effect; the stack door walks the groups (Decimator Beetle; fold run 8c).
+
+- `MatchingCreaturesMustAttackThisTurnEffect.attacking(PlayerSubject | PermanentSubject)` / `.lasting(Duration)`: "creatures [players] control attack [you / CARDNAME] [during their next turn] if able"; the next-turn form makes one float per player (fold run 7c).
+- `MustBeBlockedIfAbleEffect(PermanentPredicate blockerFilter)` and `GameQueryService.mustBeBlockedRequirements` / `mustBeBlockedIfAble` / `mustBeBlockedByMatchingCreatureRequirements` / `obeysAMustBeBlockedRequirement`: the one must-be-blocked reader (fold run 7c).
+- `ProtectionFromColorsEffect` with a set subject (`chosenColor(controlledBy(...))`) also protects its source, through `ProtectionFromColorsSelfEffectHandler` (fold run 7c).
 
 ### Blocked causes still open
 
@@ -5160,6 +5164,30 @@ Batch `splits`, first half (11 rows): 5 split onto existing steps, 1 `blocked-ot
 - Separately, `LibrarySearchDestination.CAST_WITHOUT_PAYING_OR_PUT_INTO_HAND` already exists and fits Rashmi.
 - After that, the land branch of Unexpected Results is `ConditionalEffect(toACard(REVEAL, land), MayEffect(put onto battlefield + return the spell))`, and Rashmi's is `PutCardsIntoHandEffect(revealedThisWay())`.
 - Specter's Shriek, The Master and Danse Macabre were not read in depth.
+
+### Step 9, fold run 7c (2026-11-24, parallel worktree)
+The three `must-attack` rows fold run 7 left, plus the Ward Sliver re-triage. Ratchet 3,058 / 2,479 → 3,054 / 2,475 (4 records, 4 handlers; `TauntTarget` enum also deleted). Ledger 7 rows: absorbed 4, survivor 3. 6 card files rewritten; Oracle text checked for all 6; rulings read for Taunt, Gideon Jura, My Crushing Masterstroke, Slayer's Cleaver and Ward Sliver. CR 506.2, 508.1d, 509.1c, 608.2h, 611.2c, 613.1e, 613.1f, 702.16b–f and 301.5c checked.
+
+| Batch | Result |
+|---|---|
+| must-attack (attacked object) | Taunt and Gideon Jura onto `MatchingCreaturesMustAttackThisTurnEffect.controlledBy(targetPlayer()).attacking(you() / source()).lasting(DURING_AFFECTED_PLAYERS_NEXT_TURN)`. New components: `attackedPlayer`, `attackedPermanent` and `Duration`. The next-turn form makes one float per named player, so creatures gained later are bound too (Gideon ruling, CR 611.2c). A player who is attacked is the player, not their planeswalkers. A planeswalker gone before resolution means nothing is required. My Crushing Masterstroke folds onto `SetCombatRequirementThisTurnEffect.mustAttack(target(), ownerOf(target()))`; the triage named the wrong survivor, which has no per-creature subject. Siblings checked and left as they are: Gideon, Battle-Forged (a target creature), Nahiri (a different payload), Silver Surfer, The Brothers' War (pairs players by index). |
+| must-be-blocked filter | Slayer's Cleaver and Ace's Baseball Bat onto `MustBeBlockedIfAbleEffect(blockerFilter)`, keeping the no-arg constructor. One reader, `GameQueryService.mustBeBlockedRequirements`, covers floating effects, the attacker's own active statics (not an Equipment's own) and attached Auras/Equipment, including conditional wrappers. CombatBlockService keeps its unfiltered and filtered checks separate: a joint bipartite matching would undercount one blocker obeying two requirements on the same attacker, and the fallback search already weighs everything together. The AI readers now ask `obeysAMustBeBlockedRequirement`. |
+| Ward Sliver re-triage | Folded onto `ProtectionFromColorsEffect.chosenColor(controlledBy(eachPlayer(), Sliver))`. The colour is judged for the source. `ProtectionFromColorsSelfEffectHandler` now protects the source when the set names it. Fold run 37b's Attached-only readers removed the old blocker. |
+
+**Behaviour changes.**
+- My Crushing Masterstroke: each creature attacks its current owner. Test `seizedCreatureAttacksItsCurrentOwner`; it fails on the old code by reasoning, because the old handler read the stamped owner.
+- AI: CombatSimulator, Easy and Hard AI see filtered requirements and pick an obeying blocker, reading through the engine reader. Test `exhaustiveMustBeBlockedByMatchingCreature`; it fails on the old code by reasoning (no forced block).
+- An Equipment that is an attacking creature no longer carries its own "equipped creature must be blocked" requirement (CR 301.5c). No card reaches this today. Test `animatedCleaverItselfNeedNotBeBlockedByEldrazi` guards the fold.
+- The survivors' log lines are used for Taunt, Gideon Jura and My Crushing Masterstroke.
+
+**Tests.** None changed; 3 added. Ran 253 classes, 2,170 cases, 0 failures.
+
+**Seen, not changed.**
+- `CombatAttackService` throws "must attack the specified player" for a `MustAttackIfAbleEffect(defenderId)` instead of weighing it against other requirements (CR 508.1d). Sure of the code, low impact.
+- The AI's filtered must-be-blocked choice with menace (two blockers needed) is approximate: the greedy simulator doesn't narrow, and Easy and the exhaustive phase may skip the block. Fairly sure, low impact.
+- `MustBeBlockedIfAbleEffect` has no subject: an Aura's or Equipment's static is told apart from the creature's own only by the Equipment check. Low impact.
+
+**For the next run.** Run 7 is closed. Step 10 could give `MustBeBlockedIfAbleEffect` a subject (`source()` / `attachedCreature()`) and merge it with `SetCombatRequirementThisTurnEffect`'s MUST_BE_BLOCKED payload.
 
 ## Prompt
 

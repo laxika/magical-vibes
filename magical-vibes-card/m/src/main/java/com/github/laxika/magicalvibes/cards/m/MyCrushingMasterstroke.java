@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentMustAttackItsOwnerThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -30,6 +30,6 @@ public class MyCrushingMasterstroke extends Card {
                 Duration.UNTIL_END_OF_TURN,
                 new UntapPermanentsEffect(Subjects.target()),
                 new GrantKeywordEffect(Keyword.HASTE, Subjects.target()),
-                new PermanentMustAttackItsOwnerThisTurnEffect()));
+                SetCombatRequirementThisTurnEffect.mustAttack(Subjects.target(), Subjects.ownerOf(Subjects.target()))));
     }
 }

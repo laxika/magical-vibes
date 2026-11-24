@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackEffect;
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -48,6 +50,7 @@ public class MatchingCreaturesMustAttackThisTurnEffectHandler implements NormalE
         var e = (MatchingCreaturesMustAttackThisTurnEffect) effect;
         // A type chosen by this resolution is written in now, so the turn-long rule keeps it (CR 608.2h).
         PermanentPredicate matcher = subjectResolutionService.bindChosenValues(gameData, entry, effect, e.matcher());
+        PermanentPredicate boundMatcher = matcher;
         List<UUID> players = List.of();
         if (e.players() != null) {
             players = subjectResolutionService.players(gameData, entry, effect, e.players()).stream()
@@ -84,17 +87,50 @@ public class MatchingCreaturesMustAttackThisTurnEffectHandler implements NormalE
             return;
         }
 
-        // A group requirement doesn't change characteristics or control, so it modifies the game rules
-        // and also binds creatures that enter or start matching later this turn (CR 611.2c).
-        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
-                entry.getSourcePermanentId(), entry.getControllerId(), new MatchingCreaturesMustAttackEffect(matcher), entry.getControllerId(),
-                Duration.UNTIL_END_OF_TURN));
+        UUID attackedId = null;
+        String attackedName = null;
+        if (e.attackedPlayer() != null) {
+            attackedId = subjectResolutionService.player(gameData, entry, effect, e.attackedPlayer());
+            if (attackedId == null || !gameData.playerIds.contains(attackedId)) {
+                return;
+            }
+            attackedName = gameData.playerIdToName.get(attackedId);
+        } else if (e.attackedPermanent() != null) {
+            // "Attack Gideon Jura": a planeswalker that left before this resolves is a new object, so nothing is required.
+            Permanent attacked = subjectResolutionService.permanent(gameData, entry, effect, e.attackedPermanent());
+            if (attacked == null) {
+                return;
+            }
+            attackedId = attacked.getId();
+            attackedName = FaceDownVisibility.publicName(gameData, attacked);
+        }
 
+        // A group requirement doesn't change characteristics or control, so it modifies the game rules
+        // and also binds creatures that enter or start matching later (CR 611.2c).
+        if (e.duration() == Duration.DURING_AFFECTED_PLAYERS_NEXT_TURN) {
+            // One requirement per player, each waiting for that player's own next turn.
+            for (UUID playerId : players) {
+                gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                        entry.getSourcePermanentId(), entry.getControllerId(), new MatchingCreaturesMustAttackEffect(
+                                new PermanentAllOfPredicate(List.of(boundMatcher,
+                                        new PermanentControlledByPlayerPredicate(playerId))), attackedId),
+                        playerId, e.duration()));
+            }
+        } else {
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(),
+                    new MatchingCreaturesMustAttackEffect(matcher, attackedId), entry.getControllerId(),
+                    Duration.UNTIL_END_OF_TURN));
+        }
+
+        String attacks = attackedName == null ? " to attack" : " to attack " + attackedName;
+        String when = e.duration() == Duration.DURING_AFFECTED_PLAYERS_NEXT_TURN
+                ? " during their next turn if able." : " this turn if able.";
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), players.isEmpty()
-                ? " forces matching creatures to attack this turn if able."
+                ? " forces matching creatures" + attacks + when
                 : " forces creatures " + players.stream().map(gameData.playerIdToName::get)
-                .collect(Collectors.joining(" and ")) + " controls to attack this turn if able."));
-        log.info("Game {} - {} forces matching creatures to attack this turn if able",
-                gameData.id, entry.getCard().getName());
+                .collect(Collectors.joining(" and ")) + " controls" + attacks + when));
+        log.info("Game {} - {} forces matching creatures to attack {} if able",
+                gameData.id, entry.getCard().getName(), attackedName == null ? "anything" : attackedName);
     }
 }

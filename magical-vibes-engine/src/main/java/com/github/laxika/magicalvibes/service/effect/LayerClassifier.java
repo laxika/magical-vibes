@@ -88,7 +88,6 @@ import com.github.laxika.magicalvibes.model.effect.WrappedStackStaticEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenTypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenCardTypeToControllerAndOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenColorToPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ErrataCreatureTypeForMatchEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypesToSelfEffect;
@@ -425,7 +424,6 @@ public final class LayerClassifier {
         map.put(ProtectionFromImprintedCardTypesEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(ProtectionFromMulticoloredEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(ProtectionFromModifiedCreaturesEffect.class, fixed(Layer.L6_ABILITIES));
-        map.put(GrantProtectionFromChosenColorToPermanentsEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantProtectionFromChosenTypeToOwnCreaturesEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantProtectionFromChosenCardTypeToControllerAndOwnCreaturesEffect.class, fixed(Layer.L6_ABILITIES));
         // Self ability-scans (Cairn Wanderer family) carry the CDA flag as a modeling decision

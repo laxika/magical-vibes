@@ -28,7 +28,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCo
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
@@ -1385,10 +1384,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         for (int i = 0; i < opponentBattlefield.size(); i++) {
             Permanent attacker = opponentBattlefield.get(i);
             if (!attacker.isAttacking()) continue;
-            boolean mustBeBlocked = gameData.hasFloatingEffectOnPermanent(attacker.getId(), MustBeBlockedIfAbleEffect.class)
-                    || attacker.getCard().getStaticEffects().stream()
-                        .anyMatch(MustBeBlockedIfAbleEffect.class::isInstance)
-                    || gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);
+            boolean mustBeBlocked = gameQueryService.mustBeBlockedIfAble(gameData, attacker);
             if (mustBeBlocked) {
                 indices.add(i);
             }

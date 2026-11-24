@@ -222,6 +222,7 @@ import com.github.laxika.magicalvibes.model.effect.MiracleGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.HalveTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentEffectsCantCauseDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentEffectsCantCauseSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentLifeGainBecomesLifeLossEffect;
@@ -13397,15 +13398,90 @@ public class GameQueryService {
      */
     public <T extends CardEffect> boolean hasActiveStaticEffect(GameData gameData, Permanent source,
                                                                 Class<T> effectType, Predicate<T> matching) {
+        return ownActiveStaticEffects(gameData, source, effectType).anyMatch(matching);
+    }
+
+    /**
+     * The effects of {@code effectType} in {@code source}'s own active static abilities, as
+     * {@link #hasActiveStaticEffect(GameData, Permanent, Class, Predicate)} judges them: none while it is face down,
+     * has lost its printed abilities or has that ability removed; a conditional one once its condition holds.
+     */
+    private <T extends CardEffect> Stream<T> ownActiveStaticEffects(GameData gameData, Permanent source,
+                                                                   Class<T> effectType) {
         UUID controllerId = findPermanentController(gameData, source.getId());
         if (controllerId == null || source.isFaceDown() || gameData.removesOwnStaticAbility(source.getId(), effectType)
                 || LayerSystemService.currentCard(gameData, source).getStaticEffects().isEmpty()
-                || hasLostPrintedAbilities(gameData, source)) return false;
+                || hasLostPrintedAbilities(gameData, source)) return Stream.empty();
         return source.getCard().getStaticEffects().stream()
                 .filter(effect -> !gameData.removesOwnStaticAbility(source.getId(), effect.getClass()))
                 .map(effect -> staticEffectConditionResolver.resolve(gameData, source, controllerId, effect))
                 .filter(effect -> effect != null && !gameData.removesOwnStaticAbility(source.getId(), effect.getClass()))
-                .anyMatch(effect -> effectType.isInstance(effect) && matching.test(effectType.cast(effect)));
+                .filter(effectType::isInstance)
+                .map(effectType::cast);
+    }
+
+    /**
+     * Every "must be blocked [by a [quality] creature] if able" requirement on {@code attacker} (CR 509.1c): the floating
+     * ones a resolution put on it, its own active static abilities (not an Equipment's), and those of the Auras and
+     * Equipment attached to it
+     * (an {@link EnchantedPermanentConditionalEffect} or {@link ConditionalEffect} one while it applies; none from an
+     * Aura whose effects are ignored this turn). Each is its own requirement.
+     */
+    public List<MustBeBlockedIfAbleEffect> mustBeBlockedRequirements(GameData gameData, Permanent attacker) {
+        List<MustBeBlockedIfAbleEffect> requirements = new ArrayList<>();
+        for (FloatingContinuousEffect floating : gameData.floatingEffectsOnPermanent(attacker.getId(),
+                MustBeBlockedIfAbleEffect.class)) {
+            requirements.add((MustBeBlockedIfAbleEffect) floating.effect());
+        }
+        // An Equipment's "equipped creature must be blocked" is its creature's, not the Equipment's own while it is an
+        // attacking creature.
+        if (!attacker.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+            ownActiveStaticEffects(gameData, attacker, MustBeBlockedIfAbleEffect.class).forEach(requirements::add);
+        }
+        UUID attackerControllerId = findPermanentController(gameData, attacker.getId());
+        gameData.forEachPermanent((id, attachment) -> {
+            if (!attachment.isAttached() || !attacker.getId().equals(attachment.getAttachedTo())
+                    || gameData.ignoresEffectOf(attachment.getId(), IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class,
+                    attackerControllerId)) {
+                return;
+            }
+            for (CardEffect effect : attachment.getCard().getStaticEffects()) {
+                isActiveEffect(gameData, attachment, attacker, effect, active -> {
+                    if (active instanceof MustBeBlockedIfAbleEffect requirement) {
+                        requirements.add(requirement);
+                    }
+                    return false;
+                });
+            }
+        });
+        return requirements;
+    }
+
+    /** Whether {@code attacker} must be blocked if able by any creature (a requirement with no blocker filter). */
+    public boolean mustBeBlockedIfAble(GameData gameData, Permanent attacker) {
+        return mustBeBlockedRequirements(gameData, attacker).stream()
+                .anyMatch(requirement -> requirement.blockerFilter() == null);
+    }
+
+    /** The requirements on {@code attacker} that only a block by a matching creature obeys ("by an Eldrazi"). */
+    public List<MustBeBlockedIfAbleEffect> mustBeBlockedByMatchingCreatureRequirements(GameData gameData,
+                                                                                       Permanent attacker) {
+        return mustBeBlockedRequirements(gameData, attacker).stream()
+                .filter(requirement -> requirement.blockerFilter() != null)
+                .toList();
+    }
+
+    /** Whether {@code blocker} blocking obeys {@code requirement}. */
+    public boolean obeysMustBeBlockedRequirement(GameData gameData, MustBeBlockedIfAbleEffect requirement,
+                                                 Permanent blocker) {
+        return requirement.blockerFilter() == null
+                || predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, requirement.blockerFilter());
+    }
+
+    /** Whether {@code blocker} blocking {@code attacker} obeys one of its "must be blocked if able" requirements. */
+    public boolean obeysAMustBeBlockedRequirement(GameData gameData, Permanent attacker, Permanent blocker) {
+        return mustBeBlockedRequirements(gameData, attacker).stream()
+                .anyMatch(requirement -> obeysMustBeBlockedRequirement(gameData, requirement, blocker));
     }
 
     /**

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -105,6 +106,20 @@ class MyCrushingMasterstrokeTest extends BaseCardTest {
 
         assertThat(creature.isAttacking()).isFalse();
     }
+    @Test
+    @DisplayName("Each seized creature attacks its owner as it is now, after an ownership change")
+    void seizedCreatureAttacksItsCurrentOwner() {
+        GrizzlyBears bears = new GrizzlyBears();
+        Permanent creature = addCreatureReady(player2, bears);
+        gd.cardOwnerOverrides.put(bears.getId(), player1.getId());
+        resolveScheme();
+
+        assertThat(gd.mustAttackDefender(creature.getId())).isEqualTo(player1.getId());
+        declareAttackers(List.of());
+
+        assertThat(creature.isAttacking()).isFalse();
+    }
+
     private void resolveScheme() {
         MyCrushingMasterstroke scheme = new MyCrushingMasterstroke();
         gd.stack.add(TestStackDoor.triggered(scheme,

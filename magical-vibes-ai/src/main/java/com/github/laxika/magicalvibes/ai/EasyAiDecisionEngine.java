@@ -22,7 +22,6 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityContext;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -770,6 +769,18 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             boolean lethalIncoming = totalIncomingDamage >= myLife;
 
             List<Integer> candidates = getAvailableBlockersForAttacker(gameData, battlefield, blockerUsed, attackingPerm);
+            if (mustBlock) {
+                // "Must be blocked by an Eldrazi if able": block it with a creature that obeys the requirement when one
+                // can; when none can, nothing is required of this attacker.
+                List<Integer> obeying = candidates.stream()
+                        .filter(blockerIdx -> gameQueryService.obeysAMustBeBlockedRequirement(
+                                gameData, attackingPerm, battlefield.get(blockerIdx)))
+                        .toList();
+                mustBlock = !obeying.isEmpty();
+                if (mustBlock && minimumBlockers == 1) {
+                    candidates = new ArrayList<>(obeying);
+                }
+            }
             if (candidates.isEmpty()) continue;
             if (candidates.size() < minimumBlockers) continue;
 
@@ -848,12 +859,9 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         return gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedByAllCreaturesEffect.class);
     }
 
+    /** Whether the attacker has a "must be blocked [by a matching creature] if able" requirement. */
     private boolean hasMustBeBlockedIfAble(GameData gameData, Permanent attacker) {
-        if (gameData.hasFloatingEffectOnPermanent(attacker.getId(), MustBeBlockedIfAbleEffect.class)) return true;
-        boolean hasOnCard = attacker.getCard().getStaticEffects().stream()
-                .anyMatch(MustBeBlockedIfAbleEffect.class::isInstance);
-        if (hasOnCard) return true;
-        return gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);
+        return !gameQueryService.mustBeBlockedRequirements(gameData, attacker).isEmpty();
     }
 
     // ===== Combat Helpers =====

@@ -3304,9 +3304,6 @@ public class GameData {
     public boolean wordOfCommandCastingCard;
     public boolean wordOfCommandAwaitingCardResolution;
 
-    // Taunt — "creatures that player controls attack you if able" during their next turn
-
-
     // Oracle en-Vec — "the chosen creatures attack if able, and other creatures can't attack"
 
     /**

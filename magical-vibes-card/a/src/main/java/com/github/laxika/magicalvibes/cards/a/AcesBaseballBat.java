@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByMatchingCreatureIfAbleEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -29,7 +29,7 @@ public class AcesBaseballBat extends Card {
                 null));
         addStaticEffect(new EnchantedPermanentConditionalEffect(
                 new PermanentIsAttackingPredicate(),
-                new MustBeBlockedByMatchingCreatureIfAbleEffect(
+                new MustBeBlockedIfAbleEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.DALEK)),
                 null));
 

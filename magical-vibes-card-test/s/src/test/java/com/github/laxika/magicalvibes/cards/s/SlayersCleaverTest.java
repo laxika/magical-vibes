@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.DrownyardBehemoth;
+import com.github.laxika.magicalvibes.cards.e.EnsoulArtifact;
 import com.github.laxika.magicalvibes.cards.f.FieldCreeper;
 import com.github.laxika.magicalvibes.cards.w.WretchedGryff;
 import com.github.laxika.magicalvibes.model.Card;
@@ -21,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SlayersCleaver.class, FieldCreeper.class, DrownyardBehemoth.class, WretchedGryff.class})
+@CardUsed({SlayersCleaver.class, FieldCreeper.class, DrownyardBehemoth.class, WretchedGryff.class, EnsoulArtifact.class})
 class SlayersCleaverTest extends BaseCardTest {
 
     @Test
@@ -261,6 +262,21 @@ class SlayersCleaverTest extends BaseCardTest {
 
         assertThat(eldrazi.isBlocking()).isTrue();
         assertThat(eldrazi.getBlockingTargetIds()).containsExactly(first.getId());
+    }
+
+    @Test
+    @DisplayName("An animated, unequipped Cleaver attacking need not be blocked by an Eldrazi")
+    void animatedCleaverItselfNeedNotBeBlockedByEldrazi() {
+        Permanent cleaver = addReadyCleaver(player1);
+        harness.addToBattlefieldAndReturn(player1, new EnsoulArtifact()).setAttachedTo(cleaver.getId());
+        Permanent eldrazi = addCreatureReady(player2, new DrownyardBehemoth());
+        cleaver.setAttacking(true);
+
+        assertThat(gqs.isCreature(gd, cleaver)).isTrue();
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(eldrazi.isBlocking()).isFalse();
     }
 
     private Permanent addReadyCleaver(Player player) {

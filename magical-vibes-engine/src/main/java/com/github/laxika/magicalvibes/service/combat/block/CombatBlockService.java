@@ -36,7 +36,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockPerEquipmentEffect;
-import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByMatchingCreatureIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -722,10 +721,7 @@ public class CombatBlockService {
         List<Integer> mustBeBlockedIndices = new ArrayList<>();
         for (int idx : attackerIndices) {
             Permanent attacker = attackerBattlefield.get(idx);
-            boolean mustBeBlocked = gameData.hasFloatingEffectOnPermanent(attacker.getId(), MustBeBlockedIfAbleEffect.class)
-                    || gameQueryService.hasActiveStaticEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class)
-                    || gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);
-            if (mustBeBlocked) {
+            if (mustBeBlockedIfAble(gameData, attacker)) {
                 mustBeBlockedIndices.add(idx);
             }
         }
@@ -1083,7 +1079,8 @@ public class CombatBlockService {
             // with one creature when menace forbids it, so the cap it implies does not apply.
             boolean exactlyOneRequirementUnobeyable =
                     gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE)
-                    && gameQueryService.hasActiveStaticEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);
+                    && gameQueryService.hasActiveStaticEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class,
+                            requirement -> requirement.blockerFilter() == null);
             int maxBlockers = exactlyOneRequirementUnobeyable
                     ? Integer.MAX_VALUE : gameQueryService.getMaxBlockersAllowed(gameData, attacker);
             if (blockerCount > maxBlockers) {
@@ -1181,8 +1178,8 @@ public class CombatBlockService {
             Permanent attacker = attackerBattlefield.get(attackerIdx);
             if (!attacker.isAttacking()) continue;
             int currentAttackerIdx = attackerIdx;
-            for (MustBeBlockedByMatchingCreatureIfAbleEffect requirement : gameQueryService.collectAuraEffects(
-                    gameData, attacker, MustBeBlockedByMatchingCreatureIfAbleEffect.class)) {
+            for (MustBeBlockedIfAbleEffect requirement
+                    : gameQueryService.mustBeBlockedByMatchingCreatureRequirements(gameData, attacker)) {
                 if (blockerAssignments.stream()
                         .filter(assignment -> assignment.attackerIndex() == currentAttackerIdx)
                         .map(assignment -> defenderBattlefield.get(assignment.blockerIndex()))
@@ -1213,9 +1210,7 @@ public class CombatBlockService {
     }
 
     private boolean mustBeBlockedIfAble(GameData gameData, Permanent attacker) {
-        return gameData.hasFloatingEffectOnPermanent(attacker.getId(), MustBeBlockedIfAbleEffect.class)
-                || gameQueryService.hasActiveStaticEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class)
-                || gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);
+        return gameQueryService.mustBeBlockedIfAble(gameData, attacker);
     }
 
     /**
@@ -1258,8 +1253,7 @@ public class CombatBlockService {
                 if (attacker.isAttacking()) {
                     attackers.add(attackerIdx);
                     attackerSide += (mustBeBlockedIfAble(gameData, attacker) ? 1 : 0)
-                            + gameQueryService.collectAuraEffects(gameData, attacker,
-                            MustBeBlockedByMatchingCreatureIfAbleEffect.class).size();
+                            + gameQueryService.mustBeBlockedByMatchingCreatureRequirements(gameData, attacker).size();
                 }
             }
             this.attackerSideRequirements = attackerSide;
@@ -1780,13 +1774,12 @@ public class CombatBlockService {
             List<Integer> blockable,
             List<BlockerAssignment> blockerAssignments) {
         List<Integer> requirementAttackers = new ArrayList<>();
-        List<MustBeBlockedByMatchingCreatureIfAbleEffect> requirements = new ArrayList<>();
+        List<MustBeBlockedIfAbleEffect> requirements = new ArrayList<>();
         for (int attackerIdx = 0; attackerIdx < attackerBattlefield.size(); attackerIdx++) {
             Permanent attacker = attackerBattlefield.get(attackerIdx);
             if (!attacker.isAttacking()) continue;
-            for (MustBeBlockedByMatchingCreatureIfAbleEffect requirement
-                    : gameQueryService.collectAuraEffects(
-                            gameData, attacker, MustBeBlockedByMatchingCreatureIfAbleEffect.class)) {
+            for (MustBeBlockedIfAbleEffect requirement
+                    : gameQueryService.mustBeBlockedByMatchingCreatureRequirements(gameData, attacker)) {
                 requirementAttackers.add(attackerIdx);
                 requirements.add(requirement);
             }
@@ -1799,7 +1792,7 @@ public class CombatBlockService {
         int firstUnobeyed = -1;
         for (int i = 0; i < requirements.size(); i++) {
             int currentAttackerIdx = requirementAttackers.get(i);
-            MustBeBlockedByMatchingCreatureIfAbleEffect requirement = requirements.get(i);
+            MustBeBlockedIfAbleEffect requirement = requirements.get(i);
             boolean hasMatchingBlocker = blockerAssignments.stream()
                     .filter(assignment -> assignment.attackerIndex() == currentAttackerIdx)
                     .map(assignment -> defenderBattlefield.get(assignment.blockerIndex()))
@@ -1832,7 +1825,7 @@ public class CombatBlockService {
             List<Permanent> defenderBattlefield,
             List<Integer> blockable,
             List<Integer> requirementAttackers,
-            List<MustBeBlockedByMatchingCreatureIfAbleEffect> requirements) {
+            List<MustBeBlockedIfAbleEffect> requirements) {
         List<Integer> blockerSlots = new ArrayList<>();
         for (int blockerIdx : blockable) {
             int capacity = Math.min(
@@ -1864,7 +1857,7 @@ public class CombatBlockService {
             Integer[] slotRequirement,
             boolean[] visited,
             List<Integer> requirementAttackers,
-            List<MustBeBlockedByMatchingCreatureIfAbleEffect> requirements,
+            List<MustBeBlockedIfAbleEffect> requirements,
             int requirementIdx) {
         int attackerIdx = requirementAttackers.get(requirementIdx);
         for (int slot = 0; slot < blockerSlots.size(); slot++) {

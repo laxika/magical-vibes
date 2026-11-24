@@ -4,8 +4,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * "Up to one target creature an opponent controls attacks this permanent during its controller's
  * next turn if able." (Gideon, Battle-Forged's +2).
  *
- * <p>Targets a single creature. The single-creature sibling of
- * {@link MustAttackNextTurnEffect} with {@link TauntTarget#SOURCE_PERMANENT}, which taunts every
+ * <p>Targets a single creature. The single-creature sibling of Gideon Jura's
+ * {@link MatchingCreaturesMustAttackThisTurnEffect} attacking its {@code source()}, which taunts every
  * creature a targeted player controls: this one makes only the targeted creature
  * attack the ability's source permanent, with a floating {@link CreaturesMustAttackTargetPlayerUntilNextTurnEffect}
  * on the creature that begins when its controller's next turn begins and ends at that turn's cleanup step. The requirement lapses on its own if the source permanent is no longer

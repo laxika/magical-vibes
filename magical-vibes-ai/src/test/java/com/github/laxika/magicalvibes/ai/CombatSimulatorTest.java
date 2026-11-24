@@ -16,7 +16,9 @@ import com.github.laxika.magicalvibes.cards.h.HollowDogs;
 import com.github.laxika.magicalvibes.cards.o.OgreResister;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.p.PrizedUnicorn;
+import com.github.laxika.magicalvibes.cards.s.SalvageDrone;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.SlayersCleaver;
 import com.github.laxika.magicalvibes.cards.w.WallOfFrost;
 import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -1100,6 +1102,31 @@ class CombatSimulatorTest {
         // At least one blocker must be assigned to the protector
         boolean protectorBlocked = blockers.stream().anyMatch(b -> b[1] == 0);
         assertThat(protectorBlocked).isTrue();
+    }
+
+    @Test
+    @CardUsed({SlayersCleaver.class, GrizzlyBears.class, SalvageDrone.class})
+    @DisplayName("Exhaustive: an attacker that must be blocked by an Eldrazi is blocked by the Eldrazi")
+    void exhaustiveMustBeBlockedByMatchingCreature() {
+        Permanent attacker = new Permanent(new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(attacker);
+        Permanent cleaver = new Permanent(new SlayersCleaver());
+        cleaver.setAttachedTo(attacker.getId());
+        gd.playerBattlefields.get(player2.getId()).add(cleaver);
+
+        Permanent aiBears = new Permanent(new GrizzlyBears());
+        aiBears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(aiBears);
+        Permanent drone = new Permanent(new SalvageDrone());
+        drone.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(drone);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0, 1));
+
+        assertThat(blockers).anyMatch(block -> block[0] == 1 && block[1] == 0);
     }
 
     @Test

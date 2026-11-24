@@ -2668,23 +2668,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             Permanent blocker = aiBattlefield.get(blockerIdx);
             Permanent attacker = opponentBattlefield.get(attackerIdx);
             if (gameQueryService.isRequiredToBlockByLure(gameData, attacker, blocker)
-                    || hasMustBeBlockedIfAbleRequirement(gameData, attacker)) {
+                    || gameQueryService.obeysAMustBeBlockedRequirement(gameData, attacker, blocker)) {
                 mandatory.add(assignment);
             }
         }
         return mandatory;
-    }
-
-    /**
-     * Returns true if the attacker has a must-be-blocked-if-able effect.
-     */
-    private boolean hasMustBeBlockedIfAbleRequirement(GameData gameData, Permanent attacker) {
-        if (gameData.hasFloatingEffectOnPermanent(attacker.getId(), com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect.class)) return true;
-        boolean hasMustBlock = attacker.getCard().getStaticEffects().stream()
-                .anyMatch(com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect.class::isInstance);
-        if (hasMustBlock) return true;
-        return gameQueryService.hasAuraWithEffect(gameData, attacker,
-                com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect.class);
     }
 
     // ===== Card Choice (context-aware discard) =====

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityContext;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
 import com.github.laxika.magicalvibes.service.combat.CombatHelper;
@@ -493,6 +492,18 @@ public class CombatSimulator {
 
             boolean lure = lureAttackerIds.contains(attacker.id);
             boolean mustBlock = mustBlockAttackerIds.contains(attacker.id);
+            if (mustBlock) {
+                // "Must be blocked by an Eldrazi if able": only a matching blocker obeys it, and with none able
+                // nothing is required of this attacker.
+                List<CreatureInfo> obeying = candidates.stream()
+                        .filter(candidate -> gameQueryService.obeysAMustBeBlockedRequirement(
+                                gameData, attacker.perm, candidate.perm))
+                        .toList();
+                mustBlock = !obeying.isEmpty();
+                if (mustBlock && minimumBlockers == 1) {
+                    candidates = new ArrayList<>(obeying);
+                }
+            }
             boolean lethalIncoming = totalIncoming >= aiLife;
 
             List<CreatureInfo> chosen;
@@ -721,6 +732,10 @@ public class CombatSimulator {
             for (CreatureInfo blocker : blockerInfos) {
                 if (blockerUsed[blocker.index]) continue;
                 if (!canBlock(blockContext, blocker, mustBlockAttacker)) continue;
+                // "Must be blocked by an Eldrazi": only a matching blocker obeys it.
+                if (!gameQueryService.obeysAMustBeBlockedRequirement(gameData, mustBlockAttacker.perm, blocker.perm)) {
+                    continue;
+                }
                 scored.add(blocker);
             }
             if (scored.size() < needed) continue;
@@ -886,12 +901,9 @@ public class CombatSimulator {
         return gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedByAllCreaturesEffect.class);
     }
 
+    /** Whether the attacker has a "must be blocked [by a matching creature] if able" requirement. */
     private boolean hasMustBeBlockedIfAbleEffect(GameData gameData, Permanent attacker) {
-        if (gameData.hasFloatingEffectOnPermanent(attacker.getId(), MustBeBlockedIfAbleEffect.class)) return true;
-        boolean hasOnCard = attacker.getCard().getStaticEffects().stream()
-                .anyMatch(MustBeBlockedIfAbleEffect.class::isInstance);
-        if (hasOnCard) return true;
-        return gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);
+        return !gameQueryService.mustBeBlockedRequirements(gameData, attacker).isEmpty();
     }
 
     /**
