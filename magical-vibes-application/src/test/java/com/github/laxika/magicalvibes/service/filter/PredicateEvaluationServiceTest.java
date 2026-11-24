@@ -96,6 +96,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePr
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnBySourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToSourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtExcessDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisTurnPredicate;
@@ -2231,6 +2232,36 @@ class PredicateEvaluationServiceTest {
 
             assertThat(evaluator.matchesPermanentPredicate(gd, perm,
                     new PermanentDealtDamageThisTurnBySourcePredicate(spellCardId))).isTrue();
+        }
+
+        @Test
+        @DisplayName("PermanentDealtDamageToSourceThisTurnPredicate matches only a permanent that dealt damage to the source")
+        void dealtDamageToSourceThisTurnPredicateMatchesTheSourcesDamagers() {
+            Permanent source = addPermanent(player1Id, createCreature("Brine Hag", 2, 2, CardColor.BLUE));
+            Permanent damager = addPermanent(player2Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            Permanent bystander = addPermanent(player2Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            source.recordDamageDealtByPermanent(damager.getId());
+            FilterContext context = FilterContext.of(gd).withSourcePermanentId(source.getId());
+
+            assertThat(evaluator.matchesPermanentPredicate(damager,
+                    new PermanentDealtDamageToSourceThisTurnPredicate(), context)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(bystander,
+                    new PermanentDealtDamageToSourceThisTurnPredicate(), context)).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentDealtDamageToSourceThisTurnPredicate judges a source that died as it last existed")
+        void dealtDamageToSourceThisTurnPredicateReadsTheDyingSource() {
+            Permanent departedSource = new Permanent(createCreature("Brine Hag", 2, 2, CardColor.BLUE));
+            Permanent damager = addPermanent(player2Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            departedSource.recordDamageDealtByPermanent(damager.getId());
+            FilterContext context = FilterContext.of(gd).withSourcePermanentId(departedSource.getId())
+                    .withTriggeringPermanentSnapshot(departedSource);
+
+            assertThat(evaluator.matchesPermanentPredicate(damager,
+                    new PermanentDealtDamageToSourceThisTurnPredicate(), context)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(damager,
+                    new PermanentDealtDamageToSourceThisTurnPredicate(), FilterContext.of(gd))).isFalse();
         }
 
         @Test

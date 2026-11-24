@@ -1084,11 +1084,11 @@ public class AmountEvaluationService {
                         : gameQueryService.getEffectivePower(gameData, source);
                 yield power.allowNegative() ? value : Math.max(0, value);
             }
-            case SourceToughness ignored -> sourceToughness(gameData, ctx);
-            case TargetToughness ignored ->
-                    targetEffectiveToughness(gameData, ctx);
-            case TriggeringPermanentToughness ignored ->
-                    triggeringPermanentToughness(gameData, ctx);
+            case SourceToughness toughness -> sourceToughness(gameData, ctx, toughness.allowNegative());
+            case TargetToughness toughness ->
+                    targetEffectiveToughness(gameData, ctx, toughness.allowNegative());
+            case TriggeringPermanentToughness toughness ->
+                    triggeringPermanentToughness(gameData, ctx, toughness.allowNegative());
             case TriggeringPermanentPower power ->
                     triggeringPermanentPower(gameData, ctx, power.allowNegative());
             case TargetPower power ->
@@ -1557,18 +1557,18 @@ public class AmountEvaluationService {
                 .count();
     }
 
-    private int targetEffectiveToughness(GameData gameData, AmountContext ctx) {
+    private int targetEffectiveToughness(GameData gameData, AmountContext ctx, boolean allowNegative) {
         if (ctx.targetPermanentId() == null) return 0;
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
         if (target != null) {
-            return Math.max(0, gameQueryService.getEffectiveToughness(gameData, target));
+            return floor(gameQueryService.getEffectiveToughness(gameData, target), allowNegative);
         }
         Integer lastKnownToughness = ctx.stackEntry() == null ? null
                 : ctx.stackEntry().getLastKnownPermanentToughnesses().get(ctx.targetPermanentId());
-        return lastKnownToughness == null ? 0 : Math.max(0, lastKnownToughness);
+        return lastKnownToughness == null ? 0 : floor(lastKnownToughness, allowNegative);
     }
 
-    private int triggeringPermanentToughness(GameData gameData, AmountContext ctx) {
+    private int triggeringPermanentToughness(GameData gameData, AmountContext ctx, boolean allowNegative) {
         StackEntry entry = ctx.stackEntry();
         if (entry == null) {
             return 0;
@@ -1579,22 +1579,22 @@ public class AmountEvaluationService {
         Permanent triggering = triggeringId == null ? null : gameQueryService.findPermanentById(gameData, triggeringId);
         if (triggering != null) {
             return gameQueryService.isCreature(gameData, triggering)
-                    ? Math.max(0, gameQueryService.getEffectiveToughness(gameData, triggering)) : 0;
+                    ? floor(gameQueryService.getEffectiveToughness(gameData, triggering), allowNegative) : 0;
         }
         if (entry.getTriggeringPermanentToughnessAtTrigger() != null) {
-            return Math.max(0, entry.getTriggeringPermanentToughnessAtTrigger());
+            return floor(entry.getTriggeringPermanentToughnessAtTrigger(), allowNegative);
         }
         if (triggeringId == null) {
             return 0;
         }
         for (Permanent departed : gameData.departedPermanentSnapshots.values()) {
             if (departed.getId().equals(triggeringId) && departed.getLastKnownToughness() != null) {
-                return Math.max(0, departed.getLastKnownToughness());
+                return floor(departed.getLastKnownToughness(), allowNegative);
             }
         }
         Permanent snapshot = entry.getTriggeringPermanentSnapshot();
         return snapshot != null && snapshot.getId().equals(triggeringId) && snapshot.getLastKnownToughness() != null
-                ? Math.max(0, snapshot.getLastKnownToughness()) : 0;
+                ? floor(snapshot.getLastKnownToughness(), allowNegative) : 0;
     }
 
     /**
@@ -4908,19 +4908,19 @@ public class AmountEvaluationService {
      * (Phenax, God of Deception stopped being a creature), so it reads as 0. A source that has left the
      * battlefield uses its last-known toughness.
      */
-    private int sourceToughness(GameData gameData, AmountContext ctx) {
+    private int sourceToughness(GameData gameData, AmountContext ctx, boolean allowNegative) {
         Permanent source = ctx.sourcePermanent();
         if (source == null) {
             return 0;
         }
         if (gameQueryService.findPermanentById(gameData, source.getId()) == null) {
-            return Math.max(0, source.getLastKnownToughness() != null
+            return floor(source.getLastKnownToughness() != null
                     ? source.getLastKnownToughness()
-                    : gameQueryService.getEffectiveToughness(gameData, source));
+                    : gameQueryService.getEffectiveToughness(gameData, source), allowNegative);
         }
         if (!gameQueryService.isCreature(gameData, source)) {
             return 0;
         }
-        return Math.max(0, gameQueryService.getEffectiveToughness(gameData, source));
+        return floor(gameQueryService.getEffectiveToughness(gameData, source), allowNegative);
     }
 }

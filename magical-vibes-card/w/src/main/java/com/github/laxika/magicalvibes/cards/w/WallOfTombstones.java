@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.SetSelfBaseToughnessToAmountIndefinitelyEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,7 +21,7 @@ public class WallOfTombstones extends Card {
         CardsInGraveyard creatureCards = new CardsInGraveyard(
                 new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER);
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new SetSelfBaseToughnessToAmountIndefinitelyEffect(
-                        new Sum(new Fixed(1), creatureCards)));
+                new SetBasePowerToughnessToAmountEffect(null, new Sum(new Fixed(1), creatureCards),
+                        Subjects.source(), Duration.PERMANENT));
     }
 }

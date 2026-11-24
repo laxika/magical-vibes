@@ -205,9 +205,9 @@ class TriggerRouteRecordTest extends BaseCardTest {
     private static final Pattern RECORD_FIELD_NAME = Pattern.compile("^(triggering|event)[A-Z].*|.*AtTrigger$");
 
     private static final Set<String> NAMED_RECORD_FIELDS = Set.of(
-            "attackedTargetId", "attackingPermanentSnapshots", "defendingPlayerId", "combatOpponentPowerAtTrigger",
-            "combatOpponentToughnessAtTrigger", "grantingPermanentId", "dyingPermanentManaValue", "linkedExiledCardId",
-            "attachedPermanentSnapshot", "sourceGraveyardEntryVersion", "sourcePermanentSnapshot",
+            "attackedTargetId", "attackingPermanentSnapshots", "defendingPlayerId", "grantingPermanentId",
+            "dyingPermanentManaValue", "linkedExiledCardId", "attachedPermanentSnapshot", "sourceGraveyardEntryVersion",
+            "sourcePermanentSnapshot",
             "onceEachTurnActionKey", "xValue", "activePlayerId", "alternateCost", "producedManaColors",
             "kicked", "spectacle", "collectEvidenceCostPaid", "waterbendCostPaid", "revealCardFromHandCostPaid",
             "controlledDragonAsCast", "giftPromised", "sacrificedToughness", "repeatedAdditionalCosts",

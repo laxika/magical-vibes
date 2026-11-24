@@ -3,25 +3,32 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves one-shot dynamic base-P/T setters, such as Geometric Weird's end-step ability. */
+/**
+ * Resolves one-shot dynamic base-P/T setters: the amounts are determined once, as the effect resolves (CR 608.2h), and
+ * become a fixed layer-7b setter (CR 613.4b) through {@link SetBasePowerToughnessEffectHandler}. A {@code null} amount
+ * leaves that base value alone.
+ */
 @Component("setBasePowerToughnessToAmountNormalEffectHandler")
 @RequiredArgsConstructor
 public class SetBasePowerToughnessToAmountEffectHandler implements NormalEffectHandlerBean {
 
     private final SubjectResolutionService subjectResolutionService;
     private final AmountEvaluationService amountEvaluationService;
+    private final GameQueryService gameQueryService;
     private final SetBasePowerToughnessEffectHandler setBasePowerToughnessEffectHandler;
 
     @Override
@@ -33,13 +40,14 @@ public class SetBasePowerToughnessToAmountEffectHandler implements NormalEffectH
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         SetBasePowerToughnessToAmountEffect setPT = (SetBasePowerToughnessToAmountEffect) effect;
         if (setPT.subject() instanceof PermanentSubject.Target) {
-            // One-shot "target creature becomes X/Y until end of turn" with amounts read from the spell
-            // (Fractalize: base power and toughness each equal to X plus 1).
-            AmountContext spellContext = AmountContext.forStackEntry(entry, null);
-            int power = amountEvaluationService.evaluate(gameData, setPT.power(), spellContext);
-            int toughness = amountEvaluationService.evaluate(gameData, setPT.toughness(), spellContext);
+            // "Target creature has base power and toughness X/Y": amounts from the spell (Fractalize's X plus 1) or
+            // from the ability's source as it is now, else as it last existed (Exuberant Wolfbear, CR 608.2h).
+            Permanent liveSource = entry.getSourcePermanentId() == null
+                    ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            AmountContext context = AmountContext.forStackEntry(entry, liveSource);
             setBasePowerToughnessEffectHandler.resolve(gameData, entry,
-                    new SetBasePowerToughnessEffect(power, toughness, Subjects.target(),
+                    new SetBasePowerToughnessEffect(evaluate(gameData, setPT.power(), context),
+                            evaluate(gameData, setPT.toughness(), context), Subjects.target(),
                             setPT.duration() != null ? setPT.duration() : Duration.UNTIL_END_OF_TURN));
             return;
         }
@@ -50,11 +58,14 @@ public class SetBasePowerToughnessToAmountEffectHandler implements NormalEffectH
         if (source == null) {
             return;
         }
-        AmountContext amountContext = AmountContext.forStackEntry(entry, source);
-        int power = amountEvaluationService.evaluate(gameData, setPT.power(), amountContext);
-        int toughness = amountEvaluationService.evaluate(gameData, setPT.toughness(), amountContext);
+        AmountContext context = AmountContext.forStackEntry(entry, source);
         setBasePowerToughnessEffectHandler.resolve(gameData, entry,
-                new SetBasePowerToughnessEffect(power, toughness, Subjects.source(),
+                new SetBasePowerToughnessEffect(evaluate(gameData, setPT.power(), context),
+                        evaluate(gameData, setPT.toughness(), context), Subjects.source(),
                         setPT.duration() != null ? setPT.duration() : Duration.PERMANENT));
+    }
+
+    private Integer evaluate(GameData gameData, DynamicAmount amount, AmountContext context) {
+        return amount == null ? null : amountEvaluationService.evaluate(gameData, amount, context);
     }
 }

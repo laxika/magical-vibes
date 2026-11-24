@@ -145,6 +145,25 @@ class ExuberantWolfbearTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(5);
     }
 
+    @Test
+    @DisplayName("A negative last-known toughness of the Wolfbear becomes the Human's base toughness")
+    void copiesNegativeLastKnownToughness() {
+        Permanent wolfbear = addCreatureReady(player1, new ExuberantWolfbear());
+        Permanent human = addCreatureReady(player1, new EliteVanguard());
+        PermanentGrants.setToughnessBoost(gd, human, 1);
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, human.getId());
+        PermanentGrants.setToughnessBoost(gd, wolfbear, -5);
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, wolfbear));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        // Base toughness -1 plus its +1 leaves it at 0, so it dies (CR 107.1b keeps the negative value).
+        harness.assertInGraveyard(player1, "Elite Vanguard");
+    }
+
     private void resolveAttackTrigger(Permanent human, boolean accept) {
         declareAttackers(List.of(0));
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);

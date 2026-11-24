@@ -234,16 +234,14 @@ public class BlockTriggers {
 
     /**
      * Records "that creature", the creature on the other side of a block, whatever the effects are: its triggering
-     * permanent with its controller and as it is now (its last-known information once it leaves, CR 608.2h), its
-     * non-targeting target (CR 115.10a), and its power and toughness as the ability triggered.
+     * permanent with its controller and as it is now (its last-known information once it leaves, CR 608.2h), and its
+     * non-targeting target (CR 115.10a).
      */
     private void recordCombatOpponent(GameData gameData, StackEntry entry, Permanent opponent) {
         entry.setNonTargeting(true);
         entry.setTriggeringPermanentId(opponent.getId());
         entry.setTriggeringPermanentControllerId(gameQueryService.findPermanentController(gameData, opponent.getId()));
         entry.setTriggeringPermanent(opponent);
-        entry.setCombatOpponentPowerAtTrigger(gameQueryService.getEffectivePower(gameData, opponent));
-        entry.setCombatOpponentToughnessAtTrigger(gameQueryService.getEffectiveToughness(gameData, opponent));
     }
 
     /**

@@ -220,6 +220,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentDealtCombatDamageToP
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtCombatDamageToPlayerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtCombatDamageToSourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnBySourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToSourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtExcessDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToAnythingThisTurnPredicate;
@@ -3318,6 +3319,11 @@ public class PredicateEvaluationService {
             case PermanentDealtDamageThisTurnBySourcePredicate bySource -> gameData != null
                     && gameData.damageDealtToPermanentsBySourceThisTurn.getOrDefault(permanent.getId(), Map.of())
                     .getOrDefault(bySource.sourceId(), 0) > 0;
+            case PermanentDealtDamageToSourceThisTurnPredicate ignored -> {
+                Permanent damagedSource = sourceAsItLastExisted(filterContext);
+                yield damagedSource != null
+                        && damagedSource.getPermanentIdsThatDealtDamageThisTurn().contains(permanent.getId());
+            }
             case PermanentDealtExcessDamageThisTurnPredicate ignored ->
                     gameData != null && gameData.permanentsDealtExcessDamageThisTurn.contains(permanent.getId());
             case PermanentDealtNoncombatDamageThisTurnPredicate ignored ->
@@ -5708,5 +5714,23 @@ public class PredicateEvaluationService {
             }
         }
         return false;
+    }
+
+    /**
+     * The source permanent a filter is judged against: as a death trigger's dying source last existed (its triggering
+     * permanent, CR 603.10a), else as it is on the battlefield, else as it last existed there (CR 608.2h).
+     */
+    private Permanent sourceAsItLastExisted(FilterContext filterContext) {
+        if (filterContext == null) {
+            return null;
+        }
+        Permanent triggering = filterContext.triggeringPermanentSnapshot();
+        UUID sourceId = filterContext.sourcePermanentId();
+        if (triggering != null && (sourceId == null || sourceId.equals(triggering.getId()))) {
+            return triggering;
+        }
+        Permanent live = sourceId == null || filterContext.gameData() == null
+                ? null : gameQueryService.findPermanentById(filterContext.gameData(), sourceId);
+        return live != null ? live : filterContext.sourcePermanentSnapshot();
     }
 }

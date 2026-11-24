@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b (each in Findings; the fold queue marks its rows). Fold runs 31b and 29 are reported and wait to merge; 34, 26b and 33 are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                   |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b (each in Findings; the fold queue marks its rows). Fold runs 29 and 26b are reported and wait to merge; 34, 33 and 23c are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                    |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,469 / 2,774 (after fold run 28b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,459 / 2,764 (after fold run 31b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,883 rows over 4,455 classes (after fold run 28b). Latest verdict per class: `step-9` 602, unique 1,170, absorbed 908, split 637, blocked-other 508, survivor 332, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 602 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,894 rows over 4,456 classes (after fold run 31b). Latest verdict per class: `step-9` 592, unique 1,170, absorbed 917, split 638, blocked-other 508, survivor 333, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 592 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -825,6 +825,10 @@ Delayed and global triggers:
 - `PlayerHasMostLifePredicate` ("a player with the most life or tied", with `matching(eachPlayer(), …)`) and `PermanentControlledByPlayersPredicate(PlayerSubject)` ("creatures that player controls", bound) (fold run 28b).
 - `GrantFlashToNextMatchingSpellEffect(CardPredicate)` / `.nextSpell()`: "the next [matching] spell you cast this turn can be cast as though it had flash", resolving itself (fold run 28b).
 - `CopyTargetActivatedOrTriggeredAbilityEffect.times(DynamicAmount)` / `.thatCantBeCopied()`; `CopyControllerActivatedAbilityEffectHandler.copy(gd, entry, original, controller, ability)`, the one ability copier; `CopyAbilityRetargetEffect([ActivatedAbility])`, the one retarget marker (fold run 28b).
+
+- `SetBasePowerToughnessToAmountEffect` with a null side, the live source on `target()`, and a benign target declared by `target()` or a target-reading amount: "this creature's base power becomes equal to target creature's power", "target creature's base P/T become this creature's" (fold run 31b).
+- `SourceToughness(true)` / `TargetToughness(true)` / `TriggeringPermanentToughness(true)`: keep negative toughness for P/T setters (CR 107.1b) (fold run 31b).
+- `PermanentDealtDamageToSourceThisTurnPredicate`: "each creature that dealt damage to it this turn", the source judged as it last existed (CR 603.10a; Brine Hag) (fold run 31b).
 
 ### Blocked causes still open
 
@@ -3299,6 +3303,44 @@ Batches `value-binding` and `ability-copy`. Ratchet 3,532 / 2,825 → 3,522 / 2,
 - `TemporaryGlobalTriggeredAbility.nextThisTurn` sets no watched player, linked exile card or noted amount. `RegisterGlobalTriggeredAbilityEffectHandler` sets them from the entry, so check the cards that target a player.
 - Storm King's Thunder reaches `delayedAbility()` directly.
 - GameDataDeepCopyTest, KarnLiberatedTest and RunedTerrorTest name the records.
+
+### Step 9, fold run 31b (2026-11-24, parallel worktree)
+
+Both batches are done: 10 folded (9 absorbed, 1 split), plus one survivor row. Ratchet 3,511 / 2,805 → 3,501 / 2,795. 11 card files rewritten; Oracle text checked for all of them; rulings read for Eldrazi Mimic and Shape Stealer.
+
+**Shape.**
+- `SetBasePowerToughnessToAmountEffect`:
+- A null amount leaves that base value alone, in both the normal and the static handler.
+- The `target()` path evaluates against the live source, else its snapshot (CR 608.2h).
+- It declares a benign creature target when the subject is `target()`, or when an amount reads the target (`TargetPower`, `TargetToughness`, `TargetPowerPlusToughness`, also inside `Sum` / `Min` / `Max` / `Scaled`).
+- `SourceToughness`, `TargetToughness` and `TriggeringPermanentToughness` gain `allowNegative`, matching their power twins. A base-P/T setter keeps negative values (CR 107.1b; the Mimic ruling says so).
+- `PermanentDealtDamageToSourceThisTurnPredicate`: the source's `permanentIdsThatDealtDamageThisTurn`. The source is a death trigger's triggering snapshot, else the live source, else the source snapshot (CR 603.10a).
+
+**Settled last-known reads.**
+- Shape Stealer's "that creature" is the block trigger's triggering permanent.
+- When it leaves, `PermanentRemovalService` overwrites the entry's triggering at-trigger values and last-known maps with its departure values. So `TriggeringPermanent*` equals the old departure-snapshot read.
+- The old `combatOpponent*AtTrigger` fallback was unreachable on the same turn, so the fields are deleted.
+- Eldrazi Mimic works the same way: the at-trigger value equals the departure value.
+- In both cases a read never falls to 0 without information, so there is no 0/0 where the old handler did nothing.
+
+| Batch | Result |
+|---|---|
+| pt-amount | 8 folded: Wolfbear/Galion, Riptide Mangler, Shape Stealer, Eldrazi Mimic, Halfdane, Sentinel, Wall of Tombstones, Sworn Defender |
+| base-pt-new | 2 folded: Brine Hag (set path + the new predicate), Cycle of Life (split onto `aboutAtNext`) |
+
+**Behaviour changes.**
+- Logs are the survivors' lines: no "indefinitely", no duration text for next-upkeep durations, and one set line for Brine Hag.
+- The set-path log of `SetBasePowerToughnessEffectHandler` now says "until end of turn" only for that duration.
+- A triggering permanent or source that is a noncreature permanent on the battlefield reads 0 (CR 208.3). Not tested.
+- `TargetPolarityClassifier`: `SetBasePowerToughnessToAmountEffect` is NEUTRAL. It now declares a target (Fractalize), and its card's other effects decide the polarity.
+
+**Tests.** 3 added: the predicate (2) and the Wolfbear negative toughness copy. The route-record tests and `TriggerLedger` no longer name the deleted fields.
+
+**Seen, not changed.**
+- `SetBasePowerToughnessEffectHandler`'s set and player-target logs print "null" for a null side. No card hits it. Sure.
+- Giant Albatross's blocked `DestroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffect` reads the same damager set by hand. Step 10 should use the new predicate.
+
+**For the next run.** `floated-name` should get a run of its own with The Irencrag (removing `Permanent.persistentName`).
 
 ## Prompt
 

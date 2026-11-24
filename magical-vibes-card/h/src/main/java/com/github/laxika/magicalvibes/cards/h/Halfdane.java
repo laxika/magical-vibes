@@ -2,7 +2,11 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.SetSelfBasePowerToughnessFromTargetCreatureUntilEndOfNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.amount.TargetPower;
+import com.github.laxika.magicalvibes.model.amount.TargetToughness;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -24,6 +28,7 @@ public class Halfdane extends Card {
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))),
                 "Target must be a creature other than Halfdane"))
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                        new SetSelfBasePowerToughnessFromTargetCreatureUntilEndOfNextUpkeepEffect());
+                        new SetBasePowerToughnessToAmountEffect(new TargetPower(true), new TargetToughness(true),
+                                Subjects.source(), Duration.UNTIL_END_OF_CONTROLLERS_NEXT_UPKEEP));
     }
 }

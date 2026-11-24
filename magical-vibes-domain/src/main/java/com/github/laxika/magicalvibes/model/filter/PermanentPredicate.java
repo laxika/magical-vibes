@@ -63,6 +63,7 @@ public sealed interface PermanentPredicate permits
         PermanentCounterCountAtLeastPredicate,
         PermanentDealtDamageThisTurnPredicate,
         PermanentDealtDamageThisTurnBySourcePredicate,
+        PermanentDealtDamageToSourceThisTurnPredicate,
         PermanentDealtExcessDamageThisTurnPredicate,
         PermanentDealtNoncombatDamageThisTurnPredicate,
         PermanentDealtDamageToAnythingThisTurnPredicate,

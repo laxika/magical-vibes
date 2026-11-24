@@ -100,7 +100,7 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
                     .text(" sets the base power and toughness of " + count
                             + " creature(s) to " + e.power() + "/" + e.toughness()
-                            + " until end of turn.").build());
+                            + durationDescription(e) + ".").build());
             return;
         }
 
@@ -138,9 +138,12 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
                 e, target.getId(), null, null, e.duration(), 0));
     }
 
+    private static String durationDescription(SetBasePowerToughnessEffect effect) {
+        return Duration.UNTIL_END_OF_TURN.equals(effect.duration()) ? " until end of turn" : "";
+    }
+
     private String basePowerToughnessDescription(SetBasePowerToughnessEffect effect) {
-        String duration = Duration.UNTIL_END_OF_TURN.equals(effect.duration())
-                ? " until end of turn" : "";
+        String duration = durationDescription(effect);
         return effect.power() == null
                 ? " has base toughness " + effect.toughness() + duration + "."
                 : effect.toughness() == null

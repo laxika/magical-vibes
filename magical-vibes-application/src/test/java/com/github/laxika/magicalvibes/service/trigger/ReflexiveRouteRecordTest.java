@@ -97,10 +97,9 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
     private static final Pattern RECORD_FIELD_NAME = Pattern.compile("^(triggering|event)[A-Z].*|.*AtTrigger$");
 
     private static final Set<String> NAMED_RECORD_FIELDS = Set.of(
-            "attackedTargetId", "attackingPermanentSnapshots", "defendingPlayerId", "combatOpponentPowerAtTrigger",
-            "combatOpponentToughnessAtTrigger", "grantingPermanentId", "dyingPermanentManaValue", "linkedExiledCardId",
-            "attachedPermanentSnapshot", "sourceGraveyardEntryVersion", "sourcePermanentSnapshot", "xValue",
-            "alternateCost", "producedManaColors");
+            "attackedTargetId", "attackingPermanentSnapshots", "defendingPlayerId", "grantingPermanentId",
+            "dyingPermanentManaValue", "linkedExiledCardId", "attachedPermanentSnapshot", "sourceGraveyardEntryVersion",
+            "sourcePermanentSnapshot", "xValue", "alternateCost", "producedManaColors");
 
     private static final Set<String> DISCARDED_CARD_FIELDS =
             Set.of("triggeringCardId", "triggeringCardGraveyardEntryVersion");

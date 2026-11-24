@@ -29,8 +29,11 @@ public class SetBasePowerToughnessToAmountEffectHandler implements StaticEffectH
             return;
         }
         AmountContext amountContext = AmountContext.forStaticEffect(context.source(), context.sourceControllerId());
+        // A null amount leaves that base value alone.
         accumulator.setBasePTOverride(
-                amountEvaluationService.evaluate(context.gameData(), setPT.power(), amountContext),
-                amountEvaluationService.evaluate(context.gameData(), setPT.toughness(), amountContext));
+                setPT.power() == null ? null
+                        : Integer.valueOf(amountEvaluationService.evaluate(context.gameData(), setPT.power(), amountContext)),
+                setPT.toughness() == null ? null
+                        : Integer.valueOf(amountEvaluationService.evaluate(context.gameData(), setPT.toughness(), amountContext)));
     }
 }

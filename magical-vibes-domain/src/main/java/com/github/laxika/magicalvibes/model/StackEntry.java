@@ -508,8 +508,6 @@ public class StackEntry {
     @Setter private int eventValue;
     /** Number of cards looked at by the scry event that caused this triggered ability. */
     @Setter private int cardsLookedAtWhileScrying;
-    @Setter private Integer combatOpponentPowerAtTrigger;
-    @Setter private Integer combatOpponentToughnessAtTrigger;
     @Setter private boolean gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard;
     /** Records the cards actually moved to the graveyard by the current library choice. */
     @Setter private boolean recordLibraryGraveyardCount;
@@ -1610,8 +1608,6 @@ public class StackEntry {
         this.defendingPlayerId = source.defendingPlayerId;
         this.eventValue = source.eventValue;
         this.cardsLookedAtWhileScrying = source.cardsLookedAtWhileScrying;
-        this.combatOpponentPowerAtTrigger = source.combatOpponentPowerAtTrigger;
-        this.combatOpponentToughnessAtTrigger = source.combatOpponentToughnessAtTrigger;
         this.producedManaColors = source.producedManaColors;
         this.grantingPermanentId = source.grantingPermanentId;
         this.dyingPermanentManaValue = source.dyingPermanentManaValue;

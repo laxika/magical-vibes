@@ -79,6 +79,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -580,6 +581,12 @@ public class TargetPolarityClassifier {
             return written <= 4
                     ? TargetPolarity.HARMFUL
                     : TargetPolarity.BENEFICIAL;
+        }
+
+        // A base-P/T setter over amounts (Fractalize's X plus 1, Exuberant Wolfbear's power) has no direction of its
+        // own: the fallback stays, and the card's other effects decide.
+        if (effect instanceof SetBasePowerToughnessToAmountEffect) {
+            return TargetPolarity.NEUTRAL;
         }
 
         return FIXED_BY_CLASS_NAME.get(effect.getClass().getSimpleName());

@@ -55,8 +55,7 @@ public final class TriggerLedger {
     private static final Pattern RECORD_FIELD_NAME = Pattern.compile("^(triggering|event|target)[A-Z].*|.*AtTrigger$");
 
     private static final Set<String> NAMED_FIELDS = Set.of(
-            "targetId", "attackedTargetId", "attackingPermanentSnapshots", "defendingPlayerId",
-            "combatOpponentPowerAtTrigger", "combatOpponentToughnessAtTrigger", "grantingPermanentId",
+            "targetId", "attackedTargetId", "attackingPermanentSnapshots", "defendingPlayerId", "grantingPermanentId",
             "dyingPermanentManaValue", "linkedExiledCardId", "attachedPermanentSnapshot", "sourceGraveyardEntryVersion",
             "sourcePermanentSnapshot", "onceEachTurnActionKey", "xValue", "activePlayerId", "alternateCost",
             "nonTargeting", "controllerId", "sourcePermanentId", "damageAssignments", "removedPermanentControllers",
