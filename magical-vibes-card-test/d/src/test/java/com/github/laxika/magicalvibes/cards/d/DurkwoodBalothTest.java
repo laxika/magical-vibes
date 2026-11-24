@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -24,7 +25,7 @@ class DurkwoodBalothTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 5);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 5);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -36,12 +37,12 @@ class DurkwoodBalothTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 5);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 5);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 4);
     }
 
     @Test
@@ -56,7 +57,7 @@ class DurkwoodBalothTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
@@ -83,7 +84,7 @@ class DurkwoodBalothTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         harness.assertNotInGraveyard(player1, "Durkwood Baloth");
     }
 
@@ -106,7 +107,7 @@ class DurkwoodBalothTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(card);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exiledCardTimeCounters).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
     }
 
     @Test
@@ -132,11 +133,11 @@ class DurkwoodBalothTest extends BaseCardTest {
         advanceToUpkeep(player1);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 5);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 5);
 
         resolveAllTriggers();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 4);
     }
 
     @Test
@@ -150,6 +151,6 @@ class DurkwoodBalothTest extends BaseCardTest {
 
         var permanent = findPermanent(player1, "Durkwood Baloth");
         assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isFalse();
-        assertThat(gd.exiledCardTimeCounters).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
     }
 }

@@ -729,9 +729,18 @@ public class SubjectResolutionService {
                 gameData, ownerId, null, null, entry.getXValue(), entry.getSourcePermanentSnapshot());
     }
 
-    /** {@link CardSubject.SourceCard}: the ability's card in the graveyard stay it was put on the stack from. */
+    /**
+     * {@link CardSubject.SourceCard}: the ability's card in the exile or graveyard stay it was put on the stack from; an
+     * ability of a card in exile names it in exile, face down too, as its own card (CR 400.7).
+     */
     private List<LocatedCard> sourceCard(GameData gameData, StackEntry entry) {
         UUID cardId = entry.getCard().getId();
+        long exileStay = entry.getSourceExileEntryVersion();
+        if (exileStay >= 0) {
+            LocatedCard exiled = gameData.exileEntryVersionsOf(List.of(cardId)).get(cardId) != exileStay
+                    ? null : locate(gameData, cardId, Zone.EXILE);
+            return exiled == null ? List.of() : List.of(exiled);
+        }
         long stay = entry.sourceCardGraveyardEntryVersion();
         LocatedCard card = stay >= 0 && gameData.graveyardEntryVersion(cardId) != stay
                 ? null : locate(gameData, cardId, Zone.GRAVEYARD);

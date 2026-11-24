@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -36,7 +37,7 @@ class RoilingHorrorTest extends BaseCardTest {
     void suspendUsesChosenXAsTimeCounters() {
         RoilingHorror card = suspendCard(2);
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 2);
     }
 
     @Test
@@ -49,7 +50,7 @@ class RoilingHorrorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Suspend X requires X to be at least 1");
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
     }
 
     @Test
@@ -61,7 +62,7 @@ class RoilingHorrorTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 1);
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
@@ -145,7 +146,7 @@ class RoilingHorrorTest extends BaseCardTest {
         advanceToUpkeep(player2);
         resolveAllTriggers();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 2);
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
     }
@@ -160,7 +161,7 @@ class RoilingHorrorTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 1);
         harness.assertLife(player1, 1);
         harness.assertLife(player2, 20);
         assertThat(gd.status).isNotEqualTo(com.github.laxika.magicalvibes.model.GameStatus.FINISHED);

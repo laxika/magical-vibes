@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -47,7 +48,7 @@ public class ExileCardFromHandWithManaValueTimeCountersEffectHandler implements 
             }
             int manaValue = chosen.getManaValue();
             if (manaValue > 0) {
-                gameData.exiledCardTimeCounters.put(chosenCardId, manaValue);
+                gameData.setExiledCardCounters(chosenCardId, CounterType.TIME, manaValue);
                 gameLogService.append(gameData,
                         GameLog.cardThen(chosen, " gets " + manaValue + " time counters."));
             }
@@ -57,8 +58,7 @@ public class ExileCardFromHandWithManaValueTimeCountersEffectHandler implements 
                     || otherEntry.card().getId().equals(chosenCardId)) {
                 continue;
             }
-            Integer counters = gameData.exiledCardTimeCounters.get(otherEntry.card().getId());
-            if (counters != null && counters > 0) {
+            if (gameData.exiledCardHasCounter(otherEntry.card().getId(), CounterType.TIME)) {
                 removeTimeCounterHandler.removeTimeCounter(gameData, otherEntry.card().getId());
             }
         }

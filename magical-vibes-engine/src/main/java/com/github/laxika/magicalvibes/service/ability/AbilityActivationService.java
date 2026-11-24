@@ -2529,7 +2529,7 @@ public class AbilityActivationService {
             int suspendTimeCounters = ability.isSuspendTimeCountersFromX()
                     ? effectiveXValue
                     : ability.getSuspendTimeCounters();
-            gameData.exiledCardTimeCounters.put(card.getId(), suspendTimeCounters);
+            gameData.setExiledCardCounters(card.getId(), com.github.laxika.magicalvibes.model.CounterType.TIME, suspendTimeCounters);
             gameLogService.append(gameData,
                     GameLog.textCardText(player.getUsername() + " suspends ", card, "."));
             log.info("Game {} - {} suspends {} from hand", gameData.id,

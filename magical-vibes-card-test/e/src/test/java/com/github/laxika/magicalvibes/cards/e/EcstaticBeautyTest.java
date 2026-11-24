@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.c.ClockworkDroid;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.ProfaneTutor;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -32,7 +33,7 @@ class EcstaticBeautyTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .contains(newlyExiledSuspended, nonSuspended, anotherNonSuspended);
-        assertThat(gd.exiledCardTimeCounters)
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
                 .containsEntry(alreadySuspended.getId(), 2)
                 .containsEntry(newlyExiledSuspended.getId(), 4)
                 .doesNotContainKeys(nonSuspended.getId(), anotherNonSuspended.getId());
@@ -51,7 +52,7 @@ class EcstaticBeautyTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 4);
     }
 
     private ProfaneTutor suspendProfaneTutor() {
@@ -103,7 +104,7 @@ class EcstaticBeautyTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 4);
     }
 
     @Test
@@ -125,7 +126,7 @@ class EcstaticBeautyTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 4);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
     }
 
@@ -145,7 +146,7 @@ class EcstaticBeautyTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 4);
     }
 
     @Test
@@ -168,7 +169,7 @@ class EcstaticBeautyTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         harness.assertNotInGraveyard(player1, "Ecstatic Beauty");
     }
 
@@ -182,15 +183,15 @@ class EcstaticBeautyTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 4);
 
         for (int remaining = 3; remaining >= 0; remaining--) {
             advanceToUpkeep(player1);
             harness.passBothPriorities();
             if (remaining > 0) {
-                assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), remaining);
+                assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), remaining);
             } else {
-                assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+                assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
                 harness.passBothPriorities();
             }
         }

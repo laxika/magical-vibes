@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.p.PithingNeedle;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -23,7 +24,7 @@ class GiantDustwaspTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 4);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -39,7 +40,7 @@ class GiantDustwaspTest extends BaseCardTest {
         advanceToUpkeep(player1);
         resolveAllTriggers();
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
@@ -67,7 +68,7 @@ class GiantDustwaspTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         harness.assertNotOnBattlefield(player1, "Giant Dustwasp");
         harness.assertNotInGraveyard(player1, "Giant Dustwasp");
     }
@@ -82,7 +83,7 @@ class GiantDustwaspTest extends BaseCardTest {
         GiantDustwasp card = suspendCard();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 4);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -94,12 +95,12 @@ class GiantDustwaspTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 4);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 3);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
         harness.assertNotOnBattlefield(player1, "Giant Dustwasp");
     }

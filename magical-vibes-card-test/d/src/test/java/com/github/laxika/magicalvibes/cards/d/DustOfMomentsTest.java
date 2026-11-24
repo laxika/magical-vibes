@@ -32,7 +32,7 @@ class DustOfMomentsTest extends BaseCardTest {
         assertThat(ownPermanent.getCounterCount(CounterType.TIME)).isEqualTo(1);
         assertThat(opposingPermanent.getCounterCount(CounterType.TIME)).isZero();
         assertThat(withoutTimeCounters.getCounterCount(CounterType.TIME)).isZero();
-        assertThat(gd.exiledCardTimeCounters)
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
                 .containsEntry(ownSuspended.getId(), 2)
                 .containsEntry(opposingSuspended.getId(), 1);
     }
@@ -48,7 +48,7 @@ class DustOfMomentsTest extends BaseCardTest {
 
         assertThat(withTimeCounters.getCounterCount(CounterType.TIME)).isEqualTo(3);
         assertThat(withoutTimeCounters.getCounterCount(CounterType.TIME)).isZero();
-        assertThat(gd.exiledCardTimeCounters)
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
                 .containsEntry(ownSuspended.getId(), 4)
                 .containsEntry(opposingSuspended.getId(), 6);
     }
@@ -61,7 +61,7 @@ class DustOfMomentsTest extends BaseCardTest {
         cast(0);
 
         assertThat(permanent.getCounterCount(CounterType.TIME)).isEqualTo(1);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(suspended.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(suspended.getId());
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -72,12 +72,12 @@ class DustOfMomentsTest extends BaseCardTest {
         RealityStrobe suspended = suspendedCard(player1, 3);
         FomoriNomad exiledCardWithNonSuspendCounters = new FomoriNomad();
         harness.setExile(player2, List.of(exiledCardWithNonSuspendCounters));
-        gd.exiledCardTimeCounters.put(exiledCardWithNonSuspendCounters.getId(), 4);
+        gd.setExiledCardCounters(exiledCardWithNonSuspendCounters.getId(), CounterType.TIME, 4);
         gd.exiledCardsWithNonSuspendTimeCounters.add(exiledCardWithNonSuspendCounters.getId());
 
         cast(0);
 
-        assertThat(gd.exiledCardTimeCounters)
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
                 .containsEntry(suspended.getId(), 1)
                 .containsEntry(exiledCardWithNonSuspendCounters.getId(), 4);
     }
@@ -115,13 +115,13 @@ class DustOfMomentsTest extends BaseCardTest {
         RealityStrobe withoutTimeCounters = suspendedCard(player1, 0);
         FomoriNomad nonSuspended = new FomoriNomad();
         harness.setExile(player2, List.of(nonSuspended));
-        gd.exiledCardTimeCounters.put(nonSuspended.getId(), 3);
+        gd.setExiledCardCounters(nonSuspended.getId(), CounterType.TIME, 3);
         gd.exiledCardsWithNonSuspendTimeCounters.add(nonSuspended.getId());
 
         cast(1);
 
-        assertThat(gd.exiledCardTimeCounters)
-                .containsEntry(withoutTimeCounters.getId(), 0)
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
+                .doesNotContainKey(withoutTimeCounters.getId())
                 .containsEntry(nonSuspended.getId(), 3);
         assertThat(gd.findExiledCard(withoutTimeCounters.getId())).isNotNull();
     }
@@ -135,7 +135,7 @@ class DustOfMomentsTest extends BaseCardTest {
     private RealityStrobe suspendedCard(Player owner, int timeCounters) {
         RealityStrobe card = new RealityStrobe();
         harness.setExile(owner, List.of(card));
-        gd.exiledCardTimeCounters.put(card.getId(), timeCounters);
+        gd.setExiledCardCounters(card.getId(), CounterType.TIME, timeCounters);
         return card;
     }
 

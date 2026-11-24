@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.github.laxika.magicalvibes.cards.d.DurkwoodBaloth;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -22,7 +23,7 @@ class CurseOfTheCabalTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 2);
     }
 
     @Test
@@ -62,7 +63,7 @@ class CurseOfTheCabalTest extends BaseCardTest {
         assertThat(choice.playerId()).isEqualTo(player2.getId());
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 2);
     }
 
     @Test
@@ -75,7 +76,7 @@ class CurseOfTheCabalTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 2);
     }
 
     @Test
@@ -95,7 +96,7 @@ class CurseOfTheCabalTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player2, List.of(sacrificed.getId()));
 
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 4);
     }
 
     @Test
@@ -109,7 +110,7 @@ class CurseOfTheCabalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 3);
     }
 
     @Test
@@ -121,7 +122,7 @@ class CurseOfTheCabalTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 1);
     }
 
     @Test
@@ -129,13 +130,13 @@ class CurseOfTheCabalTest extends BaseCardTest {
         CurseOfTheCabal card = suspendCard();
         Permanent permanent = addCreatureReady(player2, new DurkwoodBaloth());
         advanceToUpkeep(player2);
-        gd.exiledCardTimeCounters.remove(card.getId());
+        gd.setExiledCardCounters(card.getId(), CounterType.TIME, 0);
 
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(permanent);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
     }
 
     @Test
@@ -185,7 +186,7 @@ class CurseOfTheCabalTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         advanceToUpkeep(player2);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -201,7 +202,7 @@ class CurseOfTheCabalTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).hasSize(1);

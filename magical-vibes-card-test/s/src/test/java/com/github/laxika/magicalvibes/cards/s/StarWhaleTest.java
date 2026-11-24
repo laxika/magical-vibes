@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -79,7 +80,7 @@ class StarWhaleTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(whale);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(whale.getId(), 6);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(whale.getId(), 6);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -137,11 +138,11 @@ class StarWhaleTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         resolveAllTriggers();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(whale.getId(), 6);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(whale.getId(), 6);
 
         advanceToUpkeep(player1);
         resolveAllTriggers();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(whale.getId(), 5);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(whale.getId(), 5);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(whale);
     }
 
@@ -159,7 +160,7 @@ class StarWhaleTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Star Whale");
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(whale);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(whale.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(whale.getId());
         declareAttackersAndPrepareBlockers(List.of(0));
         assertThat(findPermanent(player1, "Star Whale").isTapped()).isFalse();
         gs.declareBlockers(gd, player2, List.of());
@@ -180,7 +181,7 @@ class StarWhaleTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(whale);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(whale.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(whale.getId());
         harness.assertNotOnBattlefield(player1, "Star Whale");
         assertThat(gd.stack).isEmpty();
     }

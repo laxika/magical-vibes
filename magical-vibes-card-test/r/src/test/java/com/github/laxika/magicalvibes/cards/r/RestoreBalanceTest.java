@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -30,7 +31,7 @@ class RestoreBalanceTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 6);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 6);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -124,12 +125,12 @@ class RestoreBalanceTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         resolveAllTriggers();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 6);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 6);
 
         for (int remaining = 5; remaining >= 1; remaining--) {
             advanceToUpkeep(player1);
             resolveAllTriggers();
-            assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), remaining);
+            assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), remaining);
             assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
         }
         advanceToUpkeep(player1);
@@ -138,7 +139,7 @@ class RestoreBalanceTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThat(gd.stack).isEmpty();
 
         advanceToUpkeep(player1);

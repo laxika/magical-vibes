@@ -43,7 +43,7 @@ class RiftElementalTest extends BaseCardTest {
 
         activate(source);
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(target.getId(), 1);
         assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
     }
 
@@ -64,7 +64,7 @@ class RiftElementalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(permanent.getCounterCount(CounterType.TIME)).isEqualTo(1);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(suspended.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(suspended.getId(), 1);
         assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
     }
 
@@ -76,7 +76,7 @@ class RiftElementalTest extends BaseCardTest {
 
         harness.activateAbility(player1, battlefieldIndex(source), null, null);
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(target.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(target.getId());
         assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction())
@@ -122,7 +122,7 @@ class RiftElementalTest extends BaseCardTest {
                 player1, battlefieldIndex(source), null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("time counter");
-        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(target.getId(), 1);
     }
 
     @Test
@@ -130,7 +130,7 @@ class RiftElementalTest extends BaseCardTest {
         Permanent source = readySource();
         BlindPhantasm target = new BlindPhantasm();
         harness.setExile(player1, List.of(target));
-        gd.exiledCardTimeCounters.put(target.getId(), 1);
+        gd.setExiledCardCounters(target.getId(), CounterType.TIME, 1);
         gd.exiledCardsWithNonSuspendTimeCounters.add(target.getId());
         addActivationMana();
 
@@ -138,7 +138,7 @@ class RiftElementalTest extends BaseCardTest {
                 player1, battlefieldIndex(source), null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("time counter");
-        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(target.getId(), 1);
     }
 
     @Test
@@ -150,7 +150,7 @@ class RiftElementalTest extends BaseCardTest {
 
         activate(source);
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(target.getId(), 1);
         assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
     }
 
@@ -209,7 +209,7 @@ class RiftElementalTest extends BaseCardTest {
     private ArcBlade suspendedCard(Player owner, int timeCounters) {
         ArcBlade target = new ArcBlade();
         harness.setExile(owner, List.of(target));
-        gd.exiledCardTimeCounters.put(target.getId(), timeCounters);
+        gd.setExiledCardCounters(target.getId(), CounterType.TIME, timeCounters);
         return target;
     }
 

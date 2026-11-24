@@ -118,13 +118,13 @@ class TimeBeetleTest extends BaseCardTest {
             declareAttackers(List.of(1));
             resolveAllTriggers();
         });
-        assertThat(gd.exiledCardTimeCounters).containsEntry(suspended.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(suspended.getId(), 3);
 
         resolveCombat();
         resolveAllTriggers();
         harness.handleListChoice(player1, "REMOVE");
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(suspended.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(suspended.getId(), 2);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 

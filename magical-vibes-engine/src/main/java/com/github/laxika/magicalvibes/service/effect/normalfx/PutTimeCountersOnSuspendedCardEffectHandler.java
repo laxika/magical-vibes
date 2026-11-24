@@ -28,12 +28,12 @@ public class PutTimeCountersOnSuspendedCardEffectHandler implements NormalEffect
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID cardId = entry.getCard().getId();
         ExiledCardEntry exiledEntry = gameData.findExiledCard(cardId);
-        if (exiledEntry == null || !gameData.exiledCardTimeCounters.containsKey(cardId)) {
+        if (exiledEntry == null || !gameData.exiledCardHasCounter(cardId, com.github.laxika.magicalvibes.model.CounterType.TIME)) {
             return;
         }
 
         int amount = ((PutTimeCountersOnSuspendedCardEffect) effect).amount();
-        gameData.exiledCardTimeCounters.merge(cardId, amount, Integer::sum);
+        gameData.addExiledCardCounters(cardId, com.github.laxika.magicalvibes.model.CounterType.TIME, amount);
         gameLogService.append(gameData,
                 GameLog.cardThen(exiledEntry.card(), " gets " + amount + " time counters."));
         log.info("Game {} - {} gets {} time counters", gameData.id, exiledEntry.card().getName(), amount);

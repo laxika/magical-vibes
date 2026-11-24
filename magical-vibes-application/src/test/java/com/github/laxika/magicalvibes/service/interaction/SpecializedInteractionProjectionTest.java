@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -216,7 +217,7 @@ class SpecializedInteractionProjectionTest {
     void exiledCardPromptsHideFaceDownCards() {
         Card hidden = card("Hidden");
         gameData.addToExile(opponentId, hidden, UUID.randomUUID(), true);
-        gameData.exiledCardTimeCounters.put(hidden.getId(), 1);
+        gameData.setExiledCardCounters(hidden.getId(), CounterType.TIME, 1);
         List<UUID> ids = List.of(hidden.getId());
 
         List<PendingInteraction> choices = List.of(

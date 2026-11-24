@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
 import com.github.laxika.magicalvibes.cards.h.HorizonCanopy;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -32,8 +33,8 @@ class RealityStrobeTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Blind Phantasm");
         harness.assertInHand(player2, "Blind Phantasm");
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(strobe);
-        assertThat(gd.suspendedSpellExiles)
-                .containsExactly(new GameData.SuspendedSpellExile(strobe.getId(), player1.getId(), 3));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
+                .containsExactly(Map.entry(strobe.getId(), 3));
     }
 
     @Test
@@ -43,7 +44,7 @@ class RealityStrobeTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(strobe);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(strobe.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(strobe.getId(), 3);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -65,8 +66,8 @@ class RealityStrobeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player2, "Blind Phantasm");
-        assertThat(gd.suspendedSpellExiles)
-                .containsExactly(new GameData.SuspendedSpellExile(strobe.getId(), player1.getId(), 3));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
+                .containsExactly(Map.entry(strobe.getId(), 3));
     }
 
     @Test
@@ -85,7 +86,7 @@ class RealityStrobeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(strobe);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(strobe.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(strobe.getId());
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getName().equals("Reality Strobe"));
     }
@@ -125,7 +126,7 @@ class RealityStrobeTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Reality Strobe");
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(strobe);
-        assertThat(gd.suspendedSpellExiles).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
         harness.assertNotInHand(player2, "Horizon Canopy");
     }
 
@@ -140,13 +141,13 @@ class RealityStrobeTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
         advanceToUpkeep(player2);
-        assertThat(gd.suspendedSpellExiles)
-                .containsExactly(new GameData.SuspendedSpellExile(strobe.getId(), player1.getId(), 3));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
+                .containsExactly(Map.entry(strobe.getId(), 3));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        assertThat(gd.suspendedSpellExiles)
-                .containsExactly(new GameData.SuspendedSpellExile(strobe.getId(), player1.getId(), 2));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
+                .containsExactly(Map.entry(strobe.getId(), 2));
 
         for (int i = 0; i < 2; i++) {
             advanceToUpkeep(player1);
@@ -157,7 +158,7 @@ class RealityStrobeTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(strobe);
-        assertThat(gd.suspendedSpellExiles).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
     }
 
     private RealityStrobe suspendCard() {

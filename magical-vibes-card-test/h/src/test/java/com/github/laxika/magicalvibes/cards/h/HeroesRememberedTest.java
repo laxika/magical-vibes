@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.p.PithingNeedle;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -35,11 +36,11 @@ class HeroesRememberedTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 10);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 10);
 
         advanceThroughSuspendCountdown();
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
@@ -55,7 +56,7 @@ class HeroesRememberedTest extends BaseCardTest {
         HeroesRemembered card = suspendCard();
 
         advanceThroughSuspendCountdown();
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, false);
@@ -74,7 +75,7 @@ class HeroesRememberedTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 10);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 10);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
         harness.assertLife(player1, 5);
     }
@@ -89,7 +90,7 @@ class HeroesRememberedTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 1);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertLife(player1, 5);
@@ -103,7 +104,7 @@ class HeroesRememberedTest extends BaseCardTest {
 
         HeroesRemembered card = suspendCard();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 10);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 10);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
         assertThat(gd.stack).isEmpty();
         harness.assertLife(player1, 5);

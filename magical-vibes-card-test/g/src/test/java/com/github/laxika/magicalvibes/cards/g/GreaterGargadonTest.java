@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.PrismaticLens;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,7 +28,7 @@ class GreaterGargadonTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 10);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 10);
     }
 
     @Test
@@ -61,7 +62,7 @@ class GreaterGargadonTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, forest.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 9);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 9);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear).doesNotContain(forest);
     }
 
@@ -83,7 +84,7 @@ class GreaterGargadonTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, lens.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 9);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 9);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(forest).doesNotContain(lens);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentForest);
     }
@@ -93,13 +94,13 @@ class GreaterGargadonTest extends BaseCardTest {
     void removingLastTimeCounterOffersFreeCast() {
         GreaterGargadon card = suspendCard();
         addCreatureReady(player1, new AshcoatBear());
-        gd.exiledCardTimeCounters.put(card.getId(), 1);
+        gd.setExiledCardCounters(card.getId(), CounterType.TIME, 1);
 
         harness.activateExiledAbility(player1, card.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
@@ -134,14 +135,14 @@ class GreaterGargadonTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 10);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 10);
 
         advanceToUpkeep(player1);
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 10);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 10);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 9);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 9);
     }
 
     @Test
@@ -156,12 +157,12 @@ class GreaterGargadonTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bear);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(bear.getCard());
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 10);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 10);
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 9);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 9);
     }
 
     @Test
@@ -171,7 +172,7 @@ class GreaterGargadonTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateExiledAbility(player1, card.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 10);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 10);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -180,7 +181,7 @@ class GreaterGargadonTest extends BaseCardTest {
     void decliningCastLeavesSourceNoLongerSuspended() {
         GreaterGargadon card = suspendCard();
         addCreatureReady(player1, new AshcoatBear());
-        gd.exiledCardTimeCounters.put(card.getId(), 1);
+        gd.setExiledCardCounters(card.getId(), CounterType.TIME, 1);
         harness.activateExiledAbility(player1, card.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -188,7 +189,7 @@ class GreaterGargadonTest extends BaseCardTest {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThatThrownBy(() -> harness.activateExiledAbility(player1, card.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(forest);
@@ -203,7 +204,7 @@ class GreaterGargadonTest extends BaseCardTest {
     void suspendedCreatureHasHaste() {
         GreaterGargadon card = suspendCard();
         addCreatureReady(player1, new AshcoatBear());
-        gd.exiledCardTimeCounters.put(card.getId(), 1);
+        gd.setExiledCardCounters(card.getId(), CounterType.TIME, 1);
         harness.activateExiledAbility(player1, card.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();

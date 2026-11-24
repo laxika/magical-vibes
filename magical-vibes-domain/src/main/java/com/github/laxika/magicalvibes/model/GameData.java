@@ -925,29 +925,26 @@ public class GameData {
     public final Set<UUID> rebirthAnteAcceptedPlayerIds = ConcurrentHashMap.newKeySet();
     /**
      * The counters on cards in exile (CR 122.1), by card id and kind: "exile it with an ice counter on it", "with three
-     * egg counters on it", "a card you own in exile with a silver counter on it". One store for every kind but suspend's
-     * time counters ({@link #exiledCardTimeCounters}); read and written only through {@link #exiledCardCounterCount},
+     * egg counters on it", "a card you own in exile with a silver counter on it", suspend's time counters. One store for
+     * every kind; read and written only through {@link #exiledCardCounterCount},
      * {@link #exiledCardHasCounter}, {@link #addExiledCardCounters}, {@link #setExiledCardCounters} and
      * {@link #exiledCardsWithCounter}. A card that leaves exile is a new object with none of them (CR 400.7), so leaving
      * exile forgets its entry. Each value is an immutable map replaced on every change, so a copy of the entries is a
      * deep copy.
      */
     public final Map<UUID, Map<CounterType, Integer>> exiledCardCounters = new ConcurrentHashMap<>();
-    /** Maps suspended exiled card UUID → remaining time counter count. */
-    public final Map<UUID, Integer> exiledCardTimeCounters = new ConcurrentHashMap<>();
-    /** Exiled card UUIDs with time counters that do not have suspend's automatic upkeep trigger. */
+    /**
+     * Exiled cards that have time counters but no suspend (CR 702.62b): Alaundo the Seer's exile of a card without suspend.
+     * Every other card exiled with time counters has suspend, printed or gained ("if it doesn't have suspend, it gains
+     * suspend"; Delay, Jhoira of the Ghitu, the spells that exile themselves with time counters). Read through
+     * {@link #exiledCardHasSuspend} and {@link #isSuspended}; forgotten as the card leaves exile.
+     */
     public final Set<UUID> exiledCardsWithNonSuspendTimeCounters = ConcurrentHashMap.newKeySet();
     /** Alaundo's last-time-counter casting ability, retained for as long as the card stays exiled. */
     public final Set<UUID> exiledCardsWithAlaundoCastAbility = ConcurrentHashMap.newKeySet();
     /** Spells whose successful resolution is replaced by exile with a dream counter. */
     public final Set<UUID> spellsWithDreamCounterOnResolution = ConcurrentHashMap.newKeySet();
     public final Set<UUID> spellsWithPlotOnResolution = ConcurrentHashMap.newKeySet();
-    /**
-     * Spells exiled with suspend counters and waiting for their owners' upkeeps. Effects that add
-     * or remove time counters on suspended cards apply to these as well as to cards suspended from
-     * a hand; removing the last counter queues the owner's optional free cast (CR 702.62a).
-     */
-    public final List<SuspendedSpellExile> suspendedSpellExiles = Collections.synchronizedList(new ArrayList<>());
     /**
      * "All creatures with [counter] counters on them block that creature this turn if able": the counter
      * types per attacking creature. The requirement is not a characteristic change, so it applies to every
@@ -2002,9 +1999,6 @@ public class GameData {
     /** Spells whose mana was paid using a pending any-type mana permission. */
     public final Set<UUID> spellsPaidUsingPendingAnyManaTypeThisTurn = ConcurrentHashMap.newKeySet();
 
-
-    /** A spell exiled with suspend counters, waiting to be cast by its owner when the last counter is removed. */
-    public record SuspendedSpellExile(UUID cardId, UUID ownerId, int counters) {}
 
     /** Spell names a player has already resolved while controlling (for Paradigm's "first time" check). */
     public final Map<UUID, Set<String>> paradigmResolvedSpellNames = new ConcurrentHashMap<>();
@@ -8738,6 +8732,26 @@ public class GameData {
         return Collections.unmodifiableMap(withKind);
     }
 
+    /**
+     * Whether {@code card}, a card in exile, has suspend there: printed (its "suspend from hand" ability), or gained, as
+     * every card exiled with time counters does unless an effect exiled it with time counters and no suspend (Alaundo
+     * the Seer; {@link #exiledCardsWithNonSuspendTimeCounters}).
+     */
+    public boolean exiledCardHasSuspend(Card card) {
+        return !exiledCardsWithNonSuspendTimeCounters.contains(card.getId())
+                || card.getActivatedAbilities(Zone.HAND).stream().anyMatch(ActivatedAbility::isSuspendsSourceFromHand);
+    }
+
+    /**
+     * Whether the card {@code cardId} is suspended (CR 702.62b): it is in exile, face up (a face-down card has no
+     * abilities, CR 708.2), has suspend ({@link #exiledCardHasSuspend}) and has a time counter on it.
+     */
+    public boolean isSuspended(UUID cardId) {
+        ExiledCardEntry exiled = cardId == null ? null : findExiledCard(cardId);
+        return exiled != null && !exiled.faceDown() && exiledCardHasCounter(cardId, CounterType.TIME)
+                && exiledCardHasSuspend(exiled.card());
+    }
+
     /** Adds a card to exile with a stash counter. Stash counters are independent of any source permanent. */
     public void addToExileWithStashCounter(UUID ownerId, Card card) {
         spellsWithDreamCounterOnResolution.remove(card.getId());
@@ -8925,10 +8939,8 @@ public class GameData {
             plottedCardIds.remove(cardId);
             endExileInsteadOfGraveyard(cardId);
             cardsExiledFromGraveyardThisTurn.remove(cardId);
-            exiledCardTimeCounters.remove(cardId);
             exiledCardsWithNonSuspendTimeCounters.remove(cardId);
             exiledCardsWithAlaundoCastAbility.remove(cardId);
-            suspendedSpellExiles.removeIf(pending -> cardId.equals(pending.cardId()));
             // Whatever it was granted while exiled ends as it leaves: it becomes a new object (CR 400.7).
             endFloatingEffectsOnCard(cardId, Zone.EXILE);
             // A grant that lasts for as long as its card remains exiled ends as the card leaves (CR 611.2b).
@@ -10503,12 +10515,10 @@ public class GameData {
         copy.antedCardIds.addAll(this.antedCardIds);
         copy.rebirthAnteAcceptedPlayerIds.addAll(this.rebirthAnteAcceptedPlayerIds);
         copy.exiledCardCounters.putAll(this.exiledCardCounters);
-        copy.exiledCardTimeCounters.putAll(this.exiledCardTimeCounters);
         copy.exiledCardsWithNonSuspendTimeCounters.addAll(this.exiledCardsWithNonSuspendTimeCounters);
         copy.exiledCardsWithAlaundoCastAbility.addAll(this.exiledCardsWithAlaundoCastAbility);
         copy.cardsExiledFromGraveyardThisTurn.addAll(this.cardsExiledFromGraveyardThisTurn);
         copy.spellsWithDreamCounterOnResolution.addAll(this.spellsWithDreamCounterOnResolution);
-        copy.suspendedSpellExiles.addAll(this.suspendedSpellExiles);
 
         // --- Map<UUID, List<Permanent>> (deep copy each Permanent) ---
         this.playerBattlefields.forEach((k, v) -> {

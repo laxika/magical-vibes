@@ -25,7 +25,14 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDarigaazShivanChampionSpellbookEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveEggCounterFromExileAndReturnEffect;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.condition.SourceCardInExile;
+import com.github.laxika.magicalvibes.model.condition.SourceCardInExileWithCounter;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersFromExiledCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -133,9 +140,14 @@ public class ConjureDarigaazShivanChampionSpellbookEffectHandler implements Norm
         card.setKeywords(keywords);
         card.setOwnerId(ownerId);
         card.setConjured(true);
+        // It gains "At the beginning of your upkeep, if this card is exiled, remove an egg counter from it. Then if it has
+        // no egg counters on it, put it onto the battlefield."
         card.addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.EXILE),
-                TriggerOptions.DEFAULT,
-                new RemoveEggCounterFromExileAndReturnEffect(card.getId(), false));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCardInExile()),
+                SequenceEffect.of(
+                        new RemoveCountersFromExiledCardsEffect(Subjects.sourceCard(), CounterType.EGG),
+                        new ConditionalEffect(new NotCondition(new SourceCardInExileWithCounter(CounterType.EGG)),
+                                new PutCardsOntoBattlefieldEffect(Subjects.sourceCard()))));
         card.freeze();
         return card;
     }

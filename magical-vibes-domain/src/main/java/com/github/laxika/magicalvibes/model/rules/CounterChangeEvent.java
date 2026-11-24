@@ -19,7 +19,7 @@ import java.util.UUID;
  * @param permanent     the permanent the counters were put on or removed from, or the one the keyword action is
  *                      about; {@code null} for an event about a player
  * @param permanents    the permanents of an event that put counters on several at once
- * @param card          the exiled card a time counter was removed from
+ * @param card          the exiled card counters were removed from
  * @param playerId      the player who put or removed the counters, or the player the event is about
  * @param controllerId  the controller of {@code permanent} as the event happened, for the kinds that name one
  * @param counterType   the kind of counters, or {@code null} when the event doesn't say
@@ -124,8 +124,13 @@ public record CounterChangeEvent(Kind kind, Permanent permanent, List<Permanent>
          * removed from it (all kinds, time, +1/+1 and loyalty counters) until this event reads them.
          */
         REMOVED,
-        /** A time counter was removed from the exiled {@code card}, {@code amount} remaining, by {@code playerId}. */
-        TIME_COUNTER_REMOVED_IN_EXILE,
+        /**
+         * Counters of {@code counterType} were removed from the exiled {@code card}, which {@code playerId} owns, by
+         * {@code controllerId} ({@code null} for its owner), {@code amount} of them remaining on it: suspend's time
+         * counters one at a time, any other kind once for each removal ("when the last refine counter is removed from
+         * this card").
+         */
+        COUNTER_REMOVED_IN_EXILE,
         /** {@code permanent}, which {@code playerId} controls, became renowned. */
         RENOWNED,
         /** {@code permanent}, which {@code playerId} controls, became monstrous with X {@code amount}. */

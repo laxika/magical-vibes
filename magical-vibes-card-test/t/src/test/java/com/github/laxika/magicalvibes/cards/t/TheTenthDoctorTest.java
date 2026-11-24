@@ -31,7 +31,7 @@ class TheTenthDoctorTest extends BaseCardTest {
 
         assertThat(gd.exiledCards).extracting(ExiledCardEntry::card)
                 .containsExactly(land, nonland);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(nonland.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(nonland.getId(), 3);
     }
 
     @Test
@@ -77,7 +77,7 @@ class TheTenthDoctorTest extends BaseCardTest {
         });
 
         assertThat(gd.exiledCards).extracting(ExiledCardEntry::card).containsExactly(nonland);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(nonland.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(nonland.getId(), 3);
     }
 
     @Test
@@ -110,7 +110,7 @@ class TheTenthDoctorTest extends BaseCardTest {
         });
 
         assertThat(gd.exiledCards).extracting(ExiledCardEntry::card).containsExactly(first, second);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKeys(first.getId(), second.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKeys(first.getId(), second.getId());
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
@@ -170,7 +170,7 @@ class TheTenthDoctorTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Sol Ring");
         assertThat(gd.exiledCards).extracting(ExiledCardEntry::card).doesNotContain(suspended);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(suspended.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(suspended.getId());
     }
 
     @Test
@@ -192,7 +192,7 @@ class TheTenthDoctorTest extends BaseCardTest {
         harness.handleListChoice(player1, "ADD");
         harness.handleListChoice(player1, "ADD");
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(suspended.getId(), 6);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(suspended.getId(), 6);
         assertThat(gd.exiledCards).extracting(ExiledCardEntry::card).contains(suspended);
     }
 

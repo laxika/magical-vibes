@@ -129,7 +129,7 @@ class WibblyWobblyTimeyWimeyTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "REMOVE");
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(suspended.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(suspended.getId(), 3);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
         resolveAllTriggers();
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);

@@ -108,7 +108,7 @@ class DarigaazReincarnatedTest extends BaseCardTest {
         assertThat(gd.exiledCardsWithCounter(CounterType.EGG)).doesNotContainKey(card.getId());
         // Log confirms return
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
-                log.contains("Darigaaz Reincarnated") && log.contains("returns to the battlefield"));
+                log.contains("Darigaaz Reincarnated") && log.contains("enters the battlefield"));
     }
 
     // ===== Full cycle: die → exile → 3 upkeeps → return =====
@@ -262,6 +262,23 @@ class DarigaazReincarnatedTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(card);
         harness.assertNotOnBattlefield(player1, "Darigaaz Reincarnated");
         assertThat(gd.exiledCardsWithCounter(CounterType.EGG)).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    @DisplayName("Darigaaz exiled again before its upkeep ability resolves is a new object the ability doesn't touch")
+    void reExiledDarigaazIsANewObject() {
+        DarigaazReincarnated card = new DarigaazReincarnated();
+        exileWithEggCounters(player1.getId(), card, 1);
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.removeFromExile(card.getId());
+        exileWithEggCounters(player1.getId(), card, 1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardCounterCount(card.getId(), CounterType.EGG)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Darigaaz Reincarnated");
     }
 
     private void exileWithEggCounters(UUID playerId, Card card, int counters) {

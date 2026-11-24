@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.c.CitanulWoodreaders;
 import com.github.laxika.magicalvibes.cards.t.Timecrafting;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -23,7 +24,7 @@ class VeilingOddityTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 4);
     }
 
     @Test
@@ -35,7 +36,7 @@ class VeilingOddityTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsValue(3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsValue(3);
         assertThat(gqs.hasCantBeBlocked(gd, ownCreature)).isFalse();
         assertThat(gqs.hasCantBeBlocked(gd, opposingCreature)).isFalse();
     }
@@ -96,7 +97,7 @@ class VeilingOddityTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        gd.exiledCardTimeCounters.put(card.getId(), 1);
+        gd.setExiledCardCounters(card.getId(), CounterType.TIME, 1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
@@ -111,7 +112,7 @@ class VeilingOddityTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 4);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -151,7 +152,7 @@ class VeilingOddityTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
         assertThat(gqs.hasCantBeBlocked(gd, ownCreature)).isTrue();
         assertThat(gqs.hasCantBeBlocked(gd, opposingCreature)).isTrue();

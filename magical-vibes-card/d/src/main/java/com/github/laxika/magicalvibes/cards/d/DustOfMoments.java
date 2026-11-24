@@ -3,11 +3,14 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.AdjustTimeCountersOnEachSuspendedCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersFromExiledCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardIsSuspendedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 
 import java.util.List;
@@ -24,7 +27,8 @@ public class DustOfMoments extends Card {
                                         CounterType.TIME, 2,
                                         new PermanentHasCountersPredicate(CounterType.TIME),
                                         EachPermanentScope.ALL_PLAYERS),
-                                new AdjustTimeCountersOnEachSuspendedCardEffect(false))),
+                                new RemoveCountersFromExiledCardsEffect(
+                                        Subjects.exiledCards(new CardIsSuspendedPredicate()), CounterType.TIME, 2))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Put two time counters on each permanent with a time counter on it and each suspended card",
                         List.of(
@@ -32,7 +36,8 @@ public class DustOfMoments extends Card {
                                         CounterType.TIME, 2,
                                         new PermanentHasCountersPredicate(CounterType.TIME),
                                         EachPermanentScope.ALL_PLAYERS),
-                                new AdjustTimeCountersOnEachSuspendedCardEffect(true)))
+                                new PutCounterOnExiledCardsEffect(
+                                        Subjects.exiledCards(new CardIsSuspendedPredicate()), CounterType.TIME, 2)))
         )));
     }
 }

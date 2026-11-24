@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
 import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.n.Nihilith;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -30,7 +31,7 @@ class JhoiraOfTheGhituTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(first);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(first);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(first.getId(), 4);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(first.getId(), 4);
     }
 
     @Test
@@ -45,7 +46,7 @@ class JhoiraOfTheGhituTest extends BaseCardTest {
         activate(jhoira, 0);
         activate(jhoira, 0);
 
-        assertThat(gd.exiledCardTimeCounters)
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
                 .containsEntry(first.getId(), 4)
                 .containsEntry(second.getId(), 4);
     }
@@ -65,7 +66,7 @@ class JhoiraOfTheGhituTest extends BaseCardTest {
         advanceToUpkeep(player1);
         resolveAllTriggers();
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
@@ -94,7 +95,7 @@ class JhoiraOfTheGhituTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
         assertThat(findPermanents(player1, "Blind Phantasm")).isEmpty();
     }
@@ -125,11 +126,11 @@ class JhoiraOfTheGhituTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(card);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
 
         resolveAllTriggers();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 4);
     }
 
     @Test
@@ -146,13 +147,13 @@ class JhoiraOfTheGhituTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(first, second);
-        assertThat(gd.exiledCardTimeCounters)
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
                 .doesNotContainKey(first.getId())
                 .doesNotContainKey(second.getId());
 
         resolveAllTriggers();
 
-        assertThat(gd.exiledCardTimeCounters)
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
                 .containsEntry(first.getId(), 4)
                 .containsEntry(second.getId(), 4);
     }
@@ -168,12 +169,12 @@ class JhoiraOfTheGhituTest extends BaseCardTest {
         advanceToUpkeep(player2);
         resolveAllTriggers();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 4);
 
         advanceToUpkeep(player1);
         resolveAllTriggers();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 3);
     }
 
     @Test
@@ -184,12 +185,12 @@ class JhoiraOfTheGhituTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         activate(jhoira, 0);
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 4);
 
         advanceToUpkeep(player1);
         resolveAllTriggers();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 3);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
     }
 

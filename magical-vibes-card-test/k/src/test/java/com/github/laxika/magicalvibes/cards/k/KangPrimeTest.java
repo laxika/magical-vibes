@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -27,7 +28,7 @@ class KangPrimeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
-        assertThat(gd.exiledCardTimeCounters).containsOnlyKeys(firstNonland.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsOnlyKeys(firstNonland.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(land, firstNonland);
     }
 
@@ -40,7 +41,7 @@ class KangPrimeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exiledCardTimeCounters).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
     }
 
     @Test
@@ -53,11 +54,11 @@ class KangPrimeTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(nonland.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(nonland.getId(), 2);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(nonland.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(nonland.getId(), 1);
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
@@ -79,7 +80,7 @@ class KangPrimeTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(nonland);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(nonland.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(nonland.getId());
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
@@ -117,7 +118,7 @@ class KangPrimeTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(card -> card.getId())
                 .containsExactly(land.getId(), nonland.getId());
-        assertThat(gd.exiledCardTimeCounters).containsEntry(nonland.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(nonland.getId(), 2);
     }
 
     @Test
@@ -134,7 +135,7 @@ class KangPrimeTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(card -> card.getId())
                 .containsExactly(land.getId(), nonland.getId());
-        assertThat(gd.exiledCardTimeCounters).containsEntry(nonland.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(nonland.getId(), 2);
     }
 
     @Test
@@ -150,7 +151,7 @@ class KangPrimeTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(card -> card.getId())
                 .containsExactly(first.getId(), second.getId());
-        assertThat(gd.exiledCardTimeCounters).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
     }
 
     @Test
@@ -167,7 +168,7 @@ class KangPrimeTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(nonland.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(nonland.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);

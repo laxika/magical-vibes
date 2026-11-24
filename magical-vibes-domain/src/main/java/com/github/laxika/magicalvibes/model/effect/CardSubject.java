@@ -122,9 +122,10 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
     }
 
     /**
-     * "This card" in an ability that works from a graveyard ("you may return this card from your graveyard to the
-     * battlefield"): the ability's card, while it is in the graveyard stay it was in as the ability was put on the
-     * stack (CR 400.7).
+     * "This card" in an ability that works from a graveyard or from exile ("you may return this card from your
+     * graveyard to the battlefield", "remove an egg counter from it. Then if this card has no egg counters on it, return
+     * it to the battlefield"): the ability's card, while it is in the graveyard or exile stay it was in as the ability
+     * was put on the stack (CR 400.7). A face-down card in exile is named too: it is the ability's own card.
      */
     record SourceCard() implements CardSubject {
     }

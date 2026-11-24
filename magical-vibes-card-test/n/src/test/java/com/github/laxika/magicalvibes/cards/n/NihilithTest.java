@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.a.AugurOfSkulls;
 import com.github.laxika.magicalvibes.cards.p.PactOfTheTitan;
 import com.github.laxika.magicalvibes.cards.w.Whetwheel;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -28,7 +29,7 @@ class NihilithTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 7);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 7);
     }
 
     @Test
@@ -41,7 +42,7 @@ class NihilithTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 6);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 6);
     }
 
     @Test
@@ -53,7 +54,7 @@ class NihilithTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 7);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 7);
     }
 
     @Test
@@ -64,7 +65,7 @@ class NihilithTest extends BaseCardTest {
         castOwnPact();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 7);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 7);
     }
 
     @Test
@@ -72,7 +73,7 @@ class NihilithTest extends BaseCardTest {
         Nihilith card = suspendCard();
         advanceToUpkeep(player1);
         resolveAllTriggers();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 6);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 6);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -81,17 +82,17 @@ class NihilithTest extends BaseCardTest {
         Nihilith card = suspendCard();
         advanceToUpkeep(player2);
         resolveAllTriggers();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 7);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 7);
     }
 
     @Test
     void lastCounterFromGraveyardTriggerOffersSeparateFreeHastyCast() {
         Nihilith card = suspendCard();
-        gd.exiledCardTimeCounters.put(card.getId(), 1);
+        gd.setExiledCardCounters(card.getId(), CounterType.TIME, 1);
         castOpponentPact();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -109,12 +110,12 @@ class NihilithTest extends BaseCardTest {
     @Test
     void decliningLastCounterCastStopsGraveyardTriggers() {
         Nihilith card = suspendCard();
-        gd.exiledCardTimeCounters.put(card.getId(), 1);
+        gd.setExiledCardCounters(card.getId(), CounterType.TIME, 1);
         advanceToUpkeep(player1);
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
 
         castOpponentPact();
 
@@ -142,7 +143,7 @@ class NihilithTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 6);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 6);
         assertThat(gd.stack).hasSize(1);
         harness.assertInGraveyard(player2, "Augur of Skulls");
     }
@@ -163,11 +164,11 @@ class NihilithTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 5);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 5);
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 5);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 5);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
     }
 
@@ -201,14 +202,14 @@ class NihilithTest extends BaseCardTest {
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 5);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 5);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
     }
 
     @Test
     void queuedGraveyardTriggerDoesNothingAfterLastCounterIsRemoved() {
         Nihilith card = suspendCard();
-        gd.exiledCardTimeCounters.put(card.getId(), 1);
+        gd.setExiledCardCounters(card.getId(), CounterType.TIME, 1);
         harness.addToBattlefield(player1, new Whetwheel());
         harness.setLibrary(player2, List.of(new PactOfTheTitan(), new AugurOfSkulls()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -224,7 +225,7 @@ class NihilithTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
     }
 
@@ -238,7 +239,7 @@ class NihilithTest extends BaseCardTest {
         harness.runStateBasedActions();
         resolveAllTriggers();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 6);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 6);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
         harness.assertNotOnBattlefield(player2, "Giant");

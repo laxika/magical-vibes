@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -34,7 +35,7 @@ class SinisterConciergeTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(conciergeCard);
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(targetCard);
-        assertThat(gd.exiledCardTimeCounters)
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
                 .containsEntry(conciergeCard.getId(), 3)
                 .containsEntry(targetCard.getId(), 3);
     }
@@ -69,7 +70,7 @@ class SinisterConciergeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(conciergeCard);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(conciergeCard.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(conciergeCard.getId(), 3);
     }
 
     @Test
@@ -104,13 +105,13 @@ class SinisterConciergeTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        assertThat(gd.exiledCardTimeCounters)
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
                 .containsEntry(card.getId(), 2)
                 .containsEntry(target.getCard().getId(), 3);
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
-        assertThat(gd.exiledCardTimeCounters)
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
                 .containsEntry(card.getId(), 2)
                 .containsEntry(target.getCard().getId(), 2);
     }
@@ -137,7 +138,7 @@ class SinisterConciergeTest extends BaseCardTest {
         assertThat(returned.getCard().getId()).isEqualTo(card.getId());
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
     }
 
     @Test
@@ -153,7 +154,7 @@ class SinisterConciergeTest extends BaseCardTest {
         advanceToUpkeep(player1);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThat(gd.stack).isEmpty();
         harness.assertNotOnBattlefield(player1, "Sinister Concierge");
     }

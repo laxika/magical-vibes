@@ -32,7 +32,7 @@ class RoseTylerTest extends BaseCardTest {
 
         AncestralVision suspendedCard = new AncestralVision();
         harness.setExile(player1, List.of(suspendedCard));
-        gd.exiledCardTimeCounters.put(suspendedCard.getId(), 2);
+        gd.setExiledCardCounters(suspendedCard.getId(), CounterType.TIME, 2);
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -48,7 +48,7 @@ class RoseTylerTest extends BaseCardTest {
         opponentRose.setCounterCount(CounterType.TIME, 4);
         AncestralVision opponentSuspendedCard = new AncestralVision();
         harness.setExile(player2, List.of(opponentSuspendedCard));
-        gd.exiledCardTimeCounters.put(opponentSuspendedCard.getId(), 2);
+        gd.setExiledCardCounters(opponentSuspendedCard.getId(), CounterType.TIME, 2);
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -66,15 +66,15 @@ class RoseTylerTest extends BaseCardTest {
         AncestralVision zeroCounterCard = new AncestralVision();
         AncestralVision ordinaryExiledCard = new AncestralVision();
         harness.setExile(player1, List.of(suspendedCard, zeroCounterCard, ordinaryExiledCard));
-        gd.exiledCardTimeCounters.put(suspendedCard.getId(), 4);
-        gd.exiledCardTimeCounters.put(zeroCounterCard.getId(), 0);
+        gd.setExiledCardCounters(suspendedCard.getId(), CounterType.TIME, 4);
+        gd.setExiledCardCounters(zeroCounterCard.getId(), CounterType.TIME, 0);
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
         assertThat(rose.getCounterCount(CounterType.TIME)).isEqualTo(2);
         assertThat(otherPermanent.getCounterCount(CounterType.TIME)).isEqualTo(5);
-        assertThat(gd.exiledCardTimeCounters.get(suspendedCard.getId())).isEqualTo(4);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME).get(suspendedCard.getId())).isEqualTo(4);
     }
 
     @Test
@@ -84,11 +84,11 @@ class RoseTylerTest extends BaseCardTest {
         otherPermanent.setCounterCount(CounterType.TIME, 1);
         AncestralVision suspendedCard = new AncestralVision();
         harness.setExile(player1, List.of(suspendedCard));
-        gd.exiledCardTimeCounters.put(suspendedCard.getId(), 2);
+        gd.setExiledCardCounters(suspendedCard.getId(), CounterType.TIME, 2);
 
         declareAttackers(List.of(0));
         otherPermanent.setCounterCount(CounterType.TIME, 0);
-        gd.exiledCardTimeCounters.put(suspendedCard.getId(), 0);
+        gd.setExiledCardCounters(suspendedCard.getId(), CounterType.TIME, 0);
         harness.passBothPriorities();
 
         assertThat(rose.getCounterCount(CounterType.TIME)).isZero();

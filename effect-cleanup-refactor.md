@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18 (each in Findings; the fold queue marks its rows). Fold runs 8 to 19 run in parallel worktrees from 2026-11-24. Next: fold runs 15b, 17b and 19 (running), 16b (merging), 18b, 12e, `drafted-step`. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                        |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b (each in Findings; the fold queue marks its rows). Fold runs 8 to 20 run in parallel worktrees from 2026-11-24. Next: fold runs 17b, 19 and 20 (running), 15b (merging), 18b, 12e, `drafted-step`. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                         |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,704 / 2,967 (after fold run 18) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,700 / 2,963 (after fold run 16b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,523 rows over 4,425 classes (after fold run 18). Latest verdict per class: `step-9` 862, unique 1,166, absorbed 703, split 603, blocked-other 499, survivor 293, blocked-step-model 141, blocked-player-loop 96, dead 62. Waiting: 862 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,531 rows over 4,426 classes (after fold run 16b). Latest verdict per class: `step-9` 857, unique 1,167, absorbed 706, split 604, blocked-other 499, survivor 294, blocked-step-model 141, blocked-player-loop 96, dead 62. Waiting: 857 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -698,6 +698,13 @@ Delayed and global triggers:
   over a `CardSubject`: face-up exiled spell cards, one ordered choice (CR 608.2g), uncast cards stay (fold run 18).
 - `MayCastAnySpellFromHandWithoutPayingManaCostEffect.anyNumber()` / `.upTo(n)`: hand free casts with a count, each cast followed by a
   new round of offers (`MayCastFromHandWithoutPayingManaCostEffect.nextOffers`) (fold run 18).
+
+- `GameData.isSuspended(cardId)` / `exiledCardHasSuspend(card)`: the one "suspended" rule (CR 702.62b); time counters are
+  `exiledCardCounters` TIME; `CardIsSuspendedPredicate` for "each suspended card [you own]" (fold run 16b).
+- `RemoveCountersFromExiledCardsEffect` with TIME removes one counter at a time through suspend's removal; any other kind raises
+  `CounterChangeEvent.Kind.COUNTER_REMOVED_IN_EXILE` (fold run 16b).
+- `Subjects.sourceCard()` in exile, checked against the card's exile stay (`StackEntry.sourceExileEntryVersion`);
+  `SourceCardInExileWithCounter(CounterType)` (fold run 16b).
 
 ### Blocked causes still open
 
@@ -2310,6 +2317,37 @@ with a `DynamicAmount` count, a reveal flag and one place for the looked-at card
 costs; Aetherworks leaves them in the library; Sunbird uses a split-half cap). `exile-markers`: suspend's haste "until you lose
 control" (CR 702.62a) on `MayPlayExiledCardWithoutPayingManaCostEffect`. Invoke Calamity: a hand-and-graveyard source on the cast-now
 queue.
+
+### Step 9, fold run 16b (2026-11-24, parallel worktree)
+
+Batch `exiled-store`: the 6 members fold run 16 left. Ratchet in its worktree 3,754 / 3,018 → 3,750 / 3,014. Ledger 8 rows (absorbed 3,
+split 1, unique 1, survivor 2, `step-9` 1). 6 card files rewritten; Oracle text checked for Dust of Moments, Talon Gates, Ertai's
+Meddling, Uvilda and both Darigaaz. CR 702.62a, 702.62b, 122.1, 400.7, 603.4, 608.2h, 708.2, 110.2a, 707.10 checked.
+
+**Time-counter merge (St).** `exiledCardTimeCounters`, `suspendedSpellExiles` and `GameData.SuspendedSpellExile` are gone: time
+counters are `exiledCardCounters` TIME. "Suspended" has one rule, `GameData.isSuspended` (CR 702.62b: in exile, has suspend, has a time
+counter), over `exiledCardHasSuspend`: a card has suspend when it prints it or gained it; every card exiled with time counters gains it
+unless the non-suspend set marks it (only Alaundo's exile). Every reader asks the rule; StepTriggerService's separate loop for exiled
+spells is gone. `GameDataDeepCopyTest` covers TIME.
+
+| Member | Result |
+|---|---|
+| RemoveSuspendCounterFromExiledSpellEffect | absorbed into `RemoveTimeCounterFromExiledCardEffect` |
+| AdjustTimeCountersOnEachSuspendedCardEffect | absorbed: remove / put step over `exiledCards([you(),] CardIsSuspendedPredicate)`, TIME, 2 |
+| RemoveRefineCounterFromExiledCardEffect | absorbed: `RemoveCountersFromExiledCardsEffect(sourceCard(), REFINE)` + the last-refine event (`COUNTER_REMOVED_IN_EXILE`) |
+| RemoveEggCounterFromExileAndReturnEffect | split: remove from `sourceCard()` + `ConditionalEffect(NotCondition(SourceCardInExileWithCounter(EGG)), PutCardsOntoBattlefieldEffect(sourceCard()))`; Darigaaz Reincarnated prints it |
+| ConjureDarigaazShivanChampionSpellbookEffect | left: needs a face-down exile `ConjureDestination` and 13 printings |
+| RemoveDelayCounterFromExiledSpellEffect | unique: one ability with an "if"; putting the original spell back (CR 707.10) has no second user |
+
+**Behaviour changes.** Spells that gained suspend (Delay, Rory Williams, Taigam, self-exiling spells such as Arc Blade) raise the
+removed-in-exile event on every time counter, so a delayed Aeon Chronicler draws (CR 702.62a; new test); they count as suspended for
+every reader and their upkeep trigger is ordered with the other upkeep triggers. A card that prints suspend is suspended even when
+marked non-suspend (CR 702.62b; Fury Charm's test moved from Ancestral Vision to Grizzly Bears to keep its "not suspended" card).
+`SuspendedCards` no longer counts Alaundo's cards without suspend. Darigaaz Reincarnated checks that it hasn't left exile since (CR
+400.7; new test). Logs use the survivors' lines. 110 test files rewritten by script onto the store's accessors.
+
+**For the next run.** Darigaaz's conjure waits for a face-down exile conjure destination. `SourceCardInExile`'s Javadoc says "face-up"
+but the code doesn't check it; the refine and suspend upkeep abilities are still built from the counters rather than granted.
 
 ## Prompt
 

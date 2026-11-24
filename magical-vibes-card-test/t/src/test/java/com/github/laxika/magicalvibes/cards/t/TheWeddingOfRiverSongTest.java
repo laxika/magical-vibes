@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -63,11 +64,11 @@ class TheWeddingOfRiverSongTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(controllerCard);
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(opponentCard);
-        assertThat(gd.exiledCardTimeCounters)
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
                 .containsEntry(controllerCard.getId(), 2)
                 .containsEntry(opponentCard.getId(), 2);
         harness.handleListChoice(player1, "ADD");
-        assertThat(gd.exiledCardTimeCounters)
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
                 .containsEntry(controllerCard.getId(), 3)
                 .containsEntry(opponentCard.getId(), 2);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -115,7 +116,7 @@ class TheWeddingOfRiverSongTest extends BaseCardTest {
         harness.handleListChoice(player1, action);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(exiledCard);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(exiledCard.getId(), remainingCounters);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(exiledCard.getId(), remainingCounters);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

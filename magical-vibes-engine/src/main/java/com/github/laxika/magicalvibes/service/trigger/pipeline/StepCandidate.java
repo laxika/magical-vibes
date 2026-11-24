@@ -37,8 +37,6 @@ public record StepCandidate(TriggerCandidate candidate, PlanarObject plane, Embl
      * stack entry is called and what the log says as it triggers.
      */
     public enum ExileCounterAbility {
-        /** "If this card is exiled with an egg counter on it, remove an egg counter" (Darigaaz Reincarnated). */
-        EGG("egg counter ability", "'s upkeep ability triggers (exiled with egg counters)."),
         /** "If this card is exiled, remove a refine counter from it", gained as it was exiled (Uvilda). */
         REFINE("refine counter ability", "'s refine counter ability triggers."),
         /** Suspend's "if this card is suspended, remove a time counter from it" (CR 702.62a). */

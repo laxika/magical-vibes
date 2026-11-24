@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.s.SaltfieldRecluse;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -24,7 +25,7 @@ class RiftmarkedKnightTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 3);
     }
 
     @Test
@@ -44,7 +45,7 @@ class RiftmarkedKnightTest extends BaseCardTest {
         advanceToUpkeep(player2);
         resolveAllTriggers();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 3);
         assertThat(countPermanents(player1, "Knight")).isZero();
         assertThat(countPermanents(player2, "Knight")).isZero();
     }
@@ -116,13 +117,13 @@ class RiftmarkedKnightTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(countPermanents(player1, "Knight")).isZero();
-        gd.exiledCardTimeCounters.put(card.getId(), 1);
+        gd.setExiledCardCounters(card.getId(), CounterType.TIME, 1);
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Knight")).isEqualTo(1);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 1);
     }
 
     @Test

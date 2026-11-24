@@ -263,16 +263,18 @@ class GameDataDeepCopyTest {
     }
 
     @Test
-    @DisplayName("Deep copy keeps the counters of every kind on exiled cards, and the copy's changes stay its own")
+    @DisplayName("Deep copy keeps the counters of every kind on exiled cards, time counters included, and the copy's changes stay its own")
     void deepCopyKeepsExiledCardCountersIndependently() {
         UUID cardId = UUID.randomUUID();
         UUID otherId = UUID.randomUUID();
         gd.setExiledCardCounters(cardId, CounterType.DELAY, 2);
         gd.addExiledCardCounters(cardId, CounterType.ICE, 1);
         gd.addExiledCardCounters(otherId, CounterType.SILVER, 1);
+        gd.setExiledCardCounters(otherId, CounterType.TIME, 3);
 
         GameData copy = gd.simulationCopy();
         copy.setExiledCardCounters(cardId, CounterType.DELAY, 1);
+        copy.setExiledCardCounters(otherId, CounterType.TIME, 2);
         copy.setExiledCardCounters(cardId, CounterType.ICE, 0);
         copy.addExiledCardCounters(otherId, CounterType.HIT, 3);
 
@@ -283,6 +285,8 @@ class GameDataDeepCopyTest {
         assertThat(copy.exiledCardHasCounter(cardId, CounterType.ICE)).isFalse();
         assertThat(copy.exiledCardCounterCount(otherId, CounterType.HIT)).isEqualTo(3);
         assertThat(copy.exiledCardHasCounter(otherId, CounterType.SILVER)).isTrue();
+        assertThat(gd.exiledCardCounterCount(otherId, CounterType.TIME)).isEqualTo(3);
+        assertThat(copy.exiledCardCounterCount(otherId, CounterType.TIME)).isEqualTo(2);
         assertThat(gd.simulationCopy().exiledCardsWithCounter(CounterType.DELAY)).containsEntry(cardId, 2);
     }
 

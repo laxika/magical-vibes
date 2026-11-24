@@ -43,7 +43,7 @@ class FungalBehemothTest extends BaseCardTest {
     void suspendUsesChosenXAsTimeCounters() {
         FungalBehemoth card = suspendCard(3);
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 3);
     }
 
     @Test
@@ -55,7 +55,7 @@ class FungalBehemothTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null, 0))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
     }
 
     @Test
@@ -75,7 +75,7 @@ class FungalBehemothTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(gd.exiledCardTimeCounters).containsValue(1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsValue(1);
     }
 
     @Test
@@ -94,7 +94,7 @@ class FungalBehemothTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(gd.exiledCardTimeCounters).containsValue(1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsValue(1);
     }
 
     @Test
@@ -164,7 +164,7 @@ class FungalBehemothTest extends BaseCardTest {
         advanceToUpkeep(player2);
         resolveAllTriggers();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 2);
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
@@ -187,7 +187,7 @@ class FungalBehemothTest extends BaseCardTest {
         }
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         harness.assertNotOnBattlefield(player1, "Fungal Behemoth");
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }

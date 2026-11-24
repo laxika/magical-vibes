@@ -79,7 +79,7 @@ class FuryCharmTest extends BaseCardTest {
 
         cast(2, target.getId());
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(target.getId(), 1);
     }
 
     @Test
@@ -120,7 +120,7 @@ class FuryCharmTest extends BaseCardTest {
 
         cast(2, target.getId());
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(target.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(target.getId());
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
@@ -134,7 +134,7 @@ class FuryCharmTest extends BaseCardTest {
 
         cast(2, target.getId());
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(target.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(target.getId());
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
@@ -144,7 +144,9 @@ class FuryCharmTest extends BaseCardTest {
 
     @Test
     void exiledCardWithNonSuspendTimeCountersIsNotLegalTarget() {
-        AncestralVision target = suspendedCard(3);
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setExile(player2, List.of(target));
+        gd.setExiledCardCounters(target.getId(), CounterType.TIME, 3);
         gd.exiledCardsWithNonSuspendTimeCounters.add(target.getId());
 
         assertThatThrownBy(() -> cast(2, target.getId()))
@@ -154,7 +156,7 @@ class FuryCharmTest extends BaseCardTest {
     private AncestralVision suspendedCard(int timeCounters) {
         AncestralVision target = new AncestralVision();
         harness.setExile(player2, List.of(target));
-        gd.exiledCardTimeCounters.put(target.getId(), timeCounters);
+        gd.setExiledCardCounters(target.getId(), CounterType.TIME, timeCounters);
         return target;
     }
 

@@ -873,9 +873,7 @@ public class GameViewProjectionFactory {
                     && exiledEntry != null
                     && playerId.equals(exiledEntry.exilerId())
                     && exiledEntry.exiledTurnNumber() < gameData.turnNumber;
-            Integer timeCounters = gameData.exiledCardTimeCounters.get(card.getId());
-            boolean hasSuspendedExileAbility = timeCounters != null && timeCounters > 0
-                    && !gameData.exiledCardsWithNonSuspendTimeCounters.contains(card.getId())
+            boolean hasSuspendedExileAbility = gameData.isSuspended(card.getId())
                     && !card.getActivatedAbilities(Zone.EXILE).isEmpty();
             if (hasSuspendedExileAbility) {
                 playable.add(cardViewFactory.create(card));

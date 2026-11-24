@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -43,7 +44,7 @@ class RiftwingCloudskateTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 3);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -55,7 +56,7 @@ class RiftwingCloudskateTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 3);
     }
 
     @Test
@@ -72,7 +73,7 @@ class RiftwingCloudskateTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
@@ -102,7 +103,7 @@ class RiftwingCloudskateTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         harness.assertNotOnBattlefield(player1, "Riftwing Cloudskate");
     }
 
@@ -139,7 +140,7 @@ class RiftwingCloudskateTest extends BaseCardTest {
             advanceToUpkeep(player1);
             harness.passBothPriorities();
 
-            assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), remaining);
+            assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), remaining);
             assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
             assertThat(gd.interaction.isAwaitingInput()).isFalse();
             harness.assertNotOnBattlefield(player1, "Riftwing Cloudskate");
@@ -179,7 +180,7 @@ class RiftwingCloudskateTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(card);
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
     }
 
     @Test
@@ -197,7 +198,7 @@ class RiftwingCloudskateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertNotOnBattlefield(player1, "Riftwing Cloudskate");
     }

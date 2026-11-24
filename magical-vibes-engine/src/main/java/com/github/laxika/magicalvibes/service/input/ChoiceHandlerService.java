@@ -215,7 +215,6 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RemoveAnyNumberOfCountersFromAllPermanentsEffectHandler
             removeAnyNumberOfCountersFromAllPermanentsEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RemoveTimeCounterFromExiledCardEffectHandler removeTimeCounterFromExiledCardEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.RemoveSuspendCounterFromExiledSpellEffectHandler removeSuspendCounterFromExiledSpellEffectHandler;
     private final TimeTravelService timeTravelService;
     private final ToymakersTrapEffectHandler toymakersTrapEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PhaseOutChosenTypeSupport phaseOutChosenTypeSupport;
@@ -3552,25 +3551,10 @@ public class ChoiceHandlerService {
             return;
         }
         if (ctx.targetZone() == Zone.EXILE) {
-            GameData.SuspendedSpellExile suspended = gameData.suspendedSpellExiles.stream()
-                    .filter(pending -> pending.cardId().equals(ctx.targetId())).findFirst().orElse(null);
-            if (suspended != null) {
-                if (ChoiceContext.AdjustChosenCounterActionChoice.ADD.equals(choice)) {
-                    int index = gameData.suspendedSpellExiles.indexOf(suspended);
-                    gameData.suspendedSpellExiles.set(index, new GameData.SuspendedSpellExile(
-                            suspended.cardId(), suspended.ownerId(), suspended.counters() + 1));
-                } else {
-                    removeSuspendCounterFromExiledSpellEffectHandler.resolve(gameData,
-                            gameData.pendingEffectResolutionEntry,
-                            new com.github.laxika.magicalvibes.model.effect.RemoveSuspendCounterFromExiledSpellEffect(ctx.targetId()));
-                }
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-                return;
-            }
             if (ChoiceContext.AdjustChosenCounterActionChoice.ADD.equals(choice)) {
-                Integer counters = gameData.exiledCardTimeCounters.get(ctx.targetId());
-                if (gameData.findExiledCard(ctx.targetId()) != null && counters != null && counters > 0) {
-                    gameData.exiledCardTimeCounters.put(ctx.targetId(), counters + 1);
+                if (gameData.findExiledCard(ctx.targetId()) != null
+                        && gameData.exiledCardHasCounter(ctx.targetId(), CounterType.TIME)) {
+                    gameData.addExiledCardCounters(ctx.targetId(), CounterType.TIME, 1);
                 }
             } else {
                 removeTimeCounterFromExiledCardEffectHandler.removeTimeCounter(gameData, ctx.targetId(),

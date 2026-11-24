@@ -38,7 +38,7 @@ public class PutTimeCountersOnImprintedCardEffectHandler implements NormalEffect
 
         int amount = amountEvaluationService.evaluate(gameData, counters.amount(),
                 AmountContext.forStackEntry(entry, null));
-        gameData.exiledCardTimeCounters.merge(counters.cardId(), amount, Integer::sum);
+        gameData.addExiledCardCounters(counters.cardId(), com.github.laxika.magicalvibes.model.CounterType.TIME, amount);
         gameLogService.append(gameData,
                 GameLog.cardThen(exiledEntry.card(), " gets " + amount + " time counters."));
     }

@@ -1,19 +1,33 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.condition.SourceCardInExileWithCounter;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileWithEggCountersInsteadOfDyingEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersFromExiledCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DOM", collectorNumber = "193")
 public class DarigaazReincarnated extends Card {
 
     public DarigaazReincarnated() {
-        // Flying, trample, haste — loaded from Scryfall
-        // "If Darigaaz Reincarnated would die, instead exile it with three egg counters on it."
         addStaticEffect(new ExileWithEggCountersInsteadOfDyingEffect(3));
-        // "At the beginning of your upkeep, if this card is exiled with an egg counter on it,
-        //  remove an egg counter from it. Then if this card has no egg counters on it, return
-        //  it to the battlefield."
-        // Upkeep trigger is built by TriggerIndex for each exiled card with an egg counter.
+        var withEggCounter = new SourceCardInExileWithCounter(CounterType.EGG);
+        addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.EXILE),
+                TriggerOptions.DEFAULT.withInterveningIf(withEggCounter),
+                SequenceEffect.of(
+                        new RemoveCountersFromExiledCardsEffect(Subjects.sourceCard(), CounterType.EGG),
+                        new ConditionalEffect(new NotCondition(withEggCounter),
+                                new PutCardsOntoBattlefieldEffect(Subjects.sourceCard()))));
     }
 }

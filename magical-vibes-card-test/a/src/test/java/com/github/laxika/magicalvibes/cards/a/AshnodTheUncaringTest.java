@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -94,7 +95,7 @@ class AshnodTheUncaringTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(gargadon.getId(), 9);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(gargadon.getId(), 9);
     }
 
     @Test

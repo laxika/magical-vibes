@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.d.DragonSniper;
 import com.github.laxika.magicalvibes.cards.d.DustOfMoments;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -29,11 +30,7 @@ class TaigamMasterOpportunistTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.findExiledCard(second.getId())).isNotNull();
-        assertThat(gd.suspendedSpellExiles)
-                .anySatisfy(pending -> {
-                    assertThat(pending.cardId()).isEqualTo(second.getId());
-                    assertThat(pending.counters()).isEqualTo(4);
-                });
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(second.getId(), 4);
         assertThat(gd.stack).filteredOn(com.github.laxika.magicalvibes.model.StackEntry::isCopy).hasSize(1);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -54,10 +51,7 @@ class TaigamMasterOpportunistTest extends BaseCardTest {
             int counters = expectedCounters;
             advanceToUpkeep(player1);
             harness.passBothPriorities();
-            assertThat(gd.suspendedSpellExiles).anySatisfy(pending -> {
-                assertThat(pending.cardId()).isEqualTo(second.getId());
-                assertThat(pending.counters()).isEqualTo(counters);
-            });
+            assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(second.getId(), counters);
         }
 
         advanceToUpkeep(player1);
@@ -82,7 +76,7 @@ class TaigamMasterOpportunistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.castAndResolveInstant(player1, 0);
-        assertThat(gd.suspendedSpellExiles).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(first);
 
         harness.castInstant(player1, 0);
@@ -90,7 +84,7 @@ class TaigamMasterOpportunistTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(gd.suspendedSpellExiles).hasSize(1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).hasSize(1);
         assertThat(gd.findExiledCard(second.getId())).isNotNull();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(third);
         assertThat(gd.stack).isEmpty();
@@ -107,7 +101,7 @@ class TaigamMasterOpportunistTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0);
         harness.castAndResolveInstant(player2, 0);
 
-        assertThat(gd.suspendedSpellExiles).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(first, second);
         assertThat(gd.stack).isEmpty();
     }
@@ -128,8 +122,7 @@ class TaigamMasterOpportunistTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.suspendedSpellExiles).anySatisfy(pending ->
-                assertThat(pending.counters()).isEqualTo(4));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsValue(4);
 
         for (int upkeep = 0; upkeep < 4; upkeep++) {
             advanceToUpkeep(player1);
@@ -166,7 +159,7 @@ class TaigamMasterOpportunistTest extends BaseCardTest {
         advanceToUpkeep(player1);
 
         assertThat(gd.findExiledCard(second.getId())).isNotNull();
-        assertThat(gd.suspendedSpellExiles).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
     }
@@ -186,9 +179,6 @@ class TaigamMasterOpportunistTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, 0, List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.suspendedSpellExiles).anySatisfy(pending -> {
-            assertThat(pending.cardId()).isEqualTo(second.getId());
-            assertThat(pending.counters()).isEqualTo(2);
-        });
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(second.getId(), 2);
     }
 }

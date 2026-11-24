@@ -176,7 +176,7 @@ judges, records or routes by an effect's class, and none reads, wraps or rebuild
 - `stepCandidates`: delayed step abilities whose wait is over, planar objects (planar controller, CR 901.6), emblems
   (CR 114.4), then per player in APNAP order their permanents and schemes, then command-zone, graveyard and exile cards
   whose abilities function there (CR 113.6; an exiled "each upkeep" only while suspended), and at upkeep the active
-  player's egg, refine and suspend counter abilities (`StepCandidate.ExileCounterAbility`, below the exile abilities).
+  player's refine and suspend counter abilities (`StepCandidate.ExileCounterAbility`, below the exile abilities).
 - `entryCausesNoTriggers`: an entry under Hushbringer's kind of ability triggers nothing, "leaves your graveyard"
   included.
 

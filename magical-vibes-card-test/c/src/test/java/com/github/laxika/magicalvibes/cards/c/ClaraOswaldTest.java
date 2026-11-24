@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.TheTenthDoctor;
 import com.github.laxika.magicalvibes.cards.t.TheNinthDoctor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -35,7 +36,7 @@ class ClaraOswaldTest extends BaseCardTest {
 
         assertThat(gd.exiledCards).extracting(ExiledCardEntry::card)
                 .containsExactly(first, second);
-        assertThat(gd.exiledCardTimeCounters)
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
                 .containsEntry(first.getId(), 3)
                 .containsEntry(second.getId(), 3);
     }
@@ -64,7 +65,7 @@ class ClaraOswaldTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.exiledCards).extracting(ExiledCardEntry::card).containsExactly(first);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(first.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(first.getId(), 3);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second);
     }
 
@@ -81,7 +82,7 @@ class ClaraOswaldTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.exiledCards).extracting(ExiledCardEntry::card).containsExactly(first, second);
-        assertThat(gd.exiledCardTimeCounters)
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
                 .containsEntry(first.getId(), 3)
                 .containsEntry(second.getId(), 3);
     }

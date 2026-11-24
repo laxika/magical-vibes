@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.a.AeonChronicler;
 import com.github.laxika.magicalvibes.cards.a.AetherMembrane;
 import com.github.laxika.magicalvibes.cards.d.Delay;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -45,7 +45,7 @@ class TimecraftingTest extends BaseCardTest {
 
         cast(0, 2, target.getId());
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(target.getId(), 2);
     }
 
     @Test
@@ -54,7 +54,7 @@ class TimecraftingTest extends BaseCardTest {
 
         cast(1, 3, target.getId());
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 4);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(target.getId(), 4);
     }
 
     @Test
@@ -69,7 +69,7 @@ class TimecraftingTest extends BaseCardTest {
     void cannotTargetExiledCardWithNonSuspendTimeCounters() {
         AetherMembrane target = new AetherMembrane();
         harness.setExile(player2, List.of(target));
-        gd.exiledCardTimeCounters.put(target.getId(), 3);
+        gd.setExiledCardCounters(target.getId(), CounterType.TIME, 3);
         gd.exiledCardsWithNonSuspendTimeCounters.add(target.getId());
 
         assertThatThrownBy(() -> cast(0, 2, target.getId()))
@@ -151,7 +151,7 @@ class TimecraftingTest extends BaseCardTest {
 
         cast(0, 5, target.getId());
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(target.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(target.getId());
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target);
         assertThat(gd.stack).hasSize(3);
         harness.assertNotOnBattlefield(player2, "Aeon Chronicler");
@@ -164,10 +164,10 @@ class TimecraftingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castModalInstantForX(player1, 0, 1, 2, target.getId());
 
-        gd.exiledCardTimeCounters.remove(target.getId());
+        gd.setExiledCardCounters(target.getId(), CounterType.TIME, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(target.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(target.getId());
         harness.assertInGraveyard(player1, "Timecrafting");
     }
 
@@ -177,8 +177,8 @@ class TimecraftingTest extends BaseCardTest {
 
         cast(0, 2, target.getId());
 
-        assertThat(gd.suspendedSpellExiles)
-                .containsExactly(new GameData.SuspendedSpellExile(target.getId(), player1.getId(), 1));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
+                .containsExactly(Map.entry(target.getId(), 1));
     }
 
     @Test
@@ -187,8 +187,8 @@ class TimecraftingTest extends BaseCardTest {
 
         cast(1, 2, target.getId());
 
-        assertThat(gd.suspendedSpellExiles)
-                .containsExactly(new GameData.SuspendedSpellExile(target.getId(), player1.getId(), 5));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
+                .containsExactly(Map.entry(target.getId(), 5));
     }
 
     private AetherMembrane delayedCard() {
@@ -205,7 +205,7 @@ class TimecraftingTest extends BaseCardTest {
     private AeonChronicler suspendedCard(int timeCounters) {
         AeonChronicler target = new AeonChronicler();
         harness.setExile(player2, List.of(target));
-        gd.exiledCardTimeCounters.put(target.getId(), timeCounters);
+        gd.setExiledCardCounters(target.getId(), CounterType.TIME, timeCounters);
         return target;
     }
 

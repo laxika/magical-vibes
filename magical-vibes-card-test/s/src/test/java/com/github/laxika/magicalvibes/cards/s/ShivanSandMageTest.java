@@ -55,7 +55,7 @@ class ShivanSandMageTest extends BaseCardTest {
 
         cast(REMOVE_MODE, target.getId());
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(target.getId(), 2);
     }
 
     @Test
@@ -64,7 +64,7 @@ class ShivanSandMageTest extends BaseCardTest {
 
         cast(ADD_MODE, target.getId());
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(target.getId(), 3);
     }
 
     @Test
@@ -86,7 +86,7 @@ class ShivanSandMageTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 4);
     }
 
     @Test
@@ -95,7 +95,7 @@ class ShivanSandMageTest extends BaseCardTest {
 
         cast(REMOVE_MODE, target.getId());
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(target.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(target.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
@@ -123,24 +123,24 @@ class ShivanSandMageTest extends BaseCardTest {
     void removalCannotTargetExiledCardWithTimeCountersButWithoutSuspend() {
         BlindPhantasm target = new BlindPhantasm();
         harness.setExile(player2, List.of(target));
-        gd.exiledCardTimeCounters.put(target.getId(), 3);
+        gd.setExiledCardCounters(target.getId(), CounterType.TIME, 3);
         gd.exiledCardsWithNonSuspendTimeCounters.add(target.getId());
 
         assertThatThrownBy(() -> cast(REMOVE_MODE, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(target.getId(), 3);
     }
 
     @Test
     void additionCannotTargetExiledCardWithTimeCountersButWithoutSuspend() {
         BlindPhantasm target = new BlindPhantasm();
         harness.setExile(player2, List.of(target));
-        gd.exiledCardTimeCounters.put(target.getId(), 3);
+        gd.setExiledCardCounters(target.getId(), CounterType.TIME, 3);
         gd.exiledCardsWithNonSuspendTimeCounters.add(target.getId());
 
         assertThatThrownBy(() -> cast(ADD_MODE, target.getId()))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(target.getId(), 3);
     }
 
     private Permanent permanentWithTimeCounters(com.github.laxika.magicalvibes.model.Player player, int count) {
@@ -152,7 +152,7 @@ class ShivanSandMageTest extends BaseCardTest {
     private KnightOfSursi suspendedCard(int timeCounters) {
         KnightOfSursi card = new KnightOfSursi();
         harness.setExile(player2, List.of(card));
-        gd.exiledCardTimeCounters.put(card.getId(), timeCounters);
+        gd.setExiledCardCounters(card.getId(), CounterType.TIME, timeCounters);
         return card;
     }
 

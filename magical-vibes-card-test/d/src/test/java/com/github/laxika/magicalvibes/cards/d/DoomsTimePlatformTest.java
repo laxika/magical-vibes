@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -44,7 +45,7 @@ class DoomsTimePlatformTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactly(nonland.getId());
-        assertThat(gd.exiledCardTimeCounters).containsEntry(nonland.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(nonland.getId(), 2);
     }
 
     @Test
@@ -64,7 +65,7 @@ class DoomsTimePlatformTest extends BaseCardTest {
         harness.passBothPriorities();
         resolveAllTriggers();
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(nonland.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(nonland.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
@@ -84,7 +85,7 @@ class DoomsTimePlatformTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Forest");
-        assertThat(gd.exiledCardTimeCounters).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
     }
 
     @Test
@@ -149,11 +150,11 @@ class DoomsTimePlatformTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 2);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 1);
     }
 
     @Test
@@ -176,7 +177,7 @@ class DoomsTimePlatformTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId)
                 .containsExactly(card.getId());
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
     }
 
     @Test
@@ -191,7 +192,7 @@ class DoomsTimePlatformTest extends BaseCardTest {
             advanceToUpkeep(player1);
             harness.passBothPriorities();
 
-            assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+            assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
             assertThat(gd.interaction.activeInteraction()).isNull();
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -257,7 +258,7 @@ class DoomsTimePlatformTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        assertThat(gd.exiledCardTimeCounters).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
     }
 
     @Test
@@ -277,7 +278,7 @@ class DoomsTimePlatformTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exiledCardTimeCounters).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
     }
 
     private Permanent findBattlefieldPermanent(Player player, Card card) {

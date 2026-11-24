@@ -29,7 +29,6 @@ import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilE
 import com.github.laxika.magicalvibes.model.effect.PlayerWithMostLifeGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.FirstUpkeepThisTurn;
-import com.github.laxika.magicalvibes.model.condition.SourceCardInExileWithScreamCounter;
 import com.github.laxika.magicalvibes.model.condition.ActivationCount;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerControlsMoreLandsThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerControlsPermanent;
@@ -410,7 +409,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCanSoulbond;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInCommandZone;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInExile;
-import com.github.laxika.magicalvibes.model.condition.SourceCardInExileWithFetchCounter;
+import com.github.laxika.magicalvibes.model.condition.SourceCardInExileWithCounter;
 import com.github.laxika.magicalvibes.model.condition.SourceCardOnBattlefield;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterCountParity;
@@ -1880,8 +1879,9 @@ public class ConditionEvaluationService {
             case CardsStillInZone c -> cardsStillInZone(gameData, ctx, c);
             case TriggeringCardInExile ignored -> ctx.triggeringCard() != null
                     && gameData.findExiledCard(ctx.triggeringCard().getId()) != null;
-            case SourceCardInExileWithFetchCounter ignored ->
-                    isSourceCardInExileWithFetchCounter(gameData, ctx);
+            case SourceCardInExileWithCounter c -> ctx.sourceCard() != null
+                    && gameData.exiledCardHasCounter(ctx.sourceCard().getId(), c.kind())
+                    && gameData.findExiledCard(ctx.sourceCard().getId()) != null;
             case SourceCardToughnessAtLeast c ->
                     sourceCardToughnessAtLeast(gameData, ctx, c.threshold());
             case SourceCardSuspended ignored ->
@@ -2276,9 +2276,6 @@ public class ConditionEvaluationService {
             case FirstUpkeepThisTurn ignored -> !gameData.currentUpkeepIsAdditional;
             case ActivePlayerIsMonarch ignored ->
                     gameData.activePlayerId != null && gameData.activePlayerId.equals(gameData.monarchPlayerId);
-            case SourceCardInExileWithScreamCounter ignored -> ctx.sourceCard() != null
-                    && gameData.exiledCardCounterCount(ctx.sourceCard().getId(), CounterType.SCREAM) > 0
-                    && gameData.findExiledCard(ctx.sourceCard().getId()) != null;
             case OpponentControlsMoreLands ignored ->
                     gameQueryService.anyOpponentControlsMoreLands(gameData, ctx.controllerId());
             case OpponentControlsNoPermanent c ->
@@ -3061,13 +3058,6 @@ public class ConditionEvaluationService {
         return ctx.sourceCard() != null && gameData.findExiledCard(ctx.sourceCard().getId()) != null;
     }
 
-    /** True when the source card is currently exiled with a fetch counter. */
-    private boolean isSourceCardInExileWithFetchCounter(GameData gameData, ConditionContext ctx) {
-        return ctx.sourceCard() != null
-                && gameData.exiledCardHasCounter(ctx.sourceCard().getId(), CounterType.FETCH)
-                && gameData.findExiledCard(ctx.sourceCard().getId()) != null;
-    }
-
     /** True when the source card's printed toughness plus its perpetual modifiers meets the threshold. */
     private boolean sourceCardToughnessAtLeast(GameData gameData, ConditionContext ctx, int threshold) {
         if (ctx.sourceCard() == null || ctx.sourceCard().getToughness() == null) return false;
@@ -3077,14 +3067,9 @@ public class ConditionEvaluationService {
         return toughness >= threshold;
     }
 
-    /** True when the source card is still exiled with a positive time-counter entry. */
+    /** True when the source card is suspended (CR 702.62b). */
     private boolean isSourceCardSuspended(GameData gameData, ConditionContext ctx) {
-        if (ctx.sourceCard() == null) return false;
-        UUID cardId = ctx.sourceCard().getId();
-        Integer timeCounters = gameData.exiledCardTimeCounters.get(cardId);
-        return timeCounters != null && timeCounters > 0
-                && !gameData.exiledCardsWithNonSuspendTimeCounters.contains(cardId)
-                && gameData.findExiledCard(cardId) != null;
+        return ctx.sourceCard() != null && gameData.isSuspended(ctx.sourceCard().getId());
     }
 
     /** True when a permanent on the controller's battlefield makes their party count as full. */

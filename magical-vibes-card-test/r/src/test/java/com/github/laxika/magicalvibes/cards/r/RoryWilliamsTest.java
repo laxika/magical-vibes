@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.AmyPond;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -32,7 +34,7 @@ class RoryWilliamsTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(rory);
-        assertThat(gd.suspendedSpellExiles).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -62,7 +64,7 @@ class RoryWilliamsTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(amy);
         assertThat(findPermanents(player1, "Clue")).isEmpty();
-        assertThat(gd.suspendedSpellExiles).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
     }
 
     @Test
@@ -96,9 +98,8 @@ class RoryWilliamsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(rory);
-        assertThat(gd.suspendedSpellExiles).contains(
-                new com.github.laxika.magicalvibes.model.GameData.SuspendedSpellExile(
-                        rory.getId(), player1.getId(), 3));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).contains(
+                Map.entry(rory.getId(), 3));
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
         assertThat(gd.stack).isEmpty();
     }
@@ -118,6 +119,6 @@ class RoryWilliamsTest extends BaseCardTest {
 
         assertThat(findPermanent(player1, "Rory Williams")).isNotNull();
         assertThat(findPermanents(player1, "Clue")).isEmpty();
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(rory.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(rory.getId());
     }
 }

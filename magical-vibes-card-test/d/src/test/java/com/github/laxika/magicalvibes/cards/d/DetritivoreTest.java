@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.PithingNeedle;
 import com.github.laxika.magicalvibes.cards.t.TeferiMageOfZhalfir;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -55,7 +56,7 @@ class DetritivoreTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Dreadship Reef");
         harness.assertOnBattlefield(player2, "Forest");
         harness.assertInGraveyard(player2, "Dreadship Reef");
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
     }
 
     @Test
@@ -64,7 +65,7 @@ class DetritivoreTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 2);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -76,7 +77,7 @@ class DetritivoreTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 1);
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.PermanentChoice.class);
         var choice = (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
@@ -86,7 +87,7 @@ class DetritivoreTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Dreadship Reef");
         harness.assertInGraveyard(player2, "Dreadship Reef");
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 1);
     }
 
     @Test
@@ -99,7 +100,7 @@ class DetritivoreTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null, 0))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
     }
 
     private Detritivore suspendCard(int xValue) {
@@ -173,7 +174,7 @@ class DetritivoreTest extends BaseCardTest {
         Detritivore card = suspendCard(2);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 2);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -185,7 +186,7 @@ class DetritivoreTest extends BaseCardTest {
         Detritivore card = suspendCard(1);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 1);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -197,7 +198,7 @@ class DetritivoreTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
@@ -237,7 +238,7 @@ class DetritivoreTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Detritivore");
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThat(gd.stack).isEmpty();
     }
 }

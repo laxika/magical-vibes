@@ -43,7 +43,7 @@ public class PutTimeCountersAndGainSuspendEffectHandler implements NormalEffectH
             if (counters < 1) {
                 continue;
             }
-            gameData.exiledCardTimeCounters.put(card.getId(), counters);
+            gameData.setExiledCardCounters(card.getId(), com.github.laxika.magicalvibes.model.CounterType.TIME, counters);
             gameLogService.append(gameData, GameLog.cardThenUnlessHidden(gameData, card,
                     " gets " + counters + " time counters and gains suspend."));
             log.info("Game {} - {} gets {} time counters and gains suspend",

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.g.GraveyardShovel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -31,7 +32,7 @@ class SoovrilPatientAntiquarianTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, target.getId(), Zone.EXILE);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(target.getId(), 2);
         assertThat(gd.exiledCardsWithNonSuspendTimeCounters).doesNotContain(target.getId());
     }
 
@@ -44,13 +45,13 @@ class SoovrilPatientAntiquarianTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();
-        gd.exiledCardTimeCounters.put(target.getId(), 1);
+        gd.setExiledCardCounters(target.getId(), CounterType.TIME, 1);
 
         addCreatureReady(player1, new SoovrilPatientAntiquarian());
         harness.activateAbility(player1, 1, null, target.getId(), Zone.EXILE);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(target.getId(), 3);
     }
 
     @Test
@@ -75,7 +76,7 @@ class SoovrilPatientAntiquarianTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, target.getId(), Zone.EXILE))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(target.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(target.getId());
     }
 
     @Test
@@ -90,7 +91,7 @@ class SoovrilPatientAntiquarianTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, target.getId(), Zone.EXILE))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(target.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(target.getId());
     }
 
     @Test
@@ -107,11 +108,11 @@ class SoovrilPatientAntiquarianTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         resolveAllTriggers();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(target.getId(), 2);
 
         advanceToUpkeep(player1);
         resolveAllTriggers();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(target.getId(), 1);
 
         advanceToUpkeep(player1);
         resolveAllTriggers();
@@ -119,7 +120,7 @@ class SoovrilPatientAntiquarianTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(target);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(target.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(target.getId());
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anySatisfy(permanent -> assertThat(permanent.getCard()).isSameAs(target));
     }

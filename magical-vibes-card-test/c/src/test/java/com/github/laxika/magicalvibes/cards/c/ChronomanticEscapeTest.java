@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
 import com.github.laxika.magicalvibes.cards.d.DustOfMoments;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -28,8 +29,8 @@ class ChronomanticEscapeTest extends BaseCardTest {
         ChronomanticEscape escape = castNormally();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(escape);
-        assertThat(gd.suspendedSpellExiles)
-                .containsExactly(new GameData.SuspendedSpellExile(escape.getId(), player1.getId(), 3));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
+                .containsExactly(Map.entry(escape.getId(), 3));
     }
 
     @Test
@@ -63,7 +64,7 @@ class ChronomanticEscapeTest extends BaseCardTest {
     void suspendRecastsForFree() {
         ChronomanticEscape escape = suspendCard();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(escape.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(escape.getId(), 3);
 
         for (int i = 0; i < 3; i++) {
             advanceToUpkeep(player1);
@@ -72,9 +73,8 @@ class ChronomanticEscapeTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(escape.getId());
-        assertThat(gd.suspendedSpellExiles)
-                .containsExactly(new GameData.SuspendedSpellExile(escape.getId(), player1.getId(), 3));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
+                .containsExactly(Map.entry(escape.getId(), 3));
     }
 
     @Test
@@ -90,8 +90,8 @@ class ChronomanticEscapeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(escape);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(escape.getId());
-        assertThat(gd.suspendedSpellExiles).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(escape.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
     }
 
     @Test

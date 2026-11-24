@@ -2,11 +2,10 @@ package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Ability;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveRefineCounterFromExiledCardEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveEggCounterFromExileAndReturnEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersFromExiledCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.KeywordTriggers;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.AbilityZones;
@@ -621,26 +620,17 @@ public class TriggerIndex {
     }
 
     /**
-     * The upkeep abilities the cards in {@code activePlayerId}'s exile have for the counters on them, egg counters'
-     * first, then refine counters', then suspend's time counters' (CR 702.62a): "at the beginning of your upkeep, if
-     * this card is exiled with an egg counter on it" (Darigaaz Reincarnated; a card that prints it has it already), the
-     * refine counter ability a card gained as it was exiled (Uvilda, Dean of Perfection), and suspend's "remove a time
-     * counter" of a suspended card.
+     * The upkeep abilities the cards in {@code activePlayerId}'s exile have for the counters on them, refine counters'
+     * first, then suspend's time counters' (CR 702.62a): the refine counter ability a card gained as it was exiled
+     * (Uvilda, Dean of Perfection; "remove a refine counter from it" over the card in its exile stay), and suspend's
+     * "remove a time counter" of a suspended card, a spell that gained suspend included.
      */
     private static void exileCounterCandidates(GameData gameData, UUID activePlayerId, List<StepCandidate> into) {
         List<Card> exiled = List.copyOf(gameData.getPlayerExiledCards(activePlayerId));
-        StepTrigger yourUpkeep = Triggers.upkeep(ActivePlayer.YOU);
-        for (Card card : exiled) {
-            if (gameData.exiledCardHasCounter(card.getId(), CounterType.EGG) && card.getTriggerEffects(yourUpkeep, Zone.EXILE).stream()
-                    .noneMatch(RemoveEggCounterFromExileAndReturnEffect.class::isInstance)) {
-                into.add(exileCounterCandidate(card, activePlayerId, StepCandidate.ExileCounterAbility.EGG,
-                        new RemoveEggCounterFromExileAndReturnEffect(card.getId())));
-            }
-        }
         for (Card card : exiled) {
             if (gameData.exiledCardHasCounter(card.getId(), CounterType.REFINE)) {
                 into.add(exileCounterCandidate(card, activePlayerId, StepCandidate.ExileCounterAbility.REFINE,
-                        new RemoveRefineCounterFromExiledCardEffect(card.getId())));
+                        new RemoveCountersFromExiledCardsEffect(Subjects.sourceCard(), CounterType.REFINE)));
             }
         }
         for (Card card : exiled) {
@@ -659,17 +649,11 @@ public class TriggerIndex {
     }
 
     /**
-     * Whether {@code card}, a card in exile, is suspended as the "each upkeep" readers count it: it has a time counter
-     * and isn't a card exiled with time counters by another effect that has no suspend of its own (CR 702.62b).
+     * Whether {@code card}, a card in exile, is suspended (CR 702.62b): a card suspended from a hand, a spell exiled with
+     * time counters that gained suspend, not a card exiled with time counters by an effect that gave it no suspend.
      */
     private static boolean suspended(GameData gameData, Card card) {
-        if (gameData.exiledCardsWithNonSuspendTimeCounters.contains(card.getId())
-                && card.getActivatedAbilities(Zone.HAND).stream()
-                .noneMatch(ActivatedAbility::isSuspendsSourceFromHand)) {
-            return false;
-        }
-        Integer timeCounters = gameData.exiledCardTimeCounters.get(card.getId());
-        return timeCounters != null && timeCounters > 0;
+        return gameData.isSuspended(card.getId());
     }
 
     /**

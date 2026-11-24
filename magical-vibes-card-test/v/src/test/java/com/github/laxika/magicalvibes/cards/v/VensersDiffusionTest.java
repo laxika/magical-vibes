@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.d.Delay;
 import com.github.laxika.magicalvibes.cards.h.HorizonCanopy;
 import com.github.laxika.magicalvibes.cards.k.KnightOfSursi;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -47,7 +48,7 @@ class VensersDiffusionTest extends BaseCardTest {
     void returnsSuspendedCardToItsOwnersHand() {
         KnightOfSursi target = new KnightOfSursi();
         harness.setExile(player2, List.of(target));
-        gd.exiledCardTimeCounters.put(target.getId(), 2);
+        gd.setExiledCardCounters(target.getId(), CounterType.TIME, 2);
         harness.setHand(player1, List.of(new VensersDiffusion()));
         addManaForSpell();
 
@@ -55,14 +56,14 @@ class VensersDiffusionTest extends BaseCardTest {
 
         assertThat(gd.findExiledCard(target.getId())).isNull();
         assertThat(gd.playerHands.get(player2.getId())).contains(target);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(target.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(target.getId());
     }
 
     @Test
     void cannotTargetExiledCardWithNonSuspendTimeCounters() {
         BarrenGlory target = new BarrenGlory();
         harness.setExile(player2, List.of(target));
-        gd.exiledCardTimeCounters.put(target.getId(), 2);
+        gd.setExiledCardCounters(target.getId(), CounterType.TIME, 2);
         gd.exiledCardsWithNonSuspendTimeCounters.add(target.getId());
         harness.setHand(player1, List.of(new VensersDiffusion()));
         addManaForSpell();
@@ -114,8 +115,7 @@ class VensersDiffusionTest extends BaseCardTest {
         harness.assertInHand(player1, "Barren Glory");
         harness.assertNotInHand(player2, "Barren Glory");
         assertThat(gd.findExiledCard(target.getId())).isNull();
-        assertThat(gd.suspendedSpellExiles)
-                .noneMatch(suspended -> suspended.cardId().equals(target.getId()));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(target.getId());
     }
 
     @Test
@@ -131,19 +131,19 @@ class VensersDiffusionTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Knight of Sursi");
         assertThat(gd.findExiledCard(target.getId())).isNull();
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(target.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(target.getId());
     }
 
     @Test
     void doesNotReturnCardThatLosesItsLastTimeCounterBeforeResolution() {
         KnightOfSursi target = new KnightOfSursi();
         harness.setExile(player2, List.of(target));
-        gd.exiledCardTimeCounters.put(target.getId(), 1);
+        gd.setExiledCardCounters(target.getId(), CounterType.TIME, 1);
         harness.setHand(player1, List.of(new VensersDiffusion()));
         addManaForSpell();
         harness.castInstant(player1, 0, target.getId());
 
-        gd.exiledCardTimeCounters.remove(target.getId());
+        gd.setExiledCardCounters(target.getId(), CounterType.TIME, 0);
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(target.getId())).isNotNull();

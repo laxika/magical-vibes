@@ -823,6 +823,12 @@ public class StackEntry {
      * object (CR 400.7). Read through {@link #sourceCardGraveyardEntryVersion()}.
      */
     @Setter private long sourceGraveyardEntryVersion = -1;
+    /**
+     * The exile incarnation the ability's source card had as an ability of a card in exile triggered ("at the beginning
+     * of your upkeep, if this card is exiled, remove an egg counter from it"), or {@code -1} when none was recorded:
+     * "this card" names nothing once that card left exile, even if it was exiled again, a new object (CR 400.7).
+     */
+    @Setter private long sourceExileEntryVersion = -1;
     /** The {@link #sourceGraveyardEntryVersion} of a "this card" that is in no graveyard the ability can find. */
     public static final long NO_GRAVEYARD_STAY = Long.MAX_VALUE;
     /**
@@ -1617,6 +1623,7 @@ public class StackEntry {
         this.triggeringSpellCastIndex = source.triggeringSpellCastIndex;
         this.triggeringSpellTurnCastIndex = source.triggeringSpellTurnCastIndex;
         this.sourceGraveyardEntryVersion = source.sourceGraveyardEntryVersion;
+        this.sourceExileEntryVersion = source.sourceExileEntryVersion;
         this.triggeringPermanentSnapshot = source.triggeringPermanentSnapshot == null
                 ? null : new Permanent(source.triggeringPermanentSnapshot);
         this.triggeringAttachments = source.triggeringAttachments;

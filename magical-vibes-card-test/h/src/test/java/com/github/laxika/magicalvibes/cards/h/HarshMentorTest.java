@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.s.SacredCat;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -216,6 +217,6 @@ class HarshMentorTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(gargadon.getId(), 9);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(gargadon.getId(), 9);
     }
 }

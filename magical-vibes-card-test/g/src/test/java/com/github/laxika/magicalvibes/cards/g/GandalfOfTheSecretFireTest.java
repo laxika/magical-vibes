@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,8 +32,8 @@ class GandalfOfTheSecretFireTest extends BaseCardTest {
 
         harness.assertLife(player2, 18);
         assertThat(gd.findExiledCard(shock.getId())).isNotNull();
-        assertThat(gd.suspendedSpellExiles)
-                .containsExactly(new GameData.SuspendedSpellExile(shock.getId(), player1.getId(), 3));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
+                .containsExactly(Map.entry(shock.getId(), 3));
         harness.assertNotInGraveyard(player1, "Shock");
     }
 
@@ -52,7 +53,7 @@ class GandalfOfTheSecretFireTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Shock");
         assertThat(gd.findExiledCard(shock.getId())).isNull();
-        assertThat(gd.suspendedSpellExiles).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
     }
 
     private void enterOpponentTurn() {

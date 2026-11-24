@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -34,7 +35,7 @@ class TheEleventhDoctorTest extends BaseCardTest {
         harness.handleCardChosen(player1, 1);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(creature.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(creature.getId(), 2);
     }
 
     @Test
@@ -91,11 +92,11 @@ class TheEleventhDoctorTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         resolveAllTriggers();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 2);
 
         advanceToUpkeep(player1);
         resolveAllTriggers();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 1);
     }
 
     @Test
@@ -118,7 +119,7 @@ class TheEleventhDoctorTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(first.getId(), 2)
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(first.getId(), 2)
                 .containsEntry(second.getId(), 2);
     }
 
@@ -136,7 +137,7 @@ class TheEleventhDoctorTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters.getOrDefault(card.getId(), 0)).isZero();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME).getOrDefault(card.getId(), 0)).isZero();
         harness.assertNotOnBattlefield(player1, "Forest");
     }
 

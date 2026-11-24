@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.c.ClockworkDroid;
 import com.github.laxika.magicalvibes.cards.r.RoryWilliams;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -112,20 +112,20 @@ class AllOfHistoryAllAtOnceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castCreature(player1, 0, player2.getId());
         harness.passBothPriorities();
-        assertThat(gd.suspendedSpellExiles).contains(
-                new GameData.SuspendedSpellExile(rory.getId(), player1.getId(), 3));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).contains(
+                Map.entry(rory.getId(), 3));
         castAllOfHistoryAllAtOnce();
 
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleListChoice(player1, "ADD");
-        assertThat(gd.suspendedSpellExiles).contains(
-                new GameData.SuspendedSpellExile(rory.getId(), player1.getId(), 4));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).contains(
+                Map.entry(rory.getId(), 4));
         harness.passBothPriorities();
         harness.handleListChoice(player1, "REMOVE");
 
-        assertThat(gd.suspendedSpellExiles).contains(
-                new GameData.SuspendedSpellExile(rory.getId(), player1.getId(), 3));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).contains(
+                Map.entry(rory.getId(), 3));
         assertThat(gd.stack).isEmpty();
     }
 
@@ -133,7 +133,7 @@ class AllOfHistoryAllAtOnceTest extends BaseCardTest {
     void doesNotTimeTravelExiledCardsWithTimeCountersThatDoNotHaveSuspend() {
         ClockworkDroid exiled = new ClockworkDroid();
         harness.setExile(player1, List.of(exiled));
-        gd.exiledCardTimeCounters.put(exiled.getId(), 2);
+        gd.setExiledCardCounters(exiled.getId(), CounterType.TIME, 2);
         gd.exiledCardsWithNonSuspendTimeCounters.add(exiled.getId());
         castAllOfHistoryAllAtOnce();
 
@@ -141,7 +141,7 @@ class AllOfHistoryAllAtOnceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.exiledCardTimeCounters.get(exiled.getId())).isEqualTo(2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME).get(exiled.getId())).isEqualTo(2);
         assertThat(gd.exiledCardsWithNonSuspendTimeCounters).contains(exiled.getId());
         assertThat(gd.stack).isEmpty();
     }
@@ -152,16 +152,16 @@ class AllOfHistoryAllAtOnceTest extends BaseCardTest {
         ClockworkDroid opponent = new ClockworkDroid();
         harness.setExile(player1, List.of(owned));
         harness.setExile(player2, List.of(opponent));
-        gd.exiledCardTimeCounters.put(owned.getId(), 2);
-        gd.exiledCardTimeCounters.put(opponent.getId(), 2);
+        gd.setExiledCardCounters(owned.getId(), CounterType.TIME, 2);
+        gd.setExiledCardCounters(opponent.getId(), CounterType.TIME, 2);
         castAllOfHistoryAllAtOnce();
 
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleListChoice(player1, "REMOVE");
 
-        assertThat(gd.exiledCardTimeCounters.get(owned.getId())).isEqualTo(1);
-        assertThat(gd.exiledCardTimeCounters.get(opponent.getId())).isEqualTo(2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME).get(owned.getId())).isEqualTo(1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME).get(opponent.getId())).isEqualTo(2);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 

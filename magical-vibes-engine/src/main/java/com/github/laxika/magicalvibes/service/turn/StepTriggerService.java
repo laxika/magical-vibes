@@ -7,8 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.AbilityZones;
-import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
@@ -30,7 +28,6 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.rules.StepEvent;
-import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
@@ -46,13 +43,11 @@ import com.github.laxika.magicalvibes.model.effect.PlayersSkipUpkeepStepEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
-import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.DrawDuringEachOpponentsDrawStepEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
-import com.github.laxika.magicalvibes.model.effect.RemoveSuspendCounterFromExiledSpellEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -102,7 +97,6 @@ public class StepTriggerService {
     private com.github.laxika.magicalvibes.service.trigger.StackedDividedDamageTriggerService
             stackedDividedDamageTriggerService;
 
-    private static final StepTrigger YOUR_UPKEEP = Triggers.upkeep(ActivePlayer.YOU);
 
     private final DrawService drawService;
     private final GameQueryService gameQueryService;
@@ -221,28 +215,6 @@ public class StepTriggerService {
         // "Since your last upkeep" (Wiitigo) ends as the upkeep begins, not when an ability reading it resolves or only
         // when one triggers: the window closes here for every permanent, after the abilities took their snapshots.
         battlefield.forEach(permanent -> permanent.setBlockedOrWasBlockedSinceLastUpkeep(false));
-        // Suspend: remove a time counter from every suspended spell owned by the active player.
-        for (GameData.SuspendedSpellExile pending : new ArrayList<>(gameData.suspendedSpellExiles)) {
-            if (!pending.ownerId().equals(activePlayerId)) {
-                continue;
-            }
-            var suspendedEntry = gameData.findExiledCard(pending.cardId());
-            if (suspendedEntry == null) {
-                continue;
-            }
-            Card suspendedCard = suspendedEntry.card();
-            // Suspend's "remove a time counter" upkeep ability of a spell exiled with time counters that gained suspend
-            // (CR 702.62a).
-            triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
-                    new TriggeredAbility(new TriggerCondition(YOUR_UPKEEP, AbilityZones.EXILE),
-                            new RemoveSuspendCounterFromExiledSpellEffect(pending.cardId())),
-                    suspendedCard, null, activePlayerId, suspendedCard.getName() + "'s suspend ability",
-                    ConditionContext.forCard(suspendedCard, activePlayerId), TriggerRecord.NONE));
-
-            gameLogService.append(gameData, GameLog.cardThen(suspendedCard, "'s suspend ability triggers."));
-            log.info("Game {} - {} suspend upkeep trigger pushed onto stack", gameData.id, suspendedCard.getName());
-        }
-
         // Phase-in targeted triggers were queued during the untap-step phasing action; choose targets
         // now as they go on the stack (before upkeep's own targeted triggers).
 

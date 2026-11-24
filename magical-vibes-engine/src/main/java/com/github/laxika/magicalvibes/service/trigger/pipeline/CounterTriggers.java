@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardWithCostReductionEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -18,6 +20,7 @@ import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.trigger.CounterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -164,8 +167,7 @@ public class CounterTriggers {
             case LOYALTY_ON_PLANESWALKERS -> loyaltyOnPlaneswalkers(gameData, playerId, amount);
             case LAST_REMOVED -> lastRemoved(gameData, permanent, event.counterType(), amount, playerId);
             case REMOVED -> removed(gameData);
-            case TIME_COUNTER_REMOVED_IN_EXILE -> timeCounterRemovedInExile(gameData, event.card(), playerId,
-                    amount, event.controllerId());
+            case COUNTER_REMOVED_IN_EXILE -> counterRemovedInExile(gameData, event);
             case RENOWNED -> renowned(gameData, permanent, playerId);
             case MONSTROUS -> monstrous(gameData, permanent, playerId, amount);
             case TRAINED -> trained(gameData, permanent, playerId);
@@ -929,6 +931,35 @@ public class CounterTriggers {
                     ConditionContext.forPermanent(permanent, controllerId).withEventValue(amount),
                     EventAbilitySupport.eventRecord(permanent, null, controllerId, amount, permanent, controllerId));
         });
+    }
+
+    /**
+     * Counters were removed from a card in exile: suspend's time counters ({@link #timeCounterRemovedInExile}), or the
+     * last refine counter of a card Uvilda, Dean of Perfection exiled, which gained "When the last refine counter is
+     * removed from this card, if it's exiled, you may cast it. It costs {4} less to cast this way" (a card in exile has
+     * refine counters only from Uvilda, whose ability gives it both refine abilities).
+     */
+    private void counterRemovedInExile(GameData gameData, CounterChangeEvent event) {
+        if (event.counterType() == CounterType.TIME) {
+            timeCounterRemovedInExile(gameData, event.card(), event.playerId(), event.amount(), event.controllerId());
+        } else if (event.counterType() == CounterType.REFINE && event.amount() == 0 && event.card() != null
+                && event.playerId() != null && gameData.findExiledCard(event.card().getId()) != null) {
+            lastRefineCounterRemoved(gameData, event.card(), event.playerId());
+        }
+    }
+
+    private void lastRefineCounterRemoved(GameData gameData, Card card, UUID ownerId) {
+        UUID cardId = card.getId();
+        TriggeredAbility castAbility = new TriggeredAbility(
+                new TriggerCondition(new CounterTrigger(CounterTrigger.CounterEvent.COUNTERS_REMOVED,
+                        ObjectRelation.THIS), AbilityZones.EXILE),
+                new MayCastExiledCardWithCostReductionEffect(4));
+        abilities.put(gameData, castAbility, card, null, ownerId, ConditionContext.forCard(card, ownerId),
+                castTrigger -> {
+                    castTrigger.setTargetId(cardId);
+                    castTrigger.setTargetZone(Zone.EXILE);
+                }, null, card.getName() + "'s cast ability",
+                GameLog.cardThen(card, " has its last refine counter removed. You may cast it for {4} less."));
     }
 
     /**

@@ -62,7 +62,7 @@ class ClockspinningTest extends BaseCardTest {
         harness.handleListChoice(player1, "time counters");
         harness.handleListChoice(player1, "ADD");
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(target.getId(), 3);
     }
 
     @Test
@@ -73,7 +73,7 @@ class ClockspinningTest extends BaseCardTest {
         harness.handleListChoice(player1, "time counters");
         harness.handleListChoice(player1, "REMOVE");
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(target.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(target.getId());
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -176,7 +176,7 @@ class ClockspinningTest extends BaseCardTest {
         harness.handleListChoice(player1, "time counters");
         harness.handleListChoice(player1, "REMOVE");
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(target.getId(), 1);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertInGraveyard(player1, "Clockspinning");
     }
@@ -200,7 +200,7 @@ class ClockspinningTest extends BaseCardTest {
     void cannotTargetExiledCardWithNonSuspendTimeCounters() {
         AshcoatBear target = new AshcoatBear();
         harness.setExile(player2, List.of(target));
-        gd.exiledCardTimeCounters.put(target.getId(), 2);
+        gd.setExiledCardCounters(target.getId(), CounterType.TIME, 2);
         gd.exiledCardsWithNonSuspendTimeCounters.add(target.getId());
         harness.setHand(player1, List.of(new Clockspinning()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -214,14 +214,14 @@ class ClockspinningTest extends BaseCardTest {
     void canTargetCardWithSuspendEvenWhenAnotherEffectPlacedItsTimeCounters() {
         RiftBolt target = new RiftBolt();
         harness.setExile(player2, List.of(target));
-        gd.exiledCardTimeCounters.put(target.getId(), 3);
+        gd.setExiledCardCounters(target.getId(), CounterType.TIME, 3);
         gd.exiledCardsWithNonSuspendTimeCounters.add(target.getId());
 
         cast(target.getId());
         harness.handleListChoice(player1, "time counters");
         harness.handleListChoice(player1, "ADD");
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 4);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(target.getId(), 4);
         harness.assertInGraveyard(player1, "Clockspinning");
     }
 
@@ -234,7 +234,7 @@ class ClockspinningTest extends BaseCardTest {
     private AncestralVision suspendedCard(int timeCounters) {
         AncestralVision target = new AncestralVision();
         harness.setExile(player2, List.of(target));
-        gd.exiledCardTimeCounters.put(target.getId(), timeCounters);
+        gd.setExiledCardCounters(target.getId(), CounterType.TIME, timeCounters);
         return target;
     }
 

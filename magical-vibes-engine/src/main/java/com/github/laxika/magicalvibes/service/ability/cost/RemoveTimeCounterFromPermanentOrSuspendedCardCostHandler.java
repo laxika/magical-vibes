@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.service.ability.cost;
 
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveTimeCounterFromExiledCardEffectHandler;
@@ -48,27 +46,12 @@ public class RemoveTimeCounterFromPermanentOrSuspendedCardCostHandler {
         }
         synchronized (gameData.exiledCards) {
             for (ExiledCardEntry entry : gameData.exiledCards) {
-                Integer counters = gameData.exiledCardTimeCounters.get(entry.card().getId());
-                if (playerId.equals(entry.ownerId())
-                        && hasSuspendTimeCounters(gameData, entry)
-                        && counters != null && counters > 0) {
+                if (playerId.equals(entry.ownerId()) && gameData.isSuspended(entry.card().getId())) {
                     cardIds.add(entry.card().getId());
                 }
             }
         }
         return cardIds;
-    }
-
-    /**
-     * A card in exile holds suspend time counters unless its counters came from a non-suspend effect and
-     * it has no suspend ability of its own. A card with suspend keeps its suspended status even when
-     * other effects also put time counters on it (mirrors
-     * {@link RemoveTimeCounterFromExiledCardEffectHandler#isSuspended}).
-     */
-    private static boolean hasSuspendTimeCounters(GameData gameData, ExiledCardEntry entry) {
-        return !gameData.exiledCardsWithNonSuspendTimeCounters.contains(entry.card().getId())
-                || entry.card().getActivatedAbilities(Zone.HAND).stream()
-                .anyMatch(ActivatedAbility::isSuspendsSourceFromHand);
     }
 
     public void validateAndPay(GameData gameData, Player player, UUID chosenCardId) {
@@ -90,10 +73,8 @@ public class RemoveTimeCounterFromPermanentOrSuspendedCardCostHandler {
         }
 
         ExiledCardEntry exiledEntry = gameData.findExiledCard(chosenCardId);
-        Integer counters = gameData.exiledCardTimeCounters.get(chosenCardId);
         if (exiledEntry != null && player.getId().equals(exiledEntry.ownerId())
-                && hasSuspendTimeCounters(gameData, exiledEntry)
-                && counters != null && counters > 0) {
+                && gameData.isSuspended(chosenCardId)) {
             int stackSizeBefore = gameData.stack.size();
             exiledCardEffectHandler.removeTimeCounter(gameData, chosenCardId);
             moveCostTriggersAside(gameData, stackSizeBefore);

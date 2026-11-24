@@ -1791,10 +1791,10 @@ public class StackResolutionService {
                     .filter(ExileSpellEffect.class::isInstance)
                     .map(ExileSpellEffect.class::cast)
                     .mapToInt(ExileSpellEffect::suspendTimeCounters)
-                    .filter(counters -> counters > 0)
+                    .filter(counters -> counters > 0 && gameData.findExiledCard(physicalCard.getId()) != null)
                     .findFirst()
-                    .ifPresent(counters -> gameData.suspendedSpellExiles.add(
-                            new GameData.SuspendedSpellExile(physicalCard.getId(), ownerId, counters)));
+                    .ifPresent(counters -> gameData.setExiledCardCounters(physicalCard.getId(), CounterType.TIME,
+                            counters));
             if (exileSpellEffect.screamCounterCount() > 0) {
                 gameData.setExiledCardCounters(physicalCard.getId(), CounterType.SCREAM, exileSpellEffect.screamCounterCount());
             }

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
 import com.github.laxika.magicalvibes.cards.c.Clockspinning;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,8 +30,8 @@ class ArcBladeTest extends BaseCardTest {
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(blade);
-        assertThat(gd.suspendedSpellExiles)
-                .containsExactly(new GameData.SuspendedSpellExile(blade.getId(), player1.getId(), 3));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
+                .containsExactly(Map.entry(blade.getId(), 3));
     }
 
     @Test
@@ -55,7 +56,7 @@ class ArcBladeTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(blade);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(blade.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(blade.getId(), 3);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -77,8 +78,8 @@ class ArcBladeTest extends BaseCardTest {
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(blade);
-        assertThat(gd.suspendedSpellExiles)
-                .containsExactly(new GameData.SuspendedSpellExile(blade.getId(), player1.getId(), 3));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
+                .containsExactly(Map.entry(blade.getId(), 3));
     }
 
     @Test
@@ -95,8 +96,8 @@ class ArcBladeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(blade);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(blade.getId());
-        assertThat(gd.suspendedSpellExiles).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(blade.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
     }
 
     @Test
@@ -146,8 +147,8 @@ class ArcBladeTest extends BaseCardTest {
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(16);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(blade);
-        assertThat(gd.suspendedSpellExiles)
-                .containsExactly(new GameData.SuspendedSpellExile(blade.getId(), player1.getId(), 3));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
+                .containsExactly(Map.entry(blade.getId(), 3));
     }
 
     @Test
@@ -164,7 +165,7 @@ class ArcBladeTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(blade);
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(blade);
-        assertThat(gd.suspendedSpellExiles).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
     }
 
     private void addCastMana() {

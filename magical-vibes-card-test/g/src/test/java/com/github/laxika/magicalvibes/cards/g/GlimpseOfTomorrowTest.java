@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.u.UnquestionedAuthority;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -42,7 +43,7 @@ class GlimpseOfTomorrowTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(glimpse);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(glimpse.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(glimpse.getId(), 3);
 
         for (int i = 0; i < 3; i++) {
             advanceToUpkeep(player1);

@@ -5,10 +5,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCardManaValue;
-import com.github.laxika.magicalvibes.model.effect.AdjustTimeCountersOnEachSuspendedCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromHandCost;
 import com.github.laxika.magicalvibes.model.effect.PutTimeCountersOnImprintedCardEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersFromExiledCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardIsSuspendedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -33,6 +36,7 @@ public class TalonGates extends Card {
                         + "If the exiled card doesn't have suspend, it gains suspend.",
                 ActivationTimingRestriction.SORCERY_SPEED).withSpecialAction());
         addTrigger(Triggers.chaosEnsues(),
-                new AdjustTimeCountersOnEachSuspendedCardEffect(false, true));
+                new RemoveCountersFromExiledCardsEffect(
+                        Subjects.exiledCards(Subjects.you(), new CardIsSuspendedPredicate()), CounterType.TIME, 2));
     }
 }

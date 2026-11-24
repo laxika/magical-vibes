@@ -39,8 +39,9 @@ public class CounterSpellAndExileWithSuspendCountersEffectHandler implements Nor
         Card card = targetEntry.getPhysicalCard();
         if (!counterSupport.counterSpellAndExile(gameData, entry, targetEntry, ownerId)) return;
 
-        gameData.suspendedSpellExiles.add(new GameData.SuspendedSpellExile(
-                card.getId(), ownerId, suspendEffect.counters()));
+        if (gameData.findExiledCard(card.getId()) == null) return;
+
+        gameData.setExiledCardCounters(card.getId(), com.github.laxika.magicalvibes.model.CounterType.TIME, suspendEffect.counters());
         gameLogService.append(gameData, GameLog.cardThen(card,
                 " is exiled with " + suspendEffect.counters() + " time counters and gains suspend."));
     }

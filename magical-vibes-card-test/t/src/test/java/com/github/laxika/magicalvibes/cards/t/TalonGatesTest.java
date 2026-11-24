@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.d.Delay;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -23,6 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -60,7 +61,7 @@ class TalonGatesTest extends BaseCardTest {
 
         harness.handleCardChosen(player1, 0);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 2);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -72,7 +73,7 @@ class TalonGatesTest extends BaseCardTest {
         harness.inMutationScope(() -> planar.chaos(gd));
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(own.getId(), 2)
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(own.getId(), 2)
                 .containsEntry(opponent.getId(), 4);
     }
 
@@ -114,7 +115,7 @@ class TalonGatesTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(bear);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(bear.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(bear.getId(), 2);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -147,10 +148,10 @@ class TalonGatesTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         resolveAllTriggers();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(bear.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(bear.getId(), 2);
         advanceToUpkeep(player1);
         resolveAllTriggers();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(bear.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(bear.getId(), 1);
         advanceToUpkeep(player1);
         resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -167,7 +168,7 @@ class TalonGatesTest extends BaseCardTest {
         harness.inMutationScope(() -> planar.chaos(gd));
         resolveAllTriggers();
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
@@ -189,15 +190,15 @@ class TalonGatesTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(bear);
-        assertThat(gd.suspendedSpellExiles)
-                .containsExactly(new GameData.SuspendedSpellExile(bear.getId(), player1.getId(), 1));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
+                .containsExactly(Map.entry(bear.getId(), 1));
     }
 
     private AncestralVision suspendedCard(com.github.laxika.magicalvibes.model.Player owner,
                                           int timeCounters) {
         AncestralVision card = new AncestralVision();
         harness.setExile(owner, List.of(card));
-        gd.exiledCardTimeCounters.put(card.getId(), timeCounters);
+        gd.setExiledCardCounters(card.getId(), CounterType.TIME, timeCounters);
         return card;
     }
 }

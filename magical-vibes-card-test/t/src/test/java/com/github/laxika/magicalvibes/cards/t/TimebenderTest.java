@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.a.AncestralVision;
 import com.github.laxika.magicalvibes.cards.d.Delay;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -49,7 +49,7 @@ class TimebenderTest extends BaseCardTest {
 
         chooseModeAndTarget("Remove two time counters", target.getId());
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(target.getId(), 1);
     }
 
     @Test
@@ -60,7 +60,7 @@ class TimebenderTest extends BaseCardTest {
 
         chooseModeAndTarget("Put two time counters", target.getId());
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(target.getId(), 3);
     }
 
     @Test
@@ -71,7 +71,7 @@ class TimebenderTest extends BaseCardTest {
         chooseModeAndTarget("Remove two time counters", target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(target.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(target.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
@@ -80,14 +80,14 @@ class TimebenderTest extends BaseCardTest {
         turnFaceUp();
         Timebender target = new Timebender();
         harness.setExile(player1, List.of(target));
-        gd.exiledCardTimeCounters.put(target.getId(), 3);
+        gd.setExiledCardCounters(target.getId(), CounterType.TIME, 3);
         gd.exiledCardsWithNonSuspendTimeCounters.add(target.getId());
 
         harness.handleListChoice(player1, "Remove two time counters");
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(target.getId(), 3);
     }
 
     private Permanent turnFaceUp() {
@@ -156,8 +156,8 @@ class TimebenderTest extends BaseCardTest {
 
         chooseModeAndTarget("Remove two time counters", target.getId());
 
-        assertThat(gd.suspendedSpellExiles).containsExactly(
-                new GameData.SuspendedSpellExile(target.getId(), player1.getId(), 1));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsExactly(
+                Map.entry(target.getId(), 1));
     }
 
     @Test
@@ -168,8 +168,8 @@ class TimebenderTest extends BaseCardTest {
 
         chooseModeAndTarget("Put two time counters", target.getId());
 
-        assertThat(gd.suspendedSpellExiles).containsExactly(
-                new GameData.SuspendedSpellExile(target.getId(), player1.getId(), 5));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsExactly(
+                Map.entry(target.getId(), 5));
     }
 
     private Timebender suspendTimebenderWithDelay() {
@@ -203,7 +203,7 @@ class TimebenderTest extends BaseCardTest {
     private AncestralVision suspendedAncestralVision(int timeCounters) {
         AncestralVision target = new AncestralVision();
         harness.setExile(player1, List.of(target));
-        gd.exiledCardTimeCounters.put(target.getId(), timeCounters);
+        gd.setExiledCardCounters(target.getId(), CounterType.TIME, timeCounters);
         return target;
     }
 

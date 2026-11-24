@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.n.NessianCourser;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -34,8 +35,8 @@ class CyclicalEvolutionTest extends BaseCardTest {
         assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(3);
         assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(3);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.suspendedSpellExiles)
-                .containsExactly(new GameData.SuspendedSpellExile(card.getId(), player1.getId(), 3));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
+                .containsExactly(Map.entry(card.getId(), 3));
     }
 
     @Test
@@ -81,7 +82,7 @@ class CyclicalEvolutionTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(card);
-        assertThat(gd.suspendedSpellExiles).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
     }
 
     @Test
@@ -103,8 +104,8 @@ class CyclicalEvolutionTest extends BaseCardTest {
 
         assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(3);
         assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(3);
-        assertThat(gd.suspendedSpellExiles)
-                .containsExactly(new GameData.SuspendedSpellExile(card.getId(), player1.getId(), 3));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
+                .containsExactly(Map.entry(card.getId(), 3));
     }
 
     @Test
@@ -123,8 +124,8 @@ class CyclicalEvolutionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
-        assertThat(gd.suspendedSpellExiles).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
     }
 
     @Test
@@ -165,8 +166,8 @@ class CyclicalEvolutionTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.suspendedSpellExiles)
-                .containsExactly(new GameData.SuspendedSpellExile(card.getId(), player1.getId(), 3));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
+                .containsExactly(Map.entry(card.getId(), 3));
     }
 
     private void castNormallyOn(Permanent target) {

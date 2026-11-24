@@ -43,7 +43,7 @@ public class ExileTopCardsAndSuspendNonlandsWithManaValueEffectHandler
                 continue;
             }
 
-            gameData.exiledCardTimeCounters.put(card.getId(), card.getManaValue());
+            gameData.setExiledCardCounters(card.getId(), com.github.laxika.magicalvibes.model.CounterType.TIME, card.getManaValue());
             gameLogService.append(gameData, GameLog.cardThen(card,
                     " is exiled with " + card.getManaValue()
                             + " time counters and gains suspend."));

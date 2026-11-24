@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -26,7 +27,7 @@ class PardicDragonTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(dragon);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(dragon.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(dragon.getId(), 2);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -37,11 +38,11 @@ class PardicDragonTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         resolveAllTriggers();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(dragon.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(dragon.getId(), 2);
 
         advanceToUpkeep(player1);
         resolveAllTriggers();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(dragon.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(dragon.getId(), 1);
     }
 
     @Test
@@ -53,7 +54,7 @@ class PardicDragonTest extends BaseCardTest {
         advanceToUpkeep(player1);
         resolveAllTriggers();
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(dragon.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(dragon.getId());
         PendingInteraction.MayAbilityChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
         assertThat(choice).isNotNull();
@@ -83,7 +84,7 @@ class PardicDragonTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(dragon);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(dragon.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(dragon.getId());
         harness.assertNotOnBattlefield(player1, "Pardic Dragon");
     }
 
@@ -95,7 +96,7 @@ class PardicDragonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.exiledCardTimeCounters).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
     }
 
     @Test
@@ -131,7 +132,7 @@ class PardicDragonTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(dragon.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(dragon.getId(), 3);
     }
 
     @Test
@@ -148,7 +149,7 @@ class PardicDragonTest extends BaseCardTest {
         assertThat(choice.playerId()).isEqualTo(player2.getId());
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(dragon.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(dragon.getId(), 2);
     }
 
     @Test
@@ -157,11 +158,11 @@ class PardicDragonTest extends BaseCardTest {
         PardicDragon dragon = suspendCard();
         castOpponentSpell();
 
-        gd.exiledCardTimeCounters.remove(dragon.getId());
+        gd.setExiledCardCounters(dragon.getId(), CounterType.TIME, 0);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(dragon.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(dragon.getId());
 
         harness.passBothPriorities();
     }
@@ -178,7 +179,7 @@ class PardicDragonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(dragon.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(dragon.getId(), 2);
     }
 
     private PardicDragon suspendCard() {

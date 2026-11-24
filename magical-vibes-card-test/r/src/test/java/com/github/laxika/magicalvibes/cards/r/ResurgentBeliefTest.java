@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.CapashenKnight;
 import com.github.laxika.magicalvibes.cards.p.PatternOfRebirth;
 import com.github.laxika.magicalvibes.cards.s.Sanctimony;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -25,7 +26,7 @@ class ResurgentBeliefTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 2);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -43,7 +44,7 @@ class ResurgentBeliefTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities(); // the last-counter trigger offers the free cast (CR 702.62a)
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
@@ -125,7 +126,7 @@ class ResurgentBeliefTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(enchantment);
         harness.assertNotOnBattlefield(player1, "Sanctimony");
@@ -138,7 +139,7 @@ class ResurgentBeliefTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 2);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
     }
 

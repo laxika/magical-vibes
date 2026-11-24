@@ -25,7 +25,6 @@ public class TimeTravelService {
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final RemoveTimeCounterFromExiledCardEffectHandler removeTimeCounterHandler;
-    private final RemoveSuspendCounterFromExiledSpellEffectHandler removeSuspendCounterHandler;
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
 
@@ -95,19 +94,9 @@ public class TimeTravelService {
         synchronized (gameData.exiledCards) {
             for (ExiledCardEntry exiled : gameData.exiledCards) {
                 UUID cardId = exiled.card().getId();
-                Integer counters = gameData.exiledCardTimeCounters.get(cardId);
-                if (Objects.equals(controllerId, exiled.ownerId())
-                        && !exiled.faceDown() && counters != null && counters > 0
-                        && !gameData.exiledCardsWithNonSuspendTimeCounters.contains(cardId)) {
+                if (Objects.equals(controllerId, exiled.ownerId()) && gameData.isSuspended(cardId)) {
                     targets.add(new ChoiceContext.TimeTravelTarget(cardId, Zone.EXILE));
                 }
-            }
-        }
-        for (GameData.SuspendedSpellExile suspended : gameData.suspendedSpellExiles) {
-            if (Objects.equals(controllerId, suspended.ownerId()) && suspended.counters() > 0
-                    && gameData.findExiledCard(suspended.cardId()) != null
-                    && targets.stream().noneMatch(target -> target.id().equals(suspended.cardId()))) {
-                targets.add(new ChoiceContext.TimeTravelTarget(suspended.cardId(), Zone.EXILE));
             }
         }
         return targets;
@@ -118,26 +107,13 @@ public class TimeTravelService {
         StackEntry entry = gameData.pendingEffectResolutionEntry;
         if (selected.zone() == Zone.EXILE) {
             ExiledCardEntry exiled = gameData.findExiledCard(selected.id());
-            for (int i = 0; i < gameData.suspendedSpellExiles.size(); i++) {
-                GameData.SuspendedSpellExile suspended = gameData.suspendedSpellExiles.get(i);
-                if (!suspended.cardId().equals(selected.id())) continue;
-                if (exiled == null || !Objects.equals(suspended.ownerId(), controllerId)) return;
-                if (ChoiceContext.TimeTravelActionChoice.ADD.equals(choice)) {
-                    gameData.suspendedSpellExiles.set(i, new GameData.SuspendedSpellExile(
-                            suspended.cardId(), suspended.ownerId(), suspended.counters() + 1));
-                } else {
-                    removeSuspendCounterHandler.resolve(gameData, entry,
-                            new com.github.laxika.magicalvibes.model.effect.RemoveSuspendCounterFromExiledSpellEffect(selected.id()));
-                }
-                return;
-            }
-            Integer counters = gameData.exiledCardTimeCounters.get(selected.id());
             if (exiled == null || exiled.faceDown() || !Objects.equals(exiled.ownerId(), controllerId)
-                    || counters == null || counters <= 0) {
+                    || !gameData.exiledCardHasCounter(selected.id(),
+                    com.github.laxika.magicalvibes.model.CounterType.TIME)) {
                 return;
             }
             if (ChoiceContext.TimeTravelActionChoice.ADD.equals(choice)) {
-                gameData.exiledCardTimeCounters.merge(selected.id(), 1, Integer::sum);
+                gameData.addExiledCardCounters(selected.id(), com.github.laxika.magicalvibes.model.CounterType.TIME, 1);
             } else {
                 removeTimeCounterHandler.removeTimeCounter(gameData, selected.id());
             }

@@ -51,7 +51,7 @@ public class ExileTopCardsMayPlayThisTurnAndPutTimeCountersOnSuspendedCardsEffec
             gameData.grantExilePlayPermission(card.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
             if (card.getActivatedAbilities(Zone.HAND).stream()
                     .anyMatch(ActivatedAbility::isSuspendsSourceFromHand)) {
-                gameData.exiledCardTimeCounters.put(card.getId(), exileEffect.timeCounters());
+                gameData.setExiledCardCounters(card.getId(), com.github.laxika.magicalvibes.model.CounterType.TIME, exileEffect.timeCounters());
             }
 
             gameLogService.append(gameData, GameLog.builder()

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.s.SnapcasterMage;
 import com.github.laxika.magicalvibes.cards.s.SproutSwarm;
 import com.github.laxika.magicalvibes.cards.t.Tarmogoyf;
 import com.github.laxika.magicalvibes.cards.w.Whetwheel;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -175,7 +176,7 @@ class YixlidJailerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(epochrasite);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(epochrasite.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(epochrasite.getId(), 3);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(epochrasite);
     }
 

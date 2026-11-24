@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.InspiringRefrain;
@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,7 +41,7 @@ class AmyPondTest extends BaseCardTest {
         addCreatureReady(player1, amy);
         InspiringRefrain vision = new InspiringRefrain();
         harness.setExile(player1, List.of(vision));
-        gd.exiledCardTimeCounters.put(vision.getId(), 5);
+        gd.setExiledCardCounters(vision.getId(), CounterType.TIME, 5);
 
         declareAttackers(List.of(0));
         resolveCombat();
@@ -50,7 +51,7 @@ class AmyPondTest extends BaseCardTest {
                 .isInstanceOf(PendingInteraction.SuspendedCardTimeCounterChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(vision.getId()));
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(vision.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(vision.getId(), 3);
     }
 
     @Test
@@ -77,9 +78,9 @@ class AmyPondTest extends BaseCardTest {
         InspiringRefrain withoutCounters = new InspiringRefrain();
         harness.setExile(player1, List.of(first, second, withoutCounters));
         harness.setExile(player2, List.of(opposing));
-        gd.exiledCardTimeCounters.put(first.getId(), 5);
-        gd.exiledCardTimeCounters.put(second.getId(), 4);
-        gd.exiledCardTimeCounters.put(opposing.getId(), 5);
+        gd.setExiledCardCounters(first.getId(), CounterType.TIME, 5);
+        gd.setExiledCardCounters(second.getId(), CounterType.TIME, 4);
+        gd.setExiledCardCounters(opposing.getId(), CounterType.TIME, 5);
 
         declareAttackers(List.of(0));
         resolveCombat();
@@ -91,7 +92,7 @@ class AmyPondTest extends BaseCardTest {
         assertThat(choice.validCardIds()).containsExactlyInAnyOrder(first.getId(), second.getId());
         harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(first.getId(), 5)
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(first.getId(), 5)
                 .containsEntry(second.getId(), 2).containsEntry(opposing.getId(), 5);
     }
 
@@ -113,7 +114,7 @@ class AmyPondTest extends BaseCardTest {
         addCreatureReady(player1, new AmyPond());
         AmyPond exiled = new AmyPond();
         harness.setExile(player1, List.of(exiled));
-        gd.exiledCardTimeCounters.put(exiled.getId(), 3);
+        gd.setExiledCardCounters(exiled.getId(), CounterType.TIME, 3);
         gd.exiledCardsWithNonSuspendTimeCounters.add(exiled.getId());
 
         declareAttackers(List.of(0));
@@ -121,7 +122,7 @@ class AmyPondTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(exiled.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(exiled.getId(), 3);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -134,8 +135,8 @@ class AmyPondTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castCreature(player1, 0, player2.getId());
         resolveAllTriggers();
-        assertThat(gd.suspendedSpellExiles).contains(
-                new GameData.SuspendedSpellExile(rory.getId(), player1.getId(), 3));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).contains(
+                Map.entry(rory.getId(), 3));
 
         declareAttackers(List.of(0));
         resolveCombat();
@@ -145,8 +146,8 @@ class AmyPondTest extends BaseCardTest {
                 .isInstanceOf(PendingInteraction.SuspendedCardTimeCounterChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(rory.getId()));
 
-        assertThat(gd.suspendedSpellExiles).contains(
-                new GameData.SuspendedSpellExile(rory.getId(), player1.getId(), 1));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).contains(
+                Map.entry(rory.getId(), 1));
     }
 
     @Test
@@ -154,14 +155,14 @@ class AmyPondTest extends BaseCardTest {
         addCreatureReady(player1, new AmyPond());
         InspiringRefrain refrain = new InspiringRefrain();
         harness.setExile(player1, List.of(refrain));
-        gd.exiledCardTimeCounters.put(refrain.getId(), 1);
+        gd.setExiledCardCounters(refrain.getId(), CounterType.TIME, 1);
 
         declareAttackers(List.of(0));
         resolveCombat();
         resolveAllTriggers();
         harness.handleMultipleCardsChosen(player1, List.of(refrain.getId()));
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(refrain.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(refrain.getId());
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -173,14 +174,14 @@ class AmyPondTest extends BaseCardTest {
         addCreatureReady(player1, new AmyPond());
         RoryWilliams rory = new RoryWilliams();
         harness.setExile(player1, List.of(rory));
-        gd.suspendedSpellExiles.add(new GameData.SuspendedSpellExile(rory.getId(), player1.getId(), 1));
+        gd.setExiledCardCounters(rory.getId(), CounterType.TIME, 1);
 
         declareAttackers(List.of(0));
         resolveCombat();
         resolveAllTriggers();
         harness.handleMultipleCardsChosen(player1, List.of(rory.getId()));
 
-        assertThat(gd.suspendedSpellExiles).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);

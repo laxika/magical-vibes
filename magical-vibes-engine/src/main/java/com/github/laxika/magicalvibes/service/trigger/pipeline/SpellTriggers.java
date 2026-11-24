@@ -585,11 +585,7 @@ public class SpellTriggers {
             if (ownerId.equals(castingPlayerId)) {
                 continue;
             }
-            if (gameData.exiledCardsWithNonSuspendTimeCounters.contains(exiledEntry.card().getId())) {
-                continue;
-            }
-            Integer timeCounters = gameData.exiledCardTimeCounters.get(exiledEntry.card().getId());
-            if (timeCounters == null || timeCounters <= 0) {
+            if (!gameData.isSuspended(exiledEntry.card().getId())) {
                 continue;
             }
 

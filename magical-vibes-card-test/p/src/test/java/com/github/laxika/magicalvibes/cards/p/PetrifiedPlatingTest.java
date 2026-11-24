@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.d.DarksteelGarrison;
 import com.github.laxika.magicalvibes.cards.n.NessianCourser;
 import com.github.laxika.magicalvibes.cards.v.VenserShaperSavant;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -61,7 +62,7 @@ class PetrifiedPlatingTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(plating);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(plating.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(plating.getId(), 2);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -95,7 +96,7 @@ class PetrifiedPlatingTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(plating.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(plating.getId(), 2);
     }
 
     @Test
@@ -112,7 +113,7 @@ class PetrifiedPlatingTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(plating);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(plating.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(plating.getId());
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard() == plating);
     }
@@ -142,7 +143,7 @@ class PetrifiedPlatingTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(plating);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(plating.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(plating.getId());
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
@@ -156,7 +157,7 @@ class PetrifiedPlatingTest extends BaseCardTest {
         PetrifiedPlating plating = suspendCard();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(plating);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(plating.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(plating.getId(), 2);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -166,9 +167,9 @@ class PetrifiedPlatingTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(plating.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(plating.getId(), 2);
         harness.passBothPriorities();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(plating.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(plating.getId(), 1);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(plating);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }

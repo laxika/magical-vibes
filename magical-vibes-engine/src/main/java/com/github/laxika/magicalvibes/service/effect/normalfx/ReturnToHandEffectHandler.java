@@ -208,7 +208,6 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         }
 
         gameData.removeFromExile(targetId);
-        gameData.suspendedSpellExiles.removeIf(suspended -> suspended.cardId().equals(targetId));
         gameData.addCardToHand(exiled.ownerId(), exiled.card());
         gameLogService.append(gameData, GameLog.textCardText(
                 entry.getDescription() + " returns ", exiled.card(), " from exile to its owner's hand."));

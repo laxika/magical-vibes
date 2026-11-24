@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.s.SwordsToPlowshares;
 import com.github.laxika.magicalvibes.cards.t.Timecrafting;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
@@ -26,7 +27,7 @@ class WatcherOfHoursTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 6);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 6);
     }
 
     @Test
@@ -39,7 +40,7 @@ class WatcherOfHoursTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 5);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 5);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, false);
@@ -70,7 +71,7 @@ class WatcherOfHoursTest extends BaseCardTest {
         advanceToUpkeep(player2);
         resolveAllTriggers();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 6);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 6);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -82,7 +83,7 @@ class WatcherOfHoursTest extends BaseCardTest {
         advanceToUpkeep(player1);
         resolveAllTriggers();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 5);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 5);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
     }
@@ -102,7 +103,7 @@ class WatcherOfHoursTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 4);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(thirdCard);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstCard, secondCard);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -117,7 +118,7 @@ class WatcherOfHoursTest extends BaseCardTest {
 
         removeCounters(player2, card, 1);
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 5);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 5);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
@@ -127,7 +128,7 @@ class WatcherOfHoursTest extends BaseCardTest {
     void lastCounterOffersAFreeCastAndTheCreatureCanAttackImmediately() {
         WatcherOfHours card = suspendCard();
         harness.setLibrary(player1, List.of());
-        gd.exiledCardTimeCounters.put(card.getId(), 1);
+        gd.setExiledCardCounters(card.getId(), CounterType.TIME, 1);
 
         advanceToUpkeep(player1);
         resolveAllTriggers();
@@ -136,7 +137,7 @@ class WatcherOfHoursTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         harness.assertOnBattlefield(player1, "Watcher of Hours");
         declareAttackersAndPrepareBlockers(List.of(0));
         assertThat(findPermanent(player1, "Watcher of Hours").isAttacking()).isTrue();
@@ -146,12 +147,12 @@ class WatcherOfHoursTest extends BaseCardTest {
     void lastCounterCreatesSeparateSurveilAndCastTriggers() {
         WatcherOfHours card = suspendCard();
         harness.setLibrary(player1, List.of(new WatcherOfHours()));
-        gd.exiledCardTimeCounters.put(card.getId(), 1);
+        gd.setExiledCardCounters(card.getId(), CounterType.TIME, 1);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -161,7 +162,7 @@ class WatcherOfHoursTest extends BaseCardTest {
     void decliningTheLastCounterCastLeavesTheCardExiledWithoutCounters() {
         WatcherOfHours card = suspendCard();
         harness.setLibrary(player1, List.of());
-        gd.exiledCardTimeCounters.put(card.getId(), 1);
+        gd.setExiledCardCounters(card.getId(), CounterType.TIME, 1);
 
         advanceToUpkeep(player1);
         resolveAllTriggers();
@@ -170,7 +171,7 @@ class WatcherOfHoursTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         harness.assertNotOnBattlefield(player1, "Watcher of Hours");
         advanceToUpkeep(player1);
         resolveAllTriggers();

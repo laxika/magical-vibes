@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastExiledCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -57,32 +56,34 @@ public class RemoveTimeCounterFromExiledCardEffectHandler implements NormalEffec
         removeTimeCounter(gameData, cardId, null);
     }
 
-    /** Removes a time counter on behalf of {@code removerId} ({@code null} when its owner removes it). */
+    /**
+     * Removes a time counter from the card {@code cardId} in exile on behalf of {@code removerId} ({@code null} when its
+     * owner removes it): a card suspended from a hand, a spell exiled with time counters that gained suspend, or a card
+     * Alaundo the Seer exiled. Each removal is a time-counter-removed-in-exile event; the last one also queues the
+     * card's "when the last time counter is removed from this card, if it's exiled, you may play it without paying its
+     * mana cost" (suspend's, CR 702.62a, and Alaundo's).
+     */
     public void removeTimeCounter(GameData gameData, UUID cardId, UUID removerId) {
         ExiledCardEntry exiledEntry = gameData.findExiledCard(cardId);
-        Integer counters = gameData.exiledCardTimeCounters.get(cardId);
-        if (exiledEntry == null || counters == null || counters <= 0) {
-            gameData.exiledCardTimeCounters.remove(cardId);
+        int counters = gameData.exiledCardCounterCount(cardId, CounterType.TIME);
+        if (exiledEntry == null || counters <= 0) {
             return;
         }
 
-        if (counters > 1) {
-            int remaining = counters - 1;
-            gameData.exiledCardTimeCounters.put(cardId, remaining);
+        int remaining = counters - 1;
+        gameData.setExiledCardCounters(cardId, CounterType.TIME, remaining);
+        if (remaining > 0) {
             gameLogService.append(gameData,
                     GameLog.cardThen(exiledEntry.card(), " has a time counter removed (" + remaining + " remaining)."));
-            gameData.rulesEvents.occur(new CounterChangeEvent(CounterChangeEvent.Kind.TIME_COUNTER_REMOVED_IN_EXILE,
+            gameData.rulesEvents.occur(new CounterChangeEvent(CounterChangeEvent.Kind.COUNTER_REMOVED_IN_EXILE,
                     null, null, exiledEntry.card(), exiledEntry.ownerId(), removerId, CounterType.TIME, remaining, 0,
                             false, null));
             return;
         }
 
         boolean hasAlaundoCastAbility = gameData.exiledCardsWithAlaundoCastAbility.contains(cardId);
-        boolean hasSuspend = !gameData.exiledCardsWithNonSuspendTimeCounters.contains(cardId)
-                || exiledEntry.card().getActivatedAbilities(Zone.HAND).stream()
-                .anyMatch(com.github.laxika.magicalvibes.model.ActivatedAbility::isSuspendsSourceFromHand);
-        gameData.exiledCardTimeCounters.remove(cardId);
-        gameData.rulesEvents.occur(new CounterChangeEvent(CounterChangeEvent.Kind.TIME_COUNTER_REMOVED_IN_EXILE,
+        boolean hasSuspend = gameData.exiledCardHasSuspend(exiledEntry.card());
+        gameData.rulesEvents.occur(new CounterChangeEvent(CounterChangeEvent.Kind.COUNTER_REMOVED_IN_EXILE,
                 null, null, exiledEntry.card(), exiledEntry.ownerId(), removerId, CounterType.TIME, 0, 0, false, null));
         if (!hasAlaundoCastAbility && !hasSuspend) {
             return;
@@ -99,18 +100,9 @@ public class RemoveTimeCounterFromExiledCardEffectHandler implements NormalEffec
                 gameData.id, exiledEntry.card().getName());
     }
 
+    /** Whether {@code exiled} is suspended (CR 702.62b): {@link GameData#isSuspended}. */
     public static boolean isSuspended(GameData gameData, ExiledCardEntry exiled) {
-        if (exiled.faceDown()) {
-            return false;
-        }
-        UUID cardId = exiled.card().getId();
-        Integer counters = gameData.exiledCardTimeCounters.get(cardId);
-        boolean hasSuspend = !gameData.exiledCardsWithNonSuspendTimeCounters.contains(cardId)
-                || exiled.card().getActivatedAbilities(Zone.HAND).stream()
-                .anyMatch(com.github.laxika.magicalvibes.model.ActivatedAbility::isSuspendsSourceFromHand);
-        return (counters != null && counters > 0 && hasSuspend)
-                || gameData.suspendedSpellExiles.stream().anyMatch(
-                suspended -> suspended.cardId().equals(cardId) && suspended.counters() > 0);
+        return gameData.isSuspended(exiled.card().getId());
     }
 
     public void queueCastTrigger(GameData gameData, ExiledCardEntry exiledEntry, boolean suspendHaste) {

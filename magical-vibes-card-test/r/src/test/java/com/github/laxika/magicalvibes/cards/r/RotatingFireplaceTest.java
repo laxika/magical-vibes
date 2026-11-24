@@ -109,8 +109,8 @@ class RotatingFireplaceTest extends BaseCardTest {
         DinosaursOnASpaceship opponent = new DinosaursOnASpaceship();
         harness.setExile(player1, List.of(owned));
         harness.setExile(player2, List.of(opponent));
-        gd.exiledCardTimeCounters.put(owned.getId(), 2);
-        gd.exiledCardTimeCounters.put(opponent.getId(), 2);
+        gd.setExiledCardCounters(owned.getId(), CounterType.TIME, 2);
+        gd.setExiledCardCounters(opponent.getId(), CounterType.TIME, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -119,7 +119,7 @@ class RotatingFireplaceTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "ADD");
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(owned.getId(), 3)
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(owned.getId(), 3)
                 .containsEntry(opponent.getId(), 2);
         assertThat(fireplace.getCounterCount(CounterType.TIME)).isZero();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -130,7 +130,7 @@ class RotatingFireplaceTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RotatingFireplace());
         DinosaursOnASpaceship suspended = new DinosaursOnASpaceship();
         harness.setExile(player1, List.of(suspended));
-        gd.exiledCardTimeCounters.put(suspended.getId(), 2);
+        gd.setExiledCardCounters(suspended.getId(), CounterType.TIME, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -140,7 +140,7 @@ class RotatingFireplaceTest extends BaseCardTest {
         harness.handleListChoice(player1, "REMOVE");
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(suspended.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(suspended.getId(), 1);
         assertThat(countPermanents(player1, "Dinosaur")).isEqualTo(1);
     }
 

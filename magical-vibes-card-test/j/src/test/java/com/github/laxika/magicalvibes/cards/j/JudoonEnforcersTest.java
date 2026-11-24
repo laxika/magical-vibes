@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
 import com.github.laxika.magicalvibes.cards.p.PithingNeedle;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -56,7 +57,7 @@ class JudoonEnforcersTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 6);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 6);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -95,7 +96,7 @@ class JudoonEnforcersTest extends BaseCardTest {
         advanceToUpkeep(player2);
         resolveAllTriggers();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 6);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 6);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
     }
 
@@ -106,7 +107,7 @@ class JudoonEnforcersTest extends BaseCardTest {
         for (int remaining = 5; remaining > 0; remaining--) {
             advanceToUpkeep(player1);
             resolveAllTriggers();
-            assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), remaining);
+            assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), remaining);
             assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
             harness.assertNotOnBattlefield(player1, "Judoon Enforcers");
         }
@@ -118,7 +119,7 @@ class JudoonEnforcersTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Judoon Enforcers");
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThatCode(() -> declareAttackers(player1, List.of(0)))
                 .doesNotThrowAnyException();
     }
@@ -138,7 +139,7 @@ class JudoonEnforcersTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertNotOnBattlefield(player1, "Judoon Enforcers");
     }
@@ -177,7 +178,7 @@ class JudoonEnforcersTest extends BaseCardTest {
         JudoonEnforcers card = suspendCard();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 6);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 6);
         assertThat(gd.stack).isEmpty();
     }
 

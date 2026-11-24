@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MishrasFactory;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -29,7 +30,7 @@ class SuspendTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .extracting(card -> card.getName())
                 .containsExactly("Grizzly Bears");
-        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getCard().getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(target.getCard().getId(), 2);
     }
 
     @Test
@@ -40,13 +41,13 @@ class SuspendTest extends BaseCardTest {
         castSuspend(target);
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(targetCard.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(targetCard.getId(), 1);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(targetCard.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(targetCard.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
@@ -67,11 +68,11 @@ class SuspendTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(targetCard.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(targetCard.getId(), 2);
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(targetCard.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(targetCard.getId(), 1);
         advanceToUpkeep(player2);
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -97,7 +98,7 @@ class SuspendTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(target.getCard().getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(target.getCard().getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(target.getCard());
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }

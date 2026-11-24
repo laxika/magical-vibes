@@ -37,8 +37,8 @@ class ThePartingOfTheWaysTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .containsExactly(suspended, creature, land, anotherCreature, anotherLand);
-        assertThat(gd.exiledCardTimeCounters)
-                .containsEntry(suspended.getId(), suspended.getManaValue())
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
+                .doesNotContainKey(suspended.getId())
                 .containsEntry(creature.getId(), creature.getManaValue())
                 .containsEntry(anotherCreature.getId(), anotherCreature.getManaValue())
                 .doesNotContainKeys(land.getId(), anotherLand.getId());
@@ -50,7 +50,7 @@ class ThePartingOfTheWaysTest extends BaseCardTest {
         Permanent saga = addSagaWithLore(1);
         Card suspended = new GrizzlyBears();
         gd.addToExile(player1.getId(), suspended);
-        gd.exiledCardTimeCounters.put(suspended.getId(), 1);
+        gd.setExiledCardCounters(suspended.getId(), CounterType.TIME, 1);
 
         advanceToNextChapter();
         harness.passBothPriorities();
@@ -59,7 +59,7 @@ class ThePartingOfTheWaysTest extends BaseCardTest {
         harness.handleListChoice(player1, "ADD");
         harness.handleListChoice(player1, "ADD");
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(suspended.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(suspended.getId(), 3);
         assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(2);
     }
 
@@ -108,7 +108,7 @@ class ThePartingOfTheWaysTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(land, artifact);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(artifact.getId(), 1)
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(artifact.getId(), 1)
                 .doesNotContainKey(land.getId());
     }
 

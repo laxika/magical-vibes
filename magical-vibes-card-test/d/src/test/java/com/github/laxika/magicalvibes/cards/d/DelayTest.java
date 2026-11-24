@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.a.AeonChronicler;
 import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,11 +14,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Delay.class, BlindPhantasm.class})
+@CardUsed({Delay.class, BlindPhantasm.class, AeonChronicler.class})
 class DelayTest extends BaseCardTest {
 
     @Test
@@ -29,8 +31,8 @@ class DelayTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Blind Phantasm");
         harness.assertNotInGraveyard(player1, "Blind Phantasm");
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(phantasm);
-        assertThat(gd.suspendedSpellExiles)
-                .containsExactly(new GameData.SuspendedSpellExile(phantasm.getId(), player1.getId(), 3));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
+                .containsExactly(Map.entry(phantasm.getId(), 3));
     }
 
     @Test
@@ -41,8 +43,8 @@ class DelayTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.suspendedSpellExiles)
-                .containsExactly(new GameData.SuspendedSpellExile(phantasm.getId(), player1.getId(), 2));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
+                .containsExactly(Map.entry(phantasm.getId(), 2));
     }
 
     @Test
@@ -59,7 +61,7 @@ class DelayTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        assertThat(gd.suspendedSpellExiles).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
 
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.handleMayAbilityChosen(player1, true);
@@ -84,7 +86,7 @@ class DelayTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(gd.suspendedSpellExiles).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(phantasm);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).hasSize(1);
@@ -101,8 +103,8 @@ class DelayTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
 
-        assertThat(gd.suspendedSpellExiles)
-                .containsExactly(new GameData.SuspendedSpellExile(phantasm.getId(), player1.getId(), 3));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
+                .containsExactly(Map.entry(phantasm.getId(), 3));
         assertThat(gd.stack).isEmpty();
     }
 
@@ -121,9 +123,30 @@ class DelayTest extends BaseCardTest {
         advanceToUpkeep(player1);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(phantasm);
-        assertThat(gd.suspendedSpellExiles).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
         assertThat(gd.stack).isEmpty();
         harness.assertNotOnBattlefield(player1, "Blind Phantasm");
+    }
+
+    @Test
+    @DisplayName("Each time counter removed from a delayed card is removed from it in exile, so its own trigger sees it")
+    void timeCounterRemovalFromDelayedCardTriggersItsExileAbility() {
+        AeonChronicler chronicler = new AeonChronicler();
+        harness.castFromHand(player1, chronicler, "{3}{U}{U}");
+        harness.setHand(player2, List.of(new Delay()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, chronicler.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsExactly(Map.entry(chronicler.getId(), 3));
+
+        advanceToUpkeep(player1);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsExactly(Map.entry(chronicler.getId(), 2));
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 
     @Test

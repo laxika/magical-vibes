@@ -1344,8 +1344,8 @@ public class InteractionPromptProjectionRegistry {
             gameData.exiledCards.stream()
                     .filter(entry -> interaction.playerId().equals(entry.ownerId()))
                     .filter(entry -> interaction.validCardIds().contains(entry.card().getId()))
-                    .filter(entry -> gameData.exiledCardTimeCounters.getOrDefault(
-                            entry.card().getId(), 0) > 0)
+                    .filter(entry -> gameData.exiledCardHasCounter(
+                            entry.card().getId(), com.github.laxika.magicalvibes.model.CounterType.TIME))
                     .map(ExiledCardEntry::card)
                     .map(card -> exiledCardView(gameData, interaction.decidingPlayerId(), card))
                     .forEach(cardViews::add);

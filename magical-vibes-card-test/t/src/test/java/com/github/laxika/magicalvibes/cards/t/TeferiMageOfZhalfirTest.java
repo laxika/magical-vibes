@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BenalishCavalry;
 import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.s.SuddenSpoiling;
 import com.github.laxika.magicalvibes.cards.r.RiftBolt;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.e.EmptyTheWarrens;
 import com.github.laxika.magicalvibes.cards.f.Fortify;
@@ -202,7 +203,7 @@ class TeferiMageOfZhalfirTest extends BaseCardTest {
         }
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(card.getId()));
     }
 }

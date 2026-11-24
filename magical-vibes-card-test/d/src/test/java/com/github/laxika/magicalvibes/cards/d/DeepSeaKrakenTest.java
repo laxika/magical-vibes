@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.cards.t.TeferiMageOfZhalfir;
 import com.github.laxika.magicalvibes.cards.w.WipeAway;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -51,7 +52,7 @@ class DeepSeaKrakenTest extends BaseCardTest {
             resolveAllTriggers();
         }
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
@@ -75,7 +76,7 @@ class DeepSeaKrakenTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 9);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 9);
     }
 
     @Test
@@ -92,7 +93,7 @@ class DeepSeaKrakenTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.castAndResolveInstant(player2, 0, target.getId());
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 8);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 8);
     }
 
     @Test
@@ -109,7 +110,7 @@ class DeepSeaKrakenTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 9);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 9);
     }
 
     @Test
@@ -129,12 +130,12 @@ class DeepSeaKrakenTest extends BaseCardTest {
     @DisplayName("Removing the last time counter puts a separate suspend cast trigger on the stack")
     void lastCounterCreatesSeparateCastTrigger() {
         DeepSeaKraken card = suspendCard();
-        gd.exiledCardTimeCounters.put(card.getId(), 1);
+        gd.setExiledCardCounters(card.getId(), CounterType.TIME, 1);
 
         advanceToUpkeep(player1);
         harness.withAutoStop(TurnStep.UPKEEP, () -> harness.passBothPriorities());
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getCard().getId()).isEqualTo(card.getId());
@@ -145,13 +146,13 @@ class DeepSeaKrakenTest extends BaseCardTest {
     @DisplayName("Declining the suspend cast leaves Kraken exiled and no longer suspended")
     void decliningCastStopsOpponentSpellTriggers() {
         DeepSeaKraken card = suspendCard();
-        gd.exiledCardTimeCounters.put(card.getId(), 1);
+        gd.setExiledCardCounters(card.getId(), CounterType.TIME, 1);
         advanceToUpkeep(player1);
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(card.getId());
 
         Permanent target = addCreatureReady(player1, new AshcoatBear());
         harness.setHand(player2, List.of(new WipeAway()));
@@ -170,14 +171,14 @@ class DeepSeaKrakenTest extends BaseCardTest {
         advanceToUpkeep(player2);
         resolveAllTriggers();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 9);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 9);
     }
 
     @Test
     @DisplayName("An opponent spell removing the last counter allows Kraken to resolve before that spell")
     void lastCounterFromOpponentSpellCastsKrakenFirst() {
         DeepSeaKraken card = suspendCard();
-        gd.exiledCardTimeCounters.put(card.getId(), 1);
+        gd.setExiledCardCounters(card.getId(), CounterType.TIME, 1);
         harness.setHand(player2, List.of(new AshcoatBear()));
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
@@ -210,7 +211,7 @@ class DeepSeaKrakenTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 9);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 9);
         assertThat(gd.stack).isEmpty();
     }
 

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GnollHunter;
 import com.github.laxika.magicalvibes.cards.e.ErrantEphemeron;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,14 +29,14 @@ class AlaundoTheSeerTest extends BaseCardTest {
         GrizzlyBears opponentOwned = new GrizzlyBears();
         harness.setExile(player1, List.of(otherOwned));
         harness.setExile(player2, List.of(opponentOwned));
-        gd.exiledCardTimeCounters.put(otherOwned.getId(), 2);
-        gd.exiledCardTimeCounters.put(opponentOwned.getId(), 2);
+        gd.setExiledCardCounters(otherOwned.getId(), CounterType.TIME, 2);
+        gd.setExiledCardCounters(opponentOwned.getId(), CounterType.TIME, 2);
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(chosen));
 
         activateAndChoose(alaundo);
 
-        assertThat(gd.exiledCardTimeCounters)
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
                 .containsEntry(chosen.getId(), 2)
                 .containsEntry(otherOwned.getId(), 1)
                 .containsEntry(opponentOwned.getId(), 2);
@@ -48,14 +49,14 @@ class AlaundoTheSeerTest extends BaseCardTest {
         Permanent alaundo = alaundo();
         GrizzlyBears otherOwned = new GrizzlyBears();
         harness.setExile(player1, List.of(otherOwned));
-        gd.exiledCardTimeCounters.put(otherOwned.getId(), 2);
+        gd.setExiledCardCounters(otherOwned.getId(), CounterType.TIME, 2);
         harness.setLibrary(player1, List.of());
         harness.setHand(player1, List.of());
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(alaundo), null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(otherOwned.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(otherOwned.getId(), 1);
     }
 
     @Test
@@ -69,7 +70,7 @@ class AlaundoTheSeerTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(chosen.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(chosen.getId(), 2);
     }
 
     @Test
@@ -94,7 +95,7 @@ class AlaundoTheSeerTest extends BaseCardTest {
 
         Permanent cast = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.hasKeyword(gd, cast, Keyword.HASTE)).isTrue();
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(other.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(other.getId());
     }
 
     @Test
@@ -119,7 +120,7 @@ class AlaundoTheSeerTest extends BaseCardTest {
         Permanent alaundo = alaundo();
         GnollHunter unrelated = new GnollHunter();
         harness.setExile(player1, List.of(unrelated));
-        gd.exiledCardTimeCounters.put(unrelated.getId(), 1);
+        gd.setExiledCardCounters(unrelated.getId(), CounterType.TIME, 1);
         gd.exiledCardsWithNonSuspendTimeCounters.add(unrelated.getId());
         harness.setHand(player1, List.of(new GnollHunter()));
         harness.setLibrary(player1, List.of(new GnollHunter()));
@@ -129,7 +130,7 @@ class AlaundoTheSeerTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.findExiledCard(unrelated.getId())).isNotNull();
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(unrelated.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(unrelated.getId());
     }
 
     @Test
@@ -143,7 +144,7 @@ class AlaundoTheSeerTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(exiled.getId(), 6);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(exiled.getId(), 6);
     }
 
     @Test
@@ -153,7 +154,7 @@ class AlaundoTheSeerTest extends BaseCardTest {
         harness.setHand(player1, List.of(exiled));
         harness.setLibrary(player1, List.of(new GnollHunter(), new GnollHunter()));
         activateAndChoose(alaundo);
-        gd.exiledCardTimeCounters.put(exiled.getId(), 1);
+        gd.setExiledCardCounters(exiled.getId(), CounterType.TIME, 1);
         harness.performUntapStep(player1);
 
         activateAndChoose(alaundo);
@@ -181,7 +182,7 @@ class AlaundoTheSeerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.findExiledCard(exiled.getId())).isNotNull();
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(exiled.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(exiled.getId());
         harness.assertNotOnBattlefield(player1, "Gnoll Hunter");
     }
 
@@ -192,13 +193,13 @@ class AlaundoTheSeerTest extends BaseCardTest {
         harness.setHand(player1, List.of(exiled));
         harness.setLibrary(player1, List.of(new GnollHunter(), new GnollHunter(), new GnollHunter()));
         activateAndChoose(alaundo);
-        gd.exiledCardTimeCounters.put(exiled.getId(), 1);
+        gd.setExiledCardCounters(exiled.getId(), CounterType.TIME, 1);
         harness.performUntapStep(player1);
         activateAndChoose(alaundo);
         harness.passBothPriorities();
         harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
                 () -> harness.handleMayAbilityChosen(player1, false));
-        gd.exiledCardTimeCounters.put(exiled.getId(), 1);
+        gd.setExiledCardCounters(exiled.getId(), CounterType.TIME, 1);
         harness.performUntapStep(player1);
 
         activateAndChoose(alaundo);
@@ -213,7 +214,7 @@ class AlaundoTheSeerTest extends BaseCardTest {
         Island land = new Island();
         GnollHunter other = new GnollHunter();
         harness.setExile(player1, List.of(other));
-        gd.exiledCardTimeCounters.put(other.getId(), 2);
+        gd.setExiledCardCounters(other.getId(), CounterType.TIME, 2);
         gd.exiledCardsWithNonSuspendTimeCounters.add(other.getId());
         harness.setHand(player1, List.of(land));
         harness.setLibrary(player1, List.of(new GnollHunter()));
@@ -221,7 +222,7 @@ class AlaundoTheSeerTest extends BaseCardTest {
         activateAndChoose(alaundo);
 
         assertThat(gd.findExiledCard(land.getId())).isNotNull();
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(land.getId()).containsEntry(other.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(land.getId()).containsEntry(other.getId(), 1);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
     }

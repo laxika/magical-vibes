@@ -342,7 +342,7 @@ public class RulesEventPipeline {
         }
         StepCandidate.ExileCounterAbility counterAbility = match.candidate().counterAbility();
         String kind = counterAbility != null ? counterAbility.kind() : stepAbilityKind(event.moment(), match.group());
-        TriggerRecord record = counterAbility != null ? TriggerRecord.NONE : stepRecord(gameData, event, match);
+        TriggerRecord record = counterAbility != null ? exileStay(gameData, card) : stepRecord(gameData, event, match);
         TriggeredAbilityRequest request = new TriggeredAbilityRequest(candidate.ability(), card, source,
                 candidate.controllerId(), card.getName() + "'s " + kind, context, record);
         if (stackService.put(gameData, request) && match.group() != StepGroup.PLANE) {
@@ -447,7 +447,9 @@ public class RulesEventPipeline {
                 : gameQueryService.findPermanentById(gameData, match.enchantedId());
         int enchantedPower = enchanted == null ? 0 : gameQueryService.getEffectivePower(gameData, enchanted);
         long graveyardVersion = candidate.zone() == Zone.GRAVEYARD ? gameData.graveyardEntryVersion(card.getId()) : -1;
+        long exileVersion = candidate.zone() == Zone.EXILE ? exileVersion(gameData, card) : -1;
         return entry -> {
+            entry.setSourceExileEntryVersion(exileVersion);
             switch (match.group()) {
                 case PLANE -> {
                     entry.setSourcePlanarObject(match.candidate().plane().copy());
@@ -488,6 +490,23 @@ public class RulesEventPipeline {
                 entry.setTriggeringCardGraveyardEntryVersion(graveyardVersion);
             }
         };
+    }
+
+    /**
+     * What an exile counter ability's entry records: no target, and its source card's exile stay
+     * ({@code StackEntry.sourceExileEntryVersion}), so "this card" of "remove a refine counter from it" names the card
+     * only while it hasn't left exile since (CR 400.7).
+     */
+    private static TriggerRecord exileStay(GameData gameData, Card card) {
+        long version = exileVersion(gameData, card);
+        return entry -> {
+            entry.setNonTargeting(true);
+            entry.setSourceExileEntryVersion(version);
+        };
+    }
+
+    private static long exileVersion(GameData gameData, Card card) {
+        return gameData.exileEntryVersionsOf(List.of(card.getId())).get(card.getId());
     }
 
     /** Runs {@code detection} under one {@linkplain GameQueryService#withQueryScope query scope}, see {@link #process}. */

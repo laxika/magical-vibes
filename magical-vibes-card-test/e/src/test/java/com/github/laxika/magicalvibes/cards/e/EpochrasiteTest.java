@@ -38,7 +38,7 @@ class EpochrasiteTest extends BaseCardTest {
         Card epochrasiteCard = exileEpochrasiteWithFatalAttraction();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(epochrasiteCard);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(epochrasiteCard.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(epochrasiteCard.getId(), 3);
 
         for (int i = 0; i < 3; i++) {
             advanceToUpkeep(player1);
@@ -60,13 +60,13 @@ class EpochrasiteTest extends BaseCardTest {
         advanceToUpkeep(player2);
         resolveAllTriggers();
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(epochrasiteCard.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(epochrasiteCard.getId(), 3);
 
         for (int remaining = 2; remaining >= 1; remaining--) {
             advanceToUpkeep(player1);
             resolveAllTriggers();
 
-            assertThat(gd.exiledCardTimeCounters).containsEntry(epochrasiteCard.getId(), remaining);
+            assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(epochrasiteCard.getId(), remaining);
             assertThat(gd.getPlayerExiledCards(player1.getId())).contains(epochrasiteCard);
             assertThat(countPermanents(player1, "Epochrasite")).isZero();
         }
@@ -85,7 +85,7 @@ class EpochrasiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(epochrasiteCard);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(epochrasiteCard.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(epochrasiteCard.getId());
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().equals(epochrasiteCard));
     }

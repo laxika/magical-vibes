@@ -12,8 +12,13 @@ import java.util.Objects;
  * number of counters removed, the cards that lost one and their owners, so "if you do" is
  * {@code HappenedThisWay.removedCounters()}. It never prompts.
  *
+ * <p>Time counters come off one at a time as suspend's removal does it, each a time-counter-removed-in-exile event and
+ * the last one offering a suspended card's cast (CR 702.62a), the effect's controller removing them.</p>
+ *
  * <p>Mari, the Killing Quill's "remove a hit counter from a card that player owns in exile" (over the card a
- * {@code ChooseCardEffect} chose) and All Hallow's Eve's "remove a scream counter from it" (over itself in exile).</p>
+ * {@code ChooseCardEffect} chose), All Hallow's Eve's "remove a scream counter from it" (over itself in exile), Dust of
+ * Moments' "remove two time counters from each suspended card" and Talon Gates' "from each suspended card you own"
+ * (over {@code exiledCards([you(),] CardIsSuspendedPredicate)}).</p>
  *
  * @param cards   which cards; never a target
  * @param counter the kind of counter

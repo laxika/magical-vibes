@@ -47,13 +47,6 @@ public class ExileTargetValidators {
         if (exiled == null || exiled.faceDown()) {
             throw new IllegalStateException("Target card must be face up in exile");
         }
-        Integer timeCounters = ctx.gameData().exiledCardTimeCounters.get(ctx.targetId());
-        if (timeCounters == null) {
-            timeCounters = ctx.gameData().suspendedSpellExiles.stream()
-                    .filter(pending -> pending.cardId().equals(ctx.targetId()))
-                    .map(com.github.laxika.magicalvibes.model.GameData.SuspendedSpellExile::counters)
-                    .findFirst().orElse(null);
-        }
         if (!com.github.laxika.magicalvibes.service.effect.normalfx.RemoveTimeCounterFromExiledCardEffectHandler
                 .isSuspended(ctx.gameData(), exiled)) {
             throw new IllegalStateException("Target card must be suspended");
@@ -182,12 +175,7 @@ public class ExileTargetValidators {
             throw new IllegalStateException("Effect requires a target card");
         }
         ExiledCardEntry exiled = ctx.gameData().findExiledCard(ctx.targetId());
-        Integer timeCounters = ctx.gameData().exiledCardTimeCounters.get(ctx.targetId());
-        boolean suspendedSpell = ctx.gameData().suspendedSpellExiles.stream()
-                .anyMatch(pending -> pending.cardId().equals(ctx.targetId()) && pending.counters() > 0);
-        boolean suspendedByCounters = timeCounters != null && timeCounters > 0
-                && !ctx.gameData().exiledCardsWithNonSuspendTimeCounters.contains(ctx.targetId());
-        if (exiled == null || exiled.faceDown() || !(suspendedSpell || suspendedByCounters)) {
+        if (exiled == null || !ctx.gameData().isSuspended(ctx.targetId())) {
             throw new IllegalStateException("Target card must be suspended");
         }
     }

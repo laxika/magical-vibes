@@ -3025,11 +3025,7 @@ public class AmountEvaluationService {
                 if (exiled.faceDown() || !isPlayerInScope(gameData, exiled.ownerId(), count.scope(), ctx)) {
                     continue;
                 }
-                UUID cardId = exiled.card().getId();
-                boolean hasSuspendCounters = gameData.exiledCardTimeCounters.getOrDefault(cardId, 0) > 0;
-                boolean isSuspendedSpell = gameData.suspendedSpellExiles.stream()
-                        .anyMatch(pending -> cardId.equals(pending.cardId()) && pending.counters() > 0);
-                if (hasSuspendCounters || isSuspendedSpell) {
+                if (gameData.isSuspended(exiled.card().getId())) {
                     matches++;
                 }
             }

@@ -56,7 +56,7 @@ class AmysHomeTest extends BaseCardTest {
         harness.handleCardChosen(player1, 1);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 2);
     }
 
     @Test
@@ -78,14 +78,14 @@ class AmysHomeTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(card);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(card.getId(), 2);
     }
 
     @Test
     void chaosEnsuesTimeTravelsAcrossSuspendedCardsAndControlledTimeCounters() {
         GrizzlyBears suspendedCard = new GrizzlyBears();
         harness.setExile(player1, List.of(suspendedCard));
-        gd.exiledCardTimeCounters.put(suspendedCard.getId(), 2);
+        gd.setExiledCardCounters(suspendedCard.getId(), CounterType.TIME, 2);
         Permanent permanent = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         permanent.setCounterCount(CounterType.TIME, 1);
 
@@ -95,6 +95,6 @@ class AmysHomeTest extends BaseCardTest {
         harness.handleListChoice(player1, "ADD");
 
         assertThat(permanent.getCounterCount(CounterType.TIME)).isZero();
-        assertThat(gd.exiledCardTimeCounters).containsEntry(suspendedCard.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(suspendedCard.getId(), 3);
     }
 }

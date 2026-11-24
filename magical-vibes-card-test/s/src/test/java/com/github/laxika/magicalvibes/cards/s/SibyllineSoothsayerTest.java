@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -29,7 +30,7 @@ class SibyllineSoothsayerTest extends BaseCardTest {
         resolveEnterTrigger();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(qualifyingCard);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(qualifyingCard.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(qualifyingCard.getId(), 3);
         assertThat(gd.playerDecks.get(player1.getId()))
                 .containsExactlyInAnyOrder(land, belowThreshold, afterQualifyingCard);
     }
@@ -43,7 +44,7 @@ class SibyllineSoothsayerTest extends BaseCardTest {
         resolveEnterTrigger();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(nonland.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(nonland.getId());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(land, nonland);
     }
 
@@ -72,7 +73,7 @@ class SibyllineSoothsayerTest extends BaseCardTest {
         resolveEnterTrigger();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exiledCardTimeCounters).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
@@ -85,19 +86,19 @@ class SibyllineSoothsayerTest extends BaseCardTest {
         harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(qualifyingCard.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(qualifyingCard.getId(), 3);
 
         for (int remaining = 2; remaining >= 1; remaining--) {
             harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
             harness.passBothPriorities();
-            assertThat(gd.exiledCardTimeCounters).containsEntry(qualifyingCard.getId(), remaining);
+            assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(qualifyingCard.getId(), remaining);
             harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
-            assertThat(gd.exiledCardTimeCounters).containsEntry(qualifyingCard.getId(), remaining);
+            assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(qualifyingCard.getId(), remaining);
         }
 
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         harness.passBothPriorities();
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(qualifyingCard.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(qualifyingCard.getId());
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);

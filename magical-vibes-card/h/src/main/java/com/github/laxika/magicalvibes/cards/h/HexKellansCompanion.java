@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInExile;
-import com.github.laxika.magicalvibes.model.condition.SourceCardInExileWithFetchCounter;
+import com.github.laxika.magicalvibes.model.condition.SourceCardInExileWithCounter;
 import com.github.laxika.magicalvibes.model.condition.SourceCardOnBattlefield;
 import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -47,7 +47,7 @@ public class HexKellansCompanion extends Card {
 
         addTrigger(new TriggerCondition(Triggers.youCastSpell()
                         .withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.EXILE)), AbilityZones.EXILE),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceCardInExileWithFetchCounter()),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCardInExileWithCounter(CounterType.FETCH)),
                 new ReturnSourceCardFromExileToBattlefieldEffect(false));
     }
 }

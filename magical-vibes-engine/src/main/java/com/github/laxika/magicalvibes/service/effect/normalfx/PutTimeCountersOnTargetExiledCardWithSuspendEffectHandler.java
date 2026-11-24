@@ -38,7 +38,7 @@ public class PutTimeCountersOnTargetExiledCardWithSuspendEffectHandler implement
             return;
         }
 
-        gameData.exiledCardTimeCounters.merge(targetId, effect.amount(), Integer::sum);
+        gameData.addExiledCardCounters(targetId, com.github.laxika.magicalvibes.model.CounterType.TIME, effect.amount());
         gameData.exiledCardsWithNonSuspendTimeCounters.remove(targetId);
         gameLogService.append(gameData,
                 GameLog.cardThen(exiled.card(), " gets " + effect.amount()

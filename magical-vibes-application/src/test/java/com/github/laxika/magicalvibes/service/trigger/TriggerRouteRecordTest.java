@@ -2528,7 +2528,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
         mainPhaseOf(player1);
         for (Card card : cards) {
             gd.addToExile(player1.getId(), card);
-            gd.exiledCardTimeCounters.put(card.getId(), 2);
+            gd.setExiledCardCounters(card.getId(), CounterType.TIME, 2);
             harness.inMutationScope(() -> removal.removeTimeCounter(gd, card.getId()));
             answerAll();
         }

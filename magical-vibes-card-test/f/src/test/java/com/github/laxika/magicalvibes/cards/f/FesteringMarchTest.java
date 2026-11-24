@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -11,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -32,8 +33,8 @@ class FesteringMarchTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, enemyCreature)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, enemyCreature)).isEqualTo(2);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(march);
-        assertThat(gd.suspendedSpellExiles)
-                .containsExactly(new GameData.SuspendedSpellExile(march.getId(), player1.getId(), 3));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
+                .containsExactly(Map.entry(march.getId(), 3));
     }
 
     @Test
@@ -61,7 +62,7 @@ class FesteringMarchTest extends BaseCardTest {
         FesteringMarch march = suspendMarch();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(march);
-        assertThat(gd.exiledCardTimeCounters).containsEntry(march.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(march.getId(), 3);
 
         for (int i = 0; i < 3; i++) {
             advanceToUpkeep(player1);
@@ -73,8 +74,8 @@ class FesteringMarchTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, enemyCreature)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, enemyCreature)).isEqualTo(2);
-        assertThat(gd.suspendedSpellExiles)
-                .containsExactly(new GameData.SuspendedSpellExile(march.getId(), player1.getId(), 3));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
+                .containsExactly(Map.entry(march.getId(), 3));
     }
 
     @Test
@@ -94,8 +95,8 @@ class FesteringMarchTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, enemyCreature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, enemyCreature)).isEqualTo(3);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(march);
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(march.getId());
-        assertThat(gd.suspendedSpellExiles).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(march.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).isEmpty();
     }
 
     @Test
@@ -121,8 +122,8 @@ class FesteringMarchTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(march);
-        assertThat(gd.suspendedSpellExiles)
-                .containsExactly(new GameData.SuspendedSpellExile(march.getId(), player1.getId(), 3));
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME))
+                .containsExactly(Map.entry(march.getId(), 3));
     }
 
     @Test

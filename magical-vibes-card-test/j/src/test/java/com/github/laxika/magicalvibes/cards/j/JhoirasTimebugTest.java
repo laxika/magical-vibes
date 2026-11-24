@@ -69,7 +69,7 @@ class JhoirasTimebugTest extends BaseCardTest {
         harness.handleListChoice(player1, "time counters");
         harness.handleListChoice(player1, "ADD");
 
-        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).containsEntry(target.getId(), 3);
     }
 
     @Test
@@ -82,7 +82,7 @@ class JhoirasTimebugTest extends BaseCardTest {
         harness.handleListChoice(player1, "time counters");
         harness.handleListChoice(player1, "REMOVE");
 
-        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(target.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TIME)).doesNotContainKey(target.getId());
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -157,7 +157,7 @@ class JhoirasTimebugTest extends BaseCardTest {
     private AncestralVision suspendedCard(Player owner, int timeCounters) {
         AncestralVision target = new AncestralVision();
         harness.setExile(owner, List.of(target));
-        gd.exiledCardTimeCounters.put(target.getId(), timeCounters);
+        gd.setExiledCardCounters(target.getId(), CounterType.TIME, timeCounters);
         return target;
     }
 
