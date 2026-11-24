@@ -106,7 +106,7 @@ class MeathookMassacreIITest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setLife(player2, 2);
         destroyCreature(player1, bears.getId());
-        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         Permanent returned = findPermanentByCardId(player1, bears.getCard().getId());
         assertThat(returned).isNotNull();
         assertThat(returned.getCounterCount(CounterType.FINALITY)).isEqualTo(1);

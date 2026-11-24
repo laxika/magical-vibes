@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -53,6 +54,7 @@ class FearMyAuthorityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the discard offers the 3 life payment, which keeps the scheme")
     void controllerMayPayLifeToKeepScheme() {
         Permanent scheme = addScheme();
         harness.setHand(player1, List.of(new Shock()));
@@ -61,9 +63,29 @@ class FearMyAuthorityTest extends BaseCardTest {
         resolveUpkeep();
 
         harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(scheme);
         assertThat(gd.getLife(player1.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Declining both the discard and the life payment abandons the scheme")
+    void mayDeclineBothCostsWhenBothArePayable() {
+        Permanent scheme = addScheme();
+        Card card = new Shock();
+        harness.setHand(player1, List.of(card));
+        harness.setLife(player1, 20);
+
+        resolveUpkeep();
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(scheme);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        harness.assertLife(player1, 20);
     }
 
     @Test

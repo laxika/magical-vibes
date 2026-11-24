@@ -826,13 +826,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     }
 
     /**
-     * Gargantuan Gorilla: the controller accepted the upkeep "you may sacrifice a Forest" and is
-     * picking which one; a snow Forest grants {@code sourcePermanentId} trample until end of turn.
-     */
-    record GargantuanGorillaSacrificeForest(UUID controllerId, UUID sourcePermanentId, Card sourceCard)
-            implements PermanentChoiceContext {}
-
-    /**
      * A player who accepted a "[any player] may sacrifice / tap a [permanent]" payment
      * ({@code MayPayManaEffect.anyPlayerMay}) picks which one; the pick waits on the payment until every player has
      * answered, unless it is paid as each accepts.

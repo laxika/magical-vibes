@@ -168,7 +168,7 @@ class ErebosBleakHeartedTest extends BaseCardTest {
 
         killCreatureWithShock();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertLife(player1, 1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

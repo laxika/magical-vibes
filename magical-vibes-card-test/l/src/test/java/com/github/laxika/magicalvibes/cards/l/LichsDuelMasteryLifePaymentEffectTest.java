@@ -460,6 +460,7 @@ class LichsDuelMasteryLifePaymentEffectTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertMasteryAsked(player1);
         harness.assertLife(player1, 20);

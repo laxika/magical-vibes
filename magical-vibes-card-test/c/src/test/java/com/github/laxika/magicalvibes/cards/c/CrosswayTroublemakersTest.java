@@ -173,7 +173,7 @@ class CrosswayTroublemakersTest extends BaseCardTest {
         harness.setLife(player1, 1);
 
         killPermanent(player1, "Child of Night");
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

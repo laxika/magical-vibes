@@ -308,7 +308,7 @@ class LichsDuelMasteryPunisherTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, archfiendId);
         harness.passBothPriorities();
 
-        harness.handleListChoice(player2, "Lose 2 life");
+        harness.handleMayAbilityChosen(player2, false);
 
         assertMasteryAskedLibraryOrExile();
         harness.assertLife(player2, 20);

@@ -35,7 +35,6 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsOrPaysEf
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessSacrificesEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageControllerUnlessDiscardThenTapSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerTakesDamageUnlessPaysEffect;
@@ -123,7 +122,6 @@ public class MayPenaltyChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerTakesDamageUnlessPaysEffectHandler eachPlayerTakesDamageUnlessPaysEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RevealHandDiscardMatchingCardsUnlessPaysLifeEffectHandler revealHandDiscardMatchingCardsUnlessPaysLifeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DestroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffectHandler destroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageControllerUnlessDiscardThenTapSourceEffectHandler damageControllerUnlessDiscardThenTapSourceEffectHandler;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MustAttackUnlessControllerPaysManaValueEffectHandler mustAttackUnlessControllerPaysManaValueEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnMatchingPermanentsUnlessOwnerPaysEffectHandler returnMatchingPermanentsUnlessOwnerPaysEffectHandler;
@@ -1046,45 +1044,6 @@ public class MayPenaltyChoiceHandlerService {
                     ability.sourceCard().getName());
         }
 
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleDamageControllerUnlessDiscardThenTapChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        DamageControllerUnlessDiscardThenTapSourceEffect effect = ability.effects().stream()
-                .filter(e -> e instanceof DamageControllerUnlessDiscardThenTapSourceEffect)
-                .map(e -> (DamageControllerUnlessDiscardThenTapSourceEffect) e)
-                .findFirst().orElseThrow();
-
-        UUID controllerId = ability.controllerId();
-
-        if (accepted) {
-            List<Card> hand = gameData.playerHands.get(controllerId);
-            List<Integer> validIndices = new ArrayList<>();
-            if (hand != null) {
-                for (int i = 0; i < hand.size(); i++) {
-                    validIndices.add(i);
-                }
-            }
-
-            if (!validIndices.isEmpty()) {
-                gameData.discardCausedByOpponent = false;
-                playerInputService.beginDiscardChoice(gameData, controllerId, validIndices,
-                        "Choose a card to discard.", 1);
-
-                gameLogService.append(gameData, GameLog.textCardText(
-                        player.getUsername() + " chooses to discard a card. (", ability.sourceCard(), ")"));
-                log.info("Game {} - {} accepts damage-unless-discard for {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
-                return;
-            }
-
-            // Hand changed since prompt — no cards left, fall through to the damage-then-tap penalty.
-        }
-
-        // Declined or no cards — deal the damage and tap the source if it landed.
-        StackEntry syntheticEntry = StackEntry.carrier(ability.sourceCard(), controllerId,
-                ability.sourceCard().getName() + "'s ability", new ArrayList<>(),
-                null, ability.sourcePermanentId());
-        damageControllerUnlessDiscardThenTapSourceEffectHandler.applyDamageThenTapIfDealt(gameData, syntheticEntry, effect.damage());
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

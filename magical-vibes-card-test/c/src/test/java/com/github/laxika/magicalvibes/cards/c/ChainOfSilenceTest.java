@@ -102,7 +102,7 @@ class ChainOfSilenceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castAndResolveInstant(player1, 0, target.getId());
-        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(Prevention.preventedFromDealing(gd)).contains(target.getId());
         assertThat(gd.pendingMayAbilities).isEmpty();
@@ -162,7 +162,7 @@ class ChainOfSilenceTest extends BaseCardTest {
         assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player2.getId());
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(Prevention.preventedFromDealing(gd)).contains(target.getId());
         assertThat(gd.stack).isEmpty();
@@ -221,7 +221,7 @@ class ChainOfSilenceTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player2.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(Prevention.preventedFromDealing(gd)).contains(newTarget.getId());
         assertThat(gd.stack).isEmpty();
     }
@@ -252,7 +252,7 @@ class ChainOfSilenceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChainOfSilence()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castAndResolveInstant(player1, 0, attacker.getId());
-        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         attacker.setAttacking(true);
         harness.forceActivePlayer(player2);
@@ -271,7 +271,7 @@ class ChainOfSilenceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChainOfSilence()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castAndResolveInstant(player1, 0, sparksmith.getId());
-        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.activateAbility(player2, 0, null, target.getId());
         harness.passBothPriorities();
@@ -288,7 +288,7 @@ class ChainOfSilenceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChainOfSilence()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castAndResolveInstant(player1, 0, attacker.getId());
-        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();

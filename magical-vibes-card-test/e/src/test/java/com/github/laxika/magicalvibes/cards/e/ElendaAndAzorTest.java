@@ -186,7 +186,7 @@ class ElendaAndAzorTest extends BaseCardTest {
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(3);
         assertThat(findPermanents(player1, "Vampire Knight")).isEmpty();

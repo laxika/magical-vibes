@@ -105,7 +105,7 @@ class MaskOfGriselbrandTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         killEquippedCreature(creature);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(1);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.Greed;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -175,7 +176,7 @@ class VerrakWarpedSengirTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();

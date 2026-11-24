@@ -22,9 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
         ChancellorOfTheTangle.class})
 class ArchfiendOfSpiteTest extends BaseCardTest {
 
-    private static final String SACRIFICE_TWO = "Sacrifice 2 permanents";
-    private static final String LOSE_TWO = "Lose 2 life";
-
     @Test
     @DisplayName("The damage source's controller may lose life instead of sacrificing permanents")
     void choosesLifeLoss() {
@@ -32,7 +29,7 @@ class ArchfiendOfSpiteTest extends BaseCardTest {
         int life = gd.getLife(player1.getId());
 
         resolveDamageTrigger();
-        harness.handleListChoice(player1, LOSE_TWO);
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(life - 2);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
@@ -45,7 +42,7 @@ class ArchfiendOfSpiteTest extends BaseCardTest {
         int life = gd.getLife(player1.getId());
 
         resolveDamageTrigger();
-        harness.handleListChoice(player1, SACRIFICE_TWO);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(life);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
@@ -57,7 +54,7 @@ class ArchfiendOfSpiteTest extends BaseCardTest {
         setupDamageScenario(3);
 
         resolveDamageTrigger();
-        harness.handleListChoice(player1, SACRIFICE_TWO);
+        harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -190,7 +187,7 @@ class ArchfiendOfSpiteTest extends BaseCardTest {
     private void resolveDamageTrigger() {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     private ArchfiendOfSpite discardViaUnhinge() {

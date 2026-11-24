@@ -5,11 +5,15 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageTargetPlayerUnlessPaysPerCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -28,7 +32,10 @@ public class EnergyVortex extends Card {
         // At the beginning of the chosen player's upkeep, deal 3 damage to them unless they pay {1}
         // for each vortex counter.
         addTrigger(Triggers.upkeep(ActivePlayer.CHOSEN_PLAYER),
-                new DamageTargetPlayerUnlessPaysPerCounterEffect(3, CounterType.VORTEX, "{1}"));
+                MayPayManaEffect.dynamic(new CountersOnSource(CounterType.VORTEX), null,
+                        "Pay {1} for each vortex counter? If you don't, it deals 3 damage to you.",
+                        MayPayPayer.TRIGGERING_PLAYER,
+                        new DealDamageToPlayersEffect(3, Subjects.chosenPlayer())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

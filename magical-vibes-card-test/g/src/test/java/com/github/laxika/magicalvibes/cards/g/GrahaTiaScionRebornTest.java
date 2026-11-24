@@ -135,7 +135,7 @@ class GrahaTiaScionRebornTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(countPermanents(player1, "Hero")).isZero();
         harness.assertLife(player1, 2);

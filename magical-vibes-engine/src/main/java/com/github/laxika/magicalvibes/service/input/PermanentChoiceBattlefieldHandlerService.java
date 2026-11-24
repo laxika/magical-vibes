@@ -232,7 +232,6 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MaySacrificeForCounterSupport maySacrificeForCounterSupport;
 
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.GargantuanGorillaUpkeepSupport gargantuanGorillaUpkeepSupport;
 
     private final LifeSupport lifeSupport;
 
@@ -1229,14 +1228,6 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalArgumentException("Unsupported counter amount for may-sacrifice choice: "
                     + context.counterAmount().getClass().getSimpleName());
         }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleGargantuanGorillaSacrificeForest(GameData gameData, UUID permanentId,
-                                                       PermanentChoiceContext.GargantuanGorillaSacrificeForest context) {
-        gargantuanGorillaUpkeepSupport.sacrificeForest(
-                gameData, context.controllerId(), permanentId, context.sourcePermanentId());
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

@@ -425,7 +425,6 @@ public class PermanentChoiceHandlerService {
                 || context instanceof PermanentChoiceContext.ExploitSacrifice
                 || context instanceof PermanentChoiceContext.SacrificePermanentThen
                 || context instanceof PermanentChoiceContext.MaySacrificeForCounterOnSource
-                || context instanceof PermanentChoiceContext.GargantuanGorillaSacrificeForest
                 || context instanceof PermanentChoiceContext.ForcedCostOrElse forcedCost
                         && forcedCost.effect().forcedCost() instanceof SacrificePermanentCost
                 || context instanceof PermanentChoiceContext.TormentSacrifice
@@ -514,8 +513,6 @@ public class PermanentChoiceHandlerService {
                     battlefieldHandler.handleSacrificePermanentThen(gameData, permanentId, spt);
             case PermanentChoiceContext.MaySacrificeForCounterOnSource msfc ->
                     battlefieldHandler.handleMaySacrificeForCounterOnSource(gameData, permanentId, msfc);
-            case PermanentChoiceContext.GargantuanGorillaSacrificeForest ggsf ->
-                    battlefieldHandler.handleGargantuanGorillaSacrificeForest(gameData, permanentId, ggsf);
             case PermanentChoiceContext.ForcedCostOrElse forcedCostOrElse ->
                     battlefieldHandler.handleForcedCostOrElse(gameData, permanentId, forcedCostOrElse);
             case PermanentChoiceContext.TormentSacrifice tormentSacrifice ->

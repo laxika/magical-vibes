@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.CarrionHowler;
 import com.github.laxika.magicalvibes.cards.c.CullingDais;
 import com.github.laxika.magicalvibes.cards.g.GlassGolem;
@@ -187,7 +188,7 @@ class SavraQueenOfTheGolgariTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.handlePermanentChosen(player1, sacrificed.getId());
         resolveAllTriggers();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(1);

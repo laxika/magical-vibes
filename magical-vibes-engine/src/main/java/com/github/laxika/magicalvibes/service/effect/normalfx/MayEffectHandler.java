@@ -385,6 +385,16 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                     && !sacrificePermanentsEffectHandler.hasLegalSacrificeChoice(
                     gameData, entry, sacrifice, sacrificingPlayerId);
         }
+        if (optionalAction instanceof SacrificePermanentsEffect sacrifice
+                && sacrifice.player() instanceof PlayerSubject.ControllerOf) {
+            // "That creature's controller may sacrifice [N] [permanents]" (that many, Archfiend of Spite): judged the
+            // same way when the deciding player is the one who sacrifices (CR 608.2d; the rulings: a player who
+            // can't sacrifice that many must take the other branch).
+            UUID sacrificingPlayerId = subjectResolutionService.player(gameData, entry, sacrifice, sacrifice.player());
+            cannotSacrifice = choicePlayerId.equals(sacrificingPlayerId)
+                    && !sacrificePermanentsEffectHandler.hasLegalSacrificeChoice(
+                    gameData, entry, sacrifice, sacrificingPlayerId);
+        }
         if (cannotSacrifice) {
             gameData.resolvingMayEffectFromStack = false;
             insertElseEffect(entry, e);
