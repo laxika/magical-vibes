@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -16,18 +16,20 @@ import com.github.laxika.magicalvibes.model.condition.AnOpponentLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpecializeShadowheartEffect;
+import com.github.laxika.magicalvibes.model.effect.SpecializeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -59,7 +61,7 @@ public class ShadowheartSharranCleric extends Card {
                 List.of(
                         new DiscardCardTypeCost(discardFilter,
                                 color.name().toLowerCase() + " card or " + basicLandType.name().toLowerCase()),
-                        new SpecializeShadowheartEffect(color)),
+                        new SpecializeEffect(color, ShadowheartSharranCleric::specializedFace)),
                 "Specialize {2} \u2014 " + color.name().toLowerCase()
                         + " (discard a " + color.name().toLowerCase() + " card or "
                         + basicLandType.name().toLowerCase() + ")",
@@ -97,5 +99,64 @@ public class ShadowheartSharranCleric extends Card {
         card.setColors(List.of(CardColor.BLACK));
         card.setColorIdentity(List.of(CardColor.BLACK));
         card.setKeywords(Set.of(Keyword.DEATHTOUCH));
+    }
+
+    /** Writes Shadowheart's specialized face for {@code color}; it has no "when this creature specializes" ability. */
+    public static List<CardEffect> specializedFace(Card face, CardColor color) {
+        setSpecializedBaseCharacteristics(face);
+        face.setPower(4);
+        face.setToughness(4);
+
+        switch (color) {
+            case WHITE -> {
+                face.setName("Shadowheart, Cleric of Order");
+                face.setManaCost("{1}{W}{B}");
+                face.setColors(List.of(CardColor.WHITE, CardColor.BLACK));
+                face.setColorIdentity(List.of(CardColor.WHITE, CardColor.BLACK));
+                face.setColor(CardColor.WHITE);
+                face.setCardText("Deathtouch\nAt the beginning of your end step, Shadowheart, Cleric of Order deals 1 damage to each player.\nWhenever you lose life during your turn, create a 2/2 white Knight creature token.");
+            }
+            case BLUE -> {
+                face.setName("Shadowheart, Cleric of Trickery");
+                face.setManaCost("{1}{U}{B}");
+                face.setColors(List.of(CardColor.BLUE, CardColor.BLACK));
+                face.setColorIdentity(List.of(CardColor.BLUE, CardColor.BLACK));
+                face.setColor(CardColor.BLUE);
+                face.setCardText("Deathtouch\nAt the beginning of your end step, Shadowheart, Cleric of Trickery deals 1 damage to each player.\nWhenever you lose life during your turn, draw a card.");
+            }
+            case BLACK -> {
+                face.setName("Shadowheart, Cleric of Graves");
+                face.setManaCost("{1}{B}{B}");
+                face.setKeywords(Set.of(Keyword.DEATHTOUCH, Keyword.LIFELINK));
+                face.setCardText("Deathtouch, lifelink\nAt the beginning of your end step, Shadowheart, Cleric of Graves deals 1 damage to each player.");
+            }
+            case RED -> {
+                face.setName("Shadowheart, Cleric of War");
+                face.setManaCost("{1}{B}{R}");
+                face.setColors(List.of(CardColor.BLACK, CardColor.RED));
+                face.setColorIdentity(List.of(CardColor.BLACK, CardColor.RED));
+                face.setColor(CardColor.RED);
+                face.setCardText("Deathtouch\nAt the beginning of your end step, Shadowheart, Cleric of War deals 1 damage to each player.\nWhenever you lose life during your turn, Shadowheart deals that much damage to each opponent.");
+            }
+            case GREEN -> {
+                face.setName("Shadowheart, Cleric of Twilight");
+                face.setManaCost("{1}{B}{G}");
+                face.setColors(List.of(CardColor.BLACK, CardColor.GREEN));
+                face.setColorIdentity(List.of(CardColor.BLACK, CardColor.GREEN));
+                face.setColor(CardColor.GREEN);
+                face.setCardText("Deathtouch\nShadowheart, Cleric of Twilight can't be blocked by creatures with power 2 or less.\nAt the beginning of your end step, Shadowheart deals 1 damage to each player.\nWhenever you lose life during your turn, put a +1/+1 counter on Shadowheart.");
+                face.addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(new PermanentPowerAtMostPredicate(2)));
+            }
+            default -> throw new IllegalStateException("Unsupported Shadowheart specialization color: "
+                    + color);
+        }
+
+        face.addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                new DealDamageToPlayersEffect(1, Subjects.eachPlayer()));
+        TriggeredAbility lifeLossAbility = specializedLifeLossAbility(color);
+        if (lifeLossAbility != null) {
+            face.addTriggeredAbility(lifeLossAbility);
+        }
+        return List.of();
     }
 }

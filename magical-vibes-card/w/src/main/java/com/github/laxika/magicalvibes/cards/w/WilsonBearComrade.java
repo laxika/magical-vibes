@@ -1,22 +1,25 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordsToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantStaticEffectToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.SpecializeWilsonEffect;
+import com.github.laxika.magicalvibes.model.effect.SpecializeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -56,7 +59,7 @@ public class WilsonBearComrade extends Card {
                 List.of(
                         new DiscardCardTypeCost(discardFilter,
                                 color.name().toLowerCase() + " card or " + basicLandType.name().toLowerCase()),
-                        new SpecializeWilsonEffect(color)),
+                        new SpecializeEffect(color, WilsonBearComrade::specializedFace)),
                 "Specialize {4} — " + color.name().toLowerCase()
                         + " (discard a " + color.name().toLowerCase() + " card or "
                         + basicLandType.name().toLowerCase() + ")",
@@ -178,5 +181,31 @@ public class WilsonBearComrade extends Card {
                         + "{1}{G}{G}, Exile Wilson from your graveyard: Target creature you control perpetually gets +1/+1 and gains reach, trample, and ward {2}. Activate only as a sorcery.");
             }
         }
+    }
+
+    /** Writes Wilson's specialized face for {@code color}; it has no "when this creature specializes" ability. */
+    public static List<CardEffect> specializedFace(Card face, CardColor color) {
+        setBaseFaceCharacteristics(face);
+        setFaceCharacteristics(face, color);
+        addWardAbility(face);
+        if (color == CardColor.BLUE) {
+            face.addStaticEffect(new CantBeBlockedEffect());
+        }
+        face.addActivatedAbility(AbilityZones.GRAVEYARD,
+                graveyardAbility(color));
+        return List.of();
+    }
+
+    private static void setBaseFaceCharacteristics(Card card) {
+        card.setSetCode("HBG");
+        card.setCollectorNumber("19");
+        card.setType(CardType.CREATURE);
+        card.setAdditionalTypes(Set.of());
+        card.setSupertypes(EnumSet.of(CardSupertype.LEGENDARY));
+        card.setSubtypes(List.of(CardSubtype.BEAR, CardSubtype.WARRIOR));
+        card.setColor(CardColor.GREEN);
+        card.setColors(List.of(CardColor.GREEN));
+        card.setColorIdentity(List.of(CardColor.GREEN));
+        card.setKeywords(Set.of());
     }
 }

@@ -15,13 +15,13 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTriggeringCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordsToTriggeringCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.SpecializeJaheiraEffect;
+import com.github.laxika.magicalvibes.model.effect.SpecializeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingSourceKind;
@@ -74,7 +74,7 @@ public class JaheiraHarperEmissary extends Card {
                 "{2}",
                 List.of(new DiscardCardTypeCost(discardFilter,
                                 color.name().toLowerCase() + " card or " + basicLandType.name().toLowerCase()),
-                        new SpecializeJaheiraEffect(color)),
+                        new SpecializeEffect(color, JaheiraHarperEmissary::specializedFace)),
                 "Specialize {2} — " + color.name().toLowerCase()
                         + " (discard a " + color.name().toLowerCase() + " card or "
                         + basicLandType.name().toLowerCase() + ")",
@@ -131,5 +131,71 @@ public class JaheiraHarperEmissary extends Card {
         card.setColors(List.of(CardColor.GREEN));
         card.setColorIdentity(List.of(CardColor.GREEN));
         card.setKeywords(Set.of());
+    }
+
+    /** Writes Jaheira's specialized face for {@code color}; returns its "when this creature specializes" ability. */
+    public static List<CardEffect> specializedFace(Card face, CardColor color) {
+        setSpecializedBaseCharacteristics(face);
+        addHexproofFromArtifactsAndEnchantments(face);
+        face.setPower(3);
+        face.setToughness(4);
+        List<CardEffect> specializedTrigger = specializedTrigger(color);
+        setFaceCharacteristics(face, color);
+        installSpecializedTargets(face, specializedTrigger, color);
+        return specializedTrigger;
+    }
+
+    private static void setFaceCharacteristics(Card card, CardColor color) {
+        switch (color) {
+            case WHITE -> {
+                card.setName("Jaheira, Heroic Harper");
+                card.setManaCost("{1}{G}{W}");
+                card.setColors(List.of(CardColor.GREEN, CardColor.WHITE));
+                card.setColorIdentity(List.of(CardColor.GREEN, CardColor.WHITE));
+                card.setColor(CardColor.WHITE);
+                card.setCardText("Hexproof from artifacts and enchantments\n"
+                        + "When this creature specializes, destroy up to one target artifact or enchantment. "
+                        + "Put a +1/+1 counter on each of up to two other target creatures.");
+            }
+            case BLUE -> {
+                card.setName("Jaheira, Insightful Harper");
+                card.setManaCost("{1}{G}{U}");
+                card.setColors(List.of(CardColor.GREEN, CardColor.BLUE));
+                card.setColorIdentity(List.of(CardColor.GREEN, CardColor.BLUE));
+                card.setColor(CardColor.BLUE);
+                card.setCardText("Hexproof from artifacts and enchantments\n"
+                        + "When this creature specializes, destroy up to one target artifact or enchantment. "
+                        + "Scry 2.");
+            }
+            case BLACK -> {
+                card.setName("Jaheira, Ruthless Harper");
+                card.setManaCost("{1}{G}{B}");
+                card.setColors(List.of(CardColor.GREEN, CardColor.BLACK));
+                card.setColorIdentity(List.of(CardColor.GREEN, CardColor.BLACK));
+                card.setColor(CardColor.BLACK);
+                card.setCardText("Hexproof from artifacts and enchantments\n"
+                        + "When this creature specializes, destroy up to one target artifact or enchantment. "
+                        + "Each opponent loses 3 life.");
+            }
+            case RED -> {
+                card.setName("Jaheira, Stirring Harper");
+                card.setManaCost("{1}{G}{R}");
+                card.setColors(List.of(CardColor.GREEN, CardColor.RED));
+                card.setColorIdentity(List.of(CardColor.GREEN, CardColor.RED));
+                card.setColor(CardColor.RED);
+                card.setCardText("Hexproof from artifacts and enchantments\n"
+                        + "When this creature specializes, destroy up to one target artifact or enchantment. "
+                        + "You get a one-time boon with \"When you cast a creature spell, it perpetually gets "
+                        + "+1/+0 and gains haste.\"");
+            }
+            case GREEN -> {
+                card.setName("Jaheira, Merciful Harper");
+                card.setManaCost("{1}{G}{G}");
+                card.setCardText("Hexproof from artifacts and enchantments\n"
+                        + "When this creature specializes, destroy up to one target artifact or enchantment. "
+                        + "You gain 4 life.");
+            }
+            default -> throw new IllegalStateException("Unsupported Jaheira specialization color: " + color);
+        }
     }
 }

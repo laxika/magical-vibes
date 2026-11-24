@@ -19,11 +19,11 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordsToTriggeringCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpecializeLuluEffect;
+import com.github.laxika.magicalvibes.model.effect.SpecializeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -72,7 +72,7 @@ public class LuluForgetfulHollyphant extends Card {
                 List.of(
                         new DiscardCardTypeCost(discardFilter,
                                 color.name().toLowerCase() + " card or " + basicLandType.name().toLowerCase()),
-                        new SpecializeLuluEffect(color)),
+                        new SpecializeEffect(color, LuluForgetfulHollyphant::specializedFace)),
                 "Specialize {2} — " + color.name().toLowerCase()
                         + " (discard a " + color.name().toLowerCase() + " card or "
                         + basicLandType.name().toLowerCase() + ")",
@@ -166,5 +166,13 @@ public class LuluForgetfulHollyphant extends Card {
             }
             default -> throw new IllegalStateException("Unsupported Lulu specialization color: " + color);
         }
+    }
+
+    /** Writes Lulu's specialized face for {@code color}; it has no "when this creature specializes" ability. */
+    public static List<CardEffect> specializedFace(Card face, CardColor color) {
+        setSpecializedBaseCharacteristics(face);
+        setFaceCharacteristics(face, color);
+        addAttackTrigger(face, color);
+        return List.of();
     }
 }

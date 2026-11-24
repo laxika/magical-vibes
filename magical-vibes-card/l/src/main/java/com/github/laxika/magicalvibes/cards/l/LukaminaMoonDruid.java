@@ -12,9 +12,16 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.SpecializeLukaminaEffect;
+import com.github.laxika.magicalvibes.model.effect.SpecializeEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.UnspecializeLukaminaEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -22,6 +29,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -65,7 +73,7 @@ public class LukaminaMoonDruid extends Card {
                 "{3}",
                 List.of(new DiscardCardTypeCost(discardFilter,
                                 color.name().toLowerCase() + " card or " + basicLandType.name().toLowerCase()),
-                        new SpecializeLukaminaEffect(color)),
+                        new SpecializeEffect(color, LukaminaMoonDruid::specializedFace)),
                 "Specialize {3} — " + color.name().toLowerCase()
                         + " (discard a " + color.name().toLowerCase() + " card or "
                         + basicLandType.name().toLowerCase() + ")",
@@ -173,5 +181,43 @@ public class LukaminaMoonDruid extends Card {
                         new CardSubtypePredicate(CardSubtype.SWAMP),
                         new CardSubtypePredicate(CardSubtype.MOUNTAIN),
                         new CardSubtypePredicate(CardSubtype.FOREST)))));
+    }
+
+    /** Writes Lukamina's specialized face for {@code color}; returns its "when this creature specializes" ability. */
+    public static List<CardEffect> specializedFace(Card face, CardColor color) {
+        setBaseFaceCharacteristics(face);
+        setFaceCharacteristics(face, color);
+
+        List<CardEffect> whenSpecializes = List.of();
+        switch (color) {
+            case WHITE -> {
+                // Hawk Form has only its printed keywords.
+            }
+            case BLUE -> {
+                CardEffect tapEffect = new TapPermanentsEffect(Subjects.target());
+                CardEffect lockEffect = DoesntUntapEffect.targetWhileSourceControlled();
+                face.target(TargetFilters.nonlandPermanentAnOpponentControls())
+                        .bindEffect(tapEffect)
+                        .bindEffect(lockEffect);
+                whenSpecializes = List.of(tapEffect, lockEffect);
+            }
+            case BLACK -> face.addStaticEffect(new MustBeBlockedIfAbleEffect());
+            case RED -> {
+                CardEffect wolfTokenEffect = wolfTokenEffect();
+                face.addTrigger(Triggers.attacks(), wolfTokenEffect);
+                whenSpecializes = List.of(wolfTokenEffect);
+            }
+            case GREEN -> face.addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.TRAMPLE), Subjects.otherCreaturesYouControl()));
+            default -> throw new IllegalStateException("Unsupported Lukamina specialization color: "
+                    + color);
+        }
+        face.addTrigger(Triggers.dies(ObjectRelation.THIS), new UnspecializeLukaminaEffect());
+
+        return whenSpecializes;
+    }
+
+    private static CreateTokenEffect wolfTokenEffect() {
+        return new CreateTokenEffect("Wolf", 2, 2, CardColor.GREEN,
+                List.of(com.github.laxika.magicalvibes.model.CardSubtype.WOLF), Set.of(), Set.of());
     }
 }

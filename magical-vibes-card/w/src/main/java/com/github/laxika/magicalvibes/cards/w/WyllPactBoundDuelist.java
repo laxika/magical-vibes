@@ -22,7 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpecializeWyllEffect;
+import com.github.laxika.magicalvibes.model.effect.SpecializeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -80,7 +80,7 @@ public class WyllPactBoundDuelist extends Card {
                 "{2}",
                 List.of(new DiscardCardTypeCost(discardFilter,
                         color.name().toLowerCase() + " card or " + basicLandType.name().toLowerCase()),
-                        new SpecializeWyllEffect(color)),
+                        new SpecializeEffect(color, WyllPactBoundDuelist::specializedFace)),
                 "Specialize {2} — " + color.name().toLowerCase()
                         + " (discard a " + color.name().toLowerCase() + " card or "
                         + basicLandType.name().toLowerCase() + ")",
@@ -143,5 +143,67 @@ public class WyllPactBoundDuelist extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))),
                         new PermanentIsArtifactPredicate()))));
+    }
+
+    /** Writes Wyll's specialized face for {@code color}; returns its "when this creature specializes" ability. */
+    public static List<CardEffect> specializedFace(Card face, CardColor color) {
+        setSpecializedBaseCharacteristics(face);
+        face.setPower(5);
+        face.setToughness(5);
+        setFaceCharacteristics(face, color);
+        TargetFilter targetFilter = specializedTargetFilter(color);
+        if (targetFilter != null) {
+            face.target(targetFilter);
+        }
+        return List.of(specializedTrigger(color));
+    }
+
+    private static void setFaceCharacteristics(Card card, CardColor color) {
+        switch (color) {
+            case WHITE -> {
+                card.setName("Wyll of the Celestial Pact");
+                card.setManaCost("{3}{R}{R}{W}");
+                card.setColors(List.of(CardColor.RED, CardColor.WHITE));
+                card.setColorIdentity(List.of(CardColor.RED, CardColor.WHITE));
+                card.setColor(CardColor.WHITE);
+                card.setCardText("When this creature specializes, you may sacrifice another creature or an artifact. "
+                        + "When you do, return target creature card from your graveyard to the battlefield. It gains "
+                        + "haste. If its mana value is 4 or greater, sacrifice it at the beginning of your next end step.");
+            }
+            case BLUE -> {
+                card.setName("Wyll of the Elder Pact");
+                card.setManaCost("{3}{R}{R}{U}");
+                card.setColors(List.of(CardColor.RED, CardColor.BLUE));
+                card.setColorIdentity(List.of(CardColor.RED, CardColor.BLUE));
+                card.setColor(CardColor.BLUE);
+                card.setCardText("When this creature specializes, you may sacrifice another creature or an artifact. "
+                        + "When you do, return target instant or sorcery card from your graveyard to your hand.");
+            }
+            case BLACK -> {
+                card.setName("Wyll of the Fiend Pact");
+                card.setManaCost("{3}{B}{R}{R}");
+                card.setColors(List.of(CardColor.BLACK, CardColor.RED));
+                card.setColorIdentity(List.of(CardColor.BLACK, CardColor.RED));
+                card.setColor(CardColor.BLACK);
+                card.setCardText("When this creature specializes, you may sacrifice another creature or an artifact. "
+                        + "When you do, draw three cards unless target opponent pays 5 life.");
+            }
+            case RED -> {
+                card.setName("Wyll of the Blade Pact");
+                card.setManaCost("{3}{R}{R}{R}");
+                card.setCardText("When this creature specializes, you may sacrifice another creature or an artifact. "
+                        + "If you do, untap Wyll of the Blade Pact. After this main phase, there is an additional "
+                        + "combat phase followed by an additional main phase.");
+            }
+            case GREEN -> {
+                card.setName("Wyll of the Fey Pact");
+                card.setManaCost("{3}{R}{R}{G}");
+                card.setColors(List.of(CardColor.RED, CardColor.GREEN));
+                card.setColorIdentity(List.of(CardColor.RED, CardColor.GREEN));
+                card.setColor(CardColor.GREEN);
+                card.setCardText("When this creature specializes, you may sacrifice another creature or an artifact. "
+                        + "If you do, Wyll of the Fey Pact perpetually gets +3/+3 and gains trample.");
+            }
+        }
     }
 }

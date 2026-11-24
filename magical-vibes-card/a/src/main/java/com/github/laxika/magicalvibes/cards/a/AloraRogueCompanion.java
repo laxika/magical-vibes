@@ -1,26 +1,28 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.model.StepKind;
-import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedEndStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpecializeAloraEffect;
+import com.github.laxika.magicalvibes.model.effect.SpecializeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -30,7 +32,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "HBG", collectorNumber = "5")
 public class AloraRogueCompanion extends Card {
@@ -58,7 +62,7 @@ public class AloraRogueCompanion extends Card {
         List<CardEffect> effects = new ArrayList<>();
         effects.add(new DiscardCardTypeCost(discardFilter,
                 color.name().toLowerCase() + " card or " + basicLandType.name().toLowerCase()));
-        effects.add(new SpecializeAloraEffect(color));
+        effects.add(new SpecializeEffect(color, AloraRogueCompanion::specializedFace));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}",
@@ -103,5 +107,78 @@ public class AloraRogueCompanion extends Card {
             case RED -> common + " If you do, create a Treasure token.";
             case GREEN -> common + " If you do, it perpetually gets +1/+1.";
         };
+    }
+
+    /** Writes Alora's specialized face for {@code color}; it has no "when this creature specializes" ability. */
+    public static List<CardEffect> specializedFace(Card face, CardColor color) {
+        setBaseFaceCharacteristics(face);
+
+        switch (color) {
+            case WHITE -> {
+                face.setName("Alora, Cheerful Mastermind");
+                face.setManaCost("{3}{W}{U}");
+                face.setColors(List.of(CardColor.WHITE, CardColor.BLUE));
+                face.setColorIdentity(List.of(CardColor.WHITE, CardColor.BLUE));
+                face.setColor(CardColor.WHITE);
+                face.setPower(4);
+                face.setToughness(4);
+            }
+            case BLUE -> {
+                face.setName("Alora, Cheerful Thief");
+                face.setManaCost("{3}{U}{U}");
+                face.setPower(4);
+                face.setToughness(4);
+            }
+            case BLACK -> {
+                face.setName("Alora, Cheerful Assassin");
+                face.setManaCost("{3}{U}{B}");
+                face.setColors(List.of(CardColor.BLUE, CardColor.BLACK));
+                face.setColorIdentity(List.of(CardColor.BLUE, CardColor.BLACK));
+                face.setSubtypes(List.of(CardSubtype.HALFLING, CardSubtype.ROGUE,
+                        CardSubtype.ASSASSIN));
+                face.setColor(CardColor.BLACK);
+                face.setPower(4);
+                face.setToughness(4);
+            }
+            case RED -> {
+                face.setName("Alora, Cheerful Swashbuckler");
+                face.setManaCost("{3}{U}{R}");
+                face.setColors(List.of(CardColor.BLUE, CardColor.RED));
+                face.setColorIdentity(List.of(CardColor.BLUE, CardColor.RED));
+                face.setColor(CardColor.RED);
+                face.setPower(4);
+                face.setToughness(4);
+            }
+            case GREEN -> {
+                face.setName("Alora, Cheerful Scout");
+                face.setManaCost("{3}{G}{U}");
+                face.setColors(List.of(CardColor.GREEN, CardColor.BLUE));
+                face.setColorIdentity(List.of(CardColor.GREEN, CardColor.BLUE));
+                face.setColor(CardColor.GREEN);
+                face.setSubtypes(List.of(CardSubtype.HALFLING, CardSubtype.ROGUE,
+                        CardSubtype.SCOUT));
+                face.setPower(4);
+                face.setToughness(4);
+            }
+            default -> throw new IllegalStateException("Unsupported Alora specialization color: "
+                    + color);
+        }
+
+        face.setCardText(specializedCardText(color));
+        addAttackAbility(face, specializedReturnEffect(color));
+        return List.of();
+    }
+
+    private static void setBaseFaceCharacteristics(Card card) {
+        card.setSetCode("HBG");
+        card.setCollectorNumber("5");
+        card.setType(CardType.CREATURE);
+        card.setAdditionalTypes(Set.of());
+        card.setSupertypes(EnumSet.of(CardSupertype.LEGENDARY));
+        card.setSubtypes(List.of(CardSubtype.HALFLING, CardSubtype.ROGUE));
+        card.setColor(CardColor.BLUE);
+        card.setColors(List.of(CardColor.BLUE));
+        card.setColorIdentity(List.of(CardColor.BLUE));
+        card.setKeywords(Set.of());
     }
 }

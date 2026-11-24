@@ -282,8 +282,8 @@ run below.
 | 42 | `per-target` | one per-target change (sign, whose spells, filter) | R | 3 (3) | ReduceOwnCastCostForEachTargetEffect, ReduceOwnCastCostPerTargetEffect, IncreaseOpponentCastCostPerTargetEffect |
 | 42 | `cost-scope` | `IncreaseSpellCostEffect`: `CostModificationScope` becomes a static `PlayerSubject` | S | 5 (6) | IncreaseCastCostForChosenNameSpellsEffect, IncreaseCastCostForNextMatchingSpellEffect, IncreaseSpellCostExceptOnControllersTurnEffect, IncreaseSpellCostForTargetPlayerUntilEndOfTurnEffect, IncreaseSpellCostUntilNextTurnEffect |
 | 42 | `own-sign` | `ReduceOwnCastCostEffect` / `...IfTargetingPermanentEffect` with an increase direction | C | 2 (4) | IncreaseOwnCastCostEffect, IncreaseOwnCastCostIfTargetingPermanentEffect |
-| 43 | `specialize` | one `SpecializeEffect(color)` and one handler; faces through a card-side hook | R | 20 (19) | SpecializeAloraEffect, SpecializeAmbergrisEffect, SpecializeGaleEffect, SpecializeGutEffect, SpecializeImoenEffect, SpecializeJaheiraEffect, SpecializeKarlachEffect, SpecializeKlementEffect, SpecializeLaezelEffect, SpecializeLukaminaEffect, SpecializeLuluEffect, SpecializeRasaadEffect, SpecializeSarevokEffect, SpecializeShadowheartEffect, SpecializeSkanosEffect, SpecializeVhalEffect, SpecializeViconiaEffect, SpecializeWilsonEffect, SpecializeWyllEffect, UnspecializeLukaminaEffect |
-| 43 | `room-door` | `UnlockControlledRoomDoorEffect` + a Room subject + lock mode | S | 1 (2) | UnlockControlledRoomDoorEffect |
+| 43 | `specialize` | one `SpecializeEffect(color)` and one handler; faces through a card-side hook Done 2026-11-24 (fold run 43): 18 folded onto `SpecializeEffect(color, Card::specializedFace)`, 2 left `unique` (Karlach's graveyard specialize and return; Lukamina's unspecialize). | R | 20 (19) | SpecializeAloraEffect, SpecializeAmbergrisEffect, SpecializeGaleEffect, SpecializeGutEffect, SpecializeImoenEffect, SpecializeJaheiraEffect, SpecializeKarlachEffect, SpecializeKlementEffect, SpecializeLaezelEffect, SpecializeLukaminaEffect, SpecializeLuluEffect, SpecializeRasaadEffect, SpecializeSarevokEffect, SpecializeShadowheartEffect, SpecializeSkanosEffect, SpecializeVhalEffect, SpecializeViconiaEffect, SpecializeWilsonEffect, SpecializeWyllEffect, UnspecializeLukaminaEffect |
+| 43 | `room-door` | `UnlockControlledRoomDoorEffect` + a Room subject + lock mode Done 2026-11-24 (fold run 43): 1 folded (`LockOrUnlockTargetRoomDoorEffect` into `UnlockControlledRoomDoorEffect.lockOrUnlockTargetRoom()`); the survivor takes a Room `PermanentSubject` and a lock mode. | S | 1 (2) | UnlockControlledRoomDoorEffect |
 | 44 | `airbend` | `AirbendTargetPermanentEffect` + a `PermanentSubject` | S | 2 (2) | AirbendAllOtherCreaturesEffect, AirbendTargetCreatureOrSpellEffect |
 | 44 | `connive` | `DrawDiscardAndConniveEffect` + a `PermanentSubject` | S | 3 (46) | ConniveConvokeCreaturesEffect, ConniveEachTargetEffect, DrawDiscardAndConniveEffect* |
 | 44 | `suspect` | `SuspectEffect` over subjects | S | 4 (4) | SuspectAndPerpetuallyGrantAbilityToTargetCreatureEffect, SuspectReturnedPermanentEffect, SuspectTargetCreatureEffect, SuspectedEffect |
@@ -658,6 +658,7 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - Shadow of Doubt logs nothing since fold run 34: `GrantStaticEffectToPlayerEffect` has no log line. Seen in fold run 34. Sure, low.
 - `getRevealedOpponentHand` returns only the first opponent's hand (multiplayer). Seen in fold run 35. Sure of the code.
 - `CantAttackThisTurnEffectHandler`'s set branch logs the source by `entry.getCard().getName()` with no face-down redaction and doesn't bind its filter's chosen values (only the except branch goes through `lastingRule`). Seen in fold run 36. Sure of the code; no card hits it today.
+- Marina Vendrell (DSK 221): check that the enters ability reveals the top seven cards (it goes through `LookAtTopCardsEffect`). Run 43. Low.
 
 **9. Other.**
 
@@ -746,6 +747,7 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - AI: the Hard AI likely scores `PayFreeCastCostIncreaseEffect`'s "may" at 0 and declines a paid free cast. Seen in fold run 29d. Unverified.
 - Red Sun's Twilight and any token copy of departed permanents: `CreateTokenCopyOfTargetPermanentEffectHandler.resolveEsixReplacement` counts only copy sources still on the battlefield, so Esix's first-token-creation offer is skipped. Run 41. Fairly sure.
 - `CounterSpellEffect` with several targets and `LIBRARY_TOP_OR_BOTTOM` opens overlapping prompts. No card affected. Run 39. Sure.
+- Rasaad, Radiant Monk (HBG 4): the white specialized face also has an enters trigger, but its text says only "When this creature specializes". Run 43. Unsure (the face's Oracle text couldn't be fetched).
 
 Not a defect after all: `SuspectedEffect` (P08 "nothing reads it") is read by `LayerSystemService`, `UnsuspectEffectHandler` and
 `GameQueryService` (checked 2026-11-23; P14 is right). Betrayal of Flesh and Solar Tide on `EscalateSacrificeCost` pay the same as

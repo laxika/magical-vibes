@@ -51,6 +51,10 @@ public class SpecializeKarlachEffectHandler implements NormalEffectHandlerBean {
         Permanent source = entry.getSourcePermanentId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null && entry.getSourcePermanentId() != null) {
+            // Activated on the battlefield: the card it became in the graveyard is a new object (CR 400.7).
+            return;
+        }
         Card sourceCard = source == null
                 ? gameQueryService.findCardInGraveyardById(gameData, entry.getCard().getId())
                 : source.getCard();

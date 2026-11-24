@@ -17,7 +17,7 @@ public class GhostlyKeybearer extends Card {
 
     public GhostlyKeybearer() {
         target(roomYouControl(), 0, 1).addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new UnlockControlledRoomDoorEffect(true));
+                UnlockControlledRoomDoorEffect.targetRoom());
     }
 
     private static ControlledPermanentPredicateTargetFilter roomYouControl() {

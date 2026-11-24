@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpecializeSkanosEffect;
+import com.github.laxika.magicalvibes.model.effect.SpecializeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -87,7 +87,7 @@ public class SkanosDragonVassal extends Card {
                 List.of(
                         new DiscardCardTypeCost(discardFilter,
                                 color.name().toLowerCase() + " card or " + basicLandType.name().toLowerCase()),
-                        new SpecializeSkanosEffect(color)),
+                        new SpecializeEffect(color, SkanosDragonVassal::specializedFace)),
                 "Specialize {4} — " + color.name().toLowerCase()
                         + " (discard a " + color.name().toLowerCase() + " card or "
                         + basicLandType.name().toLowerCase() + ")",
@@ -158,5 +158,15 @@ public class SkanosDragonVassal extends Card {
                 card.setCardText("Vigilance\nWhenever Skanos, Green Dragon Vassal attacks, untap another target attacking creature. It gets +X/+0 until end of turn, where X is Skanos's power.");
             }
         }
+    }
+
+    /** Writes Skanos's specialized face for {@code color}; it has no "when this creature specializes" ability. */
+    public static List<CardEffect> specializedFace(Card face, CardColor color) {
+        setSpecializedBaseCharacteristics(face);
+        face.setPower(4);
+        face.setToughness(4);
+        setFaceCharacteristics(face, color);
+        addAttackAbility(face, specializedAttackEffect(color));
+        return List.of();
     }
 }

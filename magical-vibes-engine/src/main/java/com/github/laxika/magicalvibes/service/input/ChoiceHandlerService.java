@@ -222,8 +222,6 @@ public class ChoiceHandlerService {
     private final MulliganService mulliganService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.UnlockControlledRoomDoorEffectHandler
             unlockControlledRoomDoorEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.LockOrUnlockTargetRoomDoorEffectHandler
-            lockOrUnlockTargetRoomDoorEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesMasterOfCeremoniesEffectHandler
             eachOpponentChoosesMasterOfCeremoniesEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PrisonersDilemmaEffectHandler
@@ -717,10 +715,6 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.UnlockRoomDoorChoice ctx) {
             unlockControlledRoomDoorEffectHandler.completeChoice(gameData, colorName, ctx);
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.LockOrUnlockRoomDoorChoice ctx) {
-            lockOrUnlockTargetRoomDoorEffectHandler.completeChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.RemoveCountersFromForcedCostOrElse ctx) {

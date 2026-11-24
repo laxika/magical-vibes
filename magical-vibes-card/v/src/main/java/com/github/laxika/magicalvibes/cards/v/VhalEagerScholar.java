@@ -9,39 +9,46 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.StepKind;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveVhalStudyCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SpecializeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.SpecializeVhalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardMaxManaValueXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -85,7 +92,7 @@ public class VhalEagerScholar extends Card {
                 "{5}",
                 List.of(new DiscardCardTypeCost(discardFilter,
                                 color.name().toLowerCase() + " card or " + basicLandType.name().toLowerCase()),
-                        new SpecializeVhalEffect(color)),
+                        new SpecializeEffect(color, VhalEagerScholar::specializedFace)),
                 "Specialize {5} — " + color.name().toLowerCase()
                         + " (discard a " + color.name().toLowerCase() + " card or "
                         + basicLandType.name().toLowerCase() + ")",
@@ -136,5 +143,101 @@ public class VhalEagerScholar extends Card {
         card.setColors(List.of(CardColor.BLUE));
         card.setColorIdentity(List.of(CardColor.BLUE));
         card.setKeywords(Set.of());
+    }
+
+    /**
+     * Writes Vhal's specialized face for {@code color}; returns its "when this creature specializes" ability, which
+     * removes the study counters and then puts the face's "when you do" ability on the stack.
+     */
+    public static List<CardEffect> specializedFace(Card face, CardColor color) {
+        setSpecializedBaseCharacteristics(face);
+        addSpecializedLootAbility(face);
+        face.setPower(4);
+        face.setToughness(4);
+        setFaceCharacteristics(face, color);
+        installSpecializedTargets(face, color);
+        return List.of(new RemoveVhalStudyCountersEffect(color));
+    }
+
+    private static void installSpecializedTargets(Card specialized, CardColor color) {
+        installSpecializedTargetGroup(specialized, color);
+        if (!specialized.getTargetGroups().isEmpty()) {
+            specialized.registerEffectTargetIndex(specializedTrigger(color), 0);
+        }
+    }
+
+    private static void installSpecializedTargetGroup(Card specialized, CardColor color) {
+        switch (color) {
+            case WHITE -> specialized.targetUpTo(new com.github.laxika.magicalvibes.model.amount.EventValue(),
+                    TargetFilters.creature(), 100);
+            case BLACK -> specialized.target(
+                    new GraveyardCardPredicateTargetFilter(
+                            new CardAllOfPredicate(List.of(
+                                    new CardTypePredicate(CardType.CREATURE),
+                                    new CardMaxManaValueXPredicate())),
+                            GraveyardSearchScope.ALL_GRAVEYARDS));
+            case RED -> specialized.target(new PermanentPredicateTargetFilter(
+                    creatureOrPlaneswalkerAnOpponentControls(),
+                    "Target must be a creature or planeswalker an opponent controls"));
+            default -> {
+            }
+        }
+    }
+
+    private static void setFaceCharacteristics(Card card, CardColor color) {
+        switch (color) {
+            case WHITE -> {
+                card.setName("Vhal, Scholar of Tactics");
+                card.setManaCost("{2}{W}{U}");
+                card.setColors(List.of(CardColor.WHITE, CardColor.BLUE));
+                card.setColorIdentity(List.of(CardColor.WHITE, CardColor.BLUE));
+                card.setColor(CardColor.WHITE);
+                card.setCardText("When this creature specializes, remove all study counters from it. "
+                        + "When you do, distribute that many +1/+1 counters among any number of target creatures.\n"
+                        + "{T}: Draw a card, then discard a card.");
+            }
+            case BLUE -> {
+                card.setName("Vhal, Scholar of Prophecy");
+                card.setManaCost("{2}{U}{U}");
+                card.setCardText("When this creature specializes, remove all study counters from it. "
+                        + "Look at that many cards from the top of your library. Put one of those cards into your hand "
+                        + "and the rest on the bottom of your library in a random order.\n"
+                        + "{T}: Draw a card, then discard a card.");
+            }
+            case BLACK -> {
+                card.setName("Vhal, Scholar of Mortality");
+                card.setManaCost("{2}{U}{B}");
+                card.setColors(List.of(CardColor.BLUE, CardColor.BLACK));
+                card.setColorIdentity(List.of(CardColor.BLUE, CardColor.BLACK));
+                card.setColor(CardColor.BLACK);
+                card.setCardText("When this creature specializes, remove all study counters from it. "
+                        + "When you do, put target creature card with mana value less than or equal to the number "
+                        + "of study counters removed this way from a graveyard onto the battlefield.\n"
+                        + "{T}: Draw a card, then discard a card.");
+            }
+            case RED -> {
+                card.setName("Vhal, Scholar of Elements");
+                card.setManaCost("{2}{U}{R}");
+                card.setColors(List.of(CardColor.BLUE, CardColor.RED));
+                card.setColorIdentity(List.of(CardColor.BLUE, CardColor.RED));
+                card.setColor(CardColor.RED);
+                card.setCardText("When this creature specializes, remove all study counters from it. "
+                        + "When you do, Vhal, Scholar of Elements deals that much damage to target creature "
+                        + "or planeswalker an opponent controls.\n"
+                        + "{T}: Draw a card, then discard a card.");
+            }
+            case GREEN -> {
+                card.setName("Vhal, Scholar of Creation");
+                card.setManaCost("{2}{G}{U}");
+                card.setColors(List.of(CardColor.GREEN, CardColor.BLUE));
+                card.setColorIdentity(List.of(CardColor.GREEN, CardColor.BLUE));
+                card.setColor(CardColor.GREEN);
+                card.setCardText("When this creature specializes, remove all study counters from it. "
+                        + "When you do, seek two creature cards with mana value less than or equal to the number "
+                        + "of study counters removed this way. Put one of them onto the battlefield and shuffle the "
+                        + "other into your library.\n{T}: Draw a card, then discard a card.");
+            }
+            default -> throw new IllegalStateException("Unsupported Vhal specialization color: " + color);
+        }
     }
 }

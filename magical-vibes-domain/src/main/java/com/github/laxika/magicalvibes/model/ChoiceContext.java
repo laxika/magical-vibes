@@ -2451,23 +2451,14 @@ public sealed interface ChoiceContext {
         }
     }
 
-    /** Choice of a specific locked door for an effect that unlocks a Room for free. */
-    record UnlockRoomDoorChoice(Card sourceCard, UUID controllerId, List<RoomDoor> choices)
+    /**
+     * Choice of a door of a Room for an effect that unlocks one for free: a locked door, or with {@code lockOrUnlock}
+     * either door, an unlocked one being locked.
+     */
+    record UnlockRoomDoorChoice(Card sourceCard, UUID controllerId, List<RoomDoor> choices, boolean lockOrUnlock)
             implements ChoiceContext {
 
         public UnlockRoomDoorChoice {
-            choices = List.copyOf(choices);
-        }
-
-        public record RoomDoor(UUID roomPermanentId, int doorIndex, String label) {
-        }
-    }
-
-    /** Choice of a door for an effect that locks an unlocked door or unlocks a locked door. */
-    record LockOrUnlockRoomDoorChoice(Card sourceCard, UUID controllerId, List<RoomDoor> choices)
-            implements ChoiceContext {
-
-        public LockOrUnlockRoomDoorChoice {
             choices = List.copyOf(choices);
         }
 

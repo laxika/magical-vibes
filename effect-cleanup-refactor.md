@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40 (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 42, 37, 41b; merge queue 43. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                             |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43 (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 41b, 44, 45; merge queue 37, 42. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                              |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,263 / 2,641 (after fold run 40) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,245 / 2,623 (after fold run 43) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,257 rows over 4,516 classes (after fold run 40). Latest verdict per class: `step-9` 337, unique 1,177, absorbed 1,117, split 657, blocked-other 530, survivor 393, blocked-step-model 140, blocked-player-loop 96, dead 69. Waiting: 337 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,280 rows over 4,517 classes (after fold run 43). Latest verdict per class: `step-9` 316, unique 1,178, absorbed 1,136, split 657, blocked-other 530, survivor 395, blocked-step-model 140, blocked-player-loop 96, dead 69. Waiting: 316 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -969,6 +969,9 @@ Delayed and global triggers:
 - `FlipUntilLoseEffect.untilLose()` / `.upTo(coins, allWins)` / `.flip(coins, perWin, perLoss, allWins)` / `.headsOrTails(n, perHeads)`: every multi-coin flip by the controller (fold run 40).
 - `SacrificedCardMatches.permanent(PermanentPredicate, description)` + `ConditionContext.sacrificedPermanent`: "if the sacrificed permanent was [suspected / a commander]", read as it last existed (fold run 40).
 - `DrawFromBottomOfLibraryEffect.fromAnywhere()` (`From.ANY_POSITION`), `DoubleDrawReplacementEffect.exceptFirstDrawInEachOfYourDrawSteps()`, `DoubleTargetCreaturePowerEffect.of(subject)` / `.ofCreaturesYouControl(filter)` (fold run 40).
+
+- `SpecializeEffect(CardColor color, SpecializeEffect.Faces faces)`: "Specialize {N}". The card's static `specializedFace(Card face, CardColor color)` writes the face onto a cleared runtime copy and returns its "when this creature specializes" effects (fold run 43).
+- `UnlockControlledRoomDoorEffect(PermanentSubject rooms, boolean lockOrUnlock)`: `()`, `targetRoom()`, `lockOrUnlockTargetRoom()`; one `UnlockRoomDoorChoice` context (fold run 43).
 
 ### Blocked causes still open
 
@@ -4264,6 +4267,33 @@ All 11 batches done. Ratchet 3,324 / 2,675 → 3,311 / 2,670. Ledger 24 rows: ab
 - Mutalith fires coin-flip events for a Pokey d20 result (already queued).
 
 **For the next run.** `two-dice`: check `RollTwoD20IgnoreLowerEffect` and `RollWithAdvantageEffect` first. Then the per-object flips, after the owner rules on grouping.
+
+### Step 9, fold run 43 (2026-11-24, parallel worktree)
+
+**specialize** (20 rows): 18 folded, 2 left.
+- No existing transform or perpetual record could carry it. `TransformSelfEffect` has one back face, and the perpetual stores can't change name, mana cost, colors or subtypes. So this is a new record: `SpecializeEffect(CardColor color, SpecializeEffect.Faces faces)`, with one handler.
+- The handler finds the source permanent and checks it is still the card the ability was activated from (`entry.getCard()` name). It makes a runtime copy, clears its abilities, calls `faces.writeFace(face, color)`, swaps the face in (`exchangeCard`), and puts the returned "when this creature specializes" effects on the stack as a made ability.
+- Each card passes `Card::specializedFace`, a static method in its own class that holds what its old handler did. So every face keeps its own text, abilities and target groups.
+- The `Faces` hook follows the `Supplier<Card>` records (`DraftCardIntoHandEffect`).
+- Vhal: `RemoveVhalStudyCountersEffectHandler` now puts the face's "when you do" ability on the stack itself.
+- Wyll and Vhal no longer set an entry target filter or `nonTargeting` on the made ability. The face's target group gives the same targets (tests pass).
+- Left, `unique`: `SpecializeKarlachEffect`, the only specialize that works from a graveyard; its graveyard return is an option only Karlach would set. Also `UnspecializeLukaminaEffect`, the only unspecialize.
+- Fixed, failing-first: Karlach, Raging Tiefling. Activated on the battlefield and killed in response, it used to be specialized in the graveyard and returned (CR 400.7). The handler now returns when the source permanent is gone.
+
+**room-door** (1 row, plus the unaudited `LockOrUnlockTargetRoomDoorEffect`): folded.
+- New shape: `UnlockControlledRoomDoorEffect(PermanentSubject rooms, boolean lockOrUnlock)`. `()` means the Rooms you control (Ghostly Dancers). `targetRoom()` means up to one target Room you control (Ghostly Keybearer). `lockOrUnlockTargetRoom()` is for Keys to the House and Marina Vendrell.
+- The Rooms are resolved by `SubjectResolutionService`. Unlocking gives the designation, a new timestamp and the DoorUnlocked event, plus FullyUnlocked on the second door (CR 709.5f, 709.5i). Locking removes the designation (CR 709.5g).
+- One choice context: `UnlockRoomDoorChoice.lockOrUnlock`; `LockOrUnlockRoomDoorChoice` is deleted.
+- Survivor guard: the door index check (0 or 1) now applies to the unlock-only cards too. It changes nothing for them.
+- The prompt texts, option labels and log lines are kept for each mode.
+
+**Seen, not changed:**
+- Rasaad, Radiant Monk: the white face also gets an "enters" trigger, but its card text says only "When this creature specializes" (CR none; HBG 4; unsure, the face's Oracle couldn't be checked).
+- Marina Vendrell: the ETB "reveal the top seven" goes through `LookAtTopCardsEffect`; unchecked whether it reveals.
+
+**Ratchet:** records 3300 → 3282, handlers 2659 → 2641.
+
+**For the next run:** card-side hooks passed as method references (`SpecializeEffect.Faces`) are a way to fold per-card "build this face" records. Karlach's graveyard specialize would fold if a second card ever specializes from a graveyard.
 
 ## Prompt
 

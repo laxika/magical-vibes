@@ -194,6 +194,24 @@ class KarlachRagingTieflingTest extends BaseCardTest {
         harness.assertInHand(player1, "Plains");
     }
 
+    @Test
+    @DisplayName("A Karlach that dies in response to its battlefield specialization stays unspecialized in the graveyard")
+    void battlefieldSpecializationDoesNothingOnceKarlachHasDied() {
+        Permanent karlach = addCreatureReady(player1, new KarlachRagingTiefling());
+        harness.setHand(player1, List.of(new Plains()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.activateAbility(player1, 0, 0, null, null);
+        payDiscardIfRequested();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, karlach));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Karlach, Tiefling Zealot");
+        harness.assertInGraveyard(player1, "Karlach, Raging Tiefling");
+        assertThat(countPermanents(player1, "Knight")).isZero();
+    }
+
     private Permanent specialize(int abilityIndex, Card discard) {
         Permanent karlach = addCreatureReady(player1, new KarlachRagingTiefling());
         harness.setHand(player1, List.of(discard));

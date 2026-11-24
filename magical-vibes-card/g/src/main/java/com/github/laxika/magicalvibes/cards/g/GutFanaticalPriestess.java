@@ -7,13 +7,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfExiledCreatureWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInsteadOfDieThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.SpecializeGutEffect;
+import com.github.laxika.magicalvibes.model.effect.SpecializeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -24,7 +25,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -65,7 +65,7 @@ public class GutFanaticalPriestess extends Card {
         List<CardEffect> effects = new ArrayList<>();
         effects.add(new DiscardCardTypeCost(discardFilter,
                 color.name().toLowerCase() + " card or " + basicLandType.name().toLowerCase()));
-        effects.add(new SpecializeGutEffect(color));
+        effects.add(new SpecializeEffect(color, GutFanaticalPriestess::specializedFace));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{5}",
@@ -76,7 +76,14 @@ public class GutFanaticalPriestess extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED));
     }
 
-    public static CardEffect specializedTrigger(CardColor color) {
+    /** Writes Gut's specialized face for {@code color}; returns its "when this creature specializes" ability. */
+    public static List<CardEffect> specializedFace(Card face, CardColor color) {
+        setBaseFaceCharacteristics(face);
+        setFaceCharacteristics(face, color);
+        return List.of(specializedTrigger(color));
+    }
+
+    private static CardEffect specializedTrigger(CardColor color) {
         return new CreateTokenCopyOfExiledCreatureWithSourceEffect(tokenCopyEffect(color));
     }
 
@@ -98,7 +105,7 @@ public class GutFanaticalPriestess extends Card {
                 new Fixed(amount), false, Set.of(), false);
     }
 
-    public static void setBaseFaceCharacteristics(Card card) {
+    private static void setBaseFaceCharacteristics(Card card) {
         card.setSetCode("HBG");
         card.setCollectorNumber("13");
         card.setSubtypes(List.of(CardSubtype.GOBLIN, CardSubtype.SHAMAN));
@@ -108,7 +115,7 @@ public class GutFanaticalPriestess extends Card {
         card.setKeywords(Set.of());
     }
 
-    public static void setFaceCharacteristics(Card card, CardColor color) {
+    private static void setFaceCharacteristics(Card card, CardColor color) {
         switch (color) {
             case WHITE -> {
                 card.setName("Gut, Zealous Fanatic");

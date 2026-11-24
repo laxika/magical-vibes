@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.rules.RoomEvent;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -11,9 +10,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlockControlledRoomDoorEffect;
+import com.github.laxika.magicalvibes.model.rules.RoomEvent;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Asks the controller for a door of a Room they control among the Rooms the effect names: a locked one to unlock
+ * (CR 709.5f), or with {@code lockOrUnlock} either one, an unlocked door being locked (CR 709.5g). Unlocking gives the
+ * Room a new timestamp and raises the door-unlocked event, and the fully-unlocked event when it was the second door
+ * (CR 709.5i).
+ */
 @Component
 @RequiredArgsConstructor
 public class UnlockControlledRoomDoorEffectHandler implements NormalEffectHandlerBean {
@@ -31,6 +38,7 @@ public class UnlockControlledRoomDoorEffectHandler implements NormalEffectHandle
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,38 +47,26 @@ public class UnlockControlledRoomDoorEffectHandler implements NormalEffectHandle
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UnlockControlledRoomDoorEffect unlockEffect = (UnlockControlledRoomDoorEffect) effect;
+        UnlockControlledRoomDoorEffect unlock = (UnlockControlledRoomDoorEffect) effect;
         UUID controllerId = entry.getControllerId();
         List<ChoiceContext.UnlockRoomDoorChoice.RoomDoor> choices = new ArrayList<>();
-        if (unlockEffect.targeted()) {
-            List<UUID> targetIds = entry.targetsForEffect(effect);
-            UUID targetId = !targetIds.isEmpty() ? targetIds.getFirst() : entry.getTargetId();
-            Permanent room = targetId == null ? null : gameQueryService.findPermanentById(gameData, targetId);
-            if (room == null || !isRoom(room)
-                    || !controllerId.equals(gameQueryService.findPermanentController(gameData, room.getId()))) {
-                return;
-            }
-            addLockedDoorChoices(choices, room, roomIndex(gameData, controllerId, room));
-        } else {
-            List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(controllerId, List.of());
-            for (int permanentIndex = 0; permanentIndex < battlefield.size(); permanentIndex++) {
-                Permanent room = battlefield.get(permanentIndex);
-                if (isRoom(room)) {
-                    addLockedDoorChoices(choices, room, permanentIndex);
-                }
+        for (Permanent room : subjectResolutionService.permanents(gameData, entry, effect, unlock.rooms())) {
+            if (isRoom(room) && controllerId.equals(gameQueryService.findPermanentController(gameData, room.getId()))) {
+                addDoorChoices(choices, room, roomIndex(gameData, controllerId, room), unlock.lockOrUnlock());
             }
         }
-
         if (choices.isEmpty()) {
             return;
         }
 
         ChoiceContext.UnlockRoomDoorChoice context = new ChoiceContext.UnlockRoomDoorChoice(
-                entry.getCard(), controllerId, choices);
+                entry.getCard(), controllerId, choices, unlock.lockOrUnlock());
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 controllerId, null, null, context,
                 choices.stream().map(ChoiceContext.UnlockRoomDoorChoice.RoomDoor::label).toList(),
-                entry.getCard().getName() + " - Choose a locked door of a Room you control."));
+                entry.getCard().getName() + (unlock.lockOrUnlock()
+                        ? " - Choose a door to lock or unlock."
+                        : " - Choose a locked door of a Room you control.")));
     }
 
     public void completeChoice(GameData gameData, String selectedLabel,
@@ -84,21 +80,28 @@ public class UnlockControlledRoomDoorEffectHandler implements NormalEffectHandle
         if (room == null
                 || !context.controllerId().equals(gameQueryService.findPermanentController(gameData, room.getId()))
                 || !isRoom(room)
-                || room.isRoomDoorUnlocked(choice.doorIndex())) {
+                || choice.doorIndex() < 0 || choice.doorIndex() > 1
+                || !context.lockOrUnlock() && room.isRoomDoorUnlocked(choice.doorIndex())) {
             throw new IllegalStateException("That Room door is no longer available");
         }
 
-        boolean wasFullyUnlocked = room.isRoomFullyUnlocked();
-        room.unlockRoomDoor(choice.doorIndex());
-        room.setTimestamp(gameData.nextTimestamp());
-        gameData.rulesEvents.occur(new RoomEvent.DoorUnlocked(room, context.controllerId(), choice.doorIndex()));
-        if (!wasFullyUnlocked && room.isRoomFullyUnlocked()) {
-            gameData.rulesEvents.occur(new RoomEvent.FullyUnlocked(room, context.controllerId()));
+        boolean locks = room.isRoomDoorUnlocked(choice.doorIndex());
+        if (locks) {
+            room.lockRoomDoor(choice.doorIndex());
+        } else {
+            boolean wasFullyUnlocked = room.isRoomFullyUnlocked();
+            room.unlockRoomDoor(choice.doorIndex());
+            room.setTimestamp(gameData.nextTimestamp());
+            gameData.rulesEvents.occur(new RoomEvent.DoorUnlocked(room, context.controllerId(), choice.doorIndex()));
+            if (!wasFullyUnlocked && room.isRoomFullyUnlocked()) {
+                gameData.rulesEvents.occur(new RoomEvent.FullyUnlocked(room, context.controllerId()));
+            }
         }
 
         gameData.interaction.clearAwaitingInput();
         gameLogService.append(gameData, GameLog.textCardText(
-                gameData.playerIdToName.get(context.controllerId()) + " unlocks a door of ",
+                gameData.playerIdToName.get(context.controllerId())
+                        + (locks ? " locks a door of " : " unlocks a door of "),
                 room.getCard(), "."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
@@ -109,15 +112,18 @@ public class UnlockControlledRoomDoorEffectHandler implements NormalEffectHandle
                 && permanent.getCard().getRoomDoorManaCosts().size() == 2;
     }
 
-    private void addLockedDoorChoices(List<ChoiceContext.UnlockRoomDoorChoice.RoomDoor> choices,
-                                      Permanent room, int permanentIndex) {
+    private void addDoorChoices(List<ChoiceContext.UnlockRoomDoorChoice.RoomDoor> choices, Permanent room,
+                                int permanentIndex, boolean lockOrUnlock) {
         for (int doorIndex = 0; doorIndex < 2; doorIndex++) {
-            if (!room.isRoomDoorUnlocked(doorIndex)) {
-                choices.add(new ChoiceContext.UnlockRoomDoorChoice.RoomDoor(
-                        room.getId(), doorIndex,
-                        FaceDownVisibility.publicName(room) + " (Room " + (permanentIndex + 1)
-                                + ") - Door " + (doorIndex + 1)));
+            boolean unlocked = room.isRoomDoorUnlocked(doorIndex);
+            if (unlocked && !lockOrUnlock) {
+                continue;
             }
+            String action = !lockOrUnlock ? "" : unlocked ? "Lock " : "Unlock ";
+            choices.add(new ChoiceContext.UnlockRoomDoorChoice.RoomDoor(
+                    room.getId(), doorIndex,
+                    action + FaceDownVisibility.publicName(room) + " (Room " + (permanentIndex + 1)
+                            + ") - Door " + (doorIndex + 1)));
         }
     }
 

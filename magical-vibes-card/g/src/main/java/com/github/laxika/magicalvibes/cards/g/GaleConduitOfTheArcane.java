@@ -1,29 +1,28 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantStaticEffectToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SpecializeGaleEffect;
+import com.github.laxika.magicalvibes.model.effect.SpecializeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.condition.WasCast;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -31,6 +30,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -63,7 +63,7 @@ public class GaleConduitOfTheArcane extends Card {
         List<CardEffect> effects = new ArrayList<>();
         effects.add(new DiscardCardTypeCost(discardFilter,
                 color.name().toLowerCase() + " card or " + basicLandType.name().toLowerCase()));
-        effects.add(new SpecializeGaleEffect(color));
+        effects.add(new SpecializeEffect(color, GaleConduitOfTheArcane::specializedFace));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}",
@@ -109,5 +109,57 @@ public class GaleConduitOfTheArcane extends Card {
         card.setColors(List.of(CardColor.BLUE));
         card.setColorIdentity(List.of(CardColor.BLUE));
         card.setKeywords(Set.of());
+    }
+
+    /** Writes Gale's specialized face for {@code color}; it has no "when this creature specializes" ability. */
+    public static List<CardEffect> specializedFace(Card face, CardColor color) {
+        setSpecializedBaseCharacteristics(face);
+        face.setPower(4);
+        face.setToughness(5);
+
+        switch (color) {
+            case WHITE -> {
+                face.setName("Gale, Holy Conduit");
+                face.setManaCost("{3}{W}{U}");
+                face.setColors(List.of(CardColor.WHITE, CardColor.BLUE));
+                face.setColorIdentity(List.of(CardColor.WHITE, CardColor.BLUE));
+                face.setColor(CardColor.WHITE);
+                face.setCardText("Whenever you cast an instant or sorcery spell, create a 1/1 white Pegasus creature token with flying.");
+            }
+            case BLUE -> {
+                face.setName("Gale, Temporal Conduit");
+                face.setManaCost("{3}{U}{U}");
+                face.setCardText("Whenever you cast an instant or sorcery spell, draw a card, then discard a card.");
+            }
+            case BLACK -> {
+                face.setName("Gale, Abyssal Conduit");
+                face.setManaCost("{3}{U}{B}");
+                face.setColors(List.of(CardColor.BLUE, CardColor.BLACK));
+                face.setColorIdentity(List.of(CardColor.BLUE, CardColor.BLACK));
+                face.setColor(CardColor.BLACK);
+                face.setCardText("Whenever you cast an instant or sorcery spell, each opponent loses 2 life.");
+            }
+            case RED -> {
+                face.setName("Gale, Storm Conduit");
+                face.setManaCost("{3}{U}{R}");
+                face.setColors(List.of(CardColor.BLUE, CardColor.RED));
+                face.setColorIdentity(List.of(CardColor.BLUE, CardColor.RED));
+                face.setColor(CardColor.RED);
+                face.setCardText("Whenever you cast an instant or sorcery spell, Gale, Storm Conduit perpetually gains \"Creatures you control get +1/+0.\"");
+            }
+            case GREEN -> {
+                face.setName("Gale, Primeval Conduit");
+                face.setManaCost("{3}{G}{U}");
+                face.setColors(List.of(CardColor.GREEN, CardColor.BLUE));
+                face.setColorIdentity(List.of(CardColor.GREEN, CardColor.BLUE));
+                face.setColor(CardColor.GREEN);
+                face.setCardText("Whenever you cast an instant or sorcery spell, put two +1/+1 counters on target creature.");
+            }
+            default -> throw new IllegalStateException("Unsupported Gale specialization color: "
+                    + color);
+        }
+
+        addSpecializedSpellCastTrigger(face, color);
+        return List.of();
     }
 }

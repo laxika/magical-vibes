@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.LockOrUnlockTargetRoomDoorEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
+import com.github.laxika.magicalvibes.model.effect.UnlockControlledRoomDoorEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -32,7 +32,7 @@ public class MarinaVendrell extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new LockOrUnlockTargetRoomDoorEffect()),
+                List.of(UnlockControlledRoomDoorEffect.lockOrUnlockTargetRoom()),
                 "{T}: Lock or unlock a door of target Room you control. Activate only as a sorcery.",
                 roomYouControl(),
                 null,

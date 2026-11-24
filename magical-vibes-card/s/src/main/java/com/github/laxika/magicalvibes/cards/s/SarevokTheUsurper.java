@@ -9,20 +9,20 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpecializeSarevokEffect;
+import com.github.laxika.magicalvibes.model.effect.SpecializeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -67,7 +67,7 @@ public class SarevokTheUsurper extends Card {
                 List.of(
                         new DiscardCardTypeCost(discardFilter,
                                 color.name().toLowerCase() + " card or " + basicLandType.name().toLowerCase()),
-                        new SpecializeSarevokEffect(color)),
+                        new SpecializeEffect(color, SarevokTheUsurper::specializedFace)),
                 "Specialize {3} \u2014 " + color.name().toLowerCase()
                         + " (discard a " + color.name().toLowerCase() + " card or "
                         + basicLandType.name().toLowerCase() + ")",
@@ -109,5 +109,63 @@ public class SarevokTheUsurper extends Card {
         card.setColors(List.of(CardColor.BLACK));
         card.setColorIdentity(List.of(CardColor.BLACK));
         card.setKeywords(Set.of());
+    }
+
+    /** Writes Sarevok's specialized face for {@code color}; returns its "when this creature specializes" ability. */
+    public static List<CardEffect> specializedFace(Card face, CardColor color) {
+        setSpecializedBaseCharacteristics(face);
+        face.setPower(4);
+        face.setToughness(4);
+        setFaceCharacteristics(face, color);
+
+        face.target(TargetFilters.creatureYouControl()).addTrigger(
+                Triggers.beginningOfCombat(ActivePlayer.YOU),
+                specializedCombatTrigger(color));
+        return color == CardColor.BLACK ? List.of(specializationTrigger()) : List.of();
+    }
+
+    private static void setFaceCharacteristics(Card card, CardColor color) {
+        switch (color) {
+            case WHITE -> {
+                card.setName("Sarevok, Divine Usurper");
+                card.setManaCost("{3}{W}{B}");
+                card.setColors(List.of(CardColor.WHITE, CardColor.BLACK));
+                card.setColorIdentity(List.of(CardColor.WHITE, CardColor.BLACK));
+                card.setColor(CardColor.WHITE);
+                card.setKeywords(Set.of(Keyword.FIRST_STRIKE));
+                card.setCardText("First strike\nAt the beginning of combat on your turn, target creature you control gains first strike and gets +X/+0 until end of turn, where X is the number of creature cards in your graveyard.");
+            }
+            case BLUE -> {
+                card.setName("Sarevok, Deceitful Usurper");
+                card.setManaCost("{3}{U}{B}");
+                card.setColors(List.of(CardColor.BLUE, CardColor.BLACK));
+                card.setColorIdentity(List.of(CardColor.BLUE, CardColor.BLACK));
+                card.setColor(CardColor.BLUE);
+                card.setCardText("At the beginning of combat on your turn, target creature you control gets +X/+0 until end of turn, where X is the number of creature, instant, and sorcery cards in your graveyard.");
+            }
+            case BLACK -> {
+                card.setName("Sarevok, Deadly Usurper");
+                card.setManaCost("{3}{B}{B}");
+                card.setCardText("When this creature specializes, seek a creature card and put it into your graveyard, then conjure two duplicates of it into your graveyard.\nAt the beginning of combat on your turn, target creature you control gets +X/+0 until end of turn, where X is the number of creature cards in your graveyard.");
+            }
+            case RED -> {
+                card.setName("Sarevok, Ferocious Usurper");
+                card.setManaCost("{3}{B}{R}");
+                card.setColors(List.of(CardColor.RED, CardColor.BLACK));
+                card.setColorIdentity(List.of(CardColor.RED, CardColor.BLACK));
+                card.setColor(CardColor.RED);
+                card.setKeywords(Set.of(Keyword.MENACE));
+                card.setCardText("Menace\nAt the beginning of combat on your turn, target creature you control gains menace and gets +X/+0 until end of turn, where X is the number of creature cards in your graveyard.");
+            }
+            case GREEN -> {
+                card.setName("Sarevok, Mighty Usurper");
+                card.setManaCost("{3}{B}{G}");
+                card.setColors(List.of(CardColor.GREEN, CardColor.BLACK));
+                card.setColorIdentity(List.of(CardColor.GREEN, CardColor.BLACK));
+                card.setColor(CardColor.GREEN);
+                card.setKeywords(Set.of(Keyword.TRAMPLE));
+                card.setCardText("Trample\nAt the beginning of combat on your turn, target creature you control gains trample and gets +X/+0 until end of turn, where X is the number of creature cards in your graveyard.");
+            }
+        }
     }
 }
