@@ -62,7 +62,9 @@ public class AuraCopyService {
                 continue;
             }
             for (Permanent permanent : battlefield) {
-                if (gameQueryService.isCreature(gameData, permanent)) {
+                // A permanent that can't be chosen is not offered (CR 608.2d).
+                if (gameQueryService.isCreature(gameData, permanent)
+                        && !gameQueryService.cantBeChosen(gameData, permanent)) {
                     validIds.add(permanent.getId());
                 }
             }
@@ -97,19 +99,6 @@ public class AuraCopyService {
         // The chosen creature's copiable values are locked in now, even when it is the enchanted
         // creature itself and already carries an earlier copy effect (Metamorphic Alteration rulings).
         applyWhileAttachedCopy(gameData, aura, enchanted, chosen, Duration.WHILE_ATTACHED);
-    }
-
-    /** Applies Blade of Shared Souls' copy effect to the creature that triggered it. */
-    public void applyEquippedCreatureCopy(GameData gameData, Permanent equipment,
-                                          Permanent equipped, Permanent chosen) {
-        if (equipment == null || equipped == null || chosen == null
-                || !equipment.isAttached() || !equipped.getId().equals(equipment.getAttachedTo())
-                || !gameQueryService.isCreature(gameData, equipped)
-                || equipped.getId().equals(chosen.getId())) {
-            return;
-        }
-
-        applyWhileAttachedCopy(gameData, equipment, equipped, chosen, Duration.WHILE_REMAINS_ATTACHED);
     }
 
     private void applyWhileAttachedCopy(GameData gameData, Permanent source, Permanent affected,

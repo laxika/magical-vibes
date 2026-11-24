@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSubjectEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -18,7 +19,7 @@ public class TruePolymorph extends Card {
                 artifactOrCreature(), "Target must be an artifact or creature"));
         target(new PermanentPredicateTargetFilter(
                 artifactOrCreature(), "Second target must be an artifact or creature"))
-                .addSpellEffect(new MakeTargetCopyOfTargetPermanentEffect());
+                .addSpellEffect(BecomeCopyOfSubjectEffect.of(Subjects.target(1)).by(Subjects.target(0)));
     }
 
     private static PermanentAnyOfPredicate artifactOrCreature() {

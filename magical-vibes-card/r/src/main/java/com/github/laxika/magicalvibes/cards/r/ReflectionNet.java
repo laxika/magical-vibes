@@ -4,8 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSubjectEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesCopyOfExiledCreatureWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -26,7 +29,8 @@ public class ReflectionNet extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}",
-                List.of(new TargetCreatureBecomesCopyOfExiledCreatureWithSourceEffect()),
+                List.of(BecomeCopyOfSubjectEffect.of(Subjects.exiledWithSourceMatching(
+                        new CardTypePredicate(CardType.CREATURE))).by(Subjects.target())),
                 "{2}: Target creature you control becomes a copy of a creature card exiled with Reflection Net. "
                         + "Activate only as a sorcery and only once.",
                 new ControlledPermanentPredicateTargetFilter(

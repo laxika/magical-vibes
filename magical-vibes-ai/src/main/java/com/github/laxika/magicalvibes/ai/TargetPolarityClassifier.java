@@ -377,6 +377,12 @@ public class TargetPolarityClassifier {
         if (effect instanceof TapOrUntapTargetPermanentEffect) {
             return TargetPolarity.NEUTRAL;
         }
+        // A copy made by or of a target ("target creature becomes a copy of another target creature") is as good as
+        // bad: it depends on the two creatures, not on whose they are.
+        if (effect instanceof com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSubjectEffect copy
+                && copy.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+            return TargetPolarity.NEUTRAL;
+        }
 
         // Phasing: only the targeted form aims at a permanent the AI chose (Reality Ripple, Vision
         // Charm) — the source and attached forms carry no target and no polarity.
@@ -790,9 +796,6 @@ public class TargetPolarityClassifier {
             entry("EachControlledPermanentBecomesCopyOfTargetNonAuraPermanentEffect", TargetPolarity.NEUTRAL),
             entry("EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("EachControlledLandOfChosenNonbasicTypeBecomesCopyOfTargetCreatureUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
-            entry("MakeTargetCopyOfTargetCreatureUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
-            entry("MakeTargetCopyOfTargetPermanentEffect", TargetPolarity.NEUTRAL),
-            entry("MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("GrantBasicLandTypeToTargetEffect", TargetPolarity.NEUTRAL),
             entry("GrantColorEffect", TargetPolarity.NEUTRAL),
             entry("GrantColorUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),

@@ -135,6 +135,24 @@ class InfiniteReflectionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The enters trigger copies the creature the Aura entered attached to, even after the Aura moves")
+    void triggerCopiesCreatureAuraEnteredAttachedTo() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new Archangel());
+        Permanent wolf = harness.addToBattlefieldAndReturn(player1, new WanderingWolf());
+        Permanent sanctifier = harness.addToBattlefieldAndReturn(player2, new CathedralSanctifier());
+        harness.setHand(player1, List.of(new InfiniteReflection()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+
+        findPermanent(player1, "Infinite Reflection").setAttachedTo(sanctifier.getId());
+        harness.passBothPriorities();
+
+        assertThat(wolf.getCard().getName()).isEqualTo("Archangel");
+        assertThat(wolf.getCard().getPower()).isEqualTo(5);
+    }
+
+    @Test
     @DisplayName("Copies already made remain copies after the Aura is destroyed")
     void existingCopiesPersistAfterAuraLeaves() {
         Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new Archangel());

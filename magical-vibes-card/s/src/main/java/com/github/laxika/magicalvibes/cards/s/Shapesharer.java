@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSubjectEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -20,7 +22,8 @@ public class Shapesharer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{U}",
-                List.of(new MakeTargetCopyOfTargetCreatureUntilNextTurnEffect()),
+                List.of(BecomeCopyOfSubjectEffect.of(Subjects.target(1)).by(Subjects.target(0))
+                        .lasting(Duration.UNTIL_YOUR_NEXT_TURN)),
                 "{2}{U}: Target Shapeshifter becomes a copy of target creature until your next turn.",
                 List.of(
                         new PermanentPredicateTargetFilter(

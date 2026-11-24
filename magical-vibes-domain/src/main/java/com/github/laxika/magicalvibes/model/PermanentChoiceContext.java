@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileChosenPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfNextPlayerNonlandPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MeldWithNamedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayReturnPermanentToHandAndEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
@@ -1600,14 +1599,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** Deepfathom Echo: choose another creature the source controller controls to copy until end of turn. */
     record DeepfathomEchoCreatureChoice(UUID controllerId, UUID sourcePermanentId)
-            implements PermanentChoiceContext {}
-
-    /** Brudiclad: choose a token whose copiable characteristics the other controlled tokens copy. */
-    record BrudicladTokenChoice(UUID controllerId) implements PermanentChoiceContext {}
-
-    /** Choose the creature whose copiable characteristics will be used. */
-    record PolymorphousRushCreatureChoice(UUID controllerId,
-                                           MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect effect)
             implements PermanentChoiceContext {}
 
     record CopySpellForOtherControlledCreatureChoice(CopySpellForEachOtherControlledCreatureEffect effect)

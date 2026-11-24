@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSubjectEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -20,7 +20,7 @@ public class PrimeMinistersCabinetRoom extends Card {
         // copy of target creature an opponent controls.
         target(TargetFilters.creatureYouControl(), 0, 1)
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                        new MakeTargetCopyOfTargetPermanentEffect());
+                        BecomeCopyOfSubjectEffect.of(Subjects.target(1)).by(Subjects.target(0)));
         target(TargetFilters.creatureAnOpponentControls());
 
         // Will of the council — Whenever chaos ensues, starting with you, each player votes for a

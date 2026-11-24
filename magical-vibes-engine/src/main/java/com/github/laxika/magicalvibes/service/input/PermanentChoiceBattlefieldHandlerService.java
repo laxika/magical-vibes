@@ -103,7 +103,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.MayReturnPermanentToHandAndEnterWithCountersEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesPermanentToExileUntilSourceLeavesEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesPermanentToSacrificeEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.OtherControlledTokensBecomeCopyOfChosenTokenUntilEndOfTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PopulateSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PreventCombatDamageByTargetCreatureIfSharesColorWithChosenPermanentEffectHandler;
@@ -287,7 +286,6 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final BecomeCopyOfChosenCreatureYouControlUntilEndOfTurnEffectHandler deepfathomEchoHandler;
 
-    private final OtherControlledTokensBecomeCopyOfChosenTokenUntilEndOfTurnEffectHandler brudicladTokenHandler;
 
     private final AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler attachTargetAuraHandler;
 
@@ -383,7 +381,6 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BalduvianWarlordEffectHandler balduvianWarlordEffectHandler;
 
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandler makeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChoosePlayerEffectHandler choosePlayerEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChoosePermanentsEffectHandler choosePermanentsEffectHandler;
 
@@ -1661,19 +1658,6 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleDeepfathomEchoCreatureChoice(GameData gameData, UUID chosenPermanentId,
                                                    PermanentChoiceContext.DeepfathomEchoCreatureChoice context) {
         deepfathomEchoHandler.completeChoice(gameData, chosenPermanentId, context);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleBrudicladTokenChoice(GameData gameData, UUID chosenPermanentId,
-                                           PermanentChoiceContext.BrudicladTokenChoice context) {
-        brudicladTokenHandler.completeChoice(gameData, chosenPermanentId, context);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handlePolymorphousRushCreatureChoice(GameData gameData, UUID chosenPermanentId,
-                                                     PermanentChoiceContext.PolymorphousRushCreatureChoice context) {
-        makeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandler.completeChoice(
-                gameData, chosenPermanentId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

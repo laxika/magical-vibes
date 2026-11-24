@@ -107,6 +107,26 @@ public class PermanentCopierService {
         return lastKnown != null && lastKnown.isFaceDown() ? faceDownCopiableCard(lastKnown) : lastKnownCard;
     }
 
+    /**
+     * The copiable values of {@code permanentId} as it last existed on the battlefield (CR 608.2h, 707.2), once it has
+     * left: those of its departure snapshot, else of the snapshot {@code entry} recorded of it (triggering, source,
+     * sacrificed or attached permanent), else {@code entry}'s last-known card of it; {@code null} when none is known.
+     * The snapshot's card is the one copy effects left it, not the one other continuous effects made (its
+     * last-known card), so a copy of it has no counters, Aura grants or anthem keywords.
+     */
+    public Card lastKnownCopiableCard(GameData gameData, StackEntry entry, UUID permanentId) {
+        Permanent lastKnown = java.util.stream.Stream.concat(
+                        gameData.departedPermanentSnapshots.values().stream(),
+                        java.util.stream.Stream.of(entry.getTriggeringPermanentSnapshot(),
+                                entry.getSourcePermanentSnapshot(), entry.getSacrificedPermanentSnapshot(),
+                                entry.getAttachedPermanentSnapshot()))
+                .filter(java.util.Objects::nonNull)
+                .filter(snapshot -> permanentId.equals(snapshot.getId()))
+                .findFirst()
+                .orElse(null);
+        return lastKnown != null ? copiableCard(lastKnown) : entry.lastKnownPermanentCard(permanentId);
+    }
+
     private Card printedCopiableCard(Permanent permanent) {
         if (permanent.isFaceDown()) {
             return faceDownCopiableCard(permanent);

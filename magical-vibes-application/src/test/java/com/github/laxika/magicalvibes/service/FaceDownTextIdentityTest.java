@@ -104,7 +104,7 @@ class FaceDownTextIdentityTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player2, hidden.getId());
 
-        assertThat(logText()).anyMatch(line -> line.contains("copies of"));
+        assertThat(logText()).anyMatch(line -> line.contains("becomes a copy of"));
         assertHidden();
     }
 

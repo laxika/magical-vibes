@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BecomeTargetPermanentCopyOfSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSubjectEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "EMN", collectorNumber = "165")
@@ -10,6 +11,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class PermeatingMass extends Card {
 
     public PermeatingMass() {
-        addTrigger(Triggers.dealsCombatDamageToCreature(), new BecomeTargetPermanentCopyOfSourceEffect());
+        addTrigger(Triggers.dealsCombatDamageToCreature(), BecomeCopyOfSubjectEffect.of(Subjects.source()).by(Subjects.triggering()));
     }
 }

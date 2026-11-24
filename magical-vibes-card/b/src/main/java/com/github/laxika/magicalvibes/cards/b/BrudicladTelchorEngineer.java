@@ -6,10 +6,12 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSubjectEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.OtherControlledTokensBecomeCopyOfChosenTokenUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -36,8 +38,12 @@ public class BrudicladTelchorEngineer extends Card {
                 new CreateTokenEffect(
                         1, "Phyrexian Myr", 2, 1, CardColor.BLUE,
                         List.of(CardSubtype.PHYREXIAN, CardSubtype.MYR), Set.of(), Set.of(CardType.ARTIFACT)),
-                new MayEffect(
-                        new OtherControlledTokensBecomeCopyOfChosenTokenUntilEndOfTurnEffect(),
+                new MayEffect(SequenceEffect.of(
+                        ChoosePermanentsEffect.exactly(1, Subjects.controlledBy(Subjects.you(),
+                                new PermanentIsTokenPredicate()), "a token you control"),
+                        BecomeCopyOfSubjectEffect.of(Subjects.thisWay(StepKind.CHOOSE))
+                                .by(Subjects.except(Subjects.controlledBy(Subjects.you(),
+                                        new PermanentIsTokenPredicate()), Subjects.thisWay(StepKind.CHOOSE)))),
                         "Choose a token you control for your other tokens to copy?")));
     }
 }

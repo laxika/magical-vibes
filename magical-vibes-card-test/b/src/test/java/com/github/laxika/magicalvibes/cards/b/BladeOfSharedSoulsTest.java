@@ -97,6 +97,28 @@ class BladeOfSharedSoulsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The copy does nothing once Blade of Shared Souls is no longer attached to that creature (CR 611.2b)")
+    void copyDoesNothingAfterBladeMovesBeforeResolution() {
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new BladeOfSharedSouls());
+        Permanent equipped = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player1, new HillGiant());
+        Permanent other = addCreatureReady(player1, new MistralCharger());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, equipped.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        blade.setAttachedTo(other.getId());
+        harness.passBothPriorities();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(equipped.getCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(other.getCard().getName()).isEqualTo("Mistral Charger");
+    }
+
+    @Test
     @DisplayName("An effect that attaches Blade of Shared Souls elsewhere ends the copy of the creature it left")
     void attachingElsewhereByEffectEndsCopy() {
         Permanent blade = harness.addToBattlefieldAndReturn(player1, new BladeOfSharedSouls());

@@ -413,6 +413,14 @@ public final class Subjects {
         return new CardSubject.ExiledWithSource(null, null);
     }
 
+    /**
+     * "A [filter] card exiled with this": of {@link #exiledWithSource()}, those {@code filter} matches; a card exiled face
+     * down has no characteristics to match (CR 406.3a).
+     */
+    public static CardSubject exiledWithSourceMatching(CardPredicate filter) {
+        return new CardSubject.ExiledWithSource(null, filter);
+    }
+
     /** "The cards you own exiled with this": of {@link #exiledWithSource()}, those {@code owners} own. */
     public static CardSubject exiledWithSource(PlayerSubject owners) {
         return new CardSubject.ExiledWithSource(owners, null);

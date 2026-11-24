@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.a.ArcaneFlight;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GoblinKing;
 import com.github.laxika.magicalvibes.model.Card;
@@ -18,7 +19,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({IdentityThief.class, GoblinPiker.class, GoblinKing.class})
+@CardUsed({IdentityThief.class, GoblinPiker.class, GoblinKing.class, ArcaneFlight.class})
 class IdentityThiefTest extends BaseCardTest {
 
     @Test
@@ -127,6 +128,26 @@ class IdentityThiefTest extends BaseCardTest {
 
         assertThat(findPermanent(player2, "Goblin Piker").getOriginalCard()).isSameAs(goblin.getOriginalCard());
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, thief)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The copy has the exiled creature's copiable values, not what its Aura gave it (CR 707.2)")
+    void copyLeavesOutAuraGrants() {
+        Permanent thief = addCreatureReady(player1, new IdentityThief());
+        Permanent goblin = addCreatureReady(player2, new GoblinPiker());
+        Permanent flight = harness.addToBattlefieldAndReturn(player2, new ArcaneFlight());
+        flight.setAttachedTo(goblin.getId());
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.FLYING)).isTrue();
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, goblin.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(thief.getCard().getName()).isEqualTo("Goblin Piker");
+        assertThat(gqs.hasKeyword(gd, thief, Keyword.FLYING)).isFalse();
         assertThat(gqs.getEffectivePower(gd, thief)).isEqualTo(2);
     }
 

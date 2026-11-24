@@ -5,10 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSubjectEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EquippedCreatureBecomesCopyOfTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -33,7 +35,8 @@ public class BladeOfSharedSouls extends Card {
                         new PermanentNotPredicate(new PermanentIsHostOfSourceAuraPredicate()))),
                 "Target must be another creature you control."));
         addTrigger(Triggers.becomesAttachedToCreature(),
-                new MayEffect(new EquippedCreatureBecomesCopyOfTargetCreatureEffect(),
+                new MayEffect(BecomeCopyOfSubjectEffect.of(Subjects.target()).by(Subjects.triggering())
+                        .lasting(Duration.WHILE_REMAINS_ATTACHED),
                         "Have the equipped creature become a copy of another creature you control?"));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

@@ -681,7 +681,7 @@ Reasoning behind the non-obvious mappings:
   own floating 7b entry and never reaches classification.
 - **One-shot continuous effects** (future floating effects) are classified alongside the
   statics: copy (`BecomeCopyOfTargetCreature*`,
-  `MakeTargetCopyOfTargetCreatureUntilNextTurnEffect`, `CopyPermanentOnEnterEffect`) → L1; control
+  `CopyPermanentOnEnterEffect`) → L1; control
   (`GainControlOfTargetEffect`, `ControlEnchantedCreatureEffect`,
   `GainControlOfEnchantedTargetEffect`, `GainControlOfTargetAuraEffect`,
   `GainControlOfAuraAttachedPermanentEffect`,

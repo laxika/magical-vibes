@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.d.Demystify;
+import com.github.laxika.magicalvibes.cards.g.GlimpseTheUnthinkablePlaytest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MetamorphicAlteration.class, GrizzlyBears.class, HillGiant.class, AirElemental.class, Demystify.class})
+@CardUsed({MetamorphicAlteration.class, GlimpseTheUnthinkablePlaytest.class, GrizzlyBears.class, HillGiant.class, AirElemental.class, Demystify.class})
 class MetamorphicAlterationTest extends BaseCardTest {
 
     @Test
@@ -36,6 +37,24 @@ class MetamorphicAlterationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+    }
+
+    @Test
+    @DisplayName("A creature that can't be chosen is not offered as the creature to copy")
+    void creatureThatCantBeChosenIsNotOffered() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent giant = addCreatureReady(player1, new HillGiant());
+        Permanent glimpse = addCreatureReady(player2, new GlimpseTheUnthinkablePlaytest());
+        harness.setHand(player1, List.of(new MetamorphicAlteration()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .contains(bears.getId(), giant.getId())
+                .doesNotContain(glimpse.getId());
     }
 
     @Test

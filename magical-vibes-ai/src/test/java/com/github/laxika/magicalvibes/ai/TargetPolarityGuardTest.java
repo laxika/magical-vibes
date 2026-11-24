@@ -31,7 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetAttackingCreatureBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureBlockableOnlyByFilterThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSubjectEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -399,7 +399,7 @@ class TargetPolarityGuardTest {
         assertThat(classifier.classify(gd, new MakeCreatureBlockableOnlyByFilterThisTurnEffect(
                 new com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate(CardSubtype.WALL),
                 "Walls"), aiPlayerId)).isEqualTo(TargetPolarity.BENEFICIAL);
-        assertThat(classifier.classify(gd, new MakeTargetCopyOfTargetPermanentEffect(), aiPlayerId))
+        assertThat(classifier.classify(gd, BecomeCopyOfSubjectEffect.of(Subjects.target(1)).by(Subjects.target(0)), aiPlayerId))
                 .isEqualTo(TargetPolarity.NEUTRAL);
     }
 

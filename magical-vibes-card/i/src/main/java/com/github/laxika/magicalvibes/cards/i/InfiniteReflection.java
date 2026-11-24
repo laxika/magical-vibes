@@ -2,12 +2,18 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSubjectEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.OtherNontokenCreaturesBecomeCopyOfEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "61")
 @CardRegistration(set = "C14", collectorNumber = "114")
@@ -22,7 +28,11 @@ public class InfiniteReflection extends Card {
                 // When this Aura enters attached to a creature, each other nontoken creature you
                 // control becomes a copy of that creature.
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new OtherNontokenCreaturesBecomeCopyOfEnchantedCreatureEffect())
+                        BecomeCopyOfSubjectEffect.of(Subjects.attachedAtTrigger())
+                                .by(Subjects.except(Subjects.controlledBy(Subjects.you(),
+                                        new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                                new PermanentNotPredicate(new PermanentIsTokenPredicate())))),
+                                        Subjects.attachedAtTrigger())))
                 // Nontoken creatures you control enter as a copy of enchanted creature.
                 .addStaticEffect(new CreaturesEnterAsCopyOfSourceEffect(true, true));
     }

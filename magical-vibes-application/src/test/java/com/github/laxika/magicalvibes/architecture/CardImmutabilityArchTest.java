@@ -126,7 +126,6 @@ class CardImmutabilityArchTest {
             "DamageSupport", // effective-type snapshot of a damaged permanent on a fresh runtime copy
             "FlipCoinOnEnterEffectHandler", // as-enters P/T and keywords on a fresh runtime copy
             "MayCastCommanderFromCommandZoneWithoutPayingManaCostHandler", // waived mana cost on a fresh payment copy
-            "BecomeCopyOfTopCreatureCardUntilEndOfTurnEffectHandler", // adds keywords to the fresh clone-copy card installed by PermanentCopierService
             "BronzeTabletAnteExchangeEffectHandler", // changes owner on a fresh runtime copy of the exiled card
             "CreateEmblemEffectHandler", // assembles and freezes the fresh emblem source card
             "EachOpponentSacrificesNontokenCreatureConjuresDuplicatesEffectHandler", // stamps owner on fresh conjured copies

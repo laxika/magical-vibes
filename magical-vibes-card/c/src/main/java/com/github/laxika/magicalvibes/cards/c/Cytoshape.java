@@ -3,7 +3,10 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.effect.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSubjectEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -23,7 +26,10 @@ public class Cytoshape extends Card {
 
     public Cytoshape() {
         target(TargetFilters.creature())
-                .addSpellEffect(new MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect(
-                                NONLEGENDARY_CREATURE));
+                .addSpellEffect(ChoosePermanentsEffect.exactly(1,
+                        Subjects.controlledBy(Subjects.eachPlayer(), NONLEGENDARY_CREATURE),
+                        "a nonlegendary creature to copy"))
+                .addSpellEffect(BecomeCopyOfSubjectEffect.of(Subjects.thisWay(StepKind.CHOOSE))
+                        .by(Subjects.target()).untilEndOfTurn());
     }
 }
