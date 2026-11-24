@@ -331,6 +331,13 @@ public class TargetPolarityClassifier {
             return TargetPolarity.HARMFUL_REMOVAL;
         }
 
+        // A wipe that reads the target's power as a threshold and spares the target itself (Fell the Mighty, Mandate of
+        // Abaddon) aims at no board.
+        if (effect instanceof com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect wipe
+                && wipe.referencedTarget() != null) {
+            return TargetPolarity.NEUTRAL;
+        }
+
         // "Target creature's controller sacrifices it" (Mercy Killing, Sarkhan the Mad, Arcum Dagsson): an edict aimed at
         // the target, which leaves the battlefield. "That player sacrifices one of them" after a choice among the targets
         // (Incriminate, Barrin's Spite, Retribution) is one too.
@@ -855,9 +862,6 @@ public class TargetPolarityClassifier {
             entry("ChooseOneForTargetPermanentEffect", TargetPolarity.NEUTRAL),
             entry("CreateTokenCopyAndLinkToSourceEffect", TargetPolarity.NEUTRAL),
             entry("RegisterMysticReflectionEffect", TargetPolarity.NEUTRAL),
-            // Fell the Mighty uses the target's power as a threshold and spares the target itself.
-            entry("DestroyAllCreaturesWithPowerGreaterThanTargetEffect", TargetPolarity.NEUTRAL),
-            entry("DestroyAllCreaturesWithPowerLessThanTargetEffect", TargetPolarity.NEUTRAL),
             entry("EachControlledPermanentBecomesCopyOfTargetNonAuraPermanentEffect", TargetPolarity.NEUTRAL),
             entry("EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("EachControlledLandOfChosenNonbasicTypeBecomesCopyOfTargetCreatureUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),

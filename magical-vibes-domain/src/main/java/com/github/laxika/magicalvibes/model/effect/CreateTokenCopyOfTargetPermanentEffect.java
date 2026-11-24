@@ -29,6 +29,8 @@ import java.util.UUID;
  *   <li>{@code named(id)} ({@link #ofNamed}): one given permanent (the creature a token-creation replacement copies
  *       instead).</li>
  * </ul>
+ * <li>{@code departedThisWay(kind)}: "for each artifact destroyed this way, create a token that's a copy of it" (Red
+ *       Sun's Twilight), each copied as it last existed on the battlefield.</li>
  * Only {@code target()} targets. A non-target permanent that has left the battlefield is copied as it last existed
  * there (CR 608.2h, 111.12). The token copies all copiable characteristics per CR 707.2.
  *
@@ -90,11 +92,13 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 && !(subject instanceof PermanentSubject.Attached)
                 && !(subject instanceof PermanentSubject.Named)
                 && !(subject instanceof PermanentSubject.ThisWay)
+                && !(subject instanceof PermanentSubject.DepartedThisWay)
                 && !(subject instanceof PermanentSubject.ControlledBy)
                 && !(subject instanceof PermanentSubject.Returned)
                 && !(subject instanceof PermanentSubject.Except)) {
             throw new IllegalArgumentException("A token copy copies target(), triggering(), triggeringAll(), attached() "
-                    + "named(id), thisWay(kind), controlledBy(players, filter), returned() or except(...): " + subject);
+                    + "named(id), thisWay(kind), departedThisWay(kind), controlledBy(players, filter), returned() or "
+                    + "except(...): " + subject);
         }
         if (animateIfNotCreature != null
                 && (!(animateIfNotCreature.power() instanceof Fixed)

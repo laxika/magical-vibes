@@ -26,14 +26,24 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                                            wipe leaves ("destroy all <em>other</em> creatures" after creating
  *                                            tokens, Martial Coup; "destroy the rest" after a choice, Duneblast), or
  *                                            {@code null}
+ * @param referencedTarget                    the target a filter amount reads but the wipe doesn't destroy for being
+ *                                            it ("power greater than target creature's power", Fell the Mighty), or
+ *                                            {@code null}; the spell declares it, and is countered if it is illegal
+ *                                            (CR 608.2b)
  */
 public record DestroyAllPermanentsEffect(
         PermanentPredicate filter,
         boolean cannotBeRegenerated,
         EachPermanentScope scope,
         CardEffect thenEffect,
-        PermanentSubject spared
+        PermanentSubject spared,
+        TargetSpec referencedTarget
 ) implements BoardWipeEffect {
+
+    public DestroyAllPermanentsEffect(PermanentPredicate filter, boolean cannotBeRegenerated, EachPermanentScope scope,
+                                      CardEffect thenEffect, PermanentSubject spared) {
+        this(filter, cannotBeRegenerated, scope, thenEffect, spared, null);
+    }
 
     public DestroyAllPermanentsEffect(PermanentPredicate filter) {
         this(filter, false, EachPermanentScope.ALL_PLAYERS, null, null);
@@ -67,6 +77,16 @@ public record DestroyAllPermanentsEffect(
         return new DestroyAllPermanentsEffect(filter, false, EachPermanentScope.ALL_PLAYERS, null, spared);
     }
 
+    /**
+     * "Destroy all creatures with power greater than target creature's power": the wipe over {@code filter}, whose
+     * amounts ({@code PermanentPowerAtLeastAmountPredicate} / {@code PermanentPowerAtMostAmountPredicate} over
+     * {@code TargetPower}) read the target declared by {@code target}.
+     */
+    public static DestroyAllPermanentsEffect readingTarget(PermanentPredicate filter, TargetPredicate target) {
+        return new DestroyAllPermanentsEffect(filter, false, EachPermanentScope.ALL_PLAYERS, null, null,
+                TargetSpec.harmful(target));
+    }
+
     /** Destroy-all always sweeps the board. */
     @Override
     public boolean sweepsBoard() {
@@ -82,8 +102,9 @@ public record DestroyAllPermanentsEffect(
      */
     @Override
     public TargetSpec targetSpec() {
-        return scope == EachPermanentScope.TARGET_PLAYER
-                ? TargetSpec.harmful(TargetPredicates.player())
-                : TargetSpec.NONE;
+        if (scope == EachPermanentScope.TARGET_PLAYER) {
+            return TargetSpec.harmful(TargetPredicates.player());
+        }
+        return referencedTarget != null ? referencedTarget : TargetSpec.NONE;
     }
 }

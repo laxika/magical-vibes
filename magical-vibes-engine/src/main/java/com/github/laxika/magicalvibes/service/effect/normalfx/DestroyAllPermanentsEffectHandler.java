@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
@@ -48,6 +49,7 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final GameOutcomeService gameOutcomeService;
     private final SubjectResolutionService subjectResolutionService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -72,7 +74,11 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
                 // X paid when the spell was cast (CR 601.2b).
                 .withXValue(entry.getXValue());
         // "With that spell's mana value" (Celestial Kirin) reads the triggering spell as the ability resolves.
-        PermanentPredicate filter = AmountEvaluationService.bindTriggeringSpellManaValue(gameData, e.filter(), entry);
+        // "Power greater than target creature's power", "power at least the chosen number": the amount is read once,
+        // as the wipe resolves (CR 608.2h).
+        PermanentPredicate filter = amountEvaluationService.bindAmounts(gameData,
+                AmountEvaluationService.bindTriggeringSpellManaValue(gameData, e.filter(), entry),
+                AmountContext.forStackEntry(entry, null));
 
         // "Destroy all other creatures" (Martial Coup), "destroy the rest" (Duneblast): spare what an earlier step of
         // this resolution created or chose.

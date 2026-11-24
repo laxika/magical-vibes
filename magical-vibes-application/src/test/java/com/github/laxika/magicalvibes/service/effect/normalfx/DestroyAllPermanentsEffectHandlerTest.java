@@ -105,9 +105,16 @@ class DestroyAllPermanentsEffectHandlerTest {
         ReflectionTestUtils.setField(destructionSupport, "departureService",
                 new DepartureService(gameQueryService, permanentRemovalService, graveyardService,
                         mock(GrantedTriggeredAbilitySupport.class), gameLogService));
+        com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService =
+                mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class);
+        lenient().when(amountEvaluationService.bindAmounts(org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.any(com.github.laxika.magicalvibes.model.filter.PermanentPredicate.class),
+                        org.mockito.ArgumentMatchers.any()))
+                .thenAnswer(invocation -> invocation.getArgument(1));
         destroyAllPermanentsHandler = new DestroyAllPermanentsEffectHandler(destructionSupport,
                 predicateEvaluationService, effectHandlerRegistry, gameOutcomeService,
-                mock(com.github.laxika.magicalvibes.service.effect.SubjectResolutionService.class));
+                mock(com.github.laxika.magicalvibes.service.effect.SubjectResolutionService.class),
+                amountEvaluationService);
 
     }
 

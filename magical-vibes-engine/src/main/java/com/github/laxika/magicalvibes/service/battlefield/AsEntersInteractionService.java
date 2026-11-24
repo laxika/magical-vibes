@@ -39,8 +39,6 @@ import com.github.laxika.magicalvibes.model.effect.NumberChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfLifeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfCreaturesSetPowerToughnessOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsSetPowerToughnessToCountOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsAsEntersForCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromChosenPermanentsThenEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.TurnOtherNontokenCreaturesFaceDownOnEnterEffect;
@@ -656,61 +654,9 @@ public class AsEntersInteractionService {
             // No other creatures — devours nothing; ETB triggers proceed with 0 devoured creatures.
         }
 
-        // "As this creature enters, sacrifice any number of creatures. This creature's power becomes
-        // their total power and its toughness their total toughness" (CR 614.1c, Dracoplasm).
-        boolean needsSacrificeForPowerToughness = card.getStaticEffects().stream()
-                .anyMatch(e -> e instanceof SacrificeAnyNumberOfCreaturesSetPowerToughnessOnEnterEffect);
-        if (needsSacrificeForPowerToughness) {
-            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-            Permanent justEntered = bf.get(bf.size() - 1);
-            List<UUID> sacrificeable = bf.stream()
-                    .filter(p -> p != justEntered && gameQueryService.isCreature(gameData, p))
-                    .filter(p -> !gameQueryService.cantBeChosenToSacrifice(gameData, p))
-                    .map(Permanent::getId)
-                    .toList();
-            if (!sacrificeable.isEmpty()) {
-                playerInputService.beginMultiPermanentChoice(gameData, controllerId,
-                        new ArrayList<>(sacrificeable), sacrificeable.size(),
-                        new MultiPermanentChoiceContext.SacrificeCreaturesSetEnteringPowerToughness(
-                                justEntered.getId(), controllerId, card, targetId, wasCastFromHand, etbMode, kicked),
-                        card.getName() + " — sacrifice any number of creatures.");
-                return;
-            }
-            // No other creatures — nothing is sacrificed; the creature enters as a 0/0.
-        }
-
-        SacrificeAnyNumberOfPermanentsSetPowerToughnessToCountOnEnterEffect sacrificeForPowerToughness =
-                card.getStaticEffects().stream()
-                        .filter(e -> e instanceof SacrificeAnyNumberOfPermanentsSetPowerToughnessToCountOnEnterEffect)
-                        .map(SacrificeAnyNumberOfPermanentsSetPowerToughnessToCountOnEnterEffect.class::cast)
-                        .findFirst().orElse(null);
-        if (sacrificeForPowerToughness != null) {
-            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-            Permanent justEntered = bf.get(bf.size() - 1);
-            FilterContext filterContext = FilterContext.of(gameData)
-                    .withSourceCardId(card.getId())
-                    .withSourceControllerId(controllerId);
-            List<UUID> sacrificeable = bf.stream()
-                    .filter(p -> p != justEntered)
-                    .filter(p -> predicateEvaluationService.matchesPermanentPredicate(
-                            p, sacrificeForPowerToughness.filter(), filterContext))
-                    .filter(p -> !gameQueryService.cantBeChosenToSacrifice(gameData, p))
-                    .map(Permanent::getId)
-                    .toList();
-            if (!sacrificeable.isEmpty()) {
-                playerInputService.beginMultiPermanentChoice(gameData, controllerId,
-                        new ArrayList<>(sacrificeable), sacrificeable.size(),
-                        new MultiPermanentChoiceContext.SacrificePermanentsSetEnteringPowerToughness(
-                                justEntered.getId(), sacrificeForPowerToughness.filter(), controllerId, card,
-                                targetId, wasCastFromHand, etbMode, kicked),
-                        card.getName() + " — sacrifice any number of permanents.");
-                return;
-            }
-        }
-
-        // "As this creature enters, sacrifice any number of permanents. It enters with that many
-        // +1/+1 counters on it" (CR 614.1c, Shimatsu the Bloodcloaked). Resolved before ETB triggers;
-        // the entering permanent itself isn't offered.
+        // "As this creature enters, sacrifice any number of [permanents]" and what that gives it: counters
+        // (Shimatsu the Bloodcloaked), the total P/T (Dracoplasm) or P/T equal to the count (Wood Elemental)
+        // (CR 614.1c). Resolved before ETB triggers; the entering permanent itself isn't offered.
         SacrificePermanentsAsEntersForCountersEffect sacForCounters =
                 card.getStaticEffects().stream()
                         .filter(e -> e instanceof SacrificePermanentsAsEntersForCountersEffect)
@@ -733,12 +679,11 @@ public class AsEntersInteractionService {
                 playerInputService.beginMultiPermanentChoice(gameData, controllerId,
                         new ArrayList<>(sacrificeable), sacrificeable.size(),
                         new MultiPermanentChoiceContext.SacrificeAsEntersForCounters(justEntered.getId(),
-                                sacForCounters.countersPerPermanent(), controllerId, card, targetId,
-                                wasCastFromHand, etbMode, kicked),
+                                sacForCounters, controllerId, card, targetId, wasCastFromHand, etbMode, kicked),
                         card.getName() + " — sacrifice any number of permanents.");
                 return;
             }
-            // Nothing to sacrifice — it enters with no counters; ETB triggers proceed.
+            // Nothing to sacrifice: it enters with no counters, or keeps its printed 0/0; ETB triggers proceed.
         }
 
         // "As this creature enters, pay any amount of life" (Minion of the Wastes). The payment is a

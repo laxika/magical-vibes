@@ -298,6 +298,10 @@ import com.github.laxika.magicalvibes.model.effect.StationPowerModifierEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostAmountPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostAmountPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastAmountPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
@@ -2830,6 +2834,28 @@ public class AmountEvaluationService {
             case CardAnyOfPredicate any -> new CardAnyOfPredicate(any.predicates().stream()
                     .map(part -> bindAmounts(gameData, part, ctx, asSpell)).toList());
             case CardNotPredicate not -> new CardNotPredicate(bindAmounts(gameData, not.predicate(), ctx, asSpell));
+            default -> filter;
+        };
+    }
+
+    /**
+     * {@code filter} with each "power at least / at most [amount]" ({@link PermanentPowerAtLeastAmountPredicate},
+     * {@link PermanentPowerAtMostAmountPredicate}) bound to its amount, evaluated once now in {@code ctx} (CR 608.2h):
+     * "power greater than target creature's power" (Fell the Mighty), "power greater than or equal to the chosen
+     * number" (Expel the Interlopers). A filter without them is returned as it is.
+     */
+    public PermanentPredicate bindAmounts(GameData gameData, PermanentPredicate filter, AmountContext ctx) {
+        return switch (filter) {
+            case null -> null;
+            case PermanentPowerAtLeastAmountPredicate atLeast ->
+                    new PermanentPowerAtLeastPredicate(evaluate(gameData, atLeast.amount(), ctx));
+            case PermanentPowerAtMostAmountPredicate atMost ->
+                    new PermanentPowerAtMostPredicate(evaluate(gameData, atMost.amount(), ctx));
+            case PermanentAllOfPredicate all -> new PermanentAllOfPredicate(all.predicates().stream()
+                    .map(part -> bindAmounts(gameData, part, ctx)).toList());
+            case PermanentAnyOfPredicate any -> new PermanentAnyOfPredicate(any.predicates().stream()
+                    .map(part -> bindAmounts(gameData, part, ctx)).toList());
+            case PermanentNotPredicate not -> new PermanentNotPredicate(bindAmounts(gameData, not.predicate(), ctx));
             default -> filter;
         };
     }

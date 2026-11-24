@@ -235,6 +235,8 @@ public sealed interface PermanentPredicate permits
         PermanentPowerAtMostSourceCountersPredicate,
         PermanentPowerAtMostSourcePowerPredicate,
         PermanentPowerAtMostXPredicate,
+        PermanentPowerAtLeastAmountPredicate,
+        PermanentPowerAtMostAmountPredicate,
         PermanentPowerAtMostTriggeringPermanentPowerPredicate,
         PermanentPowerGreaterThanBasePowerPredicate,
         PermanentPowerDifferentFromBasePowerPredicate,

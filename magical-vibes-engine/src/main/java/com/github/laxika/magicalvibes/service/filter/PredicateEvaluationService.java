@@ -2721,6 +2721,8 @@ public class PredicateEvaluationService {
             case PermanentIsTargetCardPredicate ignored -> filterContext.targetCardId() != null
                     && permanent.getOriginalCard().getId().equals(filterContext.targetCardId());
             case PermanentPowerLessThanTargetPredicate ignored -> false;
+            case com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastAmountPredicate ignored -> false;
+            case com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostAmountPredicate ignored -> false;
             case PermanentIsSpecificPermanentPredicate specific ->
                     specific.permanentId() != null && specific.permanentId().equals(permanent.getId());
             case PermanentControlledBySourceControllerPredicate ignored -> {

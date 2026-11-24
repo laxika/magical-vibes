@@ -69,6 +69,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsAsEntersForCountersEffect;
 
 /**
  * Handles multi-permanent choice inputs where the player selects
@@ -605,16 +606,17 @@ public class MultiPermanentChoiceHandlerService {
                 throw new IllegalStateException("A selected permanent no longer exists");
             }
         }
-        if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsSetEnteringPowerToughness enterCtx) {
+        if (context instanceof MultiPermanentChoiceContext.SacrificeAsEntersForCounters enterCtx) {
             FilterContext filterContext = FilterContext.of(gameData)
                     .withSourceCardId(enterCtx.card().getId())
                     .withSourceControllerId(enterCtx.controllerId());
             if (permanentIds.stream().anyMatch(id -> {
                 Permanent permanent = gameQueryService.findPermanentById(gameData, id);
                 return permanent == null
+                        || id.equals(enterCtx.enteringPermanentId())
                         || !playerId.equals(gameQueryService.findPermanentController(gameData, id))
                         || !predicateEvaluationService.matchesPermanentPredicate(
-                        permanent, enterCtx.filter(), filterContext);
+                        permanent, enterCtx.effect().filter(), filterContext);
             })) {
                 throw new IllegalStateException("A selected permanent is no longer eligible to sacrifice");
             }
@@ -1680,8 +1682,6 @@ public class MultiPermanentChoiceHandlerService {
      * {@link MultiPermanentChoiceContext.EachPlayerChoosesCreaturesWithTotalPowerAtMostChoice} keeps the kept
      * creatures so far in the immutable context and only prompts the next player before it sacrifices the rest. The as-enters sacrifices
      * ({@link MultiPermanentChoiceContext.DevourSacrifice},
-     * {@link MultiPermanentChoiceContext.SacrificeCreaturesSetEnteringPowerToughness},
-     * {@link MultiPermanentChoiceContext.SacrificePermanentsSetEnteringPowerToughness},
      * {@link MultiPermanentChoiceContext.SacrificeAsEntersForCounters} and
      * {@link MultiPermanentChoiceContext.SacrificePermanentsToEnter}) change the entering permanent and go on
      * with its entry only after their batch.
@@ -1721,8 +1721,6 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.SacrificeCreaturesWithTotalPowerOrSacrificeSource
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesCreaturesWithTotalPowerAtMostChoice
                 || context instanceof MultiPermanentChoiceContext.DevourSacrifice
-                || context instanceof MultiPermanentChoiceContext.SacrificeCreaturesSetEnteringPowerToughness
-                || context instanceof MultiPermanentChoiceContext.SacrificePermanentsSetEnteringPowerToughness
                 || context instanceof MultiPermanentChoiceContext.SacrificeAsEntersForCounters
                 || context instanceof MultiPermanentChoiceContext.SacrificePermanentsToEnter;
     }
@@ -1917,14 +1915,6 @@ public class MultiPermanentChoiceHandlerService {
             }
             case MultiPermanentChoiceContext.DevourSacrifice ctx -> {
                 handleDevourSacrifice(gameData, playerId, permanentIds, ctx);
-                return;
-            }
-            case MultiPermanentChoiceContext.SacrificeCreaturesSetEnteringPowerToughness ctx -> {
-                handleSacrificeCreaturesSetEnteringPowerToughness(gameData, playerId, permanentIds, ctx);
-                return;
-            }
-            case MultiPermanentChoiceContext.SacrificePermanentsSetEnteringPowerToughness ctx -> {
-                handleSacrificePermanentsSetEnteringPowerToughness(gameData, playerId, permanentIds, ctx);
                 return;
             }
             case MultiPermanentChoiceContext.SacrificeAsEntersForCounters ctx -> {
@@ -2718,106 +2708,79 @@ public class MultiPermanentChoiceHandlerService {
     }
 
     /**
-     * Dracoplasm: sacrifice the chosen creatures and set the entering permanent's base power and
-     * toughness to their totals, read from their last known battlefield values before they leave.
-     * The stamp is a durable layer-7b base-P/T override, so counters and boosts apply on top of it.
+     * "As this permanent enters, sacrifice any number of [permanents]": the chosen permanents are sacrificed together,
+     * then the entering permanent gets the payoff from what was actually sacrificed, the creatures' power and toughness
+     * read as they last existed on the battlefield (CR 608.2h), before its ETB triggers proceed.
      */
-    private void handleSacrificeCreaturesSetEnteringPowerToughness(
-            GameData gameData, UUID playerId, List<UUID> permanentIds,
-            MultiPermanentChoiceContext.SacrificeCreaturesSetEnteringPowerToughness context) {
-        Permanent entering = gameQueryService.findPermanentById(gameData, context.enteringPermanentId());
-
-        int totalPower = 0;
-        int totalToughness = 0;
-        List<Permanent> sacrificed = new ArrayList<>();
-        for (UUID permId : permanentIds) {
-            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-            if (perm != null) {
-                totalPower += gameQueryService.getEffectivePower(gameData, perm);
-                totalToughness += gameQueryService.getEffectiveToughness(gameData, perm);
-                sacrificed.add(perm);
-            }
-        }
-        destructionSupport.performSimultaneousSacrifice(gameData,
-                sacrificed.stream().map(Permanent::getId).toList());
-        permanentRemovalService.removeOrphanedAuras(gameData);
-
-        if (entering != null) {
-            gameData.addEffectOnPermanent(context.card().getName(), entering.getId(), context.controllerId(),
-                    new SetBasePowerToughnessEffect(totalPower, totalToughness, Subjects.target(), Duration.PERMANENT),
-                    entering.getId(), Duration.PERMANENT);
-            gameLogService.append(gameData, GameLog.cardThen(context.card(),
-                    " becomes " + totalPower + "/" + totalToughness + "."));
-        }
-
-        battlefieldEntryService.processCreatureETBEffects(gameData, context.controllerId(), context.card(),
-                context.targetId(), context.wasCastFromHand(), context.etbMode(), context.kicked());
-
-        if (!gameData.interaction.isAwaitingInput()) {
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-        }
-    }
-
-    private void handleSacrificePermanentsSetEnteringPowerToughness(
-            GameData gameData, UUID playerId, List<UUID> permanentIds,
-            MultiPermanentChoiceContext.SacrificePermanentsSetEnteringPowerToughness context) {
-        Permanent entering = gameQueryService.findPermanentById(gameData, context.enteringPermanentId());
-
-        int sacrificed = sacrificeTogetherCounting(gameData, playerId, permanentIds);
-        permanentRemovalService.removeOrphanedAuras(gameData);
-
-        if (entering != null) {
-            // Oracle: "power and toughness are each equal to the number of Forests sacrificed" is a
-            // characteristic-defining ability (CR 613.4a, layer 7a), so any layer 7b setter wins;
-            // timestamp 0 orders this entry before every real 7b effect.
-            gameData.putFloatingEffect(FloatingContinuousEffect.onPermanent(context.card().getName(), entering.getId(),
-                    context.controllerId(), new SetBasePowerToughnessEffect(sacrificed, sacrificed, Subjects.target(),
-                            Duration.PERMANENT), entering.getId(), Duration.PERMANENT));
-            gameLogService.append(gameData, GameLog.cardThen(context.card(),
-                    " becomes " + sacrificed + "/" + sacrificed + "."));
-        }
-
-        battlefieldEntryService.processCreatureETBEffects(gameData, context.controllerId(), context.card(),
-                context.targetId(), context.wasCastFromHand(), context.etbMode(), context.kicked());
-
-        if (!gameData.interaction.isAwaitingInput()) {
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-        }
-    }
-
     private void handleSacrificeAsEntersForCounters(GameData gameData, UUID playerId, List<UUID> permanentIds,
                                                     MultiPermanentChoiceContext.SacrificeAsEntersForCounters context) {
         Permanent entering = gameQueryService.findPermanentById(gameData, context.enteringPermanentId());
+        SacrificePermanentsAsEntersForCountersEffect effect = context.effect();
 
-        int sacrificed = (int) permanentIds.stream()
-                .map(permId -> gameQueryService.findPermanentById(gameData, permId))
+        List<Permanent> chosen = permanentIds.stream()
+                .map(id -> gameQueryService.findPermanentById(gameData, id))
                 .filter(java.util.Objects::nonNull)
-                .filter(perm -> !gameQueryService.cantBeSacrificed(gameData, perm))
-                .count();
-        destructionSupport.performSimultaneousSacrifice(gameData, permanentIds);
+                .toList();
+        List<DepartureResult> sacrificed = destructionSupport.sacrificeTogether(gameData, chosen, playerId).results()
+                .stream()
+                .filter(DepartureResult::sacrificed)
+                .toList();
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        if (entering != null && sacrificed > 0
-                && !gameQueryService.cantHaveCounters(gameData, entering)) {
-            int added = context.countersPerPermanent() * sacrificed;
-            added = gameQueryService.doublePlusOnePlusOneCounters(gameData, entering, playerId, added);
-            entering.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
-                    entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + added);
-            permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
-                    gameData, entering, playerId);
-            permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
-                    gameData, entering, context.controllerId(), added);
-            gameLogService.append(gameData, GameLog.cardThen(context.card(),
-                    " enters with " + added + " +1/+1 counter" + (added == 1 ? "" : "s") + "."));
+        if (entering != null) {
+            switch (effect.payoff()) {
+                case COUNTERS -> putAsEntersCounters(gameData, playerId, context, entering,
+                        effect.countersPerPermanent() * sacrificed.size());
+                case BASE_POWER_TOUGHNESS_TOTAL -> {
+                    int totalPower = sacrificed.stream()
+                            .mapToInt(result -> result.lastKnownPower() == null ? 0 : result.lastKnownPower())
+                            .sum();
+                    int totalToughness = sacrificed.stream()
+                            .mapToInt(result -> result.lastKnownToughness() == null ? 0 : result.lastKnownToughness())
+                            .sum();
+                    gameData.addEffectOnPermanent(context.card().getName(), entering.getId(), context.controllerId(),
+                            new SetBasePowerToughnessEffect(totalPower, totalToughness, Subjects.target(),
+                                    Duration.PERMANENT),
+                            entering.getId(), Duration.PERMANENT);
+                    gameLogService.append(gameData, GameLog.cardThen(context.card(),
+                            " becomes " + totalPower + "/" + totalToughness + "."));
+                }
+                case POWER_TOUGHNESS_EQUAL_TO_COUNT -> {
+                    // A characteristic-defining ability (CR 604.3, layer 7a), so any layer 7b setter wins;
+                    // timestamp 0 orders this entry before every real 7b effect.
+                    int count = sacrificed.size();
+                    gameData.putFloatingEffect(FloatingContinuousEffect.onPermanent(context.card().getName(),
+                            entering.getId(), context.controllerId(), new SetBasePowerToughnessEffect(count, count,
+                                    Subjects.target(), Duration.PERMANENT), entering.getId(), Duration.PERMANENT));
+                    gameLogService.append(gameData, GameLog.cardThen(context.card(),
+                            " becomes " + count + "/" + count + "."));
+                }
+            }
         }
 
-        // Resume the entry: run ETB triggers now that the counters are set.
+        // Resume the entry: run ETB triggers now that the counters or P/T are set.
         battlefieldEntryService.processCreatureETBEffects(gameData, context.controllerId(), context.card(),
                 context.targetId(), context.wasCastFromHand(), context.etbMode(), context.kicked());
 
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         }
+    }
+
+    private void putAsEntersCounters(GameData gameData, UUID playerId,
+                                     MultiPermanentChoiceContext.SacrificeAsEntersForCounters context,
+                                     Permanent entering, int counters) {
+        if (counters <= 0 || gameQueryService.cantHaveCounters(gameData, entering)) {
+            return;
+        }
+        int added = gameQueryService.doublePlusOnePlusOneCounters(gameData, entering, playerId, counters);
+        entering.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + added);
+        permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(gameData, entering, playerId);
+        permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
+                gameData, entering, context.controllerId(), added);
+        gameLogService.append(gameData, GameLog.cardThen(context.card(),
+                " enters with " + added + " +1/+1 counter" + (added == 1 ? "" : "s") + "."));
     }
 
     private void handleRemoveAllCountersAsEntersForCounters(

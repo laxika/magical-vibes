@@ -890,34 +890,14 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
-     * Dracoplasm: the entering creature's controller chose which of their other creatures to
-     * sacrifice as it enters (CR 614.1c). The chosen creatures are sacrificed, the entering
-     * permanent's base power and toughness are set to their total power and total toughness, then
-     * the creature's ETB triggers proceed. Carries the entry context needed to resume
+     * "As this permanent enters, sacrifice any number of [permanents]" ({@code effect}): the entering permanent's
+     * controller chose which of their matching permanents to sacrifice as it enters. The chosen permanents are
+     * sacrificed together, the entering permanent gets the effect's payoff (counters, total P/T or P/T equal to the
+     * count), then its ETB triggers proceed. Carries the entry context needed to resume
      * {@code processCreatureETBEffects}.
      */
-    record SacrificeCreaturesSetEnteringPowerToughness(UUID enteringPermanentId, UUID controllerId, Card card,
-                                                       UUID targetId, boolean wasCastFromHand, int etbMode,
-                                                       boolean kicked)
-            implements MultiPermanentChoiceContext {
-    }
-
-    /** The controller chose matching permanents to sacrifice as the entering permanent's P/T was set to their count. */
-    record SacrificePermanentsSetEnteringPowerToughness(UUID enteringPermanentId, PermanentPredicate filter,
-                                                        UUID controllerId, Card card, UUID targetId,
-                                                        boolean wasCastFromHand, int etbMode, boolean kicked)
-            implements MultiPermanentChoiceContext {
-    }
-
-    /**
-     * "As this permanent enters, sacrifice any number of permanents. It enters with that many +1/+1
-     * counters on it" (Shimatsu the Bloodcloaked): the entering permanent's controller chose which of
-     * their permanents to sacrifice as it enters. The chosen permanents are sacrificed, the entering
-     * permanent receives {@code countersPerPermanent} times that many +1/+1 counters, then its ETB
-     * triggers proceed. Carries the entry context needed to resume
-     * {@code processCreatureETBEffects}.
-     */
-    record SacrificeAsEntersForCounters(UUID enteringPermanentId, int countersPerPermanent,
+    record SacrificeAsEntersForCounters(UUID enteringPermanentId,
+                                        com.github.laxika.magicalvibes.model.effect.SacrificePermanentsAsEntersForCountersEffect effect,
                                         UUID controllerId, Card card, UUID targetId,
                                         boolean wasCastFromHand, int etbMode, boolean kicked)
             implements MultiPermanentChoiceContext {

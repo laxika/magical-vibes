@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c (each in Findings; the fold queue marks its rows). Fold runs 41 and 39 are reported and wait to merge; 40, 42 and 43 are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                          |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41 (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 42, 43, 37; merge queue 39, 40. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                           |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,293 / 2,659 (after fold run 35c) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,287 / 2,655 (after fold run 41) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,200 rows over 4,507 classes (after fold run 35c). Latest verdict per class: `step-9` 382, unique 1,176, absorbed 1,088, split 655, blocked-other 524, survivor 379, blocked-step-model 140, blocked-player-loop 96, dead 67. Waiting: 382 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,210 rows over 4,508 classes (after fold run 41). Latest verdict per class: `step-9` 375, unique 1,176, absorbed 1,092, split 657, blocked-other 525, survivor 380, blocked-step-model 140, blocked-player-loop 96, dead 67. Waiting: 375 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -947,6 +947,11 @@ Delayed and global triggers:
 
 - `PlayerHasProtectionEffect(Quality EACH_OPPONENT | CHOSEN_NAME)`: static "you have protection from [quality]", printed (protects its controller) or floated by `GrantStaticEffectToPlayerEffect` (fold run 35c).
 - `GameQueryService.playerProtectionFrom(gd, player, ProtectionSource(card, permanent, controllerId, colors))`: the one player-protection reader, giving the quality text or null. Used by targeting, Aura attachment and the `PlayerProtection` damage rule. It reads everything, players (owner when uncontrolled, CR 702.16k), colours, chosen card type and chosen name (fold run 35c).
+
+- `SacrificePermanentsAsEntersForCountersEffect.Payoff` (`COUNTERS`, `.basePowerToughnessEqualToTotalOfCreatures()`, `.powerToughnessEqualToNumberSacrificed(filter)`): every "as this enters, sacrifice any number of [permanents]", paid off from the sacrifice's `DepartureResult`s (fold run 41).
+- `PermanentPowerAtLeastAmountPredicate` / `PermanentPowerAtMostAmountPredicate(DynamicAmount)` + `AmountEvaluationService.bindAmounts(gd, PermanentPredicate, ctx)`: power compared with an amount fixed as the effect resolves, read by `DestroyAllPermanentsEffect` (fold run 41).
+- `DestroyAllPermanentsEffect.readingTarget(filter, TargetPredicate)` (`referencedTarget`): a wipe whose amount reads a target it doesn't destroy for being that target, AI NEUTRAL (Fell the Mighty, Mandate of Abaddon; fold run 41).
+- `CreateTokenCopyOfTargetPermanentEffect.withSubject(departedThisWay(kind))`: "for each [permanent] destroyed this way, create a token that's a copy of it", each copied as it last existed (Red Sun's Twilight; fold run 41).
 
 ### Blocked causes still open
 
@@ -4137,6 +4142,34 @@ Batch `player-prot` is done: 2 folded, 0 left. Ratchet 3,325 / 2,676 → 3,324 /
 - the chosen card type: Serra's Emissary's controller half;
 - players: the `ProtectionFromPlayersEffect` floats.
 - The reader already reads all of them, so these become parameter folds.
+
+### Step 9, fold run 41 (2026-11-24, parallel worktree)
+3 of 8 batches done, each complete. Ratchet 3,318 / 2,672 → 3,312 / 2,668. Ledger 10 rows: absorbed 4, split 2, survivor 3, blocked-other 1. 6 card files rewritten, Oracle text checked for all 6 and for Saw in Half; rulings read for Dracoplasm, Wood Elemental, Fell the Mighty, Mandate of Abaddon, Expel the Interlopers, Red Sun's Twilight and Saw in Half. CR 604.3, 608.2b, 608.2h, 613.1f, 613.4a, 613.4b, 614.1c and 707.9b checked.
+
+| Batch | Result |
+|---|---|
+| asenters-sac-any | 2 folded. `SacrificePermanentsAsEntersForCountersEffect` gains `Payoff`: `COUNTERS`, `BASE_POWER_TOUGHNESS_TOTAL` (Dracoplasm: last-known totals from the `DepartureResult`s of `sacrificeTogether`, layer 7b with the entry's timestamp) and `POWER_TOUGHNESS_EQUAL_TO_COUNT` (Wood Elemental: a CDA, layer 7a, timestamp 0). It now has one as-enters branch, one `MultiPermanentChoiceContext.SacrificeAsEntersForCounters(effect)` and one answer handler. Two contexts and two handler methods are gone. |
+| power-bound | 3 folded. New `PermanentPowerAtLeastAmountPredicate` / `PermanentPowerAtMostAmountPredicate(DynamicAmount)`, bound once as the wipe resolves (CR 608.2h) by the new `AmountEvaluationService.bindAmounts(gd, PermanentPredicate, ctx)`. `DestroyAllPermanentsEffect` gains `referencedTarget` and `.readingTarget(filter, target)`, because only an effect's `targetSpec` declares a single target (a target group with a non-targeting effect does not). Fell the Mighty and Mandate of Abaddon use `TargetPower(true)`, so a negative power isn't clamped. An illegal target counters the spell (CR 608.2b), as the rulings say. Expel the Interlopers is `ChooseNumberAtResolutionEffect(0, 10)` + `XValue`. |
+| departed-copies | 1 folded, 1 left. Red Sun's Twilight: `DestroyTargetPermanentEffect(allTargets(), artifact)` + `ConditionalEffect(SpellXAtLeast(5), CreateTokenCopyOfTargetPermanentEffect(true, true).withSubject(departedThisWay(DESTROY)))`. Each destroyed artifact is copied as it last existed. `target()` destroys only the first target. Saw in Half is blocked-other (see the ledger row). |
+| same-quality, topcard-look, facedown-look, may-reveal-hand, topcard-bf | not started (run length) |
+
+**Behaviour changes.** None observable. The as-enters answer check (controller, filter, not the entering permanent) now covers Shimatsu, Caprichrome, Devouring Hellion, Famished Worldsire, Feasting Hobbit and Dracoplasm. Dracoplasm sums only what was actually sacrificed. Red Sun's Twilight's destroy log is the survivor's.
+
+**Tests changed.** `DestroyAllPermanentsEffectHandlerTest`: constructor wiring only.
+
+**Seen, not changed.**
+- `CreateTokenCopyOfTargetPermanentEffectHandler.resolveEsixReplacement` counts only copy sources still on the battlefield. So copies of departed permanents (Red Sun's Twilight; the old handler was the same) never get Esix's first-token-creation offer. Fairly sure.
+- `ExileTargetPermanentAndCreateTokenCopyEffect` (Dedicated Dollmaker, Kaya, Nemesis Trap; blocked-other, "needs the exiled card's last-known copiable values") may now fold onto the copy survivor over `departedThisWay(EXILE)`. Unverified.
+
+**For the next run.**
+- `same-quality` (12 members) needs:
+- a `CardSharesCreatureTypeWithPermanentsPredicate(PermanentSubject)` bound in `bindCardSubjects` from live or `DepartureResult.lastKnownSubtypes`, used by Pyre of Heroes `paidAsCost()`, Call to the Kindred `attached()`, Conjurer's Mantle and Descendants' Fury;
+- its permanent twin for Endemic Plague's wipe, bound in `DestroyAllPermanentsEffectHandler` next to `bindAmounts`;
+- a card-subject name predicate for Infernal Tutor and Assembly Hall (`revealedThisWay()`);
+- a target declaration for Pack Hunt's search (the problem `readingTarget` solved for wipes);
+- Mimeofacture: `SearchTargetLibraryEffect` must bind its filter (its handler matches without game state);
+- Canoptek Wraith fits `CardSharesNameWithPermanentsPredicate(thisWay(CHOOSE))` as it is.
+- Then `topcard-look`, `facedown-look`, `may-reveal-hand`, `topcard-bf` (CR 701.20a/b, 708.5 checked).
 
 ## Prompt
 
