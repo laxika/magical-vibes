@@ -5,17 +5,20 @@ import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesMustAttackTargetPlayerUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackEffect;
-import com.github.laxika.magicalvibes.model.effect.OnlyChosenCreaturesCanAttackEffect;
+import com.github.laxika.magicalvibes.model.effect.OnlyMatchingCreaturesCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Puts the floating combat-structure effects (taunts, chosen attackers, skipped steps, "assigns no combat damage") in
@@ -70,14 +73,17 @@ public final class FloatingCombatRules {
 
     /** Only {@code chosen} can attack this turn, and they attack if able. */
     public static void chosenAttackers(GameData gd, UUID controllerId, UUID playerId, Set<UUID> chosen) {
+        OnlyMatchingCreaturesCanAttackThisCombatEffect onlyChosen = OnlyMatchingCreaturesCanAttackThisCombatEffect.only(chosen);
         gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, controllerId,
-                new OnlyChosenCreaturesCanAttackEffect(chosen), playerId, Duration.UNTIL_END_OF_TURN));
+                new MatchingCreaturesMustAttackEffect(onlyChosen.filter()), playerId, Duration.UNTIL_END_OF_TURN));
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, controllerId,
+                onlyChosen, playerId, Duration.UNTIL_END_OF_TURN));
     }
 
     /** The sets of creatures the chosen-attackers effects in force allow to attack. */
     public static List<Set<UUID>> chosenAttackers(GameData gd, UUID playerId) {
-        return gd.floatingEffectsOnPlayer(playerId, OnlyChosenCreaturesCanAttackEffect.class).stream()
-                .map(effect -> ((OnlyChosenCreaturesCanAttackEffect) effect.effect()).chosen())
+        return gd.floatingEffectsOnPlayer(playerId, OnlyMatchingCreaturesCanAttackThisCombatEffect.class).stream()
+                .map(effect -> chosenIds((OnlyMatchingCreaturesCanAttackThisCombatEffect) effect.effect()))
                 .toList();
     }
 
@@ -85,9 +91,15 @@ public final class FloatingCombatRules {
     public static List<Set<UUID>> scheduledChosenAttackers(GameData gd, UUID playerId) {
         return gd.scheduledFloatingEffects.stream()
                 .filter(effect -> playerId.equals(effect.affectedPlayerId())
-                        && effect.effect() instanceof OnlyChosenCreaturesCanAttackEffect)
-                .map(effect -> ((OnlyChosenCreaturesCanAttackEffect) effect.effect()).chosen())
+                        && effect.effect() instanceof OnlyMatchingCreaturesCanAttackThisCombatEffect)
+                .map(effect -> chosenIds((OnlyMatchingCreaturesCanAttackThisCombatEffect) effect.effect()))
                 .toList();
+    }
+
+    private static Set<UUID> chosenIds(OnlyMatchingCreaturesCanAttackThisCombatEffect only) {
+        return ((PermanentAnyOfPredicate) only.filter()).predicates().stream()
+                .map(predicate -> ((PermanentIsSpecificPermanentPredicate) predicate).permanentId())
+                .collect(Collectors.toSet());
     }
 
     /** {@code playerId} skips every {@code kind} step or phase this turn. */

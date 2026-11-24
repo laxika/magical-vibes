@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.combat.attack;
 import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
 
-import com.github.laxika.magicalvibes.model.effect.OnlyChosenCreaturesCanAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayForArtifactsOrCreaturesCantAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.AttackDirection;
@@ -30,8 +29,6 @@ import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackController
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessDefendingPlayerActedLastTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessSacrificeEffect;
-import com.github.laxika.magicalvibes.model.effect.CreaturesWithPowerGreaterThanAmountCantAttackEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanAttackAsThoughHasteEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadStatusEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
@@ -46,16 +43,11 @@ import com.github.laxika.magicalvibes.model.effect.RestrictAttacksToDirectionUnt
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.model.effect.OnlyLandCreaturesCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.OnlyMatchingCreaturesCanAttackThisCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.OnlySourceCreatureCanAttackThisCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.OnlyTargetCreaturesCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
-import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -90,27 +82,20 @@ public class AttackLegalityService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
-    private final AmountEvaluationService amountEvaluationService;
 
     /**
-     * Whether a floating restriction on which creatures can attack keeps {@code creature} from attacking: "during that
-     * combat" of an added combat phase only land creatures, only the restriction's source, only the chosen creatures or
-     * only matching creatures (the aggressive combat) can attack in it.
+     * Whether a floating "only matching creatures can attack" restriction in force keeps {@code creature} from attacking
+     * (CR 508.1c): "during that combat" of an added combat phase, the aggressive combat, or the chosen player's next turn
+     * (Oracle en-Vec). The filter is judged with the restriction's source permanent and controller as its context.
      */
     private boolean isExcludedFromThisCombat(GameData gameData, Permanent creature) {
-        for (FloatingContinuousEffect restriction : gameData.floatingEffectsOnPlayer(null,
-                OnlyLandCreaturesCanAttackThisCombatEffect.class, OnlySourceCreatureCanAttackThisCombatEffect.class,
-                OnlyTargetCreaturesCanAttackThisCombatEffect.class, OnlyMatchingCreaturesCanAttackThisCombatEffect.class)) {
-            boolean excluded = switch (restriction.effect()) {
-                case OnlyLandCreaturesCanAttackThisCombatEffect ignored -> !gameQueryService.isLand(gameData, creature);
-                case OnlySourceCreatureCanAttackThisCombatEffect ignored ->
-                        !creature.getId().equals(restriction.sourcePermanentId());
-                case OnlyTargetCreaturesCanAttackThisCombatEffect only -> !only.permanentIds().contains(creature.getId());
-                case OnlyMatchingCreaturesCanAttackThisCombatEffect only -> !predicateEvaluationService
-                        .matchesPermanentPredicate(creature, only.filter(), FilterContext.of(gameData));
-                default -> false;
-            };
-            if (excluded) {
+        for (FloatingContinuousEffect restriction
+                : gameData.floatingEffectsOfTypes(OnlyMatchingCreaturesCanAttackThisCombatEffect.class)) {
+            FilterContext context = FilterContext.of(gameData)
+                    .withSourceControllerId(restriction.controllerId())
+                    .withSourcePermanentId(restriction.sourcePermanentId());
+            if (!predicateEvaluationService.matchesPermanentPredicate(creature,
+                    ((OnlyMatchingCreaturesCanAttackThisCombatEffect) restriction.effect()).filter(), context)) {
                 return true;
             }
         }
@@ -136,10 +121,8 @@ public class AttackLegalityService {
         if (gameData.hasFloatingEffectOnPermanent(creature.getId(), CantAttackThisTurnEffect.class)) return false;
         if (gameQueryService.isLockedFromAttacking(gameData, creature.getId())) return false;
         if (gameQueryService.isPeaceTalksActive(gameData)) return false;
-        if (isOutsideChosenAttackers(gameData, creature)) return false;
         if (creature.isSummoningSick() && !gameQueryService.hasKeyword(gameData, creature, Keyword.HASTE)
-                && !gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCanAttackAsThoughHasteEffect.class)
-                && !canAttackAsThoughHasteFromOwnStatic(gameData, creature)) return false;
+                && !canAttackAsThoughHaste(gameData, creature)) return false;
         if (gameQueryService.hasKeyword(gameData, creature, Keyword.DEFENDER)
                 && !canAttackDespiteDefender(gameData, creature)
                 && !canAttackPlayersWhoAttackedControllerLastTurn(gameData, creature)) return false;
@@ -151,15 +134,22 @@ public class AttackLegalityService {
     }
 
     /**
-     * Chaos Lord: "can attack as though it had haste unless it entered this turn". The permission is
-     * printed on the creature itself, so it survives a change of control, but it is switched off for
-     * the turn the permanent entered the battlefield.
+     * A {@link CanAttackAsThoughHasteUnlessEnteredThisTurnEffect} lets the summoning-sick creature attack: its own
+     * (Chaos Lord: "can attack as though it had haste unless it entered this turn", printed on the creature, so it
+     * survives a change of control but is off the turn the permanent entered), or an attached Aura's rule for it
+     * (Instill Energy: "enchanted creature can attack as though it had haste").
      */
-    private boolean canAttackAsThoughHasteFromOwnStatic(GameData gameData, Permanent creature) {
-        if (gameQueryService.hasLostAllAbilities(gameData, creature)) return false;
-        boolean hasPermission = creature.getCard().getStaticEffects().stream()
-                .anyMatch(CanAttackAsThoughHasteUnlessEnteredThisTurnEffect.class::isInstance);
-        if (!hasPermission) return false;
+    private boolean canAttackAsThoughHaste(GameData gameData, Permanent creature) {
+        List<CanAttackAsThoughHasteUnlessEnteredThisTurnEffect> permissions = new ArrayList<>(gameQueryService
+                .attachedPermanentRestrictions(gameData, creature, CanAttackAsThoughHasteUnlessEnteredThisTurnEffect.class));
+        if (!gameQueryService.hasLostAllAbilities(gameData, creature)) {
+            creature.getCard().getStaticEffects().stream()
+                    .filter(CanAttackAsThoughHasteUnlessEnteredThisTurnEffect.class::isInstance)
+                    .map(CanAttackAsThoughHasteUnlessEnteredThisTurnEffect.class::cast)
+                    .forEach(permissions::add);
+        }
+        if (permissions.isEmpty()) return false;
+        if (permissions.stream().anyMatch(permission -> !permission.unlessEnteredThisTurn())) return true;
         return gameData.permanentsEnteredBattlefieldThisTurn.values().stream()
                 .flatMap(List::stream)
                 .noneMatch(card -> card.getId().equals(creature.getCard().getId()));
@@ -594,21 +584,6 @@ public class AttackLegalityService {
     }
 
     /**
-     * Attack restrictions that allow only a recorded set of creatures. An empty choice bars
-     * everyone, and creatures that entered after the choice are barred too. No entries means no
-     * restriction.
-     */
-    private boolean isOutsideChosenAttackers(GameData gameData, Permanent creature) {
-        for (FloatingContinuousEffect restriction
-                : gameData.floatingEffectsOfTypes(OnlyChosenCreaturesCanAttackEffect.class)) {
-            if (!((OnlyChosenCreaturesCanAttackEffect) restriction.effect()).chosen().contains(creature.getId())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
      * "Creatures target player controls can't attack this turn" (CR 611.2c): the restriction is on the player, and the
      * set's filter is judged against the player's current creatures, so it covers creatures that came under that player's control after it
      * resolved and no longer covers creatures that left.
@@ -633,13 +608,10 @@ public class AttackLegalityService {
             }
             for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof CreaturesCantAttackUnlessPredicateEffect restriction) {
-                    if (!predicateEvaluationService.matchesPermanentPredicate(gameData, creature, restriction.exemptionPredicate())) {
-                        restricted[0] = true;
-                    }
-                } else if (effect instanceof CreaturesWithPowerGreaterThanAmountCantAttackEffect restriction) {
-                    int threshold = amountEvaluationService.evaluate(gameData, restriction.amount(),
-                            AmountContext.forStaticEffect(permanent, playerId));
-                    if (gameQueryService.getEffectivePower(gameData, creature) > threshold) {
+                    FilterContext context = FilterContext.of(gameData)
+                            .withSourceControllerId(playerId)
+                            .withSourceCardId(permanent.getOriginalCard().getId());
+                    if (!predicateEvaluationService.matchesPermanentPredicate(creature, restriction.exemptionPredicate(), context)) {
                         restricted[0] = true;
                     }
                 } else if (effect instanceof AttackOrBlockRestrictionEffect restriction

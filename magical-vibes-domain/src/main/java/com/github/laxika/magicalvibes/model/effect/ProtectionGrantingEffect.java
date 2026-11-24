@@ -22,12 +22,8 @@ import java.util.UUID;
  *
  * <p>Scope note: this covers the printed, statically-known protection shapes
  * ({@code ProtectionFromColorsEffect}, {@code ProtectionFromCardTypesEffect},
- * {@code ProtectionFromSubtypesEffect}, {@code ProtectionFromManaValueEffect},
- * {@code ProtectionFromManaValueAtMostEffect},
- * {@code ProtectionFromMulticoloredEffect}, {@code ProtectionFromMonocoloredEffect},
- * {@code ProtectionFromEnemyColoredMulticoloredEffect},
- * {@code ProtectionFromAllOtherManaValuesEffect}, {@code ProtectionFromColorlessEffect},
- * {@code ProtectionFromPlayersEffect}).
+ * {@code ProtectionFromSubtypesEffect}, {@code ProtectionFromManaValueEffect} (its mana-value qualities),
+ * {@code ProtectionFromMulticoloredEffect} (its colour counts), {@code ProtectionFromPlayersEffect}).
  * Protection whose
  * protected set is only known at runtime from game state — a chosen color
  * ({@code ProtectionFromChosenColorEffect}, resolved via {@link ChooseColorEffect}) or a chosen player

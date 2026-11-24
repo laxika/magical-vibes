@@ -41,7 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.MayCastTopInstantOrSorceryFro
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.OnlyLandCreaturesCanAttackThisCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.OnlyMatchingCreaturesCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
@@ -943,7 +943,7 @@ class GameDataDeepCopyTest {
     @DisplayName("Deep copy keeps a \"during that combat\" effect waiting for its combat phase independently")
     void deepCopyKeepsADuringThatCombatEffectIndependently() {
         FloatingContinuousEffect scheduled = gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Bumi, Unleashed",
-                null, player1.getId(), new OnlyLandCreaturesCanAttackThisCombatEffect(), null,
+                null, player1.getId(), OnlyMatchingCreaturesCanAttackThisCombatEffect.lands(), null,
                 Duration.duringCombatPhase(2)));
 
         GameData copy = gd.simulationCopy();

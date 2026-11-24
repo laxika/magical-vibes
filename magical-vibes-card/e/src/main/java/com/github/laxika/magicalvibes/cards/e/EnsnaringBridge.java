@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.amount.CardsInHand;
-import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.CreaturesWithPowerGreaterThanAmountCantAttackEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerGreaterThanSourceControllerHandSizePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "8ED", collectorNumber = "300")
@@ -19,8 +19,7 @@ public class EnsnaringBridge extends Card {
 
     public EnsnaringBridge() {
         // Creatures with power greater than the number of cards in your hand can't attack.
-        addStaticEffect(new CreaturesWithPowerGreaterThanAmountCantAttackEffect(
-                new CardsInHand(CountScope.CONTROLLER)
-        ));
+        addStaticEffect(new CreaturesCantAttackUnlessPredicateEffect(
+                new PermanentNotPredicate(new PermanentPowerGreaterThanSourceControllerHandSizePredicate())));
     }
 }

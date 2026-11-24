@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.OnlySourceCreatureCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerUpAbilitiesCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnSkipReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipAllExtraTurnsReplacementEffect;
@@ -629,7 +628,8 @@ public class TurnProgressionService {
     private static UUID onlySourceCanAttackController(GameData gameData, int combatPhase) {
         synchronized (gameData.scheduledFloatingEffects) {
             return gameData.scheduledFloatingEffects.stream()
-                    .filter(effect -> effect.effect() instanceof OnlySourceCreatureCanAttackThisCombatEffect
+                    .filter(effect -> effect.effect() instanceof OnlyMatchingCreaturesCanAttackThisCombatEffect only
+                            && only.onlySource()
                             && effect.duration().start() == Duration.Start.COMBAT_PHASE_OF_THIS_TURN
                             && effect.duration().combatPhase() == combatPhase)
                     .map(FloatingContinuousEffect::controllerId)

@@ -8,10 +8,14 @@ package com.github.laxika.magicalvibes.model.effect;
  * its abilities in layer 6 (CR 613.1f) doesn't remove it, and the restriction never applies to the
  * Aura or Equipment itself.
  * <p>
- * The wrapped {@code restriction} is read by the query that owns that restriction kind:
- * {@link TargetingRestrictionEffect} (can't be the target of spells, and abilities from sources of
- * the given card types), {@link CantBeEnchantedByOtherAurasEffect} (the imposing Aura itself is not
- * "other"), {@link CantBeSacrificedEffect} and {@link CantBecomeSuspectedEffect}.
+ * The wrapped {@code restriction} (a rule the attachment imposes; a permission too, such as "can
+ * attack as though it had haste") is read by the query that owns that restriction kind:
+ * {@link TargetingRestrictionEffect} (can't be the target of spells, of abilities from sources of
+ * the given card types, or of spells or abilities the attachment controller's opponents control),
+ * {@link CantBeEnchantedByOtherAurasEffect} (the imposing Aura itself is not "other"),
+ * {@link CantBeSacrificedEffect}, {@link CantBecomeSuspectedEffect}, {@link PreventTransformEffect}
+ * (can't transform), {@link CanOnlyAttackAloneEffect}, {@link CantAttackOrBlockAloneEffect} and
+ * {@link CanAttackAsThoughHasteUnlessEnteredThisTurnEffect}.
  *
  * @param restriction the restriction the attached permanent is under
  */

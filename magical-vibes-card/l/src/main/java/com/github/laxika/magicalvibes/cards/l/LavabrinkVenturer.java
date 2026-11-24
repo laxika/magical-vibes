@@ -3,13 +3,13 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseManaValueParityOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromManaValueParityEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromManaValueEffect;
 
 @CardRegistration(set = "IKO", collectorNumber = "19")
 public class LavabrinkVenturer extends Card {
 
     public LavabrinkVenturer() {
         addStaticEffect(new ChooseManaValueParityOnEnterEffect());
-        addStaticEffect(new ProtectionFromManaValueParityEffect());
+        addStaticEffect(ProtectionFromManaValueEffect.chosenParity());
     }
 }

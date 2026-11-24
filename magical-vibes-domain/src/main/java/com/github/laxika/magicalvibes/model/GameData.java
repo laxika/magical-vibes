@@ -31,7 +31,8 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLand
 import com.github.laxika.magicalvibes.model.effect.PlayersWithChosenPlanarModePlayAdditionalLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.OnlyChosenCreaturesCanAttackEffect;
+import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackEffect;
+import com.github.laxika.magicalvibes.model.effect.OnlyMatchingCreaturesCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
 import com.github.laxika.magicalvibes.model.effect.RenewExilePlayPermissionOnLoreCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.LukkaExileCastPermissionEffect;
@@ -3315,14 +3316,19 @@ public class GameData {
     // Oracle en-Vec — "the chosen creatures attack if able, and other creatures can't attack"
 
     /**
-     * Records that {@code playerId} chose {@code chosen} to attack during their next turn (Oracle en-Vec) as a floating
-     * effect that applies during that turn, and makes the delayed triggered ability "at the beginning of that turn's end step, destroy each of the chosen creatures
+     * Records that {@code playerId} chose {@code chosen} to attack during their next turn (Oracle en-Vec) as two floating
+     * effects that apply during that turn, "the chosen creatures attack if able" (CR 508.1d) and "other creatures can't
+     * attack" (CR 508.1c), and makes the delayed triggered ability "at the beginning of that turn's end step, destroy each of the chosen creatures
      * that didn't attack this turn" (CR 603.7a) for the ability of {@code sourceCard} controlled by
      * {@code controllerId}: it waits for the end step of {@code playerId}'s next turn.
      */
     public void restrictAttackersNextTurn(UUID playerId, Set<UUID> chosen, UUID controllerId, Card sourceCard) {
+        OnlyMatchingCreaturesCanAttackThisCombatEffect onlyChosen = OnlyMatchingCreaturesCanAttackThisCombatEffect.only(chosen);
         addFloatingEffect(FloatingContinuousEffect.onPlayer(sourceCard.getName(), null, controllerId,
-                new OnlyChosenCreaturesCanAttackEffect(chosen), playerId, Duration.DURING_AFFECTED_PLAYERS_NEXT_TURN));
+                new MatchingCreaturesMustAttackEffect(onlyChosen.filter()), playerId,
+                Duration.DURING_AFFECTED_PLAYERS_NEXT_TURN));
+        addFloatingEffect(FloatingContinuousEffect.onPlayer(sourceCard.getName(), null, controllerId,
+                onlyChosen, playerId, Duration.DURING_AFFECTED_PLAYERS_NEXT_TURN));
         if (!chosen.isEmpty()) {
             List<UUID> chosenIds = List.copyOf(chosen);
             temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(controllerId, sourceCard,

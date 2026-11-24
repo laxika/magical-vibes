@@ -762,8 +762,8 @@ public sealed interface MultiPermanentChoiceContext {
 
     /**
      * Oracle en-Vec: {@code targetPlayerId} chose any number of creatures they control. The chosen
-     * set is made a floating {@code OnlyChosenCreaturesCanAttackEffect} that applies during that
-     * player's next turn — the chosen creatures attack if able, every other creature can't
+     * set is made a floating {@code MatchingCreaturesMustAttackEffect} and
+     * {@code OnlyMatchingCreaturesCanAttackThisCombatEffect} that apply during that player's next turn — the chosen creatures attack if able, every other creature can't
      * attack, and each chosen creature that didn't attack is destroyed at that turn's end step.
      */
     record ChooseCreaturesToAttackNextTurn(UUID targetPlayerId, UUID controllerId, Card sourceCard)

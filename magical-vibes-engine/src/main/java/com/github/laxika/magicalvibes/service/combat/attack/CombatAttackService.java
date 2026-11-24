@@ -37,8 +37,6 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatCreatureLimitEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithCounterAttackTogetherEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanOnlyAttackAloneEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsMustAttackControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -266,13 +264,13 @@ public class CombatAttackService {
     /**
      * Whether this creature may be declared only as the sole attacker, either from its own
      * static ability, while it has it (a face-down creature, or one that lost its abilities, has
-     * not), or from an attached Aura.
+     * not), or from an attached Aura's restriction on it (Errantry).
      */
     public boolean canOnlyAttackAlone(GameData gameData, Permanent creature) {
         boolean selfRestricted = gameQueryService.hasActiveStaticEffectIncludingGranted(gameData, creature,
                 CanOnlyAttackAloneEffect.class);
-        return selfRestricted || gameQueryService.hasAuraWithEffect(gameData, creature,
-                EnchantedCreatureCanOnlyAttackAloneEffect.class);
+        return selfRestricted || gameQueryService.hasAttachedPermanentRestriction(gameData, creature,
+                CanOnlyAttackAloneEffect.class::isInstance);
     }
 
     /**
@@ -1683,10 +1681,6 @@ public class CombatAttackService {
     private void validateCantAttackAlone(GameData gameData, List<Permanent> battlefield,
                                          List<Integer> attackerIndices) {
         if (attackerIndices.size() == 1) {
-            Permanent sole = battlefield.get(attackerIndices.getFirst());
-            if (gameQueryService.hasAuraWithEffect(gameData, sole, EnchantedCreatureCantAttackOrBlockAloneEffect.class)) {
-                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, sole) + " can't attack alone");
-            }
             validateCompanionsAlsoAttack(gameData, battlefield, attackerIndices);
         }
     }
@@ -1715,9 +1709,7 @@ public class CombatAttackService {
     }
 
     private boolean hasCantAttackOrBlockAlone(GameData gameData, Permanent creature) {
-        return combatCompanionRestrictions.isRestricted(gameData, creature, true)
-                || gameQueryService.hasAuraWithEffect(gameData, creature,
-                        EnchantedCreatureCantAttackOrBlockAloneEffect.class);
+        return combatCompanionRestrictions.isRestricted(gameData, creature, true);
     }
 
     /**

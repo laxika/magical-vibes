@@ -13,10 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionSharedByOwnCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromAllOtherManaValuesEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsOfPermanentsYouControlEffect;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromManaValueParityEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
@@ -145,13 +144,13 @@ public class GrantProtectionSharedByOwnCreaturesUntilEndOfTurnEffectHandler impl
     private static ProtectionGrantingEffect withChosenValues(ProtectionGrantingEffect protection, Permanent creature) {
         if (protection.protectionFromManaValueParity() && protection.protectionFromFixedManaValueParity() == null) {
             return creature.getChosenManaValueParity() == null ? null
-                    : new ProtectionFromManaValueParityEffect(creature.getChosenManaValueParity());
+                    : ProtectionFromManaValueEffect.parity(creature.getChosenManaValueParity());
         }
         if (!protection.protectionFromManaValuesOtherThanChosen().isEmpty()
                 && protection.protectionFromManaValuesOtherThanFixed() == null) {
             int chosen = creature.getChosenNumber();
             return protection.protectionFromManaValuesOtherThanChosen().contains(chosen)
-                    ? new ProtectionFromAllOtherManaValuesEffect(Set.of(chosen), chosen) : null;
+                    ? ProtectionFromManaValueEffect.otherThan(chosen) : null;
         }
         return protection;
     }

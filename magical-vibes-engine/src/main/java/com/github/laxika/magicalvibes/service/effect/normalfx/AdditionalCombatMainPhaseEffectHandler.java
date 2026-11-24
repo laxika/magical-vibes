@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.OnlyTargetCreaturesCanAttackThisCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.OnlyMatchingCreaturesCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,7 +58,7 @@ public class AdditionalCombatMainPhaseEffectHandler implements NormalEffectHandl
             beginningEffects.add(e.additionalCombatBeginningEffect());
         }
         if (e.onlyTargetCreaturesCanAttack()) {
-            beginningEffects.add(new OnlyTargetCreaturesCanAttackThisCombatEffect(Set.copyOf(entry.getTargetIds())));
+            beginningEffects.add(OnlyMatchingCreaturesCanAttackThisCombatEffect.only(Set.copyOf(entry.getTargetIds())));
         }
         AdditionalCombatBeginningSupport.register(gameData, entry, beginningEffects, e.count(), combatPhasesBefore);
 

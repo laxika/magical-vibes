@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43 (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 41b, 44, 45; merge queue 37, 42. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                              |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37 (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 41b, 44, 45; merge queue 42. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                               |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,245 / 2,623 (after fold run 43) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,225 / 2,620 (after fold run 37) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,280 rows over 4,517 classes (after fold run 43). Latest verdict per class: `step-9` 316, unique 1,178, absorbed 1,136, split 657, blocked-other 530, survivor 395, blocked-step-model 140, blocked-player-loop 96, dead 69. Waiting: 316 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,312 rows over 4,520 classes (after fold run 37). Latest verdict per class: `step-9` 293, unique 1,174, absorbed 1,155, split 658, blocked-other 530, survivor 405, blocked-step-model 140, blocked-player-loop 96, dead 69. Waiting: 293 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -972,6 +972,13 @@ Delayed and global triggers:
 
 - `SpecializeEffect(CardColor color, SpecializeEffect.Faces faces)`: "Specialize {N}". The card's static `specializedFace(Card face, CardColor color)` writes the face onto a cleared runtime copy and returns its "when this creature specializes" effects (fold run 43).
 - `UnlockControlledRoomDoorEffect(PermanentSubject rooms, boolean lockOrUnlock)`: `()`, `targetRoom()`, `lockOrUnlockTargetRoom()`; one `UnlockRoomDoorChoice` context (fold run 43).
+
+- `OnlyMatchingCreaturesCanAttackThisCombatEffect.lands()` / `.source()` / `.only(ids)`: every "only [these] creatures can attack" float (an added combat, the aggressive combat, en-Vec's next turn), judged with the float's source and controller (fold run 37).
+- `MakeTargetAttackingCreatureBlockedEffect(PermanentSubject)`: "[subject] becomes blocked" (CR 509.1h) (fold run 37).
+- `CanBlockCreaturesWithShadowEffect(Mode, attackers)` / `.ignoringLandwalk()` / `.asThoughReachAgainst(subtype)`: every "can block … as though" permission (fold run 37).
+- `MatchingPermanentsCantActivateTapAbilitiesEffect(PermanentSubject)`: "[set / enchanted creature]'s {T} abilities can't be activated" (CR 602.5) (fold run 37).
+- `AttachedPermanentRestrictionEffect` also carries `PreventTransformEffect()`, `CanOnlyAttackAloneEffect`, `CantAttackOrBlockAloneEffect`, `TargetingRestrictionEffect.opponentSpellsAndAbilities()` (opponents of the attachment's controller) and `CanAttackAsThoughHasteUnlessEnteredThisTurnEffect(false)`. It is read through `GameQueryService.hasAttachedPermanentRestriction` / `attachedPermanentRestrictions(gd, permanent, type)` (fold run 37).
+- `ProtectionFromManaValueEffect` Quality (`atMost`, `chosenParity`, `parity`, `otherThanChosenNumber`, `otherThan`) and `ProtectionFromMulticoloredEffect` ColorCount (`monocolored`, `enemyColoredMulticolored`, `colorless`) (fold run 37).
 
 ### Blocked causes still open
 
@@ -4294,6 +4301,35 @@ All 11 batches done. Ratchet 3,324 / 2,675 → 3,311 / 2,670. Ledger 24 rows: ab
 **Ratchet:** records 3300 → 3282, handlers 2659 → 2641.
 
 **For the next run:** card-side hooks passed as method references (`SpecializeEffect.Faces`) are a way to fold per-card "build this face" records. Karlach's graveyard specialize would fold if a second card ever specializes from a graveyard.
+
+### Step 9, fold run 37 (2026-11-24, parallel worktree)
+8 of 9 batches done; `prot-dyn` left (time). Ratchet 3,294 / 2,659 → 3,274 / 2,656. Ledger 32 rows: absorbed 18, split 1, survivor 11, `step-9` 2. 20 card files rewritten, Oracle text checked for all 20. CR 105.2, 105.2a–c, 113.10, 202.3e, 508.1c, 508.1d, 509.1b, 509.1h, 510.1c, 511.3, 602.5, 611.2a, 613.1f, 702.16a–f, 702.16i and 708.2a checked.
+
+| Batch | Result |
+|---|---|
+| power-gated | 1 folded. Ensnaring Bridge is `CreaturesCantAttackUnlessPredicateEffect(Not(PermanentPowerGreaterThanSourceControllerHandSizePredicate))`. The exemption is now judged with the source's card and controller as filter context; the old branch passed none. `AmountEvaluationService` was dropped from `AttackLegalityService`. |
+| become-blocked | 1 folded. `MakeTargetAttackingCreatureBlockedEffect(PermanentSubject)` resolves through the resolver (no-arg = `target()`, harmful). Fog Patch uses `controlledBy(eachPlayer(), PermanentIsAttackingPredicate)` with no target. |
+| only-attackers | 4 folded, 1 split. `OnlyMatchingCreaturesCanAttackThisCombatEffect` gets `lands()`, `source()` (`PermanentIsSourcePermanentPredicate`) and `only(ids)`; its duration is the float's. One reader covers every float, with the float's source permanent and controller as context. Oracle en-Vec is now two floats, `MatchingCreaturesMustAttackEffect(chosen)` (CR 508.1d) and `only(chosen)` (CR 508.1c). `isOutsideChosenAttackers` is gone. Throat Wolf's active-player switch reads `onlySource()`. |
+| blockability | 2 folded. `CanBlockCreaturesWithShadowEffect(Mode, attackers)` has modes AS_THOUGH_SHADOW, IGNORING_SHADOW, IGNORING_LANDWALK and AS_THOUGH_REACH; only reach takes the attacker filter. `BlockLegalityService` is unchanged. |
+| tap-lock | 1 folded. `MatchingPermanentsCantActivateTapAbilitiesEffect(PermanentSubject)` takes either a `controlledBy` set (judged as an active static ability with `staticSubjectNames`) or `attachedCreature()` (through `hasAuraWithEffect`). |
+| attached-restr | 5 folded onto the existing `AttachedPermanentRestrictionEffect`; no new record. All five texts are rules of the Aura, not granted abilities (CR 113.10, 613.1f). `CanAttackAsThoughHasteUnlessEnteredThisTurnEffect` gets `unlessEnteredThisTurn` (Chaos Lord true, Instill Energy false); `PreventTransformEffect()` is any permanent. Readers: `hasAttachedPermanentRestriction` / `attachedPermanentRestrictions(type)` (now public), `CombatCompanionRestrictions`, `canOnlyAttackAlone`, `isTransformPrevented`. `cantBeTargetedByOpponentSpellsOrAbilities` counts opponents of the attachment's controller. |
+| prot-mv | 3 folded. `ProtectionFromManaValueEffect(Quality AT_LEAST/AT_MOST/PARITY/OTHER_THAN, …)` with factories `atMost`, `chosenParity`, `parity`, `otherThanChosenNumber`, `otherThan`. The `ProtectionGrantingEffect` facets are unchanged, so no reader changed; Concerted Effort's share uses the factories. |
+| prot-colourcount | 3 folded. `ProtectionFromMulticoloredEffect(subject, ColorCount MULTICOLORED/MONOCOLORED/ENEMY_COLORED_PAIR/COLORLESS)`. Two empty staticfx handlers and two `LayerClassifier` entries were deleted. |
+| prot-dyn | not taken. `ProtectionFromColorsEffect`'s colours are the static facet `protectionFromColors()`, read by 12 readers. A set judged as asked needs that facet to take the game and source, or the layered pass to supply it, plus Kannushi's two staticfx handlers and readers. |
+
+**Behaviour changes.**
+- The Katabatic Winds kind is read through active statics: a face-down or ability-less source locks nothing (CR 613.1f, 708.2a). Test: `GameQueryServiceTest` face-down lock, which fails on the old code.
+- An attached restriction from an attachment that lost its abilities (Instill Energy, Errantry, Brawler, Moonsilver, Collar, Canopy Cover, Plax) no longer applies, and Canopy Cover and Plax honour the Aura-ignore effect. No card reaches this; no test.
+- Bestowed Sightless Brawler's restriction is read by `CombatCompanionRestrictions` (the AI too). The declaration message is the same.
+- The colorless protection reader also reads printed protection. No card has it printed.
+
+**Tests changed.** `GameQueryServiceTest` (named deleted records; added the face-down case), `GameDataDeepCopyTest`, `FloatingCombatRules` (reads the survivor's ids). Ran 228 classes: 355 XML files, 3,121 cases, 0 failures.
+
+**Seen, not changed.**
+- Katabatic Winds' lock set is "flying", not "creatures with flying": a noncreature flying permanent's {T} abilities are locked. Sure of the code, low.
+- `hasProtectionFromMulticoloredEffects` / Mono / Enemy ignore `protectionSubject()`, so Guildscorn Ward itself has protection from multicolored. Fairly sure.
+
+**For the next run.** `prot-dyn` as its own run, with `ProtectionFromChosenColorEffect` (8 cards): a dynamic colour set on `ProtectionFromColorsEffect`, with its readers moved onto a context-taking facet or the layered pass.
 
 ## Prompt
 

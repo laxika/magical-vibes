@@ -61,7 +61,6 @@ import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromTargetPermanentThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateTapAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
@@ -92,7 +91,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromEverythingEffect;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromManaValueParityEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromManaValueEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessGreaterThanPowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -2282,7 +2281,7 @@ class GameQueryServiceTest {
         @DisplayName("returns true when source mana value matches chosen parity")
         void returnsTrueFromMatchingManaValueParity() {
             Card targetCard = createCreatureWithStaticEffect("Lavabrink Venturer", 3, 3, CardColor.WHITE,
-                    new ProtectionFromManaValueParityEffect());
+                    ProtectionFromManaValueEffect.chosenParity());
             Permanent target = addPermanent(player1Id, targetCard);
             target.setChosenManaValueParity(ManaValueParity.EVEN);
 
@@ -4004,7 +4003,7 @@ class GameQueryServiceTest {
             Permanent myr = addPermanent(player1Id, myrCard);
 
             Card auraCard = createAura("Serra Bestiary",
-                    new EnchantedCreatureCantActivateTapAbilitiesEffect());
+                    new MatchingPermanentsCantActivateTapAbilitiesEffect(Subjects.attachedCreature()));
             Permanent aura = addPermanent(player2Id, auraCard);
             aura.setAttachedTo(myr.getId());
 
@@ -4088,6 +4087,19 @@ class GameQueryServiceTest {
                     gqs.canActivateManaAbility(gd, myr)));
 
             assertThat(answers).containsExactly(false, true, true, false);
+        }
+
+        @Test
+        @DisplayName("a face-down permanent's board-wide tap-ability lock locks nothing")
+        void faceDownTapAbilityLockLocksNothing() {
+            Permanent lock = addPermanent(player2Id, createCreatureWithStaticEffect("Tap Lock", 2, 2, null,
+                    new MatchingPermanentsCantActivateTapAbilitiesEffect(new PermanentIsArtifactPredicate())));
+            Permanent myr = addPermanent(player1Id, createArtifactCreature("Leaden Myr", 1, 1, List.of(CardSubtype.MYR)));
+            assertThat(gqs.isLockedFromActivatingTapAbilities(gd, myr)).isTrue();
+
+            lock.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+            assertThat(gqs.isLockedFromActivatingTapAbilities(gd, myr)).isFalse();
         }
     }
 

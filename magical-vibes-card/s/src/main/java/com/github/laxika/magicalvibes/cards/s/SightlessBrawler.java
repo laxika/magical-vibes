@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.BestowCast;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.AttachedPermanentRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -18,6 +18,6 @@ public class SightlessBrawler extends Card {
 
         target(TargetFilters.creature())
                 .addStaticEffect(new StaticBoostEffect(3, 2, Subjects.attachedCreature()))
-                .addStaticEffect(new EnchantedCreatureCantAttackOrBlockAloneEffect(false));
+                .addStaticEffect(new AttachedPermanentRestrictionEffect(new CantAttackOrBlockAloneEffect(false)));
     }
 }

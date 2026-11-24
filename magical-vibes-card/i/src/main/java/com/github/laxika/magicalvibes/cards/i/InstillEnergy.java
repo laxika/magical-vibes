@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanAttackAsThoughHasteEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachedPermanentRestrictionEffect;
+import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughHasteUnlessEnteredThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -23,7 +24,7 @@ public class InstillEnergy extends Card {
 
     public InstillEnergy() {
         // Enchant creature â€” the enchanted creature can attack as though it had haste.
-        target(TargetFilters.creature()).addStaticEffect(new EnchantedCreatureCanAttackAsThoughHasteEffect());
+        target(TargetFilters.creature()).addStaticEffect(new AttachedPermanentRestrictionEffect(new CanAttackAsThoughHasteUnlessEnteredThisTurnEffect(false)));
 
         // {0}: Untap enchanted creature. Activate only during your turn and only once each turn.
         addActivatedAbility(new ActivatedAbility(false, "{0}",

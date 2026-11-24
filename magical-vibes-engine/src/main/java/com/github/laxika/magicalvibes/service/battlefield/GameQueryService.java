@@ -177,10 +177,8 @@ import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ETBDoubleTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EchoCostAlternativeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateTapAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentAbilityLockEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCombatTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentToughnessBecomesLoyaltyEffect;
@@ -279,7 +277,6 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
 import com.github.laxika.magicalvibes.model.effect.TargetedSpellDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentCantBeTargetedByOpponentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingSourceKind;
 import com.github.laxika.magicalvibes.model.effect.TokenCreationReplacementEffect;
@@ -336,6 +333,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -823,12 +821,13 @@ public class GameQueryService {
     /**
      * Returns {@code true} if the given permanent can't transform because its controller controls a
      * permanent with a {@link PreventTransformEffect} whose filter matches it (e.g. Immerwolf's
-     * "Non-Human Werewolves you control can't transform"), or because it is enchanted by an Aura with
-     * {@link EnchantedCreatureCantTransformEffect} (e.g. Bound by Moonsilver). The filter is evaluated
-     * against the permanent's current face.
+     * "Non-Human Werewolves you control can't transform"), or because an Aura or Equipment attached to it
+     * imposes a {@link PreventTransformEffect} through {@link AttachedPermanentRestrictionEffect} (e.g. Bound by
+     * Moonsilver). The filter is evaluated against the permanent's current face.
      */
     public boolean isTransformPrevented(GameData gameData, Permanent permanent) {
-        if (hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantTransformEffect.class)) {
+        if (hasAttachedPermanentRestriction(gameData, permanent, effect -> effect instanceof PreventTransformEffect prevent
+                && predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, prevent.filter()))) {
             return true;
         }
         UUID controllerId = findPermanentController(gameData, permanent.getId());
@@ -4926,10 +4925,27 @@ public class GameQueryService {
         }
     }
 
-    private boolean hasAttachedPermanentRestriction(GameData gameData, Permanent permanent,
-                                                    Predicate<CardEffect> matcher) {
+    /**
+     * Whether an Aura or Equipment attached to {@code permanent} imposes a restriction {@code matcher} accepts through
+     * {@link AttachedPermanentRestrictionEffect} (see {@link #attachedPermanentRestrictions(GameData, Permanent)}).
+     */
+    public boolean hasAttachedPermanentRestriction(GameData gameData, Permanent permanent,
+                                                   Predicate<CardEffect> matcher) {
         return attachedPermanentRestrictions(gameData, permanent).stream()
                 .anyMatch(attached -> matcher.test(attached.restriction()));
+    }
+
+    /**
+     * The restrictions of {@code type} that Auras and Equipment attached to {@code permanent} impose on it through
+     * {@link AttachedPermanentRestrictionEffect} (see {@link #attachedPermanentRestrictions(GameData, Permanent)}).
+     */
+    public <T extends CardEffect> List<T> attachedPermanentRestrictions(GameData gameData, Permanent permanent,
+                                                                       Class<T> type) {
+        return attachedPermanentRestrictions(gameData, permanent).stream()
+                .map(AttachedRestriction::restriction)
+                .filter(type::isInstance)
+                .map(type::cast)
+                .toList();
     }
 
     /**
@@ -5090,12 +5106,16 @@ public class GameQueryService {
      */
     public boolean cantBeTargetedByOpponentSpellsOrAbilities(GameData gameData, Permanent permanent,
                                                                UUID targetingControllerId) {
-        boolean restrictedByAura = gameData.playerBattlefields.entrySet().stream()
-                .filter(battlefield -> !battlefield.getKey().equals(targetingControllerId))
-                .flatMap(battlefield -> battlefield.getValue().stream())
-                .anyMatch(aura -> permanent.getId().equals(aura.getAttachedTo())
-                        && hasActiveStaticEffect(gameData, aura, EnchantedPermanentCantBeTargetedByOpponentsEffect.class));
-        if (restrictedByAura) {
+        // "Enchanted creature can't be the target of spells or abilities your opponents control": the Aura's own
+        // restriction, its "opponents" those of the Aura's controller.
+        boolean restrictedByAttachment = attachedPermanentRestrictions(gameData, permanent).stream()
+                .anyMatch(attached -> attached.restriction() instanceof TargetingRestrictionEffect r
+                        && r.kind() == TargetingSourceKind.SPELLS_AND_ABILITIES
+                        && r.opponentOnly()
+                        && r.mode() == TargetColorMode.ANY
+                        && r.sourceCardTypes().isEmpty()
+                        && !targetingControllerId.equals(findPermanentController(gameData, attached.source().getId())));
+        if (restrictedByAttachment) {
             return true;
         }
         UUID targetControllerId = findPermanentController(gameData, permanent.getId());
@@ -8066,9 +8086,13 @@ public class GameQueryService {
         return targetControllerId != null && !targetControllerId.equals(sourceControllerId);
     }
 
-    /** Whether the target has a granted protection from colorless that the layers left it. */
+    /**
+     * Whether the target has protection from colorless: its own printed protection while it keeps it, or one granted
+     * to it that the layers left it.
+     */
     private boolean hasProtectionFromColorless(GameData gameData, Permanent target) {
-        return computeStaticBonus(gameData, target).grantedEffects().stream()
+        return Stream.concat(printedProtectionEffects(gameData, target).stream(),
+                        computeStaticBonus(gameData, target).grantedEffects().stream())
                 .anyMatch(effect -> effect instanceof ProtectionGrantingEffect protection
                         && protection.protectionFromColorless());
     }
@@ -13998,25 +14022,25 @@ public class GameQueryService {
     }
 
     /**
-     * Returns {@code true} if the permanent's activated abilities with {T} in their costs are
-     * locked (Serra Bestiary aura, or a board-wide matching-predicate lock such as Katabatic Winds).
+     * Returns {@code true} if the permanent's activated abilities with {T} in their costs are locked (CR 602.5) by a
+     * {@link MatchingPermanentsCantActivateTapAbilitiesEffect}: an attached Aura's lock (Serra Bestiary), or a set the
+     * active static ability of a battlefield permanent names (Katabatic Winds); a face-down or ability-less source
+     * locks nothing.
      */
     public boolean isLockedFromActivatingTapAbilities(GameData gameData, Permanent permanent) {
-        if (hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateTapAbilitiesEffect.class)) {
+        if (hasAuraWithEffect(gameData, permanent, effect -> effect instanceof MatchingPermanentsCantActivateTapAbilitiesEffect lock
+                && lock.locksAttachedPermanent())) {
             return true;
         }
         if (!anyBattlefieldPrintsStaticEffect(gameData, MatchingPermanentsCantActivateTapAbilitiesEffect.class)) {
             return false;
         }
-        for (UUID pid : gameData.playerIds) {
-            for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
-                for (CardEffect effect : p.getCard().getStaticEffects()) {
-                    if (effect instanceof MatchingPermanentsCantActivateTapAbilitiesEffect lock
-                            && predicateEvaluationService.matchesPermanentPredicate(
-                                    gameData, permanent, lock.affectedPredicate())) {
-                        return true;
-                    }
-                }
+        UUID controllerId = findPermanentController(gameData, permanent.getId());
+        for (ActiveStaticEffect<MatchingPermanentsCantActivateTapAbilitiesEffect> active
+                : activeStaticEffects(gameData, MatchingPermanentsCantActivateTapAbilitiesEffect.class)) {
+            if (!active.effect().locksAttachedPermanent() && staticSubjectNames(gameData, active.source(),
+                    active.controllerId(), controllerId, permanent, active.effect().subject())) {
+                return true;
             }
         }
         return false;

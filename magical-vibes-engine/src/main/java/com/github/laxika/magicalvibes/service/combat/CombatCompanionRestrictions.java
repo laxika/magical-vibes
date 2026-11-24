@@ -11,13 +11,16 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Judges {@link CantAttackOrBlockAloneEffect} ("can't attack or block alone", "can't attack unless at least two other
  * creatures attack", "unless a creature with greater power also blocks") for the attack and block declarations and the
  * AI that builds them (CR 508.1c, 509.1b). A creature's restrictions are its active static abilities, so a face-down
- * creature or one that lost its abilities has none; a companion filter is judged with the restricted creature as its
- * source, as the declaration is made.
+ * creature or one that lost its abilities has none of its own, and the restrictions the Auras and Equipment attached to
+ * it impose ({@code AttachedPermanentRestrictionEffect}: a bestowed Sightless Brawler's "enchanted creature can't attack
+ * alone"), which stay the attachment's abilities (CR 613.1f); a companion filter is judged with the restricted creature
+ * as its source, as the declaration is made.
  */
 @Component
 @RequiredArgsConstructor
@@ -28,9 +31,11 @@ public class CombatCompanionRestrictions {
 
     /** The restrictions on {@code creature} for an attack ({@code attacking}) or a block. */
     public List<CantAttackOrBlockAloneEffect> restrictions(GameData gameData, Permanent creature, boolean attacking) {
-        return gameQueryService.getActiveStaticEffects(gameData, creature).stream()
-                .filter(CantAttackOrBlockAloneEffect.class::isInstance)
-                .map(CantAttackOrBlockAloneEffect.class::cast)
+        return Stream.concat(gameQueryService.getActiveStaticEffects(gameData, creature).stream()
+                                .filter(CantAttackOrBlockAloneEffect.class::isInstance)
+                                .map(CantAttackOrBlockAloneEffect.class::cast),
+                        gameQueryService.attachedPermanentRestrictions(gameData, creature,
+                                CantAttackOrBlockAloneEffect.class).stream())
                 .filter(restriction -> attacking ? restriction.restrictsAttacking() : restriction.restrictsBlocking())
                 .toList();
     }

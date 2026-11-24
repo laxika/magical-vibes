@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstestStrikeEffect;
-import com.github.laxika.magicalvibes.model.effect.OnlySourceCreatureCanAttackThisCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.OnlyMatchingCreaturesCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,6 +24,6 @@ public class ThroatWolf extends Card {
         addStaticEffect(new FirstestStrikeEffect());
         addTrigger(Triggers.endOfCombat(),
                 TriggerOptions.DEFAULT.withEventCondition(new AllConditions(List.of(new FirstCombatPhase(), new NotControllerTurn()))),
-                new AdditionalCombatPhaseEffect(1, new OnlySourceCreatureCanAttackThisCombatEffect()));
+                new AdditionalCombatPhaseEffect(1, OnlyMatchingCreaturesCanAttackThisCombatEffect.source()));
     }
 }

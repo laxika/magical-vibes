@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service.input;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorlessEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromMulticoloredEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
@@ -4183,7 +4183,7 @@ public class ChoiceHandlerService {
                 log.info("Game {} - {} gains protection from artifacts until end of turn", gameData.id, target.getCard().getName());
             } else if (colorlessChosen) {
                 gameData.addEffectOnPermanent(null, null, null,
-                        new GrantEffectEffect(new ProtectionFromColorlessEffect(), Subjects.target()),
+                        new GrantEffectEffect(ProtectionFromMulticoloredEffect.colorless(), Subjects.target()),
                         target.getId(), Duration.UNTIL_END_OF_TURN);
                 gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                         " gains protection from colorless until end of turn."));

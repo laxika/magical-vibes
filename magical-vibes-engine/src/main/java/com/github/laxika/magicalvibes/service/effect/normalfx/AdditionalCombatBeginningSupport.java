@@ -6,9 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.OnlyLandCreaturesCanAttackThisCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.OnlySourceCreatureCanAttackThisCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.OnlyTargetCreaturesCanAttackThisCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.OnlyMatchingCreaturesCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -33,9 +31,7 @@ final class AdditionalCombatBeginningSupport {
      * triggered ability.
      */
     static boolean restrictsAttackers(CardEffect effect) {
-        return effect instanceof OnlyLandCreaturesCanAttackThisCombatEffect
-                || effect instanceof OnlySourceCreatureCanAttackThisCombatEffect
-                || effect instanceof OnlyTargetCreaturesCanAttackThisCombatEffect;
+        return effect instanceof OnlyMatchingCreaturesCanAttackThisCombatEffect;
     }
 
     /**

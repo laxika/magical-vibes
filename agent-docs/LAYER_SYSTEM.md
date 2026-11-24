@@ -490,7 +490,7 @@ from creatures your opponents control until end of turn" are floating effects on
 `Duration` (CR 611.2a), applied in layer 6 in timestamp order with the static ones (CR 613.1f, 613.7):
 `GrantKeywordEffect` and `RemoveKeywordEffect` (`Subjects.target()`), `ProtectionFromColorsEffect(colors,
 Subjects.target())`, and `GrantEffectEffect(protection, Subjects.target())` for `ProtectionFromCardTypesEffect`,
-`ProtectionFromColorlessEffect`, `ProtectionFromPlayersEffect` (players fixed as it resolves),
+`ProtectionFromMulticoloredEffect.colorless()`, `ProtectionFromPlayersEffect` (players fixed as it resolves),
 `ProtectionFromNonSubtypeCreaturesEffect` and `GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffect` (its
 "opponents" are read at each check). A "loses all abilities" or "loses all protection" removes only the grants older
 than it; `CharacteristicState.removeAllProtection` drops the protection abilities granted so far and marks the

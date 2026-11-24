@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseRandomNumberOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromAllOtherManaValuesEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromManaValueEffect;
 
 import java.util.Set;
 
@@ -15,6 +15,6 @@ public class HaktosTheUnscarred extends Card {
     public HaktosTheUnscarred() {
         addStaticEffect(new MustAttackEffect());
         addStaticEffect(new ChooseRandomNumberOnEnterEffect(2, 4));
-        addStaticEffect(new ProtectionFromAllOtherManaValuesEffect(Set.of(2, 3, 4)));
+        addStaticEffect(ProtectionFromManaValueEffect.otherThanChosenNumber(Set.of(2, 3, 4)));
     }
 }
