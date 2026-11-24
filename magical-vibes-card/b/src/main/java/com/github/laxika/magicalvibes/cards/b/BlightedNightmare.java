@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.GreatestToughnessAmongControlled;
-import com.github.laxika.magicalvibes.model.effect.BlightXCost;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCreatureCardsInGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -28,7 +28,7 @@ public class BlightedNightmare extends Card {
                 false,
                 null,
                 List.of(
-                        new BlightXCost(new GreatestToughnessAmongControlled()),
+                        PutCounterOnControlledCreatureCost.blightX(),
                         new ReturnSelfToHandCost(),
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
@@ -38,6 +38,6 @@ public class BlightedNightmare extends Card {
                                 .build()),
                 "Blight X, Return this enchantment to its owner's hand: Return target creature card with mana value X or less from your graveyard to the battlefield. X can't be greater than the greatest toughness among creatures you control. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED
-        ).withXValue());
+        ).withXValue().withMaximumXValue(new GreatestToughnessAmongControlled()));
     }
 }

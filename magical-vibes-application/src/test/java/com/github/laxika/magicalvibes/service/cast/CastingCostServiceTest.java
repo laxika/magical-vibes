@@ -190,21 +190,42 @@ class CastingCostServiceTest {
     }
 
     @Test
+    @DisplayName("A conditional {0} equip cost needs its condition and the turn's first equip activation")
     void enduringStoryFreeEquipRequiresDesignationAndFirstActivation() {
         Card source = new Card();
-        source.addStaticEffect(new com.github.laxika.magicalvibes.model.effect.FreeEquipWhileEnduringStoryEffect());
+        source.addStaticEffect(new com.github.laxika.magicalvibes.model.effect.ConditionalEffect(
+                new com.github.laxika.magicalvibes.model.condition.ControllerHasEnduringStory(),
+                com.github.laxika.magicalvibes.model.effect.PayZeroRatherThanAbilityCostEffect.firstEachTurn(
+                        com.github.laxika.magicalvibes.model.effect.ActivatedAbilityKind.EQUIP)));
         Permanent permanent = new Permanent(source);
         gd.playerBattlefields.get(player1Id).add(permanent);
         ActivatedAbility equip = new EquipActivatedAbility("{2}");
 
-        assertThat(svc.hasFreeEquipAbilityCost(gd, player1Id, equip)).isFalse();
+        assertThat(svc.paysZeroRatherThanAbilityCost(gd, player1Id, equip)).isFalse();
         gd.playersWithEnduringStory.add(player1Id);
-        assertThat(svc.hasFreeEquipAbilityCost(gd, player1Id, equip)).isTrue();
+        assertThat(svc.paysZeroRatherThanAbilityCost(gd, player1Id, equip)).isTrue();
         gd.playersWhoActivatedEquipAbilityThisTurn.add(player1Id);
-        assertThat(svc.hasFreeEquipAbilityCost(gd, player1Id, equip)).isFalse();
+        assertThat(svc.paysZeroRatherThanAbilityCost(gd, player1Id, equip)).isFalse();
         gd.playersWhoActivatedEquipAbilityThisTurn.clear();
-        when(gameQueryService.hasLostAllAbilities(gd, permanent)).thenReturn(true);
-        assertThat(svc.hasFreeEquipAbilityCost(gd, player1Id, equip)).isFalse();
+        when(gameQueryService.hasLostPrintedAbilities(gd, permanent)).thenReturn(true);
+        assertThat(svc.paysZeroRatherThanAbilityCost(gd, player1Id, equip)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A {0} cost for one kind of ability doesn't apply to another kind or to an opponent's activation")
+    void freeAbilityCostAppliesOnlyToItsKindAndController() {
+        Card source = new Card();
+        source.addStaticEffect(com.github.laxika.magicalvibes.model.effect.PayZeroRatherThanAbilityCostEffect
+                .always(com.github.laxika.magicalvibes.model.effect.ActivatedAbilityKind.CYCLING));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(source));
+        ActivatedAbility equip = new EquipActivatedAbility("{2}");
+        ActivatedAbility cycling = new ActivatedAbility(false, "{2}", List.of(), "Cycling {2}");
+
+        assertThat(svc.paysZeroRatherThanAbilityCost(gd, player1Id, equip)).isFalse();
+        assertThat(svc.paysZeroRatherThanAbilityCost(gd, player1Id, cycling)).isTrue();
+        gd.cardsCycledThisTurn.put(player1Id, 3);
+        assertThat(svc.paysZeroRatherThanAbilityCost(gd, player1Id, cycling)).isTrue();
+        assertThat(svc.paysZeroRatherThanAbilityCost(gd, player2Id, cycling)).isFalse();
     }
 
     @Nested

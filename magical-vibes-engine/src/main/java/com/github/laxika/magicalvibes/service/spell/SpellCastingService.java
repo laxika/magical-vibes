@@ -79,7 +79,6 @@ import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
 import com.github.laxika.magicalvibes.model.effect.AlternativeSpellCost;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.BeholdCost;
-import com.github.laxika.magicalvibes.model.effect.BlightCost;
 import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTimeCreatureTypeChoiceEffect;
@@ -156,7 +155,6 @@ import com.github.laxika.magicalvibes.model.effect.RevealCardFromHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrDiscardCardOrPayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeFractionRoundedUpCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
@@ -502,17 +500,13 @@ public class SpellCastingService {
      * reaches 0.
      */
     private void payPutCounterOnControlledCreatureCost(GameData gameData, Player player, Card card,
-                                                       PutCounterOnControlledCreatureCost cost, UUID creatureId) {
+                                                       PutCounterOnControlledCreatureCost cost, UUID creatureId,
+                                                       int announcedX) {
         if (cost == null || (cost.optional() && creatureId == null)) return;
         Permanent creature = additionalSpellCostService.validatePutCounterOnControlledCreatureCost(gameData, player, card, cost, creatureId);
-        putCountersAsCost(gameData, player, card, creature, cost.counterType(), cost.count());
-    }
-
-    private void payBlightCost(GameData gameData, Player player, Card card,
-                               BlightCost cost, UUID creatureId, int announcedX) {
-        if (cost == null) return;
-        Permanent creature = additionalSpellCostService.validateBlightCost(gameData, player, card, creatureId);
-        putCountersAsCost(gameData, player, card, creature, CounterType.MINUS_ONE_MINUS_ONE, announcedX);
+        int count = amountEvaluationService.evaluate(gameData, cost.amount(),
+                new com.github.laxika.magicalvibes.service.effect.AmountContext(player.getId(), null, null, announcedX, 0));
+        putCountersAsCost(gameData, player, card, creature, cost.counterType(), count);
     }
 
     private void payPutCountersOnControlledCreatureOrPayManaCost(
@@ -8326,8 +8320,8 @@ public class SpellCastingService {
         if (costs.returnCreatureToHand()) {
             payReturnCreatureToHandCost(gameData, player, card, selection.sacrificePermanentId());
         }
-        payBlightCost(gameData, player, card, costs.blightCost(), selection.sacrificePermanentId(), announcedXValue);
-        payPutCounterOnControlledCreatureCost(gameData, player, card, costs.putCounterCost(), selection.sacrificePermanentId());
+        payPutCounterOnControlledCreatureCost(gameData, player, card, costs.putCounterCost(), selection.sacrificePermanentId(),
+                announcedXValue);
         payPutCountersOnControlledCreatureOrPayManaCost(gameData, player, card,
                 costs.putCountersOrPayManaCost(), selection.sacrificePermanentId(), preManaPaymentPool);
         if (costs.exileGraveyardCost() != null && costs.exileGraveyardCost().trackExiledPower()) {
@@ -11140,7 +11134,7 @@ public class SpellCastingService {
                 || additionalCosts.discardCardOrPayLifeCost() != null
                 || additionalCosts.returnPermanentToHand() != null
                 || additionalCosts.returnCreatureToHand()
-                || additionalCosts.blightCost() != null || additionalCosts.putCounterCost() != null
+                || additionalCosts.putCounterCost() != null
                 || additionalCosts.putCountersOrPayManaCost() != null
                 || additionalCosts.exileAnyNumberOfCardsFromHandCost() != null
                 || additionalCosts.exileGraveyardCost() != null
@@ -13918,7 +13912,6 @@ public class SpellCastingService {
                 additionalSpellCostService.peek(gameData, playerId, card);
         List<CardEffect> otherAdditionalEffects = new ArrayList<>(card.getCastingCostsAndSpellEffects());
         otherAdditionalEffects.removeIf(effect -> effect instanceof SacrificeCreatureCost
-                || effect instanceof SacrificeCreatureOrPayManaCost
                 || effect instanceof SacrificePermanentOrPayManaCost
                 || effect instanceof SacrificePermanentCost);
         boolean hasOnlySupportedAdditionalCosts = !additionalSpellCostService

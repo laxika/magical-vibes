@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCost;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
@@ -142,9 +141,6 @@ final class AiTestPlayabilityStub {
             switch (effect) {
                 case SacrificeCreatureCost ignored -> {
                     if (battlefield.stream().noneMatch(p -> p.getCard().hasType(CardType.CREATURE))) return false;
-                }
-                case SacrificeCreatureOrPayManaCost ignored -> {
-                    // Mana option always keeps this cost satisfiable for stub suites.
                 }
                 case SacrificePermanentOrPayManaCost ignored -> {
                     // Mana option always keeps this cost satisfiable for stub suites.

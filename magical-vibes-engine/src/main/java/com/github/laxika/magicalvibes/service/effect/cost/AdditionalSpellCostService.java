@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.RemoveXCountersFromControlledPermane
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.BeholdCost;
-import com.github.laxika.magicalvibes.model.effect.BlightCost;
 import com.github.laxika.magicalvibes.model.effect.CasualtyCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeCost;
@@ -64,7 +63,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouContr
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllPermanentsYouControlCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrDiscardCardOrPayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
 import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
@@ -133,7 +131,6 @@ public class AdditionalSpellCostService {
             SacrificeCreatureCost.class,
             SacrificeCreatureOrDiscardCardOrPayLifeCost.class,
             CasualtyCost.class,
-            SacrificeCreatureOrPayManaCost.class,
             ForageOrPayManaCost.class,
             SacrificePermanentOrPayManaCost.class,
             SacrificePermanentOrDiscardCardCost.class,
@@ -152,7 +149,6 @@ public class AdditionalSpellCostService {
             ReturnAnyNumberOfPermanentsToHandCost.class,
             ReturnPermanentToHandCost.class,
             ReturnCreatureToHandCost.class,
-            BlightCost.class,
             PutCounterOnControlledCreatureCost.class,
             PutCountersOnControlledCreatureOrPayManaCost.class,
             PayXLifeCost.class,
@@ -283,7 +279,6 @@ public class AdditionalSpellCostService {
             ReturnAnyNumberOfPermanentsToHandCost returnAnyNumberCost,
             ReturnPermanentToHandCost returnPermanentToHand,
             boolean returnCreatureToHand,
-            BlightCost blightCost,
             PutCounterOnControlledCreatureCost putCounterCost,
             PutCountersOnControlledCreatureOrPayManaCost putCountersOrPayManaCost,
             boolean payXLife,
@@ -342,7 +337,7 @@ public class AdditionalSpellCostService {
                     || tapMultipleCost != null || returnAnyNumberCost != null
                     || teamworkCost != null
                     || returnPermanentToHand != null
-                    || returnCreatureToHand || blightCost != null || putCounterCost != null || putCountersOrPayManaCost != null
+                    || returnCreatureToHand || putCounterCost != null || putCountersOrPayManaCost != null
                     || payXLife || payLifeCost != null || payLifeOrPayManaCost != null
                     || payLifeOrSacrificePermanentCost != null
                     || discardCardOrSacrificePermanentCost != null
@@ -511,13 +506,7 @@ public class AdditionalSpellCostService {
         SacrificeCreatureOrDiscardCardOrPayLifeCost sacCreatureOrDiscardOrPayLife =
                 removeFirst(effects, SacrificeCreatureOrDiscardCardOrPayLifeCost.class);
         CasualtyCost casualtyCost = removeFirst(effects, CasualtyCost.class);
-        SacrificeCreatureOrPayManaCost legacySacOrPay =
-                removeFirst(effects, SacrificeCreatureOrPayManaCost.class);
         SacrificePermanentOrPayManaCost sacOrPay = removeFirst(effects, SacrificePermanentOrPayManaCost.class);
-        if (sacOrPay == null && legacySacOrPay != null) {
-            sacOrPay = new SacrificePermanentOrPayManaCost(
-                    legacySacOrPay.manaCost(), new PermanentIsCreaturePredicate(), "a creature");
-        }
         TapPermanentOrPayManaCost tapOrPay = removeFirst(effects, TapPermanentOrPayManaCost.class);
         SacrificePermanentOrDiscardCardCost sacOrDiscard =
                 removeFirst(effects, SacrificePermanentOrDiscardCardCost.class);
@@ -540,7 +529,6 @@ public class AdditionalSpellCostService {
                 removeFirst(effects, ReturnAnyNumberOfPermanentsToHandCost.class);
         ReturnPermanentToHandCost returnPermanentToHand = removeFirst(effects, ReturnPermanentToHandCost.class);
         boolean returnCreature = effects.removeIf(ReturnCreatureToHandCost.class::isInstance);
-        BlightCost blightCost = removeFirst(effects, BlightCost.class);
         PutCounterOnControlledCreatureCost putCounterCost = removeFirst(effects, PutCounterOnControlledCreatureCost.class);
         PutCountersOnControlledCreatureOrPayManaCost putCountersOrPayManaCost =
                 removeFirst(effects, PutCountersOnControlledCreatureOrPayManaCost.class);
@@ -609,7 +597,7 @@ public class AdditionalSpellCostService {
                 fractionRoundedUpCost, escalateSacrificeCost, escalateTapCost,
                 sacAnyNumberCost, tapAnyNumberCost, tapCreaturesForManaCost, tapMultipleCost, teamworkCost, returnAnyNumberCost,
                 returnPermanentToHand, returnCreature,
-                blightCost, putCounterCost, putCountersOrPayManaCost,
+                putCounterCost, putCountersOrPayManaCost,
                 payXLife, payLifeCost, payLifeOrPayManaCost, exileAnyNumberOfCardsFromHandCost,
                 exileAnyNumberOfCardsFromGraveyardCost,
                 exileGraveyardCost, exileXCardsCost, putOpponentOwnedExiledCardIntoGraveyardCost,
@@ -805,15 +793,6 @@ public class AdditionalSpellCostService {
                         return false;
                     }
                 }
-                case SacrificeCreatureOrPayManaCost cost -> {
-                    boolean hasCreature = battlefield.stream().anyMatch(p -> gameQueryService.isCreature(gameData, p)
-                            && gameQueryService.canChooseToSacrificeForCosts(gameData, p));
-                    if (!hasCreature && !canAffordSacrificeOrPayManaOption(gameData, playerId, card,
-                            new SacrificePermanentOrPayManaCost(
-                                    cost.manaCost(), new PermanentIsCreaturePredicate(), "a creature"))) {
-                        return false;
-                    }
-                }
                 case ForageOrPayManaCost cost -> {
                     if (!canPayForageOrPayManaCost(gameData, playerId, card, cost)) {
                         return false;
@@ -866,9 +845,6 @@ public class AdditionalSpellCostService {
                             predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))) {
                         return false;
                     }
-                }
-                case BlightCost ignored -> {
-                    if (battlefield.stream().noneMatch(p -> isChoosableCreature(gameData, p))) return false;
                 }
                 case PutCounterOnControlledCreatureCost cost -> {
                     if (!cost.optional()
@@ -1432,9 +1408,6 @@ public class AdditionalSpellCostService {
         // Discarding your entire hand has no failure mode (empty hand is legal).
         if (costs.returnCreatureToHand()) {
             validateReturnCreatureToHandCost(gameData, player, card, selection.sacrificePermanentId());
-        }
-        if (costs.blightCost() != null) {
-            validateBlightCost(gameData, player, card, selection.sacrificePermanentId());
         }
         if (costs.putCounterCost() != null
                 && (!costs.putCounterCost().optional() || selection.sacrificePermanentId() != null)) {
@@ -2748,12 +2721,6 @@ public class AdditionalSpellCostService {
     public Permanent validatePutCounterOnControlledCreatureCost(GameData gameData, Player player, Card card,
                                                                 PutCounterOnControlledCreatureCost cost, UUID creatureId) {
         return validateControlledCreatureForCounterCost(gameData, player, card, creatureId, cost.counterType());
-    }
-
-    /** Validates the creature choice for a blight additional cast cost. */
-    public Permanent validateBlightCost(GameData gameData, Player player, Card card, UUID creatureId) {
-        return validateControlledCreatureForCounterCost(gameData, player, card, creatureId,
-                CounterType.MINUS_ONE_MINUS_ONE);
     }
 
     /** Validates the counter-payment option of a counter-or-mana additional cast cost. */

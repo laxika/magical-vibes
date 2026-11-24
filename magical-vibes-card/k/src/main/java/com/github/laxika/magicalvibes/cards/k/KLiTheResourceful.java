@@ -5,8 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.condition.ControllerHasEnduringStory;
+import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityKind;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.FreeEquipWhileEnduringStoryEffect;
+import com.github.laxika.magicalvibes.model.effect.PayZeroRatherThanAbilityCostEffect;
 import com.github.laxika.magicalvibes.model.effect.StoriedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -23,7 +26,8 @@ public class KLiTheResourceful extends Card {
 
     public KLiTheResourceful() {
         addStaticEffect(new StoriedEffect());
-        addStaticEffect(new FreeEquipWhileEnduringStoryEffect());
+        addStaticEffect(new ConditionalEffect(new ControllerHasEnduringStory(),
+                PayZeroRatherThanAbilityCostEffect.firstEachTurn(ActivatedAbilityKind.EQUIP)));
         // "Whenever another Dwarf you control enters and whenever an Equipment you control enters, draw a card.
         // This ability triggers only once each turn": one ability of two trigger conditions under one limit.
         addTriggeredAbility(new TriggeredAbility(List.of(

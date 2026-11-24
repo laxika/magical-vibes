@@ -240,8 +240,7 @@ public class GameActionAvailabilityService {
                         || !PotentialManaService.meetsRequiredSourceCounters(ability, perm)) {
                     continue;
                 }
-                if (castingCostService.hasFreeEquipAbilityCost(gameData, playerId, ability)
-                        || castingCostService.hasFreePowerUpAbilityCost(gameData, playerId, ability)) {
+                if (castingCostService.paysZeroRatherThanAbilityCost(gameData, playerId, ability)) {
                     payable.add(i);
                     continue;
                 }

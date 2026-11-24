@@ -431,7 +431,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | random greatest-mana-value creature card in hand perpetually costs less | `f/FuelTankFeaster.java` + `PerpetualReduceRandomGreatestManaValueCreatureCardCostEffect` |
 | random artifact card in hand perpetually costs less | `f/FoundryBeetle.java` + `ChooseCardEffect.atRandom(cardsInYourHand(artifact), label)` + `PerpetuallyChangeCastCostEffect(cardsThisWay(CHOOSE), -1)` |
 | nontoken artifact trigger seeks a random nonland artifact with lesser mana value and grants cast permission through the next turn | `j/JunkyardScrapper.java` + `SeekLibraryEffect(..., EXILE_WITH_SOURCE, ManaValueBound(SourceCardManaValue, false, -1), false, true)` |
-| creature card in your graveyard without unearth perpetually gains unearth; max speed makes first unearth free | `h/HighwayReaver.java` + `PerpetuallyGrantUnearthToTargetCreatureCardEffect` + `MaxSpeedFreeFirstUnearthEffect` |
+| creature card in your graveyard without unearth perpetually gains unearth; max speed makes first unearth free | `h/HighwayReaver.java` + `PerpetuallyGrantUnearthToTargetCreatureCardEffect` + `ConditionalEffect(MaxSpeed, PayZeroRatherThanAbilityCostEffect.firstEachTurn(UNEARTH))` |
 | temporary global nontoken death trigger perpetually grants fixed-cost unearth, then deals mass creature damage | `c/ConsumedByHistory.java` + `RegisterGlobalTriggeredAbilityEffect(Triggers.nontokenCreatureDies(ANY), PerpetuallyGrantAbilitiesEffect(Subjects.triggeringCards(), unearth("{5}").withZones(GRAVEYARD)))` + `MassDamageEffect(3)` |
 | enchantment spell and Room unlock cost reduction | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | ETB, enters the battlefield | CARD_PATTERNS_CREATURES_ETB.md |

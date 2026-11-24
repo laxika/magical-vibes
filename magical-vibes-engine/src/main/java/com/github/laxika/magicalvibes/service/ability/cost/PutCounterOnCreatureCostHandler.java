@@ -10,27 +10,35 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatur
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 
 import java.util.List;
 import java.util.UUID;
 
 /**
  * Handles the {@link PutCounterOnControlledCreatureCost} as an activated-ability cost (e.g. Hatchet
- * Bully — "Put a -1/-1 counter on a creature you control"). The player chooses a creature they
- * control and the counter(s) are placed on it; the creature dies later via state-based actions if
- * its toughness reaches 0.
+ * Bully — "Put a -1/-1 counter on a creature you control", Gristle Glutton's "Blight 1", Blighted Nightmare's
+ * "Blight X"). The player chooses a creature they control that can get the counters (CR 701.68b, 118.3) and the
+ * counter(s) are placed on it; the creature dies later via state-based actions if its toughness reaches 0. An
+ * {@code XValue} amount is the activation's announced X.
  */
 public class PutCounterOnCreatureCostHandler implements PermanentChoiceCostHandler {
 
     private final PutCounterOnControlledCreatureCost cost;
+    private final int xValue;
     private final GameQueryService gameQueryService;
+    private final AmountEvaluationService amountEvaluationService;
     private final GameLogService gameLogService;
 
-    public PutCounterOnCreatureCostHandler(PutCounterOnControlledCreatureCost cost,
+    public PutCounterOnCreatureCostHandler(PutCounterOnControlledCreatureCost cost, int xValue,
                                            GameQueryService gameQueryService,
+                                           AmountEvaluationService amountEvaluationService,
                                            GameLogService gameLogService) {
         this.cost = cost;
+        this.xValue = xValue;
         this.gameQueryService = gameQueryService;
+        this.amountEvaluationService = amountEvaluationService;
         this.gameLogService = gameLogService;
     }
 
@@ -39,6 +47,9 @@ public class PutCounterOnCreatureCostHandler implements PermanentChoiceCostHandl
 
     @Override
     public void validateCanPay(GameData gameData, UUID playerId) {
+        if (xValue < 0) {
+            throw new IllegalStateException("X can't be negative");
+        }
         if (getValidChoiceIds(gameData, playerId).isEmpty()) {
             throw new IllegalStateException("No creature you control to put a " + counterLabel() + " counter on");
         }
@@ -48,9 +59,10 @@ public class PutCounterOnCreatureCostHandler implements PermanentChoiceCostHandl
     public List<UUID> getValidChoiceIds(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
+        boolean placesCounters = count(gameData, playerId) > 0;
         return battlefield.stream()
                 .filter(p -> gameQueryService.isCreature(gameData, p))
-                .filter(p -> canReceiveCounters(gameData, p))
+                .filter(p -> !placesCounters || canReceiveCounters(gameData, p))
                 .filter(p -> !gameQueryService.cantBeChosen(gameData, p))
                 .map(Permanent::getId)
                 .toList();
@@ -61,14 +73,14 @@ public class PutCounterOnCreatureCostHandler implements PermanentChoiceCostHandl
         if (!gameQueryService.isCreature(gameData, chosen)) {
             throw new IllegalStateException("Must choose a creature");
         }
-        if (!canReceiveCounters(gameData, chosen)) {
+        int count = count(gameData, player.getId());
+        if (count > 0 && !canReceiveCounters(gameData, chosen)) {
             throw new IllegalStateException("The chosen creature cannot receive these counters");
         }
         if (gameQueryService.cantBeChosen(gameData, chosen)) {
             throw new IllegalStateException(FaceDownVisibility.publicName(gameData, chosen) + " can't be chosen");
         }
         CounterType type = cost.counterType();
-        int count = cost.count();
         count = gameQueryService.replaceCounters(gameData, chosen, type, count, player.getId());
         if (count <= 0) {
             return;
@@ -91,6 +103,11 @@ public class PutCounterOnCreatureCostHandler implements PermanentChoiceCostHandl
     @Override
     public String getPromptMessage(int remaining) {
         return "Choose a creature to put a " + counterLabel() + " counter on.";
+    }
+
+    private int count(GameData gameData, UUID playerId) {
+        return amountEvaluationService.evaluate(gameData, cost.amount(),
+                new AmountContext(playerId, null, null, xValue, 0));
     }
 
     private String counterLabel() {

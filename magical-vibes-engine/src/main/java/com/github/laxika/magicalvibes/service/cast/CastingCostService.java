@@ -47,9 +47,8 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityAdditionalCos
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedPermanentActivatedAbilityCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.BattlefieldTargetCastCostReducingEffect;
-import com.github.laxika.magicalvibes.model.effect.FreeEquipEffect;
-import com.github.laxika.magicalvibes.model.effect.FreeEquipWhileEnduringStoryEffect;
-import com.github.laxika.magicalvibes.model.effect.FreePowerUpEffect;
+import com.github.laxika.magicalvibes.model.effect.PayZeroRatherThanAbilityCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityKind;
 import com.github.laxika.magicalvibes.model.effect.FirstActivatedAbilityCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceFirstActivatedAbilityCostForControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalSacrificePerManaSymbolTaxEffect;
@@ -1413,43 +1412,32 @@ public class CastingCostService {
         return unrestrictedReduction + Math.min(restrictedReduction, maximumReductionForMinimumOneMana);
     }
 
-    /** Whether the activating player can use a static effect that replaces this equip cost with zero. */
-    public boolean hasFreeEquipAbilityCost(GameData gameData, UUID activatingPlayerId,
-                                           ActivatedAbility ability) {
-        if (!ability.isEquipAbility()
-                || gameData.playersWhoActivatedEquipAbilityThisTurn.contains(activatingPlayerId)) {
-            return false;
+    /**
+     * Whether {@code activatingPlayerId} may pay {0} rather than {@code ability}'s cost (CR 118.9, 602.2b): an active
+     * {@link PayZeroRatherThanAbilityCostEffect} of a permanent they control names the ability's kind, and, when it is
+     * for the first such ability each turn, they haven't activated one of that kind this turn.
+     */
+    public boolean paysZeroRatherThanAbilityCost(GameData gameData, UUID activatingPlayerId,
+                                                 ActivatedAbility ability) {
+        for (var active : gameQueryService.activeStaticEffects(
+                gameData, activatingPlayerId, PayZeroRatherThanAbilityCostEffect.class)) {
+            PayZeroRatherThanAbilityCostEffect free = active.effect();
+            if (free.kind().matches(ability)
+                    && (!free.firstEachTurn() || !activatedAbilityOfKindThisTurn(gameData, activatingPlayerId, free.kind()))) {
+                return true;
+            }
         }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(activatingPlayerId);
-        if (battlefield == null) {
-            return false;
-        }
-        return battlefield.stream()
-                .filter(permanent -> !permanent.isFaceDown()
-                        && !gameQueryService.hasLostAllAbilities(gameData, permanent))
-                .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
-                .anyMatch(effect -> effect instanceof FreeEquipEffect
-                        && (!(effect instanceof FreeEquipWhileEnduringStoryEffect)
-                        || gameData.playersWithEnduringStory.contains(activatingPlayerId)));
+        return false;
     }
 
-    /** Whether the activating player can use a static effect that replaces this Power-up cost with zero. */
-    public boolean hasFreePowerUpAbilityCost(GameData gameData, UUID activatingPlayerId,
-                                             ActivatedAbility ability) {
-        if (!ability.isPowerUpAbility()
-                || !activatingPlayerId.equals(gameData.activePlayerId)
-                || gameData.playersWhoActivatedPowerUpAbilityThisTurn.contains(activatingPlayerId)) {
-            return false;
-        }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(activatingPlayerId);
-        if (battlefield == null) {
-            return false;
-        }
-        return battlefield.stream()
-                .filter(permanent -> !permanent.isFaceDown()
-                        && !gameQueryService.hasLostAllAbilities(gameData, permanent))
-                .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
-                .anyMatch(FreePowerUpEffect.class::isInstance);
+    private static boolean activatedAbilityOfKindThisTurn(GameData gameData, UUID playerId, ActivatedAbilityKind kind) {
+        return switch (kind) {
+            case EQUIP -> gameData.playersWhoActivatedEquipAbilityThisTurn.contains(playerId);
+            case POWER_UP -> gameData.playersWhoActivatedPowerUpAbilityThisTurn.contains(playerId);
+            case CYCLING -> gameData.cardsCycledThisTurn.getOrDefault(playerId, 0) > 0;
+            case UNEARTH -> gameData.playersWhoUsedMaxSpeedFreeUnearthThisTurn.contains(playerId);
+            default -> throw new IllegalArgumentException("No per-turn activation record for " + kind + " abilities");
+        };
     }
 
     /**

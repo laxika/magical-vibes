@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromControlledCreaturesCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromControlledPermanentsCost;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -23,7 +24,8 @@ public class OozeFlux extends Card {
                 false,
                 "{1}{G}",
                 List.of(
-                        new RemoveOneOrMoreCountersFromControlledCreaturesCost(CounterType.PLUS_ONE_PLUS_ONE),
+                        new RemoveOneOrMoreCountersFromControlledPermanentsCost(CounterType.PLUS_ONE_PLUS_ONE,
+                                new PermanentIsCreaturePredicate()),
                         new CreateTokenEffect("Ooze", new XValue(), new XValue(),
                                 CardColor.GREEN, List.of(CardSubtype.OOZE), Set.of(), Set.of())),
                 "{1}{G}, Remove one or more +1/+1 counters from among creatures you control: "

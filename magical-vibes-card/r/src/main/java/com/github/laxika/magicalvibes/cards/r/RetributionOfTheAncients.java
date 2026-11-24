@@ -7,8 +7,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromControlledCreaturesCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromControlledPermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 
@@ -20,7 +21,8 @@ public class RetributionOfTheAncients extends Card {
                 false,
                 "{B}",
                 List.of(
-                        new RemoveOneOrMoreCountersFromControlledCreaturesCost(CounterType.PLUS_ONE_PLUS_ONE, true),
+                        new RemoveOneOrMoreCountersFromControlledPermanentsCost(CounterType.PLUS_ONE_PLUS_ONE,
+                                new PermanentIsCreaturePredicate(), true, false),
                         new BoostTargetCreatureEffect(
                                 new Scaled(new XValue(), -1),
                                 new Scaled(new XValue(), -1))

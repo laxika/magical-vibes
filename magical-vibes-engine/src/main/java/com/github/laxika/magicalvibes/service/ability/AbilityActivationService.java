@@ -49,7 +49,6 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingP
 import com.github.laxika.magicalvibes.model.effect.ActivationCostModifierEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.BlightXCost;
 import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaColorLandScope;
@@ -83,9 +82,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.FirstCardCycledFreeEffect;
 import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
-import com.github.laxika.magicalvibes.model.effect.FreeCyclingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLandwalkOfSacrificedLandToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.HandCardCost;
@@ -117,7 +114,6 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCr
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromGrantingPermanentCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromControlledCreaturesCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromControlledPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromPermanentOrSuspendedCardCost;
@@ -169,7 +165,6 @@ import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.ability.cost.AllMatchingPermanentSacrificeCostHandler;
-import com.github.laxika.magicalvibes.service.ability.cost.BlightXCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.CreatureSacrificeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.CrewCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.DistinctNamePermanentSacrificeCostHandler;
@@ -1593,10 +1588,10 @@ public class AbilityActivationService {
         // ability cost {N} less to activate; the reduction is floored to the generic portion so the
         // cost never drops below its colored requirements, then threaded through as a negative
         // additional generic cost.
-        boolean maxSpeedFreeUnearth = ability.isUnearthAbility()
-                && gameQueryService.canUseMaxSpeedFreeUnearth(gameData, playerId);
+        boolean unearthCostReplaced = ability.isUnearthAbility()
+                && castingCostService.paysZeroRatherThanAbilityCost(gameData, playerId, ability);
         String abilityCost = ability.getManaCost();
-        if (abilityCost != null && !maxSpeedFreeUnearth) {
+        if (abilityCost != null && !unearthCostReplaced) {
             ManaCost manaCost = new ManaCost(abilityCost);
             int genericCost = manaCost.getGenericCost();
             int additionalGenericCost = -Math.min(
@@ -1623,7 +1618,7 @@ public class AbilityActivationService {
             }
             payManaCostForSourceCard(gameData, playerId, card, abilityCost, xValue, false, false,
                     additionalGenericCost);
-        } else if (maxSpeedFreeUnearth) {
+        } else if (unearthCostReplaced) {
             int activationTax = castingCostService.getActivatedAbilityActivationTax(
                     gameData, playerId, new Permanent(card), ability, isManaAbility(ability));
             if (activationTax > 0) {
@@ -2438,21 +2433,14 @@ public class AbilityActivationService {
         int stackSizeBeforeCosts = gameData.stack.size();
 
         // Pay mana cost (throws before mutating the pool if it can't be afforded). A static effect
-        // may replace a cycling ability's mana cost with {0} (New Perspectives, CR 118.9): the card
-        // being cycled still counts toward the hand-size condition, so check the current hand size
-        // before it is discarded below as part of the cost.
+        // may let the player pay {0} rather than the cycling cost (Gavi, New Perspectives, CR 118.9):
+        // it is judged before the card is discarded below as part of the cost, so the card being
+        // cycled still counts toward a hand-size condition.
         String abilityCost = ability.getManaCost();
-        UUID firstCardCycledFreeSourceId = abilityCost != null
-                ? findFirstCardCycledFreeSource(gameData, playerId, ability)
-                : null;
-        boolean cyclingCostReplaced = false;
-        if (firstCardCycledFreeSourceId != null) {
+        boolean cyclingCostReplaced = ability.isCyclingAbility()
+                && castingCostService.paysZeroRatherThanAbilityCost(gameData, playerId, ability);
+        if (cyclingCostReplaced) {
             abilityCost = null;
-            cyclingCostReplaced = true;
-        }
-        if (cyclingCostReplacedWithZero(gameData, playerId, ability, hand.size())) {
-            abilityCost = null;
-            cyclingCostReplaced = true;
         }
         if (cyclingCostReplaced && effectiveXValue > 0) {
             throw new IllegalStateException("A cycling cost replaced with {0} can't be paid with X");
@@ -2492,12 +2480,6 @@ public class AbilityActivationService {
                 lifeSupport.applyLifePayment(gameData, playerId, amount, card.getName());
             }
             deferActivatedAbilityCostTriggers(gameData, stackSizeBeforeCosts);
-        }
-
-        if (firstCardCycledFreeSourceId != null) {
-            gameData.firstCardCycledFreeUsesThisTurn
-                    .computeIfAbsent(firstCardCycledFreeSourceId, ignored -> ConcurrentHashMap.newKeySet())
-                    .add(playerId);
         }
 
         if (ability.isSourceStaysInHand() && ability.isRevealsSourceFromHand()) {
@@ -2954,58 +2936,6 @@ public class AbilityActivationService {
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " exiles ", card, " from their hand for mana."));
         log.info("Game {} - {} exiles {} from hand for mana", gameData.id, player.getUsername(), card.getName());
-    }
-
-    /** Returns the unused source permanent granting Gavi-style first-card-free cycling, if any. */
-    private UUID findFirstCardCycledFreeSource(GameData gameData, UUID playerId, ActivatedAbility ability) {
-        if (!ability.isCyclingAbility() || gameData.cardsCycledThisTurn.getOrDefault(playerId, 0) > 0) {
-            return null;
-        }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return null;
-        }
-        for (Permanent permanent : battlefield) {
-            if (gameData.firstCardCycledFreeUsesThisTurn
-                    .getOrDefault(permanent.getId(), Set.of()).contains(playerId)
-                    || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
-                continue;
-            }
-            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
-                if (effect instanceof FirstCardCycledFreeEffect) {
-                    return permanent.getId();
-                }
-            }
-        }
-        return null;
-    }
-
-    /**
-     * True if {@code ability}'s mana cost is currently replaced with {0} for {@code playerId}: the
-     * ability is a cycling ability and the player controls a permanent granting free cycling while
-     * they hold enough cards in hand (New Perspectives, CR 118.9). Cycling is identified by the
-     * ability's reminder-text description ending in "cycling", the engine's convention for cycling.
-     * {@code handSize} is the hand size at activation, which still includes the card being cycled.
-     */
-    private boolean cyclingCostReplacedWithZero(GameData gameData, UUID playerId, ActivatedAbility ability, int handSize) {
-        if (!ability.isCyclingAbility()) {
-            return false;
-        }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return false;
-        }
-        for (Permanent permanent : battlefield) {
-            if (gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
-                continue;
-            }
-            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
-                if (effect instanceof FreeCyclingEffect freeCycling && handSize >= freeCycling.minCardsInHand()) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     /**
@@ -4232,8 +4162,7 @@ public class AbilityActivationService {
             activationPool.promotePowerUpAbilityOnlyMana();
         }
         String abilityCost = effectiveAbilityManaCost(gameData, permanent, ability);
-        if (castingCostService.hasFreeEquipAbilityCost(gameData, playerId, ability)
-                || castingCostService.hasFreePowerUpAbilityCost(gameData, playerId, ability)) {
+        if (castingCostService.paysZeroRatherThanAbilityCost(gameData, playerId, ability)) {
             abilityCost = null;
         }
         gameData.abilityActivationTreasureManaSpent.remove(permanent.getCard().getId());
@@ -5973,10 +5902,8 @@ public class AbilityActivationService {
         if (effect instanceof RemoveCounterFromControlledPermanentCost c) return new RemoveCounterFromPermanentCostHandler(
                 c, gameLogService, predicateEvaluationService, sourcePermanentId);
         if (effect instanceof RemoveCounterFromControlledCreatureCost c) return new RemoveCounterFromCreatureCostHandler(c, gameQueryService, gameLogService);
-        if (effect instanceof RemoveOneOrMoreCountersFromControlledCreaturesCost c) return new RemoveCounterFromCreatureCostHandler(c, xValue, gameQueryService, gameLogService);
         if (effect instanceof RemoveOneOrMoreCountersFromControlledPermanentsCost c) return new RemoveCounterFromControlledPermanentsCostHandler(c, xValue, predicateEvaluationService, gameLogService);
-        if (effect instanceof BlightXCost c) return new BlightXCostHandler(c, xValue, gameQueryService, amountEvaluationService, gameLogService);
-        if (effect instanceof PutCounterOnControlledCreatureCost c) return new PutCounterOnCreatureCostHandler(c, gameQueryService, gameLogService);
+        if (effect instanceof PutCounterOnControlledCreatureCost c) return new PutCounterOnCreatureCostHandler(c, xValue, gameQueryService, amountEvaluationService, gameLogService);
         if (effect instanceof UnattachEquipmentFromSourceCost c) return new UnattachEquipmentFromSourceCostHandler(
                 c, sourcePermanentId, gameQueryService, equipSupport, durationClock, gameLogService);
         return null;
@@ -6870,7 +6797,7 @@ public class AbilityActivationService {
                         gameData, playerId, permanent, ability, isManaAbility(ability));
         String abilityCost = effectiveAbilityManaCost(gameData, permanent, ability);
         if (abilityCost == null
-                || castingCostService.hasFreeEquipAbilityCost(gameData, playerId, ability)) {
+                || castingCostService.paysZeroRatherThanAbilityCost(gameData, playerId, ability)) {
             if (abilityCost == null && additionalGenericCost > 0) {
                 int taxReduction = castingCostService.getActivatedAbilityActivationCostReduction(
                         gameData, permanent, ability, targetId, targetIds,
@@ -7002,6 +6929,13 @@ public class AbilityActivationService {
 
         if (xValue < ability.getMinimumXValue()) {
             throw new IllegalStateException("X must be at least " + ability.getMinimumXValue());
+        }
+        if (ability.getMaximumXValue() != null) {
+            int maximumX = amountEvaluationService.evaluate(
+                    gameData, ability.getMaximumXValue(), new AmountContext(playerId, permanent, null, xValue, 0));
+            if (xValue > maximumX) {
+                throw new IllegalStateException("X can't be greater than " + maximumX);
+            }
         }
         if (ability.isModalModesMustBeUnused()) {
             ChooseOneEffect modal = ability.modalEffectAtActivation();
@@ -7278,8 +7212,7 @@ public class AbilityActivationService {
             }
         }
         String abilityCost = effectiveAbilityManaCost(gameData, permanent, ability);
-        if (castingCostService.hasFreeEquipAbilityCost(gameData, playerId, ability)
-                || castingCostService.hasFreePowerUpAbilityCost(gameData, playerId, ability)) {
+        if (castingCostService.paysZeroRatherThanAbilityCost(gameData, playerId, ability)) {
             abilityCost = null;
         }
         if (ability.isManaCostOfEnchantedPermanent() && abilityCost == null) {

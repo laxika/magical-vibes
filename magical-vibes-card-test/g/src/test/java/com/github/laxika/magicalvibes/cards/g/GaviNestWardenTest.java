@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.d.DarksteelMutation;
 import com.github.laxika.magicalvibes.cards.r.RemoteIsle;
 import com.github.laxika.magicalvibes.cards.s.SharkTyphoon;
+import com.github.laxika.magicalvibes.cards.s.StreetWraith;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,12 +18,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GaviNestWarden.class, Censor.class, GrizzlyBears.class, CounselOfTheSoratami.class,
-        RemoteIsle.class, SharkTyphoon.class, DarksteelMutation.class})
+        RemoteIsle.class, SharkTyphoon.class, DarksteelMutation.class, StreetWraith.class})
 class GaviNestWardenTest extends BaseCardTest {
 
     @Test
@@ -218,5 +221,32 @@ class GaviNestWardenTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Dinosaur Cat")).isZero();
+    }
+
+    @Test
+    @DisplayName("A face-down Gavi has no abilities, so cycling isn't free")
+    void faceDownGaviDoesNotMakeCyclingFree() {
+        Permanent gavi = harness.addToBattlefieldAndReturn(player1, new GaviNestWarden());
+        gavi.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setHand(player1, List.of(new RemoteIsle()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The first cycling cost replaced with {0} is a cycling life payment too")
+    void firstCyclingReplacesALifeCyclingCost() {
+        harness.addToBattlefield(player1, new GaviNestWarden());
+        harness.setHand(player1, List.of(new StreetWraith()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+        harness.assertInGraveyard(player1, "Street Wraith");
     }
 }

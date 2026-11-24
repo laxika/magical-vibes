@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.m.MeliraSylvokOutcast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -7,13 +8,15 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GristleGlutton.class})
+@CardUsed({GristleGlutton.class, MeliraSylvokOutcast.class})
 class GristleGluttonTest extends BaseCardTest {
 
     @Test
@@ -87,5 +90,22 @@ class GristleGluttonTest extends BaseCardTest {
         assertThat(glutton.isTapped()).isTrue();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(heldCard);
+    }
+
+    @Test
+    @DisplayName("Can't blight 1 when no creature you control can get a -1/-1 counter")
+    void cannotBlightWhenNoCreatureCanGetMinusOneMinusOneCounters() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        Permanent glutton = harness.addToBattlefieldAndReturn(player1, new GristleGlutton());
+        harness.addToBattlefield(player1, new MeliraSylvokOutcast());
+        glutton.setSummoningSick(false);
+        harness.setHand(player1, List.of(new GristleGlutton()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(glutton.isTapped()).isFalse();
+        assertThat(glutton.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }
 }

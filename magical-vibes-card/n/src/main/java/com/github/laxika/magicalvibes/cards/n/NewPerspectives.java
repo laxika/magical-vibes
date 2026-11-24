@@ -2,8 +2,11 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
+import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityKind;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.FreeCyclingWhileHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.PayZeroRatherThanAbilityCostEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,6 +22,7 @@ public class NewPerspectives extends Card {
         // As long as you have seven or more cards in hand, you may pay {0} rather than pay cycling
         // costs. Static alternative cost read at cycling activation (AbilityActivationService); the
         // card being cycled still counts toward the seven.
-        addStaticEffect(new FreeCyclingWhileHandSizeEffect(7));
+        addStaticEffect(new ConditionalEffect(new CardsInHandAtLeast(7),
+                PayZeroRatherThanAbilityCostEffect.always(ActivatedAbilityKind.CYCLING)));
     }
 }

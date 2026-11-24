@@ -40,7 +40,6 @@ import com.github.laxika.magicalvibes.model.SaturatingMath;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantSacrificeTargetThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PayBlackManaWithLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MaxSpeedFreeFirstUnearthEffect;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -1879,16 +1878,6 @@ public class GameQueryService {
         CardPredicate filter = grant.cardFilter();
         return card != null && grant.appliesTo(card) && (filter == null
                 || predicateEvaluationService.matchesCardPredicate(card, filter, null, gameData, ownerId));
-    }
-
-    /** Whether Highway Reaver currently permits this player's first unearth activation to be free. */
-    public boolean canUseMaxSpeedFreeUnearth(GameData gameData, UUID playerId) {
-        return gameData.playerSpeeds.getOrDefault(playerId, 0) == 4
-                && !gameData.playersWhoUsedMaxSpeedFreeUnearthThisTurn.contains(playerId)
-                && gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
-                .filter(permanent -> !permanent.isFaceDown() && !hasLostAllAbilities(gameData, permanent))
-                .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
-                .anyMatch(MaxSpeedFreeFirstUnearthEffect.class::isInstance);
     }
 
     /**

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.g.GoreclawTerrorOfQalSisma;
 import com.github.laxika.magicalvibes.cards.s.SpinedKarok;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -121,6 +122,21 @@ class BayouGroffTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Bayou Groff");
         harness.assertOnBattlefield(player1, "Goreclaw, Terror of Qal Sisma");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Can be cast from exile, paying {3} for the additional cost")
+    void castFromExilePaysTheManaAlternative() {
+        BayouGroff groff = new BayouGroff();
+        harness.setExile(player1, List.of(groff));
+        gd.grantExilePlayPermission(groff.getId(), player1.getId(), Duration.PERMANENT);
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castFromExile(player1, groff.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Bayou Groff");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 }

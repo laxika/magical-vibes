@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
+import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityKind;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.FirstEquipFreeEffect;
+import com.github.laxika.magicalvibes.model.effect.PayZeroRatherThanAbilityCostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "AFR", collectorNumber = "219")
@@ -19,6 +20,6 @@ public class BruenorBattlehammer extends Card {
                 Subjects.creaturesYouControl(),
                 null,
                 true));
-        addStaticEffect(new FirstEquipFreeEffect());
+        addStaticEffect(PayZeroRatherThanAbilityCostEffect.firstEachTurn(ActivatedAbilityKind.EQUIP));
     }
 }

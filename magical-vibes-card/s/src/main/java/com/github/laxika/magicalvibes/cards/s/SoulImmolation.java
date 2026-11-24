@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.GreatestToughnessAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.BlightCost;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -28,7 +28,7 @@ public class SoulImmolation extends Card {
 
     public SoulImmolation() {
         setXValueCap(new GreatestToughnessAmongControlled());
-        addCastingCost(new BlightCost());
+        addCastingCost(PutCounterOnControlledCreatureCost.blightX());
         addSimultaneousSpellEffects(new DealDamageToPlayersEffect(new XValue(), Subjects.eachOpponent()),
                 new DealDamageToEachMatchingPermanentEffect(
                         new XValue(), OPPONENT_CREATURE, EachPermanentScope.ALL_PLAYERS));

@@ -671,7 +671,7 @@ public class GameData {
     public final Map<UUID, Integer> playerSpeeds = new ConcurrentHashMap<>();
     /** Players whose speed has already increased during the current turn. */
     public final Set<UUID> playersWhoseSpeedIncreasedThisTurn = ConcurrentHashMap.newKeySet();
-    /** Players who used Highway Reaver's max-speed free unearth this turn. */
+    /** Players who activated an unearth ability this turn (any unearth, paid or not; CR 702.84a). */
     public final Set<UUID> playersWhoUsedMaxSpeedFreeUnearthThisTurn = ConcurrentHashMap.newKeySet();
     public final InteractionState interaction = new InteractionState(this::takeTriggerRecordInHand,
             this::reportInteractionWithoutTriggerRecord);
@@ -3133,9 +3133,6 @@ public class GameData {
      *  abilities it had at the time. Used for "for the first time each turn" counter triggers that
      *  may be granted after an earlier placement. Cleared at start of new turn. */
     public final Set<UUID> permanentsWithCountersPutThisTurn = ConcurrentHashMap.newKeySet();
-
-    /** Tracks which controller has used each permanent's first-card-cycled-free permission this turn. */
-    public final Map<UUID, Set<UUID>> firstCardCycledFreeUsesThisTurn = new ConcurrentHashMap<>();
 
     /**
      * The once-each-turn limits used this turn, by source permanent or graveyard card and then by the limited
@@ -10473,8 +10470,6 @@ public class GameData {
             copiedKeys.addAll(keys);
             copy.keyedOnceOnlyTriggersFired.put(sourceId, copiedKeys);
         });
-        this.firstCardCycledFreeUsesThisTurn.forEach((k, v) ->
-                copy.firstCardCycledFreeUsesThisTurn.put(k, new HashSet<>(v)));
         this.keyedOncePerTurnTriggersFiredThisTurn.forEach((k, v) -> {
             Set<String> keys = ConcurrentHashMap.newKeySet();
             keys.addAll(v);

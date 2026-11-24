@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
-import com.github.laxika.magicalvibes.model.effect.BlightXCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
@@ -21,7 +21,7 @@ public class GristleGlutton extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(BlightXCost.fixed(1),
+                List.of(PutCounterOnControlledCreatureCost.blight(1),
                         SequenceEffect.of(
                                 new DiscardEffect(1, Subjects.you()),
                                 new ConditionalEffect(HappenedThisWay.discarded(),

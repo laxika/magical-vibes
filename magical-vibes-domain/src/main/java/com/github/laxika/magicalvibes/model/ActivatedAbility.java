@@ -166,6 +166,8 @@ public non-sealed class ActivatedAbility implements Ability {
     private boolean requiresXValue;
     /** Minimum value that may be announced for this ability's {@code X} cost. */
     private int minimumXValue;
+    /** Greatest value that may be announced for this ability's {@code X}, evaluated as it is activated; null for none. */
+    private DynamicAmount maximumXValue;
     /** Counter type whose current count fixes the announced X for this ability. */
     private CounterType requiredXSourceCounterType;
     /** Whether this ability's ChooseOneEffect mode is selected as the ability is activated. */
@@ -407,6 +409,7 @@ public non-sealed class ActivatedAbility implements Ability {
         copy.dynamicMaxTargets = this.dynamicMaxTargets;
         copy.requiresXValue = this.requiresXValue;
         copy.minimumXValue = this.minimumXValue;
+        copy.maximumXValue = this.maximumXValue;
         copy.requiredXSourceCounterType = this.requiredXSourceCounterType;
         copy.modalChoiceAtActivation = this.modalChoiceAtActivation;
         copy.modalModesMustBeUnused = this.modalModesMustBeUnused;
@@ -432,6 +435,20 @@ public non-sealed class ActivatedAbility implements Ability {
     public ActivatedAbility withSourceChosenColorManaOnly() {
         this.sourceChosenColorManaOnly = true;
         return this;
+    }
+
+    /**
+     * "X can't be greater than [amount]": the announced X is checked against {@code maximumXValue} as the ability is
+     * activated (Blighted Nightmare), as {@link Card#setXValueCap} does for a spell.
+     */
+    public ActivatedAbility withMaximumXValue(DynamicAmount maximumXValue) {
+        this.maximumXValue = maximumXValue;
+        return this;
+    }
+
+    /** The greatest X this ability may be activated with, or null for no bound. */
+    public DynamicAmount getMaximumXValue() {
+        return maximumXValue;
     }
 
     /** Sets the minimum value that may be chosen for X in this ability's mana cost. */
