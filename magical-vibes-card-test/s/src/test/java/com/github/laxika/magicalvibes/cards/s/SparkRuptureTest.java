@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Planeswalkerificate;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SparkRupture.class, SarkhanTheMasterless.class, Forest.class})
+@CardUsed({SparkRupture.class, SarkhanTheMasterless.class, Forest.class, GrizzlyBears.class,
+        Planeswalkerificate.class})
 class SparkRuptureTest extends BaseCardTest {
 
     @Test
@@ -165,5 +168,23 @@ class SparkRuptureTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, sarkhan)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, sarkhan, Keyword.FLYING)).isTrue();
         assertThat(gs.getEffectiveActivatedAbilities(gd, sarkhan)).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A creature an effect made a planeswalker becomes a creature with loyalty-based P/T and no abilities")
+    void planeswalkerByEffectIsAffected() {
+        // Planeswalkerificate makes Grizzly Bears a planeswalker in layer 4 before Spark Rupture applies,
+        // so it is a planeswalker with a loyalty counter when Spark Rupture's effect starts (CR 613.1d).
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Planeswalkerificate());
+        aura.setAttachedTo(bears.getId());
+        bears.setCounterCount(CounterType.LOYALTY, 4);
+        harness.addToBattlefield(player1, new SparkRupture());
+
+        assertThat(gqs.isCreature(gd, bears)).isTrue();
+        assertThat(gqs.isPlaneswalker(gd, bears)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+        assertThat(gs.getEffectiveActivatedAbilities(gd, bears)).isEmpty();
     }
 }

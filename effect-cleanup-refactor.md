@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b (each in Findings; the fold queue marks its rows). Fold runs 32b and 35b are reported and wait to merge; 29d (fixing its payment window), 38 and 36b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                    |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b (each in Findings; the fold queue marks its rows). Fold run 35b is reported and waits to merge; 29d (fixing its payment window), 38 and 36b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                     |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,325 / 2,676 (after fold run 27b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,324 / 2,675 (after fold run 32b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,138 rows over 4,490 classes (after fold run 27b). Latest verdict per class: `step-9` 423, unique 1,173, absorbed 1,048, split 652, blocked-other 523, survivor 370, blocked-step-model 140, blocked-player-loop 96, dead 65. Waiting: 423 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,142 rows over 4,490 classes (after fold run 32b). Latest verdict per class: `step-9` 419, unique 1,174, absorbed 1,049, split 652, blocked-other 524, survivor 371, blocked-step-model 140, blocked-player-loop 96, dead 65. Waiting: 419 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -918,6 +918,10 @@ Delayed and global triggers:
 - `RedirectNextDamageFromChosenSourceToSelfEffect.to(source, permanent)` / `.toPlayer(source, player)` / `.toItsController(source)` + `.dealtTo(players)` / `.allThisTurn()` / `.combatDamageOnly()`: every source-keyed redirection. One `SourceKeyedRedirectShield` per source, read by `DamagePreventionService.applicableSourceKeyedRedirects` / `applySourceKeyedRedirect` (CR 614.9) (fold run 27b).
 - `PreventNextDamageByTargetCreatureEffect.preventing(source)` / `.doubling(source)` + `.combatDamageOnly()`: "the next time [source] would deal damage this turn, prevent it / it deals double instead", with `target()`, `triggering()` or `thisWay(CHOOSE)` (fold run 27b).
 - `SubjectResolutionService.damageSourceIds(...)`: the ids of damage sources a subject names, a chosen spell and `targetSpell()` included (fold run 27b).
+
+- `AnimateNoncreatureArtifactsEffect(PermanentSubject subject, PermanentPredicate filter, boolean losesAllAbilities)` / `.otherNonAuraEnchantments()`: "each [filter] permanent is a creature in addition to its other types with base P/T equal to its mana value". The filter is judged in layer 4, and layers 6 and 7b apply to that set (CR 613.6) (fold run 32b).
+- `LayerSystemService.LayeredBoardState.staticAnimations` + `animatedBy(effect)` / `recordStaticAnimation(effect, id)`: the permanents each multi-layer static animation instance animated in layer 4, copied into dependency trials (fold run 32b).
+- `GameQueryService.isAnimatedByPrintedStaticAnimation(gameData, permanent, ownCardId, skipSourcesWithoutAbilities)`: the creature check for a permanent with no layered state (fold run 32b).
 
 ### Blocked causes still open
 
@@ -3936,6 +3940,34 @@ Okk, Champions of Minas Tirith, Call for Aid, Seeker of Slaanesh, Viashino Bey, 
 **For the next run.**
 - Move the other chosen-source records onto `ChooseDamageSourceEffect` + `thisWay(CHOOSE)`: `PreventDamageFromChosenSourceEffect`'s scopes, EyeForAnEye, `PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect`, `RedirectTargetCreature*FromChosenSource*`, `RedirectNextDamageFromChosenSourceToTargetCreatureEffect`. Their shields could join `SourceKeyedRedirectShield` (with an amount) or `SourceNextDamageToAnyTargetShield`.
 - Then do `redir-absorb` once fold run 35 is in.
+
+### Step 9, fold run 32b (2026-11-24, parallel worktree)
+
+1 folded, 1 survivor, 1 blocked-other, 1 unique. Ratchet 3,384 / 2,712 → 3,383 / 2,711. 1 card file rewritten (Opalescence). Oracle text and rulings checked for March of the Machines, Titania's Song, Opalescence, Starfield of Nyx and Spark Rupture. CR 205.1a, 205.1b, 613.1d, 613.1f, 613.4b, 613.6, 613.7, 613.7a and 613.8a checked.
+
+| Batch | Result |
+|---|---|
+| mv-animation | 1 folded: Opalescence is `AnimateNoncreatureArtifactsEffect.otherNonAuraEnchantments()` (`otherPermanents()`, non-Aura enchantment filter). Starfield left `blocked-other`: its threshold is a one-card option, and the `ConditionalEffect` route needs `ControlsPermanentCount` board-stable (default-deny; its filter can read combat state) plus the wrapper admitted to 7b. Spark Rupture left `unique`: replacing the type (CR 205.1a, ruling) and loyalty-based P/T are two one-card options. |
+
+**Shape.**
+- The survivor's filter is judged in layer 4 against the states as of the earlier layer-4 effects. "Noncreature" uses `PermanentIsCreaturePredicate`, which counts awakened lands, so March's old awakening skip is now part of its filter. Opalescence still animates an awakened enchantment land.
+- `LayeredBoardState.staticAnimations` (identity-keyed by `instance.original()`) replaces `marchAnimatedIds`, `starfieldAnimatedIds` and `opalescenceAnimatedIds`. It is written by the layer-4 cases of the survivor, Starfield and Spark Rupture, and read by their layer-6 gates, their 7b entries and their handlers.
+- Trials deep-copy the table, and the footprint tag is `STATIC_ANIMATIONS`. No layer-6 reader uses `l4Contributions` any more; that table is empty in trials.
+
+**Behaviour changes.**
+- Layers 6 and 7b apply to the set each instance animated, not to the union (CR 613.6). A second March gives no base P/T to an artifact the first already animated, so Lignify between them wins (0/4). New test.
+- Spark Rupture reads the layered planeswalker type. A Planeswalkerificate'd Grizzly Bears with 4 loyalty counters becomes a 4/4 with no abilities; before it was 2/2 and kept its abilities. New test; this is the "Fold:" defect.
+- Titania's Song and Spark Rupture's layer-6 dependency trials now see their animated set. Not tested.
+- Creature fallbacks (`isCreatureWithBonus`, `StaticEffectSupport.isEffectivelyCreature`): a battlefield permanent answers from its layered state. A permanent with no state is judged by each printed survivor's filter on its own characteristics (`isAnimatedByPrintedStaticAnimation`), so Opalescence now counts there too. `wouldEnterAsCreature` uses the same check. The two same-name boost handlers pass `gameData`, so they also count awakened lands and conditional self-animations. Not tested.
+- Opalescence's handler no longer adds a granted creature type in assembly; the layered state already has it.
+
+**Tests.** 2 added (March, Spark Rupture). `DependencyFootprintTest` only renamed its table constant.
+
+**Seen, not changed.**
+- `isAnimatedByStarfield` still answers for battlefield permanents, ignoring a later type removal. `wouldEnterAsCreature` ignores Starfield, so Torpor Orb misses an enchantment entering under an active Starfield. Sure of the code.
+- Titania's Song's "continues until end of turn" floating copy is keyed by `losesAllAbilities`, which only Titania sets. A second user of that flag would need its own marker. Sure.
+
+**For the next run.** Starfield of Nyx: make `ControlsPermanentCount` with a pure type filter board-stable, admit `ConditionalEffect(…, AnimateNoncreatureArtifactsEffect)` to layer 7b, and delete `isAnimatedByStarfield`. Then floated-name with The Irencrag.
 
 ## Prompt
 

@@ -128,10 +128,6 @@ public class StaticEffectSupport implements SubjectResolutionService.StaticReads
         return matchesStaticFilter(context, permanent, filter);
     }
 
-    public boolean isEffectivelyCreature(Permanent permanent, boolean hasAnimateArtifacts) {
-        return isEffectivelyCreature(null, permanent, hasAnimateArtifacts);
-    }
-
     public boolean isEffectivelyCreature(GameData gameData, Permanent permanent, boolean hasAnimateArtifacts) {
         if (permanent.isFaceDown()) return true;
         CharacteristicState activeState = LayerSystemService.activeStateFor(permanent.getId());
@@ -139,10 +135,13 @@ public class StaticEffectSupport implements SubjectResolutionService.StaticReads
         if (activeState == null && permanent.getCard().hasType(CardType.CREATURE)) return true;
         if (gameData != null && gameData.animatedByFloatingEffect(permanent.getId())) return true;
         if (permanent.getCounterCount(CounterType.AWAKENING) > 0) return true;
-        boolean artifact = activeState != null
-                ? activeState.hasCardType(CardType.ARTIFACT)
-                : permanent.getCard().hasType(CardType.ARTIFACT);
-        if (hasAnimateArtifacts && artifact) return true;
+        // With a layered state the animation's layer-4 type change is in it (CR 613.1d); without one its filter is
+        // judged on the permanent's own characteristics.
+        if (hasAnimateArtifacts && activeState == null && gameData != null
+                && gameQueryService.isAnimatedByPrintedStaticAnimation(gameData, permanent,
+                permanent.getCard().getId(), false)) {
+            return true;
+        }
         boolean land = activeState != null
                 ? activeState.hasCardType(CardType.LAND)
                 : permanent.getCard().hasType(CardType.LAND);
@@ -302,7 +301,8 @@ public class StaticEffectSupport implements SubjectResolutionService.StaticReads
 
     /**
      * Whether a face-up battlefield permanent prints an {@link AnimateNoncreatureArtifactsEffect} (March of the
-     * Machines). A face-down one has no abilities (CR 708.2).
+     * Machines, Opalescence): the cheap gate before {@link #isEffectivelyCreature} judges what it animates. A
+     * face-down one has no abilities (CR 708.2).
      */
     public boolean hasAnimateArtifactEffect(GameData gameData) {
         for (UUID playerId : gameData.orderedPlayerIds) {

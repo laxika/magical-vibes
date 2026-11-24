@@ -41,7 +41,7 @@ public class BoostByOtherCreaturesWithSameNameScopedEffectHandler implements Sta
         context.gameData().forEachPermanent((playerId, permanent) -> {
             if (permanent.getId().equals(boosted.getId())) return;
             if (boost.onlyControlled() && !playerId.equals(context.sourceControllerId())) return;
-            if (!support.isEffectivelyCreature(permanent, hasAnimateArtifacts)) return;
+            if (!support.isEffectivelyCreature(context.gameData(), permanent, hasAnimateArtifacts)) return;
             if (!name.equals(BoostByOtherCreaturesWithSameNameSelfEffectHandler.sameNameCheckName(permanent))) return;
             count[0]++;
         });

@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.AllPermanentsGainChosenColorE
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateControlledEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
-import com.github.laxika.magicalvibes.model.effect.AnimateNonAuraEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureWhileTargetTappedEffect;
@@ -354,7 +353,7 @@ public final class LayerClassifier {
         map.put(LoseAllLandTypesEffect.class, fixed(Layer.L4_TYPE));
         map.put(SetCreatureTypesToImprintedCreatureEffect.class, fixed(Layer.L4_TYPE));
         // Animate-and-set-P/T: the type change applies in layer 4, the MV-based base P/T in
-        // sublayer 7b, both with ONE timestamp (CR 613.4, March of the Machines). Titania's Song
+        // sublayer 7b, both with ONE timestamp (CR 613.4, March of the Machines, Opalescence). Titania's Song
         // (losesAllAbilities) additionally strips the artifacts' abilities in layer 6.
         map.put(AnimateNoncreatureArtifactsEffect.class,
                 new Entry(Set.of(Layer.L4_TYPE, Layer.L6_ABILITIES, Layer.L7B_SET_PT), (effect, fromOwnStaticSlot) ->
@@ -366,8 +365,6 @@ public final class LayerClassifier {
         // Starfield of Nyx: same layer-4 + sublayer-7b split for the enchantments its controller
         // controls.
         map.put(AnimateControlledEnchantmentsEffect.class,
-                fixed(Layer.L4_TYPE, Layer.L7B_SET_PT));
-        map.put(AnimateNonAuraEnchantmentsEffect.class,
                 fixed(Layer.L4_TYPE, Layer.L7B_SET_PT));
 
         // Layer 5 — color-changing effects. colorSetting distinguishes "becomes [color]"

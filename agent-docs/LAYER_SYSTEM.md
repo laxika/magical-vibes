@@ -199,7 +199,9 @@ A whole-battlefield, layer-by-layer pass replacing the per-permanent
 
 **Implementation status (step 5):** `LayerSystemService` (engine, `service/effect/`) runs the
 whole-battlefield pass for **layers 4, 5, and 6** (`LayeredBoardState`: per-permanent
-`CharacteristicState`s, the resolved per-land type override, the March-animated permanent set,
+`CharacteristicState`s, the resolved per-land type override, the permanents each multi-layer static animation
+(March of the Machines, Opalescence, Starfield of Nyx, Spark Rupture) animated in layer 4, kept per effect instance so its
+layer 6 and 7b parts apply to that set (CR 613.6),
 the managed-L4 replay records, the per-filter-instance layer-4 verdicts consumed per CR 613.6,
 the managed-L5/L6 effect instances, and the set of permanents whose color/ability state the
 pass touched). Layer 4 is applied with hand-written semantics as in step 4. **Layers 5 and 6**
@@ -609,8 +611,10 @@ Reasoning behind the non-obvious mappings:
 
 - **One effect, several layers, ONE timestamp.** `StaticBoostEffect` with granted keywords →
   L6 + 7c (keywordless → 7c only). `AnimateNoncreatureArtifactsEffect` (March of the
-  Machines) → L4 + 7b per CR 613.4: the artifact stays a creature via L4 even when a later 7b
-  setter (Lignify/Diminish) overrides the MV-based base P/T.
+  Machines, Opalescence) → L4 + 7b per CR 613.4: the artifact stays a creature via L4 even when a later 7b
+  setter (Lignify/Diminish) overrides the MV-based base P/T. Its filter is judged once, in layer 4; the 7b
+  (and Titania's Song's layer 6) part applies to the permanents that instance animated there (CR 613.6), so a
+  second March that found an already animated artifact sets no base P/T on it.
 - **7a vs 7b.** `SetPowerToughnessToAmountEffect` from the creature's own static ability is the
   `*/*` characteristic-defining ability → 7a with the CDA flag; anywhere else (granted,
   one-shot) → 7b. `SetBasePowerToughnessEffect` ("has base power and toughness X/Y") is

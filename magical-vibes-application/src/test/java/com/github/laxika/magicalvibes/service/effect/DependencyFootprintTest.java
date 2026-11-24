@@ -62,9 +62,9 @@ class DependencyFootprintTest {
     @DisplayName("A side table read as a whole conflicts with any write to it")
     void wholeTableReadConflictsWithAnyWrite() {
         DependencyFootprint writer = new DependencyFootprint();
-        writer.write(BoardTable.MARCH_ANIMATED_IDS, creature);
+        writer.write(BoardTable.STATIC_ANIMATIONS, creature);
         DependencyFootprint reader = new DependencyFootprint();
-        reader.readWholeTable(BoardTable.MARCH_ANIMATED_IDS);
+        reader.readWholeTable(BoardTable.STATIC_ANIMATIONS);
 
         assertThat(writer.mayChangeWhatIsReadBy(reader)).isTrue();
     }

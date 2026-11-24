@@ -71,7 +71,6 @@ import com.github.laxika.magicalvibes.model.effect.AllowLoyaltyActivationAtInsta
 import com.github.laxika.magicalvibes.model.effect.AnimateControlledEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.AnimateNonAuraEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ArtifactOrCreatureEnteringDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedPermanentRestrictionEffect;
@@ -630,33 +629,53 @@ public class GameQueryService {
     }
 
     /**
-     * Returns whether {@code card} is a creature at the moment it enters the battlefield. A non-Aura
-     * enchantment is a creature on entry while another battlefield permanent animates non-Aura
-     * enchantments (Opalescence); a noncreature artifact is one while another battlefield permanent
-     * animates noncreature artifacts (March of the Machines). Such an effect does not apply to its
-     * own source card.
+     * Returns whether {@code card} is a creature at the moment it enters the battlefield: a creature card, or one an
+     * {@link AnimateNoncreatureArtifactsEffect} of another face-up battlefield permanent that still has its abilities
+     * animates (a noncreature artifact under March of the Machines, a non-Aura enchantment under Opalescence). Such an
+     * effect does not apply to its own source card.
      */
     private boolean wouldEnterAsCreature(GameData gameData, Card card) {
         if (hasCardType(card, CardType.CREATURE)) {
             return true;
         }
-        if (hasCardType(card, CardType.ARTIFACT) && gameData.anyPermanentMatches(p ->
-                !p.isFaceDown()
-                        && !p.getCard().getId().equals(card.getId())
-                        && p.getCard().getStaticEffects().stream()
-                        .anyMatch(AnimateNoncreatureArtifactsEffect.class::isInstance)
-                        && !hasLostPrintedAbilities(gameData, p))) {
-            return true;
+        return isAnimatedByPrintedStaticAnimation(gameData, new Permanent(card), card.getId(), true);
+    }
+
+    /**
+     * Whether a permanent with no layered state (a departed snapshot, a permanent judged off the battlefield, a card
+     * about to enter) is one an {@link AnimateNoncreatureArtifactsEffect} printed by another face-up battlefield
+     * permanent animates, its filter judged on the permanent's own characteristics. A permanent on the battlefield
+     * answers from its layered state instead, where the animation applied in layer 4 (CR 613.1d).
+     *
+     * @param ownCardId           the card the permanent is, so a source never animates itself through it
+     * @param skipSourcesWithoutAbilities whether a source that lost its printed abilities is skipped (safe only outside
+     *                            the static-bonus assembly)
+     */
+    public boolean isAnimatedByPrintedStaticAnimation(GameData gameData, Permanent permanent, UUID ownCardId,
+                                                      boolean skipSourcesWithoutAbilities) {
+        CharacteristicState characteristics = null;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent source : battlefield) {
+                if (source.isFaceDown() || source.getId().equals(permanent.getId())
+                        || source.getCard().getId().equals(ownCardId)) {
+                    continue;
+                }
+                for (CardEffect effect : source.getCard().getStaticEffects()) {
+                    if (!(effect instanceof AnimateNoncreatureArtifactsEffect animation)) continue;
+                    if (skipSourcesWithoutAbilities && hasLostPrintedAbilities(gameData, source)) continue;
+                    if (characteristics == null) {
+                        characteristics = new CharacteristicState(permanent.getCard(), permanent);
+                    }
+                    if (predicateEvaluationService.matchesPermanentPredicate(characteristics, permanent,
+                            animation.filter(), FilterContext.of(gameData))) {
+                        return true;
+                    }
+                }
+            }
         }
-        if (!hasCardType(card, CardType.ENCHANTMENT) || card.getSubtypes().contains(CardSubtype.AURA)) {
-            return false;
-        }
-        return gameData.anyPermanentMatches(p ->
-                !p.isFaceDown()
-                        && !p.getCard().getId().equals(card.getId())
-                        && p.getCard().getStaticEffects().stream()
-                        .anyMatch(AnimateNonAuraEnchantmentsEffect.class::isInstance)
-                        && !hasLostPrintedAbilities(gameData, p));
+        return false;
     }
 
     /**
@@ -3514,8 +3533,12 @@ public class GameQueryService {
         if (bonus.cardTypeOverriding()) return false;
         if (gameData.animatedByFloatingEffect(permanent.getId())) return true;
         if (permanent.getCounterCount(CounterType.AWAKENING) > 0) return true;
-        if (hasEffectiveCardType(permanent, bonus, CardType.ARTIFACT)
-                && hasAnimateArtifactEffect(gameData)) return true;
+        // A permanent on the battlefield answers from its layered state (the bonus above), where the
+        // animation applied in layer 4 to what it matched then (CR 613.1d).
+        if (isAnimatedByPrintedStaticAnimation(gameData, permanent, permanent.getCard().getId(), false)
+                && !gameData.anyPermanentMatches(p -> p.getId().equals(permanent.getId()))) {
+            return true;
+        }
         if (isAnimatedByStarfield(gameData, permanent)) return true;
         if (hasEffectiveCardType(permanent, bonus, CardType.LAND) && matchesAnimateLand(gameData, permanent)) return true;
         if (hasAuraBecomeCreatureEffect(gameData, permanent)) return true;
@@ -10961,15 +10984,6 @@ public class GameQueryService {
     }
 
     // --- Aura & enchantment ---
-
-    /**
-     * Returns {@code true} if any permanent on the battlefield has an
-     * {@link AnimateNoncreatureArtifactsEffect}, which turns all non-creature artifacts
-     * into creatures.
-     */
-    private boolean hasAnimateArtifactEffect(GameData gameData) {
-        return anyBattlefieldHasStaticEffect(gameData, AnimateNoncreatureArtifactsEffect.class);
-    }
 
     /**
      * Returns {@code true} if the permanent is one of the "each other non-Aura enchantment you

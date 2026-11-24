@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.l.Lignify;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({MarchOfTheMachines.class, AngelsFeather.class, GloriousAnthem.class,
         FountainOfYouth.class, GrizzlyBears.class, IcyManipulator.class, LeoninScimitar.class,
-        Ornithopter.class, MycosynthLattice.class, HolyStrength.class})
+        Ornithopter.class, MycosynthLattice.class, HolyStrength.class, Lignify.class})
 class MarchOfTheMachinesTest extends BaseCardTest {
 
     @Test
@@ -258,5 +259,22 @@ class MarchOfTheMachinesTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, feather)).isFalse();
         assertThat(gqs.getEffectivePower(gd, feather)).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(feather);
+    }
+
+    @Test
+    @DisplayName("A second March doesn't animate an artifact the first already made a creature, so a base-P/T setter between them wins")
+    void laterMarchLeavesAnArtifactAnEarlierMarchAnimated() {
+        // Angel's Feather has mana value 2. The first March animates it in layer 4; Lignify, attached
+        // after it, sets base 0/4; the second March finds a creature, not a noncreature artifact, so it
+        // applies to nothing there and sets no base P/T in sublayer 7b (CR 613.6).
+        Permanent feather = harness.addToBattlefieldAndReturn(player1, new AngelsFeather());
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        Permanent lignify = harness.addToBattlefieldAndReturn(player1, new Lignify());
+        lignify.setAttachedTo(feather.getId());
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+
+        assertThat(gqs.isCreature(gd, feather)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, feather)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, feather)).isEqualTo(4);
     }
 }

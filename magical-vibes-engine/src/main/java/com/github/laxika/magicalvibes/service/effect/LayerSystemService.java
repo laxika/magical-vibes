@@ -24,7 +24,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateControlledEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
-import com.github.laxika.magicalvibes.model.effect.AnimateNonAuraEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessUntilEndOfTurnEffect;
@@ -327,8 +326,10 @@ public class LayerSystemService {
     /**
      * The finished layered board computation: per-permanent characteristic states, the resolved
      * land-type override per permanent (drives the land's intrinsic mana ability per CR 305.7),
-     * the permanents animated by an {@link AnimateNoncreatureArtifactsEffect} (whose MV-based
-     * base P/T is consumed as a 7b entry by the legacy accumulator assembly), the recorded
+     * the permanents each multi-layer static animation ({@link AnimateNoncreatureArtifactsEffect},
+     * {@link AnimateControlledEnchantmentsEffect}, {@link PlaneswalkersWithLoyaltyBecomeCreaturesEffect})
+     * turned into creatures in layer 4, per effect instance ({@code staticAnimations}: its layer 6 and
+     * 7b parts apply to that same set, CR 613.6), the recorded
      * per-target decisions of the purely-type-changing effects the pass took over from the
      * legacy handlers (identity-keyed by effect instance), the layer 5/6 effect instances whose
      * color/ability outputs the pass applied in timestamp order ({@code managedL56Effects} —
@@ -351,9 +352,7 @@ public class LayerSystemService {
 
     public record LayeredBoardState(Map<UUID, CharacteristicState> states,
                                     Map<UUID, List<CardSubtype>> landTypeOverrides,
-                                    Set<UUID> marchAnimatedIds,
-                                    Set<UUID> starfieldAnimatedIds,
-                                    Set<UUID> opalescenceAnimatedIds,
+                                    Map<CardEffect, Set<UUID>> staticAnimations,
                                     Set<CardEffect> managedL4Effects,
                                     Map<CardEffect, Map<UUID, L4Contribution>> l4Contributions,
                                     Map<PermanentPredicate, Map<UUID, Boolean>> l4FilterVerdicts,
@@ -387,6 +386,17 @@ public class LayerSystemService {
         /** Drops ability attribution removed by a layer-6 "loses all abilities" effect. */
         public void clearGrantedEffects(UUID targetId) {
             grantedEffectProvenance.remove(targetId);
+        }
+
+        /** The permanents the given multi-layer static animation instance turned into creatures in
+         *  layer 4 (CR 613.6: its later-layer parts apply to exactly these). */
+        public Set<UUID> animatedBy(CardEffect effect) {
+            return staticAnimations.getOrDefault(effect, Set.of());
+        }
+
+        /** Records that the given multi-layer static animation instance animated the permanent in layer 4. */
+        public void recordStaticAnimation(CardEffect effect, UUID permanentId) {
+            staticAnimations.computeIfAbsent(effect, key -> new HashSet<>()).add(permanentId);
         }
 
         /** True if the layer-4 pass owns this effect's application — the legacy static handler
@@ -1293,9 +1303,7 @@ public class LayerSystemService {
         List<PermanentSlot> slots = orderedPermanents(gameData);
         Map<UUID, CharacteristicState> states = new HashMap<>();
         Map<UUID, PermanentSlot> slotsById = new HashMap<>();
-        LayeredBoardState board = new LayeredBoardState(states, new HashMap<>(), new HashSet<>(),
-                new HashSet<>(),
-                new HashSet<>(),
+        LayeredBoardState board = new LayeredBoardState(states, new HashMap<>(), new IdentityHashMap<>(),
                 Collections.newSetFromMap(new IdentityHashMap<>()), new IdentityHashMap<>(),
                 new IdentityHashMap<>(), Collections.newSetFromMap(new IdentityHashMap<>()),
                 new HashSet<>(), new HashMap<>(), new HashSet<>(), new HashMap<>(), new HashMap<>(),
@@ -1925,9 +1933,7 @@ public class LayerSystemService {
         Map<PermanentPredicate, Map<UUID, Boolean>> trialVerdicts = new IdentityHashMap<>();
         board.l4FilterVerdicts().forEach((filter, verdicts) -> trialVerdicts.put(filter, new HashMap<>(verdicts)));
         LayeredBoardState trialTables = new LayeredBoardState(trialStates,
-                new HashMap<>(board.landTypeOverrides()), new HashSet<>(board.marchAnimatedIds()),
-                new HashSet<>(board.starfieldAnimatedIds()),
-                new HashSet<>(board.opalescenceAnimatedIds()),
+                new HashMap<>(board.landTypeOverrides()), copyStaticAnimations(board.staticAnimations()),
                 Collections.newSetFromMap(new IdentityHashMap<>()), new IdentityHashMap<>(),
                 trialVerdicts, Collections.newSetFromMap(new IdentityHashMap<>()),
                 new HashSet<>(board.l56Touched()), new HashMap<>(board.basePt7b()),
@@ -1955,10 +1961,7 @@ public class LayerSystemService {
     private static LayeredBoardState readTracking(LayeredBoardState tables, DependencyFootprint footprint) {
         return new LayeredBoardState(tables.states(),
                 new ReadTrackingMap<>(tables.landTypeOverrides(), BoardTable.LAND_TYPE_OVERRIDES, footprint),
-                new ReadTrackingSet<>(tables.marchAnimatedIds(), BoardTable.MARCH_ANIMATED_IDS, footprint),
-                new ReadTrackingSet<>(tables.starfieldAnimatedIds(), BoardTable.STARFIELD_ANIMATED_IDS, footprint),
-                new ReadTrackingSet<>(tables.opalescenceAnimatedIds(), BoardTable.OPALESCENCE_ANIMATED_IDS,
-                        footprint),
+                new ReadTrackingMap<>(tables.staticAnimations(), BoardTable.STATIC_ANIMATIONS, footprint),
                 new ReadTrackingSet<>(tables.managedL4Effects(), BoardTable.MANAGED_L4_EFFECTS, footprint),
                 new ReadTrackingMap<>(tables.l4Contributions(), BoardTable.L4_CONTRIBUTIONS, footprint),
                 new ReadTrackingMap<>(tables.l4FilterVerdicts(), BoardTable.L4_FILTER_VERDICTS, footprint),
@@ -1980,11 +1983,7 @@ public class LayerSystemService {
     private static void recordSideTableWrites(DependencyFootprint footprint, LayeredBoardState board,
                                               LayeredBoardState trial) {
         recordWrites(footprint, BoardTable.LAND_TYPE_OVERRIDES, board.landTypeOverrides(), trial.landTypeOverrides());
-        recordWrites(footprint, BoardTable.MARCH_ANIMATED_IDS, board.marchAnimatedIds(), trial.marchAnimatedIds());
-        recordWrites(footprint, BoardTable.STARFIELD_ANIMATED_IDS, board.starfieldAnimatedIds(),
-                trial.starfieldAnimatedIds());
-        recordWrites(footprint, BoardTable.OPALESCENCE_ANIMATED_IDS, board.opalescenceAnimatedIds(),
-                trial.opalescenceAnimatedIds());
+        recordWrites(footprint, BoardTable.STATIC_ANIMATIONS, board.staticAnimations(), trial.staticAnimations());
         recordWrites(footprint, BoardTable.MANAGED_L4_EFFECTS, Collections.emptySet(), trial.managedL4Effects());
         recordWrites(footprint, BoardTable.L4_CONTRIBUTIONS, Collections.emptyMap(), trial.l4Contributions());
         recordWrites(footprint, BoardTable.L4_FILTER_VERDICTS, board.l4FilterVerdicts(), trial.l4FilterVerdicts());
@@ -1995,6 +1994,13 @@ public class LayerSystemService {
         recordWrites(footprint, BoardTable.DEVOTION_MODIFIERS, board.devotionModifiers(), trial.devotionModifiers());
         recordWrites(footprint, BoardTable.SELF_INFLICTED_LOSE_ALL, board.selfInflictedLoseAll(),
                 trial.selfInflictedLoseAll());
+    }
+
+    /** A trial's own copy of the per-instance animation sets, so its writes never reach the board's. */
+    private static Map<CardEffect, Set<UUID>> copyStaticAnimations(Map<CardEffect, Set<UUID>> animations) {
+        Map<CardEffect, Set<UUID>> copy = new IdentityHashMap<>();
+        animations.forEach((effect, ids) -> copy.put(effect, new HashSet<>(ids)));
+        return copy;
     }
 
     private static <E> void recordWrites(DependencyFootprint footprint, BoardTable table, Set<E> before,
@@ -2301,6 +2307,7 @@ public class LayerSystemService {
                         continue;
                     }
                     state.overrideCardTypes(Set.of(CardType.CREATURE));
+                    board.recordStaticAnimation(instance.original(), target.permanent().getId());
                     record(board, instance, target, new L4Contribution(
                             List.of(), false, false, null, null, true,
                             List.of(CardType.CREATURE)));
@@ -2488,28 +2495,26 @@ public class LayerSystemService {
                     record(board, instance, target, new L4Contribution(List.of(), true, true));
                 }
             }
-            case AnimateNoncreatureArtifactsEffect ignored -> {
-                // NOT managed: the effect also contributes to 7b, so its legacy handler keeps
-                // running during assembly (setting the animated flag) with the MV base P/T
-                // injected there at this instance's timestamp.
-                for (PermanentSlot target : slots) {
+            case AnimateNoncreatureArtifactsEffect animation -> {
+                // NOT managed: the effect also contributes to 7b (and 6), so its handler keeps running during
+                // assembly (setting the animated flag). The permanents it animates here are kept per instance:
+                // its layer 6 and 7b parts apply to exactly them (CR 613.6), whatever they are by then. The
+                // filter is judged against the states as of the layer-4 effects applied so far (CR 613.1d), so
+                // "noncreature" skips what an earlier effect already made a creature (an awakened land included).
+                for (PermanentSlot target : staticAnimationTargets(gameData, instance, animation, slots, slotsById,
+                        board)) {
                     Permanent permanent = target.permanent();
-                    CharacteristicState state = states.get(permanent.getId());
-                    if (state.hasCardType(CardType.ARTIFACT) && !state.hasCardType(CardType.CREATURE)
-                            && !isOneShotAnimated(permanent)) {
-                        state.addCardType(CardType.CREATURE);
-                        board.marchAnimatedIds().add(permanent.getId());
-                        record(board, instance, target, new L4Contribution(
-                                null, false, false, CardType.CREATURE, null));
-                    }
+                    states.get(permanent.getId()).addCardType(CardType.CREATURE);
+                    board.recordStaticAnimation(instance.original(), permanent.getId());
+                    record(board, instance, target, new L4Contribution(
+                            null, false, false, CardType.CREATURE, null));
                 }
             }
             case AnimateControlledEnchantmentsEffect animateEnchantments -> {
-                // Starfield of Nyx. NOT managed, for the same reason as March above. Unlike March
-                // it does not skip permanents that are already creatures: "is a creature in
-                // addition to its other types" still sets an enchantment creature's base P/T. A
-                // one-shot animation's base P/T is a timestamped floating effect, so Starfield
-                // competes with it by timestamp (CR 613.7) instead of skipping it.
+                // Starfield of Nyx. NOT managed, for the same reason as above. Unlike March it does not skip
+                // permanents that are already creatures: "is a creature in addition to its other types" still
+                // sets an enchantment creature's base P/T. A one-shot animation's base P/T is a timestamped
+                // floating effect, so Starfield competes with it by timestamp (CR 613.7) instead of skipping it.
                 PermanentSlot animateSource = instance.source();
                 if (animateSource == null) return;
                 UUID controllerId = animateSource.controllerId();
@@ -2523,20 +2528,7 @@ public class LayerSystemService {
                     CharacteristicState state = states.get(permanent.getId());
                     if (state.hasCardType(CardType.ENCHANTMENT) && !state.hasSubtype(CardSubtype.AURA)) {
                         state.addCardType(CardType.CREATURE);
-                        board.starfieldAnimatedIds().add(permanent.getId());
-                    }
-                }
-            }
-            case AnimateNonAuraEnchantmentsEffect ignored -> {
-                // A one-shot animation's base P/T is a timestamped floating effect, so Opalescence
-                // competes with it by timestamp (CR 613.7) instead of being skipped.
-                for (PermanentSlot target : slots) {
-                    if (isSource(instance, target)) continue;
-                    Permanent permanent = target.permanent();
-                    CharacteristicState state = states.get(permanent.getId());
-                    if (state.hasCardType(CardType.ENCHANTMENT) && !state.hasSubtype(CardSubtype.AURA)) {
-                        state.addCardType(CardType.CREATURE);
-                        board.opalescenceAnimatedIds().add(permanent.getId());
+                        board.recordStaticAnimation(instance.original(), permanent.getId());
                     }
                 }
             }
@@ -2741,6 +2733,30 @@ public class LayerSystemService {
 
     private static boolean isSource(EffectInstance instance, PermanentSlot target) {
         return instance.source() != null && instance.source().permanent() == target.permanent();
+    }
+
+    /**
+     * The permanents an {@link AnimateNoncreatureArtifactsEffect} animates as layer 4 applies it: those its subject
+     * names that match its filter, both judged against the states as of the layer-4 effects applied so far. A floating
+     * copy (Titania's Song's effect continuing after it left) has no source left to judge the subject from, and names
+     * every permanent its filter matches.
+     */
+    private List<PermanentSlot> staticAnimationTargets(GameData gameData, EffectInstance instance,
+                                                       AnimateNoncreatureArtifactsEffect animation,
+                                                       List<PermanentSlot> slots, Map<UUID, PermanentSlot> slotsById,
+                                                       LayeredBoardState board) {
+        FloatingContinuousEffect floating = instance.floating();
+        if (floating == null) {
+            return scopeTargets(gameData, instance, animation.subject(), animation.filter(), slots, slotsById, board);
+        }
+        List<PermanentSlot> targets = new ArrayList<>();
+        for (PermanentSlot slot : slots) {
+            if (matchesL4Filter(slot, animation.filter(), board, gameData, null, floating.controllerId(),
+                    floating.sourcePermanentId())) {
+                targets.add(slot);
+            }
+        }
+        return targets;
     }
 
     /**
@@ -3392,7 +3408,7 @@ public class LayerSystemService {
                 switch (instance.effect()) {
                     case AnimateNoncreatureArtifactsEffect animation -> {
                         if (animation.losesAllAbilities()
-                                && board.marchAnimatedIds().contains(target.permanent().getId())) {
+                                && board.animatedBy(instance.original()).contains(target.permanent().getId())) {
                             state.loseAllAbilities(instance.timestamp());
                             board.clearGrantedEffects(target.permanent().getId());
                             board.recordProvenance(target.permanent().getId(),
@@ -3529,19 +3545,13 @@ public class LayerSystemService {
             if (!hasLayer6Output(harvested)) {
                 return;
             }
-            if (instance.effect() instanceof PlaneswalkersWithLoyaltyBecomeCreaturesEffect
-                    && !board.l4Contributions().getOrDefault(instance.original(), Map.of())
-                    .containsKey(target.permanent().getId())) {
-                // Only planeswalkers this effect turned into creatures in layer 4 lose their abilities;
-                // one an earlier effect already made a non-planeswalker is unaffected.
-                return;
-            }
-            if (instance.effect() instanceof AnimateNoncreatureArtifactsEffect
-                    && !board.l4Contributions().getOrDefault(instance.original(), Map.of())
-                    .containsKey(target.permanent().getId())) {
-                // "Each noncreature artifact loses all abilities": only an artifact this effect itself
-                // turned into a creature in layer 4 loses them; one an earlier effect (March of the
-                // Machines) already animated was a creature when this effect applied (CR 613.1d).
+            if ((instance.effect() instanceof PlaneswalkersWithLoyaltyBecomeCreaturesEffect
+                    || instance.effect() instanceof AnimateNoncreatureArtifactsEffect)
+                    && !board.animatedBy(instance.original()).contains(target.permanent().getId())) {
+                // Only what this animation itself turned into a creature in layer 4 loses its abilities (CR 613.6):
+                // an artifact an earlier effect (March of the Machines) already animated was a creature when
+                // Titania's Song applied, and a planeswalker an earlier effect made a non-planeswalker is not one of
+                // Spark Rupture's (CR 613.1d).
                 return;
             }
             CharacteristicState state = states.get(target.permanent().getId());
@@ -3710,6 +3720,25 @@ public class LayerSystemService {
     /** One base-P/T-setting application collected for the 7b pass; a {@code null} component
      *  leaves that component untouched (power-only exchanges). {@code sourceName} is the
      *  display attribution recorded as board provenance. */
+    /**
+     * The sublayer-7b part of a mana-value animation: each permanent the instance animated in layer 4 has base power
+     * and toughness equal to its mana value (CR 613.4b, 613.6), at the instance's timestamp. An artifact or enchantment
+     * that animates itself is left to its own animation's base P/T.
+     */
+    private void addManaValueBasePtEntries(GameData gameData, EffectInstance instance, List<PermanentSlot> slots,
+                                           LayeredBoardState board, List<BasePtEntry> entries) {
+        Set<UUID> animated = board.animatedBy(instance.original());
+        for (PermanentSlot target : slots) {
+            Permanent permanent = target.permanent();
+            if (animated.contains(permanent.getId())
+                    && !gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent)) {
+                int manaValue = gameQueryService.getPermanentManaValue(permanent);
+                entries.add(new BasePtEntry(permanent.getId(), manaValue, manaValue,
+                        instance.timestamp(), instance.position(), provenanceSourceName(instance)));
+            }
+        }
+    }
+
     private record BasePtEntry(UUID targetId, Integer power, Integer toughness, long timestamp, int position,
                                String sourceName) {
     }
@@ -3895,22 +3924,18 @@ public class LayerSystemService {
                                 instance.timestamp(), instance.position(), provenanceSourceName(instance)));
                     }
                 }
-                case PlaneswalkersWithLoyaltyBecomeCreaturesEffect ignored ->
-                        applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
-                                (target, harvested) -> {
-                                    // Only planeswalkers this effect turned into creatures in layer 4 are
-                                    // affected; one an earlier effect already made a non-planeswalker is not.
-                                    boolean animatedHere = board.l4Contributions()
-                                            .getOrDefault(instance.original(), Map.of())
-                                            .containsKey(target.permanent().getId());
-                                    if (animatedHere && harvested.isBasePTOverridden()) {
-                                        entries.add(new BasePtEntry(target.permanent().getId(),
-                                                harvested.getBasePowerOverride(),
-                                                harvested.getBaseToughnessOverride(),
-                                                instance.timestamp(), instance.position(),
-                                                provenanceSourceName(instance)));
-                                    }
-                                });
+                case PlaneswalkersWithLoyaltyBecomeCreaturesEffect ignored -> {
+                    // Each planeswalker this effect turned into a creature in layer 4 (CR 613.6) has base P/T
+                    // equal to its loyalty counters; one an earlier effect already made a non-planeswalker is not.
+                    for (PermanentSlot target : slots) {
+                        Permanent permanent = target.permanent();
+                        if (board.animatedBy(instance.original()).contains(permanent.getId())) {
+                            int loyalty = permanent.getCounterCount(CounterType.LOYALTY);
+                            entries.add(new BasePtEntry(permanent.getId(), loyalty, loyalty,
+                                    instance.timestamp(), instance.position(), provenanceSourceName(instance)));
+                        }
+                    }
+                }
                 case AnimatePermanentsEffect animate -> {
                     if (animate.subject() instanceof PermanentSubject.ControlledBy) {
                         applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
@@ -3924,48 +3949,10 @@ public class LayerSystemService {
                                 });
                     }
                 }
-                case AnimateNoncreatureArtifactsEffect ignored -> {
-                    // Gated off for artifacts that animate themselves — their own animation
-                    // defines the base P/T, not March's MV.
-                    for (PermanentSlot target : slots) {
-                        Permanent permanent = target.permanent();
-                        if (board.marchAnimatedIds().contains(permanent.getId())
-                                && !gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent)) {
-                            int manaValue = gameQueryService.getPermanentManaValue(permanent);
-                            entries.add(new BasePtEntry(permanent.getId(), manaValue, manaValue,
-                                    instance.timestamp(), instance.position(),
-                                    provenanceSourceName(instance)));
-                        }
-                    }
-                }
-                case AnimateControlledEnchantmentsEffect ignored -> {
-                    // Starfield of Nyx: same MV base P/T, gated off enchantments that animate
-                    // themselves (their own animation defines the base P/T).
-                    for (PermanentSlot target : slots) {
-                        if (isSource(instance, target)) continue;
-                        Permanent permanent = target.permanent();
-                        if (board.starfieldAnimatedIds().contains(permanent.getId())
-                                && !gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent)) {
-                            int manaValue = gameQueryService.getPermanentManaValue(permanent);
-                            entries.add(new BasePtEntry(permanent.getId(), manaValue, manaValue,
-                                    instance.timestamp(), instance.position(),
-                                    provenanceSourceName(instance)));
-                        }
-                    }
-                }
-                case AnimateNonAuraEnchantmentsEffect ignored -> {
-                    for (PermanentSlot target : slots) {
-                        if (isSource(instance, target)) continue;
-                        Permanent permanent = target.permanent();
-                        if (board.opalescenceAnimatedIds().contains(permanent.getId())
-                                && !gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent)) {
-                            int manaValue = gameQueryService.getPermanentManaValue(permanent);
-                            entries.add(new BasePtEntry(permanent.getId(), manaValue, manaValue,
-                                    instance.timestamp(), instance.position(),
-                                    provenanceSourceName(instance)));
-                        }
-                    }
-                }
+                case AnimateNoncreatureArtifactsEffect ignored ->
+                        addManaValueBasePtEntries(gameData, instance, slots, board, entries);
+                case AnimateControlledEnchantmentsEffect ignored ->
+                        addManaValueBasePtEntries(gameData, instance, slots, board, entries);
                 default -> {
                 }
             }
