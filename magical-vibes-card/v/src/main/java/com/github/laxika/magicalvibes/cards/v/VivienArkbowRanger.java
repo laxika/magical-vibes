@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchOutsideGameForCreatureToHandEffect;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.SearchOutsideGameForCardToHandEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -53,7 +55,7 @@ public class VivienArkbowRanger extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -5,
-                List.of(new SearchOutsideGameForCreatureToHandEffect()),
+                List.of(new SearchOutsideGameForCardToHandEffect(new CardTypePredicate(CardType.CREATURE))),
                 "\u22125: You may reveal a creature card you own from outside the game and put it into your hand."
         ));
     }

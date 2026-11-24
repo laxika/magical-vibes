@@ -10758,12 +10758,8 @@ public class GameData {
                 this.graveyardTargetOperation.resolutionTimeBargainedReturnChoiceResume;
         copy.graveyardTargetOperation.resolutionTimeBargainedReturnTargetCardIds =
                 new ArrayList<>(this.graveyardTargetOperation.resolutionTimeBargainedReturnTargetCardIds);
-        copy.graveyardTargetOperation.resolutionTimeExileUpToOneMatchingCardFromEachGraveyardResume =
-                this.graveyardTargetOperation.resolutionTimeExileUpToOneMatchingCardFromEachGraveyardResume;
         copy.graveyardTargetOperation.eachPlayerExilesCardFromGraveyard =
                 this.graveyardTargetOperation.eachPlayerExilesCardFromGraveyard;
-        copy.graveyardTargetOperation.resolutionTimeShuffleUpToThreeCardsFromEachGraveyardResume =
-                this.graveyardTargetOperation.resolutionTimeShuffleUpToThreeCardsFromEachGraveyardResume;
         copy.graveyardTargetOperation.chooseCardResume = this.graveyardTargetOperation.chooseCardResume;
         copy.graveyardTargetOperation.chooseCardAnswer = this.graveyardTargetOperation.chooseCardAnswer;
         copy.graveyardTargetOperation.chooseCardPicked = this.graveyardTargetOperation.chooseCardPicked;

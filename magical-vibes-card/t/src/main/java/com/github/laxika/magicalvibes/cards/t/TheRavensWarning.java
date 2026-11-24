@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchOutsideGameForCardToTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchOutsideGameForCardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -34,6 +34,6 @@ public class TheRavensWarning extends Card {
                         .withFilter(new PermanentHasKeywordPredicate(Keyword.FLYING)),
                 TriggerOptions.ONE_OR_MORE, new LookAtHandEffect(), new DrawCardEffect(1))));
 
-        addTrigger(Triggers.chapter(3), new SearchOutsideGameForCardToTopOfLibraryEffect());
+        addTrigger(Triggers.chapter(3), SearchOutsideGameForCardToHandEffect.onTopOfLibrary());
     }
 }

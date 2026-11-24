@@ -44,8 +44,10 @@ class KingNarfisBetrayalTest extends BaseCardTest {
         triggerChapter();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNotNull();
-        harness.handleMultipleCardsChosen(player1, List.of(firstOwnCreature.getId(), opponentCreature.getId()));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class))
+                .satisfies(choice -> assertThat(choice.cards()).containsExactly(firstOwnCreature, secondOwnCreature));
+        harness.handleMultipleCardsChosen(player1, List.of(firstOwnCreature.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(opponentCreature.getId()));
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsAll(ownMilledCards)
                 .doesNotContain(firstOwnCreature);
@@ -74,8 +76,7 @@ class KingNarfisBetrayalTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(
                 player1, List.of(firstCreature.getId(), secondCreature.getId())))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("at most one");
+                .isInstanceOf(IllegalStateException.class);
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
     }
 
@@ -151,6 +152,7 @@ class KingNarfisBetrayalTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter I can decline exiling from each graveyard")
     void chapterICanDeclineExilingFromBothGraveyards() {
         Card ownCreature = new GrizzlyBears();
         Card opponentCreature = new GrizzlyBears();
@@ -162,6 +164,7 @@ class KingNarfisBetrayalTest extends BaseCardTest {
 
         triggerChapter();
         harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
         harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(5).contains(ownCreature);

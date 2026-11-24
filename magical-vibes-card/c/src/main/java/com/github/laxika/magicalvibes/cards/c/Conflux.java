@@ -2,7 +2,11 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForOneCardOfEachColorToHandEffect;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForOneCardOfEachSubtypeEffect;
+
+import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "102")
 @CardRegistration(set = "V16", collectorNumber = "3")
@@ -10,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForOneCardOfEach
 public class Conflux extends Card {
 
     public Conflux() {
-        addSpellEffect(new SearchLibraryForOneCardOfEachColorToHandEffect());
+        addSpellEffect(SearchLibraryForOneCardOfEachSubtypeEffect.ofEachColor(List.of(
+                CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN),
+                LibrarySearchDestination.HAND));
     }
 }

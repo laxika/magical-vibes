@@ -55,7 +55,7 @@
 | artifact creature death → may exile it, then highest-life opponent faces a villainous choice | `t/TheMasterGallifreysEnd.java` + `TheMasterGallifreysEndEffect` |
 | activated ability offers a suspended hand spell for its suspend cost | `t/TheFaceOfBoe.java` + `MayCastSpellWithSuspendCostFromHandEffect` |
 | turn-scoped shuffle replacement for creatures entering from exile or cast from exile | `d/DontBlink.java` + `ShuffleCreaturesEnteringFromExileEffect` |
-| creature death replacement that reveals and shuffles the creature into its owner's library | `s/SaibaSyphoner.java` + `ShuffleIntoLibraryInsteadOfDyingEffect` |
+| creature death replacement that shuffles the creature into its owner's library | `s/SaibaSyphoner.java` + `PutOnTopOfLibraryInsteadOfDyingEffect.shuffledIn()` |
 | turn-scoped controlled-permanent death replacement that exiles and returns cards at the next end step | `c/CosmicIntervention.java` + `ExileControlledPermanentsInsteadOfDyingThisTurnEffect` |
 | equipment attack counter plus combat-damage d12 comparison that doubles attached-creature +1/+1 counters | `s/SwordOfHours.java` + `RollD12AndResolveIfGreaterThanEventValueEffect` + `DoublePlusOneCountersOnTargetCreatureEffect(Subjects.triggering())` |
 | temporary triggered ability on all opponent permanents, including later entrants | `h/HellishRebuke.java` + `GrantStaticEffectToOpponentPermanentsUntilEndOfTurnEffect` + `GrantTriggeredAbilityEffect` |

@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.AdjustTimeCountersOnTargetEff
 import com.github.laxika.magicalvibes.model.effect.PutTargetExiledCardOwnedByDamagedPlayerOnBottomOfOwnersLibraryAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromExileToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardFromExileIntoOwnersLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -189,12 +188,6 @@ public class ExileTargetValidators {
         if (ctx.defendingPlayerId() != null && !ctx.defendingPlayerId().equals(exiled.ownerId())) {
             throw new IllegalStateException("Target card must be owned by the damaged player");
         }
-    }
-
-    @ValidatesTarget(ShuffleTargetCardFromExileIntoOwnersLibraryEffect.class)
-    public void validateShuffleTargetCardFromExileIntoOwnersLibrary(
-            TargetValidationContext ctx, ShuffleTargetCardFromExileIntoOwnersLibraryEffect effect) {
-        validateFaceUpExileCard(ctx);
     }
 
     private void validateFaceUpExileCard(TargetValidationContext ctx) {

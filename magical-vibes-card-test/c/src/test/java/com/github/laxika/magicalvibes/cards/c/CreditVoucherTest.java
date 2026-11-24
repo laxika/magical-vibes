@@ -32,7 +32,6 @@ class CreditVoucherTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Credit Voucher");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, 1);
         harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(selected);
@@ -54,7 +53,6 @@ class CreditVoucherTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, 2);
 
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
                 List.of(first.getId(), first.getId())))
@@ -80,9 +78,7 @@ class CreditVoucherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
-        harness.handleXValueChosen(player1, 2);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PutCardsFromHandOnLibraryCardChoice.class))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class))
                 .isNotNull();
         harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
@@ -107,7 +103,7 @@ class CreditVoucherTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
@@ -134,11 +130,10 @@ class CreditVoucherTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, initialHand.size());
 
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOfSatisfying(PendingInteraction.PutCardsFromHandOnLibraryCardChoice.class, choice -> {
-                    assertThat(choice.minCount()).isEqualTo(initialHand.size());
+                .isInstanceOfSatisfying(PendingInteraction.MultiGraveyardChoice.class, choice -> {
+                    assertThat(choice.minCount()).isZero();
                     assertThat(choice.maxCount()).isEqualTo(initialHand.size());
                     assertThat(choice.validCardIds())
                             .containsExactly(first.getId(), second.getId(), third.getId());

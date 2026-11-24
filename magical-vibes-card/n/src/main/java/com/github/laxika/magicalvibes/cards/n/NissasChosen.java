@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PutOnBottomOfLibraryInsteadOfDyingEffect;
+import com.github.laxika.magicalvibes.model.effect.PutOnTopOfLibraryInsteadOfDyingEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "171")
 @CardRegistration(set = "DDR", collectorNumber = "14")
@@ -10,6 +10,6 @@ public class NissasChosen extends Card {
 
     public NissasChosen() {
         // "If this creature would die, put it on the bottom of its owner's library instead."
-        addStaticEffect(new PutOnBottomOfLibraryInsteadOfDyingEffect());
+        addStaticEffect(PutOnTopOfLibraryInsteadOfDyingEffect.onBottom());
     }
 }

@@ -2159,6 +2159,11 @@ public class AbilityActivationService {
         stackEntry.setTriggeringCardId(card.getId());
         stackEntry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
         stackEntry.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
+        if (ability.getEffects().stream().anyMatch(ExileSelfFromGraveyardCost.class::isInstance)
+                && gameData.findExiledCard(card.getId()) != null) {
+            // "Shuffle it into its owner's library" finds the card its cost exiled, in that stay (CR 400.7j).
+            stackEntry.setSourceExileEntryVersion(gameData.exileEntryVersionsOf(List.of(card.getId())).get(card.getId()));
+        }
         stackEntry.setTargetFilter(ability.getTargetFilter());
         if (multiTarget) {
             configureHandAbilityTargets(stackEntry, ability, graveyardTargetIds);

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryInsteadOfDyingEffect;
+import com.github.laxika.magicalvibes.model.effect.PutOnTopOfLibraryInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -36,6 +36,6 @@ public class SaibaSyphoner extends Card {
                 .targetGraveyard(true)
                 .build());
 
-        addStaticEffect(new ShuffleIntoLibraryInsteadOfDyingEffect());
+        addStaticEffect(PutOnTopOfLibraryInsteadOfDyingEffect.shuffledIn());
     }
 }

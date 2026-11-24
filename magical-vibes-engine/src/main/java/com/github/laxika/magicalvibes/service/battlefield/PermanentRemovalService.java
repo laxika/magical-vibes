@@ -49,7 +49,6 @@ import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DyingCreatureLibraryReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureReturnToHandReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesDamagedByControlledSourceInsteadOfDyingEffect;
@@ -3223,7 +3222,7 @@ public class PermanentRemovalService {
      * Returns {@code false} when it has no such replacement.
      */
     public boolean offerMayLibraryReplacement(GameData gameData, Permanent target) {
-        DyingCreatureLibraryReplacementEffect replacement = findMayLibraryReplacement(gameData, target);
+        PutOnTopOfLibraryInsteadOfDyingEffect replacement = findMayLibraryReplacement(gameData, target);
         if (replacement == null) {
             return false;
         }
@@ -3253,11 +3252,11 @@ public class PermanentRemovalService {
     }
 
     /** The dying creature's own or granted "you may put it on top of its owner's library instead" replacement. */
-    private DyingCreatureLibraryReplacementEffect findMayLibraryReplacement(GameData gameData, Permanent target) {
+    private PutOnTopOfLibraryInsteadOfDyingEffect findMayLibraryReplacement(GameData gameData, Permanent target) {
         return target.getCard().getStaticEffects().stream()
-                .filter(DyingCreatureLibraryReplacementEffect.class::isInstance)
-                .map(DyingCreatureLibraryReplacementEffect.class::cast)
-                .filter(DyingCreatureLibraryReplacementEffect::mayChoose)
+                .filter(PutOnTopOfLibraryInsteadOfDyingEffect.class::isInstance)
+                .map(PutOnTopOfLibraryInsteadOfDyingEffect.class::cast)
+                .filter(PutOnTopOfLibraryInsteadOfDyingEffect::mayChoose)
                 .findFirst()
                 .orElseGet(() -> {
                     var bonus = gameQueryService.computeStaticBonus(gameData, target);
@@ -3265,9 +3264,9 @@ public class PermanentRemovalService {
                         return null;
                     }
                     return bonus.grantedEffects().stream()
-                            .filter(DyingCreatureLibraryReplacementEffect.class::isInstance)
-                            .map(DyingCreatureLibraryReplacementEffect.class::cast)
-                            .filter(DyingCreatureLibraryReplacementEffect::mayChoose)
+                            .filter(PutOnTopOfLibraryInsteadOfDyingEffect.class::isInstance)
+                            .map(PutOnTopOfLibraryInsteadOfDyingEffect.class::cast)
+                            .filter(PutOnTopOfLibraryInsteadOfDyingEffect::mayChoose)
                             .findFirst()
                             .orElse(null);
                 });

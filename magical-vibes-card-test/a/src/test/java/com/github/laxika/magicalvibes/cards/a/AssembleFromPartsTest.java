@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -17,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AssembleFromParts.class, GrizzlyBears.class, LightningBolt.class})
+@CardUsed({AssembleFromParts.class, GrizzlyBears.class, LightningBolt.class, PsychogenicProbe.class})
 class AssembleFromPartsTest extends BaseCardTest {
 
     @Test
@@ -158,6 +160,23 @@ class AssembleFromPartsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears);
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(bears);
+    }
+
+    @Test
+    @DisplayName("The owner's library is still shuffled when the exiled card left exile before the ability resolves")
+    void shufflesTheLibraryEvenWhenTheCardLeftExile() {
+        Card bears = grantAbilityToBears();
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateGraveyardAbility(player1, 0);
+        gd.removeFromExile(bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(bears);
+        harness.assertLife(player1, 18);
     }
 
     private Card grantAbilityToBears() {

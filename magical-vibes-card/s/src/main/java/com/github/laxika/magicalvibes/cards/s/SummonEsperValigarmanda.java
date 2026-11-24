@@ -5,9 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileUpToOneMatchingCardFromEachGraveyardWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayCastInstantOrSorceryCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -27,7 +30,9 @@ public class SummonEsperValigarmanda extends Card {
                 new CardTypePredicate(CardType.SORCERY)));
 
         addTrigger(Triggers.chapter(1),
-                new ExileUpToOneMatchingCardFromEachGraveyardWithSourceEffect(instantOrSorcery, true));
+                ChooseCardEffect.oneOf(Subjects.cardsInGraveyards(Subjects.eachPlayer(), instantOrSorcery),
+                        "an instant or sorcery card to exile").fromEachOwner(),
+                ExileGraveyardCardsEffect.cardsWithSource(Subjects.cardsThisWay(StepKind.CHOOSE)));
 
         for (int chapter : Set.of(2, 3, 4)) {
             addTrigger(Triggers.chapter(chapter),

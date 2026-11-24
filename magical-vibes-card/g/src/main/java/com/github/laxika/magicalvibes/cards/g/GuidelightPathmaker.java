@@ -7,7 +7,15 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToBattlefieldOrHandByManaValueEffect;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,9 +27,13 @@ public class GuidelightPathmaker extends Card {
 
     public GuidelightPathmaker() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MayEffect(
-                        new SearchLibraryForCardToBattlefieldOrHandByManaValueEffect(
-                                new CardTypePredicate(CardType.ARTIFACT), 2),
+                new MayEffect(SequenceEffect.of(
+                        new SearchLibraryEffect(new CardTypePredicate(CardType.ARTIFACT),
+                                LibrarySearchDestination.REVEAL_ONLY, null, false),
+                        new PutCardsOntoBattlefieldEffect(
+                                Subjects.cardsThisWay(StepKind.SEARCH, new CardMaxManaValuePredicate(2))),
+                        new PutCardsIntoHandEffect(Subjects.foundThisWay()),
+                        new ShuffleLibraryEffect(false)),
                         "Search your library for an artifact card?"));
 
         addActivatedAbility(new ActivatedAbility(

@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/** Resolves a search for a matching card in the controller's sideboard. */
+/** Offers a matching card from the controller's outside-the-game pool, into their hand or on top of their library. */
 @Component
 @RequiredArgsConstructor
 public class SearchOutsideGameForCardToHandEffectHandler implements NormalEffectHandlerBean {
@@ -48,22 +48,25 @@ public class SearchOutsideGameForCardToHandEffectHandler implements NormalEffect
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(controllerId) + " finds no "
                             + CardPredicateUtils.describeFilter(search.filter())
-                            + " card outside the game."));
+                            + " outside the game."));
             return;
         }
 
+        boolean toHand = search.destination() == LibrarySearchDestination.HAND;
         LibrarySearchParams params = LibrarySearchParams.builder(controllerId, new ArrayList<>(matchingCards))
-                .reveals(true)
+                .reveals(search.reveals())
                 .canFailToFind(true)
                 .remainingCount(1)
-                .destination(LibrarySearchDestination.HAND)
+                .destination(search.destination())
                 .filterPredicate(search.filter())
                 .shuffleAfterSelection(false)
                 .sourceSideboard(true)
                 .build();
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
-                params,
-                "You may reveal a matching card you own from outside the game and put it into your hand.",
-                true));
+        String what = search.filter() == null ? "a card" : "a matching card";
+        String prompt = search.reveals()
+                ? "You may reveal " + what + " you own from outside the game and put it into your hand."
+                : "You may put " + what + " you own from outside the game "
+                + (toHand ? "into your hand." : "on top of your library.");
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
     }
 }

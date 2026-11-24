@@ -78,14 +78,17 @@ public class ChooseCardEffectHandler implements NormalEffectHandlerBean {
             state.chooseCardIndex = 0;
             gameData.rerunCurrentEffectAfterInteraction = false;
         }
-        int choices = choose.each().isEmpty() ? 1 : choose.each().size();
+        List<UUID> owners = choose.fromEach() ? ownersInTurnOrder(gameData, candidates) : List.of();
+        int choices = choose.fromEach() ? owners.size() : choose.each().isEmpty() ? 1 : choose.each().size();
         for (; choice < choices; choice++) {
             ChooseCardEffect.Each each = choose.each().isEmpty() ? null : choose.each().get(choice);
+            UUID owner = choose.fromEach() ? owners.get(choice) : null;
             List<LocatedCard> offered = candidates.stream()
                     // Choosing a card again where none has to be chosen is choosing none.
                     .filter(located -> choose.upTo() && !choose.offeredOnce()
                             || !picked.contains(located.card().getId()))
                     .filter(located -> each == null || matches(gameData, entry, located, each))
+                    .filter(located -> owner == null || owner.equals(located.ownerId()))
                     .toList();
             int wanted = each != null ? 1 : amountEvaluationService.evaluate(gameData, choose.count(),
                     AmountContext.forStackEntry(entry, entry.getSourcePermanentSnapshot()));
@@ -103,7 +106,8 @@ public class ChooseCardEffectHandler implements NormalEffectHandlerBean {
             state.chooseCardPicked = List.copyOf(picked);
             state.chooseCardIndex = choice;
             gameData.rerunCurrentEffectAfterInteraction = true;
-            String what = each == null ? choose.label() : each.label();
+            String what = each != null ? each.label() : owner == null ? choose.label()
+                    : choose.label() + " (" + gameData.playerIdToName.get(owner) + "'s)";
             String prompt = !choose.upTo() ? "Choose " + what + "."
                     : most == 1 ? "You may choose " + what + "." : "Choose up to " + most + ": " + what + ".";
             playerInputService.beginMultiGraveyardChoice(gameData, chooserId,
@@ -112,6 +116,13 @@ public class ChooseCardEffectHandler implements NormalEffectHandlerBean {
         }
         record(gameData, entry, choose, candidates.stream()
                 .filter(located -> picked.contains(located.card().getId())).toList(), chooserId, hidden);
+    }
+
+    /** The owners of {@code candidates}, in turn order: "from each graveyard" is one choice per owner. */
+    private static List<UUID> ownersInTurnOrder(GameData gameData, List<LocatedCard> candidates) {
+        return gameData.orderedPlayerIds.stream()
+                .filter(playerId -> candidates.stream().anyMatch(located -> playerId.equals(located.ownerId())))
+                .toList();
     }
 
     private void chooseAtRandom(GameData gameData, StackEntry entry, ChooseCardEffect choose,

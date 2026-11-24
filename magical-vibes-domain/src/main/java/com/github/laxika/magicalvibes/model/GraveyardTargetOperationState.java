@@ -139,11 +139,8 @@ public class GraveyardTargetOperationState {
     public boolean resolutionTimeDragonApproachResume;
     /** Resolution-time choice for Chandra, Heart of Fire's graveyard-and-library exile. */
     public ExileMatchingCardsFromGraveyardAndLibraryContext resolutionTimeExileMatchingCardsResume;
-    public ExileUpToOneMatchingCardFromEachGraveyardContext
-            resolutionTimeExileUpToOneMatchingCardFromEachGraveyardResume;
     /** Resolution-time mandatory exile of one card from each player's graveyard. */
     public EachPlayerExilesCardFromGraveyardContext eachPlayerExilesCardFromGraveyard;
-    public boolean resolutionTimeShuffleUpToThreeCardsFromEachGraveyardResume;
     public boolean resolutionTimePutOnBottomThenExileTopCardsResume;
     public boolean resolutionTimePutOnBottomThenExileTopCardsChoiceMade;
     public UUID resolutionTimePutOnBottomThenExileTopCardsChosenCardId;
@@ -173,12 +170,6 @@ public class GraveyardTargetOperationState {
     public boolean resolutionTimeExileOneOfEachCardTypeChoiceMade;
     /** The cards chosen for the one-card-of-each-card-type graveyard exile. */
     public List<UUID> resolutionTimeExileOneOfEachCardTypeChosenCardIds;
-    /** Whether the own-graveyard shuffle choice is awaiting its answer. */
-    public boolean resolutionTimeShuffleOwnGraveyardCardsResume;
-    /** Whether the own-graveyard shuffle choice has been answered. */
-    public boolean resolutionTimeShuffleOwnGraveyardCardsChoiceMade;
-    /** The cards chosen for the own-graveyard shuffle, or an empty list for none. */
-    public List<UUID> resolutionTimeShuffleOwnGraveyardCardsChosenCardIds;
     /** Whether Winter's multi-card graveyard selection is awaiting its answer. */
     public boolean resolutionTimeExileAnyNumberWithFourCardTypesResume;
     /** Whether Winter's multi-card graveyard selection has been answered. */
@@ -282,10 +273,6 @@ public class GraveyardTargetOperationState {
     }
 
     public record ExileMatchingCardsFromGraveyardAndLibraryContext(UUID controllerId, CardPredicate filter) {
-    }
-
-    public record ExileUpToOneMatchingCardFromEachGraveyardContext(
-            UUID controllerId, UUID sourcePermanentId, CardPredicate filter, boolean requireOne) {
     }
 
     public record EachPlayerExilesCardFromGraveyardContext(

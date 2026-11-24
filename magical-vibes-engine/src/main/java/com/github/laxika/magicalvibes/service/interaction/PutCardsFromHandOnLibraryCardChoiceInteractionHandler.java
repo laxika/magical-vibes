@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
-import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -75,21 +74,6 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
         gameData.interaction.clearAwaitingInput();
 
         if (validated.isEmpty()) {
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        if (interaction.shuffleIn()) {
-            inOneBatch(gameData, () -> shuffleIntoLibrary(gameData, player, validated));
-            if (interaction.thenEffect() != null && interaction.thenEffectSourceCard() != null) {
-                Card sourceCard = interaction.thenEffectSourceCard();
-                StackEntry followUp = StackEntry.carrier(sourceCard,
-                        player.getId(),
-                        sourceCard.getName() + "'s effect",
-                        List.of(interaction.thenEffect())
-                );
-                resolveFollowUp(gameData, followUp);
-            }
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -205,29 +189,6 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
 
         deck.add(0, setAside.get(0));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /** Moves the chosen hand cards into the library and shuffles it. */
-    private void shuffleIntoLibrary(GameData gameData, Player player, List<UUID> chosenCardIds) {
-        UUID playerId = player.getId();
-        List<Card> hand = gameData.playerHands.get(playerId);
-        List<Card> deck = gameData.playerDecks.get(playerId);
-
-        int moved = 0;
-        for (UUID id : chosenCardIds) {
-            Card found = hand.stream().filter(c -> c.getId().equals(id)).findFirst().orElse(null);
-            if (found != null) {
-                hand.remove(found);
-                deck.add(found);
-                moved++;
-            }
-        }
-        LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
-
-        gameLogService.append(gameData, GameLog.text(player.getUsername() + " shuffles "
-                + moved + " card(s) from their hand into their library."));
-        log.info("Game {} - {} shuffled {} card(s) from hand into library",
-                gameData.id, player.getUsername(), moved);
     }
 
     /**

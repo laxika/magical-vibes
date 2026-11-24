@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.cards.i.IcehideTroll;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
@@ -21,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TheThreeSeasons.class, Forest.class, Shock.class,
+@CardUsed({TheThreeSeasons.class, Forest.class, Shock.class, PsychogenicProbe.class,
         SnowCoveredForest.class, SnowCoveredIsland.class, IcehideTroll.class})
 class TheThreeSeasonsTest extends BaseCardTest {
 
@@ -81,16 +82,14 @@ class TheThreeSeasonsTest extends BaseCardTest {
 
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
-        assertThat(choice.minCount()).isEqualTo(5);
+        assertThat(choice.cards()).containsExactlyElementsOf(ownCards);
+        assertThat(choice.minCount()).isEqualTo(3);
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
-                List.of(ownCards.get(0).getId(), ownCards.get(1).getId(),
-                        opponentCards.get(0).getId(), opponentCards.get(1).getId())))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Must choose 5");
+                List.of(ownCards.get(0).getId(), ownCards.get(1).getId())))
+                .isInstanceOf(IllegalStateException.class);
 
         harness.handleMultipleCardsChosen(player1, List.of(
-                ownCards.get(0).getId(), ownCards.get(1).getId(), ownCards.get(2).getId(),
-                opponentCards.get(0).getId(), opponentCards.get(1).getId()));
+                ownCards.get(0).getId(), ownCards.get(1).getId(), ownCards.get(2).getId()));
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ownCards.get(3), saga.getCard());
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
@@ -112,11 +111,38 @@ class TheThreeSeasonsTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
                 List.of(ownCards.get(0).getId(), ownCards.get(1).getId(), ownCards.get(2).getId(),
-                        ownCards.get(3).getId(), opponentCards.get(0).getId(),
-                        opponentCards.get(1).getId(), opponentCards.get(2).getId())))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("at most three");
-        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+                        ownCards.get(3).getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1,
+                List.of(ownCards.get(0).getId(), ownCards.get(1).getId(), ownCards.get(2).getId()));
+
+        PendingInteraction.MultiGraveyardChoice opponents =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(opponents.cards()).containsExactlyElementsOf(opponentCards);
+        assertThat(opponents.maxCount()).isEqualTo(3);
+        harness.handleMultipleCardsChosen(player1,
+                List.of(opponentCards.get(0).getId(), opponentCards.get(1).getId(), opponentCards.get(2).getId()));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownCards.get(3));
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCards.get(3));
+    }
+
+    @Test
+    @DisplayName("Chapter III shuffles each library a card went into, raising the shuffle event, but not one whose graveyard was empty")
+    void chapterIIIShufflesThroughTheShuffleEvent() {
+        harness.setGraveyard(player1, new ArrayList<>());
+        harness.setGraveyard(player2, new ArrayList<>(List.of(new Forest())));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new PsychogenicProbe());
+        addSaga(2);
+
+        triggerChapter();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
     }
 
     @Test

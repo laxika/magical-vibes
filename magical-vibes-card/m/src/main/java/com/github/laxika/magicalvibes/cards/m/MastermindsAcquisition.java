@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchOutsideGameToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchOutsideGameForCardToHandEffect;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ public class MastermindsAcquisition extends Card {
                         new SearchLibraryEffect()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a card you own from outside the game into your hand",
-                        new SearchOutsideGameToHandEffect())
+                        SearchOutsideGameForCardToHandEffect.unrevealed(null))
         )));
     }
 }

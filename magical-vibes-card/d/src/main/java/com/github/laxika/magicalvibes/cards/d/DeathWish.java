@@ -7,13 +7,13 @@ import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.SearchOutsideGameToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchOutsideGameForCardToHandEffect;
 
 @CardRegistration(set = "JUD", collectorNumber = "64")
 public class DeathWish extends Card {
 
     public DeathWish() {
-        addSpellEffect(new SearchOutsideGameToHandEffect());
+        addSpellEffect(SearchOutsideGameForCardToHandEffect.unrevealed(null));
         addSpellEffect(new LoseLifeEffect(
                 new HalvedRoundedUp(new ControllerLifeTotal()), Subjects.you()));
         addSpellEffect(new ExileSpellEffect());

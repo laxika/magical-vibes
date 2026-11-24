@@ -1501,9 +1501,7 @@ public class InteractionPromptProjectionRegistry {
             case PLAYER_CHOICE -> "top or bottom of";
         };
         String prompt;
-        if (interaction.shuffleIn()) {
-            prompt = "Choose " + interaction.maxCount() + " card(s) to shuffle into your library.";
-        } else if (interaction.swapWithLibraryTop()) {
+        if (interaction.swapWithLibraryTop()) {
             prompt = "Choose any number of cards to exile face down and swap for the top of your library.";
         } else {
             prompt = "Choose " + interaction.maxCount() + " card(s) to put on " + destination

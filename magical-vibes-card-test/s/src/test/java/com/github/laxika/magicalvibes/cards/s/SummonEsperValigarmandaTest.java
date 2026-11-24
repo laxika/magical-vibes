@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -22,25 +23,28 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class SummonEsperValigarmandaTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Chapter I exiles an instant or sorcery card from each graveyard, a lone one unasked")
     void chapterIExilesAnInstantOrSorceryFromEachGraveyard() {
         DarkRitual ownRitual = new DarkRitual();
         DarkRitual opposingRitual = new DarkRitual();
+        DarkRitual otherOpposingRitual = new DarkRitual();
         GrizzlyBears opposingCreature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(ownRitual));
-        harness.setGraveyard(player2, List.of(opposingRitual, opposingCreature));
+        harness.setGraveyard(player2, List.of(opposingRitual, opposingCreature, otherOpposingRitual));
 
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new SummonEsperValigarmanda());
         advanceToNextChapter();
 
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
-        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(ownRitual.getId(), opposingRitual.getId());
+        assertThat(choice.validCardIds())
+                .containsExactlyInAnyOrder(opposingRitual.getId(), otherOpposingRitual.getId());
 
-        harness.handleMultipleCardsChosen(player1, List.of(ownRitual.getId(), opposingRitual.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(opposingRitual.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingCreature, otherOpposingRitual);
         assertThat(gd.getCardsExiledByPermanent(saga.getId()))
                 .extracting(Card::getId)
                 .containsExactlyInAnyOrder(ownRitual.getId(), opposingRitual.getId());
@@ -77,8 +81,9 @@ class SummonEsperValigarmandaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter I can't skip a graveyard with an instant or sorcery card")
     void chapterICannotSkipAllEligibleGraveyards() {
-        harness.setGraveyard(player1, List.of(new DarkRitual()));
+        harness.setGraveyard(player1, List.of(new DarkRitual(), new DarkRitual()));
         harness.setGraveyard(player2, List.of(new DarkRitual()));
         addSagaWithLore(0);
 
@@ -89,15 +94,18 @@ class SummonEsperValigarmandaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter I chooses an opponent's card only from that opponent's graveyard")
     void chapterICannotSkipAnEligibleOpposingGraveyard() {
         DarkRitual ownRitual = new DarkRitual();
         harness.setGraveyard(player1, List.of(ownRitual));
-        harness.setGraveyard(player2, List.of(new DarkRitual()));
+        harness.setGraveyard(player2, List.of(new DarkRitual(), new DarkRitual()));
         addSagaWithLore(0);
 
         advanceToNextChapter();
 
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(ownRitual.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -148,6 +156,7 @@ class SummonEsperValigarmandaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter I exiles a lone sorcery unasked when the other graveyard has none")
     void chapterIExilesASorceryWhenTheOtherGraveyardHasNoEligibleCards() {
         UntamedWilds sorcery = new UntamedWilds();
         GrizzlyBears creature = new GrizzlyBears();
@@ -156,7 +165,7 @@ class SummonEsperValigarmandaTest extends BaseCardTest {
         Permanent saga = addSagaWithLore(0);
 
         advanceToNextChapter();
-        harness.handleMultipleCardsChosen(player1, List.of(sorcery.getId()));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();

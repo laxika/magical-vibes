@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class SeeBeyondTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Draws two cards, then shuffles the chosen hand card into the library")
     void drawsTwoCardsThenShufflesOneFromHandIntoLibrary() {
         Card shuffled = new Forest();
         Card kept = new Island();
@@ -30,7 +32,7 @@ class SeeBeyondTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.PutCardsFromHandOnLibraryCardChoice.class);
+                .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
         harness.handleMultipleCardsChosen(player1, List.of(shuffled.getId()));
         harness.passBothPriorities();
@@ -41,6 +43,7 @@ class SeeBeyondTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("May shuffle a card that was in hand before the draws")
     void canShuffleACardAlreadyInHandAfterDrawingTheLastTwoLibraryCards() {
         Card shuffled = new Forest();
         Card firstDraw = new Island();
@@ -65,6 +68,7 @@ class SeeBeyondTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Exactly one card has to be chosen to shuffle")
     void mustChooseExactlyOneCardToShuffle() {
         Card firstDraw = new Forest();
         Card secondDraw = new Island();

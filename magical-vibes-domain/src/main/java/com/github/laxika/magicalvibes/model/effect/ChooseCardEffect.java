@@ -39,9 +39,12 @@ import java.util.Objects;
  * @param each        the qualities one card is chosen for each of, in this order; empty for none
  * @param chooser     who chooses; {@code null} for nobody, where the cards are chosen at random
  * @param offeredOnce whether a card chosen for one quality isn't offered for the next also where none has to be
+ * @param fromEach    "choose three cards in each graveyard", "exile a card from each graveyard": {@code count} cards
+ *                    are chosen from each owner's cards on their own, one owner after another in turn order
  */
 public record ChooseCardEffect(CardSubject cards, String label, boolean alwaysAsked, DynamicAmount count,
-                               boolean upTo, List<Each> each, PlayerSubject chooser, boolean offeredOnce)
+                               boolean upTo, List<Each> each, PlayerSubject chooser, boolean offeredOnce,
+                               boolean fromEach)
         implements CardEffect {
 
     /** One of the qualities a card is chosen for: "a creature card", "a land card". */
@@ -73,6 +76,23 @@ public record ChooseCardEffect(CardSubject cards, String label, boolean alwaysAs
         if (offeredOnce && each.isEmpty()) {
             throw new IllegalArgumentException("Only a choice for each of several qualities offers a card again");
         }
+        if (fromEach && (chooser == null || !each.isEmpty())) {
+            throw new IllegalArgumentException("A choice from each owner's cards is one player's, of one quality");
+        }
+    }
+
+    /** A choice among all the cards {@code cards} names, whoever owns them. */
+    public ChooseCardEffect(CardSubject cards, String label, boolean alwaysAsked, DynamicAmount count,
+                            boolean upTo, List<Each> each, PlayerSubject chooser, boolean offeredOnce) {
+        this(cards, label, alwaysAsked, count, upTo, each, chooser, offeredOnce, false);
+    }
+
+    /**
+     * "Choose three cards in each graveyard", "you may exile a creature card from each graveyard": this choice made
+     * for each owner's cards on their own.
+     */
+    public ChooseCardEffect fromEachOwner() {
+        return new ChooseCardEffect(cards, label, alwaysAsked, count, upTo, each, chooser, offeredOnce, true);
     }
 
     /** A choice offering a card again for another quality where none has to be chosen. */
@@ -83,7 +103,7 @@ public record ChooseCardEffect(CardSubject cards, String label, boolean alwaysAs
 
     /** This choice, not offering a card again once it is chosen for one of the qualities. */
     public ChooseCardEffect offeringEachOnce() {
-        return new ChooseCardEffect(cards, label, alwaysAsked, count, upTo, each, chooser, true);
+        return new ChooseCardEffect(cards, label, alwaysAsked, count, upTo, each, chooser, true, fromEach);
     }
 
     /** The controller's choice. */
@@ -99,7 +119,7 @@ public record ChooseCardEffect(CardSubject cards, String label, boolean alwaysAs
 
     /** "Its controller may put ... from their hand": this choice made by the player {@code player} names. */
     public ChooseCardEffect by(PlayerSubject player) {
-        return new ChooseCardEffect(cards, label, alwaysAsked, count, upTo, each, player, offeredOnce);
+        return new ChooseCardEffect(cards, label, alwaysAsked, count, upTo, each, player, offeredOnce, fromEach);
     }
 
     /** The player whose cards are chosen among, where that is a target. */

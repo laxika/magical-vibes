@@ -71,11 +71,6 @@ class MultiGraveyardChoiceAiStrategy implements AiInteractionStrategy<PendingInt
         if (maxCount <= 0) {
             return List.of();
         }
-        if (ctx.gameData().graveyardTargetOperation
-                .resolutionTimeShuffleUpToThreeCardsFromEachGraveyardResume) {
-            return applyMaximumTotalManaValue(
-                    chooseCardsPerGraveyard(validIds, maxCount, 3, ctx), interaction);
-        }
         BattlefieldAndGraveyardCardChoosingEffect mixedZoneTargets = mixedZoneTargets(ctx.gameData());
         if (mixedZoneTargets != null) {
             return applyMaximumTotalManaValue(
@@ -145,27 +140,6 @@ class MultiGraveyardChoiceAiStrategy implements AiInteractionStrategy<PendingInt
         return validIds.stream()
                 .sorted(Comparator.comparingInt((UUID id) -> manaValues.getOrDefault(id, 0)).reversed())
                 .toList();
-    }
-
-    private List<UUID> chooseCardsPerGraveyard(
-            List<UUID> validIds,
-            int maxCount,
-            int maxPerGraveyard,
-            AiInteractionContext ctx) {
-        Map<UUID, Integer> selectedPerOwner = new LinkedHashMap<>();
-        List<UUID> chosen = new ArrayList<>();
-        for (UUID cardId : validIds) {
-            UUID ownerId = ctx.gameQueryService().findGraveyardOwnerById(ctx.gameData(), cardId);
-            if (ownerId == null || selectedPerOwner.getOrDefault(ownerId, 0) >= maxPerGraveyard) {
-                continue;
-            }
-            selectedPerOwner.merge(ownerId, 1, Integer::sum);
-            chosen.add(cardId);
-            if (chosen.size() == maxCount) {
-                break;
-            }
-        }
-        return chosen;
     }
 
     private List<UUID> applyMaximumTotalManaValue(

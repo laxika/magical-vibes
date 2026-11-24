@@ -40,7 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestructionReplacement;
 import com.github.laxika.magicalvibes.model.effect.DestructionReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
-import com.github.laxika.magicalvibes.model.effect.DyingCreatureLibraryReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.PutOnTopOfLibraryInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAndTakeExtraTurnReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileInstantSorceryCardsInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileInsteadOfGraveyardReplacementEffect;
@@ -637,17 +637,17 @@ public class GraveyardService {
 
             // "If [this creature] would die, put it on top or bottom of its owner's library instead"
             // "Die" = move from battlefield to graveyard, so only applies when sourceZone is BATTLEFIELD.
-            DyingCreatureLibraryReplacementEffect libraryReplacement = sourceZone == Zone.BATTLEFIELD
+            PutOnTopOfLibraryInsteadOfDyingEffect libraryReplacement = sourceZone == Zone.BATTLEFIELD
                     && (battlefieldSnapshot == null || !gameData.losesAllAbilitiesByEffect(battlefieldSnapshot))
                     ? getDyingCreatureLibraryReplacementEffect(card)
                     : null;
             if (libraryReplacement != null) {
                 List<Card> deck = gameData.playerDecks.get(ownerId);
-                if (libraryReplacement.shuffleIntoLibrary()) {
+                if (libraryReplacement.position() == PutOnTopOfLibraryInsteadOfDyingEffect.Position.SHUFFLED) {
                     deck.add(card);
                     LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
                     gameLogService.append(gameData, GameLog.cardThen(card,
-                            " is revealed and shuffled into its owner's library instead of dying."));
+                            " is shuffled into its owner's library instead of dying."));
                     log.info("Game {} - {} replacement effect: shuffled into library instead of dying",
                             gameData.id, card.getName());
                     updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
@@ -655,7 +655,7 @@ public class GraveyardService {
                 }
                 String position;
                 String positionPhrase;
-                if (libraryReplacement.putOnBottom()) {
+                if (libraryReplacement.position() == PutOnTopOfLibraryInsteadOfDyingEffect.Position.BOTTOM) {
                     deck.add(card);
                     position = "bottom";
                     positionPhrase = "the bottom";
@@ -1453,10 +1453,10 @@ public class GraveyardService {
                 .orElseThrow();
     }
 
-    private DyingCreatureLibraryReplacementEffect getDyingCreatureLibraryReplacementEffect(Card card) {
+    private PutOnTopOfLibraryInsteadOfDyingEffect getDyingCreatureLibraryReplacementEffect(Card card) {
         return card.getStaticEffects().stream()
-                .filter(DyingCreatureLibraryReplacementEffect.class::isInstance)
-                .map(DyingCreatureLibraryReplacementEffect.class::cast)
+                .filter(PutOnTopOfLibraryInsteadOfDyingEffect.class::isInstance)
+                .map(PutOnTopOfLibraryInsteadOfDyingEffect.class::cast)
                 .filter(effect -> !effect.mayChoose())
                 .findFirst()
                 .orElse(null);

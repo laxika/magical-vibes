@@ -114,32 +114,6 @@ class MultiGraveyardChoiceAiStrategyTest {
     }
 
     @Test
-    @DisplayName("Per-graveyard choice takes the required cards without exceeding each limit")
-    void perGraveyardChoiceTakesRequiredCardsWithinEachLimit() throws Exception {
-        Card ownCard = new Card();
-        List<Card> opponentCards = List.of(new Card(), new Card(), new Card(), new Card(), new Card());
-        List<Card> cards = new ArrayList<>();
-        cards.add(ownCard);
-        cards.addAll(opponentCards);
-        UUID opponentId = UUID.randomUUID();
-        when(gameQueryService.findGraveyardOwnerById(any(), any()))
-                .thenAnswer(invocation -> ownCard.getId().equals(invocation.getArgument(1))
-                        ? aiPlayerId : opponentId);
-        gameData.graveyardTargetOperation.effects = new ArrayList<>();
-        gameData.graveyardTargetOperation
-                .resolutionTimeShuffleUpToThreeCardsFromEachGraveyardResume = true;
-
-        strategy.answer(new PendingInteraction.MultiGraveyardChoice(
-                aiPlayerId, cards, 6, "Choose three cards in each graveyard.", 4), context());
-
-        assertChosen(
-                ownCard.getId(),
-                opponentCards.get(0).getId(),
-                opponentCards.get(1).getId(),
-                opponentCards.get(2).getId());
-    }
-
-    @Test
     @DisplayName("The AI's own choice among another player's revealed hand takes the highest mana value")
     void revealedHandChoiceTakesMostValuable() throws Exception {
         Card cheap = cardWithManaValue(1);

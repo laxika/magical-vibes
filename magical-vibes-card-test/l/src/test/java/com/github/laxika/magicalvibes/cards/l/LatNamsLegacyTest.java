@@ -34,7 +34,7 @@ class LatNamsLegacyTest extends BaseCardTest {
         castLatNamsLegacy(List.of(shuffled, remaining));
 
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.PutCardsFromHandOnLibraryCardChoice.class);
+                .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
         harness.handleMultipleCardsChosen(player1, List.of(shuffled.getId()));
@@ -53,7 +53,6 @@ class LatNamsLegacyTest extends BaseCardTest {
     void drawsTwoAtNextUpkeep() {
         Card filler = new LatNamsLegacy();
         castLatNamsLegacy(List.of(filler));
-        harness.handleMultipleCardsChosen(player1, List.of(filler.getId()));
         harness.passBothPriorities();
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
@@ -72,9 +71,9 @@ class LatNamsLegacyTest extends BaseCardTest {
         Card shuffled = new LatNamsLegacy();
         castLatNamsLegacy(List.of(shuffled));
 
-        harness.handleMultipleCardsChosen(player1, List.of(shuffled.getId()));
-
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).contains(shuffled);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
     }
@@ -84,7 +83,6 @@ class LatNamsLegacyTest extends BaseCardTest {
     void waitsForNextTurnAndDrawsOnlyOnce() {
         Card shuffled = new LatNamsLegacy();
         castLatNamsLegacy(List.of(shuffled));
-        harness.handleMultipleCardsChosen(player1, List.of(shuffled.getId()));
         harness.passBothPriorities();
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
@@ -103,6 +101,7 @@ class LatNamsLegacyTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
         assertThat(gd.stack).isEmpty();
     }
+
     @Test
     @DisplayName("With an empty hand nothing is shuffled and no draw is scheduled")
     void emptyHandDoesNothing() {

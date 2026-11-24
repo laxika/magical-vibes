@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService.LocatedCard;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Moves the named cards at once and records {@link StepKind#PUT_INTO_LIBRARY}, then each owner orders the ones put
- * into their library. Only a lone card that everybody saw is named in the log (CR 400.2, 401.4, 406.3).
+ * into their library; shuffled in, each library is shuffled once and {@link StepKind#SHUFFLE_INTO_LIBRARY} recorded. Only a lone card that everybody saw is named in the log (CR 400.2, 401.4, 406.3).
  */
 @Component
 @RequiredArgsConstructor
@@ -51,7 +52,8 @@ public class PutCardsIntoLibraryEffectHandler implements NormalEffectHandlerBean
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var put = (PutCardsIntoLibraryEffect) effect;
         List<LocatedCard> named = subjectResolutionService.locatedCards(gameData, entry, put, put.cards());
-        entry.recordStep(StepKind.PUT_INTO_LIBRARY, StepOutcome.NONE);
+        StepKind kind = put.shuffled() ? StepKind.SHUFFLE_INTO_LIBRARY : StepKind.PUT_INTO_LIBRARY;
+        entry.recordStep(kind, StepOutcome.NONE);
         Map<UUID, List<Card>> byOwner = new LinkedHashMap<>();
         Map<UUID, Boolean> publiclyKnown = new LinkedHashMap<>();
         List<UUID> movedIds = new ArrayList<>();
@@ -85,6 +87,10 @@ public class PutCardsIntoLibraryEffectHandler implements NormalEffectHandlerBean
             }
         } finally {
             graveyardService.endGraveyardLeaveBatch(gameData);
+        }
+        if (put.shuffled()) {
+            shuffleIn(gameData, entry, put, byOwner, publiclyKnown);
+            return;
         }
         if (!movedIds.isEmpty()) {
             entry.recordStep(StepKind.PUT_INTO_LIBRARY,
@@ -124,6 +130,38 @@ public class PutCardsIntoLibraryEffectHandler implements NormalEffectHandlerBean
                 gameData.pendingLibraryBottomReorders.addLast(
                         new LibraryBottomReorderRequest(ownerId, new ArrayList<>(cards)));
             }
+        }
+    }
+
+    /**
+     * Puts each owner's cards into their library and shuffles it, then the libraries of the players the effect always
+     * shuffles that got none (CR 701.24c, 701.24d), each once; records how many each owner shuffled in.
+     */
+    private void shuffleIn(GameData gameData, StackEntry entry, PutCardsIntoLibraryEffect put,
+                           Map<UUID, List<Card>> byOwner, Map<UUID, Boolean> publiclyKnown) {
+        Map<UUID, Integer> shuffledIn = new LinkedHashMap<>();
+        for (Map.Entry<UUID, List<Card>> group : byOwner.entrySet()) {
+            UUID ownerId = group.getKey();
+            List<Card> cards = group.getValue();
+            gameData.playerDecks.get(ownerId).addAll(cards);
+            shuffledIn.put(ownerId, cards.size());
+            LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
+            String ownerName = gameData.playerIdToName.get(ownerId);
+            gameLogService.append(gameData, cards.size() == 1 && publiclyKnown.get(ownerId)
+                    ? GameLog.textCardText(ownerName + " shuffles ", cards.getFirst(), " into their library.")
+                    : GameLog.text(ownerName + " shuffles " + cards.size() + " card(s) into their library."));
+        }
+        if (put.alwaysShuffled() != null) {
+            for (UUID playerId : subjectResolutionService.players(gameData, entry, put, put.alwaysShuffled())) {
+                if (!shuffledIn.containsKey(playerId) && gameData.playerDecks.containsKey(playerId)) {
+                    LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+                    gameLogService.append(gameData, GameLog.text(
+                            gameData.playerIdToName.get(playerId) + "'s library is shuffled."));
+                }
+            }
+        }
+        if (!shuffledIn.isEmpty()) {
+            entry.recordStep(StepKind.SHUFFLE_INTO_LIBRARY, StepOutcome.ofAmounts(shuffledIn));
         }
     }
 }

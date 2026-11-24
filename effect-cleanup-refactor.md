@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c (each in Findings; the fold queue marks its rows). Fold runs 21 and 12e are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21 (each in Findings; the fold queue marks its rows). Fold runs 19c and 22 are running in worktrees; 12e waits to merge. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                 |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,648 / 2,909 (after fold run 17c) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,632 / 2,895 (after fold run 21) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,620 rows over 4,433 classes (after fold run 17c). Latest verdict per class: `step-9` 793, unique 1,169, absorbed 747, split 616, blocked-other 507, survivor 303, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 793 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,645 rows over 4,437 classes (after fold run 21). Latest verdict per class: `step-9` 778, unique 1,169, absorbed 762, split 618, blocked-other 507, survivor 305, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 778 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -739,6 +739,12 @@ Delayed and global triggers:
 - `Subjects.paidAsCost()` (`PermanentSubject.PaidAsCost`): "the sacrificed / exiled creature" of the cost, read as it last existed; `lastKnownCopiableCard` reads the cost-tracked snapshots (fold run 17c).
 - `CopyExceptions.alsoStillA`, `.alsoWithSubtypes` (CR 205.3d), `.alsoColored`, `.withAbilities` / `.alsoWithAbilities` (CR 707.9a); a kept ability is one instance, a second one when the copied values already have it (CR 707.9a, 113.2c), and a kept trigger keeps its target group (fold run 17c).
 - `CopyCreatureCardInGraveyardOnEnterEffect.of(cardsInGraveyards(...) | exiledCards(...))` + `.except`, `.gainingHaste`, `.exilingCopiedCard`, `.exilingTwoAddingTheOthersPower`; `CardPutIntoGraveyardFromLibraryThisTurnPredicate` (fold run 17c).
+
+- `PutCardsIntoLibraryEffect.shuffledIn(cards)` / `.alwaysShuffling(players)`: "shuffle it into its owner's library", "their owners shuffle those cards into their libraries"; each library shuffled once, records `SHUFFLE_INTO_LIBRARY` per owner; a library with nothing moved is shuffled only for the named players (CR 701.24c, 701.24d) (fold run 21).
+- `ChooseCardEffect.fromEachOwner()`: "choose three cards in each graveyard", "exile a card from each graveyard", one choice per owner in turn order (fold run 21).
+- `PutOnTopOfLibraryInsteadOfDyingEffect.onBottom()` / `.shuffledIn()` (Position TOP, BOTTOM, SHUFFLED): the dying-library replacements (fold run 21).
+- `SearchOutsideGameForCardToHandEffect(filter, reveals, destination)`, `.unrevealed(filter)`, `.onTopOfLibrary()` (fold run 21).
+- `SearchLibraryForOneCardOfEachSubtypeEffect.ofEachColor(colors, HAND | GRAVEYARD)` (fold run 21).
 
 ### Blocked causes still open
 
@@ -2582,6 +2588,44 @@ Fold run 17b's leftovers in `cost-paid-copy`, `copy-on-enter`, plus Absorbing Ma
 **Seen, not changed.** None new.
 
 **For the next run.** Aegis: `ChooseCardEffect.oneOf(exiledWithSourceMatching(creature))` + `BecomeCopyOfSubjectEffect.of(cardsThisWay(CHOOSE)).by(triggering()).lasting(WHILE_REMAINS_ATTACHED)`; Headdress needs `AttachmentTriggers`' direct handler call replaced by a two-step resolution and `WHILE_ATTACHED` on the survivor. Then Kaya (per-card exile-stay map on `StackEntry`) and Spirit (CHOOSE over last-known event cards).
+
+### Step 9, fold run 21 (2026-11-24, parallel worktree)
+
+Five of seven batches done. Ratchet 3,690 / 2,954 → 3,674 / 2,940. Ledger 25 rows: absorbed 14, split 2, survivor 5, step-9 3, plus the deleted interface. 20 card files rewritten, Oracle text checked for all; rulings for Lat-Nam's Legacy, See Beyond, The Three Seasons, Stream of Thought. CR 400.7j, 401.4, 608.2d, 614.1a, 614.6, 701.23a, 701.23b, 701.24a–e checked.
+
+**The shape.**
+- `PutCardsIntoLibraryEffect.shuffledIn(cards)`: each library a card went into is shuffled once through `LibraryShuffleHelper`, and the step records `SHUFFLE_INTO_LIBRARY` per owner.
+- `.alwaysShuffling(players)`: also shuffles a library nothing went into, for a specific object or a possibly empty set (CR 701.24c, 701.24d). An impossible choice shuffles nothing (the See Beyond, Lat-Nam's and Three Seasons rulings).
+- `ChooseCardEffect.fromEachOwner()`: one choice per owner's cards, in turn order.
+
+| Batch | Result |
+|---|---|
+| card-shuffle | 7 folded: Credit Voucher, Lat-Nam's Legacy, See Beyond, Stream of Thought, Assemble from Parts, Riftsweeper, The Three Seasons, King Narfi's Betrayal, Summon: Esper Valigarmanda. Also gone: the hand-shuffle payload, `PutCardsFromHandOnLibraryCardChoice.shuffleIn`, five `GraveyardTargetOperationState` fields, two completion branches and an AI branch. Left: Serene Remembrance / Turn the Earth (`targetCard` names one card; the single-graveyard cast check reads the record) |
+| perm-shuffle | not reached |
+| dying-lib | 2 folded onto `PutOnTopOfLibraryInsteadOfDyingEffect(mayChoose, Position)` (`onBottom`, `shuffledIn`); the interface went |
+| outside-game | 3 folded (incl. unaudited `SearchOutsideGameToHandEffect`, 3 cards) onto `SearchOutsideGameForCardToHandEffect(filter, reveals, destination)`. Left: Research (up to four shuffled in needs a card subject for outside-the-game cards) |
+| multi-zone | not reached |
+| one-per-pred | 2 folded (Conflux, Lotuslight Dancers) via `SearchLibraryForOneCardOfEachSubtypeEffect.ofEachColor`. Left: Firemind's Foresight (an exact-mana-value pick, a third pick queue; folds when `ToHandPick` takes a `CardPredicate`) |
+| cond-dest | 2 split (Guidelight Pathmaker, Archdruid's Charm) into run 13's reveal-search composition (`REVEAL_ONLY` + put to battlefield + put to hand + shuffle) |
+
+**Behaviour changes.**
+- The Three Seasons shuffle event (fixes the "Fold:" defect; new test).
+- Assemble from Parts shuffles after its card left exile (new test). A graveyard ability with `ExileSelfFromGraveyardCost` records the card's exile stay, so `sourceCard()` finds it.
+- A lone hand or graveyard card is chosen unasked (Lat-Nam's, Esper).
+- Saiba Syphoner's log no longer says "revealed".
+- The outside-the-game "card card" log is fixed.
+- The survivors' log lines win.
+
+**Seen, not changed.**
+- Firemind's Foresight's picks ignore Aven Mindcensor's top-N limit (sure of the code).
+- Invasion of Arcavios's search passes no Opposition Agent controller (sure of the code, low).
+- `LibrarySearchParams.battlefieldIfManaValueAtMost` / `battlefieldIfChosenPredicate` have no producer left; `battlefieldIfChosenPredicate` is still passed along at `LibraryChoiceHandlerService` line 2025 (dead code).
+- The dying-library reader still asks only the floating loss of abilities (P03 line).
+
+**For the next run.**
+- `perm-shuffle`: `ShuffleTargetPermanentIntoLibraryEffect` over a `PermanentSubject` recording `SHUFFLE_INTO_LIBRARY` with the owners, so `playersThisWay` can replace `ThenEffectRecipient`; also Teferi's −12 as one event, and Mirror-Mad Phantasm through the entry batch.
+- `multi-zone` with Research: one outside-the-game card subject.
+- Serene Remembrance / Turn the Earth: a `targetCards` subject.
 
 ## Prompt
 

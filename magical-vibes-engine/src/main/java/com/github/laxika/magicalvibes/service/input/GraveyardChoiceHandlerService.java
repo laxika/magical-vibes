@@ -794,17 +794,6 @@ public class GraveyardChoiceHandlerService {
             cardIds = cardIds.stream().distinct().toList();
         }
 
-        if (gameData.graveyardTargetOperation
-                .resolutionTimeShuffleUpToThreeCardsFromEachGraveyardResume) {
-            Map<UUID, Integer> selectedPerOwner = new java.util.HashMap<>();
-            for (UUID cardId : cardIds) {
-                UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
-                if (ownerId == null || selectedPerOwner.merge(ownerId, 1, Integer::sum) > 3) {
-                    throw new IllegalStateException("Choose at most three cards from each graveyard");
-                }
-            }
-        }
-
         if (cardIds.size() > maxCount) {
             throw new IllegalStateException("Too many cards selected: " + cardIds.size() + " > " + maxCount);
         }
@@ -1072,16 +1061,6 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
-        if (gameData.graveyardTargetOperation.resolutionTimeShuffleOwnGraveyardCardsResume) {
-            gameData.interaction.clearAwaitingInput();
-            gameData.graveyardTargetOperation.resolutionTimeShuffleOwnGraveyardCardsResume = false;
-            gameData.graveyardTargetOperation.resolutionTimeShuffleOwnGraveyardCardsChoiceMade = true;
-            gameData.graveyardTargetOperation.resolutionTimeShuffleOwnGraveyardCardsChosenCardIds =
-                    List.copyOf(cardIds);
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
         if (gameData.graveyardTargetOperation.resolutionTimeExileAnyNumberWithFourCardTypesResume) {
             gameData.interaction.clearAwaitingInput();
             gameData.graveyardTargetOperation.resolutionTimeExileAnyNumberWithFourCardTypesResume = false;
@@ -1327,70 +1306,6 @@ public class GraveyardChoiceHandlerService {
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             }
-            return;
-        }
-
-        var exileFromEachContext = gameData.graveyardTargetOperation
-                .resolutionTimeExileUpToOneMatchingCardFromEachGraveyardResume;
-        if (exileFromEachContext != null) {
-            Set<UUID> selectedOwners = new HashSet<>();
-            for (UUID cardId : cardIds) {
-                UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
-                if (ownerId == null || !selectedOwners.add(ownerId)) {
-                    throw new IllegalStateException("Choose at most one card from each graveyard");
-                }
-            }
-            if (exileFromEachContext.requireOne()) {
-                for (Card option : multiGraveyardChoice.cards()) {
-                    UUID optionOwnerId = gameQueryService.findGraveyardOwnerById(gameData, option.getId());
-                    if (optionOwnerId != null && !selectedOwners.contains(optionOwnerId)) {
-                        throw new IllegalStateException("Choose a card from each graveyard that has one");
-                    }
-                }
-            }
-
-            gameData.graveyardTargetOperation
-                    .resolutionTimeExileUpToOneMatchingCardFromEachGraveyardResume = null;
-            gameData.interaction.clearAwaitingInput();
-            for (UUID cardId : cardIds) {
-                UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
-                Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
-                if (ownerId != null && card != null) {
-                    permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, cardId);
-                    exileService.exileCard(gameData, ownerId, card, exileFromEachContext.sourcePermanentId());
-                }
-            }
-            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-            return;
-        }
-
-        if (gameData.graveyardTargetOperation
-                .resolutionTimeShuffleUpToThreeCardsFromEachGraveyardResume) {
-            Map<UUID, Integer> selectedPerOwner = new java.util.HashMap<>();
-            for (UUID cardId : cardIds) {
-                UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
-                if (ownerId == null || selectedPerOwner.merge(ownerId, 1, Integer::sum) > 3) {
-                    throw new IllegalStateException("Choose at most three cards from each graveyard");
-                }
-            }
-
-            gameData.graveyardTargetOperation
-                    .resolutionTimeShuffleUpToThreeCardsFromEachGraveyardResume = false;
-            gameData.interaction.clearAwaitingInput();
-            Set<UUID> shuffledOwners = new HashSet<>();
-            for (UUID cardId : cardIds) {
-                UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
-                Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
-                if (ownerId != null && card != null) {
-                    permanentRemovalService.removeCardFromGraveyardById(gameData, cardId);
-                    gameData.playerDecks.get(ownerId).add(card);
-                    shuffledOwners.add(ownerId);
-                }
-            }
-            for (UUID ownerId : shuffledOwners) {
-                Collections.shuffle(gameData.playerDecks.get(ownerId), ThreadLocalRandom.current());
-            }
-            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
             return;
         }
 
