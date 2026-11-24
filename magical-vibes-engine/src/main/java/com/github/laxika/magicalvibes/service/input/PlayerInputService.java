@@ -1597,21 +1597,6 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a card type", gameData.id, playerName);
     }
 
-    public void beginSpellLandOrNonlandChoice(GameData gameData, UUID playerId) {
-        beginSpellLandOrNonlandChoice(gameData, playerId, false);
-    }
-
-    public void beginSpellLandOrNonlandChoice(GameData gameData, UUID playerId, boolean secret) {
-        ChoiceContext.SpellLandOrNonlandChoice choiceContext =
-                new ChoiceContext.SpellLandOrNonlandChoice(playerId, secret);
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                playerId, null, null, choiceContext, List.of("LAND", "NONLAND"),
-                secret ? "Secretly choose land or nonland." : "Choose land or nonland."));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose land or nonland", gameData.id, playerName);
-    }
-
     public void beginCardTypeOnEnterChoice(GameData gameData, UUID playerId, Card card,
                                            List<CardType> excludedTypes) {
         beginCardTypeOnEnterChoice(gameData, playerId, card, excludedTypes, null);

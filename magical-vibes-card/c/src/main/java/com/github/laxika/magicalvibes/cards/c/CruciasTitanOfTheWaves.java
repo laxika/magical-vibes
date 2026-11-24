@@ -9,7 +9,11 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SeekFromLibraryToHandWithRelativeManaValueEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.Sum;
+import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostAmountPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -30,12 +34,15 @@ public class CruciasTitanOfTheWaves extends Card {
                                         new ChooseOneEffect(List.of(
                                                 new ChooseOneEffect.ChooseOneOption(
                                                         "Ambitious",
-                                                        new SeekFromLibraryToHandWithRelativeManaValueEffect(
-                                                                new LastDiscardedCardManaValue(), true)),
+                                                        new SeekLibraryEffect(1, new CardNotPredicate(
+                                                                new CardManaValueAtMostAmountPredicate(
+                                                                        new LastDiscardedCardManaValue())))),
                                                 new ChooseOneEffect.ChooseOneOption(
                                                         "Expedient",
-                                                        new SeekFromLibraryToHandWithRelativeManaValueEffect(
-                                                                new LastDiscardedCardManaValue(), false))))))),
+                                                        new SeekLibraryEffect(1,
+                                                                new CardManaValueAtMostAmountPredicate(new Sum(
+                                                                        new LastDiscardedCardManaValue(),
+                                                                        new Fixed(-1)))))))))),
                 "Discard a card?"));
     }
 }

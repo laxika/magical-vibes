@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.cards.v.VexyrIchTekiksHeir;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
@@ -21,7 +23,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SarevokTheUsurper.class, Forest.class, GrizzlyBears.class, Swamp.class,
+@CardUsed({VexyrIchTekiksHeir.class, SarevokTheUsurper.class, Forest.class, GrizzlyBears.class, Swamp.class,
         Plains.class, Island.class, Mountain.class, ShockingGrasp.class, CounselOfTheSoratami.class, ThayanEvokers.class})
 class SarevokTheUsurperTest extends BaseCardTest {
 
@@ -262,5 +264,24 @@ class SarevokTheUsurperTest extends BaseCardTest {
                 .filteredOn(card -> card.getName().equals("Grizzly Bears"))
                 .hasSize(3);
         assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The black specialization's seek triggers a \"whenever you seek\" ability")
+    void blackSpecializationSeekTriggersSeekAbilities() {
+        harness.addToBattlefield(player1, new SarevokTheUsurper());
+        harness.addToBattlefield(player1, new VexyrIchTekiksHeir());
+        harness.setHand(player1, List.of(new Swamp()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Grizzly Bears"))
+                .hasSize(3);
+        assertThat(countPermanents(player1, "Phyrexian Golem")).isEqualTo(1);
     }
 }

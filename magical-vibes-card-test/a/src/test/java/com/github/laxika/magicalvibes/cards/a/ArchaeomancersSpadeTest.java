@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.cards.v.VexyrIchTekiksHeir;
 import com.github.laxika.magicalvibes.cards.f.FlaringPain;
 import com.github.laxika.magicalvibes.cards.c.CosisTrickster;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
@@ -15,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArchaeomancersSpade.class, FlaringPain.class, ThinkTwice.class, Shock.class,
+@CardUsed({VexyrIchTekiksHeir.class, ArchaeomancersSpade.class, FlaringPain.class, ThinkTwice.class, Shock.class,
         CosisTrickster.class, ShivanDragon.class})
 class ArchaeomancersSpadeTest extends BaseCardTest {
 
@@ -136,5 +138,18 @@ class ArchaeomancersSpadeTest extends BaseCardTest {
                 .isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getNonHandSpellOnlyMana(ManaColor.WHITE))
                 .isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Seeking the two flashback cards is one seek: a \"whenever you seek\" ability triggers once")
+    void seekingTheFlashbackCardsIsOneSeek() {
+        harness.addToBattlefield(player1, new VexyrIchTekiksHeir());
+        harness.setLibrary(player1, List.of(new FlaringPain(), new ThinkTwice()));
+
+        harness.enterBattlefieldAndReturn(player1, new ArchaeomancersSpade());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Phyrexian Golem")).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
 }

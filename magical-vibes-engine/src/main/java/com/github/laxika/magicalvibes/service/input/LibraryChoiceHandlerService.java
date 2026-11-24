@@ -89,7 +89,6 @@ import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.SeekTwoCardsToBattlefieldEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SplitCardCastSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -180,8 +179,6 @@ public class LibraryChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport guildFeudSupport;
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler returnCardExiledWithSourceToBattlefieldEffectHandler;
-
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.SeekTwoCardsToBattlefieldEffectHandler seekTwoCardsToBattlefieldEffectHandler;
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
 
@@ -3553,16 +3550,6 @@ public class LibraryChoiceHandlerService {
         if (libraryRevealChoice.lifeCostPerSelection() > 0 && libraryRevealChoice.beneficiaryPlayerId() != null) {
             handlePunisherRevealChoice(gameData, allRevealedCards, cardIds,
                     libraryRevealChoice.beneficiaryPlayerId(), libraryRevealChoice.lifeCostPerSelection());
-            return;
-        }
-
-        StackEntry seekEntry = gameData.pendingEffectResolutionEntry;
-        if (seekEntry != null && gameData.pendingEffectResolutionIndex > 0
-                && gameData.pendingEffectResolutionIndex <= seekEntry.getEffectsToResolve().size()
-                && SeekTwoCardsToBattlefieldEffectHandler.isSeekTwoToBattlefield(
-                seekEntry.getEffectsToResolve().get(gameData.pendingEffectResolutionIndex - 1))) {
-            seekTwoCardsToBattlefieldEffectHandler.completeChoice(gameData, controllerId, allRevealedCards, cardIds);
-            finishSearchAndResume(gameData);
             return;
         }
 

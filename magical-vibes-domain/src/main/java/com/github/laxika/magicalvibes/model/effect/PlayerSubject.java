@@ -21,7 +21,7 @@ import java.util.Objects;
  * <p>The variants and the wording each stands for are listed in {@code agent-docs/SUBJECTS_REFERENCE.md}.
  */
 public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.TargetPlayer, PlayerSubject.Each,
-        PlayerSubject.OpponentsOf, PlayerSubject.ControllerOf, PlayerSubject.OwnerOf, PlayerSubject.TriggeringPlayer,
+        PlayerSubject.OpponentsOf, PlayerSubject.ControllerOf, PlayerSubject.OwnerOf, PlayerSubject.OwnersOfCards, PlayerSubject.TriggeringPlayer,
         PlayerSubject.ActivePlayer, PlayerSubject.DefendingPlayer, PlayerSubject.EnchantedPlayer,
         PlayerSubject.ChosenPlayer, PlayerSubject.ChosenPlayers, PlayerSubject.AcceptedPlayers, PlayerSubject.ModeChooser,
         PlayerSubject.PlayersDealtDamage, PlayerSubject.SubgameWinners, PlayerSubject.Except, PlayerSubject.AllOf, PlayerSubject.Matching,
@@ -124,6 +124,25 @@ public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.T
         @Override
         public boolean needsStackEntry() {
             return permanent.needsStackEntry();
+        }
+    }
+
+    /**
+     * "The exiled card's owner": the owner of each card {@code cards} names as the effect resolves, each once, in
+     * APNAP order; nobody when it names no card.
+     */
+    record OwnersOfCards(CardSubject cards) implements PlayerSubject {
+
+        public OwnersOfCards {
+            Objects.requireNonNull(cards, "cards");
+            if (cards.declaresTarget()) {
+                throw new IllegalArgumentException("The owner of a target card is that card's scope: " + cards);
+            }
+        }
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
         }
     }
 

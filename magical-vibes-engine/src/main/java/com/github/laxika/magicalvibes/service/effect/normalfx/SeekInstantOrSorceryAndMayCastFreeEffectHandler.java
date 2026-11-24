@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -60,6 +61,7 @@ public class SeekInstantOrSorceryAndMayCastFreeEffectHandler implements NormalEf
         Card sought = eligible.get(ThreadLocalRandom.current().nextInt(eligible.size()));
         library.removeIf(card -> card.getId().equals(sought.getId()));
         gameData.addCardToHand(controllerId, sought);
+        ActionEvents.sought(gameData, controllerId, List.of(sought));
         // "Until end of turn, you may cast that card without paying its mana cost": a free-cast permission
         // for exactly that card, usable any time this turn it could be cast, not only right now.
         gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),

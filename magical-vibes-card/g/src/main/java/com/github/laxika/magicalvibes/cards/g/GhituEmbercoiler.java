@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SeekFromLibraryWithGreaterManaValueEffect;
+import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostAmountPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -24,7 +26,8 @@ public class GhituEmbercoiler extends Card {
                 SequenceEffect.of(
                         new DiscardEffect(1, Subjects.you()),
                         new ConditionalEffect(HappenedThisWay.discarded(),
-                                new SeekFromLibraryWithGreaterManaValueEffect(new LastDiscardedCardManaValue()))),
+                                SeekLibraryEffect.exiledPlayableUntilNextTurn(1, new CardNotPredicate(
+                                        new CardManaValueAtMostAmountPredicate(new LastDiscardedCardManaValue()))))),
                 "Discard a card to seek a card with greater mana value?"));
     }
 }

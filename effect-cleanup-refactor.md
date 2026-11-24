@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b (each in Findings; the fold queue marks its rows). Fold runs 17c, 21 and 12e are running in worktrees; 20 waits to merge. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                              |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20 (each in Findings; the fold queue marks its rows). Fold runs 17c, 21 and 12e are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                               |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,673 / 2,934 (after fold run 19b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,653 / 2,914 (after fold run 20) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,583 rows over 4,430 classes (after fold run 19b). Latest verdict per class: `step-9` 823, unique 1,168, absorbed 732, split 606, blocked-other 502, survivor 301, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 823 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,612 rows over 4,431 classes (after fold run 20). Latest verdict per class: `step-9` 797, unique 1,169, absorbed 742, split 616, blocked-other 507, survivor 302, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 797 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -730,6 +730,11 @@ Delayed and global triggers:
 - `ChooseOneEffect.anOpponentChooses(options)` / `ModeChooser` / `isCastersModal`: "an opponent chooses one —", announced by `StackedModalTriggerService` before priority (controller picks among several opponents, CR 700.2e; targets after the mode, CR 601.2c) (fold run 19b).
 - `Subjects.modeChooser()` (`StackEntry.modeChooserId`) and `DrawUpToRecipient.MODE_CHOOSER`: "that player" of an opponent-chosen mode (fold run 19b).
 - `MultiPermanentChoiceContext.TargetsAfterOpponentModeChoice(entry, controller, targetFilter)`: the mode's targets chosen after the mode (fold run 19b).
+
+- `SeekLibraryEffect` records `StepKind.SEEK` (cards in the zone each went to, permanents on the battlefield, seekers); `GRAVEYARD` / `EXILE` destinations, `exiledPlayableUntilNextTurn`, `.fromAmongTop(n)`, `.by(seeker)`; the filter is bound by `bindCardSubjects` + `bindAmounts` ("greater/lesser mana value than X") (fold run 20).
+- `Subjects.ownersOf(CardSubject)` (`PlayerSubject.OwnersOfCards`): "the exiled card's owner [seeks]" (fold run 20).
+- `ChooseOneAtResolutionEffect.secretly(choice)`: "secretly choose land or nonland", mode not logged (fold run 20).
+- "Seek N; put one onto the battlefield / keep one and shuffle the rest": `SeekLibraryEffect` + `ChooseCardEffect.oneOf(cardsThisWay(SEEK))` + mover + `PutCardsIntoLibraryEffect.onBottomInRandomOrder(except(cardsThisWay(SEEK), cardsThisWay(CHOOSE)))` + `ShuffleLibraryEffect(false)`; a choice among sought cards is hidden (`CardsThisWay(SEEK).inHiddenZone()`) (fold run 20).
 
 ### Blocked causes still open
 
@@ -2526,6 +2531,36 @@ Blockers found:
 **Seen, not changed.** A free cast that skips `finishSpellCast` (exile and library free casts) should now get its mode announced at the next auto-pass; not tested.
 
 **For the next run.** 19c builds the token-controller subject first, then folds `tempting` as above; the Fold-line defect "Tempt with Glory, Bunnies, Mayhem, Immortality act as each opponent accepts" is still open.
+
+### Step 9, fold run 20 (2026-11-24, parallel worktree)
+
+`seek-step`, `three-way`, `two-picks`: 20 folded (6 absorbed, 14 split), 6 left, 1 re-batched. Ratchet 3,711 / 2,975 → 3,691 / 2,955. Ledger 29 rows (survivor 2, absorbed 6, split 14, blocked-other 5, unique 1, step-9 1). 23 card files rewritten, Oracle text checked for all; CR 400.2, 608.2h, 701.24c, 701.24d checked.
+
+**The shape.** `SeekLibraryEffect` is the SEEK step.
+- It records `StepKind.SEEK` (no new kind): the sought cards with a `MovedCard` in the hand, graveyard or exile each went to (a replacement's zone, bound to the stay), the permanent each became on the battlefield, and the seekers as players. It records NONE first.
+- New: `GRAVEYARD` and `EXILE` destinations (`exiledPlayableUntilNextTurn`), `.fromAmongTop(n)` and `.by(PlayerSubject seeker)` (the new `Subjects.ownersOf(CardSubject)`).
+- The filter goes through `bindCardSubjects` and `bindAmounts`, so "greater/lesser mana value than the discarded card" is `CardNotPredicate(CardManaValueAtMostAmountPredicate(x))` / `CardManaValueAtMostAmountPredicate(Sum(x, Fixed(-1)))`; no new ManaValueBound relation.
+- A seek passes through the hand; `randomWithoutSeeking` doesn't, and records SEEK too.
+- `CardsThisWay(SEEK).inHiddenZone()` is true, so "choose one of them" is a hidden hand choice.
+- `ChooseOneAtResolutionEffect.secretly(...)`: "secretly choose land or nonland".
+
+| Batch | Result |
+|---|---|
+| `seek-step` | 20 folded: land/nonland (2, onto `ChooseOneAtResolutionEffect`), graveyard, top-N, manifest, the two mana-value relations, Sarevok, both owner seeks, Choice of Fortunes, the three seek-then-choose, the six perpetual. Left: Karlach's blue (a free-cast grant bound to a card subject: one user; sought event added), Plunderer's Prize (no card subject for the spell on the stack, no this-spell return step), Song of Seasons (one seek of three filters: one user) |
+| `three-way` | 0: Expressive Iteration's prompt has its own client flow (handBottomExile), so folding it needs frontend work; Write into Being's "top or bottom" is the player's choice (`unique`; the triage note was wrong) |
+| `two-picks` | 0: Wakanda Forever! would need an entry-counter component only it sets; re-batched to `splits` (reveal top 6 + two `ChooseCardEffect.upTo` + movers) |
+
+**Behaviour changes.** The eleven missing sought events are all raised now (Vexyr tests). Crucias no longer shuffles. Vhal's green face goes through the hand, so Cage doesn't stop it. Inquisitor and Vhal shuffle with fewer than two cards sought (CR 701.24c). The choice among sought cards names no card in the log. Spade's cards go hand → graveyard; Vinesoul's random land goes library → graveyard. Thought Rattle uses the perpetual cost store. Hamza manifests through the entry batch.
+
+**Tests changed.** Abundant Harvest and Azurescale answer the mode labels "Land"/"Nonland". Inquisitor and Vhal answer `MultiGraveyardChoice`; two order assertions became any-order (CR 701.24c). 11 tests added.
+
+**Seen, not changed.**
+- Plunderer's Prize seeks onto the battlefield straight from the library, so Grafdigger's Cage stops it. Code, sure.
+- `ChooseCardEffect`'s hidden flag is fixed per subject: a choice among cards that RETURN, CONJURE or SEARCH put into a hand would name them in the log. Unverified, no card found.
+- `SeekLibraryEffect` to a hand logs no line, while `SeekCardsToHandEffect` logs "seeks N cards". Low.
+- Fold run 4's line (no enter abilities for a sought noncreature, nonland permanent) is still open.
+
+**For the next run.** Step 10 can merge `SeekEffect` (17 cards), `SeekCardsToHandEffect` (21), `SeekLibraryToHandEffect` (4) and `SeekCardToBattlefieldEffect` (5) into `SeekLibraryEffect`; they differ only in options it now has. A zone-based hidden check in `ChooseCardEffectHandler` breaks choices among revealed cards still in a hand or library (Addle, Intuition): keep hidden-ness on the subject.
 
 ## Prompt
 

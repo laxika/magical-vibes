@@ -1910,6 +1910,12 @@ public class SubjectResolutionService {
             }
             case PlayerSubject.ControllerOf controllerOf -> controllers(ctx, controllerOf.permanent());
             case PlayerSubject.OwnerOf ownerOf -> owners(ctx, ownerOf.permanent());
+            case PlayerSubject.OwnersOfCards owners -> locatedCards(gameData, ctx.entry(), ctx.effect(), owners.cards())
+                    .stream()
+                    .map(LocatedCard::ownerId)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .toList();
             case PlayerSubject.TriggeringPlayer ignored -> listOf(triggeringPlayer(ctx));
             case PlayerSubject.ActivePlayer ignored -> listOf(gameData.activePlayerId);
             case PlayerSubject.DefendingPlayer ignored -> listOf(ctx.entry().getDefendingPlayerId() != null

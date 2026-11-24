@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.v.VexyrIchTekiksHeir;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -22,7 +23,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DarkstarBanisher.class, GrizzlyBears.class, Forest.class, SerraAngel.class,
+@CardUsed({VexyrIchTekiksHeir.class, DarkstarBanisher.class, GrizzlyBears.class, Forest.class, SerraAngel.class,
         LightningBolt.class, HillGiant.class, SolRing.class, Panharmonicon.class})
 class DarkstarBanisherTest extends BaseCardTest {
 
@@ -197,5 +198,23 @@ class DarkstarBanisherTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player1, new DarkstarBanisher(), "{1}{W}{B}");
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("The exiled card's owner seeks: that player's \"whenever you seek\" ability triggers")
+    void ownersSeekTriggersTheirSeekAbilities() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new VexyrIchTekiksHeir());
+        harness.setLibrary(player2, List.of(new Forest(), new SerraAngel()));
+
+        castBanisher();
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+        destroyBanisher();
+        resolveAllTriggers();
+
+        harness.assertInHand(player2, "Serra Angel");
+        assertThat(countPermanents(player2, "Phyrexian Golem")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Phyrexian Golem")).isZero();
     }
 }

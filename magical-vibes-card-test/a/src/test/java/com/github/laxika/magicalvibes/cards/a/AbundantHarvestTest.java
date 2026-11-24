@@ -25,7 +25,7 @@ class AbundantHarvestTest extends BaseCardTest {
         castWithLibrary(nonland, land, untouched);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        harness.handleListChoice(player1, "LAND");
+        harness.handleListChoice(player1, "Land");
 
         assertThat(gd.playerHands.get(player1.getId())).contains(land);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(nonland, untouched);
@@ -39,7 +39,7 @@ class AbundantHarvestTest extends BaseCardTest {
         Card untouched = new Mountain();
         castWithLibrary(land, nonland, untouched);
 
-        harness.handleListChoice(player1, "NONLAND");
+        harness.handleListChoice(player1, "Nonland");
 
         assertThat(gd.playerHands.get(player1.getId())).contains(nonland);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(land, untouched);
@@ -52,7 +52,7 @@ class AbundantHarvestTest extends BaseCardTest {
         Card secondLand = new Mountain();
         castWithLibrary(firstLand, secondLand);
 
-        harness.handleListChoice(player1, "NONLAND");
+        harness.handleListChoice(player1, "Nonland");
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(firstLand, secondLand);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(firstLand, secondLand);
@@ -62,7 +62,7 @@ class AbundantHarvestTest extends BaseCardTest {
     void emptyLibraryStillAllowsChoiceAndAddsNothingToHand() {
         castWithLibrary();
 
-        harness.handleListChoice(player1, "LAND");
+        harness.handleListChoice(player1, "Land");
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -76,7 +76,7 @@ class AbundantHarvestTest extends BaseCardTest {
         Card last = new Mountain();
         castWithLibrary(land, next, last);
 
-        harness.handleListChoice(player1, "LAND");
+        harness.handleListChoice(player1, "Land");
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(next, last);
@@ -91,7 +91,7 @@ class AbundantHarvestTest extends BaseCardTest {
         Card last = new Forest();
         castWithLibrary(first, second, land, next, last);
 
-        harness.handleListChoice(player1, "LAND");
+        harness.handleListChoice(player1, "Land");
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
         assertThat(gd.playerDecks.get(player1.getId()).subList(0, 2)).containsExactly(next, last);
@@ -106,7 +106,7 @@ class AbundantHarvestTest extends BaseCardTest {
         Card second = new GrizzlyBears();
         castWithLibrary(first, second);
 
-        harness.handleListChoice(player1, "LAND");
+        harness.handleListChoice(player1, "Land");
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(first, second);

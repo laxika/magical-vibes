@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.cards.v.VexyrIchTekiksHeir;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HobgoblinCaptain;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -21,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KarlachRagingTiefling.class, Plains.class, Island.class, Swamp.class,
+@CardUsed({VexyrIchTekiksHeir.class, KarlachRagingTiefling.class, Plains.class, Island.class, Swamp.class,
         Mountain.class, Forest.class, HobgoblinCaptain.class, ShockingGrasp.class})
 class KarlachRagingTieflingTest extends BaseCardTest {
 
@@ -207,5 +209,20 @@ class KarlachRagingTieflingTest extends BaseCardTest {
         if (gd.interaction.activeInteraction(PendingInteraction.DiscardCostChoice.class) != null) {
             harness.handleCardChosen(player1, 0);
         }
+    }
+
+    @Test
+    @DisplayName("The blue specialization's seek triggers a \"whenever you seek\" ability")
+    void blueSpecializationSeekTriggersSeekAbilities() {
+        harness.addToBattlefield(player1, new VexyrIchTekiksHeir());
+        harness.setLibrary(player1, List.of(new ShockingGrasp()));
+        specialize(1, new Island());
+        resolveAllTriggers();
+        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player1, false);
+        }
+
+        harness.assertInHand(player1, "Shocking Grasp");
+        assertThat(countPermanents(player1, "Phyrexian Golem")).isEqualTo(1);
     }
 }

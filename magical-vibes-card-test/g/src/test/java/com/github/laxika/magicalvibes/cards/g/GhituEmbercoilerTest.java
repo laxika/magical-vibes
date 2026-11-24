@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.v.VexyrIchTekiksHeir;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
@@ -18,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GhituEmbercoiler.class, GrizzlyBears.class, AirElemental.class,
+@CardUsed({VexyrIchTekiksHeir.class, GhituEmbercoiler.class, GrizzlyBears.class, AirElemental.class,
         LightningBolt.class, PsychogenicProbe.class})
 class GhituEmbercoilerTest extends BaseCardTest {
 
@@ -227,5 +228,24 @@ class GhituEmbercoilerTest extends BaseCardTest {
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
         harness.passUntil(player, TurnStep.PRECOMBAT_MAIN);
+    }
+
+    @Test
+    @DisplayName("The seek before the exile triggers a \"whenever you seek\" ability")
+    void seekTriggersWheneverYouSeekAbilities() {
+        harness.addToBattlefield(player1, new GhituEmbercoiler());
+        harness.addToBattlefield(player1, new VexyrIchTekiksHeir());
+        Card greaterManaValue = new AirElemental();
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(greaterManaValue));
+
+        advanceToPrecombatMain(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(greaterManaValue);
+        assertThat(countPermanents(player1, "Phyrexian Golem")).isEqualTo(1);
     }
 }

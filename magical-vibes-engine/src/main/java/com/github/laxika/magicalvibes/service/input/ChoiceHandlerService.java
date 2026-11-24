@@ -1091,10 +1091,6 @@ public class ChoiceHandlerService {
             handleSpellCardTypeChoice(gameData, player, colorName);
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.SpellLandOrNonlandChoice ctx) {
-            handleSpellLandOrNonlandChoice(gameData, player, colorName, colorChoice.options(), ctx.secret());
-            return;
-        }
         if (colorChoice.context() instanceof ChoiceContext.SpellColorChoice) {
             handleSpellColorChoice(gameData, player, colorName);
             return;
@@ -5620,24 +5616,6 @@ public class ChoiceHandlerService {
         String logEntry = player.getUsername() + " chooses " + cardType.getDisplayName().toLowerCase() + ".";
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} chooses card type {} for a spell", gameData.id, player.getUsername(), cardType);
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void handleSpellLandOrNonlandChoice(GameData gameData, Player player, String choice,
-                                                 List<String> options, boolean secret) {
-        if (!options.contains(choice)) {
-            throw new IllegalArgumentException("Invalid land or nonland choice: " + choice);
-        }
-
-        gameData.chosenSpellLandOrNonland = choice.equals("LAND");
-        gameData.interaction.clearAwaitingInput();
-
-        if (!secret) {
-            String logEntry = player.getUsername() + " chooses " + choice.toLowerCase() + ".";
-            gameLogService.append(gameData, GameLog.text(logEntry));
-        }
-        log.info("Game {} - {} chooses {} for a spell", gameData.id, player.getUsername(), choice.toLowerCase());
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

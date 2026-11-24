@@ -19,7 +19,17 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.SeekTwoCardsToBattlefieldWithinManaValueEffect;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SpecializeVhalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -36,7 +46,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "HBG", collectorNumber = "8")
 public class VhalEagerScholar extends Card {
@@ -95,8 +104,17 @@ public class VhalEagerScholar extends Card {
                     false, false, false, 1);
             case RED -> new DealDamageToTargetCreatureOrPlaneswalkerEffect(
                     new EventValue(), creatureOrPlaneswalkerAnOpponentControls());
-            case GREEN -> new SeekTwoCardsToBattlefieldWithinManaValueEffect(
-                    new CardTypePredicate(CardType.CREATURE), new EventValue());
+            // "Seek two creature cards with mana value less than or equal to the number of study counters removed this
+            // way. Put one of them onto the battlefield and shuffle the other into your library."
+            case GREEN -> SequenceEffect.of(
+                    new SeekLibraryEffect(new Fixed(2), new CardTypePredicate(CardType.CREATURE),
+                            LibrarySearchDestination.HAND, new ManaValueBound(new EventValue(), false, 0)),
+                    ChooseCardEffect.oneOf(Subjects.cardsThisWay(StepKind.SEEK),
+                            "a sought creature card to put onto the battlefield"),
+                    new PutCardsOntoBattlefieldEffect(Subjects.cardsThisWay(StepKind.CHOOSE)),
+                    PutCardsIntoLibraryEffect.onBottomInRandomOrder(Subjects.except(
+                            Subjects.cardsThisWay(StepKind.SEEK), Subjects.cardsThisWay(StepKind.CHOOSE))),
+                    new ShuffleLibraryEffect(false));
         };
     }
 

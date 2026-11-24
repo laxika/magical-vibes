@@ -16,7 +16,17 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalCounterToTriggeringCreatureSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.SeekThreeNonlandPermanentAndChooseOneEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.SpecializeKlementEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,7 +35,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumSet;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 import java.util.Set;
 
@@ -124,8 +133,14 @@ public class SpecializeKlementEffectHandler implements NormalEffectHandlerBean {
         } else if (specialize.color() == CardColor.BLACK) {
             enqueueSpecializationTrigger(gameData, entry, specialized, CreateTokenEffect.blackZombie(2));
         } else if (specialize.color() == CardColor.BLUE) {
-            enqueueSpecializationTrigger(gameData, entry, specialized,
-                    new SeekThreeNonlandPermanentAndChooseOneEffect());
+            // "Seek three nonland permanent cards. Choose one of those cards and shuffle the rest into your library."
+            enqueueSpecializationTrigger(gameData, entry, specialized, SequenceEffect.of(
+                    new SeekLibraryEffect(3, new CardAllOfPredicate(List.of(new CardIsPermanentPredicate(),
+                            new CardNotPredicate(new CardTypePredicate(CardType.LAND))))),
+                    ChooseCardEffect.oneOf(Subjects.cardsThisWay(StepKind.SEEK), "one of the sought cards to keep"),
+                    PutCardsIntoLibraryEffect.onBottomInRandomOrder(Subjects.except(
+                            Subjects.cardsThisWay(StepKind.SEEK), Subjects.cardsThisWay(StepKind.CHOOSE))),
+                    new ShuffleLibraryEffect(false)));
         }
     }
 

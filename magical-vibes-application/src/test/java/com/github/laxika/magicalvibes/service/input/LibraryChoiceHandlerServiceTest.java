@@ -127,7 +127,6 @@ class LibraryChoiceHandlerServiceTest {
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler.class),
-                mock(com.github.laxika.magicalvibes.service.effect.normalfx.SeekTwoCardsToBattlefieldEffectHandler.class),
                 permanentCounterSupport,
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.ManifestService.class),
                 mock(com.github.laxika.magicalvibes.service.cast.CastingPermissionService.class));

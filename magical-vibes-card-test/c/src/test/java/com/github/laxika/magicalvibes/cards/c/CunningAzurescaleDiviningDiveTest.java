@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -27,7 +28,7 @@ class CunningAzurescaleDiviningDiveTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         resolveAllTriggers();
-        harness.handleListChoice(player1, "LAND");
+        harness.handleListChoice(player1, "Land");
 
         assertThat(gd.playerHands.get(player1.getId())).contains(forest, island);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(nonland);
@@ -45,10 +46,25 @@ class CunningAzurescaleDiviningDiveTest extends BaseCardTest {
 
         harness.castAdventure(player1, 0, List.of());
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "NONLAND");
+        harness.handleListChoice(player1, "Nonland");
 
         assertThat(gd.playerHands.get(player1.getId())).contains(nonland);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(forest);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("The secret land-or-nonland choice is not logged")
+    void secretChoiceIsNotLogged() {
+        harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new CunningAzurescaleDiviningDive()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handleListChoice(player1, "Nonland");
+
+        assertThat(gameLogContains("Nonland")).isFalse();
+        assertThat(gameLogContains("nonland")).isFalse();
     }
 }

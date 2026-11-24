@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import java.util.ArrayList;
+import com.github.laxika.magicalvibes.model.Card;
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.cards.v.VexyrIchTekiksHeir;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -13,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CruciasTitanOfTheWaves.class, GrizzlyBears.class, HillGiant.class, Shock.class})
+@CardUsed({VexyrIchTekiksHeir.class, CruciasTitanOfTheWaves.class, GrizzlyBears.class, HillGiant.class, Shock.class})
 class CruciasTitanOfTheWavesTest extends BaseCardTest {
 
     @Test
@@ -104,5 +108,29 @@ class CruciasTitanOfTheWavesTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(activePlayer, TurnStep.END_STEP);
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("The seek doesn't shuffle the library, and it triggers a \"whenever you seek\" ability")
+    void seekDoesNotShuffleTheLibrary() {
+        GrizzlyBears discarded = new GrizzlyBears();
+        HillGiant greater = new HillGiant();
+        List<Card> library = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            library.add(new Shock());
+        }
+        library.add(greater);
+        harness.addToBattlefield(player1, new CruciasTitanOfTheWaves());
+        harness.addToBattlefield(player1, new VexyrIchTekiksHeir());
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, library);
+        List<Card> rest = List.copyOf(library.subList(0, 8));
+
+        resolveEndStepTrigger(true, "Ambitious");
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(greater);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(rest);
+        assertThat(countPermanents(player1, "Phyrexian Golem")).isEqualTo(1);
     }
 }

@@ -6,7 +6,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
-import com.github.laxika.magicalvibes.model.effect.SeekDragonAndPerpetuallyBoostEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -21,6 +24,9 @@ public class DarigaazsWhelp extends Card {
                 PerpetuallyBoostCardEffect.ofTriggeringCard(1, 1));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
-                new SeekDragonAndPerpetuallyBoostEffect());
+                SequenceEffect.of(
+                        new SeekLibraryEffect(1, new CardSubtypePredicate(CardSubtype.DRAGON)),
+                        new PerpetuallyBoostCardEffect(this, 1, 1),
+                        PerpetuallyBoostCardEffect.toCards(Subjects.cardsThisWay(StepKind.SEEK), 1, 1)));
     }
 }

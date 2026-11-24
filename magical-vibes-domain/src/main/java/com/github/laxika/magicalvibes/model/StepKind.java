@@ -34,8 +34,11 @@ package com.github.laxika.magicalvibes.model;
  *   <li>{@link #MANIFEST}: the number of permanents manifested or cloaked, those permanents, their controllers;</li>
  *   <li>{@link #TRANSFORM}: the number of permanents that transformed (or converted), those permanents, their
  *       controllers;</li>
- *   <li>{@link #SEEK}: the number of cards sought into a hand ({@code SeekCardsToHandEffect}), those cards, the
- *       player; a sought card is followed into the hand it went to, as seek's cards are (digital only);</li>
+ *   <li>{@link #SEEK}: the number of cards sought ({@code SeekLibraryEffect}, {@code SeekCardsToHandEffect}; a random
+ *       library card {@code SeekLibraryEffect.randomWithoutSeeking} takes too), those cards, or the permanents they became
+ *       on the battlefield, the seekers; each card's {@link StepOutcome#movedCards()} entry names the hand, graveyard or
+ *       exile it went to (a replacement's zone, when one sent it elsewhere), so "it perpetually gets", "manifest it" and
+ *       "choose one of them" find it there (digital only);</li>
  *   <li>{@link #CHOOSE}: the number of cards chosen without moving them ({@code ChooseCardEffect}, a revealed-hand
  *       choice that keeps the card in the hand), those cards, their owners, each one's {@link StepOutcome#movedCards()}
  *       entry naming the zone and stay it was chosen in; or of a player chosen at random
@@ -103,7 +106,7 @@ package com.github.laxika.magicalvibes.model;
  * ({@code ExileAllPermanentsEffect}), exile the source's or
  * the triggering card or target cards from a graveyard ({@code ExileGraveyardCardsEffect} except where its player
  * chooses at a prompt), exile the top card of a library, a hand or a spell ({@code ExileTargetPlayerHandEffect},
- * {@code ExileTargetSpellEffect}), seek cards to a hand, conjure cards ({@code ConjureCardsEffect}), put exiled cards into a graveyard, note a number, destroy, copy, create a token (also attached to a permanent, {@code CreateTokenAttachedToTargetEffect}, whose choice among triggering creatures adds the token as it is answered), manifest, mill and exile the
+ * {@code ExileTargetSpellEffect}), seek cards ({@code SeekLibraryEffect}, {@code SeekCardsToHandEffect}), conjure cards ({@code ConjureCardsEffect}), put exiled cards into a graveyard, note a number, destroy, copy, create a token (also attached to a permanent, {@code CreateTokenAttachedToTargetEffect}, whose choice among triggering creatures adds the token as it is answered), manifest, mill and exile the
  * source and return it transformed ({@code ExileSelfAndReturnTransformedEffect}), transform the source
  * ({@code TransformSelfEffect}) (never prompt, or
  * rerun before any change); the self sacrifice ({@code departAsStep}), discard and

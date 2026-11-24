@@ -4,14 +4,16 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostMatchingHandCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.SeekFromTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "YWOE", collectorNumber = "19")
 public class GrowOldTogether extends Card {
 
     public GrowOldTogether() {
-        addSpellEffect(new SeekFromTopOfLibraryEffect(10, 2, new CardTypePredicate(CardType.CREATURE)));
+        addSpellEffect(new SeekLibraryEffect(2, new CardTypePredicate(CardType.CREATURE)).fromAmongTop(10));
+        addSpellEffect(new ShuffleLibraryEffect(false));
         addSpellEffect(new PerpetuallyBoostMatchingHandCardsEffect(
                 new CardTypePredicate(CardType.CREATURE), 1, 1));
     }

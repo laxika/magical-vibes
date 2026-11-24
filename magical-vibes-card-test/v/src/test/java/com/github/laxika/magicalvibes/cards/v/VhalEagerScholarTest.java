@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.g.GrafdiggersCage;
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.cards.v.VexyrIchTekiksHeir;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -23,7 +26,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VhalEagerScholar.class, GrizzlyBears.class, Island.class, Forest.class, Mountain.class, Plains.class, Swamp.class, SylvanShepherd.class, Ornithopter.class})
+@CardUsed({VexyrIchTekiksHeir.class, GrafdiggersCage.class, VhalEagerScholar.class, GrizzlyBears.class, Island.class, Forest.class, Mountain.class, Plains.class, Swamp.class, SylvanShepherd.class, Ornithopter.class})
 class VhalEagerScholarTest extends BaseCardTest {
 
     @Test
@@ -220,7 +223,7 @@ class VhalEagerScholarTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(com.github.laxika.magicalvibes.model.PendingInteraction.LibraryRevealChoice.class);
+                .isInstanceOf(com.github.laxika.magicalvibes.model.PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(chosen.getId()));
@@ -230,5 +233,24 @@ class VhalEagerScholarTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.activateAbility(player1, 0, abilityIndex, null, null);
         harness.handleCardChosen(player1, 0);
+    }
+
+    @Test
+    @DisplayName("The green face seeks into the hand first: Grafdigger's Cage doesn't stop the creature, and the seek triggers")
+    void greenFaceSeeksThroughTheHand() {
+        Permanent vhal = addCreatureReady(player1, new VhalEagerScholar());
+        vhal.setCounterCount(CounterType.STUDY, 3);
+        harness.addToBattlefield(player2, new GrafdiggersCage());
+        harness.addToBattlefield(player1, new VexyrIchTekiksHeir());
+        SylvanShepherd sought = new SylvanShepherd();
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(sought, new Island()));
+
+        activateSpecialization(5);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(sought.getId()));
+        assertThat(countPermanents(player1, "Phyrexian Golem")).isEqualTo(1);
     }
 }

@@ -1186,8 +1186,6 @@ public class GameData {
     public CardType chosenSpellPermanentType;
     /** Resolution-time card type choice for a spell with no permanent to store it on. */
     public CardType chosenSpellCardType;
-    /** Resolution-time land/nonland choice for a spell with no permanent to store it on. */
-    public Boolean chosenSpellLandOrNonland;
     /** Resolution-time Turnabout action choice: true to tap, false to untap. */
     public Boolean turnaboutTap;
     /**
@@ -9850,7 +9848,6 @@ public class GameData {
         copy.chosenSpellManaValueParity = this.chosenSpellManaValueParity;
         copy.chosenSpellPermanentType = this.chosenSpellPermanentType;
         copy.chosenSpellCardType = this.chosenSpellCardType;
-        copy.chosenSpellLandOrNonland = this.chosenSpellLandOrNonland;
         copy.turnaboutTap = this.turnaboutTap;
         copy.rerunCurrentEffectAfterInteraction = this.rerunCurrentEffectAfterInteraction;
         copy.pendingDrawRevealDiscardDrawCounts.putAll(this.pendingDrawRevealDiscardDrawCounts);

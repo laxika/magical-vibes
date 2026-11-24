@@ -7,6 +7,12 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.MovedCard;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
@@ -31,7 +37,11 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
-/** Resolves the digital Seek action without opening a player-choice search interaction. */
+/**
+ * Resolves the digital Seek action without opening a player-choice search interaction, and records the
+ * {@link StepKind#SEEK} step: the sought cards in the zone each went to, the permanents they became on the battlefield,
+ * and the seekers.
+ */
 @Component
 @RequiredArgsConstructor
 public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
@@ -43,6 +53,8 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
     private final GameLogService gameLogService;
     private final ExileService exileService;
     private final ExileSupport exileSupport;
+    private final GraveyardService graveyardService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -52,12 +64,31 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         SeekLibraryEffect seek = (SeekLibraryEffect) effect;
-        UUID controllerId = entry.getControllerId();
-        List<Card> deck = gameData.playerDecks.get(controllerId);
+        entry.recordStep(StepKind.SEEK, StepOutcome.NONE);
         Permanent currentSource = entry.getSourcePermanentId() == null
                 ? entry.getSourcePermanentSnapshot()
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         Permanent source = currentSource != null ? currentSource : entry.getSourcePermanentSnapshot();
+        List<UUID> seekers = seek.seeker() == null ? List.of(entry.getControllerId())
+                : subjectResolutionService.players(gameData, entry, seek, seek.seeker());
+        AmountContext amountContext = AmountContext.forStackEntry(entry, source);
+        // "A card that shares a card type with the exiled card", "a card with greater mana value than the discarded
+        // card": read as the seek applies (CR 608.2h).
+        CardPredicate filter = amountEvaluationService.bindAmounts(gameData,
+                subjectResolutionService.bindCardSubjects(gameData, entry, seek, seek.filter()), amountContext);
+        List<UUID> objectIds = new ArrayList<>();
+        List<MovedCard> movedCards = new ArrayList<>();
+        for (UUID seekerId : seekers) {
+            seekFor(gameData, entry, seek, seekerId, source, filter, amountContext, objectIds, movedCards);
+        }
+        entry.recordStep(StepKind.SEEK, objectIds.isEmpty() ? StepOutcome.NONE
+                : StepOutcome.ofObjects(objectIds, seekers, movedCards));
+    }
+
+    private void seekFor(GameData gameData, StackEntry entry, SeekLibraryEffect seek, UUID controllerId,
+                         Permanent source, CardPredicate filter, AmountContext amountContext,
+                         List<UUID> objectIds, List<MovedCard> movedCards) {
+        List<Card> deck = gameData.playerDecks.get(controllerId);
         Card sourceCard = source == null ? entry.getTargetingCard() : source.getCard();
         List<AllowCastFromCardsExiledWithSourceEffect> persistentPermissions = sourceCard == null
                 ? List.of()
@@ -66,11 +97,10 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
                 .map(AllowCastFromCardsExiledWithSourceEffect.class::cast)
                 .filter(AllowCastFromCardsExiledWithSourceEffect::persistsAfterSourceLeaves)
                 .toList();
-        int count = Math.max(0, amountEvaluationService.evaluate(gameData, seek.count(),
-                AmountContext.forStackEntry(entry, source)));
+        int count = Math.max(0, amountEvaluationService.evaluate(gameData, seek.count(), amountContext));
         Integer manaValueBound = seek.manaValueBound() == null ? null
-                : amountEvaluationService.evaluate(gameData, seek.manaValueBound().amount(),
-                AmountContext.forStackEntry(entry, source)) + seek.manaValueBound().offset();
+                : amountEvaluationService.evaluate(gameData, seek.manaValueBound().amount(), amountContext)
+                + seek.manaValueBound().offset();
         if (deck == null || deck.isEmpty() || count == 0) {
             if (count > 0 && seek.destination() != LibrarySearchDestination.HAND) {
                 logNoMatch(gameData, entry);
@@ -86,11 +116,15 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
         }
         boolean entersBattlefield = seek.destination() == LibrarySearchDestination.BATTLEFIELD
                 || seek.destination() == LibrarySearchDestination.BATTLEFIELD_TAPPED;
+        // "From among the top ten cards of your library".
+        List<Card> candidates = seek.fromAmongTop() == null ? deck
+                : deck.subList(0, Math.clamp(amountEvaluationService.evaluate(gameData, seek.fromAmongTop(),
+                amountContext), 0, deck.size()));
 
-        List<Card> matchingCards = new ArrayList<>(deck.stream()
+        List<Card> matchingCards = new ArrayList<>(candidates.stream()
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
-                        card, seek.filter(), entry.getCard() == null ? null : entry.getCard().getId(),
-                        gameData, controllerId, entry.getSourcePermanentId(), null, null, source)
+                        card, filter, entry.getCard() == null ? null : entry.getCard().getId(),
+                        gameData, entry.getControllerId(), entry.getSourcePermanentId(), null, null, source)
                         && (manaValueBound == null || (seek.manaValueBound().exact()
                         ? card.getManaValue() == manaValueBound
                         : card.getManaValue() <= manaValueBound))
@@ -108,13 +142,16 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
         List<Card> soughtCards = new ArrayList<>(cardsToSeek);
         List<Permanent> simultaneouslyEntered = new ArrayList<>();
         List<Card> simultaneousCreatureEntries = new ArrayList<>();
+        String playerName = gameData.playerIdToName.get(controllerId);
         for (int i = 0; i < cardsToSeek; i++) {
             Card chosen = matchingCards.remove(ThreadLocalRandom.current().nextInt(matchingCards.size()));
             deck.removeIf(card -> card.getId().equals(chosen.getId()));
             if (seek.destination() == LibrarySearchDestination.HAND) {
                 gameData.addCardToHand(controllerId, chosen);
-            } else if (seek.destination() == LibrarySearchDestination.BATTLEFIELD
-                    || seek.destination() == LibrarySearchDestination.BATTLEFIELD_TAPPED) {
+                objectIds.add(chosen.getId());
+                movedCards.add(gameData.boundToStay(new MovedCard(chosen.getId(), chosen.getId(), Zone.HAND,
+                        controllerId)));
+            } else if (entersBattlefield) {
                 // Seek puts the card into the hand first and then onto the battlefield, so hand-from-library triggers see it.
                 gameData.addCardToHand(controllerId, chosen);
                 gameData.playerHands.get(controllerId).removeIf(card -> card.getId().equals(chosen.getId()));
@@ -141,11 +178,35 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
                 } else if (gameQueryService.isCreature(gameData, permanent)) {
                     simultaneousCreatureEntries.add(chosen);
                 }
+                if (gameQueryService.findPermanentById(gameData, permanent.getId()) != null) {
+                    objectIds.add(permanent.getId());
+                }
                 gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
                         .text(seek.battlefieldCloaked()
                                 ? "seeks and cloaks a card onto the battlefield."
                                 : "seeks and puts " + chosen.getName() + " onto the battlefield.").build());
-            } else if (seek.destination() == LibrarySearchDestination.EXILE_WITH_SOURCE) {
+            } else if (seek.destination() == LibrarySearchDestination.GRAVEYARD) {
+                // "Seek two cards with flashback and put them into your graveyard": from the hand a seek puts them in;
+                // a random library card that isn't sought goes there from the library.
+                Zone from = seek.triggersSeekAbilities() ? Zone.HAND : Zone.LIBRARY;
+                if (from == Zone.HAND) {
+                    gameData.addCardToHand(controllerId, chosen);
+                    gameData.playerHands.get(controllerId).removeIf(card -> card.getId().equals(chosen.getId()));
+                }
+                boolean inGraveyard = graveyardService.addCardToGraveyard(gameData, controllerId, chosen, from);
+                objectIds.add(chosen.getId());
+                if (inGraveyard) {
+                    movedCards.add(gameData.boundToStay(new MovedCard(chosen.getId(), chosen.getId(),
+                            Zone.GRAVEYARD, controllerId)));
+                    gameLogService.append(gameData, GameLog.textCardText(playerName + " puts ", chosen,
+                            " into their graveyard."));
+                } else if (gameData.findExiledCard(chosen.getId()) != null) {
+                    // A replacement exiled it instead (Rest in Peace).
+                    movedCards.add(gameData.boundToStay(new MovedCard(chosen.getId(), chosen.getId(), Zone.EXILE,
+                            controllerId)));
+                }
+            } else if (seek.destination() == LibrarySearchDestination.EXILE
+                    || seek.destination() == LibrarySearchDestination.EXILE_WITH_SOURCE) {
                 // "Seek …, then exile them": the card is put into the hand first, so hand-from-library triggers see
                 // it, and then exiled from there.
                 gameData.addCardToHand(controllerId, chosen);
@@ -153,6 +214,8 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
                 if (seek.faceDown()) {
                     exileService.exileCardFaceDown(gameData, controllerId, chosen, sourcePermanentId);
                     gameData.grantExileLookPermission(chosen.getId(), controllerId);
+                } else if (sourcePermanentId == null) {
+                    exileService.exileCard(gameData, controllerId, chosen);
                 } else {
                     exileService.exileCard(gameData, controllerId, chosen, sourcePermanentId);
                 }
@@ -160,6 +223,14 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
                     exileSupport.grantPlayUntilOwnersNextTurn(gameData, chosen.getId(), controllerId);
                 }
                 grantPersistentPermissions(gameData, chosen, persistentPermissions, controllerId);
+                objectIds.add(chosen.getId());
+                movedCards.add(gameData.boundToStay(new MovedCard(chosen.getId(), chosen.getId(), Zone.EXILE,
+                        controllerId)));
+                if (seek.destination() == LibrarySearchDestination.EXILE) {
+                    gameLogService.append(gameData, GameLog.textCardText(playerName + " seeks and exiles ", chosen,
+                            seek.grantPlayUntilNextTurn() ? "; it may be played until the end of their next turn."
+                                    : "."));
+                }
             } else {
                 throw new IllegalStateException("Unsupported Seek destination: " + seek.destination());
             }

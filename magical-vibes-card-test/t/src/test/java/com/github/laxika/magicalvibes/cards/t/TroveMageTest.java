@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.v.VexyrIchTekiksHeir;
 import com.github.laxika.magicalvibes.cards.g.GolemsHeart;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SteelHellkite;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TroveMage.class, GolemsHeart.class, GrizzlyBears.class, SteelHellkite.class})
+@CardUsed({VexyrIchTekiksHeir.class, TroveMage.class, GolemsHeart.class, GrizzlyBears.class, SteelHellkite.class})
 class TroveMageTest extends BaseCardTest {
 
     @Test
@@ -143,5 +144,18 @@ class TroveMageTest extends BaseCardTest {
 
     private void castTroveMage() {
         harness.castFromHand(player1, new TroveMage(), "{2}{U}");
+    }
+
+    @Test
+    @DisplayName("Seeking the artifact triggers a \"whenever you seek\" ability")
+    void seekTriggersWheneverYouSeekAbilities() {
+        harness.addToBattlefield(player1, new VexyrIchTekiksHeir());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GolemsHeart()));
+        castTroveMage();
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(countPermanents(player1, "Phyrexian Golem")).isEqualTo(1);
     }
 }

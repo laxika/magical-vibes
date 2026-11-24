@@ -44,7 +44,8 @@ public class ChooseOneAtResolutionEffectHandler implements NormalEffectHandlerBe
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        ChooseOneEffect offered = ((ChooseOneAtResolutionEffect) effect).choice();
+        ChooseOneAtResolutionEffect atResolution = (ChooseOneAtResolutionEffect) effect;
+        ChooseOneEffect offered = atResolution.choice();
         if (onlySacrificesOrDiscards(offered) && offered.options().stream()
                 .allMatch(option -> impossible(gameData, entry, option))) {
             gameLogService.append(gameData, GameLog.textCardText(gameData.playerIdToName.get(entry.getControllerId())
@@ -58,6 +59,11 @@ public class ChooseOneAtResolutionEffectHandler implements NormalEffectHandlerBe
             entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, only.effects());
             gameLogService.append(gameData, GameLog.textCardText(gameData.playerIdToName.get(entry.getControllerId())
                     + " can only \"" + only.label() + "\" for ", entry.getCard(), "."));
+            return;
+        }
+        if (atResolution.secret()) {
+            playerInputService.beginSecretChooseModeChoice(gameData, entry.getControllerId(), entry.getCard(),
+                    choice, entry.getSourcePermanentId());
             return;
         }
         playerInputService.beginChooseModeChoice(gameData, entry.getControllerId(), entry.getCard(),

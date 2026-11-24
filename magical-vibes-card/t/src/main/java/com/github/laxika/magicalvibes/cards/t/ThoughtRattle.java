@@ -11,7 +11,11 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffe
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.SeekLibraryAndPerpetuallyReduceSoughtCardEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyChangeCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -29,8 +33,10 @@ public class ThoughtRattle extends Card {
                 .addSpellEffect(new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND),
                                 HandChoiceDestination.EXILE).withRevealMatchingOnly())
                 .addSpellEffect(new ConditionalEffect(new GraveyardCardThreshold(7, null),
-                                new SeekLibraryAndPerpetuallyReduceSoughtCardEffect(
-                                        new CardSubtypePredicate(CardSubtype.RAT))))
+                                SequenceEffect.of(
+                                        new SeekLibraryEffect(1, new CardSubtypePredicate(CardSubtype.RAT)),
+                                        new PerpetuallyChangeCastCostEffect(
+                                                Subjects.cardsThisWay(StepKind.SEEK), -1))))
                 .addSpellEffect(new GainLifeEffect(new MatchingCardsInHand(
                                 CountScope.CONTROLLER, new CardSubtypePredicate(CardSubtype.RAT))));
     }

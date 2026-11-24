@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.b.BeskirShieldmate;
 import com.github.laxika.magicalvibes.cards.f.FearlessPup;
 import com.github.laxika.magicalvibes.cards.l.LurkerInTheDeep;
@@ -32,10 +33,9 @@ class InquisitorCaptainTest extends BaseCardTest {
 
         castCaptain();
 
-        PendingInteraction.LibraryRevealChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
-        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(
-                soughtPup.getId(), soughtShieldmate.getId());
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.cards()).containsExactlyInAnyOrder(soughtPup, soughtShieldmate);
 
         harness.handleMultipleCardsChosen(player1, List.of(soughtPup.getId()));
 
@@ -116,8 +116,9 @@ class InquisitorCaptainTest extends BaseCardTest {
         assertThat(entered.getCard().getId()).isEqualTo(courser.getId());
         assertThat(entered.isTapped()).isFalse();
         assertThat(entered.isSummoningSick()).isTrue();
+        // "Shuffle the other into your library" shuffles it even with no other card (CR 701.24c).
         assertThat(gd.playerDecks.get(player1.getId()))
-                .containsExactly(ineligibleCreature, ineligibleSpell);
+                .containsExactlyInAnyOrder(ineligibleCreature, ineligibleSpell);
     }
 
     @Test
@@ -130,8 +131,9 @@ class InquisitorCaptainTest extends BaseCardTest {
         castCaptain();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+        // "Shuffle the other into your library" shuffles it even with nothing sought (CR 701.24c).
         assertThat(gd.playerDecks.get(player1.getId()))
-                .containsExactly(ineligibleCreature, ineligibleSpell);
+                .containsExactlyInAnyOrder(ineligibleCreature, ineligibleSpell);
         assertThat(countPermanents(player1, "Inquisitor Captain")).isEqualTo(1);
     }
 
@@ -184,10 +186,10 @@ class InquisitorCaptainTest extends BaseCardTest {
 
         castCaptain();
 
-        PendingInteraction.LibraryRevealChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(pup.getId(), shieldmate.getId());
+        assertThat(choice.cards()).containsExactlyInAnyOrder(pup, shieldmate);
         harness.handleMultipleCardsChosen(player1, List.of(pup.getId()));
 
         assertThat(countPermanents(player1, "Fearless Pup")).isEqualTo(1);
@@ -243,10 +245,10 @@ class InquisitorCaptainTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Inquisitor Captain")).isZero();
-        PendingInteraction.LibraryRevealChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(pup.getId(), shieldmate.getId());
+        assertThat(choice.cards()).containsExactlyInAnyOrder(pup, shieldmate);
         harness.handleMultipleCardsChosen(player1, List.of(shieldmate.getId()));
         assertThat(countPermanents(player1, "Beskir Shieldmate")).isEqualTo(1);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(pup);
@@ -279,5 +281,23 @@ class InquisitorCaptainTest extends BaseCardTest {
             cards.add(new FearlessPup());
         }
         return cards;
+    }
+
+    @Test
+    @DisplayName("The choice among the sought cards is a hidden hand choice: the log names neither card")
+    void choiceAmongTheSoughtCardsIsHidden() {
+        FearlessPup pup = new FearlessPup();
+        BeskirShieldmate shieldmate = new BeskirShieldmate();
+        setUpThreshold(new InquisitorCaptain(), 9, 9, List.of(pup, shieldmate));
+
+        castCaptain();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        assertThat(gameLogContains("Beskir Shieldmate")).isFalse();
+        harness.handleMultipleCardsChosen(player1, List.of(pup.getId()));
+
+        assertThat(gameLogContains("Beskir Shieldmate")).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(shieldmate);
     }
 }

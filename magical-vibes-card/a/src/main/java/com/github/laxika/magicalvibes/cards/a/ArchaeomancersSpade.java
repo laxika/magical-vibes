@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
-import com.github.laxika.magicalvibes.model.effect.SeekFromLibraryToGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,9 +18,8 @@ import java.util.List;
 public class ArchaeomancersSpade extends Card {
 
     public ArchaeomancersSpade() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SequenceEffect(List.of(
-                new SeekFromLibraryToGraveyardEffect(new CardHasFlashbackPredicate()),
-                new SeekFromLibraryToGraveyardEffect(new CardHasFlashbackPredicate()))));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SeekLibraryEffect(2, new CardHasFlashbackPredicate(),
+                LibrarySearchDestination.GRAVEYARD));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

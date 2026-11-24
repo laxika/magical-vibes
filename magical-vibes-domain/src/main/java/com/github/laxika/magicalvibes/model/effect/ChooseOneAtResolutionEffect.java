@@ -5,8 +5,19 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * <p>The effect may be bound to a target group so an independently optional target remains
  * available to the modal's later options.</p>
+ *
+ * @param secret "secretly choose land or nonland": the other players don't learn the mode chosen
  */
-public record ChooseOneAtResolutionEffect(ChooseOneEffect choice) implements CardEffect {
+public record ChooseOneAtResolutionEffect(ChooseOneEffect choice, boolean secret) implements CardEffect {
+
+    public ChooseOneAtResolutionEffect(ChooseOneEffect choice) {
+        this(choice, false);
+    }
+
+    /** "Secretly choose [one]": a choice the other players don't learn. */
+    public static ChooseOneAtResolutionEffect secretly(ChooseOneEffect choice) {
+        return new ChooseOneAtResolutionEffect(choice, true);
+    }
 
     @Override
     public TargetSpec targetSpec() {

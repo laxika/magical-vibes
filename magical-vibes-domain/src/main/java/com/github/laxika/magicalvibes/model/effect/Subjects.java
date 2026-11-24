@@ -806,6 +806,11 @@ public final class Subjects {
         return new PlayerSubject.OwnerOf(permanent);
     }
 
+    /** "The exiled card's owner": the owner of each card {@code cards} names. */
+    public static PlayerSubject ownersOf(CardSubject cards) {
+        return new PlayerSubject.OwnersOfCards(cards);
+    }
+
     /** "That player": the player the trigger event was about. */
     public static PlayerSubject triggeringPlayer() {
         return TRIGGERING_PLAYER;

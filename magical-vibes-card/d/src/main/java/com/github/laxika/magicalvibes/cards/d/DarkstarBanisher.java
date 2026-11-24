@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.SeekLibraryForOwnerOfCardExiledWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithCardsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -31,6 +33,7 @@ public class DarkstarBanisher extends Card {
                 new ExileTargetPermanentAndTrackWithSourceEffect());
 
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
-                new SeekLibraryForOwnerOfCardExiledWithSourceEffect());
+                new SeekLibraryEffect(1, new CardSharesCardTypeWithCardsPredicate(Subjects.exiledWithSource()))
+                        .by(Subjects.ownersOf(Subjects.exiledWithSource())));
     }
 }

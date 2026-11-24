@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.cards.v.VexyrIchTekiksHeir;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -21,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KlementNoviceAcolyte.class, GrizzlyBears.class, Plains.class, Island.class,
+@CardUsed({VexyrIchTekiksHeir.class, KlementNoviceAcolyte.class, GrizzlyBears.class, Plains.class, Island.class,
         Swamp.class, Mountain.class, Forest.class, LightningBolt.class})
 class KlementNoviceAcolyteTest extends BaseCardTest {
 
@@ -255,5 +257,18 @@ class KlementNoviceAcolyteTest extends BaseCardTest {
             harness.handleCardChosen(player1, 0);
         }
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("The blue specialization's seek triggers a \"whenever you seek\" ability")
+    void blueSpecializationSeekTriggersSeekAbilities() {
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(new Plains(), creature));
+        specialize(1, new Island());
+        harness.addToBattlefield(player1, new VexyrIchTekiksHeir());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
+        assertThat(countPermanents(player1, "Phyrexian Golem")).isEqualTo(1);
     }
 }

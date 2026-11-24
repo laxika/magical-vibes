@@ -16,7 +16,11 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.SeekLibraryAndConjureDuplicatesInGraveyardEffect;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
+import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeSarevokEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -87,7 +91,11 @@ public class SarevokTheUsurper extends Card {
     }
 
     public static CardEffect specializationTrigger() {
-        return new SeekLibraryAndConjureDuplicatesInGraveyardEffect(CREATURE_CARDS);
+        // "Seek a creature card and put it into your graveyard, then conjure two duplicates of it into your graveyard."
+        return SequenceEffect.of(
+                new SeekLibraryEffect(1, CREATURE_CARDS, LibrarySearchDestination.GRAVEYARD),
+                ConjureCardsEffect.duplicateOf(Subjects.cardsThisWay(StepKind.SEEK), ConjureDestination.intoGraveyard())
+                        .times(2));
     }
 
     public static void setSpecializedBaseCharacteristics(Card card) {
