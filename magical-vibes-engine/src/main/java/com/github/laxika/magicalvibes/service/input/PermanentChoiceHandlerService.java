@@ -654,8 +654,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleLandEquilibriumSacrifice(gameData, permanentId, landEquilibrium);
         } else if (context instanceof PermanentChoiceContext.TormentSacrifice tormentSacrifice) {
             battlefieldHandler.handleTormentSacrifice(gameData, permanentId, tormentSacrifice);
-        } else if (context instanceof PermanentChoiceContext.ExquisiteArchangelLossReplacement lossReplacement) {
-            battlefieldHandler.handleExquisiteArchangelLossReplacement(gameData, permanentId, lossReplacement);
+        } else if (context instanceof PermanentChoiceContext.LossReplacementChoice lossReplacement) {
+            battlefieldHandler.handleLossReplacementChoice(gameData, permanentId, lossReplacement);
         } else if (context instanceof PermanentChoiceContext.DestroyChosenCreature destroyChosenCreature) {
             battlefieldHandler.handleDestroyChosenCreature(gameData, permanentId, destroyChosenCreature);
         } else if (context instanceof PermanentChoiceContext.GildedAmbusherChoice gildedAmbusherChoice) {

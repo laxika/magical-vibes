@@ -73,7 +73,6 @@ import com.github.laxika.magicalvibes.model.effect.AllowLoyaltyActivationAtInsta
 import com.github.laxika.magicalvibes.model.effect.AnimateControlledEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.ArtifactOrCreatureEnteringDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedPermanentRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageAssignmentEffect;
@@ -166,7 +165,6 @@ import com.github.laxika.magicalvibes.model.effect.CounterLimitEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
-import com.github.laxika.magicalvibes.model.effect.CreatureDyingDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewAndSaddlePowerModifierEffect;
 import com.github.laxika.magicalvibes.model.effect.DamagePreventionBySelfEffect;
@@ -238,7 +236,6 @@ import com.github.laxika.magicalvibes.model.effect.OpponentEffectsCantCauseSacri
 import com.github.laxika.magicalvibes.model.effect.OpponentLifeGainBecomesLifeLossEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeredAbilitiesCantCauseSacrificeOrExileCreatureTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.TheValeyardEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentPermanentsEnteringDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentRecipientDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDuringYourTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantTargetLandsEffect;
@@ -10608,16 +10605,18 @@ public class GameQueryService {
     }
 
     /**
-     * Returns {@code true} if any permanent on the battlefield has a
-     * {@link CreatureEnteringDontCauseTriggersEffect} static effect (e.g. Torpor Orb),
-     * AND the entering card is a creature.
+     * Whether an entering creature is prevented from causing triggered abilities to trigger by a
+     * {@link CreatureEnteringDontCauseTriggersEffect} naming every player's abilities whose types include creature
+     * (Torpor Orb, Doorkeeper Thrull).
      */
     public boolean areCreatureETBTriggersSuppressed(GameData gameData, Card enteringCard) {
         if (!wouldEnterAsCreature(gameData, enteringCharacteristics(gameData, enteringCard))) {
             return false;
         }
-        return anyBattlefieldHasStaticEffect(gameData, CreatureEnteringDontCauseTriggersEffect.class)
-                || anyBattlefieldHasStaticEffect(gameData, ArtifactOrCreatureEnteringDontCauseTriggersEffect.class);
+        return anyActiveTriggerSuppression(gameData, suppression ->
+                suppression.event() == CreatureEnteringDontCauseTriggersEffect.Event.ENTERING
+                        && suppression.appliesToEveryPlayersAbilities()
+                        && (suppression.types().isEmpty() || suppression.types().contains(CardType.CREATURE)));
     }
 
     /**
@@ -10636,16 +10635,22 @@ public class GameQueryService {
     }
 
     /**
-     * Returns whether an entering artifact or creature is prevented from causing triggered abilities.
+     * Whether an entering permanent is prevented from causing triggered abilities to trigger by a
+     * {@link CreatureEnteringDontCauseTriggersEffect} naming every player's abilities whose types it has, a creature
+     * judged as it would enter (Torpor Orb, Doorkeeper Thrull, Hushbringer).
      */
     public boolean areArtifactOrCreatureETBTriggersSuppressed(GameData gameData, Card enteringCard) {
-        Card entered = enteringCharacteristics(gameData, enteringCard);
-        if (!hasCardType(entered, CardType.ARTIFACT)
-                && !wouldEnterAsCreature(gameData, entered)) {
+        if (!anyBattlefieldPrintsStaticEffect(gameData, CreatureEnteringDontCauseTriggersEffect.class)) {
             return false;
         }
-        return anyBattlefieldHasStaticEffect(gameData, ArtifactOrCreatureEnteringDontCauseTriggersEffect.class)
-                || areCreatureETBTriggersSuppressed(gameData, enteringCard);
+        Card entered = enteringCharacteristics(gameData, enteringCard);
+        boolean creature = wouldEnterAsCreature(gameData, entered);
+        return anyActiveTriggerSuppression(gameData, suppression ->
+                suppression.event() == CreatureEnteringDontCauseTriggersEffect.Event.ENTERING
+                        && suppression.appliesToEveryPlayersAbilities()
+                        && (suppression.types().isEmpty()
+                        || suppression.types().stream().anyMatch(type -> type == CardType.CREATURE
+                        ? creature : hasCardType(entered, type))));
     }
 
     /**
@@ -10662,28 +10667,59 @@ public class GameQueryService {
         if (!creatureInDeathBatch && !isCreature(gameData, dyingPermanent)) {
             return false;
         }
-        if (anyBattlefieldHasStaticEffect(gameData, CreatureDyingDontCauseTriggersEffect.class)) {
+        Predicate<CardEffect> dying = effect -> effect instanceof CreatureEnteringDontCauseTriggersEffect suppression
+                && suppression.event() == CreatureEnteringDontCauseTriggersEffect.Event.DYING;
+        if (anyActiveTriggerSuppression(gameData, dying::test)) {
             return true;
         }
         return gameData.simultaneousDyingCreatures.values().stream()
                 .filter(permanent -> !gameData.losesAllAbilitiesByEffect(permanent))
-                .anyMatch(permanent -> permanent.getCard().getStaticEffects().stream()
-                        .anyMatch(CreatureDyingDontCauseTriggersEffect.class::isInstance));
+                .anyMatch(permanent -> permanent.getCard().getStaticEffects().stream().anyMatch(dying));
     }
 
     /**
      * Returns whether entering permanents are prevented from causing triggered abilities of
-     * permanents controlled by {@code abilityControllerId} to trigger by an opposing static
-     * effect such as Elesh Norn, Mother of Machines.
+     * permanents controlled by {@code abilityControllerId} to trigger by a
+     * {@link CreatureEnteringDontCauseTriggersEffect} that names that player's abilities but not every player's
+     * (Elesh Norn, Mother of Machines: its controller's opponents).
      */
     public boolean areOpponentPermanentETBTriggersSuppressed(GameData gameData, UUID abilityControllerId) {
-        if (gameData == null || abilityControllerId == null) {
+        if (gameData == null || abilityControllerId == null
+                || !anyBattlefieldPrintsStaticEffect(gameData, CreatureEnteringDontCauseTriggersEffect.class)) {
             return false;
         }
-        UUID opponentId = gameData.getOpponentId(abilityControllerId);
-        return opponentId != null
-                && playerBattlefieldHasStaticEffect(
-                gameData, opponentId, OpponentPermanentsEnteringDontCauseTriggersEffect.class);
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            for (Permanent permanent : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
+                if (permanent.isFaceDown()) {
+                    continue;
+                }
+                boolean names = permanent.getCard().getStaticEffects().stream().anyMatch(effect ->
+                        effect instanceof CreatureEnteringDontCauseTriggersEffect suppression
+                                && suppression.event() == CreatureEnteringDontCauseTriggersEffect.Event.ENTERING
+                                && !suppression.appliesToEveryPlayersAbilities()
+                                && SubjectResolutionService.namesPlayer(gameData, permanent, controllerId,
+                                abilityControllerId, suppression.abilityControllers()));
+                if (names && !hasLostPrintedAbilities(gameData, permanent)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Whether a battlefield permanent that is face up and has its printed abilities has a
+     * {@link CreatureEnteringDontCauseTriggersEffect} matching {@code matches} (CR 708.2a, 613.1f).
+     */
+    private boolean anyActiveTriggerSuppression(GameData gameData,
+                                                Predicate<CreatureEnteringDontCauseTriggersEffect> matches) {
+        if (!anyBattlefieldPrintsStaticEffect(gameData, CreatureEnteringDontCauseTriggersEffect.class)) {
+            return false;
+        }
+        return gameData.anyPermanentMatches(permanent -> !permanent.isFaceDown()
+                && permanent.getCard().getStaticEffects().stream().anyMatch(effect ->
+                effect instanceof CreatureEnteringDontCauseTriggersEffect suppression && matches.test(suppression))
+                && !hasLostPrintedAbilities(gameData, permanent));
     }
 
     /**

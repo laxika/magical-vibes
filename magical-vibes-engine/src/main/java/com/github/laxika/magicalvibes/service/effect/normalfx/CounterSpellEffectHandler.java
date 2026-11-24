@@ -14,9 +14,11 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CounteredSpellDestination;
 import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -39,8 +41,15 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         entry.recordStep(StepKind.COUNTER_SPELL, StepOutcome.NONE);
         UUID targetCardId = entry.getTargetId();
-        if (targetCardId == null && entry.targetsForEffect(effect).size() == 1) {
-            targetCardId = entry.targetsForEffect(effect).getFirst();
+        List<UUID> groupTargets = entry.targetsForEffect(effect);
+        Card targeting = entry.getTargetingCard();
+        boolean boundToGroup = targeting != null && targeting.hasEffectTargetIndex(effect);
+        if (boundToGroup && groupTargets.size() > 1) {
+            counterEachTarget(gameData, entry, groupTargets, ((CounterSpellEffect) effect).destination());
+            return;
+        }
+        if (targetCardId == null && groupTargets.size() == 1) {
+            targetCardId = groupTargets.getFirst();
         }
         if (targetCardId == null) return;
 
@@ -69,9 +78,45 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
 
         StackEntry targetEntry = counterSupport.findCounterTarget(gameData, targetCardId, entry);
         if (targetEntry == null) return;
-        rememberTargetPlayerOfCounteredAbility(gameData, targetEntry);
+        boolean countered = counter(gameData, entry, targetEntry, ((CounterSpellEffect) effect).destination());
+        entry.recordStep(StepKind.COUNTER_SPELL, countered
+                ? StepOutcome.ofObjects(List.of(targetCardId), listOfController(targetEntry),
+                movedCard(gameData, targetCardId, targetEntry))
+                : StepOutcome.NONE);
+    }
 
-        boolean countered = switch (((CounterSpellEffect) effect).destination()) {
+    /**
+     * "Counter up to N target spells": every spell or ability chosen for the effect's target group, each looked up
+     * and countered on its own, so one that left the stack or can't be countered is skipped and the others are still
+     * countered (CR 608.2b). Records every countered object in one COUNTER_SPELL outcome.
+     */
+    private void counterEachTarget(GameData gameData, StackEntry entry, List<UUID> targetIds,
+                                   CounteredSpellDestination destination) {
+        List<UUID> counteredIds = new ArrayList<>();
+        List<UUID> controllers = new ArrayList<>();
+        List<MovedCard> moved = new ArrayList<>();
+        for (UUID targetId : targetIds) {
+            StackEntry targetEntry = counterSupport.findCounterTarget(gameData, targetId, entry);
+            if (targetEntry == null || !counter(gameData, entry, targetEntry, destination)) {
+                continue;
+            }
+            counteredIds.add(targetId);
+            for (UUID controller : listOfController(targetEntry)) {
+                if (!controllers.contains(controller)) {
+                    controllers.add(controller);
+                }
+            }
+            moved.addAll(movedCard(gameData, targetId, targetEntry));
+        }
+        entry.recordStep(StepKind.COUNTER_SPELL, counteredIds.isEmpty()
+                ? StepOutcome.NONE : StepOutcome.ofObjects(counteredIds, controllers, moved));
+    }
+
+    /** Counters {@code targetEntry} into {@code destination}; whether it was countered. */
+    private boolean counter(GameData gameData, StackEntry entry, StackEntry targetEntry,
+                            CounteredSpellDestination destination) {
+        rememberTargetPlayerOfCounteredAbility(gameData, targetEntry);
+        return switch (destination) {
             case GRAVEYARD -> counterSupport.counterSpell(gameData, entry, targetEntry);
             case EXILE -> counterSupport.counterSpellAndExile(gameData, entry, targetEntry);
             case HAND -> counterSupport.counterSpellAndPutInHand(gameData, entry, targetEntry);
@@ -88,10 +133,6 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
                 yield true;
             }
         };
-        entry.recordStep(StepKind.COUNTER_SPELL, countered
-                ? StepOutcome.ofObjects(List.of(targetCardId), listOfController(targetEntry),
-                movedCard(gameData, targetCardId, targetEntry))
-                : StepOutcome.NONE);
     }
 
     /**

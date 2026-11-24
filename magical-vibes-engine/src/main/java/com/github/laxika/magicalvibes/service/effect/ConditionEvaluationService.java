@@ -1847,7 +1847,8 @@ public class ConditionEvaluationService {
                     yield gameQueryService.getEffectiveCardColors(gameData, targetSpell.getCard()).stream()
                             .anyMatch(colorIn.colors()::contains);
                 }
-                yield predicateEvaluationService.matchesStackEntryPredicate(targetSpell, c.filter(), null);
+                yield predicateEvaluationService.matchesStackEntryPredicate(targetSpell, c.filter(), null, gameData,
+                        null);
             }
             case TargetSpellNoManaSpentToCast ignored -> {
                 com.github.laxika.magicalvibes.model.StackEntry targetSpell = gameQueryService

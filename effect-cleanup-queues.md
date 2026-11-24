@@ -247,17 +247,17 @@ run below.
 | 38 | `leader-control` | `GainControlOfTargetEffect.gainedBy(matching(eachPlayer(), ...))`, seat direction Done 2026-11-24 (fold run 38): 5 folded (4 absorbed, Loxodon split) onto `gainedBy(matching(eachPlayer(), ...))` with three new player predicates. | S | 5 (8) | PlayerWithLowestLifeGainsControlOfSourceCreatureEffect, PlayerWithMostCardsInHandGainsControlOfSourceCreatureEffect, PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect, PlayerWithMostLifeGainsControlOfSourceCreatureEffect, NextPlayerGainsControlOfSourceEffect |
 | 38 | `legend-rule` | `IgnoreLegendRuleEffect` + a static subject; exactly-two count scope Done 2026-11-24 (fold run 38): 7 folded onto `IgnoreLegendRuleEffect(subject)` / `IgnoreLegendRuleWhenExactlyTwoSameNameEffect(counted)`; 7 interfaces gone. | S | 7 (11) | IgnoreLegendRuleEffect, IgnoreLegendRuleForControlledCreaturesEffect, IgnoreLegendRuleForControlledPermanentsEffect, IgnoreLegendRuleForControlledSubtypeEffect, IgnoreLegendRuleForControlledTokensEffect, IgnoreLegendRuleWhenControllerControlsExactlyTwoSameNameEffect, IgnoreLegendRuleWhenExactlyTwoSameNameEffect |
 | 38 | `player-control` | `ControlTargetPlayerNextTurnEffect` + a `Duration` and a controlling subject Done 2026-11-24 (fold run 38): 0 folded, 2 left `unique` (Secret of Bloodbending, Cruel Entertainment: each option has one user). | S, C | 2 (2) | ControlTargetPlayerNextCombatOrTurnEffect, ControlTargetPlayersNextTurnsEffect |
-| 39 | `loss-repl` | `ReplaceControllerLossWithExileAndLifeTotalEffect` + starting life, one replacer (CR 616.1) | C | 2 (2) | ReplaceControllerLossWithExileAndLifeTotalEffect, ReplaceControllerLossWithExileAndStartingLifeEffect |
-| 39 | `token-kind` | `ReplaceTokenSubtypeCreationEffect` with a token filter | C | 2 (2) | ReplaceCreatureTokenCreationEffect, ReplaceTokenSubtypeCreationEffect |
-| 39 | `extra-upkeep` | `AdditionalUpkeepStepEffect` + count, placement; one store | C, St | 2 (3) | AdditionalUpkeepStepEffect, AdditionalUpkeepStepsEffect |
-| 39 | `counter-each` | `CounterSpellEffect` counters every target of its group | C | 1 (2) | CounterEachTargetSpellEffect |
-| 39 | `counter-set` | `CounterMatchingSpellsEffect` admits abilities | C | 2 (2) | CounterOpponentsAbilitiesEffect, CounterOpponentsSpellsAndAbilitiesEffect |
-| 39 | `poison-counter` | `ConditionalEffect(TargetSpellMatches(poison), CounterSpellEffect)` | C | 1 (2) | CounterSpellIfControllerPoisonedEffect |
-| 39 | `extra-draw` | `OpponentExtraDrawsRedirectedEffect` + a payload | C | 2 (2) | OpponentExtraDrawsCreateTreasureEffect, OpponentExtraDrawsRedirectedEffect |
-| 39 | `extra-turn` | `SkipAllExtraTurnsReplacementEffect` + a `PlayerSubject` | S | 2 (3) | OpponentExtraTurnSkipReplacementEffect, SkipAllExtraTurnsReplacementEffect |
-| 39 | `enter-triggers` | `CreatureEnteringDontCauseTriggersEffect` + filter, event kind, whose subject | C, S | 3 (3) | OpponentPermanentsEnteringDontCauseTriggersEffect, CreatureDyingDontCauseTriggersEffect, ArtifactOrCreatureEnteringDontCauseTriggersEffect |
-| 39 | `draw-repl-look` | one record (count, rest to bottom or graveyard) | R | 2 (2) | TomorrowAzamisFamiliarDrawReplacementEffect, UnderrealmLichDrawReplacementEffect |
-| 39 | `life-to-loss` | `OpponentLifeGainBecomesLifeLossEffect` + whose gains (weigh) | C | 2 (3) | RainOfGoreEffect, OpponentLifeGainBecomesLifeLossEffect* |
+| 39 | `loss-repl` | `ReplaceControllerLossWithExileAndLifeTotalEffect` + starting life, one replacer (CR 616.1) Done 2026-11-24 (fold run 39): 1 folded, Golden Throne's record survives; the losing player chooses among all loss replacements. | C | 2 (2) | ReplaceControllerLossWithExileAndLifeTotalEffect, ReplaceControllerLossWithExileAndStartingLifeEffect |
+| 39 | `token-kind` | `ReplaceTokenSubtypeCreationEffect` with a token filter Done 2026-11-24 (fold run 39): 1 folded. | C | 2 (2) | ReplaceCreatureTokenCreationEffect, ReplaceTokenSubtypeCreationEffect |
+| 39 | `extra-upkeep` | `AdditionalUpkeepStepEffect` + count, placement; one store Done 2026-11-24 (fold run 39): 1 folded, no store merge (two consumption points). | C, St | 2 (3) | AdditionalUpkeepStepEffect, AdditionalUpkeepStepsEffect |
+| 39 | `counter-each` | `CounterSpellEffect` counters every target of its group Done 2026-11-24 (fold run 39): 1 folded. | C | 1 (2) | CounterEachTargetSpellEffect |
+| 39 | `counter-set` | `CounterMatchingSpellsEffect` admits abilities Done 2026-11-24 (fold run 39): 2 folded. | C | 2 (2) | CounterOpponentsAbilitiesEffect, CounterOpponentsSpellsAndAbilitiesEffect |
+| 39 | `poison-counter` | `ConditionalEffect(TargetSpellMatches(poison), CounterSpellEffect)` Done 2026-11-24 (fold run 39): 1 folded (new predicate). | C | 1 (2) | CounterSpellIfControllerPoisonedEffect |
+| 39 | `extra-draw` | `OpponentExtraDrawsRedirectedEffect` + a payload Done 2026-11-24 (fold run 39): 1 folded. | C | 2 (2) | OpponentExtraDrawsCreateTreasureEffect, OpponentExtraDrawsRedirectedEffect |
+| 39 | `extra-turn` | `SkipAllExtraTurnsReplacementEffect` + a `PlayerSubject` Done 2026-11-24 (fold run 39): 1 folded. | S | 2 (3) | OpponentExtraTurnSkipReplacementEffect, SkipAllExtraTurnsReplacementEffect |
+| 39 | `enter-triggers` | `CreatureEnteringDontCauseTriggersEffect` + filter, event kind, whose subject Done 2026-11-24 (fold run 39): 3 folded. | C, S | 3 (3) | OpponentPermanentsEnteringDontCauseTriggersEffect, CreatureDyingDontCauseTriggersEffect, ArtifactOrCreatureEnteringDontCauseTriggersEffect |
+| 39 | `draw-repl-look` | one record (count, rest to bottom or graveyard) Done 2026-11-24 (fold run 39): 2 folded (the interface became the record). | R | 2 (2) | TomorrowAzamisFamiliarDrawReplacementEffect, UnderrealmLichDrawReplacementEffect |
+| 39 | `life-to-loss` | `OpponentLifeGainBecomesLifeLossEffect` + whose gains (weigh) Done 2026-11-24 (fold run 39): 0 folded, 2 left unique (Rain's condition would be a one-card option). | C | 2 (3) | RainOfGoreEffect, OpponentLifeGainBecomesLifeLossEffect* |
 | 40 | `per-object-flips` | `FlipCoinWinEffect` + a `forEach` subject | S | 3 (3) | FlipCoinForEachBlockingCreatureEffect, FlipCoinForEachMatchingPermanentDestroyOnLossEffect, FlipCoinForEachOpponentEffect |
 | 40 | `multi-flip` | `FlipUntilLoseEffect` + count, stop-at-loss, per-loss and all-wins effects | C | 4 (6) | FlipCoinsUntilLoseEffect, FlipCoinsWithResultEffectsEffect, FlipUntilLosePutCountersOnSourceEffect, FlipCoinsPerHeadsEffect* |
 | 40 | `two-dice` | a new `RollTwoDiceChooseOneEffect(sides)` | R | 3 (3) | ValiantEndeavorEffect, WildEndeavorEffect, ArcaneEndeavorEffect* |
@@ -396,7 +396,7 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - Radiant Restraints, Overwhelming Splendor: readers ignore a lost or ignored Aura (Volrath's Curse). P03. Sure, low. Radiant Restraints' lost-abilities half fixed in fold run 35b (`EnterPermanentsOfTypesTappedEffect` over active statics; test); Overwhelming Splendor and the ignored-Aura case open.
 - Celestial Dawn, Sunglasses of Urza (`playerBattlefieldHasStaticEffect`) ask only the floating flag. P07. Sure, low.
 - Nicol Bolas, Dragon-God borrows printed loyalty abilities only and asks only the floating flag; no static case could be set up without a layer-dependency case. T5, defect run 2. Code.
-- `TokenCreationReplacementSupport`'s static counts (Bilbo, Academy Manufactor, Map, the subtype replacements) ask only the floating flag. T5, defect run 2. Code. Partly fixed in fold run 22b: the Bilbo, Manufactor and Map counts are gone; the subtype and Divine Visitation reads on the non-ordered entry path (`activeTokenSubtypeReplacements`, `staticEffectCount`) remain.
+- `TokenCreationReplacementSupport`'s static counts (Bilbo, Academy Manufactor, Map, the subtype replacements) ask only the floating flag. T5, defect run 2. Code. Partly fixed in fold run 22b: the Bilbo, Manufactor and Map counts are gone; the subtype and Divine Visitation reads on the non-ordered entry path (`activeTokenSubtypeReplacements`, `staticEffectCount`) remain. Partly fixed in fold run 39: the entry-path subtype and Divine Visitation reads now ask `hasLostPrintedAbilities`.
 - Pariah, the attached preventions, Curse of Bloodletting: no lost-abilities check. 5m. Unverified.
 - Kappa Cannoneer, Lockjaw, Slicer, Full Steam Ahead, Vines of Vastwood: "can't be blocked / sacrificed / the target" are granted abilities "loses all abilities" removes, but are rules of the game (CR 611.2c). 5m. Unverified.
 - Summon: Valefor compares the cards' mana values, not the permanents'. Run 8. Unverified.
@@ -414,6 +414,7 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - `BattlefieldPlacementService.losesNonManaAbilitiesAsLandEnters` ignores full "loses all abilities" statics on lands (Alpine Moon) for an entering land's replacements (CR 614.12). Seen in fold run 32. Unverified.
 - `CombatHelper`'s first defender-condition scan reads the attacker's printed statics with no face-down or lost-ability check; it only pre-filters `getBlockableAttackerIndices` (`BlockLegalityService` decides). Seen in fold run 36b. Sure of the code, low.
 - Serra's Emissary's controller protection reads printed statics with no face-down check (CR 708.2a). Seen in fold run 35c. Sure of the code.
+- Tomorrow, Azami's Familiar and Underrealm Lich: the draw-replacement scan skips no face-down source (CR 708.2a). Run 39. Sure.
 
 **2. Two-player assumptions (`getOpponentId`, first seat).** All right with two players only.
 
@@ -520,7 +521,7 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - Turf War's enter trigger doesn't target ("target land"): hexproof, shroud, protection, ward are skipped. P14. Sure.
 - ~~Misfortune's second mode hits every opponent ("that player"). P13. Sure, multiplayer. Fold: opp-mode.~~ Fixed in fold run 19b.
 - ~~Kaya, Spirits' Justice targets any token ("target token you control"). P13. Fairly sure. Fold: copier.~~ Fixed in fold run 17b.
-- Loss replacements apply in `LossReplacer` bean order: the losing player doesn't choose (CR 616.1; only several Archangels do). P04. Sure. Fold: loss-repl.
+- ~~Loss replacements apply in `LossReplacer` bean order: the losing player doesn't choose (CR 616.1; only several Archangels do). P04. Sure. Fold: loss-repl.~~ Fixed in fold run 39.
 - Delaying Shield and Force Bubble: damage goes to the first source found; the player should choose (CR 616.1). P06. Sure, rare.
 - ~~`AuraCopyService.beginChooseCreatureOnEnter` (Metamorphic Alteration), Ascent of the Worthy's choice: no can't-be-chosen check (CR 608.2d). P03. Sure. Fold: copier, redir-your. (Metamorphic Alteration fixed in fold run 17; Ascent of the Worthy open.)~~ Ascent fixed in fold run 27 (`ChoosePermanentsEffect`); line closed.
 - ~~Portal Mage, Capricopian: `getValidAttackTargetIds` keeps restrictions the reselection ignores (Portal Mage's ruling; Misleading Signpost uses `getValidReselectionTargetIds`). P09. Sure, low. Fold: reselect.~~ Fixed in fold run 19.
@@ -743,6 +744,7 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - Awe Strike: `TargetPolarityClassifier` lists `PreventNextDamageByTargetCreatureEffect` as BENEFICIAL, though the spell is used against an opponent's creature. Seen in fold run 27b. Fairly sure.
 - AI: the Hard AI likely scores `PayFreeCastCostIncreaseEffect`'s "may" at 0 and declines a paid free cast. Seen in fold run 29d. Unverified.
 - Red Sun's Twilight and any token copy of departed permanents: `CreateTokenCopyOfTargetPermanentEffectHandler.resolveEsixReplacement` counts only copy sources still on the battlefield, so Esix's first-token-creation offer is skipped. Run 41. Fairly sure.
+- `CounterSpellEffect` with several targets and `LIBRARY_TOP_OR_BOTTOM` opens overlapping prompts. No card affected. Run 39. Sure.
 
 Not a defect after all: `SuspectedEffect` (P08 "nothing reads it") is read by `LayerSystemService`, `UnsuspectEffectHandler` and
 `GameQueryService` (checked 2026-11-23; P14 is right). Betrayal of Flesh and Solar Tide on `EscalateSacrificeCost` pay the same as

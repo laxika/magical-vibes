@@ -446,6 +446,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredi
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasOneTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCouldTargetAnotherPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryKickedPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryControllerPoisonCountersAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsModalSpellPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaSpentLessThanManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColoredManaSpentPredicate;
@@ -5495,6 +5496,9 @@ public class PredicateEvaluationService {
                     ? entry.isCopy() && entry.isCastCopy()
                     : entry.isCopy() && !entry.isCastCopy();
             case StackEntryKickedPredicate ignored -> entry.wasKicked();
+            case StackEntryControllerPoisonCountersAtLeastPredicate poisoned -> gameData != null
+                    && gameData.playerPoisonCounters.getOrDefault(entry.getControllerId(), 0)
+                    >= poisoned.minimumPoisonCounters();
             case StackEntryIsModalSpellPredicate ignored -> entry.getModalModeCount() != null;
             case StackEntryTruePredicate ignored -> true;
             case StackEntryIsSingleTargetPredicate ignored -> false;

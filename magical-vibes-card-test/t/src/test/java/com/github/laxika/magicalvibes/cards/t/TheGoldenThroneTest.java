@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.e.ExquisiteArchangel;
+import com.github.laxika.magicalvibes.cards.l.LichsMirror;
 import com.github.laxika.magicalvibes.cards.m.MarneusCalgar;
 import com.github.laxika.magicalvibes.cards.p.Poxwalkers;
 import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
@@ -18,7 +20,8 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TheGoldenThrone.class, Poxwalkers.class, MarneusCalgar.class, SongOfTheDryads.class})
+@CardUsed({TheGoldenThrone.class, Poxwalkers.class, MarneusCalgar.class, SongOfTheDryads.class,
+        ExquisiteArchangel.class, LichsMirror.class})
 class TheGoldenThroneTest extends BaseCardTest {
 
     @Test
@@ -33,6 +36,43 @@ class TheGoldenThroneTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(throne);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(throne.getCard());
+    }
+
+    @Test
+    @DisplayName("With Exquisite Archangel too, the losing player chooses which replacement applies")
+    void losingPlayerChoosesBetweenThroneAndArchangel() {
+        var throne = harness.addToBattlefieldAndReturn(player1, new TheGoldenThrone());
+        var angel = harness.addToBattlefieldAndReturn(player1, new ExquisiteArchangel());
+        harness.setLife(player1, 0);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(throne, angel);
+
+        harness.handlePermanentChosen(player1, angel.getId());
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(throne).doesNotContain(angel);
+    }
+
+    @Test
+    @DisplayName("With Lich's Mirror too, choosing the Throne exiles it and leaves the Mirror")
+    void losingPlayerChoosesThroneOverLichsMirror() {
+        var throne = harness.addToBattlefieldAndReturn(player1, new TheGoldenThrone());
+        var mirror = harness.addToBattlefieldAndReturn(player1, new LichsMirror());
+        harness.setLife(player1, 0);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+
+        harness.handlePermanentChosen(player1, throne.getId());
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(mirror).doesNotContain(throne);
     }
 
     @Test

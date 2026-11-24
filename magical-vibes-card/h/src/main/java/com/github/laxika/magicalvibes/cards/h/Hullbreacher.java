@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.OpponentExtraDrawsCreateTreasureEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentExtraDrawsRedirectedEffect;
 
 @CardRegistration(set = "MB2", collectorNumber = "124")
 public class Hullbreacher extends Card {
 
     public Hullbreacher() {
-        addStaticEffect(new OpponentExtraDrawsCreateTreasureEffect());
+        addStaticEffect(OpponentExtraDrawsRedirectedEffect.createTreasureInstead());
     }
 }

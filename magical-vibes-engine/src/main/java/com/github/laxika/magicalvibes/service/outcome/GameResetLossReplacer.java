@@ -56,18 +56,24 @@ public class GameResetLossReplacer implements LossReplacer {
     @Lazy
     private DrawService drawService;
 
+    /**
+     * The first Mirror only: every Mirror's reset is the same event (the reset never moves the Mirror for being its
+     * source), so several give the player no choice that matters.
+     */
     @Override
-    public boolean tryReplace(GameData gameData, UUID losingPlayerId, LossReason reason) {
-        if (losingPlayerId == null) {
-            return false;
-        }
-        Permanent mirror = findMirror(gameData, losingPlayerId);
-        if (mirror == null) {
-            return false;
-        }
+    public List<Permanent> sources(GameData gameData, UUID losingPlayerId, LossReason reason) {
+        return gameQueryService.activeStaticEffects(gameData, losingPlayerId, ReplaceControllerLossWithGameResetEffect.class)
+                .stream()
+                .map(GameQueryService.ActiveStaticEffect::source)
+                .limit(1)
+                .toList();
+    }
 
+    @Override
+    public boolean replace(GameData gameData, UUID losingPlayerId, Permanent mirror, LossReason reason) {
         if (masterySurvivesReset(gameData, losingPlayerId)
-                && LossReplacer.askBeforeLifeTotal(lifeSupport, gameData, losingPlayerId, reason, RESET_LIFE_TOTAL)) {
+                && LossReplacer.askBeforeLifeTotal(lifeSupport, gameData, losingPlayerId, reason, RESET_LIFE_TOTAL,
+                mirror)) {
             return true;
         }
 
@@ -112,12 +118,6 @@ public class GameResetLossReplacer implements LossReplacer {
         DepartureIntent sacrifice = lifeSupport.lifeLossSacrifice(gameData, playerId);
         return sacrifice != null
                 && !playerId.equals(gameData.stolenCreatures.getOrDefault(sacrifice.permanentId(), playerId));
-    }
-
-    private Permanent findMirror(GameData gameData, UUID playerId) {
-        List<GameQueryService.ActiveStaticEffect<ReplaceControllerLossWithGameResetEffect>> mirrors =
-                gameQueryService.activeStaticEffects(gameData, playerId, ReplaceControllerLossWithGameResetEffect.class);
-        return mirrors.isEmpty() ? null : mirrors.getFirst().source();
     }
 
     /**

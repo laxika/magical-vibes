@@ -2,31 +2,28 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Counters every spell on the stack matching the effect's {@link StackEntryPredicate} (Counterflux
- * overload). Snapshot-then-counter because removing mutates the stack. Abilities are skipped.
+ * Counters every spell or ability on the stack of the effect's kinds matching its {@code StackEntryPredicate}
+ * ({@link CounterMatchingSpellsEffect}). Snapshot-then-counter because removing mutates the stack; each one is
+ * looked up again and skipped when it left or can't be countered. Records the number countered as the entry's
+ * event value and the countered objects as the COUNTER_SPELL step.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class CounterMatchingSpellsEffectHandler implements NormalEffectHandlerBean {
-
-    private static final Set<StackEntryType> SPELL_TYPES = Set.of(
-            StackEntryType.CREATURE_SPELL, StackEntryType.ENCHANTMENT_SPELL,
-            StackEntryType.SORCERY_SPELL, StackEntryType.INSTANT_SPELL,
-            StackEntryType.ARTIFACT_SPELL, StackEntryType.PLANESWALKER_SPELL,
-            StackEntryType.BATTLE_SPELL);
 
     private final CounterSupport counterSupport;
     private final TargetLegalityService targetLegalityService;
@@ -39,26 +36,36 @@ public class CounterMatchingSpellsEffectHandler implements NormalEffectHandlerBe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         CounterMatchingSpellsEffect matching = (CounterMatchingSpellsEffect) effect;
+        entry.recordStep(StepKind.COUNTER_SPELL, StepOutcome.NONE);
 
-        List<StackEntry> toCounter = new ArrayList<>();
+        List<UUID> toCounter = new ArrayList<>();
         for (StackEntry se : gameData.stack) {
-            if (se == entry || !SPELL_TYPES.contains(se.getEntryType())) {
+            if (se == entry || !matching.types().contains(se.getEntryType())) {
                 continue;
             }
             if (!targetLegalityService.matchesStackEntryPredicate(
                     gameData, se, matching.filter(), entry.getControllerId())) {
                 continue;
             }
-            toCounter.add(se);
+            toCounter.add(se.getTargetableId());
         }
 
-        int counteredCount = 0;
-        for (StackEntry target : toCounter) {
-            StackEntry resolved = counterSupport.findCounterTargetExcludingSource(gameData, target.getCard().getId(), entry);
+        List<UUID> counteredIds = new ArrayList<>();
+        List<UUID> controllers = new ArrayList<>();
+        for (UUID targetId : toCounter) {
+            StackEntry resolved = counterSupport.findCounterTargetExcludingSource(gameData, targetId, entry);
             if (resolved != null && counterSupport.counterSpell(gameData, entry, resolved)) {
-                counteredCount++;
+                counteredIds.add(targetId);
+                if (resolved.getControllerId() != null && !controllers.contains(resolved.getControllerId())) {
+                    controllers.add(resolved.getControllerId());
+                }
             }
         }
-        entry.setEventValue(counteredCount);
+        entry.setEventValue(counteredIds.size());
+        if (!counteredIds.isEmpty()) {
+            entry.recordStep(StepKind.COUNTER_SPELL, StepOutcome.ofObjects(counteredIds, controllers));
+        }
+        log.info("Game {} - {} countered {} spells or abilities",
+                gameData.id, entry.getCard().getName(), counteredIds.size());
     }
 }

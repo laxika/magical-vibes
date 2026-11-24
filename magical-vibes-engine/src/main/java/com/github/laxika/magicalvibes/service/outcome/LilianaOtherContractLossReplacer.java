@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 /** Handles Liliana's Other Contract's game-loss replacement. */
@@ -33,17 +34,14 @@ public class LilianaOtherContractLossReplacer implements LossReplacer {
     }
 
     @Override
-    public boolean tryReplace(GameData gameData, UUID losingPlayerId, LossReason reason) {
-        if (losingPlayerId == null) {
-            return false;
-        }
-
+    public List<Permanent> sources(GameData gameData, UUID losingPlayerId, LossReason reason) {
         Permanent contract = gameQueryService.findControlledPermanentWithStaticEffect(
                 gameData, losingPlayerId, ReplaceControllerLossWithExileAndReturnTransformedEffect.class);
-        if (contract == null || contract.isTransformed()) {
-            return false;
-        }
+        return contract == null || contract.isTransformed() ? List.of() : List.of(contract);
+    }
 
+    @Override
+    public boolean replace(GameData gameData, UUID losingPlayerId, Permanent contract, LossReason reason) {
         if (!exileAndReturnTransformedService.exileAndReturnTransformed(
                 gameData, contract.getId(), true)) {
             return false;

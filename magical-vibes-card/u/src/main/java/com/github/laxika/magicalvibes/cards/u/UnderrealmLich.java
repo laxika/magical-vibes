@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.UnderrealmLichDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseOneToHandDrawReplacementEffect;
 
 import java.util.List;
 
@@ -16,7 +16,7 @@ import java.util.List;
 public class UnderrealmLich extends Card {
 
     public UnderrealmLich() {
-        addStaticEffect(new UnderrealmLichDrawReplacementEffect());
+        addStaticEffect(LookAtTopCardsChooseOneToHandDrawReplacementEffect.restIntoGraveyard(3));
 
         addActivatedAbility(new ActivatedAbility(false, null,
                 List.of(

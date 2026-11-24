@@ -1,18 +1,9 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.UUID;
-
 /**
  * Static replacement capability that skips an extra turn as it would begin while the source is
- * on the battlefield.
+ * on the battlefield (CR 614.10). Every player's extra turns, except where the record names whose
+ * ({@link SkipAllExtraTurnsReplacementEffect#players()}).
  */
 public interface ExtraTurnSkipReplacementEffect extends CardEffect {
-
-    /**
-     * Returns whether this replacement applies to an extra turn taken by the given player.
-     * Existing implementations apply to every player's extra turns by default.
-     */
-    default boolean appliesToExtraTurn(UUID sourceControllerId, UUID extraTurnPlayerId) {
-        return true;
-    }
 }

@@ -10,6 +10,7 @@ import java.util.UUID;
  *
  * @param playerId the player who would lose the game
  * @param reason   the name of the loss's {@code LossReason}
+ * @param sourceId the permanent whose replacement was chosen to apply, applied again without a new choice
  */
-public record PendingLossReplacement(UUID playerId, String reason) {
+public record PendingLossReplacement(UUID playerId, String reason, UUID sourceId) {
 }

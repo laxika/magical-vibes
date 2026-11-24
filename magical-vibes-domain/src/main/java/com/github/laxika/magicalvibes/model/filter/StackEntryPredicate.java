@@ -24,6 +24,7 @@ public sealed interface StackEntryPredicate permits
         StackEntryControlledByWatchedPlayerPredicate,
         StackEntryControlledByEnchantedPlayerPredicate,
         StackEntryControlledByPredicate,
+        StackEntryControllerPoisonCountersAtLeastPredicate,
         StackEntryHasAnyTargetPredicate,
         StackEntryHasTargetPredicate,
         StackEntryHasXInManaCostPredicate,

@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.TomorrowAzamisFamiliarDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseOneToHandDrawReplacementEffect;
 
 @CardRegistration(set = "BOK", collectorNumber = "58")
 public class TomorrowAzamisFamiliar extends Card {
 
     public TomorrowAzamisFamiliar() {
-        addStaticEffect(new TomorrowAzamisFamiliarDrawReplacementEffect());
+        addStaticEffect(LookAtTopCardsChooseOneToHandDrawReplacementEffect.restOnBottom(3));
     }
 }

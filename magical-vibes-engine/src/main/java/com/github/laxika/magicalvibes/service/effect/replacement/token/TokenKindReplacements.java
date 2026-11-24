@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ReplaceCreatureTokenCreationEffect;
+import com.github.laxika.magicalvibes.model.effect.AddTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceTokenSubtypeCreationEffect;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
 import com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent;
@@ -118,19 +118,14 @@ public class TokenKindReplacements implements ReplacementCandidateSource<TokenCr
                 }
                 String key = KEY_PREFIX + permanent.getId() + ":" + i;
                 String name = FaceDownVisibility.publicName(gameData, permanent);
-                Instance instance = switch (effect) {
-                    case ReplaceCreatureTokenCreationEffect ignored -> new Instance(key,
-                            name + ": create that many 4/4 Angel tokens instead of creature tokens",
-                            (blueprint, creature) -> creature,
-                            TokenCreationReplacementSupport::divineVisitationToken);
-                    case ReplaceTokenSubtypeCreationEffect subtype
-                            when permanent.getClassLevel() >= subtype.minimumSourceLevel() -> new Instance(key,
-                            name + ": create " + subtype.replacementToken().tokenName() + " tokens instead of "
-                                    + subtype.sourceSubtype().getDisplayName() + " tokens",
-                            (blueprint, creature) -> hasSubtype(blueprint, subtype.sourceSubtype()),
-                            blueprint -> TokenCreationReplacementSupport.subtypeReplacementToken(subtype, blueprint));
-                    default -> null;
-                };
+                Instance instance = effect instanceof ReplaceTokenSubtypeCreationEffect kind
+                        && permanent.getClassLevel() >= kind.minimumSourceLevel()
+                        ? new Instance(key,
+                        name + ": create " + kind.replacementToken().tokenName() + " tokens instead of "
+                                + describe(kind.replaces()) + " tokens",
+                        (blueprint, creature) -> kind.replaces().matches(blueprint, creature),
+                        blueprint -> TokenCreationReplacementSupport.subtypeReplacementToken(kind, blueprint))
+                        : null;
                 if (instance != null && createsMatchingToken(event, instance)) {
                     instances.add(instance);
                 }
@@ -155,7 +150,12 @@ public class TokenKindReplacements implements ReplacementCandidateSource<TokenCr
                 .anyMatch(group -> instance.replaces().test(group.blueprint(), group.creature()));
     }
 
-    private static boolean hasSubtype(CreateTokenEffect blueprint, CardSubtype subtype) {
-        return blueprint.subtypes() != null && blueprint.subtypes().contains(subtype);
+    /** "creature", "Fish" or "Clue, Food, or Treasure": the replaced tokens as the option's label names them. */
+    private static String describe(AddTokenCreationEffect.TokenKind kind) {
+        List<String> words = new ArrayList<>();
+        kind.subtypes().stream().map(CardSubtype::getDisplayName).sorted().forEach(words::add);
+        String subtypes = String.join(" or ", words);
+        String type = kind.type() == null ? "" : kind.type().name().toLowerCase(java.util.Locale.ROOT);
+        return subtypes.isEmpty() ? type : type.isEmpty() ? subtypes : subtypes + " " + type;
     }
 }

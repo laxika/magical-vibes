@@ -313,7 +313,8 @@ public class BattlefieldPlacementService {
         gameData.restoreBombardmentCardForBattlefield(permanent);
         controllerId = resolveEnteringController(gameData, controllerId, permanent);
         if (!permanent.isTokenKindReplacementsApplied()) {
-            TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(gameData, controllerId, permanent);
+            TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(gameData, controllerId, permanent,
+                    source -> gameQueryService.hasLostPrintedAbilities(gameData, source));
         }
         applyMysticReflectionReplacement(gameData, permanent, simultaneouslyEntered);
         if (!gameData.losesAllAbilitiesByEffect(permanent.getId())) {

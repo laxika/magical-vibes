@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -24,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class KatarasReversalTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Counters target spells and untaps target artifacts or creatures")
     void countersSpellsAndUntapsArtifactsOrCreatures() {
         GrizzlyBears bears = new GrizzlyBears();
         AngelsMercy mercy = new AngelsMercy();
@@ -54,6 +56,7 @@ class KatarasReversalTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counters a target activated ability")
     void countersAnActivatedAbility() {
         VigilantDrake drakeCard = new VigilantDrake();
         harness.addToBattlefield(player1, drakeCard);
@@ -71,6 +74,7 @@ class KatarasReversalTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counters several abilities from the same permanent")
     void countersMultipleAbilitiesFromTheSamePermanent() {
         Permanent drake = harness.addToBattlefieldAndReturn(player1, new VigilantDrake());
         drake.tap();
@@ -89,6 +93,7 @@ class KatarasReversalTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can be cast and resolve with no targets")
     void canResolveWithoutAnyTargets() {
         harness.setHand(player1, List.of(new KatarasReversal()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -101,6 +106,7 @@ class KatarasReversalTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Untaps four artifacts or creatures with no spell or ability targets")
     void untapsFourArtifactsAndCreaturesWithoutCounterTargets() {
         Permanent artifact1 = harness.addToBattlefieldAndReturn(player1, new HookSwords());
         Permanent artifact2 = harness.addToBattlefieldAndReturn(player2, new HookSwords());
@@ -121,6 +127,7 @@ class KatarasReversalTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counters four spells and untaps four permanents")
     void countersFourSpellsAndUntapsFourPermanents() {
         List<KatarasReversal> spells = List.of(new KatarasReversal(), new KatarasReversal(),
                 new KatarasReversal(), new KatarasReversal());
@@ -149,6 +156,7 @@ class KatarasReversalTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counters a triggered ability without removing its source")
     void countersATriggeredAbilityWithoutRemovingItsSource() {
         harness.setLibrary(player2, List.of(new KindlyCustomer()));
         harness.setHand(player2, List.of());
@@ -167,6 +175,7 @@ class KatarasReversalTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Still untaps its permanent targets when its spell target leaves the stack")
     void stillUntapsWhenItsCounterTargetLeavesTheStack() {
         Permanent equipment = harness.enterBattlefieldAndReturn(player1, new HookSwords());
         equipment.tap();
@@ -185,6 +194,7 @@ class KatarasReversalTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot target five artifacts or creatures")
     void rejectsFivePermanentTargets() {
         List<UUID> targets = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
@@ -199,6 +209,7 @@ class KatarasReversalTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot target five spells or abilities")
     void rejectsFiveSpellTargets() {
         List<Card> hand = new ArrayList<>();
         for (int i = 0; i < 6; i++) {
@@ -217,6 +228,7 @@ class KatarasReversalTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot target a land that is not an artifact or creature")
     void cannotUntapAPlainLand() {
         Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
         harness.setHand(player1, List.of(new KatarasReversal()));

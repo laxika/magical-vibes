@@ -4682,7 +4682,7 @@ public class SpellCastingService {
         //  - a modal mode that declares more than one spell target() slot (Choreographed Sparks' "both":
         //    one instant/sorcery spell + one creature spell);
         //  - a non-modal "counter up to N target spells" (Double Negative): a single spell-on-stack
-        //    target group with max > 1 (bound to a CounterEachTargetSpellEffect) and no permanent/player
+        //    target group with max > 1 (bound to a CounterSpellEffect) and no permanent/player
         //    targets. In both cases the chosen targets ride in the flat targetIds list.
         boolean multipleSpellTargets = unwrappedNeedsSpellTarget && (wasModal
                 ? !unwrappedNeedsTarget && targetId == null && !targetIds.isEmpty()

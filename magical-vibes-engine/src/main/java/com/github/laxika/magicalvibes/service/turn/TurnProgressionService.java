@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.OnlySourceCreatureCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerUpAbilitiesCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnSkipReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipAllExtraTurnsReplacementEffect;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.model.effect.RunedTerrorEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.effect.TimeVaultReplacementEffect;
@@ -1188,7 +1190,9 @@ public class TurnProgressionService {
                 boolean applies = permanent.getCard().getStaticEffects().stream()
                         .filter(ExtraTurnSkipReplacementEffect.class::isInstance)
                         .map(ExtraTurnSkipReplacementEffect.class::cast)
-                        .anyMatch(effect -> effect.appliesToExtraTurn(sourceControllerId, extraTurnPlayerId));
+                        .anyMatch(effect -> !(effect instanceof SkipAllExtraTurnsReplacementEffect skip)
+                                || SubjectResolutionService.namesPlayer(gameData, permanent, sourceControllerId,
+                                extraTurnPlayerId, skip.players()));
                 if (applies) return true;
             }
         }

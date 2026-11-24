@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41 (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 42, 43, 37; merge queue 39, 40. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                           |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39 (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 42, 37; merge queue 40, 43. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                            |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,287 / 2,655 (after fold run 41) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,274 / 2,650 (after fold run 39) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,210 rows over 4,508 classes (after fold run 41). Latest verdict per class: `step-9` 375, unique 1,176, absorbed 1,092, split 657, blocked-other 525, survivor 380, blocked-step-model 140, blocked-player-loop 96, dead 67. Waiting: 375 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,234 rows over 4,511 classes (after fold run 39). Latest verdict per class: `step-9` 354, unique 1,178, absorbed 1,106, split 657, blocked-other 525, survivor 388, blocked-step-model 140, blocked-player-loop 96, dead 67. Waiting: 354 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -952,6 +952,18 @@ Delayed and global triggers:
 - `PermanentPowerAtLeastAmountPredicate` / `PermanentPowerAtMostAmountPredicate(DynamicAmount)` + `AmountEvaluationService.bindAmounts(gd, PermanentPredicate, ctx)`: power compared with an amount fixed as the effect resolves, read by `DestroyAllPermanentsEffect` (fold run 41).
 - `DestroyAllPermanentsEffect.readingTarget(filter, TargetPredicate)` (`referencedTarget`): a wipe whose amount reads a target it doesn't destroy for being that target, AI NEUTRAL (Fell the Mighty, Mandate of Abaddon; fold run 41).
 - `CreateTokenCopyOfTargetPermanentEffect.withSubject(departedThisWay(kind))`: "for each [permanent] destroyed this way, create a token that's a copy of it", each copied as it last existed (Red Sun's Twilight; fold run 41).
+
+- `LossReplacer.sources` / `replace` + `GameOutcomeService.applyChosenLossReplacement` and `PermanentChoiceContext.LossReplacementChoice`: every loss replacement offered for the losing player's CR 616.1 choice (fold run 39).
+- `ReplaceControllerLossWithExileAndLifeTotalEffect(DynamicAmount)` / `.startingLifeTotal()` (fold run 39).
+- `ReplaceTokenSubtypeCreationEffect(TokenKind, token, level)` / `.creatureTokens(token)` (fold run 39).
+- `AdditionalUpkeepStepEffect(DynamicAmount, Placement)` / `.afterThisCombatPhase(count)` (fold run 39).
+- `CounterSpellEffect` over a target group with several targets: "counter up to N target spells" (fold run 39).
+- `CounterMatchingSpellsEffect(filter, types)` / `.abilities` / `.spellsAndAbilities`: records COUNTER_SPELL and the event value (fold run 39).
+- `StackEntryControllerPoisonCountersAtLeastPredicate(n)`, read in `TargetSpellMatches` with the game (fold run 39).
+- `OpponentExtraDrawsRedirectedEffect(Payload)` / `.createTreasureInstead()` (fold run 39).
+- `SkipAllExtraTurnsReplacementEffect(PlayerSubject)` / `.opponents()` (fold run 39).
+- `CreatureEnteringDontCauseTriggersEffect(Event, types, abilityControllers)`, with `.artifactsOrCreaturesEntering()` / `.creaturesDying()` / `.permanentsEnteringForOpponents()` (fold run 39).
+- `LookAtTopCardsChooseOneToHandDrawReplacementEffect(lookCount, restToGraveyard)` / `.restOnBottom(n)` / `.restIntoGraveyard(n)` (fold run 39).
 
 ### Blocked causes still open
 
@@ -4170,6 +4182,47 @@ Batch `player-prot` is done: 2 folded, 0 left. Ratchet 3,325 / 2,676 → 3,324 /
 - Mimeofacture: `SearchTargetLibraryEffect` must bind its filter (its handler matches without game state);
 - Canoptek Wraith fits `CardSharesNameWithPermanentsPredicate(thisWay(CHOOSE))` as it is.
 - Then `topcard-look`, `facedown-look`, `may-reveal-hand`, `topcard-bf` (CR 701.20a/b, 708.5 checked).
+
+### Step 9, fold run 39 (2026-11-24, parallel worktree)
+All 11 batches done. Ratchet 3,324 / 2,675 → 3,311 / 2,670. Ledger 24 rows: absorbed 14, survivor 8, unique 2. 17 card files rewritten; Oracle text checked for 21 cards. CR 104.3, 121.6, 500.7, 614.6, 614.10, 616.1, 616.1e, 701.6a checked.
+
+| Batch | Result |
+|---|---|
+| loss-repl | 1 folded. `ReplaceControllerLossWithExileAndLifeTotalEffect(DynamicAmount)`, with `startingLifeTotal()`; one `ExileSourceAndSetLifeTotalLossReplacer`. `LossReplacer` now has `sources` / `replace` (plus `replacesBeforeLoss` for Enduring Angel). `GameOutcomeService.replaceLoss` gathers every source and the losing player chooses (`LossReplacementChoice`). A choice made before the Lich's Duel Mastery questions is kept on `PendingLossReplacement.sourceId`. Lich's Mirror gives one source, since every Mirror's reset is the same event. |
+| token-kind | 1 folded. The survivor takes `TokenKind replaces` (`creatureTokens(token)`). The entry path applies subtype forms first (by class level), then the type forms. |
+| extra-upkeep | 1 folded. `AdditionalUpkeepStepEffect(DynamicAmount, Placement)`. No store merge: the two counters are consumed at different points of the turn, and one has a return step. The no-extra-from-an-extra guard is kept for AFTER_THIS_STEP only. |
+| counter-each | 1 folded. `CounterSpellEffect` bound to a group with several targets counters each one and records a single COUNTER_SPELL step. |
+| counter-set | 2 folded. `CounterMatchingSpellsEffect(filter, types)` with `abilities` / `spellsAndAbilities`. It looks entries up by targetable id, records COUNTER_SPELL and implements `CounterSpellingEffect`. Glen Elendra's Answer creates its tokens with `EventValue`. |
+| poison-counter | 1 folded, onto the new `StackEntryControllerPoisonCountersAtLeastPredicate`. |
+| extra-draw | 1 folded. `Payload` DRAW_A_CARD / CREATE_A_TREASURE. Notion Thief is still taken before Hullbreacher. |
+| extra-turn | 1 folded. `SkipAllExtraTurnsReplacementEffect(PlayerSubject)`, judged by `namesPlayer`; `appliesToExtraTurn` is gone. |
+| enter-triggers | 3 folded. `CreatureEnteringDontCauseTriggersEffect(Event, types, abilityControllers)`. A form naming only some players requires ENTERING and no type filter, because the reader for opponents' abilities doesn't know the entering permanent. One scan, `anyActiveTriggerSuppression`. |
+| draw-repl-look | 2 folded. No existing draw replacement takes a look count and a destination (Sages of the Anima reveals and keeps every creature), so the interface became the record `(lookCount, restToGraveyard)`. |
+| life-to-loss | 0 folded, 2 `unique`. Rain of Gore's gains are any player's from a spell or ability they control, on any battlefield. That condition would be Rain's option alone (guard rail). |
+
+**Behaviour changes.**
+- Loss replacements: the losing player chooses among all that apply (CR 616.1), where the first replacer bean in order used to win. This fixes the "Fold: loss-repl" defect. Tests: Throne+Archangel, Throne+Lich's Mirror, picking one of two Archangels.
+- Throne: a face-down Throne has no replacement.
+- Hullbreacher and Notion Thief: a face-down copy replaces nothing (CR 708.2a). Test added for Hullbreacher.
+- Token entry path: asks `hasLostPrintedAbilities` (CR 613.1f). This is part of the "TokenCreationReplacementSupport's static counts" defect line; Divine Visitation's and the subtype reads there are fixed, `staticEffectCount` is gone.
+- Elesh Norn: every battlefield is checked, with `hasLostPrintedAbilities`.
+- Double Negative and Katara's Reversal: record COUNTER_SPELL and keep a countered ability's chosen player.
+- AI: Swift Silence is a counterspell, and Double Negative is scored as one.
+- Logs: the survivors' log lines win (Divine Visitation's option label).
+
+**Tests changed.**
+- Deleted `CounterSpellIfControllerPoisonedEffectHandlerTest` (handler gone; its cases are in `CorruptedResolveTest`).
+- Removed unused helpers from `CounterSpellEffectHandlerTest` and `CounterUnlessPaysEffectHandlerTest`.
+- `TurnProgressionServiceTest`: record rename.
+- Added 4 tests.
+
+**Seen, not changed.**
+- `CounterSpellEffect` over several targets with `LIBRARY_TOP_OR_BOTTOM` would open one prompt per target. No card does this.
+- `KatarasReversalTest` methods have no `@DisplayName`. Sure.
+- The Tomorrow and Underrealm Lich scan doesn't skip face-down sources. Sure.
+- Not tested: the Throne face-down fix, the token entry-path fix, the Elesh Norn multiplayer change.
+
+**For the next run.** The face-down draw-replacement defects: Pursuit of Knowledge, Uba Mask, Tomorrow.
 
 ## Prompt
 

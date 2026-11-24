@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentExtraTurnSkipReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipAllExtraTurnsReplacementEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class TroubleInPairs extends Card {
 
     public TroubleInPairs() {
-        addStaticEffect(new OpponentExtraTurnSkipReplacementEffect());
+        addStaticEffect(SkipAllExtraTurnsReplacementEffect.opponents());
 
         addTrigger(Triggers.playerAttacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new OpponentAttacksWithAtLeastCreatures(2, false)),

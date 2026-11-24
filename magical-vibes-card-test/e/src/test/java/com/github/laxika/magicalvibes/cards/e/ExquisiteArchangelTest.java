@@ -147,6 +147,22 @@ class ExquisiteArchangelTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The chosen Archangel is exiled and the other stays on the battlefield")
+    void chosenArchangelIsExiled() {
+        var first = harness.addToBattlefieldAndReturn(player1, new ExquisiteArchangel());
+        var second = harness.addToBattlefieldAndReturn(player1, new ExquisiteArchangel());
+        harness.setLife(player1, 0);
+
+        harness.runStateBasedActions();
+        harness.handlePermanentChosen(player1, second.getId());
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(first).doesNotContain(second);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(second.getCard());
+    }
+
+    @Test
     @DisplayName("A face-down Archangel has no loss replacement ability")
     void faceDownArchangelDoesNotReplaceLoss() {
         var angel = harness.addToBattlefieldAndReturn(player1, new ExquisiteArchangel());

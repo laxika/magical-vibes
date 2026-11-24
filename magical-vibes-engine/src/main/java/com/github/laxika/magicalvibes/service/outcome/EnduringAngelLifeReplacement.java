@@ -24,7 +24,7 @@ public class EnduringAngelLifeReplacement implements LossReplacer {
     }
 
     @Override
-    public boolean tryReplace(GameData gameData, UUID losingPlayerId, LossReason reason) {
+    public boolean replacesBeforeLoss(GameData gameData, UUID losingPlayerId, LossReason reason) {
         if (reason != LossReason.LIFE || losingPlayerId == null) {
             return false;
         }

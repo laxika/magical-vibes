@@ -10,15 +10,16 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ReplaceCreatureTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceTokenSubtypeCreationEffect;
 import com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 /**
  * The tokens replacement effects put in place of or beside a token creation event's tokens (Divine Visitation, Fisher's
@@ -26,28 +27,34 @@ import java.util.UUID;
  */
 public final class TokenCreationReplacementSupport {
 
-    private static final CreateTokenEffect DIVINE_VISITATION_TOKEN = new CreateTokenEffect(
-            "Angel", 4, 4, CardColor.WHITE, List.of(CardSubtype.ANGEL),
-            Set.of(Keyword.FLYING, Keyword.VIGILANCE), Set.of());
-
     private TokenCreationReplacementSupport() {
     }
 
     /**
-     * Returns the replacement token card when a controlled static replacement applies, otherwise
-     * returns {@code tokenCard} unchanged.
+     * The token card that enters in place of {@code tokenCard} under the controlled static token-kind replacements
+     * ({@link ReplaceTokenSubtypeCreationEffect}), for a token that enters outside an ordered token creation event;
+     * {@code tokenCard} unchanged when none applies. The subtype replacements apply first, in class-level order (a
+     * Fish becomes a Shark, then an Octopus), then the ones naming no subtype (Divine Visitation). A face-down source
+     * or one that lost its printed abilities has none (CR 708.2a, 613.1f).
      */
-    public static Card replaceCreatureTokenIfApplicable(GameData gameData, UUID controllerId,
-                                                         Card tokenCard) {
+    public static Card replaceCreatureTokenIfApplicable(GameData gameData, UUID controllerId, Card tokenCard,
+                                                         Predicate<Permanent> lostPrintedAbilities) {
         if (!tokenCard.isToken()) {
             return tokenCard;
         }
-        Card replacedToken = replaceTokenSubtypeIfApplicable(gameData, controllerId, tokenCard);
-        if (!entersAsCreature(replacedToken)
-                || !hasCreatureTokenReplacement(gameData, controllerId)) {
-            return replacedToken;
+        Card replaced = tokenCard;
+        for (ReplaceTokenSubtypeCreationEffect effect : activeTokenKindReplacements(
+                gameData, controllerId, lostPrintedAbilities)) {
+            if (effect.replaces().matches(copyKind(replaced), entersAsCreature(replaced))) {
+                CreateTokenEffect replacement = effect.replacementToken();
+                replaced = TokenCardFactory.create(
+                        replacement,
+                        replacement.tokenPower(),
+                        replacement.tokenToughness(),
+                        replaced.getSetCode());
+            }
         }
-        return TokenCardFactory.create(DIVINE_VISITATION_TOKEN, 4, 4, replacedToken.getSetCode());
+        return replaced;
     }
 
     /**
@@ -75,16 +82,8 @@ public final class TokenCreationReplacementSupport {
     }
 
     /**
-     * Divine Visitation's 4/4 white Angel created in place of a creature token of {@code original}, keeping the
-     * creating effect's riders (tapped, attacking, exiled at end of combat, ...) but none of the replaced token's
-     * characteristics or abilities.
-     */
-    public static CreateTokenEffect divineVisitationToken(CreateTokenEffect original) {
-        return withEventModifiers(DIVINE_VISITATION_TOKEN, original);
-    }
-
-    /**
-     * The token {@code replacement} (Fisher's Talent's Shark or Octopus) creates in place of a token of
+     * The token {@code replacement} (Divine Visitation's Angel, Fisher's Talent's Shark or Octopus) creates in place of
+     * a token of
      * {@code original}, keeping the creating effect's riders but none of the replaced token's characteristics or
      * abilities.
      */
@@ -95,8 +94,10 @@ public final class TokenCreationReplacementSupport {
 
     /** Applies the replacement to a token permanent that was already wrapped in a Permanent. */
     public static void replaceCreatureTokenIfApplicable(GameData gameData, UUID controllerId,
-                                                         Permanent permanent) {
-        Card replacement = replaceCreatureTokenIfApplicable(gameData, controllerId, permanent.getCard());
+                                                         Permanent permanent,
+                                                         Predicate<Permanent> lostPrintedAbilities) {
+        Card replacement = replaceCreatureTokenIfApplicable(gameData, controllerId, permanent.getCard(),
+                lostPrintedAbilities);
         if (replacement != permanent.getCard()) {
             replacement.freeze();
             permanent.setCard(replacement);
@@ -157,33 +158,11 @@ public final class TokenCreationReplacementSupport {
                 true, List.of());
     }
 
-    private static boolean hasCreatureTokenReplacement(GameData gameData, UUID controllerId) {
-        return hasStaticEffect(gameData, controllerId, ReplaceCreatureTokenCreationEffect.class);
-    }
-
-    private static Card replaceTokenSubtypeIfApplicable(GameData gameData, UUID controllerId,
-                                                         Card tokenCard) {
-        Card replaced = tokenCard;
-        for (ReplaceTokenSubtypeCreationEffect effect : activeTokenSubtypeReplacements(
-                gameData, controllerId)) {
-            if (replaced.getSubtypes() != null
-                    && replaced.getSubtypes().contains(effect.sourceSubtype())) {
-                CreateTokenEffect replacement = effect.replacementToken();
-                replaced = TokenCardFactory.create(
-                        replacement,
-                        replacement.tokenPower(),
-                        replacement.tokenToughness(),
-                        replaced.getSetCode());
-            }
-        }
-        return replaced;
-    }
-
-    private static List<ReplaceTokenSubtypeCreationEffect> activeTokenSubtypeReplacements(
-            GameData gameData, UUID controllerId) {
+    private static List<ReplaceTokenSubtypeCreationEffect> activeTokenKindReplacements(
+            GameData gameData, UUID controllerId, Predicate<Permanent> lostPrintedAbilities) {
         List<ReplaceTokenSubtypeCreationEffect> replacements = new ArrayList<>();
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
-            if (permanent.isFaceDown() || gameData.losesAllAbilitiesByEffect(permanent)) {
+            if (permanent.isFaceDown() || lostPrintedAbilities.test(permanent)) {
                 continue;
             }
             int sourceLevel = permanent.getClassLevel();
@@ -195,34 +174,10 @@ public final class TokenCreationReplacementSupport {
                 }
             }
         }
-        replacements.sort(java.util.Comparator.comparingInt(
-                ReplaceTokenSubtypeCreationEffect::minimumSourceLevel));
+        replacements.sort(Comparator
+                .comparing((ReplaceTokenSubtypeCreationEffect replacement) -> replacement.replaces().subtypes().isEmpty())
+                .thenComparingInt(ReplaceTokenSubtypeCreationEffect::minimumSourceLevel));
         return replacements;
-    }
-
-    private static boolean hasStaticEffect(GameData gameData, UUID controllerId,
-                                            Class<? extends CardEffect> effectType) {
-        return staticEffectCount(gameData, controllerId, effectType) > 0;
-    }
-
-    private static int staticEffectCount(GameData gameData, UUID controllerId,
-                                         Class<? extends CardEffect> effectType) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return 0;
-        }
-        int count = 0;
-        for (Permanent permanent : battlefield) {
-            if (permanent.isFaceDown()
-                    || gameData.losesAllAbilitiesByEffect(permanent)
-                    || gameData.removesOwnStaticAbility(permanent.getId(), effectType)) {
-                continue;
-            }
-            count += (int) permanent.getCard().getStaticEffects().stream()
-                    .filter(effectType::isInstance)
-                    .count();
-        }
-        return count;
     }
 
     /**

@@ -36,6 +36,22 @@ class HullbreacherTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A face-down Hullbreacher does not replace an opponent's extra draw")
+    void faceDownHullbreacherDoesNotReplaceDraw() {
+        var hullbreacher = harness.addToBattlefieldAndReturn(player1, new Hullbreacher());
+        hullbreacher.setFaceDown(2, 2, java.util.Set.of(com.github.laxika.magicalvibes.model.CardType.CREATURE));
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.setHand(player2, List.of(new Peek()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertInHand(player2, "Forest");
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+    }
+
+    @Test
     @DisplayName("Does not replace the first draw during an opponent's draw step")
     void doesNotReplaceFirstDrawStepDraw() {
         harness.addToBattlefield(player1, new Hullbreacher());

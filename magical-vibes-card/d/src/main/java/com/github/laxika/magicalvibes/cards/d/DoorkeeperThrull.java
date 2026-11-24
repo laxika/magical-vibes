@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ArtifactOrCreatureEnteringDontCauseTriggersEffect;
+import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTriggersEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "13")
 @CardRegistration(set = "MKM", collectorNumber = "338")
 public class DoorkeeperThrull extends Card {
 
     public DoorkeeperThrull() {
-        addStaticEffect(new ArtifactOrCreatureEnteringDontCauseTriggersEffect());
+        addStaticEffect(CreatureEnteringDontCauseTriggersEffect.artifactsOrCreaturesEntering());
     }
 }

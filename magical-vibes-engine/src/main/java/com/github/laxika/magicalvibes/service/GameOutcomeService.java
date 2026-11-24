@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingLossReplacement;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -13,6 +15,7 @@ import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.service.outcome.LossReplacer;
@@ -36,10 +39,16 @@ public class GameOutcomeService {
     private final List<LossReplacer> lossReplacers;
     private final GameMutationCoordinator mutationCoordinator;
     private ConditionEvaluationService conditionEvaluationService;
+    private PlayerInputService playerInputService;
 
     @Autowired
     void setConditionEvaluationService(@Lazy ConditionEvaluationService conditionEvaluationService) {
         this.conditionEvaluationService = conditionEvaluationService;
+    }
+
+    @Autowired
+    void setPlayerInputService(@Lazy PlayerInputService playerInputService) {
+        this.playerInputService = playerInputService;
     }
 
     public GameOutcomeService(GameQueryService gameQueryService,
@@ -68,6 +77,10 @@ public class GameOutcomeService {
      * (they each have a different one) and own the win/draw decision that follows.
      */
     public LossOutcome resolveLoss(GameData gameData, UUID losingPlayerId, LossReason reason) {
+        return resolveLoss(gameData, losingPlayerId, reason, null);
+    }
+
+    private LossOutcome resolveLoss(GameData gameData, UUID losingPlayerId, LossReason reason, UUID chosenSourceId) {
         if (losingPlayerId == null || !gameData.playerIds.contains(losingPlayerId)) {
             return LossOutcome.PREVENTED;
         }
@@ -79,12 +92,77 @@ public class GameOutcomeService {
             return LossOutcome.PREVENTED;
         }
         for (LossReplacer replacer : lossReplacers) {
-            if (replacer.tryReplace(gameData, losingPlayerId, reason)) {
+            if (replacer.replacesBeforeLoss(gameData, losingPlayerId, reason)) {
                 return LossOutcome.REPLACED;
             }
         }
-        return LossOutcome.LOSES;
+        return replaceLoss(gameData, losingPlayerId, reason, chosenSourceId)
+                ? LossOutcome.REPLACED : LossOutcome.LOSES;
     }
+
+    /**
+     * Applies the loss replacement of {@code sourceId}, chosen by the losing player in the prompt
+     * {@link #replaceLoss} opened (CR 616.1). If that source's replacement no longer applies, the remaining ones are
+     * offered again; if none applies, the player's loss is judged again by the next state-based check.
+     */
+    public void applyChosenLossReplacement(GameData gameData, UUID losingPlayerId, UUID sourceId, LossReason reason) {
+        replaceLoss(gameData, losingPlayerId, reason, sourceId);
+    }
+
+    /**
+     * Replaces the loss with one of the loss replacements that apply (CR 614.1, 616.1): every {@link LossReplacer}'s
+     * sources are gathered; one applies unasked, and with several the losing player chooses which applies, a permanent
+     * choice answered by {@link #applyChosenLossReplacement}. {@code chosenSourceId} is a source already chosen (the
+     * answer, or a replacement resumed after its Lich's Duel Mastery questions), applied without a new choice while
+     * it still applies.
+     *
+     * @return {@code true} when the loss was replaced or waits for the player's choice
+     */
+    private boolean replaceLoss(GameData gameData, UUID losingPlayerId, LossReason reason, UUID chosenSourceId) {
+        List<LossReplacementOption> options = new ArrayList<>();
+        for (LossReplacer replacer : lossReplacers) {
+            for (Permanent source : replacer.sources(gameData, losingPlayerId, reason)) {
+                options.add(new LossReplacementOption(replacer, source));
+            }
+        }
+        if (options.isEmpty()) {
+            return false;
+        }
+        if (chosenSourceId != null) {
+            for (LossReplacementOption option : options) {
+                if (option.source().getId().equals(chosenSourceId)) {
+                    if (option.replacer().replace(gameData, losingPlayerId, option.source(), reason)) {
+                        return true;
+                    }
+                    options.remove(option);
+                    break;
+                }
+            }
+        }
+        if (gameData.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null
+                && gameData.interaction.permanentChoiceContext()
+                instanceof PermanentChoiceContext.LossReplacementChoice pending
+                && pending.playerId().equals(losingPlayerId)) {
+            return true;
+        }
+        if (options.size() > 1 && playerInputService != null) {
+            gameData.interaction.setPermanentChoiceContext(
+                    new PermanentChoiceContext.LossReplacementChoice(losingPlayerId, reason.name()));
+            playerInputService.beginPermanentChoice(gameData, losingPlayerId,
+                    options.stream().map(option -> option.source().getId()).toList(),
+                    "Choose which replacement effect applies to your loss of the game.");
+            return true;
+        }
+        for (LossReplacementOption option : options) {
+            if (option.replacer().replace(gameData, losingPlayerId, option.source(), reason)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** One loss replacement that applies: its replacer and the permanent it belongs to. */
+    private record LossReplacementOption(LossReplacer replacer, Permanent source) {}
 
     /**
      * Resolves again the game loss whose replacement waited for the questions of a Lich's Duel Mastery sacrifice
@@ -99,7 +177,8 @@ public class GameOutcomeService {
         }
         gameData.pendingLossReplacement = null;
         UUID losingPlayerId = pending.playerId();
-        if (resolveLoss(gameData, losingPlayerId, LossReason.valueOf(pending.reason())) == LossOutcome.LOSES) {
+        if (resolveLoss(gameData, losingPlayerId, LossReason.valueOf(pending.reason()), pending.sourceId())
+                == LossOutcome.LOSES) {
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(losingPlayerId) + " loses the game."));
             declareWinner(gameData, gameQueryService.getOpponentId(gameData, losingPlayerId));

@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.model.rules.ActionEvent;
 import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
@@ -118,7 +119,6 @@ import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyServic
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
-import com.github.laxika.magicalvibes.service.outcome.ExquisiteArchangelLossReplacer;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
@@ -162,7 +162,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final InputCompletionService inputCompletionService;
 
 
-    private final ExquisiteArchangelLossReplacer exquisiteArchangelLossReplacer;
+    private final GameOutcomeService gameOutcomeService;
 
     private final GameQueryService gameQueryService;
 
@@ -2136,14 +2136,10 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    /** The losing player picked which Exquisite Archangel replaces their game loss; apply it and carry on. */
-    public void handleExquisiteArchangelLossReplacement(GameData gameData, UUID permanentId,
-                                                        PermanentChoiceContext.ExquisiteArchangelLossReplacement ctx) {
-        Permanent angel = gameQueryService.findPermanentById(gameData, permanentId);
-        if (angel == null) {
-            throw new IllegalStateException("Chosen Exquisite Archangel no longer exists");
-        }
-        exquisiteArchangelLossReplacer.applyReplacement(gameData, ctx.playerId(), angel,
+    /** The losing player picked which loss replacement applies (CR 616.1); apply it and carry on. */
+    public void handleLossReplacementChoice(GameData gameData, UUID permanentId,
+                                            PermanentChoiceContext.LossReplacementChoice ctx) {
+        gameOutcomeService.applyChosenLossReplacement(gameData, ctx.playerId(), permanentId,
                 LossReason.valueOf(ctx.lossReason()));
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
