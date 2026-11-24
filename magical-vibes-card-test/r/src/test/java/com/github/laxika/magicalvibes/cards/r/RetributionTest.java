@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AnabaBodyguard;
+import com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales;
 import com.github.laxika.magicalvibes.cards.w.WillowFaerie;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Retribution.class, AnabaBodyguard.class, WillowFaerie.class})
+@CardUsed({Retribution.class, AnabaBodyguard.class, TamiyoCollectorOfTales.class, WillowFaerie.class})
 class RetributionTest extends BaseCardTest {
 
     private void castRetribution(Permanent first, Permanent second) {
@@ -195,5 +196,21 @@ class RetributionTest extends BaseCardTest {
                 List.of(bodyguard.getId(), bodyguard.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("All targets must be different");
+    }
+
+    @Test
+    @DisplayName("A player whose opponents can't cause them to sacrifice keeps the chosen creature, and the other still gets the counter")
+    void opponentCantCauseSacrificeUnderTamiyo() {
+        harness.addToBattlefieldAndReturn(player2, new TamiyoCollectorOfTales())
+                .setCounterCount(CounterType.LOYALTY, 5);
+        Permanent bodyguard = addCreatureReady(player2, new AnabaBodyguard());
+        Permanent faerie = addCreatureReady(player2, new WillowFaerie());
+
+        castRetribution(bodyguard, faerie);
+        harness.handlePermanentChosen(player2, bodyguard.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bodyguard, faerie);
+        assertThat(bodyguard.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(faerie.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 }

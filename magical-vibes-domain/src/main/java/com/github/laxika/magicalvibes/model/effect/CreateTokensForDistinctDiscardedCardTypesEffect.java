@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-/** Creates one copy of the supplied token for each distinct card type among discarded cards. */
+/**
+ * "Create a [token] for each card type among cards discarded this way": one copy of the token for each distinct card
+ * type among the cards the most recent {@code StepKind.DISCARD} step of the resolution discarded (Occult Epiphany).
+ */
 public record CreateTokensForDistinctDiscardedCardTypesEffect(CreateTokenEffect tokenTemplate)
-        implements InlineDiscardFollowUpEffect {
+        implements CardEffect {
 
     public CreateTokensForDistinctDiscardedCardTypesEffect {
         if (tokenTemplate == null) {

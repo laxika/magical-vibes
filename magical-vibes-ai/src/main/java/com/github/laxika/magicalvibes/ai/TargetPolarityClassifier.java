@@ -278,8 +278,10 @@ public class TargetPolarityClassifier {
         }
 
         // "Target creature's controller sacrifices it" (Mercy Killing, Sarkhan the Mad, Arcum Dagsson): an edict aimed at
-        // the target, which leaves the battlefield.
-        if (effect instanceof SacrificeSelfEffect sacrifice && sacrifice.subject().declaresTarget()
+        // the target, which leaves the battlefield. "That player sacrifices one of them" after a choice among the targets
+        // (Incriminate, Barrin's Spite, Retribution) is one too.
+        if (effect instanceof SacrificeSelfEffect sacrifice
+                && (sacrifice.subject().declaresTarget() || sacrifice.subject() instanceof PermanentSubject.ThisWay)
                 && sacrifice.sacrificer() instanceof PlayerSubject.ControllerOf) {
             return TargetPolarity.HARMFUL_REMOVAL;
         }

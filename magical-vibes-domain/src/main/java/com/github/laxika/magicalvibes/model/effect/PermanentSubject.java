@@ -394,14 +394,16 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
     /**
      * The permanents {@code permanents} names but those {@code excluded} names: "then exile all other Nightmare tokens
      * you control" after creating a token is {@code except(controlledBy(you(), Nightmare token), createdThisResolution())}.
-     * Neither part declares a target.
+     * Neither part declares a target, save {@link AllTargets} as the permanents: "the other" of the targets after a
+     * step that chose one of them is {@code except(allTargets(), thisWay(CHOOSE))}, the targets being declared by the
+     * spell or ability's target groups (Retribution, Barrin's Spite); the exception itself declares none.
      */
     record Except(PermanentSubject permanents, PermanentSubject excluded) implements PermanentSubject {
 
         public Except {
             Objects.requireNonNull(permanents, "permanents");
             Objects.requireNonNull(excluded, "excluded");
-            if (permanents.declaresTarget() || excluded.declaresTarget()) {
+            if (permanents.declaresTarget() && !(permanents instanceof AllTargets) || excluded.declaresTarget()) {
                 throw new IllegalArgumentException("An exception can't declare a target: " + permanents + ", "
                         + excluded);
             }

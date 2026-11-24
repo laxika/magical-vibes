@@ -47,6 +47,21 @@ class KozilekCompleatedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent with two or fewer cards in hand discards nothing")
+    void opponentAtTwoCardsDiscardsNothing() {
+        harness.setHand(player1, List.of(new KozilekCompleated()));
+        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
     @DisplayName("Attacking makes the defending player sacrifice one permanent per poison counter")
     void annihinfectSacrificesPerDefendingPlayerPoisonCounter() {
         Permanent kozilek = addCreatureReady(player1, new KozilekCompleated());

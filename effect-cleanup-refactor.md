@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11 (each in Findings; the fold queue marks its rows). Fold runs 8 to 12 run in parallel worktrees from 2026-11-24. Next: fold runs 9b and 12 (running), 10b (`opp-card`), 11b (`object-vote`). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).     |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b (each in Findings; the fold queue marks its rows). Fold runs 8 to 12 run in parallel worktrees from 2026-11-24. Next: fold runs 11b and 12 (running), 10b (`opp-card`), 8b (Desolation, Creeping Dread, Kroxa). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).      |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,871 / 3,133 (after fold run 11) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,861 / 3,123 (after fold run 9b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,221 rows over 4,408 classes (after fold run 11). Latest verdict per class: `step-9` 1,070, unique 1,167, absorbed 598, split 530, blocked-other 473, survivor 273, blocked-step-model 140, blocked-player-loop 97, dead 60. Waiting: 1,070 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,239 rows over 4,409 classes (after fold run 9b). Latest verdict per class: `step-9` 1,060, unique 1,167, absorbed 600, split 538, blocked-other 473, survivor 273, blocked-step-model 140, blocked-player-loop 97, dead 61. Waiting: 1,060 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -550,6 +550,15 @@ Delayed and global triggers:
 - `VoteResult.moreVotes(option)` / `.moreVotesOrTied(option)` / `.anyVotes(option)` in a `ConditionalEffect` for "if [option] gets
   more votes [or the vote is tied]"; `VotesFor(option)` for "for each [option] vote", with `RepeatEffect` for one event per vote
   (fold run 11).
+
+- "Choose two target creatures controlled by the same player; that player sacrifices one of them": `ChoosePermanentsEffect.exactly(1,
+  allTargets(), label).chosenBy(controllerOf(allTargets()))` + `SacrificeSelfEffect(thisWay(CHOOSE), controllerOf(thisWay(CHOOSE)))`;
+  "the other" is the verb over `except(allTargets(), thisWay(CHOOSE))` (fold run 9b).
+- `DiscardEffect.eachEvaluatedFor(amount, players)`: the amount evaluated for each discarding player ("each opponent with more than N
+  cards in hand discards the difference", fold run 9b).
+- "Look at target player's hand. You may choose a card from it. If you do, …": `ChooseCardsFromTargetHandEffect(... KEEP_IN_HAND,
+  upTo, look)` + `ConditionalEffect(HappenedThisWay(CHOOSE), …)` over `cardsThisWay(CHOOSE)` (Oildeep Gearhulk, Vendilion Clique;
+  fold run 9b).
 
 ### Blocked causes still open
 
@@ -1556,6 +1565,29 @@ unasked, CR 608.2d) plus readers: a "most votes or tied for most" permanent subj
 and per-player vote counts (Trap the Trespassers, Círdan, Mob Verdict), a "received no votes" player subject; Vault 11's secret votes
 revealed in its finish step (once, not again on the death-replacement replay). Then a per-vote choose step for Elrond and
 Expropriate. Fateful Tempest onto `VoteEffect` on main.
+
+### Step 9, fold run 9b (2026-11-24, parallel worktree)
+
+Batches `one-of-two`, `hand-choice-draw`, `draw-discard` (10 rows): 10 folded (8 split, 2 absorbed), and `InlineDiscardFollowUpEffect`
+deleted. `splits` members Desolation, Creeping Dread, Kroxa not taken (time). Ratchet in its worktree 3,891 / 3,153 → 3,881 / 3,143.
+Ledger 18 rows. CR 101.4, 608.2b–e, 701.21a, 701.27g checked. All 11 card files had their Oracle text checked.
+
+| Batch | Result |
+|---|---|
+| `one-of-two` (3) | Incriminate: `ChoosePermanentsEffect.exactly(1, allTargets(), label).chosenBy(controllerOf(allTargets()))` + `SacrificeSelfEffect(thisWay(CHOOSE), controllerOf(thisWay(CHOOSE)))`; Retribution adds `PutCounterOnTargetPermanentEffect(except(allTargets(), thisWay(CHOOSE)), -1/-1)`, Barrin's Spite `ReturnToHandEffect(except(...))`. The resolution check for `CONTROLLED_BY_FIRST_TARGET` already makes the targets illegal once they no longer share a controller. The AI keeps `HARMFUL_REMOVAL` through the classifier's `SacrificeSelfEffect` branch |
+| `hand-choice-draw` (2) | The `DISCARD` destination records no `DISCARD` step and skips the choice under Tamiyo, so it was not used: `KEEP_IN_HAND` (records `CHOOSE`) + `ConditionalEffect(HappenedThisWay(CHOOSE), …)`. Oildeep: `DiscardCardsEffect(cardsThisWay(CHOOSE))` + draw. Vendilion Clique: `RevealCardsFromHandEffect.cards(...)` + `PutCardsIntoLibraryEffect.onBottom` + draw, each for `targetPlayerDeclaredElsewhere()` |
+| `draw-discard` (5) | Spellbound Dragon: draw + discard + `BoostSelfEffect(LastDiscardedCardManaValue, 0)`. Civilized Scholar: draw + discard + `ConditionalEffect(toACard(DISCARD, creature), untap + TransformSelfEffect)`. Occult Epiphany: draw X + discard X + `CreateTokensForDistinctDiscardedCardTypesEffect` reading the `DISCARD` step. Kozilek, Compleated and Your Nightmares Are Delicious: `DiscardEffect.eachEvaluatedFor(Max(0, CardsInHand(CONTROLLER) − N), eachOpponent())`; Nightmares adds `ConditionalEffect(NotCondition(HappenedThisWay(DISCARD, 3)), DrawCardEffect(3))`. Deleted with them: `GameData.pendingTransformOnCreatureDiscard`, `pendingBoostSourceByDiscardedManaValue`, their hooks, `DiscardFollowUp.eachPlayerVariableAmountsWithThenEffect` |
+
+**Behaviour changes.** Retribution, Incriminate and Barrin's Spite respect "opponents can't cause you to sacrifice" (the old path
+skipped `canEffectCauseSacrifice`); Retribution's chosen creature then gets no counter, only "the other" does (new test). Oildeep
+Gearhulk under Tamiyo: the card isn't discarded and the player still draws, since "if you do" is the choice (new test). Civilized
+Scholar obeys CR 701.27g and transform prevention. A lone legal option is chosen unasked (CR 608.2d). Logs: the survivors' lines; the
+`KEEP_IN_HAND` prompt no longer says "to keep in hand".
+
+**For the next run.** Kroxa and Creeping Dread: build `playersThisWay(kind, CardPredicate)` (`DiscardEffect(eachPlayer())` already
+chooses in APNAP order and discards at once, CR 101.4); Creeping Dread also names only the controller's own discarded card for
+`CardSharesCardTypeWithCardsPredicate`; Desolation needs the permanent-filter form over `SACRIFICE` departures and a "tapped a land
+for mana this turn" `PlayerPredicate`. Take all three in one run.
 
 ## Prompt
 

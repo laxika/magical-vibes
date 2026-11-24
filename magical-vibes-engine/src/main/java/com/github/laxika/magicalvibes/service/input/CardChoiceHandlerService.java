@@ -15,14 +15,12 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MovedCard;
-import com.github.laxika.magicalvibes.model.PendingBoostSourceByDiscardedManaValue;
 import com.github.laxika.magicalvibes.model.PendingConnive;
 import com.github.laxika.magicalvibes.model.PendingGainLifeOnDiscardType;
 import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingReturnToHandOnDiscardType;
-import com.github.laxika.magicalvibes.model.PendingTransformOnCreatureDiscard;
 import com.github.laxika.magicalvibes.model.PendingValkiHandExileChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -50,7 +48,6 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.InlineDiscardFollowUpEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -929,12 +926,6 @@ public class CardChoiceHandlerService {
         checkPendingReturnToHandOnDiscard(gameData, card);
         checkPendingGainLifeOnDiscardType(gameData, card);
 
-        // Check if a creature discard should untap + transform the source (e.g. Civilized Scholar)
-        checkPendingTransformOnCreatureDiscard(gameData, card);
-
-        // Check if the discarded card should pump the source by its mana value (e.g. Spellbound Dragon)
-        checkPendingBoostSourceByDiscardedManaValue(gameData, card);
-
         checkPendingConniveOnDiscard(gameData, card);
 
         if (followUp.enteringPermanent() != null) {
@@ -1341,8 +1332,6 @@ public class CardChoiceHandlerService {
                         gameData, selection.playerId(), card, null, false);
             }
             checkPendingReturnToHandOnDiscard(gameData, card);
-            checkPendingTransformOnCreatureDiscard(gameData, card);
-            checkPendingBoostSourceByDiscardedManaValue(gameData, card);
             checkPendingConniveOnDiscard(gameData, card);
             discardedCounts.merge(selection.playerId(), 1, Integer::sum);
         }
@@ -1489,7 +1478,7 @@ public class CardChoiceHandlerService {
 
             // Discard follow-ups that belong to the resolving spell or ability resume that
             // resolution after the discard completes.
-            if ((thenEffect instanceof InlineDiscardFollowUpEffect || followUp.resolveThenDuringSameResolution())
+            if (followUp.resolveThenDuringSameResolution()
                     && gameData.pendingEffectResolutionEntry != null) {
                 StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
                 copyDiscardFollowUpContext(gameData, pendingEntry, discardedCard, followUp);
@@ -1894,7 +1883,7 @@ public class CardChoiceHandlerService {
             } else if (exileMode) {
                 prompt = "Choose another card to exile.";
             } else if (revealedHandChoice.keepInHand()) {
-                prompt = "Choose another card to keep in hand.";
+                prompt = "Choose another card.";
             } else if (revealedHandChoice.shuffleIntoLibraryMode()) {
                 prompt = "Choose another card to shuffle into " + targetName + "'s library.";
             } else {
@@ -2962,56 +2951,6 @@ public class CardChoiceHandlerService {
             lifeSupport.applyGainLife(gameData, pending.controllerId(), lifeGain, null,
                     pending.sourceCard(), pending.sourceEntryType());
         }
-    }
-
-    private void checkPendingTransformOnCreatureDiscard(GameData gameData, Card discardedCard) {
-        PendingTransformOnCreatureDiscard pending = gameData.pendingTransformOnCreatureDiscard;
-        if (pending == null) {
-            return;
-        }
-        gameData.pendingTransformOnCreatureDiscard = null;
-        if (discardedCard.hasType(CardType.CREATURE)) {
-            Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
-            if (source == null) {
-                return;
-            }
-            // Untap
-            if (!gameQueryService.cantBecomeUntapped(gameData, source)) {
-                tapUntapSupport.untapPermanent(gameData, source);
-                gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " untaps."));
-                log.info("Game {} - {} untaps (creature discarded)", gameData.id, source.getCard().getName());
-            }
-
-            if (!source.isTransformed()) {
-                var transform = new com.github.laxika.magicalvibes.model.effect.TransformSelfEffect();
-                StackEntry transformEntry = new StackEntry(StackEntryType.ACTIVATED_ABILITY,
-                        source.getCard(), gameQueryService.findPermanentController(gameData, source.getId()),
-                        FaceDownVisibility.publicName(gameData, source) + " transforms", List.of(transform), null, source.getId());
-                effectHandlerRegistry.getHandler(transform).resolve(gameData, transformEntry, transform);
-            }
-        }
-    }
-
-    private void checkPendingBoostSourceByDiscardedManaValue(GameData gameData, Card discardedCard) {
-        PendingBoostSourceByDiscardedManaValue pending = gameData.pendingBoostSourceByDiscardedManaValue;
-        if (pending == null) {
-            return;
-        }
-        gameData.pendingBoostSourceByDiscardedManaValue = null;
-        int boost = discardedCard.getManaValue();
-        if (boost <= 0) {
-            return;
-        }
-        Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
-        if (source == null) {
-            return;
-        }
-        gameData.addPowerToughnessBoost(source, boost, 0);
-        gameLogService.append(gameData, GameLog.builder()
-                .card(source.getCard())
-                .text(String.format(" gets +%d/+0 until end of turn.", boost))
-                .build());
-        log.info("Game {} - {} gets +{}/+0 (discarded card mana value)", gameData.id, source.getCard().getName(), boost);
     }
 
     private void checkPendingConniveOnDiscard(GameData gameData, Card discardedCard) {

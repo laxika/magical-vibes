@@ -818,11 +818,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             String sourceCardName
     ) implements PermanentChoiceContext {}
 
-    /** Retribution: {@code sacrificingPlayerId} picks which of the two targeted creatures they
-     *  sacrifice; the other one gets a -1/-1 counter from {@code sourceCard}. */
-    record SacrificeOneOfTwoThenCounterOnOther(UUID sacrificingPlayerId, Card sourceCard, UUID controllerId,
-                                               UUID firstPermanentId, UUID secondPermanentId) implements PermanentChoiceContext {}
-
     /** Trial of Agony: the targeted creatures' controller picks which one receives damage; the
      *  other one can't block this turn. */
     record DealDamageToOneOfTwoThenOtherCantBlock(UUID choosingPlayerId, Card sourceCard, UUID controllerId,
@@ -860,15 +855,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             remainingCounterTypes = List.copyOf(remainingCounterTypes);
         }
     }
-    /** Barrin's Spite: the creatures' controller picks which target to sacrifice; the other returns
-     *  to its owner's hand. */
-    record SacrificeOneOfTwoThenReturnOtherToHand(UUID sacrificingPlayerId, Card sourceCard, UUID controllerId,
-                                                  UUID firstPermanentId, UUID secondPermanentId) implements PermanentChoiceContext {}
-
-    /** Incriminate: the shared controller picks which of the two targeted creatures to sacrifice. */
-    record SacrificeOneOfTwo(UUID sacrificingPlayerId, UUID firstPermanentId, UUID secondPermanentId)
-            implements PermanentChoiceContext {}
-
     /**
      * A controller accepted an upkeep "you may sacrifice" choice and is picking which permanent;
      * the sacrifice puts {@code counterType} on {@code sourcePermanentId}.

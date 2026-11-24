@@ -561,7 +561,7 @@ class GravebaneZombieTest extends BaseCardTest {
                 .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
         harness.assertOnBattlefield(player2, "Gravebane Zombie");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gameLogContains("sacrifices Gravebane Zombie")).isFalse();
+        assertThat(gameLogContains("Gravebane Zombie is sacrificed")).isFalse();
 
         harness.handleListChoice(player2, "Kalitas, Traitor of Ghet");
 
@@ -570,7 +570,7 @@ class GravebaneZombieTest extends BaseCardTest {
                 .contains(zombie.getCard().getId());
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInHand(player2, "Grizzly Bears");
-        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("Gravebane Zombie is sacrificed"))
                 .hasSize(1);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

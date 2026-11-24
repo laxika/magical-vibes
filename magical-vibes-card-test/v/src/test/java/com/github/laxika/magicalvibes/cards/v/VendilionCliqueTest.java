@@ -83,7 +83,7 @@ class VendilionCliqueTest extends BaseCardTest {
         // Both lands remain; no draw happened.
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
-        assertThat(gameLogContains("no nonland")).isTrue();
+        assertThat(gameLogContains("no valid choices")).isTrue();
     }
 
     @Test

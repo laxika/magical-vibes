@@ -387,46 +387,6 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChoosePlayerEffectHandler choosePlayerEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChoosePermanentsEffectHandler choosePermanentsEffectHandler;
 
-    /**
-     * Retribution: the creatures' controller has picked which of the two targets to sacrifice; the
-     * other target gets a -1/-1 counter. The counter is placed even if the sacrifice triggered
-     * something, mirroring the single resolution step the card describes.
-     */
-    public void handleSacrificeOneOfTwoThenCounterOnOther(GameData gameData, UUID permanentId,
-                                                          PermanentChoiceContext.SacrificeOneOfTwoThenCounterOnOther context) {
-        Permanent chosen = gameQueryService.findPermanentById(gameData, permanentId);
-        if (chosen == null) {
-            throw new IllegalStateException("Chosen creature no longer exists");
-        }
-
-        UUID otherId = permanentId.equals(context.firstPermanentId())
-                ? context.secondPermanentId()
-                : context.firstPermanentId();
-
-        destructionSupport.sacrificeAndLog(gameData, chosen, context.sacrificingPlayerId());
-
-        Permanent other = gameQueryService.findPermanentById(gameData, otherId);
-        if (other != null) {
-            permanentCounterSupport.placeCounterOnPermanent(gameData,
-                    new StackEntry(context.sourceCard(), context.controllerId()), other,
-                    com.github.laxika.magicalvibes.model.CounterType.MINUS_ONE_MINUS_ONE, 1);
-        }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /** Incriminate: the shared controller picked which of the two targets to sacrifice. */
-    public void handleSacrificeOneOfTwo(GameData gameData, UUID permanentId,
-                                        PermanentChoiceContext.SacrificeOneOfTwo context) {
-        Permanent chosen = gameQueryService.findPermanentById(gameData, permanentId);
-        if (chosen == null) {
-            throw new IllegalStateException("Chosen creature no longer exists");
-        }
-
-        destructionSupport.sacrificeAndLog(gameData, chosen, context.sacrificingPlayerId());
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
     /** Cannibalize: the spell's controller chooses which target to exile; the other gets two +1/+1 counters. */
     public void handleCannibalizeChoice(GameData gameData, UUID permanentId,
                                         PermanentChoiceContext.CannibalizeChoice context) {
@@ -446,34 +406,6 @@ public class PermanentChoiceBattlefieldHandlerService {
             permanentCounterSupport.placeCounterOnPermanent(gameData,
                     new StackEntry(context.sourceCard(), context.controllerId()), other,
                     com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE, 2);
-        }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /**
-     * Barrin's Spite: the creatures' controller has picked which target to sacrifice; the other
-     * target returns to its owner's hand.
-     */
-    public void handleSacrificeOneOfTwoThenReturnOtherToHand(GameData gameData, UUID permanentId,
-                                                             PermanentChoiceContext.SacrificeOneOfTwoThenReturnOtherToHand context) {
-        Permanent chosen = gameQueryService.findPermanentById(gameData, permanentId);
-        if (chosen == null) {
-            throw new IllegalStateException("Chosen creature no longer exists");
-        }
-
-        UUID otherId = permanentId.equals(context.firstPermanentId())
-                ? context.secondPermanentId()
-                : context.firstPermanentId();
-
-        destructionSupport.sacrificeAndLog(gameData, chosen, context.sacrificingPlayerId());
-
-        Permanent other = gameQueryService.findPermanentById(gameData, otherId);
-        if (other != null && permanentRemovalService.removePermanentToHand(gameData, other)) {
-            gameLogService.append(gameData, GameLog.cardThen(other.getCard(), " is returned to its owner's hand."));
-            log.info("Game {} - {} returned to owner's hand by {}", gameData.id,
-                    other.getCard().getName(), context.sourceCard().getName());
-            permanentRemovalService.removeOrphanedAuras(gameData);
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

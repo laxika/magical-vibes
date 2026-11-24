@@ -15,7 +15,9 @@ import java.util.Objects;
  * makes the one choice, and this effect declares the player target the chooser names. "Choose three target permanents.
  * Destroy one of them at random" is {@link #atRandom} among {@code Subjects.allTargets()}: the targets are declared by
  * the spell or ability (its {@code target(...)} groups), this effect declares none, and the pick is among those still
- * legal as it resolves (CR 608.2b).
+ * legal as it resolves (CR 608.2b). "Choose two target creatures controlled by the same player. That player sacrifices
+ * one of them" is {@link #exactly} one among {@code Subjects.allTargets()}, {@link #chosenBy} their controller
+ * ({@code controllerOf(allTargets())}): with one target left legal, it is chosen unasked.
  *
  * <p>A CHOOSE step that pauses at its end on the choice: {@code Subjects.thisWay(StepKind.CHOOSE)} is what was chosen,
  * for the steps after it. A source that chose one permanent also keeps it as its chosen permanent ("when the chosen
@@ -54,7 +56,7 @@ public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount 
         Objects.requireNonNull(candidates, "candidates");
         Objects.requireNonNull(minimum, "minimum");
         Objects.requireNonNull(label, "label");
-        if (candidates.declaresTarget() && !(random && candidates instanceof PermanentSubject.AllTargets)) {
+        if (candidates.declaresTarget() && !(candidates instanceof PermanentSubject.AllTargets)) {
             throw new IllegalArgumentException("A permanent chosen as the effect resolves is no target: " + candidates);
         }
         if (different != null && !minimum.equals(new Fixed(0))) {

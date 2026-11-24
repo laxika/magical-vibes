@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class YourNightmaresAreDeliciousTest extends BaseCardTest {
 
     @Test
+    @DisplayName("An opponent discards down to five, and fewer than three discards lets you draw three")
     void drawsThreeWhenFewerThanThreeCardsAreDiscarded() {
         List<Card> opponentHand = List.of(
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
@@ -41,6 +43,7 @@ class YourNightmaresAreDeliciousTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Three or more cards discarded this way means you draw nothing")
     void doesNotDrawWhenAtLeastThreeCardsAreDiscarded() {
         List<Card> opponentHand = List.of(
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
@@ -61,6 +64,7 @@ class YourNightmaresAreDeliciousTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("No opponent above five cards discards nothing, and you draw three")
     void drawsThreeWhenNoOpponentHasMoreThanFiveCards() {
         List<Card> drawn = List.of(new Forest(), new Forest(), new Forest());
         harness.setHand(player1, List.of());

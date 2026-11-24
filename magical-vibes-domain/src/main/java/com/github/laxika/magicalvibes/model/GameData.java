@@ -1431,8 +1431,6 @@ public class GameData {
     public boolean discardCausedByOpponent;
     public PendingReturnToHandOnDiscardType pendingReturnToHandOnDiscardType;
     public PendingGainLifeOnDiscardType pendingGainLifeOnDiscardType;
-    public PendingTransformOnCreatureDiscard pendingTransformOnCreatureDiscard;
-    public PendingBoostSourceByDiscardedManaValue pendingBoostSourceByDiscardedManaValue;
     public PendingConnive pendingConnive;
     public final Deque<UUID> extraTurns = new ArrayDeque<>();
     /**
@@ -11252,8 +11250,6 @@ public class GameData {
         // --- Pending discard / search follow-ups (immutable, so the reference is safe to share) ---
         copy.pendingReturnToHandOnDiscardType = this.pendingReturnToHandOnDiscardType;
         copy.pendingGainLifeOnDiscardType = this.pendingGainLifeOnDiscardType;
-        copy.pendingTransformOnCreatureDiscard = this.pendingTransformOnCreatureDiscard;
-        copy.pendingBoostSourceByDiscardedManaValue = this.pendingBoostSourceByDiscardedManaValue;
         copy.pendingConnive = this.pendingConnive;
         copy.pendingSearchContext = this.pendingSearchContext;
 

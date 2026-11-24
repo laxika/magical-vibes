@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.Objects;
@@ -14,8 +15,9 @@ import java.util.Objects;
  * the Aura enchanted as the ability triggered) or {@link Subjects#target()} / {@code target(group)}
  * ("target creature you control deals damage ... Then sacrifice it"; the only subject that declares a target),
  * {@link Subjects#triggeringOrSource()} ("sacrifice it" after "whenever this creature or equipped creature deals
- * combat damage", Ogre-Head Helm) or {@link Subjects#granter()} ("sacrifice Spare Dagger" in an ability the Equipment
- * grants).
+ * combat damage", Ogre-Head Helm), {@link Subjects#granter()} ("sacrifice Spare Dagger" in an ability the Equipment
+ * grants) or {@code thisWay(StepKind.CHOOSE)} ("that player sacrifices one of them of their choice" after a
+ * {@link ChoosePermanentsEffect}, sacrificed by {@code controllerOf(thisWay(CHOOSE))}: Incriminate, Barrin's Spite).
  *
  * <p>"Sacrifice it. If you do, ..." is this effect followed by a {@code ConditionalEffect} of
  * {@code HappenedThisWay.sacrificed()} (in a {@link SequenceEffect} where the steps must stay one effect); "when you
@@ -47,9 +49,10 @@ public record SacrificeSelfEffect(PermanentSubject subject,
         if (!(subject instanceof PermanentSubject.Source || subject instanceof PermanentSubject.Triggering
                 || subject instanceof PermanentSubject.Attached || subject instanceof PermanentSubject.AttachedAtTrigger
                 || subject instanceof PermanentSubject.Target || subject instanceof PermanentSubject.TriggeringOrSource
-                || subject instanceof PermanentSubject.Granter)) {
+                || subject instanceof PermanentSubject.Granter
+                || subject instanceof PermanentSubject.ThisWay thisWay && thisWay.kind() == StepKind.CHOOSE)) {
             throw new IllegalArgumentException("Sacrifices the source, the triggering (or else the source), the "
-                    + "attached (now or at trigger), the granting or the target permanent: " + subject);
+                    + "attached (now or at trigger), the granting, the chosen or the target permanent: " + subject);
         }
         if (targetFilter != null && !(subject instanceof PermanentSubject.Target)) {
             throw new IllegalArgumentException("A target filter needs a target subject: " + subject);

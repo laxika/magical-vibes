@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OildeepGearhulk.class, GrizzlyBears.class, Forest.class, Island.class})
+@CardUsed({OildeepGearhulk.class, GrizzlyBears.class, Forest.class, Island.class, TamiyoCollectorOfTales.class})
 class OildeepGearhulkTest extends BaseCardTest {
 
     @Test
@@ -119,6 +121,24 @@ class OildeepGearhulkTest extends BaseCardTest {
                 .extracting(Card::getName)
                 .containsExactly("Island");
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A player whose opponents can't cause them to discard keeps the chosen card and still draws")
+    void opponentCantCauseDiscardUnderTamiyoStillDraws() {
+        harness.addToBattlefieldAndReturn(player2, new TamiyoCollectorOfTales())
+                .setCounterCount(CounterType.LOYALTY, 5);
+        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setLibrary(player2, List.of(new Island()));
+        resolveOildeepGearhulkTargeting(player2.getId());
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Grizzly Bears", "Island");
     }
 
     private void resolveOildeepGearhulkTargeting(UUID targetPlayerId) {

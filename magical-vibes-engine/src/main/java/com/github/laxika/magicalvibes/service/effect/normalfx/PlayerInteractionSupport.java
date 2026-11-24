@@ -799,8 +799,9 @@ public class PlayerInteractionSupport {
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         String casterName = gameData.playerIdToName.get(casterId);
-        String actionVerb = keepInHand ? "keep in hand" : exileMode ? "exile"
-                : shuffleIntoLibraryMode ? "shuffle into their library" : "discard";
+        // A card chosen to stay in the hand is only chosen: what happens to it is the steps after the choice.
+        String action = keepInHand ? "." : " to " + (exileMode ? "exile"
+                : shuffleIntoLibraryMode ? "shuffle into their library" : "discard") + ".";
 
         boolean alreadyLookedAtHand = !revealHand && isInsideMayThatLooksAtHandFirst(entry);
 
@@ -876,13 +877,11 @@ public class PlayerInteractionSupport {
                     .reduce((a, b) -> a + " or " + b)
                     .orElse("card");
             choicePrompt = (choiceOptional ? "You may choose a " : "Choose a ") + typeNames.toLowerCase()
-                    + " card to " + actionVerb + ".";
+                    + " card" + action;
         } else if (shuffleIntoLibraryMode || !excludedTypes.contains(CardType.LAND)) {
-            choicePrompt = (choiceOptional ? "You may choose a card to " : "Choose a card to ")
-                    + actionVerb + ".";
+            choicePrompt = (choiceOptional ? "You may choose a card" : "Choose a card") + action;
         } else {
-            choicePrompt = (choiceOptional ? "You may choose a nonland card to " : "Choose a nonland card to ")
-                    + actionVerb + ".";
+            choicePrompt = (choiceOptional ? "You may choose a nonland card" : "Choose a nonland card") + action;
         }
         // sourcePermanentId tracks exile-until-source-leaves effects or an imprint.
         PendingInteraction.RevealedHandChoice interaction = new PendingInteraction.RevealedHandChoice(
@@ -894,8 +893,8 @@ public class PlayerInteractionSupport {
                 keepInHand);
         interactionHandlerRegistry.begin(gameData, interaction);
 
-        log.info("Game {} - {} choosing {} card(s) from {}'s hand to {}",
-                gameData.id, casterName, cardsToChoose, targetName, actionVerb);
+        log.info("Game {} - {} choosing {} card(s) from {}'s hand{}",
+                gameData.id, casterName, cardsToChoose, targetName, action);
     
     }
 
@@ -923,88 +922,6 @@ public class PlayerInteractionSupport {
                 return;
             }
         }
-    }
-
-    /**
-     * Vendilion Clique: the caster looks at the target player's hand, then may choose a nonland
-     * card. The choice is optional; the chosen card is revealed, put on the bottom of that
-     * player's library, and they draw a card ({@code bottomThenDrawMode}). Handled by
-     * {@link com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService#handleRevealedHandCardChosen}.
-     */
-    public void resolveLookAtHandChooseNonlandToBottom(GameData gameData, StackEntry entry) {
-
-        UUID targetPlayerId = entry.getTargetId();
-        UUID casterId = entry.getControllerId();
-        List<Card> hand = gameData.playerHands.get(targetPlayerId);
-        String targetName = gameData.playerIdToName.get(targetPlayerId);
-        String casterName = gameData.playerIdToName.get(casterId);
-
-        if (hand == null || hand.isEmpty()) {
-            String logEntry = casterName + " looks at " + targetName + "'s hand. It is empty.";
-            gameLogService.append(gameData, GameLog.text(logEntry));
-            log.info("Game {} - {} looks at {}'s empty hand", gameData.id, casterName, targetName);
-            return;
-        }
-
-        gameLogService.append(gameData, GameLog.text(casterName + " looks at " + targetName + "'s hand."));
-
-        List<Integer> validIndices = new ArrayList<>();
-        for (int i = 0; i < hand.size(); i++) {
-            if (!hand.get(i).hasType(CardType.LAND)) {
-                validIndices.add(i);
-            }
-        }
-
-        if (validIndices.isEmpty()) {
-            String noValidEntry = casterName + " chooses no card (" + targetName + " has no nonland cards).";
-            gameLogService.append(gameData, GameLog.text(noValidEntry));
-            log.info("Game {} - {}'s hand has no nonland cards for {}", gameData.id, targetName, casterName);
-            return;
-        }
-
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
-                casterId, targetPlayerId, validIndices, 1, false, false, List.of(), null,
-                "You may choose a nonland card to put on the bottom of " + targetName + "'s library.",
-                true, true));
-
-        log.info("Game {} - {} may choose a nonland card from {}'s hand (bottom + draw)",
-                gameData.id, casterName, targetName);
-    }
-
-    /**
-     * Oildeep Gearhulk: the caster looks at the target player's hand, then may choose a card for
-     * that player to discard and draw a card.
-     */
-    public void resolveLookAtHandChooseCardToDiscardAndDraw(GameData gameData, StackEntry entry) {
-
-        UUID targetPlayerId = entry.getTargetId();
-        UUID casterId = entry.getControllerId();
-        List<Card> hand = gameData.playerHands.get(targetPlayerId);
-        String targetName = gameData.playerIdToName.get(targetPlayerId);
-        String casterName = gameData.playerIdToName.get(casterId);
-
-        if (hand == null || hand.isEmpty()) {
-            String logEntry = casterName + " looks at " + targetName + "'s hand. It is empty.";
-            gameLogService.append(gameData, GameLog.text(logEntry));
-            log.info("Game {} - {} looks at {}'s empty hand", gameData.id, casterName, targetName);
-            return;
-        }
-
-        cardRevealService.lookAtHand(gameData, casterId, targetPlayerId);
-        gameData.discardCausedByOpponent = !casterId.equals(targetPlayerId);
-
-        List<Integer> validIndices = new ArrayList<>();
-        for (int i = 0; i < hand.size(); i++) {
-            validIndices.add(i);
-        }
-
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
-                casterId, targetPlayerId, validIndices, 1, true, false, List.of(), null,
-                "You may choose a card to discard. If you do, that player draws a card.",
-                false, true, false, 0, null, false, false, true));
-
-        log.info("Game {} - {} may choose a card from {}'s hand to discard and draw",
-                gameData.id, casterName, targetName);
     }
 
     /**

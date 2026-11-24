@@ -33,11 +33,23 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *                                matching it may be chosen, and a player with fewer of them discards those they
  *                                have (CR 609.3); {@code null} for any card. Only a chosen discard by players the
  *                                effect names without targeting them takes one
+ * @param amountPerPlayer         the amount is evaluated once for each discarding player, player-relative scopes
+ *                                ({@code CountScope.CONTROLLER}) reading that player ({@link #eachEvaluatedFor}:
+ *                                "each opponent with more than five cards in hand discards cards equal to the
+ *                                difference"); otherwise once, for the effect's controller
  */
 public record DiscardEffect(DynamicAmount amount, PlayerSubject player, boolean random,
                             CardType stopAfterDiscardingType, boolean onlyCardsDrawnThisResolution,
-                            CardPredicate stopAfterDiscardingPredicate, CardPredicate filter)
+                            CardPredicate stopAfterDiscardingPredicate, CardPredicate filter,
+                            boolean amountPerPlayer)
         implements CardEffect {
+
+    public DiscardEffect(DynamicAmount amount, PlayerSubject player, boolean random,
+                         CardType stopAfterDiscardingType, boolean onlyCardsDrawnThisResolution,
+                         CardPredicate stopAfterDiscardingPredicate, CardPredicate filter) {
+        this(amount, player, random, stopAfterDiscardingType, onlyCardsDrawnThisResolution,
+                stopAfterDiscardingPredicate, filter, false);
+    }
 
     public DiscardEffect(DynamicAmount amount, PlayerSubject player, boolean random,
                          CardType stopAfterDiscardingType, boolean onlyCardsDrawnThisResolution,
@@ -93,12 +105,26 @@ public record DiscardEffect(DynamicAmount amount, PlayerSubject player, boolean 
             throw new IllegalArgumentException(
                     "A card filter is for a plain chosen discard by a player named without targeting: " + player);
         }
+        if (amountPerPlayer && player.declaresTarget()) {
+            throw new IllegalArgumentException("An amount per player is for players named without targeting: "
+                    + player);
+        }
     }
 
     /** "Discard [amount] [land | nonland | creature] card(s)": a chosen discard of cards matching {@code filter}. */
     public static DiscardEffect matching(int amount, PlayerSubject player, CardPredicate filter) {
         return new DiscardEffect(new Fixed(amount), player, false, null, false, null,
                 Objects.requireNonNull(filter, "filter"));
+    }
+
+    /**
+     * "Each opponent with more than N cards in hand discards cards equal to the difference": a chosen discard by each
+     * of {@code players}, {@code amount} evaluated for that player ({@code Max(Fixed(0), Sum(CardsInHand(CONTROLLER),
+     * Fixed(-N)))}); a player whose amount is 0 or less discards nothing. The players choose in APNAP order, then
+     * discard at once (CR 101.4).
+     */
+    public static DiscardEffect eachEvaluatedFor(DynamicAmount amount, PlayerSubject players) {
+        return new DiscardEffect(amount, players, false, null, false, null, null, true);
     }
 
     public static DiscardEffect cardsDrawnThisResolution(int amount, PlayerSubject player) {

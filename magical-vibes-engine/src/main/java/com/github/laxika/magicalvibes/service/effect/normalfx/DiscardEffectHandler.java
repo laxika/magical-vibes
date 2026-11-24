@@ -32,7 +32,8 @@ import org.springframework.stereotype.Component;
  * subject naming several players) make every player choose in APNAP order and then discard the chosen cards at once
  * (CR 101.4), while random discards run inline in APNAP order. The {@code discardCausedByOpponent} flag, read by
  * discard-punisher triggers (e.g. Raider's Wake), is {@code true} for each discarding player other than the
- * controller. A card {@code filter} limits the cards each player may choose to those matching it.
+ * controller. A card {@code filter} limits the cards each player may choose to those matching it. An amount evaluated
+ * per player ({@link DiscardEffect#amountPerPlayer()}) is read for each player as their choice comes.
  */
 @Component
 @RequiredArgsConstructor
@@ -78,8 +79,8 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }
-        int amount = amountEvaluationService.evaluate(gameData, e.amount(),
-                AmountContext.forStackEntry(entry, source));
+        AmountContext context = AmountContext.forStackEntry(entry, source);
+        int amount = amountEvaluationService.evaluate(gameData, e.amount(), context);
 
         PlayerSubject subject = e.player();
         List<UUID> players = subjectResolutionService.players(gameData, entry, e, subject);
@@ -87,13 +88,22 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
             if (players.size() > 1) {
                 resolveTargetPlayers(gameData, entry, e, amount, players);
             } else if (!players.isEmpty()) {
-                resolveSinglePlayer(gameData, entry, e, amount, players.getFirst());
+                resolveSinglePlayer(gameData, entry, e,
+                        amountFor(gameData, e, context, amount, players.getFirst()), players.getFirst());
             }
         } else if (subject instanceof PlayerSubject.Each || players.size() > 1) {
-            resolveEachPlayer(gameData, entry, e, amount, players);
+            resolveEachPlayer(gameData, entry, e, context, amount, players);
         } else if (!players.isEmpty()) {
-            resolveSinglePlayer(gameData, entry, e, amount, players.getFirst());
+            resolveSinglePlayer(gameData, entry, e,
+                    amountFor(gameData, e, context, amount, players.getFirst()), players.getFirst());
         }
+    }
+
+    /** How many cards {@code playerId} discards: the one amount, or the amount evaluated for that player. */
+    private int amountFor(GameData gameData, DiscardEffect e, AmountContext context, int amount, UUID playerId) {
+        return e.amountPerPlayer()
+                ? amountEvaluationService.evaluate(gameData, e.amount(), context.withControllerId(playerId))
+                : amount;
     }
 
     /** Several target players choose and discard one after another, in APNAP order. */
@@ -150,15 +160,16 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
      * APNAP order first and then discarded together (CR 101.4). The handler is rerun after each choice, so the players
      * are fixed on the first run.
      */
-    private void resolveEachPlayer(GameData gameData, StackEntry entry, DiscardEffect e, int amount,
-                                   List<UUID> players) {
+    private void resolveEachPlayer(GameData gameData, StackEntry entry, DiscardEffect e, AmountContext context,
+                                   int amount, List<UUID> players) {
         UUID controllerId = entry.getControllerId();
 
         if (e.random()) {
             String sourceName = FaceDownVisibility.sourceName(gameData, entry);
             for (UUID playerId : players) {
                 gameData.discardCausedByOpponent = !playerId.equals(controllerId);
-                playerInteractionSupport.resolveRandomDiscardCards(gameData, playerId, sourceName, amount);
+                playerInteractionSupport.resolveRandomDiscardCards(gameData, playerId, sourceName,
+                        amountFor(gameData, e, context, amount, playerId));
             }
             return;
         }
@@ -171,6 +182,11 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
         }
         while (!state.remaining.isEmpty()) {
             UUID playerId = state.remaining.removeFirst();
+            // Each player's amount is read as their choice comes; no card leaves a hand before the last choice.
+            int playerAmount = amountFor(gameData, e, context, amount, playerId);
+            if (e.amountPerPlayer() && playerAmount <= 0) {
+                continue;
+            }
             List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
             List<Integer> choosable = e.filter() == null
                     ? java.util.stream.IntStream.range(0, hand.size()).boxed().toList()
@@ -180,7 +196,7 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
                 continue;
             }
             if (!playerId.equals(controllerId) && gameQueryService.isDiscardPrevented(gameData, playerId)) continue;
-            int count = Math.min(amount, choosable.size());
+            int count = Math.min(playerAmount, choosable.size());
             if (count <= 0) continue;
             state.currentPlayerId = playerId;
             gameData.rerunCurrentEffectAfterInteraction = true;

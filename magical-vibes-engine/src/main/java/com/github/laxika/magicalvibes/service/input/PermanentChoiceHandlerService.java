@@ -434,9 +434,6 @@ public class PermanentChoiceHandlerService {
                 || context instanceof PermanentChoiceContext.SacrificeCreatureCreateTokensIfSubtype
                 || context instanceof PermanentChoiceContext.OpponentChoosesPermanentToSacrifice
                 || context instanceof PermanentChoiceContext.EachTargetPlayerLosesLifeAndSacrificesCreature
-                || context instanceof PermanentChoiceContext.SacrificeOneOfTwo
-                || context instanceof PermanentChoiceContext.SacrificeOneOfTwoThenCounterOnOther
-                || context instanceof PermanentChoiceContext.SacrificeOneOfTwoThenReturnOtherToHand
                 || context instanceof PermanentChoiceContext.SacrificePermanentAndReturnTargetCards
                 || context instanceof PermanentChoiceContext.SacrificeCreatureCreateSizedTokenEqualToPower
                 || context instanceof PermanentChoiceContext.SacrificeArtifactForDividedDamage
@@ -527,12 +524,6 @@ public class PermanentChoiceHandlerService {
             case PermanentChoiceContext.EachTargetPlayerLosesLifeAndSacrificesCreature loseLifeAndSacrifice ->
                     battlefieldHandler.handleEachTargetPlayerLosesLifeAndSacrificesCreature(
                             gameData, permanentId, loseLifeAndSacrifice);
-            case PermanentChoiceContext.SacrificeOneOfTwo sacrificeOneOfTwo ->
-                    battlefieldHandler.handleSacrificeOneOfTwo(gameData, permanentId, sacrificeOneOfTwo);
-            case PermanentChoiceContext.SacrificeOneOfTwoThenCounterOnOther sacrificeOneOfTwo ->
-                    battlefieldHandler.handleSacrificeOneOfTwoThenCounterOnOther(gameData, permanentId, sacrificeOneOfTwo);
-            case PermanentChoiceContext.SacrificeOneOfTwoThenReturnOtherToHand sacrificeOneOfTwo ->
-                    battlefieldHandler.handleSacrificeOneOfTwoThenReturnOtherToHand(gameData, permanentId, sacrificeOneOfTwo);
             case PermanentChoiceContext.SacrificePermanentAndReturnTargetCards spar ->
                     battlefieldHandler.handleSacrificePermanentAndReturnTargetCards(gameData, permanentId, spar);
             case PermanentChoiceContext.SacrificeCreatureCreateSizedTokenEqualToPower scsp ->

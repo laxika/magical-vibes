@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -16,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class OccultEpiphanyTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Draws X, discards X, and creates a Spirit for each card type among the discarded cards")
     void createsOneSpiritForEachDistinctDiscardedCardType() {
         harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));
         harness.setHand(player1, List.of(new OccultEpiphany()));
@@ -36,6 +38,7 @@ class OccultEpiphanyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Discarded cards sharing a card type create only one Spirit")
     void repeatedDiscardedCardTypesCreateOnlyOneSpirit() {
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.setHand(player1, List.of(new OccultEpiphany()));
