@@ -66,7 +66,6 @@ public final class AiInteractionStrategies {
         register(new ExiledCreatureCopyChoiceAiStrategy());
         register(new KohExiledCreatureChoiceAiStrategy());
         register(new LudevicCopyChoiceAiStrategy());
-        register(new TargetHandSpellCopyChoiceAiStrategy());
         register(new WordOfCommandCardChoiceAiStrategy());
         register(new TargetedHandBattlefieldChoiceAiStrategy());
         register(new ExiledCardMayPlayChoiceAiStrategy());

@@ -21,12 +21,18 @@ import java.util.Objects;
  * <p>{@link #untilTotalManaValue} is the other stop: "until that player has exiled cards with total mana value 20 or
  * greater" (Tasha's Hideous Laughter, Dream Harvest), each player's own total.
  *
+ * <p>{@link #withSource()} is "exiled with [this]" (CR 607.2a): every exiled card is exiled with the source
+ * permanent, so a linked ability reads them as {@code Subjects.exiledWithSource()} (Krang &amp; Shredder's Disappear
+ * cast).
+ *
  * @param library        whose library: {@code you()}, {@code eachOpponent()}, or {@code targetPlayer()}, which
  *                       declares the (harmful) player target
  * @param until          the card that stops the exiling; {@code null} for a total mana value
  * @param totalManaValue the total mana value that stops it, or 0 for a card
+ * @param linkedToSource whether the cards are exiled with the source permanent
  */
-public record ExileCardsFromTopUntilEffect(PlayerSubject library, CardPredicate until, int totalManaValue)
+public record ExileCardsFromTopUntilEffect(PlayerSubject library, CardPredicate until, int totalManaValue,
+                                           boolean linkedToSource)
         implements CardEffect {
 
     /** A nonland card. */
@@ -40,12 +46,17 @@ public record ExileCardsFromTopUntilEffect(PlayerSubject library, CardPredicate 
     }
 
     public ExileCardsFromTopUntilEffect(PlayerSubject library, CardPredicate until) {
-        this(library, Objects.requireNonNull(until, "until"), 0);
+        this(library, Objects.requireNonNull(until, "until"), 0, false);
+    }
+
+    /** This exile, every card exiled with the source permanent (CR 607.2a). */
+    public ExileCardsFromTopUntilEffect withSource() {
+        return new ExileCardsFromTopUntilEffect(library, until, totalManaValue, true);
     }
 
     /** "[Player] exiles cards from the top of their library until they have exiled cards with total mana value N or greater." */
     public static ExileCardsFromTopUntilEffect untilTotalManaValue(PlayerSubject library, int total) {
-        return new ExileCardsFromTopUntilEffect(library, null, total);
+        return new ExileCardsFromTopUntilEffect(library, null, total, false);
     }
 
     /** "[Player] exiles cards from the top of their library until they exile a nonland card." */

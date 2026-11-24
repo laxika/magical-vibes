@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.PermanentLeftBattlefieldUnderYourControlThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandOfEachOpponentWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsFromTopUntilEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastCardExiledWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -16,8 +17,10 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class KrangShredder extends Card {
 
     public KrangShredder() {
-        ExileTopUntilNonlandOfEachOpponentWithSourceEffect exileEffect =
-                new ExileTopUntilNonlandOfEachOpponentWithSourceEffect();
+        // Each opponent exiles cards from the top of their library until they exile a nonland card, exiled with this
+        // creature for its Disappear cast.
+        ExileCardsFromTopUntilEffect exileEffect =
+                ExileCardsFromTopUntilEffect.untilNonland(Subjects.eachOpponent()).withSource();
         addTrigger(Triggers.enters(ObjectRelation.THIS), exileEffect);
         addTrigger(Triggers.attacks(), exileEffect);
         addTrigger(Triggers.endStep(ActivePlayer.YOU),

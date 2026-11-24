@@ -31,7 +31,7 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  * Resolves {@link ExileCardAtRandomEffect}: each named player, in APNAP order, exiles one matching card of their
  * graveyard or library picked at random (the library is not shuffled). A graveyard card is recorded as it last existed
- * there (CR 608.2h). Records the {@link StepKind#EXILE} step (the cards and their owners, or nothing). It never prompts.
+ * there (CR 608.2h); {@code linkedToSource} exiles them with the source permanent (CR 607.2a). Records the {@link StepKind#EXILE} step (the cards and their owners, or nothing). It never prompts.
  */
 @Slf4j
 @Component
@@ -83,7 +83,11 @@ public class ExileCardAtRandomEffectHandler implements NormalEffectHandlerBean {
                 } else if (!zone.removeIf(card -> card.getId().equals(exiled.getId()))) {
                     continue;
                 }
-                exileService.exileCard(gameData, playerId, exiled);
+                if (random.linkedToSource() && entry.getSourcePermanentId() != null) {
+                    exileService.exileCard(gameData, playerId, exiled, entry.getSourcePermanentId());
+                } else {
+                    exileService.exileCard(gameData, playerId, exiled);
+                }
                 entry.addToStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(exiled.getId()), List.of(playerId),
                                 // "It": the card in this exile stay (CR 400.7).
                                 List.of(gameData.boundToStay(

@@ -115,8 +115,6 @@ public class InteractionPromptProjectionRegistry {
                 this::projectExiledCreatureCopyChoice);
         register(PendingInteraction.EspersToMagiciteCreatureChoice.class,
                 this::projectEspersToMagiciteCreatureChoice);
-        register(PendingInteraction.TargetHandSpellCopyChoice.class,
-                this::projectTargetHandSpellCopyChoice);
         register(PendingInteraction.ExiledCardMayPlayChoice.class, this::projectExiledCardMayPlayChoice);
         register(PendingInteraction.HeistCardChoice.class, this::projectHeistCardChoice);
         register(PendingInteraction.LudevicCopyChoice.class, this::projectLudevicCopyChoice);
@@ -598,15 +596,6 @@ public class InteractionPromptProjectionRegistry {
                 exiledCardViews(gameData, interaction.decidingPlayerId(), interaction.validCardIds()),
                 1,
                 "Choose up to one creature card exiled this way to copy.");
-    }
-
-    private InteractionPromptMessage projectTargetHandSpellCopyChoice(
-            GameData gameData, PendingInteraction.TargetHandSpellCopyChoice interaction) {
-        return InteractionPromptMessage.multiCardPick(
-                new ArrayList<>(interaction.validCardIds()),
-                cardViews(interaction.cards()),
-                1,
-                "You may choose an instant or sorcery card to copy.");
     }
 
     private InteractionPromptMessage projectExiledCardMayPlayChoice(

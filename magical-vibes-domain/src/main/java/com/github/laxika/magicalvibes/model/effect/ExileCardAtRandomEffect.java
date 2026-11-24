@@ -24,9 +24,15 @@ import java.util.Objects;
  * @param zone   where the card is exiled from: {@link Zone#GRAVEYARD} or {@link Zone#LIBRARY}
  * @param player whose zone: {@code you()}, or a player read without a target ({@code triggeringPlayer()} for "that
  *               player's library")
- * @param filter which cards may be picked; {@code null} for any card
+ * <p>{@code linkedToSource} ({@link #withSource()}) is "exile ... with this enchantment" (CR 607.2a): the cards are
+ * exiled with the source permanent, so a linked ability reads them as {@code Subjects.exiledWithSource()} (Arcane
+ * Bombardment).
+ *
+ * @param filter     which cards may be picked; {@code null} for any card
+ * @param linkedToSource whether the cards are exiled with the source permanent
  */
-public record ExileCardAtRandomEffect(Zone zone, PlayerSubject player, CardPredicate filter, int count)
+public record ExileCardAtRandomEffect(Zone zone, PlayerSubject player, CardPredicate filter, int count,
+                                      boolean linkedToSource)
         implements CardEffect {
 
     public ExileCardAtRandomEffect {
@@ -46,12 +52,17 @@ public record ExileCardAtRandomEffect(Zone zone, PlayerSubject player, CardPredi
 
     /** One card. */
     public ExileCardAtRandomEffect(Zone zone, PlayerSubject player, CardPredicate filter) {
-        this(zone, player, filter, 1);
+        this(zone, player, filter, 1, false);
     }
 
     /** This exile of {@code cards} cards at random. */
     public ExileCardAtRandomEffect cards(int cards) {
-        return new ExileCardAtRandomEffect(zone, player, filter, cards);
+        return new ExileCardAtRandomEffect(zone, player, filter, cards, linkedToSource);
+    }
+
+    /** This exile, the cards exiled with the source permanent ("the cards exiled with this", CR 607.2a). */
+    public ExileCardAtRandomEffect withSource() {
+        return new ExileCardAtRandomEffect(zone, player, filter, count, true);
     }
 
     /** "Exile a [filter] card at random from [player]'s graveyard"; {@code filter} {@code null} for any card. */

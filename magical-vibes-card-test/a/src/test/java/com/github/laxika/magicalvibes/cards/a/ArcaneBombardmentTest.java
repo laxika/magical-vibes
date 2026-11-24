@@ -34,14 +34,42 @@ class ArcaneBombardmentTest extends BaseCardTest {
 
         assertThat(gd.getCardsExiledByPermanent(sourceId).stream().map(Card::getId))
                 .containsExactly(graveyardSpell.getId());
-        PendingInteraction.EyeOfTheStormCastChoice choice =
-                (PendingInteraction.EyeOfTheStormCastChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validCopyIds()).hasSize(1);
+        PendingInteraction.ImprovisationCapstoneCastChoice choice =
+                (PendingInteraction.ImprovisationCapstoneCastChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validCardIds()).hasSize(1);
 
-        harness.handleMultipleCardsChosen(player1, choice.validCopyIds());
+        harness.handleMultipleCardsChosen(player1, choice.validCardIds());
 
         assertThat(gd.stack).anyMatch(entry -> entry.isCopy()
                 && entry.getCard().getName().equals("Divination"));
+    }
+
+    @Test
+    @DisplayName("Offers every copy in one choice, and the copies not chosen cease to exist")
+    void unchosenCopiesCeaseToExist() {
+        UUID sourceId = addBombardment();
+        Divination first = new Divination();
+        Divination second = new Divination();
+        harness.setGraveyard(player1, List.of(first));
+        gd.addToExile(player1.getId(), second, sourceId);
+
+        harness.setHand(player1, List.of(new DarkRitual()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.getCardsExiledByPermanent(sourceId).stream().map(Card::getId))
+                .containsExactlyInAnyOrder(first.getId(), second.getId());
+        PendingInteraction.ImprovisationCapstoneCastChoice choice =
+                (PendingInteraction.ImprovisationCapstoneCastChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validCardIds()).hasSize(2);
+        assertThat(choice.maxCount()).isEqualTo(2);
+
+        harness.handleMultipleCardsChosen(player1, List.of(choice.validCardIds().getFirst()));
+
+        assertThat(gd.stack).filteredOn(entry -> entry.isCopy()).hasSize(1);
+        assertThat(gd.exiledCards).noneMatch(exiled -> exiled.card().getId().equals(choice.validCardIds().get(1)));
+        assertThat(gd.getCardsExiledByPermanent(sourceId)).hasSize(2);
     }
 
     @Test
@@ -97,9 +125,9 @@ class ArcaneBombardmentTest extends BaseCardTest {
 
         assertThat(gd.getCardsExiledByPermanent(sourceId).stream().map(Card::getId))
                 .containsExactly(tracked.getId());
-        PendingInteraction.EyeOfTheStormCastChoice choice =
-                (PendingInteraction.EyeOfTheStormCastChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validCopyIds()).hasSize(1);
+        PendingInteraction.ImprovisationCapstoneCastChoice choice =
+                (PendingInteraction.ImprovisationCapstoneCastChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validCardIds()).hasSize(1);
     }
 
     @Test
@@ -115,10 +143,10 @@ class ArcaneBombardmentTest extends BaseCardTest {
 
         harness.castInstantWithDiscard(player1, 0, null, 1);
         harness.passBothPriorities();
-        PendingInteraction.EyeOfTheStormCastChoice choice =
-                (PendingInteraction.EyeOfTheStormCastChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validCopyIds()).hasSize(1);
-        harness.handleMultipleCardsChosen(player1, choice.validCopyIds());
+        PendingInteraction.ImprovisationCapstoneCastChoice choice =
+                (PendingInteraction.ImprovisationCapstoneCastChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validCardIds()).hasSize(1);
+        harness.handleMultipleCardsChosen(player1, choice.validCardIds());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
@@ -175,8 +203,8 @@ class ArcaneBombardmentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
-        PendingInteraction.EyeOfTheStormCastChoice choice =
-                (PendingInteraction.EyeOfTheStormCastChoice) gd.interaction.activeInteraction();
+        PendingInteraction.ImprovisationCapstoneCastChoice choice =
+                (PendingInteraction.ImprovisationCapstoneCastChoice) gd.interaction.activeInteraction();
         harness.handleMultipleCardsChosen(player1, List.of());
         harness.passBothPriorities();
     }

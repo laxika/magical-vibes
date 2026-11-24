@@ -142,7 +142,7 @@ it this turn"), `AllowPlayCardsFromExileEffect` ("you may
 play that card this turn / until the end of your next turn / for as long as it remains exiled"),
 `PutCardsOntoBattlefieldEffect(cards)` ("put those cards onto the battlefield", "return that card to the battlefield"),
 `PerpetuallyBoostCardEffect.toCards(cards, p, t)`, `PerpetuallyChangeCastCostEffect(cards, change)`,
-`CopyImprintedCardAndMayCastCopyEffect.of(cards)` ("copy it. You may cast the copy"), `ExileGraveyardCardsEffect.cards(cards)` ("exile it
+`CopyImprintedCardAndMayCastCopyEffect.of(cards)` ("copy it. You may cast the copy": cards in exile, a graveyard or a hand), `ExileGraveyardCardsEffect.cards(cards)` ("exile it
 from your graveyard") and, in a filter, `CardSharesCardTypeWithCardsPredicate(cards)` ("a card that doesn't share a card type with the
 discarded card"; bound by `SubjectResolutionService.bindCardSubjects`).
 

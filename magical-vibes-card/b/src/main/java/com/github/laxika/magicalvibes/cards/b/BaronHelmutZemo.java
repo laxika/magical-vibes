@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
-import com.github.laxika.magicalvibes.model.effect.CopyCardsExiledWithSourceAndCastUpToEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
@@ -32,7 +33,7 @@ public class BaronHelmutZemo extends Card {
                 List.of(
                         CollectEvidenceCost.forColorManaSymbols(
                                 15, ManaColor.BLACK, new CardColorPredicate(CardColor.BLACK)),
-                        new CopyCardsExiledWithSourceAndCastUpToEffect(3)),
+                        CopyImprintedCardAndMayCastCopyEffect.of(Subjects.exiledAsCost()).castingUpTo(3)),
                 "Boast — Exile any number of black cards from your graveyard with fifteen or more black mana symbols among their mana costs: Copy those exiled cards. You may cast up to three of the copies without paying their mana costs. Activate only if this creature attacked this turn and only once each turn.",
                 1
         ).withActivationCondition(

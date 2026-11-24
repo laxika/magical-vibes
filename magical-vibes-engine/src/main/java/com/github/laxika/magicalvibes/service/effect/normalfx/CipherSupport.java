@@ -7,14 +7,16 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.CipherCastCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardIdSetPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -45,9 +47,10 @@ public class CipherSupport {
             return;
         }
 
-        MayEffect trigger = new MayEffect(
-                new CipherCastCopyEffect(entry.getCard().getId()),
-                "Cast a copy of " + entry.getCard().getName() + " without paying its mana cost?");
+        // "You may copy the encoded card and you may cast the copy without paying its mana cost" (CR 702.99a): the
+        // copy step offers the cast with its own "may".
+        CopyImprintedCardAndMayCastCopyEffect trigger = CopyImprintedCardAndMayCastCopyEffect.of(
+                Subjects.exiledCards(new CardIdSetPredicate(Set.of(entry.getCard().getId()))));
         // "For as long as this card is encoded on that creature" (CR 702.99a): it stays encoded while it remains
         // exiled and the creature remains on the battlefield (CR 702.99c).
         gameData.addEffectOnPermanent(entry, GrantTriggeredAbilityEffect.whileCardExiled(

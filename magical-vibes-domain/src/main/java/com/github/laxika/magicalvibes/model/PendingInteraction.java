@@ -63,7 +63,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.PlarggAndNassariCardChoice,
         PendingInteraction.EyeOfTheStormCastChoice,
         PendingInteraction.ExiledSpellCopyChoice,
-        PendingInteraction.TargetHandSpellCopyChoice,
         PendingInteraction.ExiledCardMayPlayChoice, PendingInteraction.HeistCardChoice,
         PendingInteraction.CommandZoneCardChoice, PendingInteraction.CommanderReturnChoice, PendingInteraction.CommanderReplacementChoice,
         PendingInteraction.LudevicCopyChoice,
@@ -1164,28 +1163,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             // "You may copy a card exiled with this": choosing none is the answer "no".
-            return new InteractionOptions.MultiCardPick(validCardIds, 0, 1);
-        }
-    }
-
-    /** Choose an instant or sorcery card from a revealed hand to copy. */
-    record TargetHandSpellCopyChoice(UUID playerId, UUID targetPlayerId,
-                                     java.util.List<Card> cards,
-                                     java.util.List<UUID> validCardIds)
-            implements PendingInteraction {
-
-        public TargetHandSpellCopyChoice {
-            cards = java.util.List.copyOf(cards);
-            validCardIds = java.util.List.copyOf(validCardIds);
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0, 1);
         }
     }

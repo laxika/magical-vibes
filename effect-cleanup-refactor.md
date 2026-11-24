@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33 (each in Findings; the fold queue marks its rows). Fold runs 29b and 27 are reported and wait to merge; 32, 34b and 28c are running in worktrees, with a fix for fold run 26's Aura last-enchanted regression (Followed Footsteps). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                         |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b (each in Findings; the fold queue marks its rows). Fold runs 27, 32, 28c and 34b are reported and wait to merge; 23d, 35 and 36 are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                          |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,414 / 2,737 (after fold run 33) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,409 / 2,732 (after fold run 29b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,966 rows over 4,464 classes (after fold run 33). Latest verdict per class: `step-9` 533, unique 1,174, absorbed 962, split 641, blocked-other 509, survivor 347, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 533 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,977 rows over 4,464 classes (after fold run 29b). Latest verdict per class: `step-9` 525, unique 1,174, absorbed 966, split 642, blocked-other 512, survivor 347, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 525 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -857,6 +857,10 @@ Delayed and global triggers:
 - `AwardHasteGrantingManaEffect.Rider` (`HASTE_UNTIL_END_OF_TURN`, `PERMANENT_HASTE`, `INSTANT_OR_SORCERY_CANT_BE_COUNTERED`) (fold run 33).
 
 - `Subjects.lastAttachedCreature()` (`PermanentSubject.Attached(creature, lastAttached)`): "the creature it was last enchanting" for a source that left unattached, read from the stack entry's recorded host; only for cards whose ruling says so (Bind the Monster). Plain `attached()` names nothing then (CR 608.2h, 704.5m; Followed Footsteps, Mechanized Production rulings) (fix after fold run 26).
+
+- `CopyImprintedCardAndMayCastCopyEffect.of(cards)` copies cards a subject names in exile, a graveyard or a hand (`of(cardsThisWay(CHOOSE))` after a revealed-hand choice); `.castingUpTo(n)` / `.castingAnyNumber()`: "you may cast up to N / any number of the copies", one ordered choice among free copies (CR 608.2g) (fold run 29b).
+- `ExileCardAtRandomEffect.withSource()` and `ExileCardsFromTopUntilEffect.withSource()`: the exiled cards are exiled with the source permanent for a linked ability (CR 607.2a) (fold run 29b).
+- Cipher's granted trigger is `CopyImprintedCardAndMayCastCopyEffect.of(Subjects.exiledCards(new CardIdSetPredicate(Set.of(id))))`, the pattern for an engine-built copy of one known exiled card (fold run 29b).
 
 ### Blocked causes still open
 
@@ -3532,6 +3536,40 @@ Batches `land-mana`, `mana-twist`, `mana-drain`, `cost-paid-land`, `player-mana`
 - Boseiju and Hall of the Bandit Lord: when a land-mana replacement applies, the produced mana may lose its rider (CR 106.6a). Unverified.
 
 **For the next run.** `produced-mana`: settle the fallback first, then one `AddManaOfTypeProducedByTappedPermanentEffect` with a colour (fixed or the source's chosen colour) and a recipient. Then `persistent-mana` with the two persistent siblings.
+
+### Step 9, fold run 29b (2026-11-24, parallel worktree)
+`card-copy-cast` done, `exile-until-rel` started (1 of 4), `land-or-cast` not started. Ratchet 3,453 / 2,758 → 3,448 / 2,753. Ledger 11 rows: absorbed 4, split 1, blocked-other 3, survivor 3. 5 card files rewritten plus `CipherSupport`; Oracle text checked for all. Rulings read for Kefnet, Zemo, Volute, Reversal, Arcane Bombardment, Eye of the Storm, Possibility Storm and Tibalt's Trickery. CR 118.9, 305.1, 601.2f, 607.2a, 608.2g, 702.99a, 707.10, 707.10a and 707.12 checked.
+
+| Batch | Result |
+|---|---|
+| card-copy-cast | 4 folded, 3 left. Survivor `CopyImprintedCardAndMayCastCopyEffect`: a card subject's cards are copied from exile, a graveyard or a hand (the copy is parked in exile). `castsAtMost` (`castingUpTo(n)` / `castingAnyNumber()`) offers copies of the named spell cards in one ordered `ImprovisationCapstoneCastChoice` (CR 608.2g); free only, and unchosen copies cease to exist (CR 707.10a). Zemo: `of(exiledAsCost()).castingUpTo(3)`. Reversal: `ChooseCardsFromTargetHandEffect` (KEEP_IN_HAND, instant or sorcery, up to one, hand revealed) + `of(cardsThisWay(CHOOSE))`; `TargetHandSpellCopyChoice` and its handler, projection and AI strategy are gone. Arcane Bombardment: split into `ExileCardAtRandomEffect.fromGraveyard(you(), instant or sorcery).withSource()` + `of(exiledWithSource()).castingAnyNumber()`. Cipher: `CipherSupport` grants `of(exiledCards(CardIdSetPredicate(encoded id)))`. Left, see below. |
+| exile-until-rel | 1 folded: Krang & Shredder → `ExileCardsFromTopUntilEffect.untilNonland(eachOpponent()).withSource()`. Possibility Storm, Tibalt's Trickery and Reweave not started. |
+| land-or-cast | not started |
+
+**Left.**
+- Kefnet (blocked-other): the {2} reduction would be a one-card option (guard rail). The copy is also created in and cast from the hand (ruling, CR 707.12).
+- Spellweaver Volute (blocked-other): needs a card subject for an Aura's enchanted card as the Aura last existed, a graveyard-zone copy, and the reattach step.
+- Eye of the Storm (blocked-other): needs a caster subject (the triggering spell's caster) and a non-target exile of the triggering spell with the source.
+
+**Behaviour changes.**
+- Cipher asks once (the copy step's "may", CR 702.99a) and casts in the resolution path, with the CR 601.3 check.
+- Arcane Bombardment and Zemo show the ImprovisationCapstone choice. Arcane's test was updated for the new prompt type, and a new test covers unchosen copies.
+- Reversal's card choice is the revealed-hand index prompt; its test was updated.
+- Krang records EXILE and logs the survivor's line.
+- Zemo no longer skips "this spell can't be copied" cards. That flag is about a spell, not a card; no black card has it, so nothing observable changes.
+
+**Seen, not changed.**
+- Kefnet, Reversal and Volute copies are created and cast in exile, not in the hand or graveyard the ruling names (CR 707.12). A "cast from hand / graveyard" trigger would miss them. Sure of the code.
+
+**For the next run.**
+- `exile-until-rel`:
+- Possibility Storm and Tibalt's Trickery can use the new `ExileCardsFromTopUntilEffect.withSource()`.
+- Both still need a spell-relative filter bound as the step resolves: "shares a card type with it", its types as last known and face-down aware; "nonland with a different name than that spell".
+- Possibility Storm also needs a non-target "exile the triggering spell with the source" step.
+- Tibalt's Trickery also needs a random 1-to-3 mill amount.
+- Both need "may cast that card, then put the exiled cards on the bottom in a random order", with the bottoming after the cast completes. Check `MayCastDiscardedCardWithoutPayingManaCostEffect` against the step-model rule first. Today's `deferredExileBottomSourceIds` exists for exactly that wait.
+- Reweave is a reveal (`AsksDeathReplacementsFirst`), not an exile step; it needs a filter over a departed permanent's last-known types.
+- `land-or-cast`: a mandatory "land onto the battlefield, else cast it free if able" step. Omen Machine refuses any card with a cost increase today; CR 601.2f says the increase is paid. It also skips additional costs (the "Fold:" defect).
 
 ## Prompt
 

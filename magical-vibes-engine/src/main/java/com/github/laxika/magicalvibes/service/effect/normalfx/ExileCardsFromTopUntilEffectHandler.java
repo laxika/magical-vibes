@@ -23,7 +23,7 @@ import java.util.UUID;
 /**
  * Resolves {@link ExileCardsFromTopUntilEffect}: each named player, in APNAP order, exiles cards from the top of their
  * library one at a time (each its own zone-change event) until one matches the effect's card filter or the library is
- * empty. Records the {@link StepKind#EXILE} step: every card exiled and its owner, or nothing. It never prompts.
+ * empty, each exiled with the source permanent when the effect says so. Records the {@link StepKind#EXILE} step: every card exiled and its owner, or nothing. It never prompts.
  */
 @Slf4j
 @Component
@@ -44,6 +44,8 @@ public class ExileCardsFromTopUntilEffectHandler implements NormalEffectHandlerB
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var until = (ExileCardsFromTopUntilEffect) effect;
         entry.recordStep(StepKind.EXILE, StepOutcome.NONE);
+        // "Exiled with [this]" (CR 607.2a): linked to the source permanent.
+        UUID linkedSourceId = until.linkedToSource() ? entry.getSourcePermanentId() : null;
         for (UUID playerId : subjectResolutionService.players(gameData, entry, effect, until.library())) {
             List<Card> library = gameData.playerDecks.get(playerId);
             String playerName = gameData.playerIdToName.get(playerId);
@@ -56,7 +58,13 @@ public class ExileCardsFromTopUntilEffectHandler implements NormalEffectHandlerB
             int exiledManaValue = 0;
             while (!library.isEmpty()) {
                 Card top = library.removeFirst();
-                gameData.rulesEvents.separately(() -> exileService.exileCard(gameData, playerId, top));
+                gameData.rulesEvents.separately(() -> {
+                    if (linkedSourceId != null) {
+                        exileService.exileCard(gameData, playerId, top, linkedSourceId);
+                    } else {
+                        exileService.exileCard(gameData, playerId, top);
+                    }
+                });
                 entry.addToStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(top.getId()), List.of(playerId)));
                 exiledCount++;
                 if (until.until() == null) {

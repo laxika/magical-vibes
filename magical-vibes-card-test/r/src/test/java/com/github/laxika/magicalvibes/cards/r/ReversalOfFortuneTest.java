@@ -28,11 +28,11 @@ class ReversalOfFortuneTest extends BaseCardTest {
         MagmaJet instant = new MagmaJet();
         castReversal(original, instant, new GoblinBrawler());
 
-        PendingInteraction.TargetHandSpellCopyChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.TargetHandSpellCopyChoice.class);
-        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(original.getId(), instant.getId());
+        PendingInteraction.RevealedHandChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        assertThat(choice.validIndices()).containsExactlyInAnyOrder(0, 1);
 
-        harness.handleMultipleCardsChosen(player1, List.of(original.getId()));
+        harness.handleCardChosen(player1, 0);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
@@ -54,7 +54,7 @@ class ReversalOfFortuneTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GoblinBrawler(), new GoblinBrawler()));
         castReversal(original, new GoblinBrawler());
 
-        harness.handleMultipleCardsChosen(player1, List.of(original.getId()));
+        harness.handleCardChosen(player1, 0);
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
@@ -76,7 +76,7 @@ class ReversalOfFortuneTest extends BaseCardTest {
         ManaGeyser original = new ManaGeyser();
         castReversal(original, new GoblinBrawler());
 
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
@@ -90,7 +90,7 @@ class ReversalOfFortuneTest extends BaseCardTest {
         ManaGeyser original = new ManaGeyser();
         castReversal(original, new GoblinBrawler());
 
-        harness.handleMultipleCardsChosen(player1, List.of(original.getId()));
+        harness.handleCardChosen(player1, 0);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -147,20 +147,22 @@ class ReversalOfFortuneTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Only one eligible card may be copied")
-    void cannotCopyMultipleCards() {
+    @DisplayName("Only one instant or sorcery card may be chosen, never another card")
+    void choosesOneInstantOrSorceryOnly() {
         ManaGeyser sorcery = new ManaGeyser();
         MagmaJet instant = new MagmaJet();
-        castReversal(sorcery, instant);
+        castReversal(sorcery, new GoblinBrawler(), instant);
 
-        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(
-                player1, List.of(sorcery.getId(), instant.getId())))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Choose at most one card");
+        PendingInteraction.RevealedHandChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        assertThat(choice.validIndices()).containsExactlyInAnyOrder(0, 2);
+        assertThat(choice.remainingCount()).isEqualTo(1);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 1))
+                .isInstanceOf(IllegalStateException.class);
 
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleCardChosen(player1, -1);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerHands.get(player2.getId())).containsExactly(sorcery, instant);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
     }
 
     @Test
@@ -168,7 +170,7 @@ class ReversalOfFortuneTest extends BaseCardTest {
     void resolvedCopyDoesNotEnterGraveyard() {
         ManaGeyser original = new ManaGeyser();
         castReversal(original);
-        harness.handleMultipleCardsChosen(player1, List.of(original.getId()));
+        harness.handleCardChosen(player1, 0);
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 

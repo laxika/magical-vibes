@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -13,8 +15,10 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -22,8 +26,8 @@ import org.springframework.stereotype.Component;
 /**
  * Resolution of "copy the exiled card. You may cast the copy": each copy is created straight away and parked in exile
  * for the may-choice; the card itself never leaves exile. Without a card subject it copies the source's imprinted and
- * exiled-with cards (Elite Arcanist's "{X}, {T}: Copy the exiled card"); with one, the cards the subject names in exile
- * (the cards an earlier exile step of the resolution exiled). The accept/decline half lives in
+ * exiled-with cards (Elite Arcanist's "{X}, {T}: Copy the exiled card"); with one, the cards the subject names in exile,
+ * a graveyard or a hand (the cards an earlier exile step of the resolution exiled, a card chosen from a revealed hand). The accept/decline half lives in
  * {@code CopyImprintedCardAndMayCastCopyHandler}.
  */
 @Component
@@ -35,6 +39,10 @@ public class CopyImprintedCardAndMayCastCopyEffectHandler implements NormalEffec
     private final CopySupport copySupport;
     private final ExileService exileService;
     private final SubjectResolutionService subjectResolutionService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
+
+    /** The zones a card subject's cards are copied from. */
+    private static final Set<Zone> COPIED_ZONES = Set.of(Zone.EXILE, Zone.GRAVEYARD, Zone.HAND);
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -109,18 +117,24 @@ public class CopyImprintedCardAndMayCastCopyEffectHandler implements NormalEffec
     }
 
     /**
-     * Copies each card the subject names in exile and parks the copy with a may-choice to cast it, the first card's
-     * offer first; the offer keeps the source permanent for a "if you do" rider on the source.
+     * Copies each card the subject names in exile, a graveyard or a hand and parks the copy with a may-choice to cast
+     * it, the first card's offer first; the offer keeps the source permanent for a "if you do" rider on the source.
+     * With {@code castsAtMost}, the copies of spell cards are offered in one ordered choice instead (CR 608.2g); a copy
+     * of a land card can't be cast and is not made.
      */
     private void offerCopiesOfSubjectCards(GameData gameData, StackEntry entry,
                                            CopyImprintedCardAndMayCastCopyEffect copyEffect) {
-        List<Card> exiledCards = subjectResolutionService.locatedCards(gameData, entry, copyEffect, copyEffect.cards())
+        List<Card> namedCards = subjectResolutionService.locatedCards(gameData, entry, copyEffect, copyEffect.cards())
                 .stream()
-                .filter(located -> located.zone() == Zone.EXILE)
+                .filter(located -> COPIED_ZONES.contains(located.zone()))
                 .map(SubjectResolutionService.LocatedCard::card)
                 .toList();
-        for (Card exiledCard : exiledCards.reversed()) {
-            Card copy = copySupport.createCopyCard(exiledCard);
+        if (copyEffect.castsAtMost() > 0) {
+            offerChoiceAmongCopies(gameData, entry, copyEffect, namedCards);
+            return;
+        }
+        for (Card namedCard : namedCards.reversed()) {
+            Card copy = copySupport.createCopyCard(namedCard);
             exileService.exileCard(gameData, entry.getControllerId(), copy);
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     copy,
@@ -131,5 +145,41 @@ public class CopyImprintedCardAndMayCastCopyEffectHandler implements NormalEffec
                     null,
                     entry.getSourcePermanentId()));
         }
+    }
+
+    /**
+     * "You may cast up to N / any number of the copies": the copies of the named spell cards, parked in exile, are
+     * offered in one choice that also orders the casts; the free-cast queue casts the chosen ones and the others
+     * cease to exist (CR 707.10a).
+     */
+    private void offerChoiceAmongCopies(GameData gameData, StackEntry entry,
+                                        CopyImprintedCardAndMayCastCopyEffect copyEffect, List<Card> namedCards) {
+        UUID controllerId = entry.getControllerId();
+        List<UUID> copyIds = new ArrayList<>();
+        for (Card namedCard : namedCards) {
+            if (!isSpell(namedCard)) {
+                continue;
+            }
+            Card copy = copySupport.createCopyCard(namedCard);
+            exileService.exileCard(gameData, controllerId, copy);
+            copyIds.add(copy.getId());
+        }
+        if (copyIds.isEmpty()) {
+            return;
+        }
+        int atMost = copyEffect.castsAtMost();
+        String spells = atMost == Integer.MAX_VALUE ? "any number of the copies"
+                : "up to " + atMost + " of the copies";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ImprovisationCapstoneCastChoice(
+                controllerId, copyIds, Math.min(atMost, copyIds.size()),
+                "You may cast " + spells + " without paying their mana costs.", true));
+    }
+
+    /** An instant, a sorcery or a nonland permanent card: a land card is played, not cast. */
+    private static boolean isSpell(Card card) {
+        if (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY)) {
+            return true;
+        }
+        return card.getType().isPermanentType() && !card.hasType(CardType.LAND);
     }
 }
