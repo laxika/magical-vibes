@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueParityPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasChosenParityPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasChosenSpellColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasCardTypeChosenThisResolutionPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenCardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
@@ -375,8 +377,10 @@ public class SubjectResolutionService {
      * {@link PermanentHasChosenParityPredicate} of mana value "has mana value of that parity" (Twins of Discord; the power
      * form stays as it is, judged while the entry resolves);
      * {@link PermanentControlledByPlayersPredicate} "controlled by one of those players", its players found now ("creatures
-     * that player controls", The Black Gate). A leaf with nothing chosen, or no player, matches nothing. A filter
-     * without them is returned as it is.
+     * that player controls", The Black Gate); {@link PermanentHasChosenSpellColorPredicate} "of that color", the color an
+     * earlier {@code ChooseColorAtResolutionEffect} of the resolution chose ("can't be blocked by creatures of that color
+     * this turn", Skrelv, Sungold Sentinel). A leaf with nothing chosen, or no player, matches nothing. A filter without
+     * them is returned as it is.
      */
     public PermanentPredicate bindChosenValues(GameData gameData, StackEntry entry, CardEffect effect,
                                                PermanentPredicate filter) {
@@ -389,6 +393,9 @@ public class SubjectResolutionService {
                     entry.getChosenParity() == null
                             ? new PermanentNotPredicate(new PermanentTruePredicate())
                             : new PermanentManaValueParityPredicate(entry.getChosenParity());
+            case PermanentHasChosenSpellColorPredicate ignored -> gameData.chosenSpellColor == null
+                    ? new PermanentNotPredicate(new PermanentTruePredicate())
+                    : new PermanentColorInPredicate(Set.of(gameData.chosenSpellColor));
             case PermanentControlledByPlayersPredicate controlled -> {
                 List<UUID> players = players(gameData, entry, effect, controlled.players());
                 yield players.isEmpty() ? new PermanentNotPredicate(new PermanentTruePredicate())

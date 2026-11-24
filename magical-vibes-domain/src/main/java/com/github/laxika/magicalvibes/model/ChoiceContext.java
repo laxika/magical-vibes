@@ -1515,12 +1515,6 @@ public sealed interface ChoiceContext {
 
     record PreventDamageToTargetFromChosenColorChoice(UUID targetId) implements ChoiceContext {}
 
-    record TargetCreatureHexproofFromChosenColorChoice(UUID targetId, UUID controllerId, String sourceCardName)
-            implements ChoiceContext {}
-
-    record BecomeChosenColorAndGainHexproofChoice(UUID targetId, UUID controllerId,
-                                                    String sourceCardName) implements ChoiceContext {}
-
     /**
      * The controller chooses a color at resolution; the target permanent then becomes that color
      * until end of turn (CR 105.3 / layer 5). Used by Distorting Lens.

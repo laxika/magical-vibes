@@ -55,7 +55,6 @@ import com.github.laxika.magicalvibes.model.VoteChoiceContext;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.DevotionToColor;
 import com.github.laxika.magicalvibes.model.effect.LandwalkIgnoredForBlockingEffect;
-import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TextChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
@@ -78,10 +77,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseColorForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -111,6 +108,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesP
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandTypeToTargetEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TimeTravelService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SetChosenColorUntilEndOfTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ToymakersTrapEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -133,7 +131,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import com.github.laxika.magicalvibes.model.effect.GrantControllerAndPermanentsHexproofFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect;
 
 @Slf4j
@@ -232,6 +229,7 @@ public class ChoiceHandlerService {
             seizeTheSpotlightEffectHandler;
     private final EachPlayerChoosesTokenEffectHandler eachPlayerChoosesTokenEffectHandler;
     private final BecomeChosenColorsUntilEndOfTurnEffectHandler becomeChosenColorsUntilEndOfTurnEffectHandler;
+    private final SetChosenColorUntilEndOfTurnEffectHandler setChosenColorUntilEndOfTurnEffectHandler;
     private final EachPlayerChoosesPlanarModeEffectHandler eachPlayerChoosesPlanarModeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.VoteEffectHandler voteEffectHandler;
     private final ManaSourceColorSupport manaSourceColorSupport;
@@ -997,14 +995,6 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.PreventDamageToTargetFromChosenColorChoice ctx) {
             handlePreventDamageToTargetFromChosenColorChoice(gameData, colorName, ctx);
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.TargetCreatureHexproofFromChosenColorChoice ctx) {
-            handleTargetCreatureHexproofFromChosenColorChoice(gameData, colorName, ctx);
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.BecomeChosenColorAndGainHexproofChoice ctx) {
-            handleBecomeChosenColorAndGainHexproofChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.MassProtectionColorChoice ctx) {
@@ -4210,60 +4200,6 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handleTargetCreatureHexproofFromChosenColorChoice(GameData gameData, String chosenValue,
-                                                                    ChoiceContext.TargetCreatureHexproofFromChosenColorChoice ctx) {
-        CardColor chosenColor = CardColor.valueOf(chosenValue);
-        gameData.interaction.clearAwaitingInput();
-
-        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
-        if (target != null) {
-            gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(ctx.sourceCardName(), null,
-                    ctx.controllerId(), new GrantControllerAndPermanentsHexproofFromColorsEffect(Set.of(chosenColor)),
-                    target.getId(), Duration.UNTIL_END_OF_TURN));
-
-            String colorName = chosenColor.name().toLowerCase();
-            gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(ctx.sourceCardName(), null,
-                    ctx.controllerId(), new CanBeBlockedOnlyByFilterEffect(
-                            new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(chosenColor))),
-                            "creatures that aren't " + colorName),
-                    target.getId(), Duration.UNTIL_END_OF_TURN));
-
-            gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
-                    " gains hexproof from " + colorName + " and can't be blocked by "
-                            + colorName + " creatures until end of turn."));
-            log.info("Game {} - {} gains hexproof from {} and can't be blocked by {} creatures until end of turn",
-                    gameData.id, target.getCard().getName(), colorName, colorName);
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void handleBecomeChosenColorAndGainHexproofChoice(GameData gameData, String chosenValue,
-                                                               ChoiceContext.BecomeChosenColorAndGainHexproofChoice ctx) {
-        CardColor chosenColor = CardColor.valueOf(chosenValue);
-        gameData.interaction.clearAwaitingInput();
-
-        String colorName = chosenColor.name().charAt(0) + chosenColor.name().substring(1).toLowerCase();
-        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
-        if (target != null) {
-            gameData.addFloatingEffect(new FloatingContinuousEffect(
-                    UUID.randomUUID(), ctx.sourceCardName(), null, ctx.controllerId(),
-                    new GrantColorUntilEndOfTurnEffect(chosenColor), target.getId(), null, null,
-                    Duration.UNTIL_END_OF_TURN, 0));
-            gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(ctx.sourceCardName(), null,
-                    ctx.controllerId(), new GrantControllerAndPermanentsHexproofFromColorsEffect(Set.of(chosenColor)),
-                    target.getId(), Duration.UNTIL_END_OF_TURN));
-
-            gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
-                    " becomes " + colorName.toLowerCase() + " and gains hexproof from "
-                            + colorName.toLowerCase() + " until end of turn."));
-            log.info("Game {} - {} becomes {} and gains hexproof from {} until end of turn",
-                    gameData.id, target.getCard().getName(), colorName.toLowerCase(), colorName.toLowerCase());
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
     private void handleMassProtectionColorChoice(GameData gameData, String chosenValue,
             ChoiceContext.MassProtectionColorChoice ctx) {
         // Parse before touching interaction state, as the dispatcher's own fallback does: an
@@ -4330,41 +4266,10 @@ public class ChoiceHandlerService {
         CardColor chosenColor = CardColor.valueOf(chosenValue);
 
         gameData.interaction.clearAwaitingInput();
-
-        String colorName = chosenColor.name().charAt(0) + chosenColor.name().substring(1).toLowerCase();
-        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
-        if (target != null) {
-            CardColor color = chosenColor;
-
-            // CR 613 layer engine: "becomes [color] until end of turn" is a floating layer-5
-            // color-setting effect. We reuse GrantColorUntilEndOfTurnEffect (the L5 setter the
-            // layered pass already understands) as the wrapped effect.
-            gameData.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
-                    UUID.randomUUID(), ctx.sourceCardName(), null, ctx.controllerId(),
-                    new com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect(color),
-                    target.getId(), null, null,
-                    com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN, 0));
-
-            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " becomes " + colorName + " until end of turn."));
-            log.info("Game {} - {} becomes {} until end of turn", gameData.id, target.getCard().getName(), colorName);
-        } else {
-            StackEntry targetSpell = gameQueryService.findStackEntryByCardId(gameData, ctx.targetId());
-            if (targetSpell != null) {
-                gameData.addFloatingEffect(com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect.onCard(
-                        ctx.sourceCardName(), null, ctx.controllerId(),
-                        new com.github.laxika.magicalvibes.model.effect.SpellColorUntilEndOfTurnEffect(chosenColor),
-                        ctx.targetId(), com.github.laxika.magicalvibes.model.Zone.STACK,
-                        com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN));
-                gameLogService.append(gameData,
-                        GameLog.cardThen(targetSpell.getCard(), " becomes " + colorName + " until end of turn."));
-                log.info("Game {} - spell {} becomes {} until end of turn",
-                        gameData.id, targetSpell.getCard().getName(), colorName);
-            }
-        }
-
+        setChosenColorUntilEndOfTurnEffectHandler.apply(gameData, ctx.targetId(), chosenColor,
+                ctx.sourceCardName(), ctx.controllerId());
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
-
     private void handleDiscardChosenColorChoice(GameData gameData, String chosenValue,
             ChoiceContext.DiscardChosenColorChoice ctx) {
         CardColor color = CardColor.valueOf(chosenValue);

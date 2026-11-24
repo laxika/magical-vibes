@@ -4,9 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanents;
-import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorAndGainHexproofFromItUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseColorAtResolutionEffect;
+import com.github.laxika.magicalvibes.model.effect.ClearChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantControllerAndPermanentsHexproofFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.SetChosenColorUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -21,7 +25,10 @@ public class MondoGecko extends Card {
                 "{1}",
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new BecomeChosenColorAndGainHexproofFromItUntilEndOfTurnEffect()
+                        new ChooseColorAtResolutionEffect(),
+                        new SetChosenColorUntilEndOfTurnEffect(false, false),
+                        GrantControllerAndPermanentsHexproofFromColorsEffect.chosenColor(Subjects.source()),
+                        new ClearChosenColorEffect()
                 ),
                 "{1}, Discard a card: Until end of turn, Mondo Gecko becomes the color of your choice "
                         + "and gains hexproof from that color."

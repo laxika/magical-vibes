@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 6c, 47b, 46c, 24b; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                               |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 47b, 24b, 30c; merge queue 46c. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,080 / 2,494 (after fold run 30b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,078 / 2,492 (after fold run 6c) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,586 rows over 4,557 classes (after fold run 30b). Latest verdict per class: `step-9` 93, unique 1,194, absorbed 1,300, split 670, blocked-other 549, survivor 442, blocked-step-model 139, blocked-player-loop 96, dead 74. Waiting: 93 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,593 rows over 4,559 classes (after fold run 6c). Latest verdict per class: `step-9` 90, unique 1,193, absorbed 1,302, split 670, blocked-other 550, survivor 445, blocked-step-model 139, blocked-player-loop 96, dead 74. Waiting: 90 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1068,6 +1068,14 @@ Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671
 - `CardMilledThisTurnPredicate`: "cards in your graveyard that were milled this turn", read by owner (fold run 30b).
 - `SpendAnyManaTypeToCastEffect(CardPredicate spellFilter)` / `.spells(filter)`: any-mana cast permission for matching spells, judged with the caster as perspective (fold run 30b).
 - `ExileTopCardsToSourceEffect` and `SearchLibraryForCardsToExileWithSourceEffect` record `StepKind.EXILE`, so "those cards" is `cardsThisWay(EXILE)` (fold run 30b).
+
+- `GrantControllerAndPermanentsHexproofFromColorsEffect.chosenColor(target() | source())`: "[it] gains hexproof from that color until end of turn" after `ChooseColorAtResolutionEffect`, the colour fixed as it applies (CR 608.2h); default `(colors)` is "you and permanents you control" (fold run 6c).
+- `SubjectResolutionService.bindChosenValues` binds `PermanentHasChosenSpellColorPredicate`: "can't be blocked by creatures of that color this turn" is `MakeCreatureBlockableOnlyByFilterThisTurnEffect(not(PermanentHasChosenSpellColorPredicate))` (fold run 6c).
+- `SetChosenColorUntilEndOfTurnEffect` after `ChooseColorAtResolutionEffect` applies that colour without asking; `SetChosenColorUntilEndOfTurnEffectHandler.apply` is the one colour application (fold run 6c).
+
+Sources (Torpor Orb rulings search):
+- [Torpor Orb (NPH 162)](https://scryfall.com/card/nph/162)
+- [Torpor Orb (BIG 57)](https://scryfall.com/card/big/57)
 
 ### Blocked causes still open
 
@@ -4844,6 +4852,29 @@ Three batches touched: 4 absorbed, 3 survivor, 4 unique, 1 blocked-other; 5 spen
 **For the next run.**
 1. 30c spend-mana: fold False Dawn into `GrantStaticEffectToPlayerEffect.untilEndOfTurn` over a from-white `SpendManaAsAnyColorEffect`; weigh Sunglasses' as-red set (one card). For Quicksilver's blue-only and Nathan's non-owned activated abilities, `controlledBy(you(), not owned)` and dropping the creature gate need a reader change. Build the any-type mode only together with the {C} payment fix.
 2. Jaya: add emblems to `findFilteredGraveyardPermission` if a second exile-instead user of `CastSpellsFromGraveyardEffect` appears.
+
+### Step 9, fold run 6c (2026-11-24, parallel worktree)
+`colour-grants` done (2 absorbed); `returned-reflexive` left (2 `blocked-other`). Ratchet 3,103 / 2,501 → 3,101 / 2,499. 3 card files rewritten; Oracle text and rulings checked for all 3, and for Back for More and Jailbreak. CR 105.4, 509.1b, 603.7d, 603.7e, 603.12, 603.12a, 608.2h, 611.2c, 613.1f, 613.7, 702.11d and 702.11e checked with `get_rule`.
+
+| Batch | Result |
+|---|---|
+| colour-grants | Mondo Gecko, Skrelv and Sungold Sentinel use the choose step, then readers, then the clear step. Hexproof is `GrantControllerAndPermanentsHexproofFromColorsEffect.chosenColor(target() / source())`. Evasion is `MakeCreatureBlockableOnlyByFilterThisTurnEffect(not(PermanentHasChosenSpellColorPredicate))`, bound to the chosen colour by `bindChosenValues`. Mondo's colour is `SetChosenColorUntilEndOfTurnEffect(false, false)`, which applies a colour already chosen and asks nothing. That adds no parameter; `SetTargetColorEffect` reads a chosen colour the same way. The two choice contexts and their `ChoiceHandlerService` branches are gone. |
+| returned-reflexive | Left. Back for More would be the only user of an about-returned reflexive or a fighter subject. Jailbreak is an enters trigger made by the spell, not a reflexive. Torpor Orb and Hushbringer rulings judge the permanent as it exists. |
+
+**Where the triage was wrong.** Jailbreak was batched as a reflexive; it is a delayed enters trigger (its own ruling; CR 603.7d). Mondo's colour step needed no colour-reading option on `GrantColorEffect`.
+
+**Behaviour changes.** Mondo Gecko and Sungold Sentinel now ask for a colour when their source has left before resolution, and apply nothing. Skrelv still fizzles when its target is illegal. Log lines are the survivors'. The evasion description doesn't name the colour.
+
+**Shared engine.** `GrantControllerAndPermanentsHexproofFromColorsEffect(colors, controllerToo, permanents, ofChosenColor)`: Veil of Summer goes through `permanentsYouControl()`, the same loop as before. `bindChosenValues` gains the `PermanentHasChosenSpellColorPredicate` leaf. `SetChosenColorUntilEndOfTurnEffectHandler.apply` is now shared with `handleColorSetChoice`.
+
+**Tests changed.** None changed. Added: two `bindChosenValues` tests (fail on the old code: the leaf was unbound and matched nothing once the colour was cleared), Skrelv's five-colour prompt, and Sungold with two activations of different colours (coverage, CR 608.2h). Ran 48 classes, 0 failures after correcting my own test's blocker colour.
+
+**Seen, not changed.**
+- Hexproof-from-colour grants from Veil of Summer, Mondo Gecko, Skrelv and Sungold Sentinel are floating effects outside layer 6. A later "loses all abilities" doesn't remove them (CR 613.1f). Sure of the code; moderate impact.
+- Jailbreak's ability uses the returned permanent as its source; CR 603.7d says the source is the spell. Its suppression check reads the card, not the permanent as it exists (Torpor Orb ruling). Sure of the code.
+- Whether Torpor Orb stops Back for More's "when you do" isn't settled by any ruling found.
+
+**For the next run.** Re-triage `GrantProtectionFromChosenColorToPermanentsEffect` (Ward Sliver) against the new subject on `GrantControllerAndPermanentsHexproofFromColorsEffect`. The returned-reflexive rows wait for a third user of an "enters during this resolution" trigger.
 
 ## Prompt
 

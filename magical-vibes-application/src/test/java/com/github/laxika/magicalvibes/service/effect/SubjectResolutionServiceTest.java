@@ -3,10 +3,12 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.cards.b.Bonesplitter;
 import com.github.laxika.magicalvibes.model.effect.CardSubject;
 import com.github.laxika.magicalvibes.cards.c.CurseOfStalkedPrey;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenCardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayersPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasChosenSpellColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasTypeChosenThisResolutionPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithPermanentsPredicate;
@@ -2359,6 +2361,32 @@ class SubjectResolutionServiceTest extends BaseCardTest {
             gd.stack.remove(entry);
 
             assertThat(predicates().matchesPermanentPredicate(gd, bears, bound)).isTrue();
+            assertThat(predicates().matchesPermanentPredicate(gd, giant, bound)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Writes the color chosen earlier in the resolution into a permanent filter, which keeps it once cleared")
+        void bindsTheColorChosenThisResolution() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            Permanent giant = addCreatureReady(player2, new HillGiant());
+            gd.chosenSpellColor = CardColor.RED;
+
+            PermanentPredicate bound = subjects.bindChosenValues(gd, entry(player1, null, null), EFFECT,
+                    new PermanentHasChosenSpellColorPredicate());
+            gd.chosenSpellColor = null;
+
+            assertThat(predicates().matchesPermanentPredicate(gd, giant, bound)).isTrue();
+            assertThat(predicates().matchesPermanentPredicate(gd, bears, bound)).isFalse();
+        }
+
+        @Test
+        @DisplayName("A color leaf with no color chosen matches nothing")
+        void unchosenColorMatchesNothing() {
+            Permanent giant = addCreatureReady(player2, new HillGiant());
+
+            PermanentPredicate bound = subjects.bindChosenValues(gd, entry(player1, null, null), EFFECT,
+                    new PermanentHasChosenSpellColorPredicate());
+
             assertThat(predicates().matchesPermanentPredicate(gd, giant, bound)).isFalse();
         }
 

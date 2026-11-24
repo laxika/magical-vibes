@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -244,5 +245,22 @@ class SkrelvDefectorMiteTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(target)))));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The color choice offers exactly the five colors")
+    void colorChoiceOffersTheFiveColors() {
+        addCreatureReady(player1, new SkrelvDefectorMite());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(gqs.hasHexproofFromColor(gd, target, CardColor.BLACK)).isTrue();
+        assertThat(gd.chosenSpellColor).isNull();
     }
 }

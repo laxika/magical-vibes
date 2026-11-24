@@ -20,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SungoldSentinel.class, DawnhartMentor.class, FestivalCrasher.class, AngelfireIgnition.class})
+@CardUsed({SungoldSentinel.class, DawnhartMentor.class, FestivalCrasher.class, AngelfireIgnition.class,
+        SavannahLions.class})
 class SungoldSentinelTest extends BaseCardTest {
 
     @Test
@@ -210,5 +211,40 @@ class SungoldSentinelTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
         assertThatThrownBy(() -> harness.castSorcery(player2, 0, sentinel.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Each activation keeps the color chosen for it: hexproof from both and unblockable by both")
+    void eachActivationKeepsItsOwnChosenColor() {
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new SungoldSentinel());
+        harness.addToBattlefield(player1, new DawnhartMentor());
+        harness.addToBattlefield(player1, new FestivalCrasher());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        for (String color : List.of("RED", "WHITE")) {
+            harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(sentinel), null, null);
+            harness.passBothPriorities();
+            harness.handleListChoice(player1, color);
+        }
+
+        assertThat(gqs.hasHexproofFromColor(gd, sentinel, CardColor.RED)).isTrue();
+        assertThat(gqs.hasHexproofFromColor(gd, sentinel, CardColor.WHITE)).isTrue();
+        assertThat(gqs.hasHexproofFromColor(gd, sentinel, CardColor.GREEN)).isFalse();
+
+        Permanent redBlocker = harness.addToBattlefieldAndReturn(player2, new FestivalCrasher());
+        Permanent whiteBlocker = harness.addToBattlefieldAndReturn(player2, new SavannahLions());
+        sentinel.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(sentinel);
+        for (Permanent blocker : List.of(redBlocker, whiteBlocker)) {
+            int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+            assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                    List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                    .isInstanceOf(IllegalStateException.class);
+        }
     }
 }

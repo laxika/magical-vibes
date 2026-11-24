@@ -6,13 +6,17 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseColorAtResolutionEffect;
+import com.github.laxika.magicalvibes.model.effect.ClearChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantTargetCreatureHexproofFromChosenColorAndCantBeBlockedByItUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantControllerAndPermanentsHexproofFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.MakeCreatureBlockableOnlyByFilterThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasChosenSpellColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -28,9 +32,14 @@ public class SkrelvDefectorMite extends Card {
         addStaticEffect(new ToxicEffect(1));
 
         addActivatedAbility(new ActivatedAbility(true, "{W/P}", List.of(
+                new ChooseColorAtResolutionEffect(),
                 new GrantKeywordEffect(Keyword.TOXIC, Subjects.target(), new PermanentIsCreaturePredicate()),
                 new GrantEffectToTargetUntilEndOfTurnEffect(StaticAbility.of(new ToxicEffect(1))),
-                new GrantTargetCreatureHexproofFromChosenColorAndCantBeBlockedByItUntilEndOfTurnEffect()
+                GrantControllerAndPermanentsHexproofFromColorsEffect.chosenColor(Subjects.target()),
+                new MakeCreatureBlockableOnlyByFilterThisTurnEffect(
+                        new PermanentNotPredicate(new PermanentHasChosenSpellColorPredicate()),
+                        "creatures that aren't the chosen color"),
+                new ClearChosenColorEffect()
         ), "{W/P}, {T}: Choose a color. Another target creature you control gains toxic 1 and "
                 + "hexproof from that color until end of turn. It can't be blocked by creatures of "
                 + "that color this turn.", new ControlledPermanentPredicateTargetFilter(
