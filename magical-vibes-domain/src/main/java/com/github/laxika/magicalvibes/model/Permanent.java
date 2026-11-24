@@ -358,8 +358,6 @@ public class Permanent {
      * may block attackers attacking this battle; everyone else (including the controller) may attack it.
      */
     @Setter private UUID protectorPlayerId;
-    /** Name assigned by a one-shot effect for as long as this permanent stays on the battlefield. */
-    @Setter private String persistentName;
     /** If true, this permanent is exiled instead of going to any other zone when it leaves the battlefield (CR 614.6). */
     @Setter private boolean exileIfLeavesBattlefield;
     /** If true, this permanent is exiled instead of being put into a graveyard from the battlefield. */
@@ -730,7 +728,6 @@ public class Permanent {
         this.enteredFromGraveyardOwnerId = source.enteredFromGraveyardOwnerId;
         this.enteredFromExile = source.enteredFromExile;
         this.returnedWhenSourceLeftId = source.returnedWhenSourceLeftId;
-        this.persistentName = source.persistentName;
         this.exileIfLeavesBattlefield = source.exileIfLeavesBattlefield;
         this.exileIfDying = source.exileIfDying;
         this.exileIfDyingTimestamp = source.exileIfDyingTimestamp;

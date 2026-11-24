@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 44b, 45b; merge queue 40b. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                      |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 44b, 45b, 46b; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                       |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,136 / 2,545 (after fold run 41c) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,131 / 2,541 (after fold run 40b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,476 rows over 4,539 classes (after fold run 41c). Latest verdict per class: `step-9` 164, unique 1,189, absorbed 1,243, split 667, blocked-other 543, survivor 428, blocked-step-model 139, blocked-player-loop 96, dead 70. Waiting: 164 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,490 rows over 4,541 classes (after fold run 40b). Latest verdict per class: `step-9` 156, unique 1,187, absorbed 1,249, split 667, blocked-other 547, survivor 430, blocked-step-model 139, blocked-player-loop 96, dead 70. Waiting: 156 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1026,6 +1026,11 @@ Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671
 - `LookAtTopCardMayPutMatchingOntoBattlefieldEffect.Otherwise {TOP, HAND, MAY_BOTTOM}`, the predicate judged with the source or its snapshot, `StepKind.RETURN`: "if you didn't put a card onto the battlefield this way" = `ConditionalEffect(NotCondition(HappenedThisWay.returned()), …)` (Rulik Mons; fold run 41c).
 - `ChoosePermanentsEffect.toSacrifice()`: "[that player] sacrifices one of them", "you may sacrifice one of them": only the candidates the chooser controls and could sacrifice (CR 608.2d, 701.21a), then `SacrificeSelfEffect(thisWay(CHOOSE))` (Incriminate, Descendants' Fury; fold run 41c).
 - `SubjectResolutionService.cardTypes` falls back to the entry's last-known snapshot of a permanent no removal step recorded (CR 608.2h) (fold run 41c).
+
+- `RollTwoDiceChooseOneEffect(sides)`: "roll two d{sides} and choose one result": one advantage-aware roll of two dice and the choice; X is the chosen result and the event value the other, for the card's following steps (fold run 40b).
+- `DiceRollService.rollDice(gameData, player, sides, count)`: one roll of `count` dice; each `RollWithAdvantageEffect` adds one die to the roll and the lowest are ignored (CR 706.6) (fold run 40b).
+- `RedirectPlayerDamageToSelfEffect.combatOnly` / `.combatDamageFromUnblockedCreatures(requiresUntapped)`: floated on a player by `GrantStaticEffectToPlayerEffect`, "this creature" is the float's source (fold run 40b).
+- `SetNameEffect(name, subject, Duration)` one-shot path: a resolved name change floats a layer-3 `target()` copy on each permanent, in timestamp order with static name setters and kept after a loss of all abilities; `Permanent.persistentName` is gone (fold run 40b).
 
 ### Blocked causes still open
 
@@ -4568,6 +4573,31 @@ All of these have tests that would fail on the old code by reasoning. Prompts an
 
 **For the next run.**
 - `LookAtTopCardMayPutMatchingOntoBattlefieldElseToHandEffect` (5 cards, unaudited) is the bf survivor with `Otherwise.HAND` plus `tapped`. Its Aura put goes through the entry batch, which the survivor's own Aura path should adopt when they merge.
+
+### Step 9, fold run 40b (2026-11-24, parallel worktree)
+6 folded (absorbed), 3 survivor (1 new), 4 blocked-other, 1 unique note updated. Ratchet 3,190 / 2,605 → 3,185 / 2,601. 9 card files rewritten, Oracle text checked for 9 of 9. CR 510.2, 611.2c, 612.8, 613.1c, 613.7, 614.9, 616.1, 706.2, 706.6 checked.
+
+| Batch | Result |
+|---|---|
+| two-dice | 4 folded into the new `RollTwoDiceChooseOneEffect(sides)`: Valiant, Wild, Arcane, and Reckless (no ledger row before this run). It makes one roll of two dice through the new `DiceRollService.rollDice(gameData, player, sides, count)`: each advantage replacement adds one die to the roll, and the lowest results are ignored (CR 706.6). The dice events, log and spell-number prompt are unchanged (no prompt when both are equal). The chosen result becomes X and the other the event value, for the card's steps: `PermanentPowerAtLeastAmountPredicate(XValue)`, `CreateTokenEffect(XValue / EventValue)`, `SearchLibraryEffect(EventValue)`, `DrawCardEffect(XValue)`, the free cast's `EventValue` bound, `MassDamageEffect(XValue, false)`. Existing roll effects (`RollTwoD20IgnoreLowerEffect`, `RollD*Effect`) have no second result or choice. Grave left: its return "with N +1/+1 counters" carries an `int` through the graveyard prompt; its roll now uses `rollDice`. |
+| redir-absorb | 1 folded. `RedirectPlayerDamageToSelfEffect` gains `combatOnly` and `.combatDamageFromUnblockedCreatures(requiresUntapped)`. Weathered Bodyguards: static, untapped. Kjeldoran Royal Guard: `GrantStaticEffectToPlayerEffect.untilEndOfTurn(...(false))`; that handler now keeps the source on a float whose payload names "this creature". `playerDamageAbsorbers` reads static and floated copies through one predicate; a source that left absorbs nothing (CR 614.9, Royal Guard ruling). |
+| floated-name | 1 folded. `SetNameEffect(name, subject, Duration)` with a normalfx path: permanents found once (CR 611.2c), one layer-3 `target()` float each (CR 612.8, 613.1c). It takes Awakening of Vitu-Ghazi, The Curse of Fenric, Tenth District Hero's Mileva (whose `GrantStaticEffectToSourceEffect(SetNameEffect)` special cases in `LayerClassifier` and `applyL3Instance` are gone) and The Irencrag's name. `Permanent.persistentName`, its copy, its seed in `CharacteristicState` and its fingerprint are removed. |
+| floated-doublers | 0 folded, 3 blocked-other. Overblaze: a resolved effect on the permanent, not an ability (a layer-6 grant would end under Humility); a shared non-ability floated source doubler would have only Overblaze and Jeska, and one record would change Overblaze's AI polarity (HARMFUL_DAMAGE). Jeska: "your opponents" is the ability controller's; it needs a multiplier and a caster's-opponents scope only it sets. Blind Fury: any controller's creatures dealing to creatures, a source set and scope only it sets. |
+
+**Behaviour changes.**
+- Pixie Guide and Barbarian Class apply to Valiant, Arcane and Grave Endeavor. Wild Endeavor rolls three d4 and ignores one (it used to roll an extra die per d4). Source: Pixie Guide's Oracle text, the Endeavor rulings. 4 new tests; each fails on the old code (old options were "4,2", "2,4", "3,1", "5,2").
+- A resolved name follows timestamp order with static name setters (CR 613.7): Fenric after Witness Protection is named Fenric. New test; on the old code the static name beat the persistent seed.
+- Blind Fury's doubling takes Maro's Gone Nuts' factor (Maro + Blind Fury: a 2/2 now kills a 2/5 blocker). New test; this is the queued defect.
+- Logs: Royal Guard's activation line is gone (the survivor logs nothing). The name line "is named X." is kept on the new path.
+- The AI now sees the Endeavors' follow-up steps (draw, destroy-all, mass damage) for its multipliers; the board-wipe view is kept through `DestroyAllPermanentsEffect` and `MassDamageEffect`.
+
+**Tests changed.** The 5 Endeavor tests inject a fixed `DiceRollService` into `RollTwoDiceChooseOneEffectHandler` (Grave: its own handler), with `@DisplayName` added. ScourTest and TheCurseOfFenricTest replace `setPersistentName` with a floating `SetNameEffect`. KjeldoranRoyalGuardTest's end-of-turn check reads the floated survivor. `TargetPolarityClassifier`'s name entry is now `SetNameEffect` (NEUTRAL). Added: 4 Pixie Guide tests, the Fenric timestamp test, the Blind Fury + Maro test.
+
+**Seen, not changed.**
+- `RollD6Effect`, `RollD8Effect`, `RollD10Effect`, Clown Car, Neverwinter Hydra and Sword of Hours still ignore dice advantage (the queued line, minus the Endeavors). Sure.
+- Overblaze's AI polarity entry is HARMFUL_DAMAGE, though one's own creature is the usual target. AI only, unsure.
+
+**For the next run.** The rest of the advantage defect can move onto `DiceRollService.rollDice` (the d6, d8 and d10 rolls, Clown Car, Hydra, Sword of Hours). Grave Endeavor folds once a second card needs a dynamic "return with N counters". The three doublers need the owner's leave to add one-card options, or a second user.
 
 ## Prompt
 

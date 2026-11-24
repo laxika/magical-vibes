@@ -3,13 +3,14 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BarbarianClass;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.effect.normalfx.D12RollService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.RecklessEndeavorEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DiceRollService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.RollTwoDiceChooseOneEffectHandler;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -18,21 +19,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({RecklessEndeavor.class, AirElemental.class, BarbarianClass.class})
 class RecklessEndeavorTest extends BaseCardTest {
 
-    private RecklessEndeavorEffectHandler effectHandler;
-    private D12RollService originalD12RollService;
+    private RollTwoDiceChooseOneEffectHandler effectHandler;
+    private DiceRollService originalDiceRollService;
 
     @BeforeEach
-    void captureD12RollService() {
-        effectHandler = GameTestEngineContext.get().getBean(RecklessEndeavorEffectHandler.class);
-        originalD12RollService = (D12RollService) ReflectionTestUtils.getField(effectHandler, "d12RollService");
+    void captureDiceRollService() {
+        effectHandler = GameTestEngineContext.get().getBean(RollTwoDiceChooseOneEffectHandler.class);
+        originalDiceRollService = (DiceRollService) ReflectionTestUtils.getField(effectHandler, "diceRollService");
     }
 
     @AfterEach
-    void restoreD12RollService() {
-        ReflectionTestUtils.setField(effectHandler, "d12RollService", originalD12RollService);
+    void restoreDiceRollService() {
+        ReflectionTestUtils.setField(effectHandler, "diceRollService", originalDiceRollService);
     }
 
     @Test
+    @DisplayName("Choosing first roll deals that much and creates the other number of treasures")
     void choosingFirstRollDealsThatMuchAndCreatesTheOtherNumberOfTreasures() {
         castWithRolls(3, 8);
 
@@ -46,6 +48,7 @@ class RecklessEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing second roll creates the other number of treasures")
     void choosingSecondRollCreatesTheOtherNumberOfTreasures() {
         castWithRolls(3, 8);
 
@@ -56,13 +59,14 @@ class RecklessEndeavorTest extends BaseCardTest {
     }
 
     private void castWithRolls(int first, int second) {
-        ReflectionTestUtils.setField(effectHandler, "d12RollService", new FixedD12RollService(first, second));
+        ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(first, second));
         harness.addToBattlefield(player2, new AirElemental());
         harness.castFromHand(player1, new RecklessEndeavor(), "{5}{R}{R}");
         harness.passBothPriorities();
     }
 
     @Test
+    @DisplayName("Equal rolls resolve without a choice")
     void equalRollsResolveWithoutAChoice() {
         castWithRolls(4, 4);
 
@@ -73,6 +77,7 @@ class RecklessEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Damage hits creatures controlled by both players but not players")
     void damageHitsCreaturesControlledByBothPlayersButNotPlayers() {
         harness.addToBattlefield(player1, new AirElemental());
         castWithRolls(4, 12);
@@ -88,8 +93,9 @@ class RecklessEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Creates treasures even when there are no creatures")
     void createsTreasuresEvenWhenThereAreNoCreatures() {
-        ReflectionTestUtils.setField(effectHandler, "d12RollService", new FixedD12RollService(1, 12));
+        ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(1, 12));
         harness.castFromHand(player1, new RecklessEndeavor(), "{5}{R}{R}");
         harness.passBothPriorities();
 
@@ -100,9 +106,10 @@ class RecklessEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Barbarian class adds one die to the whole roll and ignores only the lowest")
     void barbarianClassAddsOneDieToTheWholeRollAndIgnoresOnlyTheLowest() {
         harness.addToBattlefield(player1, new BarbarianClass());
-        ReflectionTestUtils.setField(effectHandler, "d12RollService", new FixedD12RollService(12, 8, 1, 1));
+        ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(12, 8, 1, 1));
         harness.castFromHand(player1, new RecklessEndeavor(), "{5}{R}{R}");
         harness.passBothPriorities();
 
@@ -115,17 +122,17 @@ class RecklessEndeavorTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Barbarian Class");
     }
 
-    private static final class FixedD12RollService extends D12RollService {
+    private static final class FixedDiceRollService extends DiceRollService {
 
         private final int[] results;
         private int index;
 
-        private FixedD12RollService(int... results) {
+        private FixedDiceRollService(int... results) {
             this.results = results;
         }
 
         @Override
-        public int roll() {
+        public int roll(int sides) {
             return results[Math.min(index++, results.length - 1)];
         }
     }

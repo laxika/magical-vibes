@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KjeldoranRoyalGuard;
+import com.github.laxika.magicalvibes.cards.m.MarosGoneNuts;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,7 +15,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-@CardUsed({BlindFury.class, AvatarOfMight.class, GiantSpider.class, GrizzlyBears.class})
+@CardUsed({BlindFury.class, AvatarOfMight.class, GiantSpider.class, GrizzlyBears.class, KjeldoranRoyalGuard.class,
+        MarosGoneNuts.class})
 class BlindFuryTest extends BaseCardTest {
 
     private void castBlindFury() {
@@ -36,6 +39,19 @@ class BlindFuryTest extends BaseCardTest {
             blocker.addBlockingTarget(0);
         }
         resolveCombat(player2);
+    }
+
+    @Test
+    @DisplayName("Maro's Gone Nuts upgrades Blind Fury's doubling of combat damage to creatures")
+    void marosGoneNutsUpgradesTheDoubling() {
+        harness.addToBattlefield(player1, new MarosGoneNuts());
+        Permanent attacker = addAttacker(new GrizzlyBears());
+        Permanent blocker = addBlocker(new KjeldoranRoyalGuard());
+        castBlindFury();
+
+        resolveOpponentCombat(attacker, blocker);
+
+        harness.assertInGraveyard(player1, "Kjeldoran Royal Guard");
     }
 
     @Test

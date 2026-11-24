@@ -1122,8 +1122,6 @@ public class LayerSystemService {
         h = hashEnums(h, p.getFaceDownCardTypes());
         h = hashEnums(h, p.getFaceDownSubtypes());
 
-        h = mix(h, p.getPersistentName() == null ? 0 : p.getPersistentName().hashCode());
-
         // A chosen color feeds layer 3 (Swirl the Mists rewrites every color word to it) and
         // layers 5/6 (chosen-color protection, Shifting Sky), so it must invalidate the cache.
         h = mix(h, enumOrdinal(p.getChosenColor()));
@@ -2059,12 +2057,6 @@ public class LayerSystemService {
                                  Map<UUID, PermanentSlot> slotsById, LayeredBoardState board) {
         if (instance.effect() instanceof SetNameEffect setName) {
             for (PermanentSlot target : scopeTargets(gameData, instance, setName.subject(), null,
-                    slots, slotsById, board)) {
-                board.states().get(target.permanent().getId()).setName(setName.name());
-            }
-        } else if (instance.effect() instanceof GrantStaticEffectToSourceEffect grant
-                && grant.staticEffect() instanceof SetNameEffect setName) {
-            for (PermanentSlot target : scopeTargets(gameData, instance, SOURCE, null,
                     slots, slotsById, board)) {
                 board.states().get(target.permanent().getId()).setName(setName.name());
             }

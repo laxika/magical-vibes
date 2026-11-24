@@ -48,8 +48,7 @@ public class TenthDistrictHero extends Card {
                                 SequenceEffect.of(
                                         new SetBasePowerToughnessEffect(5, 5, Subjects.source(), Duration.PERMANENT),
                                         new SetTargetPermanentSupertypeEffect(CardSupertype.LEGENDARY, true, Subjects.source()),
-                                        new GrantStaticEffectToSourceEffect(
-                                                new SetNameEffect("Mileva, the Stalwart", Subjects.source())),
+                                        new SetNameEffect("Mileva, the Stalwart", Subjects.source()),
                                         new GrantStaticEffectToSourceEffect(
                                                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.otherCreaturesYouControl()))
                                 )

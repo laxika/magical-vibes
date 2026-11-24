@@ -5,15 +5,17 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Opt;
 import com.github.laxika.magicalvibes.cards.r.RealityShift;
+import com.github.laxika.magicalvibes.cards.p.PixieGuide;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ArcaneEndeavorEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DiceRollService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.RollTwoDiceChooseOneEffectHandler;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -21,15 +23,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArcaneEndeavor.class, Divination.class, Forest.class, GrizzlyBears.class, Opt.class, RealityShift.class})
+@CardUsed({ArcaneEndeavor.class, PixieGuide.class, Divination.class, Forest.class, GrizzlyBears.class, Opt.class, RealityShift.class})
 class ArcaneEndeavorTest extends BaseCardTest {
 
-    private ArcaneEndeavorEffectHandler effectHandler;
+    private RollTwoDiceChooseOneEffectHandler effectHandler;
     private DiceRollService originalDiceRollService;
 
     @BeforeEach
     void captureDiceRollService() {
-        effectHandler = GameTestEngineContext.get().getBean(ArcaneEndeavorEffectHandler.class);
+        effectHandler = GameTestEngineContext.get().getBean(RollTwoDiceChooseOneEffectHandler.class);
         originalDiceRollService = (DiceRollService) ReflectionTestUtils.getField(effectHandler, "diceRollService");
     }
 
@@ -39,6 +41,7 @@ class ArcaneEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chosen result draws that many and other result caps instant or sorcery cast")
     void chosenResultDrawsThatManyAndOtherResultCapsInstantOrSorceryCast() {
         ArcaneEndeavor endeavor = new ArcaneEndeavor();
         Opt eligibleSpell = new Opt();
@@ -66,6 +69,7 @@ class ArcaneEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing the other result draws the other number")
     void choosingTheOtherResultDrawsTheOtherNumber() {
         ArcaneEndeavor endeavor = new ArcaneEndeavor();
         ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(3, 6));
@@ -79,6 +83,7 @@ class ArcaneEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Equal rolls draw and allow casting without a number choice")
     void equalRollsDrawAndAllowCastingWithoutANumberChoice() {
         Divination drawnSpell = new Divination();
         ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(3, 3));
@@ -100,6 +105,7 @@ class ArcaneEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("May decline casting after drawing")
     void mayDeclineCastingAfterDrawing() {
         Opt drawnSpell = new Opt();
         ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(1, 1));
@@ -116,6 +122,7 @@ class ArcaneEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Accepting one spell does not allow casting a second spell")
     void acceptingOneSpellDoesNotAllowCastingASecondSpell() {
         Divination firstSpell = new Divination();
         Opt secondSpell = new Opt();
@@ -137,6 +144,7 @@ class ArcaneEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Spell with no legal targets remains in hand")
     @CardUsed({ArcaneEndeavor.class, RealityShift.class, Forest.class})
     void spellWithNoLegalTargetsRemainsInHand() {
         RealityShift uncastableSpell = new RealityShift();
@@ -153,6 +161,22 @@ class ArcaneEndeavorTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(uncastableSpell);
         assertThat(gd.stack).isEmpty();
         harness.assertNotInGraveyard(player1, "Reality Shift");
+    }
+
+    @Test
+    @DisplayName("Pixie Guide adds one die to the two-die roll and the lowest of the three is ignored")
+    void pixieGuideAddsOneDieToTheWholeRoll() {
+        harness.addToBattlefield(player1, new PixieGuide());
+        ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(3, 1, 6));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.castFromHand(player1, new ArcaneEndeavor(), "{5}{U}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("3", "6");
+        harness.handleListChoice(player1, "6");
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(6);
     }
 
     private static final class FixedDiceRollService extends DiceRollService {

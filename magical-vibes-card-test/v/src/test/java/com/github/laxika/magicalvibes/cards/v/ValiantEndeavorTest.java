@@ -2,32 +2,34 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PixieGuide;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DiceRollService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ValiantEndeavorEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.RollTwoDiceChooseOneEffectHandler;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ValiantEndeavor.class, AirElemental.class, GrizzlyBears.class})
+@CardUsed({ValiantEndeavor.class, PixieGuide.class, AirElemental.class, GrizzlyBears.class})
 class ValiantEndeavorTest extends BaseCardTest {
 
-    private ValiantEndeavorEffectHandler effectHandler;
+    private RollTwoDiceChooseOneEffectHandler effectHandler;
     private DiceRollService originalDiceRollService;
 
     @BeforeEach
     void captureDiceRollService() {
-        effectHandler = GameTestEngineContext.get().getBean(ValiantEndeavorEffectHandler.class);
+        effectHandler = GameTestEngineContext.get().getBean(RollTwoDiceChooseOneEffectHandler.class);
         originalDiceRollService = (DiceRollService) ReflectionTestUtils.getField(effectHandler, "diceRollService");
     }
 
@@ -37,6 +39,7 @@ class ValiantEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing first roll destroys creatures at least that power and creates the other number of knights")
     void choosingFirstRollDestroysCreaturesAtLeastThatPowerAndCreatesTheOtherNumberOfKnights() {
         castWithRolls(4, 2);
 
@@ -51,6 +54,7 @@ class ValiantEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing second roll uses the first roll for knight count")
     void choosingSecondRollUsesTheFirstRollForKnightCount() {
         castWithRolls(2, 4);
 
@@ -62,6 +66,7 @@ class ValiantEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Equal rolls resolve without a choice")
     void equalRollsResolveWithoutAChoice() {
         castWithRolls(3, 3);
 
@@ -72,6 +77,7 @@ class ValiantEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Low threshold destroys both players creatures before creating knights")
     void lowThresholdDestroysBothPlayersCreaturesBeforeCreatingKnights() {
         harness.addToBattlefield(player1, new AirElemental());
         harness.addToBattlefield(player1, new GrizzlyBears());
@@ -95,6 +101,7 @@ class ValiantEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Creates knights even when no creatures meet the threshold")
     void createsKnightsEvenWhenNoCreaturesMeetTheThreshold() {
         castWithRolls(6, 1);
 
@@ -106,6 +113,7 @@ class ValiantEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Uses current power including counters")
     void usesCurrentPowerIncludingCounters() {
         var bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
@@ -117,12 +125,25 @@ class ValiantEndeavorTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(countPermanents(player1, "Knight")).isEqualTo(1);
     }
-    private void castWithRolls(int first, int second) {
-        ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(first, second));
+    private void castWithRolls(int... rolls) {
+        ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(rolls));
         harness.addToBattlefield(player2, new AirElemental());
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.castFromHand(player1, new ValiantEndeavor(), "{4}{W}{W}");
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Pixie Guide adds one die to the two-die roll and the lowest of the three is ignored")
+    void pixieGuideAddsOneDieToTheWholeRoll() {
+        harness.addToBattlefield(player1, new PixieGuide());
+        castWithRolls(4, 2, 6);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("4", "6");
+        harness.handleListChoice(player1, "6");
+
+        assertThat(countPermanents(player1, "Knight")).isEqualTo(4);
     }
 
     private static final class FixedDiceRollService extends DiceRollService {

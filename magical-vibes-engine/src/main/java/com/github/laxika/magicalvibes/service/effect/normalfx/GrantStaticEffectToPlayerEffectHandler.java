@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
@@ -14,7 +16,8 @@ import java.util.UUID;
 
 /**
  * Floats the granted static effect on each player the grant names, for its duration; a source-linked duration keeps
- * the source on the floating effect so the duration clock can end it.
+ * the source on the floating effect so the duration clock can end it, and so does a granted effect that names its
+ * source ("this creature"), so its reader can find it.
  */
 @Component
 @RequiredArgsConstructor
@@ -38,6 +41,10 @@ public class GrantStaticEffectToPlayerEffectHandler implements NormalEffectHandl
             if (sourcePermanentId == null || gameQueryService.findPermanentById(gameData, sourcePermanentId) == null) {
                 return;
             }
+        } else if (namesItsSource(grant.staticEffect())) {
+            // "Dealt to this creature instead" floated this turn (Kjeldoran Royal Guard): "this creature" is the
+            // ability's source, so the float keeps it; once it has left, the redirection does nothing (CR 614.9).
+            sourcePermanentId = entry.getSourcePermanentId();
         }
         for (UUID playerId : subjectResolutionService.players(gameData, entry, effect, grant.player())) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
@@ -52,5 +59,11 @@ public class GrantStaticEffectToPlayerEffectHandler implements NormalEffectHandl
                     grant.duration(),
                     0L));
         }
+    }
+
+    /** Whether the granted static effect acts on its own source permanent ("dealt to this creature instead"). */
+    private static boolean namesItsSource(CardEffect staticEffect) {
+        return staticEffect instanceof RedirectPlayerDamageToSelfEffect redirect
+                && redirect.subject() instanceof PermanentSubject.Source;
     }
 }

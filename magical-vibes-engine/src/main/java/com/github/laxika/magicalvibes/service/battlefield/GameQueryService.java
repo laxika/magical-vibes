@@ -13142,10 +13142,10 @@ public class GameQueryService {
      */
     public int getCombatDamageToCreatureMultiplier(GameData gameData, Permanent target) {
         int multiplier = getEquippedCreatureCombatDamageMultiplier(gameData, target);
-        int doublings = gameData.floatingEffectsOnPlayer(null,
-                DoubleCombatDamageToCreaturesThisTurnEffect.class).size();
-        for (int i = 0; i < doublings; i++) {
-            multiplier *= 2;
+        for (FloatingContinuousEffect doubling : gameData.floatingEffectsOnPlayer(null,
+                DoubleCombatDamageToCreaturesThisTurnEffect.class)) {
+            // A doubling effect, so Maro's Gone Nuts upgrades it like every other doubler.
+            multiplier *= MaroGoneNutsSupport.apply(gameData, doubling.effect(), 2);
         }
         return multiplier;
     }

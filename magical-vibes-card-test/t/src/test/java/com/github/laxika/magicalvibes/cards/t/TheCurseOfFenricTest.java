@@ -1,7 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.ClockworkDroid;
+import com.github.laxika.magicalvibes.cards.w.WitnessProtection;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -13,14 +18,16 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheCurseOfFenric.class, GrizzlyBears.class, ClockworkDroid.class})
+@CardUsed({TheCurseOfFenric.class, GrizzlyBears.class, ClockworkDroid.class, WitnessProtection.class})
 class TheCurseOfFenricTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Chapter I destroys one creature per controller and creates Mutants")
     void chapterIDestroysOneCreaturePerControllerAndCreatesMutants() {
         Permanent saga = addSaga(0);
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -47,6 +54,7 @@ class TheCurseOfFenricTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter II turns nontoken creature into Fenric")
     void chapterIITurnsNontokenCreatureIntoFenric() {
         addSaga(1);
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -64,6 +72,23 @@ class TheCurseOfFenricTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter II's name is newer than an earlier Aura's name, so the creature is named Fenric")
+    void chapterIINameFollowsTimestampOrderOverAnEarlierAurasName() {
+        addSaga(1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new WitnessProtection());
+        aura.setAttachedTo(creature.getId());
+        assertThat(gqs.getEffectiveName(gd, creature)).isEqualTo("Legitimate Businessperson");
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveName(gd, creature)).isEqualTo("Fenric");
+    }
+
+    @Test
+    @DisplayName("Chapter III Mutant fights Fenric")
     void chapterIIIMutantFightsFenric() {
         addSaga(2);
         Permanent mutant = harness.addToBattlefieldAndReturn(player1, creature("Mutant", CardSubtype.MUTANT));
@@ -79,6 +104,7 @@ class TheCurseOfFenricTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter III retains both targets when they have the same controller")
     void chapterIIIRetainsBothTargetsWhenTheyHaveTheSameController() {
         Permanent saga = addSaga(0);
         Permanent victim = harness.addToBattlefieldAndReturn(player1, new ClockworkDroid());
@@ -106,6 +132,7 @@ class TheCurseOfFenricTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter I creates replacement Mutant for destroyed token")
     void chapterICreatesReplacementMutantForDestroyedToken() {
         Permanent saga = addSaga(0);
         Permanent victim = harness.addToBattlefieldAndReturn(player1, new ClockworkDroid());
@@ -125,6 +152,7 @@ class TheCurseOfFenricTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter II replaces artifact type and persists after saga leaves")
     void chapterIIReplacesArtifactTypeAndPersistsAfterSagaLeaves() {
         Permanent saga = addSaga(1);
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new ClockworkDroid());
@@ -144,6 +172,7 @@ class TheCurseOfFenricTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter III does not fight when Fenric has another name at resolution")
     void chapterIIIDoesNotFightWhenFenricHasAnotherNameAtResolution() {
         addSaga(0);
         Permanent victim = harness.addToBattlefieldAndReturn(player1, new ClockworkDroid());
@@ -160,7 +189,8 @@ class TheCurseOfFenricTest extends BaseCardTest {
         triggerChapter();
         harness.handlePermanentChosen(player1, mutant.getId());
         harness.handlePermanentChosen(player1, fenric.getId());
-        fenric.setPersistentName("Clockwork Droid");
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new SetNameEffect("Clockwork Droid", Subjects.target()), fenric.getId(), Duration.PERMANENT));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(mutant);
@@ -170,6 +200,7 @@ class TheCurseOfFenricTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter I can choose no creatures")
     void chapterICanChooseNoCreatures() {
         addSaga(0);
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new ClockworkDroid());

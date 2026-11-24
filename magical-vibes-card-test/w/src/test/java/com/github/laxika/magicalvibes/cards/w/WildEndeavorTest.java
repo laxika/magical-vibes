@@ -2,17 +2,19 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.c.CommandTower;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.p.PixieGuide;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.effect.normalfx.D4RollService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.WildEndeavorEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DiceRollService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.RollTwoDiceChooseOneEffectHandler;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -20,26 +22,27 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WildEndeavor.class, Forest.class, CommandTower.class})
+@CardUsed({WildEndeavor.class, PixieGuide.class, Forest.class, CommandTower.class})
 class WildEndeavorTest extends BaseCardTest {
 
-    private WildEndeavorEffectHandler effectHandler;
-    private D4RollService originalD4RollService;
+    private RollTwoDiceChooseOneEffectHandler effectHandler;
+    private DiceRollService originalDiceRollService;
 
     @BeforeEach
-    void captureD4RollService() {
-        effectHandler = GameTestEngineContext.get().getBean(WildEndeavorEffectHandler.class);
-        originalD4RollService = (D4RollService) ReflectionTestUtils.getField(effectHandler, "d4RollService");
+    void captureDiceRollService() {
+        effectHandler = GameTestEngineContext.get().getBean(RollTwoDiceChooseOneEffectHandler.class);
+        originalDiceRollService = (DiceRollService) ReflectionTestUtils.getField(effectHandler, "diceRollService");
     }
 
     @AfterEach
-    void restoreD4RollService() {
-        ReflectionTestUtils.setField(effectHandler, "d4RollService", originalD4RollService);
+    void restoreDiceRollService() {
+        ReflectionTestUtils.setField(effectHandler, "diceRollService", originalDiceRollService);
     }
 
     @Test
+    @DisplayName("Chosen roll creates beasts and the other roll searches tapped basic lands")
     void chosenRollCreatesBeastsAndTheOtherRollSearchesTappedBasicLands() {
-        ReflectionTestUtils.setField(effectHandler, "d4RollService", new FixedD4RollService(3, 1));
+        ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(3, 1));
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         castWildEndeavor();
 
@@ -58,8 +61,9 @@ class WildEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing the other roll uses the first roll for land count")
     void choosingTheOtherRollUsesTheFirstRollForLandCount() {
-        ReflectionTestUtils.setField(effectHandler, "d4RollService", new FixedD4RollService(1, 3));
+        ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(1, 3));
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         castWildEndeavor();
 
@@ -76,8 +80,9 @@ class WildEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Equal rolls resolve without a choice")
     void equalRollsResolveWithoutAChoice() {
-        ReflectionTestUtils.setField(effectHandler, "d4RollService", new FixedD4RollService(2, 2));
+        ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(2, 2));
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         castWildEndeavor();
 
@@ -89,8 +94,9 @@ class WildEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing second roll creates four beasts and finds one land")
     void choosingSecondRollCreatesFourBeastsAndFindsOneLand() {
-        ReflectionTestUtils.setField(effectHandler, "d4RollService", new FixedD4RollService(1, 4));
+        ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(1, 4));
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         castWildEndeavor();
 
@@ -114,8 +120,9 @@ class WildEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Empty library still creates beasts and completes resolution")
     void emptyLibraryStillCreatesBeastsAndCompletesResolution() {
-        ReflectionTestUtils.setField(effectHandler, "d4RollService", new FixedD4RollService(4, 4));
+        ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(4, 4));
         harness.setLibrary(player1, List.of());
         castWildEndeavor();
 
@@ -125,8 +132,9 @@ class WildEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Fewer basic lands than rolled finds available lands and leaves nonlands")
     void fewerBasicLandsThanRolledFindsAvailableLandsAndLeavesNonlands() {
-        ReflectionTestUtils.setField(effectHandler, "d4RollService", new FixedD4RollService(1, 4));
+        ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(1, 4));
         WildEndeavor nonland = new WildEndeavor();
         harness.setLibrary(player1, List.of(nonland, new Forest(), new Forest()));
         castWildEndeavor();
@@ -145,8 +153,9 @@ class WildEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Restricted search can stop after finding one basic land")
     void restrictedSearchCanStopAfterFindingOneBasicLand() {
-        ReflectionTestUtils.setField(effectHandler, "d4RollService", new FixedD4RollService(1, 3));
+        ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(1, 3));
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         castWildEndeavor();
 
@@ -163,8 +172,9 @@ class WildEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Nonbasic land cannot be found even though it is a land")
     void nonbasicLandCannotBeFoundEvenThoughItIsALand() {
-        ReflectionTestUtils.setField(effectHandler, "d4RollService", new FixedD4RollService(2, 2));
+        ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(2, 2));
         CommandTower nonbasic = new CommandTower();
         harness.setLibrary(player1, List.of(nonbasic));
         castWildEndeavor();
@@ -184,17 +194,32 @@ class WildEndeavorTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private static final class FixedD4RollService extends D4RollService {
+    @Test
+    @DisplayName("Pixie Guide makes one roll of three d4 ignoring the lowest, not an extra die per d4")
+    void pixieGuideAddsOneDieToTheWholeRoll() {
+        harness.addToBattlefield(player1, new PixieGuide());
+        ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(1, 2, 3, 4));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        castWildEndeavor();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("2", "3");
+        harness.handleListChoice(player1, "3");
+
+        assertThat(countPermanents(player1, "Beast")).isEqualTo(3);
+    }
+
+    private static final class FixedDiceRollService extends DiceRollService {
 
         private final int[] results;
         private int index;
 
-        private FixedD4RollService(int... results) {
+        private FixedDiceRollService(int... results) {
             this.results = results;
         }
 
         @Override
-        public int roll() {
+        public int roll(int sides) {
             return results[Math.min(index++, results.length - 1)];
         }
     }

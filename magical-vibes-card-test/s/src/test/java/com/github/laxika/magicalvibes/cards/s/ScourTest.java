@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.cards.g.GnarledMass;
 import com.github.laxika.magicalvibes.cards.i.InTheWebOfWar;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -47,7 +51,8 @@ class ScourTest extends BaseCardTest {
     @DisplayName("Searches using the enchantment's current name rather than its printed name")
     void searchesUsingChangedName() {
         var target = harness.addToBattlefieldAndReturn(player2, new InTheWebOfWar());
-        target.setPersistentName("Gnarled Mass");
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new SetNameEffect("Gnarled Mass", Subjects.target()), target.getId(), Duration.PERMANENT));
         var matchingCard = new GnarledMass();
         var printedNameCopy = new InTheWebOfWar();
         harness.setGraveyard(player2, List.of(matchingCard, printedNameCopy));

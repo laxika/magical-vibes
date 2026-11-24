@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
-import com.github.laxika.magicalvibes.model.effect.SetTargetPermanentNameEffect;
+import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetPermanentSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -62,7 +62,7 @@ public class TheCurseOfFenric extends Card {
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
 
         addTrigger(Triggers.chapter(2),
-                new SetTargetPermanentNameEffect("Fenric"),
+                new SetNameEffect("Fenric", Subjects.target()),
                 new SetCardTypesEffect(Set.of(CardType.CREATURE), Subjects.target()),
                 new GrantSubtypeEffect(CardSubtype.HORROR, Subjects.target(), true),
                 new SetTargetPermanentSupertypeEffect(CardSupertype.LEGENDARY, true),

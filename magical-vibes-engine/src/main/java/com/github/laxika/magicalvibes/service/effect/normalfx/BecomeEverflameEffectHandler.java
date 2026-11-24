@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -49,11 +50,13 @@ public class BecomeEverflameEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
-        if (source == null || EVERFLAME_NAME.equals(source.getPersistentName())) {
+        if (source == null || EVERFLAME_NAME.equals(gameQueryService.getEffectiveName(gameData, source))) {
             return;
         }
 
-        source.setPersistentName(EVERFLAME_NAME);
+        // "Named Everflame, Heroes' Legacy": a layer-3 name change (CR 612.8, 613.1c) the Irencrag keeps indefinitely.
+        addFloatingEffect(gameData, entry, source,
+                new SetNameEffect(EVERFLAME_NAME, Subjects.target(), Duration.PERMANENT));
         gameData.addEffectOnPermanent(entry, new GrantSubtypeEffect(CardSubtype.EQUIPMENT, Subjects.target()),
                 source.getId(), Duration.PERMANENT);
 

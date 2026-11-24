@@ -39,8 +39,9 @@ public class GraveEndeavorEffectHandler implements NormalEffectHandlerBean {
         int firstRoll = entry.getXValue();
         int secondRoll = entry.getEventValue();
         if (firstRoll == 0 || secondRoll == 0) {
-            firstRoll = diceRollService.roll(10);
-            secondRoll = diceRollService.roll(10);
+            List<Integer> rolls = diceRollService.rollDice(gameData, entry.getControllerId(), 10, 2);
+            firstRoll = rolls.get(0);
+            secondRoll = rolls.get(1);
             entry.setXValue(firstRoll);
             entry.setEventValue(secondRoll);
 

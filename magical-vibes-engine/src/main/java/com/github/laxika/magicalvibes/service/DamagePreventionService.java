@@ -89,7 +89,6 @@ import com.github.laxika.magicalvibes.model.effect.DamagePreventionControlChange
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectAllDamageToEnchantedCreatureControllerEffect;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -3491,49 +3490,57 @@ public class DamagePreventionService {
      * The permanents that would be dealt damage {@code playerId} would be dealt by this source
      * instead, each its own redirection effect for the player to order (CR 616.1): an enchanted
      * creature whose Aura takes its controller's damage, a permanent whose static ability takes
-     * that player's damage ("dealt to this creature instead", Palisade Giant, Veteran Bodyguard),
-     * and for combat damage from an unblocked creature the untapped guards (Weathered Bodyguards)
-     * and the creature Kjeldoran Royal Guard's ability chose. A destination that can no longer be
-     * dealt the damage is left out (CR 614.9).
+     * that player's damage ("dealt to this creature instead", Palisade Giant, Veteran Bodyguard,
+     * Weathered Bodyguards), and the source of such an ability floated on the player this turn
+     * (Kjeldoran Royal Guard). A destination that can no longer be dealt the damage is left out
+     * (CR 614.9).
      */
     public List<Permanent> playerDamageAbsorbers(GameData gameData, UUID playerId, StackEntry sourceEntry,
                                                  Card sourceCard, UUID sourcePermanentId, boolean combat) {
         if (playerId == null) return List.of();
         Permanent sourcePermanent = sourcePermanentId == null
                 ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        boolean unblockedSource = combat && isUnblockedCreatureSource(gameData, sourcePermanentId);
         Set<Permanent> absorbers = new LinkedHashSet<>();
         absorbers.addAll(gameQueryService.findEnchantedCreaturesByAuraEffect(
                 gameData, playerId, effect -> effect instanceof RedirectPlayerDamageToSelfEffect redirect
                         && redirect.subject() instanceof PermanentSubject.Attached));
-        if (unblockedSource) {
-            for (FloatingContinuousEffect fe : gameData.floatingEffectsOnPlayer(playerId,
-                    RedirectUnblockedCombatDamageToSelfEffect.class)) {
-                Permanent chosen = gameQueryService.findPermanentById(gameData, fe.affectedPermanentId());
-                if (chosen != null) absorbers.add(chosen);
+        for (FloatingContinuousEffect fe : gameData.floatingEffectsOnPlayer(playerId,
+                RedirectPlayerDamageToSelfEffect.class)) {
+            Permanent floatSource = fe.sourcePermanentId() == null
+                    ? null : gameQueryService.findPermanentById(gameData, fe.sourcePermanentId());
+            if (floatSource != null && redirectsToSource(gameData, (RedirectPlayerDamageToSelfEffect) fe.effect(),
+                    floatSource, sourceEntry, sourceCard, sourcePermanent, sourcePermanentId, combat)) {
+                absorbers.add(floatSource);
             }
         }
-        for (GameQueryService.ActiveStaticEffect<CardEffect> active
-                : gameQueryService.activeStaticEffects(gameData, playerId, CardEffect.class)) {
+        for (GameQueryService.ActiveStaticEffect<RedirectPlayerDamageToSelfEffect> active
+                : gameQueryService.activeStaticEffects(gameData, playerId, RedirectPlayerDamageToSelfEffect.class)) {
             Permanent permanent = active.source();
             if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-            CardEffect effect = active.effect();
-            if (effect instanceof RedirectUnblockedCombatDamageToSelfEffect
-                    && unblockedSource && !permanent.isTapped()) {
-                absorbers.add(permanent);
-            } else if (effect instanceof RedirectPlayerDamageToSelfEffect redirect
-                    && redirect.subject() instanceof PermanentSubject.Source
-                    && !(redirect.requiresUntapped() && permanent.isTapped())
-                    && (!redirect.onlyFromUnblockedCreatures() || !permanent.isTapped()
-                    && gameQueryService.isCreature(gameData, permanent)
-                    && isUnblockedCreatureSource(gameData, sourcePermanentId))
-                    && gameQueryService.matchesDamageSourcePredicate(
-                    gameData, sourceEntry, sourceCard, sourcePermanent, redirect.sourcePredicate())) {
+            if (redirectsToSource(gameData, active.effect(), permanent, sourceEntry, sourceCard, sourcePermanent,
+                    sourcePermanentId, combat)) {
                 absorbers.add(permanent);
             }
         }
         absorbers.removeIf(absorber -> !isRedirectDestination(gameData, absorber.getId()));
         return List.copyOf(absorbers);
+    }
+
+    /**
+     * Whether {@code redirect}, a "dealt to this creature instead" redirection whose creature is {@code absorber},
+     * applies to this damage: untapped when it needs that, combat damage when it is combat-only, from an unblocked
+     * attacking creature when it is limited to those (a blocked trampler is not unblocked), and from a matching source.
+     */
+    private boolean redirectsToSource(GameData gameData, RedirectPlayerDamageToSelfEffect redirect, Permanent absorber,
+                                      StackEntry sourceEntry, Card sourceCard, Permanent sourcePermanent,
+                                      UUID sourcePermanentId, boolean combat) {
+        return redirect.subject() instanceof PermanentSubject.Source
+                && !(redirect.requiresUntapped() && absorber.isTapped())
+                && (!redirect.combatOnly() || combat)
+                && (!redirect.onlyFromUnblockedCreatures() || gameQueryService.isCreature(gameData, absorber)
+                && isUnblockedCreatureSource(gameData, sourcePermanentId))
+                && gameQueryService.matchesDamageSourcePredicate(
+                gameData, sourceEntry, sourceCard, sourcePermanent, redirect.sourcePredicate());
     }
 
     /** Deals damage to {@code absorber} instead of the damaged permanent (Palisade Giant). */

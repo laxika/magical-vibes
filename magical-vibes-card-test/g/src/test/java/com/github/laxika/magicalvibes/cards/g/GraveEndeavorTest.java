@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PixieGuide;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -21,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GraveEndeavor.class, Forest.class, GrizzlyBears.class})
+@CardUsed({GraveEndeavor.class, PixieGuide.class, Forest.class, GrizzlyBears.class})
 class GraveEndeavorTest extends BaseCardTest {
 
     private GraveEndeavorEffectHandler effectHandler;
@@ -39,6 +41,7 @@ class GraveEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chosen roll sets counters and other roll drains")
     void chosenRollSetsCountersAndOtherRollDrains() {
         GraveEndeavor endeavor = new GraveEndeavor();
         Card invalidCard = new Forest();
@@ -65,6 +68,7 @@ class GraveEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Equal rolls need no number choice and use the same value for both effects")
     void equalRollsNeedNoNumberChoiceAndUseTheSameValueForBothEffects() {
         GraveEndeavor endeavor = new GraveEndeavor();
         GrizzlyBears creature = new GrizzlyBears();
@@ -84,6 +88,7 @@ class GraveEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Returning available creature cannot be declined")
     void returningAvailableCreatureCannotBeDeclined() {
         GrizzlyBears creature = new GrizzlyBears();
         ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(3, 3));
@@ -101,6 +106,7 @@ class GraveEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing lower second roll uses higher first roll for life changes")
     void choosingLowerSecondRollUsesHigherFirstRollForLifeChanges() {
         GrizzlyBears creature = new GrizzlyBears();
         ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(10, 1));
@@ -120,6 +126,7 @@ class GraveEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Empty graveyard still drains using unchosen roll")
     void emptyGraveyardStillDrainsUsingUnchosenRoll() {
         ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(2, 7));
         harness.setGraveyard(player1, List.of());
@@ -134,6 +141,7 @@ class GraveEndeavorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Opponents creature cannot be returned when own graveyard has only noncreatures")
     void opponentsCreatureCannotBeReturnedWhenOwnGraveyardHasOnlyNoncreatures() {
         GrizzlyBears opposingCreature = new GrizzlyBears();
         Forest land = new Forest();
@@ -148,6 +156,22 @@ class GraveEndeavorTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(land);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingCreature);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Pixie Guide adds one die to the two-die roll and the lowest of the three is ignored")
+    void pixieGuideAddsOneDieToTheWholeRoll() {
+        harness.addToBattlefield(player1, new PixieGuide());
+        ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(5, 2, 9));
+        harness.castFromHand(player1, new GraveEndeavor(), "{5}{B}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("5", "9");
+        harness.handleListChoice(player1, "5");
+
+        harness.assertLife(player1, 29);
+        harness.assertLife(player2, 11);
     }
 
     private static final class FixedDiceRollService extends DiceRollService {

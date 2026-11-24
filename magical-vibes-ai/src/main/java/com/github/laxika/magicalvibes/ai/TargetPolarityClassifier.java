@@ -886,7 +886,7 @@ public class TargetPolarityClassifier {
             entry("ConjureCardsEffect", TargetPolarity.NEUTRAL),
             entry("GrantAllCreatureTypesToOwnCreaturesEffect", TargetPolarity.NEUTRAL),
             entry("SetTargetColorEffect", TargetPolarity.NEUTRAL),
-            entry("SetTargetPermanentNameEffect", TargetPolarity.NEUTRAL),
+            entry("SetNameEffect", TargetPolarity.NEUTRAL),
             entry("SetTargetPermanentSupertypeEffect", TargetPolarity.NEUTRAL),
             entry("SetCardTypesEffect", TargetPolarity.HARMFUL),
             entry("BecomeColorlessUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),

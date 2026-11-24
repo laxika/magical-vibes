@@ -124,8 +124,7 @@ public class CharacteristicState {
      * floating continuous effects applied during the pass at their own timestamps.
      */
     public CharacteristicState(Card card, Permanent permanent) {
-        this.name = permanent.isFaceDown() ? null
-                : permanent.getPersistentName() != null ? permanent.getPersistentName() : card.getName();
+        this.name = permanent.isFaceDown() ? null : card.getName();
         if (permanent.isFaceDown()) {
             this.cardTypes.addAll(permanent.getFaceDownCardTypes());
         } else {
