@@ -23,6 +23,10 @@ public class CopyAbilityRetargetHandler implements MayEffectHandlerBean {
 
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        mayCopyHandlerService.handleCopyAbilityRetargetChoice(gameData, player, accepted, ability);
+        CopyAbilityRetargetEffect retarget = ability.effects().stream()
+                .filter(CopyAbilityRetargetEffect.class::isInstance)
+                .map(CopyAbilityRetargetEffect.class::cast)
+                .findFirst().orElse(null);
+        mayCopyHandlerService.handleCopyAbilityRetargetChoice(gameData, player, accepted, ability, retarget);
     }
 }

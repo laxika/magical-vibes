@@ -101,7 +101,7 @@ class TheBlackGateTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player1,
                 List.of(new BlockerAssignment(1, 0))))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can't block");
+                .hasMessageContaining("can only be blocked by");
     }
 
     @Test
@@ -124,7 +124,7 @@ class TheBlackGateTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player1,
                 List.of(new BlockerAssignment(1, 0))))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can't block");
+                .hasMessageContaining("can only be blocked by");
     }
 
     @Test

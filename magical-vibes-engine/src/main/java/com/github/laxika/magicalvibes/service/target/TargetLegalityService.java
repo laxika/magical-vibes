@@ -86,6 +86,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerControlsMostLandsPredic
 import com.github.laxika.magicalvibes.model.filter.PlayerHasFewerCreatureCardsInGraveyardThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerHasMoreCardsInHandThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerHasMoreLifeThanControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerHasMostLifePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerOtherThanSourceOwnerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerIsActiveOpponentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerChosenBySourcePredicate;
@@ -6340,6 +6341,10 @@ public class TargetLegalityService {
                             && countCreatureCardsInGraveyard(gameData, controllerId)
                             >= countCreatureCardsInGraveyard(gameData, targetPlayerId)
                             + graveyardPredicate.minimumDifference();
+            case PlayerHasMostLifePredicate ignored ->
+                    targetPlayerId != null
+                            && gameData.orderedPlayerIds.stream()
+                            .noneMatch(candidateId -> gameData.getLife(candidateId) > gameData.getLife(targetPlayerId));
             case PlayerHasMoreLifeThanControllerPredicate ignored ->
                     controllerId != null
                             && !controllerId.equals(targetPlayerId)

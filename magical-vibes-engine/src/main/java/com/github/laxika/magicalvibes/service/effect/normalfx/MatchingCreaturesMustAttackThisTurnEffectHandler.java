@@ -46,7 +46,8 @@ public class MatchingCreaturesMustAttackThisTurnEffectHandler implements NormalE
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (MatchingCreaturesMustAttackThisTurnEffect) effect;
-        PermanentPredicate matcher = e.matcher();
+        // A type chosen by this resolution is written in now, so the turn-long rule keeps it (CR 608.2h).
+        PermanentPredicate matcher = subjectResolutionService.bindChosenValues(gameData, entry, effect, e.matcher());
         List<UUID> players = List.of();
         if (e.players() != null) {
             players = subjectResolutionService.players(gameData, entry, effect, e.players()).stream()

@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CopyTargetAbilityEffect;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.CopyTargetActivatedOrTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -20,7 +21,7 @@ public class GogoMasterOfMimicry extends Card {
 
     public GogoMasterOfMimicry() {
         addActivatedAbility(new ActivatedAbility(true, "{X}{X}",
-                List.of(new CopyTargetAbilityEffect()),
+                List.of(CopyTargetActivatedOrTriggeredAbilityEffect.times(new XValue()).thatCantBeCopied()),
                 "{X}{X}, {T}: Copy target activated or triggered ability you control X times. You may choose new targets for the copies.",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryAllOfPredicate(List.of(

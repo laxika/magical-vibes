@@ -88,7 +88,7 @@ control" includes the source, "other creatures you control" does not; a one-shot
 | `subgameWinners()` | "each player who doesn't win that game" is `except(eachPlayer(), subgameWinners())`: the winners of the subgame an earlier step of the same resolution played (step result; Shahrazad; resolving it with no recorded result is an engine error) | no | no |
 | `except(players, excluded)` | "the other chosen player": `except(chosenPlayers(), triggeringPlayer())` | no | if both may |
 | `allOf(players...)` | "that player or that planeswalker's controller": `allOf(targetPlayerDeclaredElsewhere(), controllerOf(target()))` over a "target player or planeswalker" another effect declares (each player once, APNAP order) | no | if every part may |
-| `matching(players, PlayerPredicate)` | "each player who controls the most lands": the players `players` names who match the filter as the effect is applied (`matching(eachPlayer(), new PlayerControlsMostLandsPredicate())`, Tectonic Hellion; also `PlayerControlsMostCreaturesPredicate`, `PlayerControlsPermanentPredicate(filter)` (with `except`: "who doesn't control"), `PlayerHasNoCardsInHandPredicate`, `PlayerAttackedBySourceThisTurnPredicate`, `PlayerLostLifeThisTurnPredicate(minimum)`, `PlayerCanSearchTheirLibraryPredicate` ("each opponent who could search", Tempt with Discovery); the filter is a `PlayerPredicate`, evaluated with the effect's controller as the comparing player) | no | if `players` may |
+| `matching(players, PlayerPredicate)` | "each player who controls the most lands": the players `players` names who match the filter as the effect is applied (`matching(eachPlayer(), new PlayerControlsMostLandsPredicate())`, Tectonic Hellion; also `PlayerControlsMostCreaturesPredicate`, `PlayerControlsPermanentPredicate(filter)` (with `except`: "who doesn't control"), `PlayerHasNoCardsInHandPredicate`, `PlayerAttackedBySourceThisTurnPredicate`, `PlayerLostLifeThisTurnPredicate(minimum)`, `PlayerCanSearchTheirLibraryPredicate` ("each opponent who could search", Tempt with Discovery); `PlayerHasMostLifePredicate` ("a player with the most life or tied for most life", The Black Gate); the filter is a `PlayerPredicate`, evaluated with the effect's controller as the comparing player) | no | if `players` may |
 
 ## CardSubject
 
@@ -143,6 +143,14 @@ play that card this turn / until the end of your next turn / for as long as it r
 `CopyImprintedCardAndMayCastCopyEffect.of(cards)` ("copy it. You may cast the copy"), `ExileGraveyardCardsEffect.cards(cards)` ("exile it
 from your graveyard") and, in a filter, `CardSharesCardTypeWithCardsPredicate(cards)` ("a card that doesn't share a card type with the
 discarded card"; bound by `SubjectResolutionService.bindCardSubjects`).
+
+A value a lasting rule or a next-spell grant needs from the resolution is written into its filter as it is registered,
+by `SubjectResolutionService.bindChosenValues` (CR 608.2h): `PermanentHasTypeChosenThisResolutionPredicate`, the
+player subject of `PermanentControlledByPlayersPredicate(players)` ("creatures that player controls" after a
+`ChoosePlayerEffect`), the card-type and subtype "chosen this resolution" predicates, and the source's as-enters
+choice (`CardHasSourceChosenSubtypePredicate`, `CardHasSourceChosenCardTypePredicate`, read from the source as it
+last existed). Callers: `MatchingCreaturesMustAttackThisTurnEffect`, `MakeCreatureBlockableOnlyByFilterThisTurnEffect`,
+`GrantFlashToNextMatchingSpellEffect`, `GrantFreeCastForNextMatchingSpellEffect`.
 
 A `target()` inside `controllerOf` / `ownerOf` reads the entry's target without declaring one ("destroy target
 creature; its controller loses 2 life"). A `PermanentIsTargetCardPredicate` leaf in a `controlledBy` filter is the entry's target permanent as the

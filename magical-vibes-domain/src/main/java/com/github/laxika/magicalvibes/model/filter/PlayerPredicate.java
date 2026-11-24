@@ -20,6 +20,7 @@ public sealed interface PlayerPredicate permits
         PlayerHasFewerCreatureCardsInGraveyardThanControllerPredicate,
         PlayerHasMoreCardsInHandThanControllerPredicate,
         PlayerHasMoreLifeThanControllerPredicate,
+        PlayerHasMostLifePredicate,
         PlayerLostLifeThisTurnPredicate,
         PlayerTappedLandForManaThisTurnPredicate,
         PlayerHasNoCardsInHandPredicate,

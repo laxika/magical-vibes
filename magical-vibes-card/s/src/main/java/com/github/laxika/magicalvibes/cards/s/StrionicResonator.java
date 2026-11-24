@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CopyTargetTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTargetActivatedOrTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -23,7 +23,7 @@ public class StrionicResonator extends Card {
     public StrionicResonator() {
         // {2}, {T}: Copy target triggered ability you control. You may choose new targets for the copy.
         addActivatedAbility(new ActivatedAbility(true, "{2}",
-                List.of(new CopyTargetTriggeredAbilityEffect()),
+                List.of(new CopyTargetActivatedOrTriggeredAbilityEffect()),
                 "{2}, {T}: Copy target triggered ability you control. You may choose new targets for the copy.",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryAllOfPredicate(List.of(

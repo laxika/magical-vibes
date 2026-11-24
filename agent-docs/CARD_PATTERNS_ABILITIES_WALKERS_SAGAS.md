@@ -22,7 +22,7 @@ All paths relative to `cards/`.
 
 ## Activated abilities
 
-| Tap plus mana to force a chosen creature type to attack | `w/WalkingDesecration.java` | `(true, "{B}", CreaturesOfChosenTypeMustAttackThisTurnEffect)` - chooses the type on resolution and applies the transient must-attack requirement to matching creatures on every battlefield |
+| Tap plus mana to force a chosen creature type to attack | `w/WalkingDesecration.java` | `(true, "{B}", ChooseCreatureTypeAtResolutionEffect, MatchingCreaturesMustAttackThisTurnEffect(PermanentHasTypeChosenThisResolutionPredicate))` - chooses the type on resolution; the turn-long must-attack rule keeps it and also binds creatures of that type arriving later |
 
 | Planeswalker with opponent damage, filtered graveyard permission, and temporary hand free-cast permission | `c/ChandraFlamesCatalyst.java` | +1 `DealDamageToPlayersEffect(3, EACH_OPPONENT)`. −2 `AllowCastTargetCardFromGraveyardThisTurnEffect(red instant-or-sorcery, CONTROLLERS_GRAVEYARD, true)`. −8 `DiscardHandEffect()` + `DrawCardEffect(7)` + `GrantStaticEffectToPlayerEffect.untilEndOfTurn(new AlternativeCostForSpellsEffect("{0}", null, null, false, true))`; the latter is a turn-scoped permission floated on the player, not an emblem |
 

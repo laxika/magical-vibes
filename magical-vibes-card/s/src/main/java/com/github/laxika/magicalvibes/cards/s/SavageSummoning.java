@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.EmpowerNextCreatureSpellThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantFlashToNextSpellOfTypeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashToNextMatchingSpellEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 /**
  * Savage Summoning — {G} instant.
@@ -19,7 +20,7 @@ public class SavageSummoning extends Card {
 
     public SavageSummoning() {
         addStaticEffect(new CantBeCounteredEffect());
-        addSpellEffect(new GrantFlashToNextSpellOfTypeThisTurnEffect(CardType.CREATURE));
+        addSpellEffect(new GrantFlashToNextMatchingSpellEffect(new CardTypePredicate(CardType.CREATURE)));
         addSpellEffect(new EmpowerNextCreatureSpellThisTurnEffect(true, 1));
     }
 }

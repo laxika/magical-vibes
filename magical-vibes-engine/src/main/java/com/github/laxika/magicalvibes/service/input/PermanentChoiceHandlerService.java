@@ -958,8 +958,6 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleDayNightTransformAttachment(gameData, permanentId, dnta);
         } else if (context instanceof PermanentChoiceContext.PlayerWithLowestLifeChoice pwll) {
             triggerHandler.handlePlayerWithLowestLifeChoice(gameData, permanentId, pwll);
-        } else if (context instanceof PermanentChoiceContext.BlackGateMostLifeChoice bgml) {
-            triggerHandler.handleBlackGateMostLifeChoice(gameData, permanentId, bgml);
         } else if (context instanceof PermanentChoiceContext.TheMasterMostLifeChoice tmml) {
             triggerHandler.handleTheMasterMostLifeChoice(gameData, permanentId, tmml);
         } else if (context instanceof PermanentChoiceContext.PucasMischiefOwnTarget pmot) {

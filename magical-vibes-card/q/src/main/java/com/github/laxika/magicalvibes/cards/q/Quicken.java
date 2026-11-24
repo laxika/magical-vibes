@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantFlashToNextSpellOfTypeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashToNextMatchingSpellEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "M14", collectorNumber = "68")
 @CardRegistration(set = "GPT", collectorNumber = "31")
@@ -14,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashToNextSpellOfTypeTh
 public class Quicken extends Card {
 
     public Quicken() {
-        addSpellEffect(new GrantFlashToNextSpellOfTypeThisTurnEffect(CardType.SORCERY));
+        addSpellEffect(new GrantFlashToNextMatchingSpellEffect(new CardTypePredicate(CardType.SORCERY)));
         addSpellEffect(new DrawCardEffect(1));
     }
 }

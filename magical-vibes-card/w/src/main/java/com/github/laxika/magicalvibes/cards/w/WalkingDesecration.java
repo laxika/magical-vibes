@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CreaturesOfChosenTypeMustAttackThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeAtResolutionEffect;
+import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackThisTurnEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasTypeChosenThisResolutionPredicate;
 
 import java.util.List;
 
@@ -14,7 +16,8 @@ public class WalkingDesecration extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{B}",
-                List.of(new CreaturesOfChosenTypeMustAttackThisTurnEffect()),
+                List.of(new ChooseCreatureTypeAtResolutionEffect(),
+                        new MatchingCreaturesMustAttackThisTurnEffect(new PermanentHasTypeChosenThisResolutionPredicate())),
                 "{B}, {T}: Creatures of the creature type of your choice attack this turn if able."
         ));
     }

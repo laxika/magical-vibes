@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -8,10 +7,9 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyActivatedAbilityRetargetEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyAbilityRetargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTargetSpellOrAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyTriggeredAbilityRetargetEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
@@ -137,14 +135,9 @@ public class CopyTargetSpellOrAbilityEffectHandler implements NormalEffectHandle
         if (targetEntry.getEntryType() == StackEntryType.INSTANT_SPELL
                 || targetEntry.getEntryType() == StackEntryType.SORCERY_SPELL) {
             retargetEffect = new CopySpellEffect();
-        } else if (targetEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY) {
-            ActivatedAbility syntheticAbility = new ActivatedAbility(
-                    false, null, List.copyOf(targetEntry.getEffectsToResolve()),
-                    "copy retarget", targetEntry.getTargetFilter());
-            retargetEffect = new CopyActivatedAbilityRetargetEffect(
-                    syntheticAbility, targetEntry.getSourcePermanentId());
         } else {
-            retargetEffect = new CopyTriggeredAbilityRetargetEffect();
+            // An ability's copy has its targets recomputed from its own effects and target filter.
+            retargetEffect = new CopyAbilityRetargetEffect();
         }
 
         return new PendingMayAbility(

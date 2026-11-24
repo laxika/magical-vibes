@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CopyTargetTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTargetActivatedOrTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
@@ -24,7 +24,7 @@ public class KirolAttentiveFirstYear extends Card {
                 null,
                 List.of(
                         new TapMultiplePermanentsCost(2, new PermanentIsCreaturePredicate()),
-                        new CopyTargetTriggeredAbilityEffect()
+                        new CopyTargetActivatedOrTriggeredAbilityEffect()
                 ),
                 "Tap two untapped creatures you control: Copy target triggered ability you control. You may choose new targets for the copy. Activate only once each turn.",
                 new StackEntryPredicateTargetFilter(

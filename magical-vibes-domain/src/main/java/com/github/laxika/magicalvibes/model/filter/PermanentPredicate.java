@@ -112,6 +112,7 @@ public sealed interface PermanentPredicate permits
         PermanentHasChosenParityPredicate,
         PermanentHasSourceChosenSubtypePredicate,
         PermanentHasTypeChosenThisResolutionPredicate,
+        PermanentControlledByPlayersPredicate,
         PermanentSharesNameWithAnotherPermanentPredicate,
         PermanentSharesNameWithAnotherControlledPermanentPredicate,
         PermanentSharesNameWithControlledCreatureOrGraveyardCreaturePredicate,

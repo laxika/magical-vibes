@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantFlashToNextSpellOfChosenSubtypeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashToNextMatchingSpellEffect;
+import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 
 import java.util.List;
 
@@ -21,7 +22,7 @@ public class ProgenitorsIcon extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new GrantFlashToNextSpellOfChosenSubtypeThisTurnEffect()),
+                List.of(new GrantFlashToNextMatchingSpellEffect(new CardHasSourceChosenSubtypePredicate(false))),
                 "{T}: The next spell of the chosen type you cast this turn can be cast as though it had flash."
         ));
     }

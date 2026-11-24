@@ -1603,15 +1603,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record PlayerWithLowestLifeChoice(Card sourceCard, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
-    /** The Black Gate's resolution-time choice of a player tied for most life. */
-    record BlackGateMostLifeChoice(Card sourceCard, UUID controllerId, UUID sourcePermanentId,
-                                   UUID targetCreatureId, List<UUID> eligiblePlayerIds)
-            implements PermanentChoiceContext {
-        public BlackGateMostLifeChoice {
-            eligiblePlayerIds = List.copyOf(eligiblePlayerIds);
-        }
-    }
-
     /** The Master's choice of an opponent tied for most life. */
     record TheMasterMostLifeChoice(Card sourceCard, UUID controllerId,
                                    List<UUID> eligiblePlayerIds)

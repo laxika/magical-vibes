@@ -4,6 +4,10 @@ import com.github.laxika.magicalvibes.cards.b.Bonesplitter;
 import com.github.laxika.magicalvibes.model.effect.CardSubject;
 import com.github.laxika.magicalvibes.cards.c.CurseOfStalkedPrey;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenCardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayersPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasTypeChosenThisResolutionPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithPermanentsPredicate;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -2122,6 +2126,87 @@ class SubjectResolutionServiceTest extends BaseCardTest {
 
             assertThatThrownBy(() -> named(source, Subjects.cardsThisWay(StepKind.EXILE)))
                     .isInstanceOf(UnsupportedOperationException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("bindChosenValues")
+    class BindChosenValues {
+
+        private PredicateEvaluationService predicates() {
+            return GameTestEngineContext.get().getBean(PredicateEvaluationService.class);
+        }
+
+        @Test
+        @DisplayName("Writes the type this resolution chose into a permanent filter, which keeps it after the resolution")
+        void bindsTheTypeChosenThisResolution() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            Permanent giant = addCreatureReady(player2, new HillGiant());
+            StackEntry entry = entry(player1, null, null);
+            entry.setChosenCreatureType(CardSubtype.BEAR);
+
+            PermanentPredicate bound = subjects.bindChosenValues(gd, entry, EFFECT,
+                    new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                            new PermanentHasTypeChosenThisResolutionPredicate())));
+            gd.stack.remove(entry);
+
+            assertThat(predicates().matchesPermanentPredicate(gd, bears, bound)).isTrue();
+            assertThat(predicates().matchesPermanentPredicate(gd, giant, bound)).isFalse();
+        }
+
+        @Test
+        @DisplayName("A type leaf with nothing chosen matches nothing")
+        void unchosenTypeMatchesNothing() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+
+            PermanentPredicate bound = subjects.bindChosenValues(gd, entry(player1, null, null), EFFECT,
+                    new PermanentHasTypeChosenThisResolutionPredicate());
+
+            assertThat(predicates().matchesPermanentPredicate(gd, bears, bound)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Binds the players a subject names now: a creature that player gains later matches, another's doesn't")
+        void bindsTheChosenPlayer() {
+            Permanent yours = addCreatureReady(player1, new GrizzlyBears());
+            StackEntry entry = entry(player1, null, null);
+            entry.recordStep(StepKind.CHOOSE, StepOutcome.ofAmount(1, List.of(player2.getId())));
+
+            PermanentPredicate bound = subjects.bindChosenValues(gd, entry, EFFECT,
+                    new PermanentControlledByPlayersPredicate(Subjects.playersThisWay(StepKind.CHOOSE)));
+            Permanent later = addCreatureReady(player2, new HillGiant());
+
+            assertThat(predicates().matchesPermanentPredicate(gd, later, bound)).isTrue();
+            assertThat(predicates().matchesPermanentPredicate(gd, yours, bound)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Reads the source's chosen card type as it last existed once the source has left")
+        void bindsTheSourcesChosenCardTypeFromItsSnapshot() {
+            Permanent source = addCreatureReady(player1, new GrizzlyBears());
+            source.setChosenCardType(CardType.CREATURE);
+            StackEntry entry = entry(player1, null, source.getId());
+            entry.setSourcePermanentSnapshot(new Permanent(source));
+            leaveBattlefield(source);
+
+            CardPredicate bound = subjects.bindChosenValues(gd, entry, EFFECT,
+                    new CardHasSourceChosenCardTypePredicate());
+
+            assertThat(predicates().matchesCardPredicate(new HillGiant(), bound, null, gd, player1.getId())).isTrue();
+            assertThat(predicates().matchesCardPredicate(new Forest(), bound, null, gd, player1.getId())).isFalse();
+        }
+
+        @Test
+        @DisplayName("Reads the source's chosen subtype into a card filter")
+        void bindsTheSourcesChosenSubtype() {
+            Permanent source = addCreatureReady(player1, new GrizzlyBears());
+            source.setChosenSubtype(CardSubtype.GIANT);
+
+            CardPredicate bound = subjects.bindChosenValues(gd, entry(player1, null, source.getId()), EFFECT,
+                    new CardHasSourceChosenSubtypePredicate(false));
+
+            assertThat(predicates().matchesCardPredicate(new HillGiant(), bound, null, gd, player1.getId())).isTrue();
+            assertThat(predicates().matchesCardPredicate(new GrizzlyBears(), bound, null, gd, player1.getId())).isFalse();
         }
     }
 }

@@ -1,34 +1,30 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTargetActivatedOrTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyTriggeredAbilityRetargetEffect;
-import com.github.laxika.magicalvibes.service.FaceDownVisibility;
-import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
- * Resolves a targeted copy of an activated or triggered ability.
+ * Resolves {@link CopyTargetActivatedOrTriggeredAbilityEffect}: the target ability, if it is still on the stack and
+ * can be copied, is copied the stated number of times for the resolving ability's controller (CR 707.10), each copy
+ * through {@link CopyControllerActivatedAbilityEffectHandler#copy}.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class CopyTargetActivatedOrTriggeredAbilityEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameLogService gameLogService;
-    private final CopySupport copySupport;
-    private final PsychicBattleSupport psychicBattleSupport;
+    private final CopyControllerActivatedAbilityEffectHandler abilityCopier;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,62 +33,22 @@ public class CopyTargetActivatedOrTriggeredAbilityEffectHandler implements Norma
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID targetCardId = entry.getTargetId();
-        if (targetCardId == null) {
+        var copy = (CopyTargetActivatedOrTriggeredAbilityEffect) effect;
+        UUID targetId = entry.getTargetId();
+        if (targetId == null) {
             return;
         }
-
-        StackEntry targetEntry = null;
-        for (StackEntry stackEntry : gameData.stack) {
-            if (stackEntry.getTargetableId().equals(targetCardId)
-                    && (stackEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
-                    || stackEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)) {
-                targetEntry = stackEntry;
-                break;
-            }
-        }
-        if (targetEntry == null || !entry.getControllerId().equals(targetEntry.getControllerId())) {
-            log.info("Game {} - Copy target ability is no longer legal", gameData.id);
+        StackEntry target = gameData.stack.stream()
+                .filter(onStack -> targetId.equals(onStack.getTargetableId())
+                        && StackEntryType.ABILITIES.contains(onStack.getEntryType()))
+                .findFirst().orElse(null);
+        if (target == null) {
+            log.info("Game {} - The ability to copy is no longer on the stack", gameData.id);
             return;
         }
-        if (CopySupport.isAbilityThatCantBeCopied(targetEntry)) {
-            log.info("Game {} - Target ability cannot be copied", gameData.id);
-            return;
-        }
-
-        UUID copyControllerId = targetEntry.getControllerId();
-        Card copyCard = targetEntry.getCard() == null ? null : copySupport.createCopyCard(targetEntry.getCard());
-        StackEntry copyEntry = copySupport.createCopyStackEntry(
-                targetEntry, copyCard, copyControllerId, targetEntry.getTargetId());
-        copyEntry.setTargetFilter(targetEntry.getTargetFilter());
-        copyEntry.setDamageSourceCard(targetEntry.getDamageSourceCard());
-        copyEntry.setSourcePermanentSnapshot(targetEntry.getSourcePermanentSnapshot());
-        copyEntry.setNonTargeting(targetEntry.isNonTargeting());
-        copyEntry.setChosenPermanentId(targetEntry.getChosenPermanentId());
-
-        copySupport.addCopyToStack(gameData, copyEntry);
-
-        gameLogService.append(gameData, GameLog.text("A copy of "
-                + FaceDownVisibility.descriptionShownTo(gameData, targetEntry, null) + " is created."));
-        log.info("Game {} - copy of {}'s ability created", gameData.id, targetEntry.getDescription());
-
-        if (!targetEntry.isNonTargeting() && psychicBattleSupport.targetIds(copyEntry).size() > 1) {
-            psychicBattleSupport.queueNextChoice(gameData, entry.getCard(), copyControllerId,
-                    copyEntry.getTargetableId(), 0);
-            return;
-        }
-        boolean singleTarget = targetEntry.getTargetId() != null
-                && (targetEntry.getTargetIds() == null || targetEntry.getTargetIds().size() <= 1)
-                && !targetEntry.isNonTargeting();
-        if (singleTarget) {
-            PendingMayAbility retargetAbility = new PendingMayAbility(
-                    entry.getCard(),
-                    copyControllerId,
-                    List.of(new CopyTriggeredAbilityRetargetEffect()),
-                    "Choose a new target for the copy of " + FaceDownVisibility.descriptionShownTo(gameData, targetEntry, entry.getControllerId()) + "'s ability?",
-                    copyEntry.getTargetableId()
-            );
-            gameData.pendingMayAbilities.addFirst(retargetAbility);
+        int copies = amountEvaluationService.evaluate(gameData, copy.copies(), AmountContext.forStackEntry(entry, null));
+        for (int i = 0; i < copies; i++) {
+            abilityCopier.copy(gameData, entry, target, entry.getControllerId(), null);
         }
     }
 }

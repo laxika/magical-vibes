@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
  * countered (when {@code uncounterable}) and the creature enters with
  * {@code additionalPlusOneCounters} extra +1/+1 counters (Savage Summoning). A floating effect on the
  * player that the next creature spell cast ends. Pair with
- * {@link GrantFlashToNextSpellOfTypeThisTurnEffect} for the "as though it had flash" rider.
+ * {@link GrantFlashToNextMatchingSpellEffect} for the "as though it had flash" rider.
  *
  * @param uncounterable             whether the empowered creature spell can't be countered
  * @param additionalPlusOneCounters extra +1/+1 counters the creature enters with

@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.HordeOfNotions;
+import com.github.laxika.magicalvibes.cards.i.ImpelledGiant;
 import com.github.laxika.magicalvibes.cards.m.MoongloveExtract;
 import com.github.laxika.magicalvibes.cards.s.Smokebraider;
 import com.github.laxika.magicalvibes.cards.s.StreetWraith;
@@ -21,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({RingsOfBrighthearth.class, ProdigalPyromancer.class, LlanowarElves.class,
-        MoongloveExtract.class, HordeOfNotions.class, Smokebraider.class, StreetWraith.class})
+        MoongloveExtract.class, HordeOfNotions.class, ImpelledGiant.class, HillGiant.class, Smokebraider.class, StreetWraith.class})
 class RingsOfBrighthearthTest extends BaseCardTest {
 
     @Test
@@ -231,5 +233,24 @@ class RingsOfBrighthearthTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard() == originalTarget)
                 .anyMatch(p -> p.getCard() == copyTarget);
+    }
+
+    @Test
+    @DisplayName("The copy uses the creature tapped to pay the original ability's cost")
+    void copyUsesTheOriginalsCostPermanent() {
+        harness.addToBattlefield(player1, new RingsOfBrighthearth());
+        Permanent impelled = addCreatureReady(player1, new ImpelledGiant());
+        addCreatureReady(player1, new HillGiant());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(impelled), null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        // 3 base, +3 from the original and +3 from the copy: the Hill Giant tapped for the original (CR 707.10).
+        assertThat(gqs.getEffectivePower(gd, impelled)).isEqualTo(9);
     }
 }

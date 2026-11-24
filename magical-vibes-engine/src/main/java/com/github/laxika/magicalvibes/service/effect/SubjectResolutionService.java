@@ -2,6 +2,16 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.filter.CardHasCardTypeChosenThisResolutionPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenCardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasTypeChosenThisResolutionPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayersPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasTypeChosenThisResolutionPredicate;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -238,6 +248,89 @@ public class SubjectResolutionService {
             case CardNotPredicate not -> new CardNotPredicate(bindCardSubjects(gameData, entry, effect, not.predicate()));
             default -> filter;
         };
+    }
+
+    /**
+     * {@code filter} with each value the resolution chose, or the source chose as it entered, written in as the effect
+     * applies, so a rule or delayed ability the effect registers keeps it when it is judged later without the entry
+     * (CR 608.2h, 611.2c): {@link PermanentHasTypeChosenThisResolutionPredicate} becomes "has that subtype" ("creatures
+     * of the creature type of your choice attack this turn if able", Walking Desecration);
+     * {@link PermanentControlledByPlayersPredicate} "controlled by one of those players", its players found now ("creatures
+     * that player controls", The Black Gate). A leaf with nothing chosen, or no player, matches nothing. A filter
+     * without them is returned as it is.
+     */
+    public PermanentPredicate bindChosenValues(GameData gameData, StackEntry entry, CardEffect effect,
+                                               PermanentPredicate filter) {
+        return switch (filter) {
+            case null -> null;
+            case PermanentHasTypeChosenThisResolutionPredicate ignored -> entry.getChosenCreatureType() == null
+                    ? new PermanentNotPredicate(new PermanentTruePredicate())
+                    : new PermanentHasSubtypePredicate(entry.getChosenCreatureType());
+            case PermanentControlledByPlayersPredicate controlled -> {
+                List<UUID> players = players(gameData, entry, effect, controlled.players());
+                yield players.isEmpty() ? new PermanentNotPredicate(new PermanentTruePredicate())
+                        : players.size() == 1 ? new PermanentControlledByPlayerPredicate(players.getFirst())
+                        : new PermanentAnyOfPredicate(players.stream()
+                                .<PermanentPredicate>map(PermanentControlledByPlayerPredicate::new).toList());
+            }
+            case PermanentAllOfPredicate all -> new PermanentAllOfPredicate(all.predicates().stream()
+                    .map(part -> bindChosenValues(gameData, entry, effect, part)).toList());
+            case PermanentAnyOfPredicate any -> new PermanentAnyOfPredicate(any.predicates().stream()
+                    .map(part -> bindChosenValues(gameData, entry, effect, part)).toList());
+            case PermanentNotPredicate not -> new PermanentNotPredicate(
+                    bindChosenValues(gameData, entry, effect, not.predicate()));
+            default -> filter;
+        };
+    }
+
+    /**
+     * {@code filter} with each chosen value written in as the effect applies, so the next-spell rule it registers keeps
+     * it (CR 608.2h): {@link CardHasTypeChosenThisResolutionPredicate} and {@link CardHasCardTypeChosenThisResolutionPredicate}
+     * become the subtype or card type this resolution chose; {@link CardHasSourceChosenSubtypePredicate} and
+     * {@link CardHasSourceChosenCardTypePredicate} the one the source chose as it entered, read from the source as it
+     * is, else as it last existed ("the next spell of the chosen type you cast this turn", Progenitor's Icon, Apex
+     * Observatory). A leaf with nothing chosen matches nothing. A filter without them is returned as it is.
+     */
+    public CardPredicate bindChosenValues(GameData gameData, StackEntry entry, CardEffect effect, CardPredicate filter) {
+        return switch (filter) {
+            case null -> null;
+            case CardHasTypeChosenThisResolutionPredicate ignored -> entry.getChosenCreatureType() == null
+                    ? new CardNotPredicate(new CardTruePredicate())
+                    : new CardSubtypePredicate(entry.getChosenCreatureType());
+            case CardHasCardTypeChosenThisResolutionPredicate ignored -> entry.getChosenCardType() == null
+                    ? new CardNotPredicate(new CardTruePredicate())
+                    : new CardTypePredicate(entry.getChosenCardType());
+            case CardHasSourceChosenSubtypePredicate chosen -> {
+                Permanent source = sourceAsItIsOrLastWas(gameData, entry);
+                CardSubtype subtype = source == null ? null : source.getChosenSubtype();
+                if (subtype == null) {
+                    yield new CardNotPredicate(new CardTruePredicate());
+                }
+                // A changeling card has every creature type (CR 702.73a), which CardSubtypePredicate counts.
+                yield chosen.creatureOnly()
+                        ? new CardAllOfPredicate(List.of(new CardTypePredicate(CardType.CREATURE),
+                                new CardSubtypePredicate(subtype)))
+                        : new CardSubtypePredicate(subtype);
+            }
+            case CardHasSourceChosenCardTypePredicate ignored -> {
+                Permanent source = sourceAsItIsOrLastWas(gameData, entry);
+                CardType type = source == null ? null : source.getChosenCardType();
+                yield type == null ? new CardNotPredicate(new CardTruePredicate()) : new CardTypePredicate(type);
+            }
+            case CardAllOfPredicate all -> new CardAllOfPredicate(all.predicates().stream()
+                    .map(part -> bindChosenValues(gameData, entry, effect, part)).toList());
+            case CardAnyOfPredicate any -> new CardAnyOfPredicate(any.predicates().stream()
+                    .map(part -> bindChosenValues(gameData, entry, effect, part)).toList());
+            case CardNotPredicate not -> new CardNotPredicate(bindChosenValues(gameData, entry, effect, not.predicate()));
+            default -> filter;
+        };
+    }
+
+    /** The entry's source permanent as it is, else as it last existed (CR 608.2h); {@code null} without one. */
+    private Permanent sourceAsItIsOrLastWas(GameData gameData, StackEntry entry) {
+        Permanent source = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        return source != null ? source : entry.getSourcePermanentSnapshot();
     }
 
     /**

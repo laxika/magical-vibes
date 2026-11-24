@@ -27,7 +27,6 @@ import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DemonstrateEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellForAnotherOpponentPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellForEachOtherControlledCreatureEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.MakeTargetCreatureCantBeBlockedByMostLifePlayerEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RevealUntilCardPredicateRestOnBottomRandomEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TheMasterGallifreysEndEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseAttackTargetsForCreatedTokensEffectHandler;
@@ -67,7 +66,6 @@ public class PermanentChoiceTriggerHandlerService {
     private final DemonstrateEffectHandler demonstrateEffectHandler;
     private final TokenCopySupport tokenCopySupport;
     private final RevealUntilCardPredicateRestOnBottomRandomEffectHandler revealUntilCardHandler;
-    private final MakeTargetCreatureCantBeBlockedByMostLifePlayerEffectHandler blackGateHandler;
     private final TheMasterGallifreysEndEffectHandler theMasterHandler;
     private final ChooseAttackTargetsForCreatedTokensEffectHandler createdTokenAttackTargetsHandler;
     @org.springframework.beans.factory.annotation.Autowired
@@ -502,12 +500,6 @@ public class PermanentChoiceTriggerHandlerService {
                     new GainControlOfTargetEffect(Duration.PERMANENT),
                     Duration.PERMANENT, null, context.sourceCard().getName());
         }
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleBlackGateMostLifeChoice(GameData gameData, UUID playerId,
-                                               PermanentChoiceContext.BlackGateMostLifeChoice context) {
-        blackGateHandler.completeChoice(gameData, playerId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

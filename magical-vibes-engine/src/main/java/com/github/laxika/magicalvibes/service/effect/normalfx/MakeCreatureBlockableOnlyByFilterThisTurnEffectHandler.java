@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureBlockableOnlyByFilterThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,7 @@ public class MakeCreatureBlockableOnlyByFilterThisTurnEffectHandler implements N
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -71,8 +73,11 @@ public class MakeCreatureBlockableOnlyByFilterThisTurnEffectHandler implements N
             return;
         }
 
+        // A player chosen by this resolution is written in now; the restriction then covers whatever creatures
+        // that player controls when blockers are declared (CR 608.2h, 611.2c).
         gameData.addEffectOnPermanent(entry,
-                new CanBeBlockedOnlyByFilterEffect(grant.blockerPredicate(), grant.allowedBlockersDescription()),
+                new CanBeBlockedOnlyByFilterEffect(subjectResolutionService.bindChosenValues(gameData, entry, grant,
+                        grant.blockerPredicate()), grant.allowedBlockersDescription()),
                 target.getId(), Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" can't be blocked this turn except by " + grant.allowedBlockersDescription() + ".").build());

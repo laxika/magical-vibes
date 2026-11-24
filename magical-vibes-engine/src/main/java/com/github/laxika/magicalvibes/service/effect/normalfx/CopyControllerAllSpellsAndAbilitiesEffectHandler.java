@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerAllSpellsAndAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyTriggeredAbilityFromSnapshotEffect;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -41,7 +40,7 @@ public class CopyControllerAllSpellsAndAbilitiesEffectHandler implements NormalE
                 case ACTIVATED_ABILITY ->
                         abilityCopyEffects.add(new CopyControllerActivatedAbilityEffect(snapshot, null, controllerId));
                 case TRIGGERED_ABILITY ->
-                        abilityCopyEffects.add(new CopyTriggeredAbilityFromSnapshotEffect(snapshot));
+                        abilityCopyEffects.add(new CopyControllerActivatedAbilityEffect(snapshot, null, controllerId));
             }
         }
 

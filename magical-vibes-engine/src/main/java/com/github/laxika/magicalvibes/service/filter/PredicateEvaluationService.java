@@ -156,6 +156,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasChosenParityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasTypeChosenThisResolutionPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanTargetPredicate;
 import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -3254,6 +3255,8 @@ public class PredicateEvaluationService {
                         && matchesPermanentPredicate(permanent,
                                 new PermanentColorInPredicate(Set.of(chosenColor)), filterContext);
             }
+            // Bound to its players by the handler that has the resolving entry (SubjectResolutionService.bindChosenValues).
+            case PermanentControlledByPlayersPredicate ignored -> false;
             case PermanentHasTypeChosenThisResolutionPredicate ignored -> {
                 StackEntry resolving = resolving(gameData);
                 CardSubtype chosen = resolving == null ? null : resolving.getChosenCreatureType();
@@ -3853,6 +3856,7 @@ public class PredicateEvaluationService {
             }
             // What a resolution chose is a resolving effect's, never a static ability's.
             case PermanentHasTypeChosenThisResolutionPredicate ignored -> false;
+            case PermanentControlledByPlayersPredicate ignored -> false;
             case PermanentHasChosenParityPredicate ignored -> false;
             case PermanentHasChosenSpellColorPredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
