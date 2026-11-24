@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.AttackDirection;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CombatAttackTarget;
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.AttackOrBlockRestrictionEffec
 import com.github.laxika.magicalvibes.model.effect.AttackDirectionRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackTargetDirectionRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackTargetRestrictionEffect;
-import com.github.laxika.magicalvibes.model.effect.AttackerTargetRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughHasteUnlessEnteredThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackPlayersWhoAttackedControllerLastTurnAsThoughNoDefenderEffect;
@@ -33,9 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessDefe
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithPowerGreaterThanAmountCantAttackEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureAttackRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanAttackAsThoughHasteEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadStatusEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
@@ -360,7 +356,7 @@ public class AttackLegalityService {
             return false;
         }
         Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
-        if (isRestrictedByAttackerTargetRestriction(gameData, attacker, targetId, targetPermanent)) {
+        if (isRestrictedFromAttackingTarget(gameData, attacker, targetId, targetPermanent)) {
             return false;
         }
         if (targetPermanent != null && isAttackTargetRestricted(gameData, targetPermanent)) {
@@ -382,9 +378,6 @@ public class AttackLegalityService {
         UUID protectedPlayerId = targetIsPlayer ? targetId
                 : gameQueryService.findPermanentController(gameData, targetId);
         if (protectedPlayerId == null) return true;
-        if (cantAttackCardOwner(gameData, attacker, targetPermanent, targetIsPlayer, targetId, protectedPlayerId)) {
-            return false;
-        }
         // Restrictions come from static abilities of the protected player's permanents (Form of the
         // Dragon, Sandwurm Convergence) and from player-scoped floating effects (Island Sanctuary's
         // "until your next turn" shield, which persists independently of its source permanent).
@@ -396,16 +389,6 @@ public class AttackLegalityService {
                     .withSourcePermanentId(source.getId())
                     .withSourceControllerId(protectedPlayerId);
             CardEffect effect = active.effect();
-            if (effect instanceof EnchantedCreatureAttackRestrictionEffect
-                    && (targetIsPlayer || !(effect instanceof EnchantedCreatureCantAttackPlayerEffect)
-                    && targetPermanent != null
-                    && gameQueryService.isPlaneswalker(gameData, targetPermanent))
-                    && !gameData.ignoresEffectOf(source.getId(), IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class, 
-                            gameQueryService.findPermanentController(gameData, attacker.getId()))
-                    && source.isAttached()
-                    && attacker.getId().equals(source.getAttachedTo())) {
-                return false;
-            }
             if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
                     && (targetIsPlayer || restriction.protectsPlaneswalkers()
                     && gameQueryService.isPlaneswalker(gameData,
@@ -421,14 +404,6 @@ public class AttackLegalityService {
         }
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect fe : gameData.floatingEffects) {
-                if (attacker.getId().equals(fe.affectedPermanentId())
-                        && protectedPlayerId.equals(fe.controllerId())
-                        && fe.effect() instanceof EnchantedCreatureAttackRestrictionEffect
-                        && attacker.getCounterCount(CounterType.VOW) > 0
-                        && (targetIsPlayer || targetPermanent != null
-                        && targetPermanent.getCard().hasType(CardType.PLANESWALKER))) {
-                    return false;
-                }
                 boolean scopedToAttacker = fe.scope() != null
                         && predicateEvaluationService.matchesPermanentPredicate(
                         gameData, attacker, fe.scope());
@@ -602,37 +577,6 @@ public class AttackLegalityService {
         return gameData.playersAttackedThisTurn
                 .getOrDefault(attacker.getId(), Set.of())
                 .contains(targetId);
-    }
-
-    private boolean cantAttackCardOwner(GameData gameData, Permanent attacker, Permanent targetPermanent,
-                                        boolean targetIsPlayer, UUID targetId, UUID protectedPlayerId) {
-        CantAttackCardOwnerEffect restriction = findCantAttackCardOwnerEffect(gameData, attacker);
-        if (restriction == null || attacker.getOriginalCard().getOwnerId() == null) {
-            return false;
-        }
-        if (targetIsPlayer) {
-            return attacker.getOriginalCard().getOwnerId().equals(targetId);
-        }
-        return restriction.includePlaneswalkers() && targetPermanent != null
-                && gameQueryService.isPlaneswalker(gameData, targetPermanent)
-                && attacker.getOriginalCard().getOwnerId().equals(protectedPlayerId);
-    }
-
-    private CantAttackCardOwnerEffect findCantAttackCardOwnerEffect(GameData gameData, Permanent attacker) {
-        if (!attacker.isFaceDown()
-                && !gameQueryService.computeStaticBonus(gameData, attacker).losesAllAbilities()) {
-            for (CardEffect effect : attacker.getCard().getStaticEffects()) {
-                if (effect instanceof CantAttackCardOwnerEffect restriction) {
-                    return restriction;
-                }
-            }
-        }
-        for (CardEffect effect : gameQueryService.getGrantedEffects(gameData, attacker)) {
-            if (effect instanceof CantAttackCardOwnerEffect restriction) {
-                return restriction;
-            }
-        }
-        return null;
     }
 
     private boolean isAttackTargetRestricted(GameData gameData, Permanent target) {
@@ -1248,37 +1192,63 @@ public class AttackLegalityService {
         }
         return validIds;
     }
-    private boolean isRestrictedByAttackerTargetRestriction(GameData gameData, Permanent attacker,
-                                                            UUID targetId, Permanent targetPermanent) {
-        if (attacker.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, attacker)) {
+    /**
+     * Whether a {@link CantAttackCardOwnerEffect} keeps {@code attacker} from attacking {@code targetId} (CR 508.1c):
+     * the creature's own active static abilities and those granted to it ({@code source()}: "can't attack its owner",
+     * "can't attack its controller"), and the active static abilities of the Auras and Equipment attached to it
+     * ({@code attachedCreature()}: "enchanted creature can't attack you"). The restricted players are judged for the
+     * ability's source; a planeswalker target is restricted through its controller when the ability says so, a battle
+     * never.
+     */
+    private boolean isRestrictedFromAttackingTarget(GameData gameData, Permanent attacker, UUID targetId,
+                                                    Permanent targetPermanent) {
+        boolean targetIsPlayer = gameData.playerIds.contains(targetId);
+        UUID judgedPlayerId;
+        if (targetIsPlayer) {
+            judgedPlayerId = targetId;
+        } else if (targetPermanent != null && gameQueryService.isPlaneswalker(gameData, targetPermanent)) {
+            judgedPlayerId = gameQueryService.findPermanentController(gameData, targetPermanent.getId());
+        } else {
             return false;
         }
-        for (CardEffect effect : attacker.getCard().getStaticEffects()) {
-            if (!(effect instanceof AttackerTargetRestrictionEffect restriction)
-                    || gameData.removesOwnStaticAbility(attacker.getId(), effect.getClass())) {
-                continue;
-            }
-            UUID sourceControllerId = gameData.findControllerOf(attacker);
-            if (restriction.restrictsSourceController()
-                    && sourceControllerId != null
-                    && sourceControllerId.equals(targetId)) {
+        UUID attackerControllerId = gameQueryService.findPermanentController(gameData, attacker.getId());
+        List<CardEffect> ownAbilities = new ArrayList<>();
+        if (!gameData.removesOwnStaticAbility(attacker.getId(), CantAttackCardOwnerEffect.class)) {
+            ownAbilities.addAll(gameQueryService.getActiveStaticEffects(gameData, attacker));
+        }
+        ownAbilities.addAll(gameQueryService.getGrantedEffects(gameData, attacker));
+        for (CardEffect effect : ownAbilities) {
+            if (effect instanceof CantAttackCardOwnerEffect restriction && !restriction.restrictsAttachedCreature()
+                    && restrictsAttackOn(gameData, attacker, attackerControllerId, restriction, targetIsPlayer,
+                    judgedPlayerId)) {
                 return true;
             }
-            UUID restrictedPlayerId = restriction.restrictedPlayerId(attacker);
-            if (restrictedPlayerId == null) {
-                continue;
-            }
-            if (restrictedPlayerId.equals(targetId)) {
-                return true;
-            }
-            if (restriction.restrictsPlaneswalkers()
-                    && targetPermanent != null
-                    && targetPermanent.getCard().hasType(CardType.PLANESWALKER)
-                    && restrictedPlayerId.equals(
-                    gameQueryService.findPermanentController(gameData, targetPermanent.getId()))) {
-                return true;
+        }
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            for (Permanent source : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                if (!source.isAttached() || !attacker.getId().equals(source.getAttachedTo())
+                        || gameData.ignoresEffectOf(source.getId(), IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class,
+                        attackerControllerId)) {
+                    continue;
+                }
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source, playerId)) {
+                    if (effect instanceof CantAttackCardOwnerEffect restriction
+                            && restriction.restrictsAttachedCreature()
+                            && restrictsAttackOn(gameData, source, playerId, restriction, targetIsPlayer,
+                            judgedPlayerId)) {
+                        return true;
+                    }
+                }
             }
         }
         return false;
+    }
+
+    private static boolean restrictsAttackOn(GameData gameData, Permanent source, UUID sourceControllerId,
+                                             CantAttackCardOwnerEffect restriction, boolean targetIsPlayer,
+                                             UUID judgedPlayerId) {
+        return (targetIsPlayer || restriction.includePlaneswalkers())
+                && SubjectResolutionService.namesPlayer(gameData, source, sourceControllerId, judgedPlayerId,
+                restriction.players());
     }
 }

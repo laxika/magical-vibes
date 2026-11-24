@@ -14,6 +14,7 @@ public sealed interface PlayerPredicate permits
         PlayerControlsMoreCreaturesThanControllerPredicate,
         PlayerControlsMoreLandsThanControllerPredicate,
         PlayerControlsMostCreaturesPredicate,
+        PlayerControlsCreaturesSharingCreatureTypePredicate,
         PlayerControlsMostLandsPredicate,
         PlayerControlsPermanentPredicate,
         PlayerAttackedBySourceThisTurnPredicate,

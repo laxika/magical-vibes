@@ -321,6 +321,40 @@ class SubjectResolutionServiceTest extends BaseCardTest {
     }
 
     @Nested
+    @DisplayName("namesPlayer(gameData, source, controller, player, ownerOf(source()) / controllerOf(source()))")
+    class StaticSourceOwnerAndController {
+
+        @Test
+        @DisplayName("ownerOf(source()) names the source card's current owner, not its controller")
+        void sourceOwner() {
+            GrizzlyBears card = new GrizzlyBears();
+            card.setOwnerId(player1.getId());
+            Permanent bears = addCreatureReady(player2, card);
+            PlayerSubject subject = Subjects.ownerOf(source());
+
+            assertThat(SubjectResolutionService.namesPlayer(gd, bears, player2.getId(), player1.getId(), subject))
+                    .isTrue();
+            assertThat(SubjectResolutionService.namesPlayer(gd, bears, player2.getId(), player2.getId(), subject))
+                    .isFalse();
+
+            gd.cardOwnerOverrides.put(card.getId(), player2.getId());
+
+            assertThat(SubjectResolutionService.namesPlayer(gd, bears, player2.getId(), player2.getId(), subject))
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("controllerOf(source()) names the ability's controller")
+        void sourceController() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            PlayerSubject subject = Subjects.controllerOf(source());
+
+            assertThat(SubjectResolutionService.namesPlayer(bears, player2.getId(), player2.getId(), subject)).isTrue();
+            assertThat(SubjectResolutionService.namesPlayer(bears, player2.getId(), player1.getId(), subject)).isFalse();
+        }
+    }
+
+    @Nested
     @DisplayName("attached()")
     class Attached {
 

@@ -464,6 +464,7 @@ public sealed interface Condition permits
         TargetPlayerAttackedBySubtypeControllerControlledThisTurn,
         TargetPlayerIsAfraidOfController,
         TargetPlayerTurn,
+        TargetPlayerMatches,
         TargetPlayerCouldCastSorcery,
         StackIsEmpty,
         TargetPlayerIsController,

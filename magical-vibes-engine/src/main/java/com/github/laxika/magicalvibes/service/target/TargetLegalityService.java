@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.filter.PlayerAttackedBySourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerControlsMostCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerControlsCreaturesSharingCreatureTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerHasNoCardsInHandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerWithoutMaxSpeedPredicate;
@@ -6357,6 +6358,8 @@ public class TargetLegalityService {
                                 controllerIndex + seated.direction().turnOrderOffset(),
                                 gameData.orderedPlayerIds.size())));
             }
+            case PlayerControlsCreaturesSharingCreatureTypePredicate sharing ->
+                    gameQueryService.controlsCreaturesSharingCreatureType(gameData, targetPlayerId, sharing.minimum());
             case PlayerControlsPermanentPredicate controls ->
                     targetPlayerId != null
                             && gameData.playerBattlefields.getOrDefault(targetPlayerId, List.of()).stream()

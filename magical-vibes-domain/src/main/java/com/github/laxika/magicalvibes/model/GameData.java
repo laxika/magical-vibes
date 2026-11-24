@@ -5038,6 +5038,7 @@ public class GameData {
                 .stream()
                 .map(fe -> ((com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect)
                         fe.effect()).defenderPermanentPredicate())
+                .filter(java.util.Objects::nonNull)
                 .toList();
     }
 

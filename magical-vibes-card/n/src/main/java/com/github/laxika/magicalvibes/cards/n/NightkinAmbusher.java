@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderHasRadCountersEffect;
+import com.github.laxika.magicalvibes.model.condition.TargetPlayerHasRadCounters;
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveRadCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,6 +26,7 @@ public class NightkinAmbusher extends Card {
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new GiveRadCountersEffect(4, Subjects.targetPlayer()));
 
-        addStaticEffect(new CantBeBlockedIfDefenderHasRadCountersEffect());
+        addStaticEffect(CantBeBlockedIfDefenderControlsMatchingPermanentEffect.whileDefendingPlayer(
+                new TargetPlayerHasRadCounters()));
     }
 }

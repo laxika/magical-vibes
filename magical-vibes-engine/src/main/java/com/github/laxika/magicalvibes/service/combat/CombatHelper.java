@@ -29,6 +29,12 @@ public final class CombatHelper {
 
     private CombatHelper() {}
 
+    /**
+     * Whether a defender-condition evasion ability makes {@code attacker} unblockable by the player whose battlefield is
+     * {@code defenderBattlefield}: its own and granted static abilities and those of the permanents attached to it, a
+     * permanent the defending player controls or a condition judged for the defending player (CR 508.5), and the
+     * until-end-of-turn landwalk grants. Landwalk switched off by Staff of the Ages is ignored.
+     */
     public static boolean isCantBeBlockedDueToDefenderCondition(GameQueryService gameQueryService,
                                                           PredicateEvaluationService predicateEvaluationService,
                                                           GameData gameData,
@@ -36,41 +42,15 @@ public final class CombatHelper {
                                                           List<Permanent> defenderBattlefield) {
         boolean landwalkIgnored = isLandwalkIgnoredForBlocking(gameData)
                 || isLandwalkIgnoredForBlocking(gameData, attacker.getId());
+        UUID defenderId = defenderId(gameData, defenderBattlefield);
         List<CardEffect> declaredStaticEffects = new java.util.ArrayList<>(attacker.getCard().getStaticEffects());
         declaredStaticEffects.addAll(gameData.staticAbilitiesGrantedByEffects(attacker.getId()));
+        declaredStaticEffects.addAll(gameQueryService.computeStaticBonus(gameData, attacker).grantedEffects());
         for (CardEffect effect : declaredStaticEffects) {
-            if (effect instanceof BlockabilityRestrictionEffect restriction) {
-                if (hasUnmetSharedTypeCondition(gameQueryService, gameData, defenderBattlefield, restriction)) {
-                    return true;
-                }
-                if (hasMostCreaturesCondition(gameQueryService, gameData, defenderBattlefield, restriction)) {
-                    return true;
-                }
-                if (restriction.unblockableIfDefenderHasRadCounters()
-                        && defenderHasRadCounters(gameData, defenderBattlefield)) {
-                    return true;
-                }
-                if (hasDefenderCondition(restriction, landwalkIgnored)
-                        && defenderControls(predicateEvaluationService, gameData, defenderBattlefield,
-                        attacker, restriction.unblockableIfDefenderControls())) {
-                    return true;
-                }
-            }
-        }
-        for (CardEffect effect : gameQueryService.computeStaticBonus(gameData, attacker).grantedEffects()) {
-            if (effect instanceof BlockabilityRestrictionEffect restriction) {
-                if (hasUnmetSharedTypeCondition(gameQueryService, gameData, defenderBattlefield, restriction)) {
-                    return true;
-                }
-                if (hasDefenderCondition(restriction, landwalkIgnored)
-                        && defenderControls(predicateEvaluationService, gameData, defenderBattlefield,
-                        attacker, restriction.unblockableIfDefenderControls())) {
-                    return true;
-                }
-                if (restriction.unblockableIfDefenderHasRadCounters()
-                        && defenderHasRadCounters(gameData, defenderBattlefield)) {
-                    return true;
-                }
+            if (effect instanceof BlockabilityRestrictionEffect restriction
+                    && unblockableByDefender(gameQueryService, predicateEvaluationService, gameData, attacker,
+                    restriction, landwalkIgnored, defenderBattlefield, defenderId)) {
+                return true;
             }
         }
         final boolean[] result = {false};
@@ -80,26 +60,11 @@ public final class CombatHelper {
                 return;
             }
             for (CardEffect effect : source.getCard().getStaticEffects()) {
-                if (effect instanceof BlockabilityRestrictionEffect restriction) {
-                    if (hasUnmetSharedTypeCondition(gameQueryService, gameData, defenderBattlefield, restriction)) {
-                        result[0] = true;
-                        return;
-                    }
-                    if (hasMostCreaturesCondition(gameQueryService, gameData, defenderBattlefield, restriction)) {
-                        result[0] = true;
-                        return;
-                    }
-                    if (restriction.unblockableIfDefenderHasRadCounters()
-                            && defenderHasRadCounters(gameData, defenderBattlefield)) {
-                        result[0] = true;
-                        return;
-                    }
-                    if (hasDefenderCondition(restriction, landwalkIgnored)
-                            && defenderControls(predicateEvaluationService, gameData, defenderBattlefield,
-                            source, restriction.unblockableIfDefenderControls())) {
-                        result[0] = true;
-                        return;
-                    }
+                if (effect instanceof BlockabilityRestrictionEffect restriction
+                        && unblockableByDefender(gameQueryService, predicateEvaluationService, gameData, source,
+                        restriction, landwalkIgnored, defenderBattlefield, defenderId)) {
+                    result[0] = true;
+                    return;
                 }
             }
         });
@@ -109,13 +74,30 @@ public final class CombatHelper {
         if (landwalkIgnored) {
             return false;
         }
-        // Until-end-of-turn defender-condition grants (Barbarian Guides' snow landwalk).
         for (PermanentPredicate predicate : gameData.unblockableIfDefenderControls(attacker.getId())) {
             if (defenderControls(predicateEvaluationService, gameData, defenderBattlefield, attacker, predicate)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private static boolean unblockableByDefender(GameQueryService gameQueryService,
+                                                 PredicateEvaluationService predicateEvaluationService,
+                                                 GameData gameData,
+                                                 Permanent source,
+                                                 BlockabilityRestrictionEffect restriction,
+                                                 boolean landwalkIgnored,
+                                                 List<Permanent> defenderBattlefield,
+                                                 UUID defenderId) {
+        if (restriction.unblockableWhileDefendingPlayer() != null
+                && gameQueryService.defendingPlayerConditionHolds(
+                gameData, source, restriction.unblockableWhileDefendingPlayer(), defenderId)) {
+            return true;
+        }
+        return hasDefenderCondition(restriction, landwalkIgnored)
+                && defenderControls(predicateEvaluationService, gameData, defenderBattlefield,
+                source, restriction.unblockableIfDefenderControls());
     }
 
     /**
@@ -160,30 +142,15 @@ public final class CombatHelper {
                 && !(landwalkIgnored && restriction.unblockableIfDefenderControlsIsLandwalk());
     }
 
-    private static boolean hasUnmetSharedTypeCondition(GameQueryService gameQueryService,
-                                                        GameData gameData,
-                                                        List<Permanent> defenderBattlefield,
-                                                        BlockabilityRestrictionEffect restriction) {
-        Integer minimum = restriction.defenderControlsCreaturesSharingTypeMinimum();
-        if (minimum == null) {
-            return false;
-        }
-        return !gameQueryService.controlsCreaturesSharingCreatureType(
-                gameData, defenderControllerId(gameData, defenderBattlefield), minimum);
-    }
-
-    private static boolean hasMostCreaturesCondition(GameQueryService gameQueryService,
-                                                      GameData gameData,
-                                                      List<Permanent> defenderBattlefield,
-                                                      BlockabilityRestrictionEffect restriction) {
-        return restriction.unblockableIfDefenderControlsMostCreaturesOrTied()
-                && gameQueryService.controlsMostCreaturesOrTied(
-                        gameData, defenderControllerId(gameData, defenderBattlefield));
-    }
-
-    private static UUID defenderControllerId(GameData gameData, List<Permanent> defenderBattlefield) {
+    /** The player whose battlefield {@code defenderBattlefield} is, else the controller of a permanent on it. */
+    private static UUID defenderId(GameData gameData, List<Permanent> defenderBattlefield) {
         if (defenderBattlefield == null) {
             return null;
+        }
+        for (Map.Entry<UUID, List<Permanent>> entry : gameData.playerBattlefields.entrySet()) {
+            if (entry.getValue() == defenderBattlefield) {
+                return entry.getKey();
+            }
         }
         for (Permanent permanent : defenderBattlefield) {
             UUID controllerId = gameData.findControllerOf(permanent);
@@ -192,22 +159,6 @@ public final class CombatHelper {
             }
         }
         return null;
-    }
-
-    private static boolean defenderHasRadCounters(GameData gameData, List<Permanent> defenderBattlefield) {
-        UUID defenderId = null;
-        if (defenderBattlefield != null) {
-            for (Map.Entry<UUID, List<Permanent>> entry : gameData.playerBattlefields.entrySet()) {
-                if (entry.getValue() == defenderBattlefield) {
-                    defenderId = entry.getKey();
-                    break;
-                }
-            }
-        }
-        if (defenderId == null) {
-            defenderId = defenderControllerId(gameData, defenderBattlefield);
-        }
-        return defenderId != null && gameData.playerRadCounters.getOrDefault(defenderId, 0) > 0;
     }
 
     public static boolean isCantBeBlockedDueToAttackingAlone(GameQueryService gameQueryService,

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
@@ -19,9 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * {@code CanBeBlockedOnlyByFilterEffect}, {@code CantBeBlockedByCreaturesMatchingPredicateEffect},
  * {@code CantBeBlockedByCreaturesWithLessPowerEffect},
  * {@code CantBeBlockedByCreaturesWithPowerLessThanIslandCountEffect},
- * {@code CantBeBlockedIfDefenderControlsMatchingPermanentEffect},
- * {@code CantBeBlockedUnlessDefenderControlsCreaturesSharingCreatureTypeEffect},
- * {@code CantBeBlockedIfDefenderControlsMostCreaturesOrTiedEffect}, and
+ * {@code CantBeBlockedIfDefenderControlsMatchingPermanentEffect} (a permanent predicate or a defending-player
+ * condition), and
  * {@code CantBeBlockedIfAttackingAloneEffect}).
  */
 public interface BlockabilityRestrictionEffect extends CardEffect {
@@ -39,19 +39,12 @@ public interface BlockabilityRestrictionEffect extends CardEffect {
         return null;
     }
 
-    /** Minimum number of shared-type creatures the defending player must control, when applicable. */
-    default Integer defenderControlsCreaturesSharingTypeMinimum() {
+    /**
+     * When non-{@code null}, this creature can't be blocked as long as this condition holds for the defending player,
+     * judged with that player as the condition context's target (Hooded Horror, Graxiplon, Nightkin Ambusher).
+     */
+    default Condition unblockableWhileDefendingPlayer() {
         return null;
-    }
-
-    /** Whether this creature can't be blocked while the defending player has the most creatures. */
-    default boolean unblockableIfDefenderControlsMostCreaturesOrTied() {
-        return false;
-    }
-
-    /** Whether this creature can't be blocked while the defending player has a rad counter. */
-    default boolean unblockableIfDefenderHasRadCounters() {
-        return false;
     }
 
     /**

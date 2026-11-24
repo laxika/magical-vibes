@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetSpellDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.Freerunning;
 import com.github.laxika.magicalvibes.model.effect.ActivateCreatureAbilitiesAsThoughHasteEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
@@ -3791,6 +3792,20 @@ public class GameQueryService {
     /** Returns whether {@code playerId} controls strictly more creatures than {@code comparedPlayerId}. */
     public boolean controlsMoreCreaturesThan(GameData gameData, UUID playerId, UUID comparedPlayerId) {
         return countCreaturesControlled(gameData, playerId) > countCreaturesControlled(gameData, comparedPlayerId);
+    }
+
+    /**
+     * Whether an evasion ability's "as long as / unless defending player …" condition holds for
+     * {@code defendingPlayerId}, the player the attacker is attacking or the controller or protector of what it attacks
+     * (CR 508.5). It is judged as a static ability of {@code source} (the attacker, or the Aura or Equipment granting
+     * the ability) with the defending player as the context's target, and only as blockers are declared: a block
+     * already made stays (CR 509.1b).
+     */
+    public boolean defendingPlayerConditionHolds(GameData gameData, Permanent source, Condition condition,
+                                                 UUID defendingPlayerId) {
+        UUID controllerId = findPermanentController(gameData, source.getId());
+        return conditionEvaluationService.isMet(gameData, condition,
+                ConditionContext.forStaticEffect(source, controllerId).withTargetId(defendingPlayerId));
     }
 
     /** Returns whether {@code playerId} controls the most creatures, including ties for most. */

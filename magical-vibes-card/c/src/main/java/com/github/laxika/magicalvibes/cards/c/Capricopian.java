@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.DuringDeclareAttackers;
 import com.github.laxika.magicalvibes.model.condition.SourceAttacksActivatingPlayer;
-import com.github.laxika.magicalvibes.model.effect.CantAttackControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackCardOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -22,7 +22,7 @@ public class Capricopian extends Card {
 
     public Capricopian() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
-        addStaticEffect(new CantAttackControllerEffect());
+        addStaticEffect(CantAttackCardOwnerEffect.cantAttack(Subjects.controllerOf(Subjects.source()), false));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}",

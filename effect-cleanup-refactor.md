@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38 (each in Findings; the fold queue marks its rows). Fold runs 36b and 35c are reported and wait to merge; 39, 40 and 41 are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                        |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b (each in Findings; the fold queue marks its rows). Fold run 35c is reported and waits to merge; 39, 40 and 41 are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                         |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,300 / 2,659 (after fold run 38) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,294 / 2,659 (after fold run 36b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,187 rows over 4,503 classes (after fold run 38). Latest verdict per class: `step-9` 391, unique 1,176, absorbed 1,080, split 655, blocked-other 524, survivor 376, blocked-step-model 140, blocked-player-loop 96, dead 65. Waiting: 391 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,197 rows over 4,506 classes (after fold run 36b). Latest verdict per class: `step-9` 384, unique 1,176, absorbed 1,086, split 655, blocked-other 524, survivor 378, blocked-step-model 140, blocked-player-loop 96, dead 67. Waiting: 384 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -938,6 +938,12 @@ Delayed and global triggers:
 - `PermanentIsHauntedPredicate`; `DealDamageToPlayersEffect` over `ownerOf(target())` declares the permanent target (fold run 38).
 - `PlayerHasLeastLifePredicate`, `PlayerHasMostCardsInHandPredicate`, `PlayerSeatedInDirectionPredicate(direction)`, `PlayerControlsMostCreaturesPredicate(creatureFilter)` (fold run 38).
 - `IgnoreLegendRuleEffect(PermanentSubject)` and `IgnoreLegendRuleWhenExactlyTwoSameNameEffect(PermanentSubject counted)`, read by LegendRuleService per permanent (fold run 38).
+
+- `CantBeBlockedIfDefenderControlsMatchingPermanentEffect.whileDefendingPlayer(Condition)`: "can't be blocked as long as / unless defending player …", the condition judged with the defending player as the context's target by `GameQueryService.defendingPlayerConditionHolds` (CR 508.5, 509.1b) (fold run 36b).
+- `TargetPlayerMatches(PlayerPredicate)`: a `Condition` true when the player it is judged for (the target player, or a target permanent's controller) matches any player predicate (fold run 36b).
+- `PlayerControlsCreaturesSharingCreatureTypePredicate(min)`: "controls N or more creatures that share a creature type" (fold run 36b).
+- `CantAttackCardOwnerEffect(attacker, players, includePlaneswalkers)` / `.cantAttack(players, pw)` / `.enchantedCreatureCantAttack(players, pw)`: every "[this / enchanted / equipped creature] can't attack [its owner / its controller / you] [or planeswalkers …]", read by `AttackLegalityService.isRestrictedFromAttackingTarget` (fold run 36b).
+- `SubjectResolutionService.namesPlayer` also judges `ownerOf(source())` (current owner, with the board) and `controllerOf(source())` (fold run 36b).
 
 ### Blocked causes still open
 
@@ -4073,6 +4079,31 @@ Four of five batches done. Ratchet 3,355 / 2,699 → 3,337 / 2,686. Ledger 32 ro
 - No test of their own: Kraj's printed-ability loss, Bolas's granted loyalty abilities, the token scan's active statics.
 
 **For the next run.** Take Secret of Bloodbending and Cruel Entertainment together with ControlTargetPlayerNextTurnEffect's six cards, once a second user needs a Duration or a controller subject.
+
+### Step 9, fold run 36b (2026-11-24, parallel worktree)
+Both Run 36 batches left by fold run 36 are done. Ratchet 3,334 / 2,685 → 3,328 / 2,685: 6 records, plus 2 interfaces that are not counted. Ledger 10 rows: absorbed 6, survivor 2, dead 2. 13 card files rewritten; Oracle text checked for 16 cards; rulings checked for Hooded Horror, Graxiplon, Nightkin Ambusher, Xantcha and Fealty to the Realm. CR 506.2, 508.1c, 508.5, 509.1b and 613.1f checked.
+
+| Batch | Result |
+|---|---|
+| defender-cond | 3 folded. `CantBeBlockedIfDefenderControlsMatchingPermanentEffect` gains a `Condition defendingPlayerCondition` (`whileDefendingPlayer(c)`; exactly one of predicate and condition is set; landwalk needs the predicate). The condition is judged as a static ability of the evasion's source, with the defending player as the context's target (CR 508.5; fold run 34b's `withTargetId`), as blockers are declared, so a made block stays (CR 509.1b; Hooded Horror and Nightkin rulings). One judge, `GameQueryService.defendingPlayerConditionHolds`, serves CombatHelper's scans and `BlockLegalityService`. `BlockabilityRestrictionEffect.unblockableWhileDefendingPlayer()` replaces the three per-record facets. New `Condition` `TargetPlayerMatches(PlayerPredicate)`: Hooded Horror reuses `PlayerControlsMostCreaturesPredicate`. New predicate `PlayerControlsCreaturesSharingCreatureTypePredicate(min)`: Graxiplon's "unless" is a `NotCondition`. Nightkin uses the existing `TargetPlayerHasRadCounters`. |
+| attack-target | 3 records folded. `CantAttackCardOwnerEffect(PermanentSubject attacker, PlayerSubject players, boolean includePlaneswalkers)`: `attacker` is `source()` or `attachedCreature()`; the old constructors stay as `ownerOf(source())`; factories `cantAttack(players, pw)` and `enchantedCreatureCantAttack(players, pw)`. One reader, `AttackLegalityService.isRestrictedFromAttackingTarget`, covers the creature's active and granted static abilities (`source()`) and the active static abilities of the permanents attached to it (`attachedCreature()`, Aura-ignore honoured). Players are judged by `SubjectResolutionService.namesPlayer` for the ability's source; a planeswalker target is judged through its controller when `includePlaneswalkers`, and a battle is never restricted (CR 508.1c). `namesPlayer` gains `ownerOf(source())` (with the board, using the current owner) and `controllerOf(source())`. The 8 "can't attack you or planeswalkers you control" cards share one form; Fealty is `(you(), false)`. |
+
+**Behaviour changes.**
+- "Its owner" is the card's current owner (`cardOwnerOverrides`, the ante exchanges), no longer the owner stamped on the card. Test: Xantcha.
+- Xantcha's, Alexios's and Capricopian's own restrictions are read through active static abilities: they go when the creature loses all non-mana abilities, loses its printed abilities, or has that one ability suppressed (CR 613.1f). Before, only Xantcha's and Alexios's path checked anything, and only for losing all abilities. No card reaches the difference; no test.
+- Capricopian's restriction is also read when granted. No card grants it.
+- CombatHelper now also judges the most-creatures condition for granted effects (the old granted-effects scan skipped it). The defending player for every condition is found the way the rad-counter check found it: battlefield identity first, then a permanent's controller.
+- Dead code deleted: the "Vow" floating-copy branch in `canAttackDefender`. Nothing has floated `EnchantedCreatureCantAttackControllerEffect` since Promise of Loyalty moved to `CreaturesCantAttackControllerUnlessPredicateEffect`.
+
+**Tests.** Added the Xantcha ownership-change test and `SubjectResolutionServiceTest$StaticSourceOwnerAndController` (2 cases). None changed. Ran 93 classes plus a re-run of 2: 189 XML files, 1,503 cases, 0 failures.
+
+**Docs.** `ORACLE_TEXT_EFFECT_MAP` named the wrong record for Fealty to the Realm (`EnchantedCreatureCantAttackControllerEffect`); now corrected.
+
+**Seen, not changed.**
+- CombatHelper's first scan reads the attacker's printed static abilities without face-down or lost-ability checks. It only pre-filters `getBlockableAttackerIndices`; `BlockLegalityService` decides. Sure of the code, low impact.
+- The block step's defender is `getOpponentId(activePlayer)` (CombatBlockService), and `DefendingPlayerControlsPermanent` also uses `getOpponentId`. Both are right for two players only. Sure.
+
+**For the next run.** Step 10 could rename `CantAttackCardOwnerEffect` (to something like `CantAttackPlayersEffect`) and `CantBeBlockedIfDefenderControlsMatchingPermanentEffect` (to something like `CantBeBlockedWhileDefenderEffect`, with its predicate as `TargetPlayerControlsPermanent`), and could fold `CreaturesCantAttackControllerUnlessPredicateEffect`'s Aura-less forms onto the same restricted-`PlayerSubject` reader.
 
 ## Prompt
 

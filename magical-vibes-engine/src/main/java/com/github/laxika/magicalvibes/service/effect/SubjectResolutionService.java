@@ -1194,7 +1194,8 @@ public class SubjectResolutionService {
      * {@code source} may be {@code null} for an ability with no source permanent (an emblem's, a plane's), which then
      * enchants and chose nobody. With the board it also judges {@code controllerOf(attached())}, "enchanted
      * creature's controller" (Brand of Ill Omen): the player whose battlefield holds the permanent the source is
-     * attached to, nobody while it is attached to nothing or to a player.
+     * attached to, nobody while it is attached to nothing or to a player; and {@code ownerOf(source())}, "its owner"
+     * (Xantcha): the owner of the source's card, an in-game ownership change included.
      *
      * @throws UnsupportedOperationException for any other subject
      */
@@ -1214,18 +1215,24 @@ public class SubjectResolutionService {
             }
             return false;
         }
+        if (players instanceof PlayerSubject.OwnerOf(PermanentSubject.Source ignored)) {
+            return playerId != null && source != null && playerId.equals(ownerOfLive(gameData, source));
+        }
         return namesPlayer(source, controllerId, playerId, players);
     }
 
     /**
-     * As {@link #namesPlayer(GameData, Permanent, UUID, UUID, PlayerSubject)} without the one form that looks the
-     * board up, {@code controllerOf(attached())}.
+     * As {@link #namesPlayer(GameData, Permanent, UUID, UUID, PlayerSubject)} without the forms that look the
+     * board up, {@code controllerOf(attached())} and {@code ownerOf(source())}; {@code controllerOf(source())} is the
+     * ability's controller.
      *
      * @throws UnsupportedOperationException for any other subject
      */
     public static boolean namesPlayer(Permanent source, UUID controllerId, UUID playerId, PlayerSubject players) {
         return switch (players) {
             case PlayerSubject.You ignored -> playerId != null && playerId.equals(controllerId);
+            case PlayerSubject.ControllerOf(PermanentSubject.Source ignored) ->
+                    playerId != null && playerId.equals(controllerId);
             case PlayerSubject.Each each -> each.relation() == PlayerSubject.Relation.ALL
                     || playerId != null && !playerId.equals(controllerId);
             case PlayerSubject.EnchantedPlayer ignored -> playerId != null && source != null

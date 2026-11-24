@@ -608,9 +608,7 @@ public class BlockLegalityService {
                 for (CardEffect effect : source.getCard().getStaticEffects()) {
                     if (effect instanceof BlockabilityRestrictionEffect restriction
                             && (restriction.unblockableIfDefenderControls() != null
-                            || restriction.unblockableIfDefenderHasRadCounters()
-                            || restriction.defenderControlsCreaturesSharingTypeMinimum() != null
-                            || restriction.unblockableIfDefenderControlsMostCreaturesOrTied()
+                            || restriction.unblockableWhileDefendingPlayer() != null
                             || restriction.blockableOnlyBy() != null
                             || restriction.cantBeBlockedByCreaturesMatching() != null
                             || restriction.unblockableUnlessAttackingOwnerOrOwnerControlledPermanent()
@@ -635,19 +633,9 @@ public class BlockLegalityService {
                     unblockableForOtherReason = true;
                 }
             }
-            if (restriction.defenderControlsCreaturesSharingTypeMinimum() != null
-                    && !gameQueryService.controlsCreaturesSharingCreatureType(
-                    gameData, defenderControllerId(context),
-                    restriction.defenderControlsCreaturesSharingTypeMinimum())) {
-                unblockable = true;
-                unblockableForOtherReason = true;
-            }
-            if (restriction.unblockableIfDefenderControlsMostCreaturesOrTied()
-                    && gameQueryService.controlsMostCreaturesOrTied(gameData, defenderControllerId(context))) {
-                unblockable = true;
-                unblockableForOtherReason = true;
-            }
-            if (restriction.unblockableIfDefenderHasRadCounters() && defenderHasRadCounters(context)) {
+            if (restriction.unblockableWhileDefendingPlayer() != null
+                    && gameQueryService.defendingPlayerConditionHolds(gameData, attackerRestriction.source(),
+                    restriction.unblockableWhileDefendingPlayer(), defenderControllerId(context))) {
                 unblockable = true;
                 unblockableForOtherReason = true;
             }
@@ -935,11 +923,6 @@ public class BlockLegalityService {
             }
         }
         return null;
-    }
-
-    private boolean defenderHasRadCounters(BlockLegalityContext context) {
-        UUID defenderId = defenderControllerId(context);
-        return defenderId != null && context.gameData.playerRadCounters.getOrDefault(defenderId, 0) > 0;
     }
 
 }

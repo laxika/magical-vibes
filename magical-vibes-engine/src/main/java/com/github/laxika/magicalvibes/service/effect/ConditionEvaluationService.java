@@ -192,6 +192,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetPlayerLifeTotalEqual
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerTurn;
+import com.github.laxika.magicalvibes.model.condition.TargetPlayerMatches;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerCouldCastSorcery;
 import com.github.laxika.magicalvibes.model.condition.StackIsEmpty;
 import com.github.laxika.magicalvibes.model.condition.SourceHasAtLeastAttachedEquipment;
@@ -1197,6 +1198,11 @@ public class ConditionEvaluationService {
                     targetPlayerIsAfraidOfController(gameData, ctx);
             case TargetPlayerTurn ignored ->
                     ctx.targetId() != null && ctx.targetId().equals(gameData.activePlayerId);
+            case TargetPlayerMatches c -> {
+                UUID judgedPlayerId = judgedPlayer(gameData, ctx);
+                yield judgedPlayerId != null && targetLegalityService.matchesPlayerPredicate(
+                        gameData, ctx.controllerId(), judgedPlayerId, c.predicate(), ctx.sourcePermanentId());
+            }
             case TargetPlayerCouldCastSorcery ignored ->
                     ctx.targetId() != null && ctx.targetId().equals(gameData.activePlayerId)
                             && (gameData.currentStep == TurnStep.PRECOMBAT_MAIN
@@ -5096,6 +5102,17 @@ public class ConditionEvaluationService {
      * controller of the context's triggering permanent (as the trigger pipeline judges a "whenever a land an opponent
      * controls enters" ability's intervening "if": Archaeomancer's Map, Tunnel Ignus).
      */
+    /** The context's target player, or the controller of the targeted permanent; {@code null} when there is none. */
+    private UUID judgedPlayer(GameData gameData, ConditionContext ctx) {
+        if (ctx.targetId() == null) {
+            return null;
+        }
+        if (gameData.playerIds.contains(ctx.targetId())) {
+            return ctx.targetId();
+        }
+        return gameQueryService.findPermanentController(gameData, ctx.targetId());
+    }
+
     private UUID thatPlayer(GameData gameData, ConditionContext ctx) {
         if (ctx.targetId() != null && gameData.playerIds.contains(ctx.targetId())) {
             return ctx.targetId();

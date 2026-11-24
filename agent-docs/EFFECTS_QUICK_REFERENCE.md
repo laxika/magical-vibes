@@ -1752,15 +1752,14 @@ a code change. Branching on one of these interfaces is fine anywhere — it is t
   by its static handler
 - `BlockabilityRestrictionEffect` — attacker-side evasion facts read by the engine query layer
   (`GameQueryService`): `cantBeBlocked()`, `unblockableIfDefenderControls()` (`PermanentPredicate`),
-  `defenderControlsCreaturesSharingTypeMinimum()` (minimum shared-type group size),
+  `unblockableWhileDefendingPlayer()` (a `Condition` judged for the defending player),
   `unblockableWhileAttackingAlone()`,
   `blockableOnlyBy()` + `blockableOnlyByDescription()`, `cantBeBlockedByCreaturesMatching()`,
   `cantBeBlockedByCreaturesMatchingOnlyIfDefenderControls()`. The engine
   evaluates the predicates and supplies engine-computed facts (attacking-alone, historic-spell). Impl
   `CantBeBlockedEffect`, `CanBeBlockedOnlyByFilterEffect`, `CantBeBlockedByCreaturesMatchingPredicateEffect`,
   `CantBeBlockedByCreaturesWithLessPowerEffect`,
-  `CantBeBlockedIfDefenderControlsMatchingPermanentEffect`, `CantBeBlockedIfDefenderHasRadCountersEffect`,
-  `CantBeBlockedUnlessDefenderControlsCreaturesSharingCreatureTypeEffect`,
+  `CantBeBlockedIfDefenderControlsMatchingPermanentEffect` (a permanent predicate, or `whileDefendingPlayer(Condition)`),
   `CantBeBlockedIfAttackingAloneEffect` ("can't be blocked if you've cast a historic spell this turn" is a static
   `ConditionalEffect(ControllerCastSpellThisTurn(CardIsHistoricPredicate), GrantEffectEffect(CantBeBlockedEffect, source()))`)
 - `BlockingRestrictionEffect` — blocker-side restriction facts (`GameQueryService`): `cantBlock()`,
@@ -2132,10 +2131,8 @@ intervening-if condition used to gate a targeted ETB. Whether the ability trigge
 - `MaximumCombatCreaturesEffect(int maxAttackers, int maxBlockers[, CombatAttackTargetScope])` — STATIC combat-set restriction: caps the number of attackers and distinct blockers declared in each combat. `ALL` is global (Dueling Grounds uses `(1, 1)`), `CONTROLLER` counts attacks aimed at the effect permanent's controller only (Crawlspace), and `SOURCE_PERMANENT` counts attacks aimed at the effect permanent itself (The Eternal Wanderer). Read through the `CombatCreatureLimitEffect` capability by `CombatAttackService`/`CombatBlockService`
 - `CreaturesCantAttackUnlessPredicateEffect(PermanentPredicate exemption)` — STATIC global: no creature can attack unless it matches exemption (Stormtide Leviathan)
 - `CreaturesCantAttackControllerUnlessPredicateEffect(PermanentPredicate exemption[, boolean protectsPlaneswalkers])` — STATIC defender-scoped: creatures not matching exemption can't attack THIS controller only ("creatures without flying can't attack you", Form of the Dragon → exemption `PermanentHasKeywordPredicate(Keyword.FLYING)`). Pass `protectsPlaneswalkers=true` to also bar attacks on the controller's planeswalkers ("can't attack you or planeswalkers you control", Sandwurm Convergence → exemption `PermanentNotPredicate(PermanentHasKeywordPredicate(Keyword.FLYING))`); the single-arg overload defaults to player-only
-- `CantAttackCardOwnerEffect(boolean includePlaneswalkers)` (no-arg = true) — STATIC self restriction: this creature can't attack its card owner, and owner-controlled planeswalkers when `includePlaneswalkers`. Enforced by `AttackLegalityService` against the owner player (and owner-controlled planeswalkers when the flag is set). Xantcha, Sleeper Agent (true); Alexios, Elrond grant (false)
+- `CantAttackCardOwnerEffect(PermanentSubject attacker, PlayerSubject players, boolean includePlaneswalkers)` — STATIC: `attacker` can't attack the players `players` names, nor their planeswalkers when `includePlaneswalkers` (never a battle). `()` / `(boolean)` = "can't attack its owner [or planeswalkers its owner controls]" (`ownerOf(source())`: Xantcha true; Alexios, Elrond's grant false); `cantAttack(controllerOf(source()), false)` = "can't attack its controller" (Capricopian); `enchantedCreatureCantAttack(you(), true)` = "enchanted / equipped creature can't attack you or planeswalkers you control" (Vows, Spectral Grasp, Assault Suit), `(you(), false)` = "can't attack you" (Fealty to the Realm). Read by `AttackLegalityService` as attackers are declared (CR 508.1c)
 - `CantAttackPlayerAlreadyAttackedThisTurnEffect()` — STATIC self restriction: this creature can't attack a player it already attacked this turn; it does not restrict attacks against planeswalkers or battles (Port Razer)
-- `EnchantedCreatureCantAttackControllerEffect()` — Aura STATIC: the enchanted creature can't attack the Aura controller or that player's planeswalkers, while remaining able to attack other players (Vow of Duty)
-- `EnchantedCreatureCantAttackPlayerEffect()` — Aura STATIC: the enchanted creature can't attack the Aura controller ("can't attack you") but may still attack that player's planeswalkers (Fealty to the Realm).
 - `CreaturesCantAttackControllerUntilNextTurnEffect()` / `(PlayerSubject attackers, PlayerSubject protectedPlayers, boolean protectsPlaneswalkers, Duration duration)` — resolution-time attack ban (floating `CreaturesCantAttackControllerUnlessPredicateEffect` on each protected player, naming each attacking player): Chronomantic Escape `()`; "they can't attack you this combat" `(activePlayer(), you(), false, UNTIL_END_OF_COMBAT)` (Champions of Minas Tirith); "you can't attack that player this turn" `(you(), targetPlayer(), false, UNTIL_END_OF_TURN)` (Call for Aid); "they can't attack you or planeswalkers you control this turn" `(triggeringPlayer(), you(), true, UNTIL_END_OF_TURN)` (Sandswirl Wanderglyph)
 - `DamagedPlayerMayDrawAndCantAttackControllerUntilNextTurnEffect()` — combat-damage trigger marker: the damaged player may draw a card; if they do, only creatures they control can't attack the trigger controller or permanents they control during their next turn (Willie Lumpkin, Postman)
 - `CreaturesCantAttackUnlessDefendingPlayerActedLastTurnEffect()` — STATIC global defender restriction: creatures can't attack a player unless that player cast a spell or put a nontoken permanent onto the battlefield during their own most recently completed turn; does not restrict attacks against planeswalkers (Arboria)
@@ -4242,6 +4239,7 @@ source card is no longer in the graveyard, the library card is not exiled and no
 ## Poison counters
 
 - `TargetPlayerHasRadCounters()` â€” condition true when the player carried by the current stack entry has one or more rad counters; combine with `ConditionalEffect` for target-player rad-counter branches such as Vexing Radgull
+- `TargetPlayerMatches(PlayerPredicate)` — condition true when the player it is judged for (the context's target player, or a targeted permanent's controller) matches the player predicate; the defending player of `CantBeBlockedIfDefenderControlsMatchingPermanentEffect.whileDefendingPlayer` (Hooded Horror `PlayerControlsMostCreaturesPredicate`, Graxiplon negated `PlayerControlsCreaturesSharingCreatureTypePredicate(3)`)
 
 The `CONTROLLER` form of `GivePoisonCountersEffect` is also supported as a mana-ability rider (Noxious Bayou).
 
@@ -4610,14 +4608,13 @@ The `CONTROLLER` form of `GivePoisonCountersEffect` is also supported as a mana-
 
 ## Combat restrictions / evasion
 
-- `CantBeBlockedIfDefenderControlsMostCreaturesOrTiedEffect()` - can't be blocked as long as the defending player controls the most creatures or is tied for the most (static)
+- `CantBeBlockedIfDefenderControlsMatchingPermanentEffect.whileDefendingPlayer(Condition)` - can't be blocked as long as the condition holds for the defending player (its context's target): `TargetPlayerMatches(PlayerControlsMostCreaturesPredicate())` (Hooded Horror), `TargetPlayerHasRadCounters()` (Nightkin Ambusher), `NotCondition(TargetPlayerMatches(PlayerControlsCreaturesSharingCreatureTypePredicate(3)))` ("unless", Graxiplon) (static)
 
 - `EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect(int maxBlockers[, PermanentPredicate affectedCreatureFilter])` — team-wide block cap; each creature the source's controller controls, optionally matching the filter, can be blocked by at most N creatures. Yuan Shao, the Indecisive uses no filter; Challenger Troll uses `PermanentPowerAtLeastPredicate(4)`.
 
 - `CantBeBlockedEffect()` — unblockable (static)
 - `CantBeBlockedUnlessAttackingOwnerOrOwnerControlledPermanentEffect()` — can't be blocked unless attacking its owner or a permanent its owner controls (static)
 - `CantBeBlockedByFewerThanNCreaturesEffect(int minBlockers)` — generalized menace: can't be blocked except by N+ creatures (static). Menace = 2; Guile = 3
-- `CantBeBlockedUnlessDefenderControlsCreaturesSharingCreatureTypeEffect(int minimum)` — can't be blocked unless the defending player controls at least `minimum` creatures sharing a creature type (static)
 - `CantBeBlockedByCreaturesMatchingPredicateEffect(PermanentPredicate blockerPredicate)` / `(blockerPredicate, onlyIfDefenderControls)` — can't be blocked by blockers matching the predicate (static). Optional second arg gates the restriction on defender controlling a matching permanent (Arctic Foxes = power dz?A2 only if snow land). Taoist Mystic = `PermanentHasKeywordPredicate(HORSEMANSHIP)`
 - `CantBeBlockedByCreaturesWithLessPowerEffect()` — STATIC: creatures with power less than this creature's power can't block it (Shrill Howler / Howling Chorus). Compared against effective powers at declaration in `GameQueryService.findBlockDenial`
 - `CantBeBlockedByCreaturesWithPowerLessThanIslandCountEffect()` — STATIC: creatures with power less than the number of Islands controlled by this creature's controller can't block it (Kraken of the Straits). Compared against current effective powers and Island count at declaration in `BlockLegalityService`
@@ -5548,7 +5545,6 @@ Use `Triggers.sourceState(counter predicate)` with `PlaneswalkEffect` for a sepa
 `SacrificeNoncreatureNonlandPermanentIfExcessDamageEffect` — **Gone** (no card wrote it): Maarika, Brutal Gladiator writes `SacrificePermanentsEffect(1, noncreature nonland, Subjects.controllerOf(triggering()))` on `Triggers.dealsDamageToCreature()` with `TriggerOptions.DEFAULT.withInterveningIf(new TriggeringPermanentMatches(new PermanentDealtExcessDamageThisTurnPredicate()))`
 - `PutCommanderFromCommandZoneIntoHandEffect` — **Gone**: `ChooseCardEffect.oneOf(cardsInYourCommandZone(CardIsCommanderPredicate()), label) + PutCardsIntoHandEffect(cardsThisWay(CHOOSE))`.
 - `ExileTopCardOfDamagedPlayerLibraryMayCastThisTurnEffect` — **Gone**: `new ExileTopCardMayPlayThisTurnEffect(1, false).fromLibraryOf(Subjects.triggeringPlayer()).mayOnlyCast().withAnyManaType()` (Grenzo, Havoc Raiser)
-- `AttackerTargetRestrictionEffect` — static attacker-side target restriction: `restrictedPlayerId(Permanent)` identifies a fixed player, `restrictsSourceController()` identifies the source's current controller, and `restrictsPlaneswalkers()` extends the restriction to that player's planeswalkers. Implemented by `CantAttackControllerEffect()` (Capricopian).
 - `GrantControllerFlagbearerEffect()` - STATIC marker making the controller a Flagbearer; the target-choice enforcement treats that player as a Flagbearer target (Enroll in the Coalition, MB1 #4)
 - `StartInGraveyardEffect(int lifeLoss)` - pregame marker: the source card may begin the game in its owner's graveyard and its controller loses `lifeLoss` life on acceptance (Buried Ogre, MB1 #36)
 - `BecomeStartingPlayerEffect()` - pregame marker allowing a non-starting player to become the starting player from the opening hand (Impatient Iguana, MB1 #55)

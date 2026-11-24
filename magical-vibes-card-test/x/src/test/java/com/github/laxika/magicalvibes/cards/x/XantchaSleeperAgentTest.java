@@ -52,6 +52,20 @@ class XantchaSleeperAgentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("After an ownership change, Xantcha may attack its former owner")
+    void restrictionFollowsTheCurrentOwner() {
+        XantchaSleeperAgent card = new XantchaSleeperAgent();
+        card.setOwnerId(player1.getId());
+        Permanent xantcha = addCreatureReady(player2, card);
+
+        assertThat(als.canAttackDefender(gd, xantcha, player1.getId())).isFalse();
+
+        gd.cardOwnerOverrides.put(card.getId(), player2.getId());
+
+        assertThat(als.canAttackDefender(gd, xantcha, player1.getId())).isTrue();
+    }
+
+    @Test
     @DisplayName("Any player may activate Xantcha's ability, making its controller lose life while the activator draws")
     void anyPlayerMayActivate() {
         XantchaSleeperAgent card = new XantchaSleeperAgent();

@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackCardOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -13,7 +14,7 @@ public class SpectralGrasp extends Card {
 
     public SpectralGrasp() {
         target(TargetFilters.creature())
-                .addStaticEffect(new EnchantedCreatureCantAttackControllerEffect())
+                .addStaticEffect(CantAttackCardOwnerEffect.enchantedCreatureCantAttack(Subjects.you(), true))
                 .addStaticEffect(new MatchingCreaturesCantBlockMatchingCreaturesEffect(
                         new PermanentIsHostOfSourceAuraPredicate(),
                         new PermanentControlledBySourceControllerPredicate(),
