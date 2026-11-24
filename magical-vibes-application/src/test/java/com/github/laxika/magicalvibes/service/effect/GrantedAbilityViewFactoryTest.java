@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.CantBeSacrificedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBecomeSuspectedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromNonSubtypeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
@@ -92,7 +91,7 @@ class GrantedAbilityViewFactoryTest {
     void projectsOnlyProtectionBeyondPrintedText() {
         Card card = creatureCard("Voice");
         card.addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
-        card.addStaticEffect(new ProtectionFromChosenColorEffect());
+        card.addStaticEffect(ProtectionFromColorsEffect.chosenColor());
         Permanent permanent = new Permanent(card);
         permanent.setChosenColor(CardColor.RED);
 

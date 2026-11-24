@@ -25,6 +25,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.e.EmptyShrineKannushi;
+import com.github.laxika.magicalvibes.cards.v.VoiceOfAll;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -38,7 +40,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         SiegeWurm.class, WeatherseedFaeries.class, DesertNomads.class, GuardianOfTheGuildpact.class,
         DimirHouseGuard.class, Sewerdreg.class, ReaverTitan.class, GiverOfRunes.class, GrizzlyBears.class,
         Memnite.class, TrueNameNemesis.class, TsaboTavoc.class, IsamaruHoundOfKonda.class, LavabrinkVenturer.class,
-        LlanowarElves.class, GrayOgre.class, HaktosTheUnscarred.class})
+        LlanowarElves.class, GrayOgre.class, HaktosTheUnscarred.class, EmptyShrineKannushi.class,
+        VoiceOfAll.class})
 class ConcertedEffortTest extends BaseCardTest {
 
     private void resolveUpkeepTrigger(Player activePlayer) {
@@ -302,5 +305,34 @@ class ConcertedEffortTest extends BaseCardTest {
 
         assertThat(gqs.hasProtectionFromSource(gd, recruit, bears)).isFalse();
         assertThat(gqs.hasProtectionFromSource(gd, recruit, ogre)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Shares the colors among permanents you control that Kannushi has protection from")
+    void sharesKannushiColors() {
+        harness.addToBattlefield(player1, new ConcertedEffort());
+        harness.addToBattlefield(player1, new EmptyShrineKannushi());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent memnite = harness.addToBattlefieldAndReturn(player1, new Memnite());
+
+        resolveUpkeepTrigger(player1);
+
+        assertThat(gqs.hasProtectionFrom(gd, memnite, CardColor.GREEN)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, memnite, CardColor.WHITE)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, memnite, CardColor.BLUE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Shares protection from the color chosen for Voice of All")
+    void sharesChosenColor() {
+        harness.addToBattlefield(player1, new ConcertedEffort());
+        Permanent voice = harness.addToBattlefieldAndReturn(player1, new VoiceOfAll());
+        voice.setChosenColor(CardColor.BLUE);
+        Permanent memnite = harness.addToBattlefieldAndReturn(player1, new Memnite());
+
+        resolveUpkeepTrigger(player1);
+
+        assertThat(gqs.hasProtectionFrom(gd, memnite, CardColor.BLUE)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, memnite, CardColor.RED)).isFalse();
     }
 }

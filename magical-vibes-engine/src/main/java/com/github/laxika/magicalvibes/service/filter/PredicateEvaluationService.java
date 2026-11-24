@@ -4224,7 +4224,8 @@ public class PredicateEvaluationService {
         for (CardEffect effect : permanent.getCard().getStaticEffects()) {
             if (effect instanceof ProtectionGrantingEffect protection
                     && protection.protectionSubject() == null
-                    && protection.protectionFromColors().contains(color)) {
+                    && gameQueryService.protectionColorsForStaticEvaluation(null, protection, permanent, null)
+                            .contains(color)) {
                 return true;
             }
         }

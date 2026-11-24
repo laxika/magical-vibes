@@ -18,9 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsOfPermanentsYouControlEffect;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -586,7 +584,7 @@ public class AuraAttachmentService {
 
         if (gameQueryService.hasProtectionFromSource(gameData, host, attachment)
                 && !(isAura && hostHasAuraSafeProtection(gameData, host))
-                && (!grantsSelfExemptProtection(attachment)
+                && (!(isAura && grantsSelfExemptProtection(attachment))
                 || gameQueryService.hasProtectionFromAuraIgnoringOwnGrant(gameData, host, attachment))) {
             String relation = isAura ? "enchanted" : isFortification ? "fortified" : "equipped";
             return relation + " permanent has protection from it";
@@ -646,11 +644,6 @@ public class AuraAttachmentService {
     }
 
     /**
-     * Auras whose protection grant explicitly keeps the Aura attached even when the Aura itself is
-     * among the protected sources. The fixed-color form is used by Spectra Ward, the chosen-color
-     * form by Ward of Lights, and the card-type form by Tattoo Ward.
-     */
-    /**
      * Whether an attached permanent gives the host protection that doesn't remove Auras (Spectra
      * Ward's "This effect doesn't remove Auras"), so Auras already attached to it stay attached.
      */
@@ -667,13 +660,14 @@ public class AuraAttachmentService {
         return false;
     }
 
+    /**
+     * Whether an Aura gives its creature protection that doesn't remove that Aura ("This effect doesn't remove this
+     * Aura": the colour Wards, Ward of Lights, Pledge of Loyalty; Tattoo Ward's card-type form). Only an Aura's text
+     * says so; an Equipment with the quality its creature has protection from becomes unattached (CR 702.16d).
+     */
     private boolean grantsSelfExemptProtection(Permanent attachment) {
         return attachment.getCard().getStaticEffects().stream()
                 .anyMatch(effect -> {
-                    if (effect instanceof ProtectionFromChosenColorEffect chosenProtection) {
-                        return chosenProtection.subject() != null
-                                && chosenProtection.subject() instanceof PermanentSubject.Attached;
-                    }
                     if (effect instanceof ProtectionFromColorsEffect fixedProtection) {
                         return fixedProtection.subject() != null
                                 && fixedProtection.subject() instanceof PermanentSubject.Attached;
@@ -682,10 +676,6 @@ public class AuraAttachmentService {
                             && grant.subject() instanceof PermanentSubject.Attached
                             && grant.effect() instanceof ProtectionFromCardTypesEffect cardTypeProtection) {
                         return cardTypeProtection.cardTypes().contains(CardType.ENCHANTMENT);
-                    }
-                    if (effect instanceof ProtectionFromColorsOfPermanentsYouControlEffect dynamicProtection) {
-                        return dynamicProtection.subject() != null
-                                && dynamicProtection.subject() instanceof PermanentSubject.Attached;
                     }
                     return false;
                 });

@@ -3,13 +3,13 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 
 @CardRegistration(set = "GPT", collectorNumber = "13")
 public class OrderOfTheStars extends Card {
 
     public OrderOfTheStars() {
         addStaticEffect(new ChooseColorOnEnterEffect());
-        addStaticEffect(new ProtectionFromChosenColorEffect());
+        addStaticEffect(ProtectionFromColorsEffect.chosenColor());
     }
 }

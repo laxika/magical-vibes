@@ -1693,14 +1693,10 @@ a code change. Branching on one of these interfaces is fine anywhere — it is t
   `ProtectionFromPlayersEffect(Set<UUID> playerIds, boolean eachOpponent)` (`protectionFromPlayers()`);
   the last two are the payloads of resolved "gains protection from colorless / from [player]" grants
   (`GrantEffectEffect(…, Subjects.target())` floating effects on the permanent).
-  NOT for runtime-only protection: chosen-color (`ProtectionFromChosenColorEffect`, a
-  `ChooseColorEffect`), the chosen player (`ProtectionFromChosenPlayerEffect`), or
-  `ProtectionFromColorsOfPermanentsYouControlEffect()` — STATIC self-scoped Empty-Shrine Kannushi
-  shape whose colour set is recomputed from the controller's battlefield inside
-  `GameQueryService.hasProtectionFrom`
-- `ProtectionFromColorsOutsideCommanderColorIdentityEffect()` — STATIC protection for an
-  equipped creature from colors outside its controller's command-zone commander identity;
-  the handler also recognizes commander-marked battlefield permanents
+  `protectionFromColors()` is only a fixed colour set: a colour set judged as asked
+  (`ProtectionFromColorsEffect.ColorSet`) is read by `GameQueryService.protectionColors(gd, protection, holder)`
+  (`protectionColorsForStaticEvaluation` in a static handler), which every colour-protection reader calls.
+  NOT for the chosen player (`ProtectionFromChosenPlayerEffect`).
 - `ProtectionFromImprintedCardTypesEffect()` — STATIC self-scoped protection from every card type
   of the card imprinted on the source permanent; the static handler derives a normal
   `ProtectionFromCardTypesEffect` from the still-exiled imprint (Mirror Golem)
@@ -1710,9 +1706,6 @@ a code change. Branching on one of these interfaces is fine anywhere — it is t
 - `TargetingRestrictionEffect.fromAbilitySourceCardTypes(Set<CardType>)` — STATIC self restriction:
   abilities from sources with one of the given card types can't target the permanent; applies to
   abilities from any controller (Artifact Ward)
-  `GameQueryService.hasProtectionFrom`; `ProtectionFromColorsOfPermanentsYouControlEffect(Subjects.attachedCreature())`
-  is the Aura-granted Pledge of Loyalty shape, evaluated from the Aura controller's battlefield
-  by its static handler
 - `BlockabilityRestrictionEffect` — attacker-side evasion facts read by the engine query layer
   (`GameQueryService`): `cantBeBlocked()`, `unblockableIfDefenderControls()` (`PermanentPredicate`),
   `unblockableWhileDefendingPlayer()` (a `Condition` judged for the defending player),
@@ -4426,7 +4419,7 @@ The `CONTROLLER` form of `GivePoisonCountersEffect` is also supported as a mana-
 - `BecomeAuraReanimateFromGraveyardEffect()` — Triggers.enters(ObjectRelation.THIS): intervening-if still on battlefield, become an Aura, put target creature card from any graveyard onto the battlefield under your control, and attach (Necromancy). `graveyardCard(ALL_GRAVEYARDS)` targetSpec; ETB graveyard-target flow chooses as the trigger goes on the stack
 - `LicidBecomeAuraEffect(endCost)` — activated: source loses the ability, becomes an Aura with enchant creature and attaches to target creature; benign `CREATURE` targetSpec (Quickening Licid)
 - `LicidEndEffect()` — the `endCost` payment installed on the Aura face by `LicidBecomeAuraEffect`; detaches and reverts to the printed creature. Never used on a card class
-- `ProtectionFromChosenColorEffect(Subjects.attachedCreature())` — STATIC on an Aura: enchanted creature has protection from the Aura's chosen colour; pair with `STATIC ChooseColorOnEnterEffect()`. The Aura is never detached by the protection it grants (Ward of Lights). No-arg = self-scoped, a static ability next to a static `ChooseColorOnEnterEffect` (Voice of All)
+- `ProtectionFromColorsEffect.chosenColor(Subjects.attachedCreature())` — STATIC on an Aura or Equipment: the creature has protection from the source's chosen colour; pair with `STATIC ChooseColorOnEnterEffect()` (Sanctuary Blade: `AsThisBecomesAttachedEffect(ChooseColorForSourceEffect)`). An Aura is never detached by the protection it grants (Ward of Lights); an Equipment is (CR 702.16d). `chosenColor()` = self-scoped, next to a static `ChooseColorOnEnterEffect` (Voice of All)
 - `GrantProtectionChoiceUntilEndOfTurnEffect(Subjects.creaturesYouControl(), PermanentPredicate filter)` — untargeted mass grant: choose one colour, every creature you control matching `filter` gains protection from it until end of turn (Brave the Elements, `new PermanentColorInPredicate(Set.of(CardColor.WHITE))`). `null` filter = each creature you control; membership fixed on resolution; no prompt if nothing qualifies. The same record's `Subjects.target()` / `Subjects.source()` scopes are the single- and self-target forms; `filter` is rejected on those
 - `GrantProtectionChoiceToControllerUntilEndOfTurnEffect()` — on resolution, the controller chooses a color and gains protection from it until end of turn; the controller's permanents are unaffected (Seht's Tiger)
 - `ReboundCastFromExileEffect()` — internal delayed-trigger effect: if the rebound card is still in exile, queues the existing `MayPlayExiledCardWithoutPayingManaCostEffect` offer; the `ExileFreeCastSupport` path handles the optional free recast
@@ -4482,7 +4475,7 @@ The `CONTROLLER` form of `GivePoisonCountersEffect` is also supported as a mana-
 - `TimeAndTideEffect()` — "simultaneously, all phased-out creatures phase in and all creatures with phasing phase out". Non-targeting; `PhasingService.applyTimeAndTide` collects both halves then moves. Attachments follow (CR 702.26g). Time and Tide
 - `EquipoiseEffect()` — upkeep: for each land/artifact/creature target player controls in excess of yours, choose that many of theirs to phase out (lands → artifacts → creatures). `harmful(PLAYER)`; pair with `PlayerPredicateTargetFilter(ANY)`. Equipoise
 - `PreventRegenerationOfCreaturesDamagedBySourceThisTurnEffect()` — without a target the source gains "Creatures dealt damage by this creature this turn can't be regenerated this turn" until end of turn (layer-6 grant); in a targeted ability it is a floating effect on the target; either way `GraveyardService.tryRegenerate` refuses any creature that source damaged this turn (`GameData.creatureCardsDamagedThisTurnBySourcePermanent`, so pre-activation damage counts). Bone Shaman / Runesword
-- `ProtectionFromColorsEffect(Set<CardColor>)` — protection from colors (static)
+- `ProtectionFromColorsEffect(Set<CardColor>)` — protection from colors (static); `ColorSet` judged as asked: `chosenColor([subject])`, `amongPermanentsYouControl([subject])` ("each color among permanents you control", Empty-Shrine Kannushi, Pledge of Loyalty), `outsideCommanderColorIdentity(subject)` (Commander's Plate; none without a commander). Read through `GameQueryService.protectionColors`
 - `ProtectionFromMulticoloredEffect.enemyColoredMulticolored()` — protection from exactly two enemy colors
   (static; Frenemy of the Guildpact, MB1 #74)
 - `ProtectionFromMulticoloredEffect.monocolored()` — protection from sources with exactly one color (static)

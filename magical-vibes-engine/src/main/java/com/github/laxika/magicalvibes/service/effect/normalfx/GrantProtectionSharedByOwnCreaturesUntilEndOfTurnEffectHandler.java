@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsOfPermanentsYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
@@ -97,10 +96,7 @@ public class GrantProtectionSharedByOwnCreaturesUntilEndOfTurnEffectHandler impl
 
         if (!bonus.losesAllAbilities() && !gameQueryService.hasLostPrintedProtection(gameData, creature)) {
             for (CardEffect staticEffect : creature.getCard().getStaticEffects()) {
-                if (staticEffect instanceof ProtectionFromColorsOfPermanentsYouControlEffect protection
-                        && protection.subject() == null) {
-                    collectColorsOfControlledPermanents(gameData, creature, protectionColors);
-                } else if (staticEffect instanceof ProtectionFromChosenPlayerEffect
+                if (staticEffect instanceof ProtectionFromChosenPlayerEffect
                         && !creature.getChosenPlayerIds().isEmpty()) {
                     // Protection from the chosen player is protection from that player (CR 702.16k).
                     protectionEffects.add(new ProtectionFromPlayersEffect(
@@ -109,29 +105,20 @@ public class GrantProtectionSharedByOwnCreaturesUntilEndOfTurnEffectHandler impl
                     protectionEffects.add(protection);
                 } else if (staticEffect instanceof ProtectionGrantingEffect protection
                         && protection.protectionSubject() == null) {
-                    addProtectionAbility(withChosenValues(protection, creature), protectionColors, protectionEffects);
+                    addProtectionAbility(gameData, creature, withChosenValues(protection, creature),
+                            protectionColors, protectionEffects);
                 }
             }
         }
         for (CardEffect grantedEffect : bonus.grantedEffects()) {
             if (grantedEffect instanceof ProtectionGrantingEffect protection) {
-                addProtectionAbility(withChosenValues(protection, creature), protectionColors, protectionEffects);
+                addProtectionAbility(gameData, creature, withChosenValues(protection, creature),
+                        protectionColors, protectionEffects);
             } else if (grantedEffect instanceof ProtectionFromPermanentsMatchingEffect
                     || grantedEffect instanceof ProtectionFromNonSubtypeCreaturesEffect
                     || grantedEffect instanceof GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffect) {
                 protectionEffects.add(grantedEffect);
             }
-        }
-    }
-
-    private void collectColorsOfControlledPermanents(GameData gameData, Permanent creature,
-                                                     Set<CardColor> protectionColors) {
-        UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
-        if (controllerId == null) return;
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) return;
-        for (Permanent permanent : battlefield) {
-            protectionColors.addAll(gameQueryService.getEffectiveColors(gameData, permanent));
         }
     }
 
@@ -156,16 +143,17 @@ public class GrantProtectionSharedByOwnCreaturesUntilEndOfTurnEffectHandler impl
     }
 
     /**
-     * Shares one protection ability: its colours join the shared colour protection, and any other quality it
-     * protects from (CR 702.16a), colorless and players (CR 702.16k) included, is granted as the ability itself.
+     * Shares one protection ability: its colours, judged for the creature that has it as this resolves, join the
+     * shared colour protection, and any other quality it protects from (CR 702.16a), colorless and players
+     * (CR 702.16k) included, is granted as the ability itself.
      */
-    private void addProtectionAbility(ProtectionGrantingEffect protection,
+    private void addProtectionAbility(GameData gameData, Permanent creature, ProtectionGrantingEffect protection,
                                       Set<CardColor> protectionColors,
                                       Set<CardEffect> protectionEffects) {
         if (protection == null) {
             return;
         }
-        protectionColors.addAll(protection.protectionFromColors());
+        protectionColors.addAll(gameQueryService.protectionColors(gameData, protection, creature));
         if (!protection.protectionFromCardTypes().isEmpty()
                 || !protection.protectionFromSubtypes().isEmpty()
                 || protection.protectionFromManaValueAtLeast().isPresent()

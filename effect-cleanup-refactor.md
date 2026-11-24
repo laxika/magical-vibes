@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46 (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 41c, 37b, 40b; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                    |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 41c, 40b; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                     |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,147 / 2,563 (after fold run 46) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,144 / 2,560 (after fold run 37b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,461 rows over 4,536 classes (after fold run 46). Latest verdict per class: `step-9` 174, unique 1,189, absorbed 1,234, split 665, blocked-other 543, survivor 425, blocked-step-model 140, blocked-player-loop 96, dead 70. Waiting: 174 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,465 rows over 4,538 classes (after fold run 37b). Latest verdict per class: `step-9` 172, unique 1,189, absorbed 1,237, split 665, blocked-other 543, survivor 426, blocked-step-model 140, blocked-player-loop 96, dead 70. Waiting: 172 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1017,6 +1017,10 @@ Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671
 
 - `EachPlayerPaysAnyManaEffect(startingWithYou, PlayerSubject payers, Resource)` / `.byYou(Resource)`: Resource `MANA`, `X_MANA` ("pay {X}"), `ENERGY`, `LIFE`. "Pay any amount", "you may pay one or more {E}" and "you may pay {X}" at resolution. Records PAY_MANA / PAY_ENERGY / PAY_LIFE, read by `AmountThisWay.manaPaid()` / `energyPaid()` / `lifePaid()` and `HappenedThisWay(kind)`. "You may pay {X}. If you do" where X = 0 matters is `MayEffect(SequenceEffect.of(pay, …))` (fold run 46).
 - `StepKind.PAY_ENERGY`, `StepKind.PAY_LIFE` (fold run 46).
+
+- `ProtectionFromColorsEffect.ColorSet` (`FIXED`, `CHOSEN`, `AMONG_PERMANENTS_YOU_CONTROL`, `OUTSIDE_COMMANDER_IDENTITY`) with `chosenColor([subject])`, `amongPermanentsYouControl([subject])`, `outsideCommanderColorIdentity(subject)`, `withColors(colors)`: every "protection from [colour set]" (fold run 37b).
+- `GameQueryService.protectionColors(gd, protection, holder)` / `protectionColorsForStaticEvaluation(gd, protection, holder, controllerId)`: the one colour-protection reader, judged for the permanent that has the ability; `protectionFromColors()` is the fixed colours only (fold run 37b).
+- `ProtectionFromColorsSelfEffectHandler`: a permanent's own board-reading colour protection applied in layer 6 (fold run 37b).
 
 ### Blocked causes still open
 
@@ -4512,6 +4516,27 @@ For the next run: a targets-x run (one target-aware reader that sums every categ
 - AI value readers don't see the payoffs inside `ConditionalEffect` or the reflexive ability (Aether Refinery, Pia, Aetherkite).
 
 **For the next run.** 46b: the reflexive four first (one pattern), then Relentless Dead with `MayEffect`, then Errant Minion/Power Leak with a non-you payer.
+
+### Step 9, fold run 37b (2026-11-24, parallel worktree)
+1 of 1 batch done (`prot-dyn`), with `ProtectionFromChosenColorEffect`. Ratchet 3,190 / 2,605 → 3,187 / 2,602. Ledger 4 rows: absorbed 3, survivor 1. 11 card files rewritten, Oracle text checked for all 11; rulings read for Commander's Plate, Pledge of Loyalty, Empty-Shrine Kannushi, Sanctuary Blade. CR 105.2, 301.5c, 613.1e, 613.1f, 702.16a–f, 704.5m, 704.5n, 708.2a and 903.4 checked.
+
+| Batch | Result |
+|---|---|
+| prot-dyn (+ chosen) | 3 folded into `ProtectionFromColorsEffect(colors, subject, doesNotRemoveAuras, ColorSet)`. The colour sets are `FIXED`, `CHOSEN` (`chosenColor([subject])`, 8 cards), `AMONG_PERMANENTS_YOU_CONTROL` (`amongPermanentsYouControl([subject])`: Kannushi, Pledge) and `OUTSIDE_COMMANDER_IDENTITY` (`outsideCommanderColorIdentity(attachedCreature())`: Commander's Plate). `protectionFromColors()` is now only the fixed colours. There is one reader, judged for the permanent whose ability it is: `GameQueryService.protectionColors(gd, protection, holder)` reads other permanents' layered colours; `protectionColorsForStaticEvaluation(gd, protection, holder, controllerId)` reads the in-flight layer-5 colours and is recursion-safe. Callers: `hasProtectionFrom` (printed and granted), the explain attribution filter, the layer seeding, the floated-grant case, the attached handler, the self handler, `StaticEffectSupport`'s conditional self branch, `PredicateEvaluationService`'s fallback and Concerted Effort's share. `GrantedAbilityViewFactory` and the `PermanentGrants` fixture keep the fixed facet: handlers harvest a dynamic set into a fixed attribution, so it never reaches a granted-effect list. Fixed and chosen self sets are seeded. A board-reading self set is applied in layer 6 by the new `ProtectionFromColorsSelfEffectHandler`. Kannushi's two handlers, the chosen handler and the commander handler are gone, as are the Kannushi branches in `hasProtectionFrom` and the share handler (the layered state already has those colours). |
+
+**Behaviour changes.**
+- Equipment is no longer exempt from the protection it gives. A Sword of War and Peace made red by Painter's Servant becomes unattached (CR 702.16d, 704.5n). Only an Aura's "This effect doesn't remove this Aura" keeps it on: `grantsSelfExemptProtection` is now asked for Auras only. Test: `SwordOfWarAndPeaceTest`; it fails on the old code, where every attached colour protection was exempt. Without this, Commander's Plate would have become exempt in the fold; `CommandersPlateTest` covers an identity colour and an outside colour.
+- On an untouched board, `hasProtectionFrom` no longer reads a face-down permanent's printed protection (CR 708.2a). Test: Kannushi face-down case (not shown failing on the old code).
+- `TextChangeTransformer` keeps `doesNotRemoveAuras` and the colour set when it rewrites a colour (`withColors`). No card reaches it; no test.
+- The no-game fallback now counts a self chosen colour. No test.
+
+**Tests changed.** `GrantedAbilityViewFactoryTest` (named the deleted record). Added: Sword of War and Peace red Sword; Commander's Plate red and green; Kannushi layer-5 colour and face-down; Concerted Effort sharing Kannushi's colours and Voice of All's chosen colour. Ran 76 classes, 176 XML files, 1,544 cases, 0 failures.
+
+**Seen, not changed.**
+- `ProtectionFromColorsEffectHandler` still gives a fixed self-subject protection to the host when its source is attached (a bestowed or reconfigured creature with printed protection). CR 702.16a makes it the object's own. No card has it. Sure of the code.
+- Fixed-colour Auras without "doesn't remove" text (Mask of Law and Grace, Shield of Duty and Reason, the Strength Auras) stay exempt from their own protection when recoloured. Fairly sure; low impact.
+
+**For the next run.** `prot-dyn` is closed. Re-triage `GrantProtectionFromChosenColorToPermanentsEffect` (Ward Sliver, `unique`) against `ProtectionFromColorsEffect.chosenColor(subject)` over a `controlledBy` set.
 
 ## Prompt
 

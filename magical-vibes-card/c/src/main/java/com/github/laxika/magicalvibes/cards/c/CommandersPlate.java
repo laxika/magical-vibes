@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsOutsideCommanderColorIdentityEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
@@ -14,7 +14,7 @@ public class CommandersPlate extends Card {
 
     public CommandersPlate() {
         addStaticEffect(new StaticBoostEffect(3, 3, Subjects.attachedCreature()));
-        addStaticEffect(new ProtectionFromColorsOutsideCommanderColorIdentityEffect());
+        addStaticEffect(ProtectionFromColorsEffect.outsideCommanderColorIdentity(Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility(
                 "{3}", new PermanentIsCommanderPredicate(), "Target must be a commander"));
         addActivatedAbility(new EquipActivatedAbility("{5}"));

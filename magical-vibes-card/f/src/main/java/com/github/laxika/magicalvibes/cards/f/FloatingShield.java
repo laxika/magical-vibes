@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenColorUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -18,7 +18,7 @@ public class FloatingShield extends Card {
     public FloatingShield() {
         target(TargetFilters.creature())
                 .addStaticEffect(new ChooseColorOnEnterEffect())
-                .addStaticEffect(new ProtectionFromChosenColorEffect(Subjects.attachedCreature()));
+                .addStaticEffect(ProtectionFromColorsEffect.chosenColor(Subjects.attachedCreature()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

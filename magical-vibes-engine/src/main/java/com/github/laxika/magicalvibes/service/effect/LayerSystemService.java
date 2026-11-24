@@ -72,7 +72,6 @@ import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PrimevalCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllProtectionUntilEndOfTurnEffect;
@@ -1413,8 +1412,6 @@ public class LayerSystemService {
 
     private boolean isAttachmentProtectionGrant(CardEffect effect) {
         return effect instanceof ProtectionFromColorsEffect
-                || effect instanceof com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect
-                || effect instanceof com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsOfPermanentsYouControlEffect
                 || effect instanceof GrantEffectEffect grant
                 && grant.effect() instanceof com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
     }
@@ -3008,18 +3005,16 @@ public class LayerSystemService {
                 }
             }
             state.addKeywords(keepingPerpetualRemovals(gameData, permanent.getCard().getId(), rewrittenKeywords));
+            // Fixed and chosen colours read nothing but the object; a set that reads the board waits for layer 6.
             for (CardEffect effect : permanent.getCard().getStaticEffects()) {
-                if (effect instanceof ProtectionFromColorsEffect protection && protection.subject() == null) {
+                if (effect instanceof ProtectionFromColorsEffect protection && protection.subject() == null
+                        && !protection.colorSet().readsBoard()) {
                     ProtectionFromColorsEffect rewritten = (ProtectionFromColorsEffect)
                             TextChangeTransformer.transform(protection, gameData.textReplacements(permanent.getId()),
                                     globalWordChange);
-                    state.addProtectionColors(rewritten.colors());
+                    state.addProtectionColors(gameQueryService.protectionColorsForStaticEvaluation(
+                            gameData, rewritten, permanent, null));
                 }
-            }
-            if (permanent.getChosenColor() != null && permanent.getCard().getStaticEffects().stream()
-                    .anyMatch(effect -> effect instanceof ProtectionFromChosenColorEffect protection
-                            && protection.subject() == null)) {
-                state.addProtectionColors(Set.of(permanent.getChosenColor()));
             }
         }
 
@@ -3456,7 +3451,8 @@ public class LayerSystemService {
                                 provenanceSourceName(instance), grant);
                     }
                     case ProtectionFromColorsEffect protection -> {
-                        state.addProtectionColors(protection.colors());
+                        state.addProtectionColors(gameQueryService.protectionColorsForStaticEvaluation(
+                                gameData, protection, target.permanent(), target.controllerId()));
                         board.recordGrantedEffect(target.permanent().getId(),
                                 provenanceSourceName(instance), protection);
                     }
@@ -3516,7 +3512,7 @@ public class LayerSystemService {
         // ability — already seeded into its state (and removable by a lose-all there); the
         // attachment handler would no-op anyway.
         if (instance.effect() instanceof ProtectionFromColorsEffect protection
-                && protection.subject() == null && instance.source() != null
+                && protection.subject() == null && !protection.colorSet().readsBoard() && instance.source() != null
                 && !instance.source().permanent().isAttached()) {
             return;
         }

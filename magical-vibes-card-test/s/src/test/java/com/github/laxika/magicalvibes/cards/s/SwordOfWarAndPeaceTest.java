@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.p.PaintersServant;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SwordOfWarAndPeace.class, PithDriller.class, ChainedThroatseeker.class,
-        BlightedAgent.class, VaultSkirge.class})
+        BlightedAgent.class, VaultSkirge.class, PaintersServant.class})
 class SwordOfWarAndPeaceTest extends BaseCardTest {
 
     @Test
@@ -447,5 +448,21 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
         Permanent perm = harness.addToBattlefieldAndReturn(player, new SwordOfWarAndPeace());
         perm.setSummoningSick(false);
         return perm;
+    }
+
+    @Test
+    @DisplayName("A Sword made red becomes unattached from the creature it gives protection from red")
+    void redSwordBecomesUnattached() {
+        Permanent creature = addCreatureReady(player1, new PithDriller());
+        Permanent sword = addSwordReady(player1);
+        sword.setAttachedTo(creature.getId());
+        Permanent servant = harness.addToBattlefieldAndReturn(player1, new PaintersServant());
+        servant.setChosenColor(CardColor.RED);
+
+        harness.runStateBasedActions();
+
+        assertThat(sword.getAttachedTo()).isNull();
+        harness.assertOnBattlefield(player1, "Sword of War and Peace");
+        assertThat(gqs.hasProtectionFrom(gd, creature, CardColor.RED)).isFalse();
     }
 }

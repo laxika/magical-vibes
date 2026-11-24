@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.CantBecomeSuspectedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHavePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
@@ -145,7 +144,8 @@ public class GrantedAbilityViewFactory {
             return null;
         }
         boolean grantsChosenProtection = permanent.getCard().getStaticEffects().stream()
-                .anyMatch(effect -> effect instanceof ProtectionFromChosenColorEffect protection
+                .anyMatch(effect -> effect instanceof ProtectionFromColorsEffect protection
+                        && protection.colorSet() == ProtectionFromColorsEffect.ColorSet.CHOSEN
                         && protection.subject() == null);
         return grantsChosenProtection ? permanent.getChosenColor() : null;
     }

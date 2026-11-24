@@ -226,7 +226,8 @@ public class StaticEffectSupport implements SubjectResolutionService.StaticReads
                 accumulator.addGrantedEffect(grant);
             }
         } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
-            accumulator.addProtectionColors(protection.colors());
+            accumulator.addProtectionColors(gameQueryService.protectionColorsForStaticEvaluation(
+                    context.gameData(), protection, context.source(), context.sourceControllerId()));
         } else if (wrapped instanceof RemoveKeywordEffect remove
                 && names(context, remove.subject(), remove.filter())) {
             accumulator.removeKeyword(remove.keyword());

@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.cards.p.PaintersServant;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,7 +22,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EmptyShrineKannushi.class, FaithfulSquire.class, Frostling.class, GoblinCohort.class, HeartOfLight.class, Shuko.class})
+@CardUsed({EmptyShrineKannushi.class, FaithfulSquire.class, Frostling.class, GoblinCohort.class, HeartOfLight.class, Shuko.class,
+        PaintersServant.class})
 class EmptyShrineKannushiTest extends BaseCardTest {
 
     private void attackWithKannushi() {
@@ -227,5 +231,26 @@ class EmptyShrineKannushiTest extends BaseCardTest {
 
         assertThat(shuko.getAttachedTo()).isEqualTo(kannushi.getId());
         harness.assertOnBattlefield(player1, "Shuko");
+    }
+
+    @Test
+    @DisplayName("A color its controller's permanents gain from an effect extends the protection")
+    void layeredColorExtendsProtection() {
+        Permanent kannushi = addCreatureReady(player1, new EmptyShrineKannushi());
+        Permanent servant = harness.addToBattlefieldAndReturn(player1, new PaintersServant());
+        servant.setChosenColor(CardColor.BLUE);
+
+        assertThat(gqs.hasProtectionFrom(gd, kannushi, CardColor.BLUE)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, kannushi, CardColor.GREEN)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A face-down Kannushi has no protection")
+    void faceDownKannushiHasNoProtection() {
+        Permanent kannushi = addCreatureReady(player1, new EmptyShrineKannushi());
+        kannushi.setFaceDown(2, 2, java.util.Set.of(CardType.CREATURE));
+        addCreatureReady(player1, new FaithfulSquire());
+
+        assertThat(gqs.hasProtectionFrom(gd, kannushi, CardColor.WHITE)).isFalse();
     }
 }

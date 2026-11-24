@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.y.YevaNaturesHerald;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.cards.p.PaintersServant;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CommandersPlate.class, GrizzlyBears.class, YevaNaturesHerald.class})
+@CardUsed({CommandersPlate.class, GrizzlyBears.class, YevaNaturesHerald.class, PaintersServant.class})
 class CommandersPlateTest extends BaseCardTest {
 
     @Test
@@ -191,4 +192,39 @@ class CommandersPlateTest extends BaseCardTest {
         assertThat(plate.getAttachedTo()).isNull();
     }
 
+    @Test
+    @DisplayName("A Plate made a color outside the commander's identity becomes unattached")
+    void plateOfProtectedColorBecomesUnattached() {
+        YevaNaturesHerald commander = new YevaNaturesHerald();
+        gd.makeCommander(player1.getId(), commander);
+        gd.playerCommandZones.get(player1.getId()).add(commander);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent plate = harness.addToBattlefieldAndReturn(player1, new CommandersPlate());
+        plate.setAttachedTo(creature.getId());
+        Permanent servant = harness.addToBattlefieldAndReturn(player1, new PaintersServant());
+        servant.setChosenColor(CardColor.RED);
+
+        harness.runStateBasedActions();
+
+        assertThat(plate.getAttachedTo()).isNull();
+        assertThat(gqs.hasProtectionFrom(gd, creature, CardColor.RED)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A Plate made a color in the commander's identity stays attached")
+    void plateOfIdentityColorStaysAttached() {
+        YevaNaturesHerald commander = new YevaNaturesHerald();
+        gd.makeCommander(player1.getId(), commander);
+        gd.playerCommandZones.get(player1.getId()).add(commander);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent plate = harness.addToBattlefieldAndReturn(player1, new CommandersPlate());
+        plate.setAttachedTo(creature.getId());
+        Permanent servant = harness.addToBattlefieldAndReturn(player1, new PaintersServant());
+        servant.setChosenColor(CardColor.GREEN);
+
+        harness.runStateBasedActions();
+
+        assertThat(plate.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.hasProtectionFrom(gd, creature, CardColor.RED)).isTrue();
+    }
 }

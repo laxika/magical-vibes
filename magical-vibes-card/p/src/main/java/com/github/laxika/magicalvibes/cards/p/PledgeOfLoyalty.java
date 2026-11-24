@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsOfPermanentsYouControlEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -11,6 +11,6 @@ public class PledgeOfLoyalty extends Card {
 
     public PledgeOfLoyalty() {
         target(TargetFilters.creature())
-                .addStaticEffect(new ProtectionFromColorsOfPermanentsYouControlEffect(Subjects.attachedCreature()));
+                .addStaticEffect(ProtectionFromColorsEffect.amongPermanentsYouControl(Subjects.attachedCreature()));
     }
 }

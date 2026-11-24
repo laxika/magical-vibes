@@ -340,8 +340,7 @@ public final class TextChangeTransformer {
             }
             case ProtectionFromColorsEffect protection -> {
                 Set<CardColor> colors = replaceColor(protection.colors(), substitution);
-                yield colors == protection.colors() ? protection
-                        : new ProtectionFromColorsEffect(colors, protection.subject());
+                yield colors == protection.colors() ? protection : protection.withColors(colors);
             }
             case PreventDamageFromChosenSourceEffect prevention -> {
                 PermanentPredicate filter = apply(prevention.sourceFilter(), substitution);

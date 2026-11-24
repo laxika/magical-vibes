@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -19,6 +19,6 @@ public class PentarchWard extends Card {
         target(TargetFilters.creature())
                 .addStaticEffect(new ChooseColorOnEnterEffect())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1))
-                .addStaticEffect(new ProtectionFromChosenColorEffect(Subjects.attachedCreature()));
+                .addStaticEffect(ProtectionFromColorsEffect.chosenColor(Subjects.attachedCreature()));
     }
 }

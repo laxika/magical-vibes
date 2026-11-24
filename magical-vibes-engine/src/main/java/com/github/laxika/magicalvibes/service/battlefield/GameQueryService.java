@@ -256,7 +256,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventOpponentCreatureWardTr
 import com.github.laxika.magicalvibes.model.effect.PreventTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventionScope;
 import com.github.laxika.magicalvibes.model.effect.ProliferateReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsOfPermanentsYouControlEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromNonSubtypeCreaturesEffect;
@@ -7101,9 +7101,11 @@ public class GameQueryService {
             if (finalGrantedEffects.contains(attribution.effect())) {
                 return false;
             }
-            return !(attribution.effect() instanceof ProtectionGrantingEffect protection
-                    && !protection.protectionFromColors().isEmpty()
-                    && bonus.protectionColors().containsAll(protection.protectionFromColors()));
+            if (!(attribution.effect() instanceof ProtectionGrantingEffect protection)) {
+                return true;
+            }
+            Set<CardColor> colors = protectionColors(gameData, protection, target);
+            return colors.isEmpty() || !bonus.protectionColors().containsAll(colors);
         });
         return new ExplainedBonus(bonus, mergeModifierLines(lines),
                 List.copyOf(effectAttributions));
@@ -8111,12 +8113,13 @@ public class GameQueryService {
         if (sourceColor == null) {
             return hasProtectionFromColorless(gameData, target);
         }
-        if (bonus == StaticBonus.NONE) {
-            // No continuous effect touched the permanent: its own printed protection stands.
+        if (bonus == StaticBonus.NONE && !target.isFaceDown()) {
+            // No continuous effect touched the permanent: its own printed protection stands (a face-down one has
+            // none, CR 708.2a).
             for (CardEffect effect : target.getCard().getStaticEffects()) {
                 if (effect instanceof ProtectionGrantingEffect protection
                         && protection.protectionSubject() == null
-                        && protection.protectionFromColors().contains(sourceColor)) {
+                        && protectionColors(gameData, protection, target).contains(sourceColor)) {
                     return true;
                 }
             }
@@ -8132,39 +8135,94 @@ public class GameQueryService {
         if (!bonus.removedProtectionColors().contains(sourceColor)) {
             for (CardEffect effect : bonus.grantedEffects()) {
                 if (effect instanceof ProtectionGrantingEffect protection
-                        && protection.protectionFromColors().contains(sourceColor)) {
+                        && protectionColors(gameData, protection, target).contains(sourceColor)) {
                     return true;
                 }
             }
-        }
-        if (!bonus.removedProtectionColors().contains(sourceColor)
-                && !bonus.losesAllAbilities()
-                && !bonus.printedProtectionRemoved()
-                && target.getCard().getStaticEffects().stream()
-                        .anyMatch(effect -> effect instanceof ProtectionFromColorsOfPermanentsYouControlEffect protection
-                                && protection.subject() == null)
-                && controlsPermanentOfColor(gameData, target, sourceColor)) {
-            return true;
         }
         return false;
     }
 
     /**
-     * Empty-Shrine Kannushi: returns {@code true} if the permanent's controller controls any
-     * permanent (including the asking permanent itself) whose current colors include
-     * {@code color}. Layer-5 aware, so color-changing effects are honoured.
+     * The colours a "protection from [colours]" ability protects from (CR 702.16a), judged for {@code holder}, the
+     * permanent whose ability it is (the creature itself, or the Aura or Equipment that gives it): the fixed colours,
+     * the colour chosen for the holder, each colour among the permanents its controller controls as they are now
+     * (layer 5, CR 613.1e), or each colour outside its controller's commanders' colour identity (CR 903.4). Every rules
+     * reader of colour protection asks this, never {@link ProtectionGrantingEffect#protectionFromColors()} alone.
      */
-    private boolean controlsPermanentOfColor(GameData gameData, Permanent permanent, CardColor color) {
-        UUID controllerId = findPermanentController(gameData, permanent.getId());
-        if (controllerId == null) return false;
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) return false;
-        for (Permanent candidate : battlefield) {
-            if (getEffectiveColors(gameData, candidate).contains(color)) {
-                return true;
-            }
+    public Set<CardColor> protectionColors(GameData gameData, ProtectionGrantingEffect protection, Permanent holder) {
+        UUID controllerId = gameData == null || holder == null ? null : findPermanentController(gameData, holder.getId());
+        return protectionColors(gameData, protection, holder, controllerId,
+                permanent -> LayerSystemService.activeStateFor(permanent.getId()) != null
+                        ? colorsForStaticEvaluation(permanent)
+                        : getEffectiveColors(gameData, permanent));
+    }
+
+    /**
+     * {@link #protectionColors(GameData, ProtectionGrantingEffect, Permanent)} for a static handler or a
+     * recursion-safe read: the colours of other permanents are read without re-entering the static-bonus assembly
+     * ({@link #colorsForStaticEvaluation}), and {@code controllerId} is the ability's controller as the caller knows it.
+     * With no game, a set that reads the board names no colour.
+     */
+    public Set<CardColor> protectionColorsForStaticEvaluation(GameData gameData, ProtectionGrantingEffect protection,
+                                                              Permanent holder, UUID controllerId) {
+        return protectionColors(gameData, protection, holder, controllerId, this::colorsForStaticEvaluation);
+    }
+
+    private Set<CardColor> protectionColors(GameData gameData, ProtectionGrantingEffect protection, Permanent holder,
+                                            UUID controllerId, Function<Permanent, Set<CardColor>> colorsOf) {
+        if (!(protection instanceof ProtectionFromColorsEffect colors)) {
+            return protection.protectionFromColors();
         }
-        return false;
+        return switch (colors.colorSet()) {
+            case FIXED -> colors.colors();
+            case CHOSEN -> holder == null || holder.getChosenColor() == null
+                    ? Set.of() : Set.of(holder.getChosenColor());
+            case AMONG_PERMANENTS_YOU_CONTROL -> {
+                Set<CardColor> among = EnumSet.noneOf(CardColor.class);
+                List<Permanent> battlefield = gameData == null || controllerId == null
+                        ? null : gameData.playerBattlefields.get(controllerId);
+                if (battlefield != null) {
+                    for (Permanent permanent : battlefield) {
+                        among.addAll(colorsOf.apply(permanent));
+                    }
+                }
+                yield among;
+            }
+            case OUTSIDE_COMMANDER_IDENTITY -> colorsOutsideCommanderIdentity(gameData, controllerId);
+        };
+    }
+
+    /**
+     * Each colour not in the colour identity of {@code playerId}'s commanders, combined (CR 903.4): the designated
+     * commanders, the cards in the command zone and the commanders on the battlefield they own. None when the player
+     * has no commander (Commander's Plate ruling, 2020-11-10).
+     */
+    private static Set<CardColor> colorsOutsideCommanderIdentity(GameData gameData, UUID playerId) {
+        if (gameData == null || playerId == null) {
+            return Set.of();
+        }
+        List<Card> designatedCommanders = gameData.playerCommanders.getOrDefault(playerId, List.of());
+        if (designatedCommanders.isEmpty()) {
+            return Set.of();
+        }
+        Set<CardColor> identity = EnumSet.noneOf(CardColor.class);
+        designatedCommanders.forEach(card -> identity.addAll(card.getColorIdentity()));
+        for (Card card : gameData.playerCommandZones.getOrDefault(playerId, List.of())) {
+            identity.addAll(card.getColorIdentity());
+        }
+        gameData.playerBattlefields.forEach((controllerId, battlefield) -> {
+            for (Permanent permanent : battlefield) {
+                if (!permanent.isCommander()) continue;
+                UUID ownerId = permanent.getOriginalCard().getOwnerId();
+                if (playerId.equals(ownerId) || (ownerId == null && playerId.equals(controllerId))) {
+                    identity.addAll(permanent.getOriginalCard().getColorIdentity());
+                }
+            }
+        });
+        Set<CardColor> outside = EnumSet.allOf(CardColor.class);
+        outside.removeAll(identity);
+        return outside;
     }
 
     /**

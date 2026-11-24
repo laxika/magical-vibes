@@ -24,15 +24,18 @@ import java.util.UUID;
  * ({@code ProtectionFromColorsEffect}, {@code ProtectionFromCardTypesEffect},
  * {@code ProtectionFromSubtypesEffect}, {@code ProtectionFromManaValueEffect} (its mana-value qualities),
  * {@code ProtectionFromMulticoloredEffect} (its colour counts), {@code ProtectionFromPlayersEffect}).
- * Protection whose
- * protected set is only known at runtime from game state — a chosen color
- * ({@code ProtectionFromChosenColorEffect}, resolved via {@link ChooseColorEffect}) or a chosen player
- * ({@code ProtectionFromChosenPlayerEffect}) — is not a pure function of an effect record's components and
- * deliberately does not implement this interface.
+ * A colour set judged as asked ({@code ProtectionFromColorsEffect}'s chosen colour, the colours among your
+ * permanents, the colours outside your commander's identity) leaves {@link #protectionFromColors()} empty and is read
+ * by {@code GameQueryService.protectionColors}, with the permanent that has the ability; a chosen player
+ * ({@code ProtectionFromChosenPlayerEffect}) is not a pure function of an effect record's components and deliberately
+ * does not implement this interface.
  */
 public interface ProtectionGrantingEffect extends CardEffect {
 
-    /** The colors this effect protects against (empty when it is not colour-based protection). */
+    /**
+     * The fixed colors this effect protects against (empty when it is not colour-based protection or its colours are
+     * judged as asked: read those through {@code GameQueryService.protectionColors}).
+     */
     default Set<CardColor> protectionFromColors() {
         return Set.of();
     }
