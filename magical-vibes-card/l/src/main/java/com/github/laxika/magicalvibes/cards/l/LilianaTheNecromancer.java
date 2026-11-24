@@ -5,13 +5,12 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.CloseGraveyardReturnBatchEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.OpenGraveyardReturnBatchEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -50,12 +49,11 @@ public class LilianaTheNecromancer extends Card {
                 false, null,
                 List.of(
                         new DestroyEachTargetPermanentEffect(),
-                        new OpenGraveyardReturnBatchEffect(),
-                        new MayEffect(returnCreatureFromAnyGraveyard(),
-                                "Put a creature card from a graveyard onto the battlefield?"),
-                        new MayEffect(returnCreatureFromAnyGraveyard(),
-                                "Put a creature card from a graveyard onto the battlefield?"),
-                        new CloseGraveyardReturnBatchEffect()
+                        ChooseCardEffect.upTo(
+                                Subjects.cardsInGraveyards(Subjects.eachPlayer(), new CardTypePredicate(CardType.CREATURE)),
+                                2, "up to two creature cards from graveyards"),
+                        new PutCardsOntoBattlefieldEffect(Subjects.cardsThisWay(StepKind.CHOOSE))
+                                .underControlOf(Subjects.you())
                 ),
                 "−7: Destroy up to two target creatures. Put up to two creature cards from graveyards onto the battlefield under your control.",
                 new PermanentPredicateTargetFilter(
@@ -65,13 +63,5 @@ public class LilianaTheNecromancer extends Card {
                 -7, null, null,
                 List.of(), 0, 2
         ));
-    }
-
-    private static ReturnCardFromGraveyardEffect returnCreatureFromAnyGraveyard() {
-        return ReturnCardFromGraveyardEffect.builder()
-                .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                .filter(new CardTypePredicate(CardType.CREATURE))
-                .source(GraveyardSearchScope.ALL_GRAVEYARDS)
-                .build();
     }
 }

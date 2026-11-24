@@ -158,7 +158,6 @@ class CloudspireCoordinatorTest extends BaseCardTest {
         harness.setHand(player1, List.of(card));
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(Permanent::isManifested)

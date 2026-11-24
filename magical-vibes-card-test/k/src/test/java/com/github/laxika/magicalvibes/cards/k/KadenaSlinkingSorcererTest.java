@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -159,17 +160,19 @@ class KadenaSlinkingSorcererTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Manifesting a noncreature card draws without using up the cast reduction")
     void manifestingANoncreatureDrawsWithoutConsumingTheCastReduction() {
         addKadena();
         harness.addToBattlefield(player1, new ScrollOfFate());
         Forest firstDraw = new Forest();
         Forest secondDraw = new Forest();
         harness.setLibrary(player1, List.of(firstDraw, secondDraw));
-        harness.setHand(player1, List.of(new Forest(), new SaguMauler()));
+        Forest manifested = new Forest();
+        harness.setHand(player1, List.of(manifested, new SaguMauler()));
 
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(manifested.getId()));
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2).contains(firstDraw);

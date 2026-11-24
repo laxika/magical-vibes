@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9 (each in Findings; the fold queue marks its rows). Fold runs 8 to 11 run in parallel worktrees from 2026-11-24. Next: fold run 9b (`one-of-two`, `hand-choice-draw`, `draw-discard`), the rest of `splits` (25 rows). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).   |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10 (each in Findings; the fold queue marks its rows). Fold runs 8 to 11 run in parallel worktrees from 2026-11-24. Next: fold run 9b, fold run 11 (vote), `opp-card` as its own run (10b). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).    |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,891 / 3,153 (after fold run 9) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,883 / 3,145 (after fold run 10) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,184 rows over 4,405 classes (after fold run 9). Latest verdict per class: `step-9` 1,099, unique 1,168, absorbed 595, split 511, blocked-other 464, survivor 271, blocked-step-model 140, blocked-player-loop 97, dead 60. Waiting: 1,099 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,200 rows over 4,406 classes (after fold run 10). Latest verdict per class: `step-9` 1,085, unique 1,167, absorbed 598, split 517, blocked-other 470, survivor 272, blocked-step-model 140, blocked-player-loop 97, dead 60. Waiting: 1,085 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -537,6 +537,13 @@ Delayed and global triggers:
 - "You may sacrifice another X. When you do / If you do": `MayEffect(SequenceEffect.of(SacrificePermanentsEffect(1, allOf(X,
   not(PermanentIsSourceCardPredicate)), you()), ConditionalEffect(sacrificed(), …)))`, offering no "may" when nothing can be
   sacrificed; "if you can't sacrifice" is `ConditionalEffect(NotCondition(sacrificed()), …)` after the step (fold run 9).
+
+- `ChooseCardTypeAtResolutionEffect` + `CardHasCardTypeChosenThisResolutionPredicate`: "choose a card type … for each card of the
+  chosen type revealed this way" (Blood Oath, Fertile Imagination); the type is kept on `StackEntry.chosenCardType` (fold run 10).
+- `PutCardsOntoBattlefieldEffect.manifested()`: "manifest those cards", face down as manifested 2/2s through the entry batch (Scroll
+  of Fate); the manifest step `SeekCreatureAndManifestEffect` and Lurker in the Deep's record wait for (fold run 10).
+- "Put up to N … from graveyards onto the battlefield under your control": `ChooseCardEffect.upTo(cardsInGraveyards(eachPlayer(),
+  filter), n)` + `PutCardsOntoBattlefieldEffect(cardsThisWay(CHOOSE)).underControlOf(you())` (Liliana, the Necromancer; fold run 10).
 
 ### Blocked causes still open
 
@@ -1468,6 +1475,38 @@ otherwise). Runo respects transform prevention and transforms a transformed copy
 `SacrificeSelfEffect` to `thisWay(CHOOSE)`, keep the AI's `RemovalEffect` view), `hand-choice-draw` (check that the DISCARD
 destination records a DISCARD step), `draw-discard` (DISCARD mana-value stat, per-player `DiscardEffect` amounts). The re-triage
 note's 25 other stale 4f Mill rows were not checked.
+
+### Step 9, fold run 10 (2026-11-24, parallel worktree)
+
+Rows: `if-instead`, `hand-reveal-dmg`, `manifest-hand`, `manifest-dread`, `gy-batch`, `opp-perm` (14 rows) plus Fertile Imagination;
+`opp-card` (8) and `returned-reflexive` (2) not taken. Ratchet in its worktree 3,915 / 3,180 → 3,907 / 3,172. Ledger 16 rows (split
+6, absorbed 3, survivor 1, blocked-other 6). 8 card files rewritten, Oracle checked for all. CR 603.10a, 603.12, 608.2d, 701.40a/b,
+508.5 checked.
+
+| Batch | Result |
+|---|---|
+| `if-instead` | Jetmir's Fixer onto `ConditionalReplacementEffect` (one branch, no unmet-branch log). Paragon `blocked-other` (no colours-spent-to-activate condition) |
+| `hand-reveal-dmg` | Darigaaz (Dromar's shape), Inquisition, Blood Oath split onto `RevealCardsFromHandEffect` + damage over `AmountThisWay.revealedCards`; new step `ChooseCardTypeAtResolutionEffect` + `CardHasCardTypeChosenThisResolutionPredicate`, also folding Fertile Imagination |
+| `manifest-hand` | Scroll of Fate: `ChooseCardEffect.oneOf(hand)` + `PutCardsOntoBattlefieldEffect.manifested()`; Mark… absorbed |
+| `manifest-dread` | Valgavoth's Onslaught `blocked-other`: the repetitions can't share one MANIFEST step |
+| `gy-batch` | Liliana −7: `ChooseCardEffect.upTo(2, every graveyard's creatures)` + put under you; `closedByEffect` gone |
+| `opp-perm` | Bane split; Crashing Boars, Wormfang Crab `blocked-other` (no blocker subject; no source-linked exile over a subject); Demonic Hordes, Infernal Denizen `blocked-other` cost-shape (their `ForcedCostOrElseEffect` fallback stops at the first prompt; step 10) |
+
+**Where the triage was wrong.** Crashing Boars' `MustBlockTriggeringAttackerEffect` doesn't exist. Valgavoth's "NONE once, addToStep
+each" has no place to record the NONE once. Demonic Hordes and Infernal Denizen can't compose inside a `ForcedCostOrElseEffect`
+fallback.
+
+**Behaviour changes.** Bane of Bala Ged exiles its two as one event (CR 603.10a), with a new test (not run on the old code). Scroll
+of Fate takes a lone card unasked (CR 608.2d) and its prompt is private. Liliana's −7 has one up-to-two prompt (its text doesn't
+target). Colours and card types are judged as effects leave them. Blood Oath no longer leaves `chosenSpellPermanentType` set.
+Darigaaz declares no target ("that player").
+
+**For the next run.** `opp-card` wants its own run; Murmurs folds as `RevealTopCardOfLibraryEffect.topCards(you(), 3)` +
+`ChoosePlayerEffect.opponent()` + `ChooseCardEffect.oneOf(cardsThisWay(REVEAL)).by(playersThisWay(CHOOSE))` +
+`PutExiledCardsIntoOwnersGraveyardEffect(cardsThisWay(CHOOSE))` + the rest to hand. Burning-Rune Demon's unrecorded search (its
+Fold: line) is still open. `returned-reflexive` needs a reflexive ability about the permanent a return step put onto the battlefield
+(making the return record picks is unsafe: 7 handlers read picks); Jailbreak also needs its Hushbringer-style check and a mana-value
+bound.
 
 ## Prompt
 

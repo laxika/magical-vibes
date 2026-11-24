@@ -577,6 +577,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardHasSourceChosenSubtypePredicate` | `()` | a creature card carrying the creature subtype chosen by the source permanent; Changeling matches every creature type. Needs the `GameData` overload and the source card ID |
 | `CardHasNameChosenThisResolutionPredicate` | `()` | cards with the name an earlier `ChooseCardNameAtResolutionEffect` of the same resolution chose, either name of a split card (CR 709.4a); needs the `GameData` |
 | `CardHasTypeChosenThisResolutionPredicate` | `()` | cards of the creature type chosen earlier in the same resolution, changeling included unless a type-setting effect replaced its types (Conspiracy); needs the `GameData` |
+| `CardHasCardTypeChosenThisResolutionPredicate` | `()` | cards of the card type an earlier `ChooseCardTypeAtResolutionEffect` of the same resolution chose, by their types as effects leave them; needs the `GameData` (Blood Oath, Fertile Imagination) |
 | `CardHasStudyCounterPredicate` | `()` | an exiled card with a study counter; needs the `GameData` |
 | `CardHasVoidCounterPredicate` | `()` | an exiled card with a void counter; needs the `GameData` (Dauthi Voidwalker) |
 | `CardHasMemoryCounterPredicate` | `()` | an exiled card with a memory counter; needs the `GameData` (Altaïr Ibn-La'Ahad) |

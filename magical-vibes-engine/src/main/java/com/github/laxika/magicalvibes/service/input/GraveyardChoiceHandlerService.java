@@ -754,7 +754,7 @@ public class GraveyardChoiceHandlerService {
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
-        } else if (gameData.pendingGraveyardReturnBatch != null && !gameData.pendingGraveyardReturnBatch.closedByEffect()
+        } else if (gameData.pendingGraveyardReturnBatch != null
                 || gameData.graveyardReturnQueueLeaveBatchOpen
                 || gameData.holdGraveyardHandReturns) {
             graveyardReturnSupport.beginNextGraveyardReturnFromQueue(gameData);

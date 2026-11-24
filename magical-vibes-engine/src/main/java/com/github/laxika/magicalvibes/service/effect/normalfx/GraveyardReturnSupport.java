@@ -391,18 +391,6 @@ public class GraveyardReturnSupport {
         try {
             permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
 
-            PendingGraveyardReturnBatch openBatch = gameData.pendingGraveyardReturnBatch;
-            if (effect.destination() == GraveyardChoiceDestination.BATTLEFIELD
-                    && openBatch != null && openBatch.closedByEffect()) {
-                // Liliana, the Necromancer's -7: the chosen cards wait until a later effect puts them all onto the
-                // battlefield together (CR 603.6a).
-                gameData.pendingGraveyardReturnBatch = openBatch.add(targetCard,
-                        targetOwnerId != null ? targetOwnerId : controllerId);
-                gameLogService.append(gameData, GameLog.textCardText(
-                        gameData.playerIdToName.get(controllerId) + " chooses ", targetCard, " from a graveyard."));
-                return;
-            }
-
             // Unconditional "+1/+1 counters" are put on the card as it enters, so entry triggers see them.
             entersWithPlusOneCounters = entersWithPlusOneCounters(gameData, targetCard, targetOwnerId, effect)
                     || entersWithConditionalPlusOneCounters(gameData, entry, destinationPlayerId, effect);

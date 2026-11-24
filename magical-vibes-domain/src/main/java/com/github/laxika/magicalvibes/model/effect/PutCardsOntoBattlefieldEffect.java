@@ -68,12 +68,22 @@ public record PutCardsOntoBattlefieldEffect(CardSubject cards, boolean tapped, P
         }
     }
 
-    /** A face-down permanent's characteristics: "It's a 2/2 Cyberman artifact creature", "It's a Forest land". */
-    public record FaceDown(int power, int toughness, Set<CardType> types, Set<CardSubtype> subtypes) {
+    /**
+     * A face-down permanent's characteristics: "It's a 2/2 Cyberman artifact creature", "It's a Forest land".
+     *
+     * @param manifested whether the card is manifested (CR 701.40a): a manifested creature card may be turned face up
+     *                   for its mana cost (CR 701.40b)
+     */
+    public record FaceDown(int power, int toughness, Set<CardType> types, Set<CardSubtype> subtypes,
+                           boolean manifested) {
 
         public FaceDown {
             types = Set.copyOf(types);
             subtypes = Set.copyOf(subtypes);
+        }
+
+        public FaceDown(int power, int toughness, Set<CardType> types, Set<CardSubtype> subtypes) {
+            this(power, toughness, types, subtypes, false);
         }
     }
 
@@ -118,6 +128,14 @@ public record PutCardsOntoBattlefieldEffect(CardSubject cards, boolean tapped, P
     /** These cards entering face down as 2/2 creatures (CR 708.2a). */
     public PutCardsOntoBattlefieldEffect faceDown() {
         return faceDown(2, 2, Set.of(CardType.CREATURE), Set.of());
+    }
+
+    /** "Manifest [those cards]": each entering face down as a manifested 2/2 creature (CR 701.40a). */
+    public PutCardsOntoBattlefieldEffect manifested() {
+        EnteringAs as = enteringAs();
+        return new PutCardsOntoBattlefieldEffect(cards, tapped, controller,
+                new EnteringAs(new FaceDown(2, 2, Set.of(CardType.CREATURE), Set.of(), true), as.counter(),
+                        as.counters(), as.grants(), as.host()));
     }
 
     /** These cards each entering with {@code count} counters of that kind. */

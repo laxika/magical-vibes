@@ -271,8 +271,6 @@ public class MultiPermanentChoiceHandlerService {
             .EachPlayerChoosesDifferentOpponentPermanentThenDestroyRestEffectHandler
             eachPlayerChoosesDifferentOpponentPermanentThenDestroyRestHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
-            .DefendingPlayerChoosesPermanentsToExileEffectHandler defendingPlayerChoosesPermanentsToExileHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .WillOfTheCouncilEffectHandler willOfTheCouncilEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .VoteForCreatureThenDestroyMostVotedEffectHandler voteForCreatureThenDestroyMostVotedEffectHandler;
@@ -598,20 +596,6 @@ public class MultiPermanentChoiceHandlerService {
                 && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one creature must be selected");
         }
-        if (context instanceof MultiPermanentChoiceContext.DefendingPlayerChoosesPermanentsToExile exileContext) {
-            if (permanentIds.size() != exileContext.requiredCount()) {
-                throw new IllegalStateException("Exactly " + exileContext.requiredCount()
-                        + " permanents must be selected");
-            }
-            if (permanentIds.stream().anyMatch(id -> {
-                Permanent permanent = gameQueryService.findPermanentById(gameData, id);
-                return permanent == null
-                        || !exileContext.defendingPlayerId().equals(
-                        gameQueryService.findPermanentController(gameData, id));
-            })) {
-                throw new IllegalStateException("A selected permanent is no longer controlled by the defending player");
-            }
-        }
         if (context instanceof MultiPermanentChoiceContext.RedirectDamageToChosenPermanent ctx) {
             if (permanentIds.size() != 1) {
                 throw new IllegalStateException("Exactly one creature or planeswalker must be selected");
@@ -881,9 +865,6 @@ public class MultiPermanentChoiceHandlerService {
         } else if (context instanceof MultiPermanentChoiceContext.ActivatedAbilitySacrificeAnyNumberCost sacrificeContext) {
             abilityActivationService.completeActivatedAbilitySacrificeAnyNumberCostChoice(
                     gameData, player, sacrificeContext, permanentIds);
-        } else if (context instanceof MultiPermanentChoiceContext.DefendingPlayerChoosesPermanentsToExile ctx) {
-            defendingPlayerChoosesPermanentsToExileHandler.completeChoice(gameData, permanentIds, ctx);
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.DealDamageToDamagedPlayerControls ctx) {
             handleDealDamageToDamagedPlayerControls(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.UntapChosenPermanent ctx) {

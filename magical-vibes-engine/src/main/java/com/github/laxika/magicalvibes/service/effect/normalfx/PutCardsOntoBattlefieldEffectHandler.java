@@ -57,6 +57,7 @@ public class PutCardsOntoBattlefieldEffectHandler implements NormalEffectHandler
             var faceDown = put.entering() == null ? null : put.entering().faceDown();
             if (faceDown != null) {
                 permanent.setFaceDown(faceDown.power(), faceDown.toughness(), faceDown.types(), faceDown.subtypes());
+                permanent.setManifested(faceDown.manifested());
             }
             UUID controllerId = battlefieldEntryService.resolveEnteringController(
                     gameData, named == null ? located.ownerId() : named, permanent);

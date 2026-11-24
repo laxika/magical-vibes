@@ -50,6 +50,7 @@ public sealed interface CardPredicate permits
         CardHasSourceChosenSubtypePredicate,
         CardHasStudyCounterPredicate,
         CardHasTypeChosenThisResolutionPredicate,
+        CardHasCardTypeChosenThisResolutionPredicate,
         CardIsAuraEnchantCreaturePredicate,
         CardIsAuraPredicate,
         CardIsColorlessPredicate,

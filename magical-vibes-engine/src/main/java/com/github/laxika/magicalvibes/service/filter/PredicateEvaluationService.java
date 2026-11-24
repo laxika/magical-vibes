@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredi
 import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareColorWithSourceControlledCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasStudyCounterPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasTypeChosenThisResolutionPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasCardTypeChosenThisResolutionPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesColorWithControlledPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithCommanderPredicate;
@@ -709,6 +710,11 @@ public class PredicateEvaluationService {
             case CardHasChosenSpellColorPredicate ignored ->
                     gameData != null && gameData.chosenSpellColor != null
                             && gameQueryService.getEffectiveCardColors(gameData, card).contains(gameData.chosenSpellColor);
+            case CardHasCardTypeChosenThisResolutionPredicate ignored -> {
+                StackEntry resolving = resolving(gameData);
+                CardType chosen = resolving == null ? null : resolving.getChosenCardType();
+                yield chosen != null && gameQueryService.cardHasType(card, chosen, gameData, cardOwnerId);
+            }
             case CardHasTypeChosenThisResolutionPredicate ignored -> {
                 StackEntry resolving = resolving(gameData);
                 CardSubtype chosen = resolving == null ? null : resolving.getChosenCreatureType();

@@ -478,6 +478,8 @@ public class StackEntry {
     @Setter private String chosenCardName;
     /** "Odd or even" as it was chosen while this resolved, for the steps after the choice. */
     @Setter private ManaValueParity chosenParity;
+    /** The card type chosen while this resolved ("choose a card type"), for the steps after the choice. */
+    @Setter private CardType chosenCardType;
     private final Map<UUID, CardSubtype> chosenCreatureTypes = new HashMap<>();
     @Setter private Card damageSourceCard;
     /** Controller of a distinct damage source when it differs from the ability's controller. */
@@ -1472,6 +1474,7 @@ public class StackEntry {
         this.chosenCreatureType = source.chosenCreatureType;
         this.chosenCardName = source.chosenCardName;
         this.chosenParity = source.chosenParity;
+        this.chosenCardType = source.chosenCardType;
         this.chosenCreatureTypes.putAll(source.chosenCreatureTypes);
         this.damageSourceCard = source.damageSourceCard;
         this.damageSourceControllerId = source.damageSourceControllerId;

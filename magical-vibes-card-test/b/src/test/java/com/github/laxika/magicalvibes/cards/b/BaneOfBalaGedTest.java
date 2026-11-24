@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.a.AwakenedSkyclave;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.i.ImperialCosmographer;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.n.NissaVoiceOfZendikar;
 import com.github.laxika.magicalvibes.cards.r.RealmbreakersGrasp;
@@ -20,7 +21,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BaneOfBalaGed.class, Forest.class, NissaVoiceOfZendikar.class,
+@CardUsed({BaneOfBalaGed.class, Forest.class, ImperialCosmographer.class, NissaVoiceOfZendikar.class,
         InvasionOfZendikar.class, AwakenedSkyclave.class, RealmbreakersGrasp.class})
 class BaneOfBalaGedTest extends BaseCardTest {
 
@@ -41,7 +42,7 @@ class BaneOfBalaGedTest extends BaseCardTest {
         assertThat(choice.playerId()).isEqualTo(player2.getId());
         assertThat(choice.validIds()).containsExactly(firstForest.getId(), secondForest.getId(), thirdForest.getId());
         assertThat(choice.maxCount()).isEqualTo(2);
-        assertThat(choice.context()).isInstanceOf(MultiPermanentChoiceContext.DefendingPlayerChoosesPermanentsToExile.class);
+        assertThat(choice.context()).isInstanceOf(MultiPermanentChoiceContext.ChoosePermanents.class);
 
         harness.handleMultiplePermanentsChosen(player2, List.of(firstForest.getId(), thirdForest.getId()));
 
@@ -64,6 +65,7 @@ class BaneOfBalaGedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Exiles exactly two available permanents without a prompt")
     void exilesExactlyTwoAvailablePermanentsWithoutPrompting() {
         Permanent attacker = addCreatureReady(player1, new BaneOfBalaGed());
         Permanent first = harness.addToBattlefieldAndReturn(player2, new Forest());
@@ -81,6 +83,7 @@ class BaneOfBalaGedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Resolves when the defending player controls no permanents")
     void resolvesWithoutPermanentsToExile() {
         Permanent attacker = addCreatureReady(player1, new BaneOfBalaGed());
 
@@ -94,6 +97,7 @@ class BaneOfBalaGedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Still exiles after the attacker leaves the battlefield")
     void triggerStillExilesPermanentsAfterAttackerLeaves() {
         Permanent attacker = addCreatureReady(player1, new BaneOfBalaGed());
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
@@ -108,6 +112,7 @@ class BaneOfBalaGedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The defending player may exile the attacked planeswalker")
     void defendingPlayerMayExileTheAttackedPlaneswalker() {
         addCreatureReady(player1, new BaneOfBalaGed());
         Permanent nissa = harness.addToBattlefieldAndReturn(player2, new NissaVoiceOfZendikar());
@@ -125,6 +130,7 @@ class BaneOfBalaGedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The attacked planeswalker's controller still exiles after it leaves")
     void triggerStillExilesPermanentsAfterAttackedPlaneswalkerLeaves() {
         addCreatureReady(player1, new BaneOfBalaGed());
         Permanent nissa = harness.addToBattlefieldAndReturn(player2, new NissaVoiceOfZendikar());
@@ -143,6 +149,7 @@ class BaneOfBalaGedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Attacking a battle exiles its protector's permanents")
     void attackingOwnBattleExilesTheProtectorsPermanents() {
         Permanent attacker = addCreatureReady(player1, new BaneOfBalaGed());
         Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfZendikar());
@@ -163,6 +170,7 @@ class BaneOfBalaGedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Exiles an enchanted creature and its Aura together")
     void exilesAnEnchantedCreatureAndItsAuraTogether() {
         addCreatureReady(player1, new BaneOfBalaGed());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new BaneOfBalaGed());
@@ -178,6 +186,25 @@ class BaneOfBalaGedTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(creature.getCard(), aura.getCard());
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(forest);
+    }
+
+    @Test
+    @DisplayName("The two chosen permanents leave together, so each sees the other leave")
+    void chosenPermanentsAreExiledAsOneEvent() {
+        addCreatureReady(player1, new BaneOfBalaGed());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new ImperialCosmographer());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new ImperialCosmographer());
+        harness.addToBattlefield(player2, new Forest());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+        harness.handleMultiplePermanentsChosen(player2, List.of(first.getId(), second.getId()));
+
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .containsExactlyInAnyOrder(first.getCard(), second.getCard());
+        assertThat(gd.stack)
+                .filteredOn(entry -> entry.getCard().getName().equals("Imperial Cosmographer"))
+                .hasSize(2);
     }
 
     private void declareAttackAt(Permanent target) {

@@ -66,10 +66,7 @@ class LilianaTheNecromancerTest extends BaseCardTest {
         harness.activateAbilityWithMultiTargets(player1, 0, 2, targets);
         harness.passBothPriorities();
 
-        harness.handleMayAbilityChosen(player1, true);
-        chooseGraveyardCard(ownCreature.getId());
-        harness.handleMayAbilityChosen(player1, true);
-        chooseGraveyardCard(opponentCreature.getId());
+        chooseGraveyardCards(ownCreature.getId(), opponentCreature.getId());
 
         assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(0);
         harness.assertNotOnBattlefield(player1, "Liliana, the Necromancer");
@@ -102,8 +99,7 @@ class LilianaTheNecromancerTest extends BaseCardTest {
 
         harness.activateAbilityWithMultiTargets(player1, 0, 2, List.of());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, false);
+        chooseGraveyardCards();
 
         harness.assertInGraveyard(player2, "Greenwood Sentinel");
         harness.assertNotOnBattlefield(player1, "Greenwood Sentinel");
@@ -119,9 +115,7 @@ class LilianaTheNecromancerTest extends BaseCardTest {
 
         harness.activateAbilityWithMultiTargets(player1, 0, 2, List.of(target.getId()));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        chooseGraveyardCard(creature.getId());
-        harness.handleMayAbilityChosen(player1, false);
+        chooseGraveyardCards(creature.getId());
 
         harness.assertOnBattlefield(player1, "Greenwood Sentinel");
         harness.assertNotOnBattlefield(player2, "Greenwood Sentinel");
@@ -129,36 +123,33 @@ class LilianaTheNecromancerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("-7 chooses both returned creatures before either enters the battlefield")
+    @DisplayName("-7 chooses both returned creatures in one choice of up to two before either enters the battlefield")
     void minusSevenReturnsCreaturesTogether() {
         addReadyLiliana(player1, 8);
         Card first = new GreenwoodSentinel();
         Card second = new GreenwoodSentinel();
-        harness.setGraveyard(player1, List.of(first, second));
+        Card third = new GreenwoodSentinel();
+        harness.setGraveyard(player1, List.of(first, second, third));
 
         harness.activateAbilityWithMultiTargets(player1, 0, 2, List.of());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        chooseGraveyardCard(first.getId());
 
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(first.getId(), second.getId(), third.getId());
+        assertThat(choice.maxCount()).isEqualTo(2);
         harness.assertNotOnBattlefield(player1, "Greenwood Sentinel");
 
-        harness.handleMayAbilityChosen(player1, true);
-        chooseGraveyardCard(second.getId());
+        chooseGraveyardCards(first.getId(), second.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getName().equals("Greenwood Sentinel")))
                 .hasSize(2);
     }
 
-    private void chooseGraveyardCard(UUID cardId) {
-        PendingInteraction.GraveyardChoice choice = gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
-        int index = choice.cardPool().stream()
-                .map(Card::getId)
-                .toList()
-                .indexOf(cardId);
-        assertThat(index).isGreaterThanOrEqualTo(0);
-        harness.handleGraveyardCardChosen(player1, index);
+    private void chooseGraveyardCards(UUID... cardIds) {
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
+                .containsAll(List.of(cardIds));
+        harness.handleMultipleCardsChosen(player1, List.of(cardIds));
     }
 
     private Permanent addReadyLiliana(Player player, int loyalty) {
