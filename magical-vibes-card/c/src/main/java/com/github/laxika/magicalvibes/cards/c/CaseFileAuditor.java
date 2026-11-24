@@ -19,6 +19,6 @@ public class CaseFileAuditor extends Card {
                 6, new CardTypePredicate(CardType.ENCHANTMENT));
         addTrigger(Triggers.enters(ObjectRelation.THIS), caseSearch);
         addTrigger(Triggers.youSolveCase(), caseSearch);
-        addStaticEffect(SpendAnyManaTypeToCastEffect.spells(new CardSubtypePredicate(CardSubtype.CASE)));
+        addStaticEffect(SpendAnyManaTypeToCastEffect.asThoughAnyColor(new CardSubtypePredicate(CardSubtype.CASE)));
     }
 }

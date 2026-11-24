@@ -2718,7 +2718,22 @@ public class CastingPermissionService {
                 .anyMatch(PerpetualAnyManaTypeToCastSelfEffect.class::isInstance);
     }
 
+    /** Whether a permanent the player controls lets them spend mana of any type to cast {@code card} (Vizier). */
     public boolean canSpendAnyManaTypeFromBattlefield(GameData gameData, UUID playerId, Card card) {
+        return hasBattlefieldSpendPermission(gameData, playerId, card, false);
+    }
+
+    /**
+     * Whether a permanent the player controls lets them spend mana as though it were mana of any color to cast
+     * {@code card} (Oath of Nissa, Case File Auditor, Nathan Drake): unlike any type, a {C} symbol is still paid only
+     * with colorless mana (CR 107.4c).
+     */
+    public boolean canSpendManaAsAnyColorToCastFromBattlefield(GameData gameData, UUID playerId, Card card) {
+        return hasBattlefieldSpendPermission(gameData, playerId, card, true);
+    }
+
+    private boolean hasBattlefieldSpendPermission(GameData gameData, UUID playerId, Card card,
+                                                  boolean asThoughAnyColor) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
@@ -2726,6 +2741,7 @@ public class CastingPermissionService {
             for (CardEffect effect : perm.getCard().getStaticEffects()) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
                 if (resolved instanceof SpendAnyManaTypeToCastEffect anyMana
+                        && anyMana.asThoughAnyColor() == asThoughAnyColor
                         && predicateEvaluationService.matchesCardPredicate(card, anyMana.spellFilter(),
                         perm.getOriginalCard().getId(), gameData, playerId)) {
                     return true;

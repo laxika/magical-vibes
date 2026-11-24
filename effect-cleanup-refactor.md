@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 30c, 49b, 47c, 48; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                   |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 49b, 47c, 48; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                    |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,067 / 2,480 (after fold run 24b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,064 / 2,479 (after fold run 30c) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,622 rows over 4,560 classes (after fold run 24b). Latest verdict per class: `step-9` 76, unique 1,193, absorbed 1,313, split 670, blocked-other 552, survivor 446, blocked-step-model 140, blocked-player-loop 96, dead 74. Waiting: 76 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,630 rows over 4,562 classes (after fold run 30c). Latest verdict per class: `step-9` 71, unique 1,194, absorbed 1,316, split 670, blocked-other 552, survivor 448, blocked-step-model 140, blocked-player-loop 96, dead 75. Waiting: 71 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1094,6 +1094,11 @@ Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671
 - Amass = `ChoosePermanentsEffect.exactly(1, controlledBy(you(), Army), "an Army you control")` + `PutCounterOnTargetPermanentEffect(thisWay(CHOOSE), +1/+1, N)` + `GrantSubtypeEffect(subtype, thisWay(CHOOSE))`.
 
 Ledger rows are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671-d50e7ccdb4f0/scratchpad/fold-24b/ledger-rows.csv.
+
+- `SpendManaAsAnyColorEffect.whiteMana()` (`fromColor` WHITE), floated by `GrantStaticEffectToPlayerEffect.untilEndOfTurn`, read printed or floated by `GameQueryService.canSpendManaAsAnyColor` / `canSpendWhiteManaAsAnyColorWithoutRestriction` (fold run 30c).
+- `SpendManaAsAnyColorForActivatedAbilitiesEffect(subject, borrowedAbilitiesOnly, fromColor)` / `.blueManaForOwnAbilities()`; `controlledBy(you(), not(PermanentOwnedBySourceControllerPredicate))` is "permanents you control but don't own" (fold run 30c).
+- `SpendAnyManaTypeToCastEffect.asThoughAnyColor(CardPredicate)`: any-colour cast permission ({C} still needs colorless), read by `CastingPermissionService.canSpendManaAsAnyColorToCastFromBattlefield` (fold run 30c).
+- Static subject sets judge `PermanentOwnedBySourceControllerPredicate` against the ability's controller (`SubjectResolutionService.setFilterMatches`) (fold run 30c).
 
 ### Blocked causes still open
 
@@ -4976,6 +4981,30 @@ Three batches touched: 4 absorbed, 3 survivor, 4 unique, 1 blocked-other; 5 spen
   - `CopyControllerActivatedAbilityEffectHandler` copies `chosenPermanentId` itself; it now gets `chosenCostPermanentIds` through `CopySupport`.
 - **Ratchet**: 3,086 / 2,497 → 3,083 / 2,494.
 - **For the next run**: 24c, enter-counters. Build an "amount evaluated against the entering permanent" option on `ControlledPermanentsEnterWithAdditionalCountersByAmountEffect`; three records need it. Read the face-down mana value. Decide Master Biomancer (layer-4 "as a Mutant" entry grant: unique unless a second user exists). Fix the CR 614.12 creature-ness read for Dearly Departed and the survivor.
+
+### Step 9, fold run 30c (2026-11-24, parallel worktree)
+`spend-mana` closed: 3 absorbed, 1 dead interface, 1 unique, 3 survivor rows. Ratchet 3,080 / 2,494 is now 3,077 / 2,493. 7 card files rewritten; Oracle text checked for all of them (plus Vizier, Sunglasses, Lattice, Orrery, Mnemonic Betrayal, Thought-Knot Seer). Rulings read for Quicksilver and False Dawn. CR 106.1b, 107.4c, 609.4b checked.
+
+| Batch | Result |
+|---|---|
+| spend-mana | Quicksilver → `SpendManaAsAnyColorForActivatedAbilitiesEffect.blueManaForOwnAbilities()`; Nathan's activated record → the same survivor over `controlledBy(you(), not(PermanentOwnedBySourceControllerPredicate))`; False Dawn → `GrantStaticEffectToPlayerEffect.untilEndOfTurn(SpendManaAsAnyColorEffect.whiteMana())`; `ActivatedAbilityManaColorPermissionEffect` deleted. Sunglasses `unique`: as-red would be a one-card option. |
+
+**Shared pieces.** `fromColor` on both spend-as-any-colour records (null = all mana; WHITE on the player record, BLUE on the source's own abilities, both validated). `SpendAnyManaTypeToCastEffect.asThoughAnyColor(filter)`, read by `CastingPermissionService.canSpendManaAsAnyColorToCastFromBattlefield`. The static one-permanent subject form now reads `PermanentOwnedBySourceControllerPredicate` (before, it was always false).
+
+**Behaviour changes.**
+- Oath of Nissa, Case File Auditor and Nathan pay "as though any color": coloured mana no longer pays {C} (CR 107.4c). Failing-first: the old code cast an opponent-owned Thought-Knot Seer with GGGG under Nathan (probe; new test).
+- The activated-ability subject path lost its creature gate. Nathan's non-owned noncreature permanents still work (Pyrite Spellbomb test); `creaturesYouControl()` still judges creature-ness.
+- False Dawn's own log line goes (the survivor's wins).
+
+**Defects.**
+- Fixed: the battlefield any-colour cast permissions paid {C} like any type.
+- Not reproduced: Vizier (hand and library top) and North Star do pay {C} with green mana (probe). King Narfi's Betrayal can't pay {C} with green: its exile cast uses the any-colour path at `SpellCastingService` (`anyColorForColoredSymbols`).
+- Seen, not changed: that same exile-path code turns every `withAnyManaType()` / `spendingManaOfAnyType()` permission into any colour when the cost has {C}. So "mana of any type" exile and graveyard permissions (Mnemonic Betrayal, verified with a probe: GGGG can't cast an exiled Thought-Knot Seer) can't pay {C} with coloured mana (CR 106.1b, 609.4b). Narfi, The Ruinous Powers and Whispersteel are right only by accident. The fix needs an any-type / any-colour mode on the exile and graveyard permission records, read at that payment site (about 30 cards). Sure.
+
+**Tests changed.** `CaseFileAuditorTest` service assertion → behaviour test (red mana casts a {W} Case).
+
+**For the next run.**
+1. A defect run: split `AllowPlayCardsFromExileEffect.withAnyManaType()` / `AllowCastMatchingCardsFromGraveyardThisTurnEffect.spendingManaOfAnyType()` into any type and any colour per Oracle text, and make the exile payment's `anyColorForColoredSymbols` apply to any colour only.
 
 ## Prompt
 

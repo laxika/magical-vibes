@@ -72,6 +72,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaReflectionEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.SpendManaAsAnyColorEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
@@ -4448,6 +4449,34 @@ class GameQueryServiceTest {
             assertThat(gqs.canCastSpellFromZone(gd, instant, Zone.EXILE, player2Id)).isFalse();
             assertThat(gqs.canCastSpellFromZone(gd, instant, Zone.HAND, player2Id)).isTrue();
             assertThat(gqs.canCastSpellFromZone(gd, creature, Zone.GRAVEYARD, player2Id)).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("Spend mana as though it were mana of any color")
+    class SpendManaAsAnyColorPermissions {
+
+        @Test
+        @DisplayName("A floated white-mana permission covers white mana only, for the player it is on")
+        void floatedWhiteManaPermission() {
+            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("False Dawn", null, player1Id,
+                    SpendManaAsAnyColorEffect.whiteMana(), player1Id, Duration.UNTIL_END_OF_TURN));
+
+            assertThat(gqs.canSpendWhiteManaAsAnyColorWithoutRestriction(gd, player1Id)).isTrue();
+            assertThat(gqs.canSpendManaAsAnyColor(gd, player1Id)).isFalse();
+            assertThat(gqs.canSpendWhiteManaAsAnyColorWithoutRestriction(gd, player2Id)).isFalse();
+        }
+
+        @Test
+        @DisplayName("A printed all-mana permission is not a white-mana permission")
+        void printedAllManaPermission() {
+            Card orrery = new Card();
+            orrery.addStaticEffect(new SpendManaAsAnyColorEffect(false));
+            addPermanent(player1Id, orrery);
+
+            assertThat(gqs.canSpendManaAsAnyColor(gd, player1Id)).isTrue();
+            assertThat(gqs.canSpendManaAsAnyColor(gd, player2Id)).isFalse();
+            assertThat(gqs.canSpendWhiteManaAsAnyColorWithoutRestriction(gd, player1Id)).isFalse();
         }
     }
 }

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DuneBeetle;
 import com.github.laxika.magicalvibes.cards.h.HazeOfPollen;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.ThoughtKnotSeer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -71,7 +72,7 @@ class VizierOfTheMenagerieTest extends BaseCardTest {
     }
 
     @Nested
-    @CardUsed({VizierOfTheMenagerie.class, GrizzlyBears.class, Shock.class})
+    @CardUsed({VizierOfTheMenagerie.class, GrizzlyBears.class, Shock.class, ThoughtKnotSeer.class})
     @DisplayName("Spend mana of any type to cast creature spells")
     class SpendAnyManaType {
 
@@ -128,6 +129,20 @@ class VizierOfTheMenagerieTest extends BaseCardTest {
             assertThat(harness.getGameActionAvailabilityService()
                     .isCardPlayable(gd, player1.getId(), shock, gd.playerManaPools.get(player1.getId()), 0))
                     .isFalse();
+        }
+
+        @Test
+        @DisplayName("Colored mana pays the {C} of a creature spell, as mana of any type")
+        void greenManaPaysColorlessSymbol() {
+            harness.addToBattlefield(player1, new VizierOfTheMenagerie());
+            harness.setHand(player1, List.of(new ThoughtKnotSeer()));
+            harness.addMana(player1, ManaColor.GREEN, 4);
+
+            harness.castCreature(player1, 0);
+
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+            assertThat(gd.stack).anySatisfy(entry ->
+                    assertThat(entry.getCard()).isInstanceOf(ThoughtKnotSeer.class));
         }
     }
 

@@ -1377,7 +1377,7 @@ public class AbilityActivationService {
             pool.setWhiteSpendableAsRed(gameQueryService.canSpendWhiteManaAsRed(gameData, player.getId()));
             pool.setWhiteSpendableAsAnyColor(gameQueryService.canSpendWhiteManaAsAnyColor(gameData, player.getId()));
             pool.setWhiteSpendableAsAnyColorWithoutRestriction(
-                    gameQueryService.canSpendWhiteManaAsAnyColorUntilEndOfTurn(gameData, player.getId()));
+                    gameQueryService.canSpendWhiteManaAsAnyColorWithoutRestriction(gameData, player.getId()));
             pool.setAllManaSpendableAsAnyColor(gameQueryService.canSpendManaAsAnyColor(gameData, player.getId()));
         }
         Map<ManaColor, Integer> withheldSpellOnlyMana = pool != null ? pool.withdrawSpellOnlyMana() : Map.of();
@@ -3953,7 +3953,7 @@ public class AbilityActivationService {
             pool.setWhiteSpendableAsRed(gameQueryService.canSpendWhiteManaAsRed(gameData, player.getId()));
             pool.setWhiteSpendableAsAnyColor(gameQueryService.canSpendWhiteManaAsAnyColor(gameData, player.getId()));
             pool.setWhiteSpendableAsAnyColorWithoutRestriction(
-                    gameQueryService.canSpendWhiteManaAsAnyColorUntilEndOfTurn(gameData, player.getId()));
+                    gameQueryService.canSpendWhiteManaAsAnyColorWithoutRestriction(gameData, player.getId()));
             pool.setAllManaSpendableAsAnyColor(gameQueryService.canSpendManaAsAnyColor(gameData, player.getId()));
         }
         Map<ManaColor, Integer> withheldSpellOnlyMana = pool != null ? pool.withdrawSpellOnlyMana() : Map.of();

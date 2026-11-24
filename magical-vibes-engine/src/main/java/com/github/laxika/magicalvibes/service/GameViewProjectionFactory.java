@@ -1191,6 +1191,12 @@ public class GameViewProjectionFactory {
             if (!canAfford && castingPermissionService.canSpendAnyManaTypeToCast(gameData, playerId, topCard)) {
                 canAfford = cost.canPayAsGeneric(cardPool, 0, additionalCost);
             }
+            if (!canAfford && castingPermissionService.canSpendManaAsAnyColorToCastFromBattlefield(
+                    gameData, playerId, topCard)) {
+                ManaPool anyColorPool = new ManaPool(cardPool);
+                anyColorPool.setAllManaSpendableAsAnyColor(true);
+                canAfford = cost.canPay(anyColorPool, additionalCost);
+            }
             if (!canAfford && !castFaceDown) {
                 canAfford = castingCostService.canAffordAlternativeCostFromBattlefield(
                         gameData, playerId, topCard, pool, additionalCost, Zone.LIBRARY);

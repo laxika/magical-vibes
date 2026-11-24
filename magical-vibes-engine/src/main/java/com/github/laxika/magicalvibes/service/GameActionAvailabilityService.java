@@ -618,14 +618,15 @@ public class GameActionAvailabilityService {
             flagged.setWhiteSpendableAsAnyColor(true);
             pool = flagged;
         }
-        if (gameQueryService.canSpendWhiteManaAsAnyColorUntilEndOfTurn(gameData, playerId)
+        if (gameQueryService.canSpendWhiteManaAsAnyColorWithoutRestriction(gameData, playerId)
                 && !pool.isWhiteSpendableAsAnyColorWithoutRestriction()) {
             ManaPool flagged = pool instanceof VirtualManaPool virtual
                     ? new VirtualManaPool(virtual) : new ManaPool(pool);
             flagged.setWhiteSpendableAsAnyColorWithoutRestriction(true);
             pool = flagged;
         }
-        if (gameQueryService.canSpendManaAsAnyColorToCastCard(gameData, playerId, card)
+        if ((gameQueryService.canSpendManaAsAnyColorToCastCard(gameData, playerId, card)
+                || castingPermissionService.canSpendManaAsAnyColorToCastFromBattlefield(gameData, playerId, card))
                 && !pool.isAllManaSpendableAsAnyColor()) {
             ManaPool flagged = pool instanceof VirtualManaPool virtual
                     ? new VirtualManaPool(virtual) : new ManaPool(pool);

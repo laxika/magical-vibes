@@ -45,7 +45,7 @@ All paths relative to `cards/`.
 | Self unblockable (Phyrexian mana) | `t/TrespassingSouleater.java` | `(false, "{U/P}", MakeCreatureUnblockableEffect(true), ...)` — Phyrexian mana activated, self-targeting unblockable |
 | Pump target | `g/GhostWarden.java` | `(true, null, BoostTargetCreatureEffect, true)` |
 | Set this creature's base power from a target creature indefinitely | `r/RiptideMangler.java` | `SetBasePowerToughnessToAmountEffect(new TargetPower(true), null, Subjects.source(), Duration.PERMANENT)` with `TargetFilters.creature()` |
-| Copy target creature's activated abilities until end of turn | `q/QuicksilverElemental.java` | `ActivatedAbility("{U}", GainActivatedAbilitiesOfTargetCreatureUntilEndOfTurnEffect)` plus a STATIC `SpendBlueManaAsAnyColorForActivatedAbilitiesEffect` permission |
+| Copy target creature's activated abilities until end of turn | `q/QuicksilverElemental.java` | `ActivatedAbility("{U}", GainActivatedAbilitiesOfTargetCreatureUntilEndOfTurnEffect)` plus a STATIC `SpendManaAsAnyColorForActivatedAbilitiesEffect.blueManaForOwnAbilities()` permission |
 | Pump target + filter | `h/HateWeaver.java` | With PermanentPredicateTargetFilter |
 | Tap to tap target | `i/IcyManipulator.java` | TapPermanentsEffect(Subjects.target()) + PermanentPredicateTargetFilter |
 | Tap to lock artifact | `r/RustTick.java` | MayNotUntapDuringUntapStepEffect (STATIC) + TapPermanentsEffect(Subjects.target()) + DoesntUntapEffect.targetWhileSourceTapped() + PermanentIsArtifactPredicate |

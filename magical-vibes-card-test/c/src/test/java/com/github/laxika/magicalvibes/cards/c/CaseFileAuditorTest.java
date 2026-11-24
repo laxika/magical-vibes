@@ -80,12 +80,19 @@ class CaseFileAuditorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Allows any mana type to cast a Case")
-    void allowsAnyManaTypeForCaseSpells() {
+    @DisplayName("Lets mana of another color pay a Case's colored cost")
+    void castsAWhiteCaseWithRedMana() {
         harness.addToBattlefield(player1, new CaseFileAuditor());
+        harness.setHand(player1, List.of(new CaseOfTheUneatenFeast()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(harness.getCastingPermissionService().canSpendAnyManaTypeToCast(
-                gd, player1.getId(), new CaseOfTheShatteredPact())).isTrue();
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof CaseOfTheUneatenFeast);
     }
 
     @Test

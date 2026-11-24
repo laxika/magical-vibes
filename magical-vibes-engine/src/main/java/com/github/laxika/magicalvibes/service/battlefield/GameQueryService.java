@@ -52,7 +52,6 @@ import com.github.laxika.magicalvibes.model.condition.Freerunning;
 import com.github.laxika.magicalvibes.model.effect.ActivateCreatureAbilitiesAsThoughHasteEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
-import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityManaColorPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityTimingEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect;
@@ -105,7 +104,6 @@ import com.github.laxika.magicalvibes.model.effect.CantBeEquippedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeSacrificedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBecomeSuspectedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBecomeUntappedEffect;
-import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsAnyColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.StunCountersCantBeRemovedFromOpponentsPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveOrGainKeywordEffect;
@@ -133,7 +131,6 @@ import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsAnyColorEffec
 import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsRedEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendManaAsAnyColorEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendManaAsAnyColorForActivatedAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.SpendBlueManaAsAnyColorForActivatedAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantActivateAbilitiesOfGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCycleCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromZonesEffect;
@@ -3007,19 +3004,34 @@ public class GameQueryService {
         return playerBattlefieldHasStaticEffect(gameData, playerId, SpendWhiteManaAsAnyColorEffect.class);
     }
 
-    /** Returns true when the player has False Dawn's temporary white-mana permission. */
-    public boolean canSpendWhiteManaAsAnyColorUntilEndOfTurn(GameData gameData, UUID playerId) {
-        return gameData.hasFloatingEffectOnPlayer(playerId, SpendWhiteManaAsAnyColorUntilEndOfTurnEffect.class);
+    /**
+     * Whether the player may spend white mana as though it were mana of any color, other mana keeping its own color: a
+     * {@link SpendManaAsAnyColorEffect} of white mana that applies to them (False Dawn's floated one).
+     */
+    public boolean canSpendWhiteManaAsAnyColorWithoutRestriction(GameData gameData, UUID playerId) {
+        return hasSpendManaAsAnyColorPermission(gameData, playerId, ManaColor.WHITE);
     }
 
-    /** Returns true when an applicable static effect lets the player spend mana as any color. */
+    /** Whether a {@link SpendManaAsAnyColorEffect} of all mana applies to the player (Mycosynth Lattice, Chromatic Orrery). */
     public boolean canSpendManaAsAnyColor(GameData gameData, UUID playerId) {
-        return gameData.anyPermanentMatches(permanent ->
+        return hasSpendManaAsAnyColorPermission(gameData, playerId, null);
+    }
+
+    /**
+     * Whether a {@link SpendManaAsAnyColorEffect} of {@code fromColor} mana ({@code null}: all mana) applies to the
+     * player: printed on a permanent that hasn't lost its abilities (its controller's, or every player's), or floated on
+     * the player.
+     */
+    private boolean hasSpendManaAsAnyColorPermission(GameData gameData, UUID playerId, ManaColor fromColor) {
+        boolean floated = gameData.floatingEffectsOnPlayer(playerId, SpendManaAsAnyColorEffect.class).stream()
+                .anyMatch(floating -> ((SpendManaAsAnyColorEffect) floating.effect()).fromColor() == fromColor);
+        return floated || gameData.anyPermanentMatches(permanent ->
                 !permanent.isFaceDown()
                         && !hasLostPrintedAbilities(gameData, permanent)
                         && permanent.getCard().getStaticEffects().stream()
                         .filter(SpendManaAsAnyColorEffect.class::isInstance)
                         .map(SpendManaAsAnyColorEffect.class::cast)
+                        .filter(permission -> permission.fromColor() == fromColor)
                         .anyMatch(permission -> permission.allPlayers()
                                 || playerId.equals(findPermanentController(gameData, permanent.getId()))));
     }
@@ -3077,32 +3089,17 @@ public class GameQueryService {
             return false;
         }
         UUID controllerId = findPermanentController(gameData, source.getId());
-        UUID ownerId = source.getCard().getOwnerId();
-        if (controllerId != null && ownerId != null && !controllerId.equals(ownerId)) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-            if (battlefield != null && battlefield.stream()
-                    .filter(permanent -> !hasLostAllAbilities(gameData, permanent))
-                    .anyMatch(permanent -> permanent.getCard().getStaticEffects().stream()
-                            .filter(ActivatedAbilityManaColorPermissionEffect.class::isInstance)
-                            .map(ActivatedAbilityManaColorPermissionEffect.class::cast)
-                            .anyMatch(ActivatedAbilityManaColorPermissionEffect::appliesToControlledNonOwnedPermanentsOnly))) {
-                return true;
-            }
-        }
         List<SpendManaAsAnyColorForActivatedAbilitiesEffect> ownPermissions = hasLostAllAbilities(gameData, source)
                 ? List.of()
                 : source.getCard().getStaticEffects().stream()
                 .filter(SpendManaAsAnyColorForActivatedAbilitiesEffect.class::isInstance)
                 .map(SpendManaAsAnyColorForActivatedAbilitiesEffect.class::cast)
-                .filter(effect -> effect.subject() instanceof PermanentSubject.Source)
+                .filter(effect -> effect.subject() instanceof PermanentSubject.Source && effect.fromColor() == null)
                 .toList();
         if (ownPermissions.stream().anyMatch(effect -> !effect.borrowedAbilitiesOnly())
                 || !ownPermissions.isEmpty() && (ability == null || isBorrowedAbility(gameData, source, controllerId,
                 ability))) {
             return true;
-        }
-        if (!isCreature(gameData, source)) {
-            return false;
         }
         if (controllerId == null) {
             return false;
@@ -3156,14 +3153,15 @@ public class GameQueryService {
     }
 
     /**
-     * Returns whether the source creature's activated abilities may use blue mana as mana of any
-     * color, as granted by Quicksilver Elemental.
+     * Whether the source's activated abilities may use blue mana as though it were mana of any color: its own
+     * {@link SpendManaAsAnyColorForActivatedAbilitiesEffect} of blue mana (Quicksilver Elemental).
      */
     public boolean canSpendBlueManaAsAnyColorForActivatedAbilities(GameData gameData, Permanent source) {
         return source != null
                 && !hasLostAllAbilities(gameData, source)
                 && source.getCard().getStaticEffects().stream()
-                .anyMatch(SpendBlueManaAsAnyColorForActivatedAbilitiesEffect.class::isInstance);
+                .anyMatch(effect -> effect instanceof SpendManaAsAnyColorForActivatedAbilitiesEffect permission
+                        && permission.fromColor() == ManaColor.BLUE);
     }
 
     /**

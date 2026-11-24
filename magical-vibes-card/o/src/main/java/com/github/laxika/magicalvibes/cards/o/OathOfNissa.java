@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "OGW", collectorNumber = "140")
 @CardRegistration(set = "PIO", collectorNumber = "189")
@@ -24,6 +23,6 @@ public class OathOfNissa extends Card {
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardTypePredicate(CardType.LAND),
                                 new CardTypePredicate(CardType.PLANESWALKER)))));
-        addStaticEffect(new SpendAnyManaTypeToCastEffect(Set.of(CardType.PLANESWALKER)));
+        addStaticEffect(SpendAnyManaTypeToCastEffect.asThoughAnyColor(new CardTypePredicate(CardType.PLANESWALKER)));
     }
 }

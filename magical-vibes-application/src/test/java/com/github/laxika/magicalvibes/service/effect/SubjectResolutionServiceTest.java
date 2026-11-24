@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTargetCardPredicate;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
@@ -1783,6 +1784,23 @@ class SubjectResolutionServiceTest extends BaseCardTest {
                     enchantedPlayersCreatures, reads)).isTrue();
             assertThat(subjects.names(gd, curse, player1.getId(), player1.getId(), entering,
                     enchantedPlayersCreatures, reads)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Names the permanents its controller controls but doesn't own by their owner")
+        void controlledButNotOwned() {
+            Permanent source = addCreatureReady(player1, new GrizzlyBears());
+            Permanent owned = addCreatureReady(player1, new GrizzlyBears());
+            GrizzlyBears borrowedCard = new GrizzlyBears();
+            borrowedCard.setOwnerId(player2.getId());
+            Permanent borrowed = addCreatureReady(player1, borrowedCard);
+            PermanentSubject controlledNotOwned = controlledBy(you(),
+                    new PermanentNotPredicate(new PermanentOwnedBySourceControllerPredicate()));
+
+            assertThat(subjects.names(gd, source, player1.getId(), player1.getId(), borrowed, controlledNotOwned,
+                    reads)).isTrue();
+            assertThat(subjects.names(gd, source, player1.getId(), player1.getId(), owned, controlledNotOwned,
+                    reads)).isFalse();
         }
 
         @Test

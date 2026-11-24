@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.effect.SpendAnyManaTypeToCastEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -1156,5 +1157,60 @@ class CastingPermissionServiceTest {
 
         assertThat(svc.isLandPlayFromHandRestricted(gd, player1Id)).isTrue();
         assertThat(svc.isSpellCastingFromHandRestricted(gd, player2Id)).isTrue();
+    }
+
+    @Nested
+    @DisplayName("Battlefield permissions to spend mana of any type or as though any color")
+    class BattlefieldSpendPermissions {
+
+        private Card creatureSpell() {
+            Card card = new Card();
+            card.setType(CardType.CREATURE);
+            return card;
+        }
+
+        private void addPermission(SpendAnyManaTypeToCastEffect permission) {
+            Card source = new Card();
+            source.addStaticEffect(permission);
+            gd.playerBattlefields.get(player1Id).add(new Permanent(source));
+        }
+
+        @Test
+        @DisplayName("An any-type permission is any type, not only any color")
+        void anyTypePermission() {
+            Card spell = creatureSpell();
+            CardPredicate filter = new CardTypePredicate(CardType.CREATURE);
+            addPermission(new SpendAnyManaTypeToCastEffect(filter, false));
+            when(predicateEvaluationService.matchesCardPredicate(eq(spell), eq(filter), any(), eq(gd), eq(player1Id)))
+                    .thenReturn(true);
+
+            assertThat(svc.canSpendAnyManaTypeFromBattlefield(gd, player1Id, spell)).isTrue();
+            assertThat(svc.canSpendManaAsAnyColorToCastFromBattlefield(gd, player1Id, spell)).isFalse();
+        }
+
+        @Test
+        @DisplayName("An as-though-any-color permission is not an any-type permission")
+        void anyColorPermission() {
+            Card spell = creatureSpell();
+            CardPredicate filter = new CardTypePredicate(CardType.CREATURE);
+            addPermission(SpendAnyManaTypeToCastEffect.asThoughAnyColor(filter));
+            when(predicateEvaluationService.matchesCardPredicate(eq(spell), eq(filter), any(), eq(gd), eq(player1Id)))
+                    .thenReturn(true);
+
+            assertThat(svc.canSpendManaAsAnyColorToCastFromBattlefield(gd, player1Id, spell)).isTrue();
+            assertThat(svc.canSpendAnyManaTypeFromBattlefield(gd, player1Id, spell)).isFalse();
+        }
+
+        @Test
+        @DisplayName("A permission covers only the spells its filter matches")
+        void filterLimitsThePermission() {
+            Card spell = creatureSpell();
+            CardPredicate filter = new CardTypePredicate(CardType.PLANESWALKER);
+            addPermission(SpendAnyManaTypeToCastEffect.asThoughAnyColor(filter));
+            when(predicateEvaluationService.matchesCardPredicate(eq(spell), eq(filter), any(), eq(gd), eq(player1Id)))
+                    .thenReturn(false);
+
+            assertThat(svc.canSpendManaAsAnyColorToCastFromBattlefield(gd, player1Id, spell)).isFalse();
+        }
     }
 }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfTargetCreatureUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.SpendBlueManaAsAnyColorForActivatedAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.SpendManaAsAnyColorForActivatedAbilitiesEffect;
 
 import java.util.List;
 
@@ -18,6 +18,6 @@ public class QuicksilverElemental extends Card {
         addActivatedAbility(new ActivatedAbility(false, "{U}",
                 List.of(new GainActivatedAbilitiesOfTargetCreatureUntilEndOfTurnEffect()),
                 "{U}: This creature gains all activated abilities of target creature until end of turn."));
-        addStaticEffect(new SpendBlueManaAsAnyColorForActivatedAbilitiesEffect());
+        addStaticEffect(SpendManaAsAnyColorForActivatedAbilitiesEffect.blueManaForOwnAbilities());
     }
 }

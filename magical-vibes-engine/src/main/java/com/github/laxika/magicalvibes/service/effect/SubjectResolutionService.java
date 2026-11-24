@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceOrPairedPred
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -1614,7 +1615,8 @@ public class SubjectResolutionService {
             case PermanentSubject.ControlledBy controlledBy ->
                     controlledByIncludes(gameData, source, controllerId, onSourcesBattlefield, targetControllerId,
                             target, controlledBy.players())
-                            && setFilterMatches(gameData, source, sourceId, target, controlledBy.filter(), reads);
+                            && setFilterMatches(gameData, source, sourceId, controllerId, target, controlledBy.filter(),
+                            reads);
             case PermanentSubject.AllOf allOf -> {
                 for (PermanentSubject part : allOf.subjects()) {
                     if (namesUnfiltered(gameData, source, sourceId, controllerId, onSourcesBattlefield,
@@ -1668,28 +1670,31 @@ public class SubjectResolutionService {
     }
 
     /**
-     * A static set's own predicate: the structural parts (the source, its pair, tapped) are judged here, the
-     * characteristic parts by {@code reads}, in the predicate's order.
+     * A static set's own predicate: the structural parts (the source, its pair, tapped, owned by the ability's
+     * controller) are judged here, the characteristic parts by {@code reads}, in the predicate's order.
      */
-    private static boolean setFilterMatches(GameData gameData, Permanent source, UUID sourceId, Permanent target,
-                                            PermanentPredicate predicate, StaticReads reads) {
+    private boolean setFilterMatches(GameData gameData, Permanent source, UUID sourceId, UUID controllerId,
+                                     Permanent target, PermanentPredicate predicate, StaticReads reads) {
         return switch (predicate) {
             case null -> true;
             case PermanentTruePredicate ignored -> true;
             case PermanentAllOfPredicate allOf -> {
                 for (PermanentPredicate part : allOf.predicates()) {
-                    if (!setFilterMatches(gameData, source, sourceId, target, part, reads)) {
+                    if (!setFilterMatches(gameData, source, sourceId, controllerId, target, part, reads)) {
                         yield false;
                     }
                 }
                 yield true;
             }
-            case PermanentNotPredicate not -> !setFilterMatches(gameData, source, sourceId, target, not.predicate(),
-                    reads);
+            case PermanentNotPredicate not -> !setFilterMatches(gameData, source, sourceId, controllerId, target,
+                    not.predicate(), reads);
             case PermanentIsSourcePermanentPredicate ignored -> target.getId().equals(sourceId);
             case PermanentIsSourceOrPairedPredicate ignored -> target.getId().equals(sourceId)
                     || source != null && target.getId().equals(source.getPairedWithId());
             case PermanentIsTappedPredicate ignored -> target.isTapped();
+            case PermanentOwnedBySourceControllerPredicate ignored ->
+                    predicateEvaluationService.matchesPermanentPredicate(target, predicate,
+                            FilterContext.of(gameData).withSourceControllerId(controllerId));
             case PermanentIsCreaturePredicate ignored -> reads.isCreature(gameData, target);
             default -> reads.matchesLeaf(target, predicate);
         };

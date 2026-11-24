@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PyriteSpellbomb;
+import com.github.laxika.magicalvibes.cards.t.ThoughtKnotSeer;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.cards.z.ZofShade;
 import com.github.laxika.magicalvibes.model.Card;
@@ -20,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({NathanDrakeTreasureHunter.class, Divination.class, GrizzlyBears.class, ZofShade.class,
-        TurnToFrog.class})
+        TurnToFrog.class, ThoughtKnotSeer.class, PyriteSpellbomb.class})
 class NathanDrakeTreasureHunterTest extends BaseCardTest {
 
     @Test
@@ -152,5 +154,72 @@ class NathanDrakeTreasureHunterTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
         assertThat(gqs.getEffectivePower(gd, zofShade)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("colored mana can't pay the {C} of a spell they do not own")
+    void coloredManaCannotPayColorlessSymbolOfNonOwnedSpell() {
+        addCreatureReady(player1, new NathanDrakeTreasureHunter());
+        Card opposingSpell = new ThoughtKnotSeer();
+        opposingSpell.setOwnerId(player2.getId());
+        harness.setHand(player1, List.of(opposingSpell));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("colorless mana pays the {C} of a spell they do not own, other mana the rest")
+    void colorlessManaPaysColorlessSymbolOfNonOwnedSpell() {
+        addCreatureReady(player1, new NathanDrakeTreasureHunter());
+        Card opposingSpell = new ThoughtKnotSeer();
+        opposingSpell.setOwnerId(player2.getId());
+        harness.setHand(player1, List.of(opposingSpell));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.stack).anySatisfy(entry ->
+                assertThat(entry.getCard().getId()).isEqualTo(opposingSpell.getId()));
+    }
+
+    @Test
+    @DisplayName("lets its controller use any mana for abilities of a noncreature permanent they do not own")
+    void activatesNonOwnedNoncreatureAbilityWithAnyMana() {
+        addCreatureReady(player1, new NathanDrakeTreasureHunter());
+        PyriteSpellbomb spellbomb = new PyriteSpellbomb();
+        spellbomb.setOwnerId(player2.getId());
+        harness.addToBattlefield(player1, spellbomb);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("does not let any mana pay abilities of a permanent they own")
+    void doesNotCoverOwnedPermanentAbilities() {
+        addCreatureReady(player1, new NathanDrakeTreasureHunter());
+        harness.addToBattlefield(player1, new PyriteSpellbomb());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
     }
 }

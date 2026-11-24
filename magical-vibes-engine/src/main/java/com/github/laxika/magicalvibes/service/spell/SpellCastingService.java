@@ -3808,7 +3808,7 @@ public class SpellCastingService {
             casterPool.setWhiteSpendableAsRed(gameQueryService.canSpendWhiteManaAsRed(gameData, playerId));
             casterPool.setWhiteSpendableAsAnyColor(gameQueryService.canSpendWhiteManaAsAnyColor(gameData, playerId));
             casterPool.setWhiteSpendableAsAnyColorWithoutRestriction(
-                    gameQueryService.canSpendWhiteManaAsAnyColorUntilEndOfTurn(gameData, playerId));
+                    gameQueryService.canSpendWhiteManaAsAnyColorWithoutRestriction(gameData, playerId));
             casterPool.setAllManaSpendableAsAnyColor(gameQueryService.canSpendManaAsAnyColor(gameData, playerId));
         }
 
@@ -15219,6 +15219,13 @@ public class SpellCastingService {
                         && gameQueryService.getEffectiveCardColors(gameData, card).contains(CardColor.BLUE)
                         && pool.getBlueCreatureSpellOnlyManaTotal() > 0
                         ? pool.promoteBlueCreatureSpellOnlyMana() : null;
+        // "As though it were mana of any color to cast [these] spells" (Oath of Nissa, Nathan Drake) pays as the any-color
+        // conversion, which leaves a {C} symbol to colorless mana (CR 107.4c), not as any type.
+        boolean anyColorForThisSpell = !pool.isAllManaSpendableAsAnyColor()
+                && castingPermissionService.canSpendManaAsAnyColorToCastFromBattlefield(gameData, playerId, card);
+        if (anyColorForThisSpell) {
+            pool.setAllManaSpendableAsAnyColor(true);
+        }
         try {
             if (!card.hasType(CardType.CREATURE)) {
                 ManaPool.DevoidSpellManaState devoidMana = card.hasKeyword(Keyword.DEVOID)
@@ -15269,6 +15276,9 @@ public class SpellCastingService {
                 pool.restorePromotedCreatureSpellOrAbilityMana(promotedCreatureSourceMana, regularManaBefore);
             }
         } finally {
+            if (anyColorForThisSpell) {
+                pool.setAllManaSpendableAsAnyColor(false);
+            }
             pool.setInstantSorceryOrClassLevelManaUsableForInstantSorcery(previousClassPermission);
             pool.setKickedOrInstantSorceryOnlyManaUsableForKickedSpell(previousUnionKickedPermission);
             pool.setKickedOrInstantSorceryOnlyManaUsableForInstantSorcery(previousUnionInstantPermission);

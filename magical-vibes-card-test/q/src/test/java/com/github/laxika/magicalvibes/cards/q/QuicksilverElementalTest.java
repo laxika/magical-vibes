@@ -178,4 +178,34 @@ class QuicksilverElementalTest extends BaseCardTest {
 
         assertThat(gs.getEffectiveActivatedAbilities(gd, quicksilver)).isEmpty();
     }
+
+    @Test
+    @DisplayName("Mana of another color can't pay a copied colored activated ability")
+    void redManaCannotPayCopiedColoredAbility() {
+        addCreatureReady(player1, new QuicksilverElemental());
+        Permanent transfixer = addCreatureReady(player1, new AuriokTransfixer());
+        Permanent ancientDen = harness.addToBattlefieldAndReturn(player1, new AncientDen());
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, 0, null, transfixer.getId());
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, ancientDen.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(ancientDen.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Blue mana can't pay another creature's colored activated ability")
+    void blueManaCannotPayAnotherCreaturesAbility() {
+        addCreatureReady(player1, new QuicksilverElemental());
+        addCreatureReady(player1, new AuriokTransfixer());
+        Permanent ancientDen = harness.addToBattlefieldAndReturn(player1, new AncientDen());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, ancientDen.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(ancientDen.isTapped()).isFalse();
+    }
 }
