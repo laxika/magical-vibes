@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 
 @CardRegistration(set = "EMA", collectorNumber = "108")
 @CardRegistration(set = "SLD", collectorNumber = "1860")
@@ -22,7 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 public class ToxicDeluge extends Card {
 
     public ToxicDeluge() {
-        addCastingCost(new PayXLifeCost());
+        addCastingCost(PayLifeCost.x());
         addSpellEffect(new BoostAllCreaturesEffect(
                 new Scaled(new XValue(), -1), new Scaled(new XValue(), -1)));
     }

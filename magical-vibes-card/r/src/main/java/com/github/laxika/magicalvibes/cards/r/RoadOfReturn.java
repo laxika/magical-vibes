@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.EntwineManaCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateCost;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -18,7 +18,7 @@ import java.util.List;
 public class RoadOfReturn extends Card {
 
     public RoadOfReturn() {
-        addCastingCost(new EntwineManaCost("{2}"));
+        addCastingCost(EscalateCost.entwine("{2}"));
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target permanent card from your graveyard to your hand",

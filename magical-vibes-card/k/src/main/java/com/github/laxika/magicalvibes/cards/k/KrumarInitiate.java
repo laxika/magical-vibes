@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.EndureEffect;
-import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 
 import java.util.List;
 
@@ -17,7 +17,7 @@ public class KrumarInitiate extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{X}{B}",
-                List.of(new PayXLifeCost(), new EndureEffect(new XValue())),
+                List.of(PayLifeCost.x(), new EndureEffect(new XValue())),
                 "{X}{B}, {T}, Pay X life: This creature endures X. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withXValue());

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 
 @CardRegistration(set = "ICE", collectorNumber = "289")
 @CardRegistration(set = "ME1", collectorNumber = "145")
@@ -14,7 +14,7 @@ public class FireCovenant extends Card {
 
     public FireCovenant() {
         // As an additional cost to cast this spell, pay X life.
-        addCastingCost(new PayXLifeCost());
+        addCastingCost(PayLifeCost.x());
         // Fire Covenant deals X damage divided as you choose among any number of target creatures.
         addSpellEffect(DealDividedDamageEffect.xAmongTargetCreatures());
     }

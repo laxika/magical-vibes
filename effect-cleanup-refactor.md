@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 48b, 8e, 50b; merge queue 50. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                           |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50 (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 8e, 50b; merge queue 48b. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                            |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,031 / 2,455 (after fold run 8d) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,029 / 2,455 (after fold run 50) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,693 rows over 4,569 classes (after fold run 8d). Latest verdict per class: `step-9` 28, unique 1,193, absorbed 1,339, split 682, blocked-other 559, survivor 456, blocked-step-model 140, blocked-player-loop 96, dead 76. Waiting: 28 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,702 rows over 4,571 classes (after fold run 50). Latest verdict per class: `step-9` 28, unique 1,193, absorbed 1,341, split 682, blocked-other 559, survivor 456, blocked-step-model 140, blocked-player-loop 96, dead 76. Waiting: 28 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1130,6 +1130,9 @@ Ledger rows are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cd
 - `RevealTopCardOfLibraryEffect` shows each revealed card to every player through `CardRevealService.revealToAllPlayers` (CR 701.20a; fold run 8d).
 
 Ledger rows are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671-d50e7ccdb4f0/scratchpad/fold-8d/ledger-rows.csv.
+
+- `PayLifeCost.x()`: "Pay X life" with the announced X, for spells (no {X} needed in the mana cost) and abilities; spells are validated by `AdditionalSpellCostService.validateSpellLifeCost` and paid by `SpellCastingService.paySpellLifeCost` through `evaluateCost` (fold run 50).
+- `ChoiceContext.ExileFreeCastModeChoice.requiredOrAllModes` / `mayStopAt(n)`: a resolution-cast mode picker that stops only at the number specified or at every mode (entwine, CR 702.42a); set by `ExileFreeCastQueueSupport` for `EscalateCost.Kind.ENTWINE` (fold run 50).
 
 ### Blocked causes still open
 
@@ -5230,6 +5233,28 @@ Each would be a one-card piece.
 **Seen, not changed.** `SubjectResolutionService.bindResolutionFilter` still binds the triggering spell's printed types only, so Baral and Kari Zev and Possibility Storm miss types an effect grants (Encroaching Mycosynth). Fairly sure.
 
 **For the next run.** Risky Move needs a way to keep two choice results of one kind. Earth Rumble needs two-group reflexive targets. No other blocked row names either piece.
+
+### Step 9, fold run 50 (2026-11-24, parallel worktree)
+Leftovers. 2 folded, 7 left (not reached). Ratchet 3,055 / 2,479 → 3,053 / 2,479. 13 card files rewritten, Oracle text checked for all 13. CR checked: 107.3a, 118.9d, 119.4, 119.8, 601.2b, 601.2f, 702.42a, 702.120a.
+
+| Member | Result |
+|---|---|
+| `PayXLifeCost` (8) | absorbed into `PayLifeCost.x()`. Activation paths: the `PayLifeCost` readers already evaluate with the activation's X. Spell path: `ExtractedCosts.payXLife` is gone. `validateAll` checks `validateSpellLifeCost` with the announced X (paying 0 life is no payment, so Angel of Jubilation doesn't stop X = 0). `paySpellLifeCost` and `castLifePayments` use `AmountEvaluationService.evaluateCost`. `AdditionalSpellCostService` gets the evaluator through an `ObjectProvider`; its compat constructor reads only fixed amounts. Satisfiability treats X as 0. Kicker and buyback keep `fixedAmount()`. |
+| `EntwineManaCost` (5) | absorbed into `EscalateCost.entwine("{M}")`. Hand casts compute the same cost through `escalateManaSuffix` / `escalatePayments`, including the in-between refusal. Free casts: `maxEscalateModes` gives all modes when entwine is payable, else the number specified. `ExileFreeCastModeChoice.requiredOrAllModes` offers Done only at that number, refuses a Done in between, and skips a card stuck in between. Graveyard casts: refused only when a non-tap escalate or entwine payment is owed (`escalatePaymentsOwed`, read before the modes are unwrapped). |
+| 7 others | not reached; ledger rows restate or sharpen each note (copy pair and Shifting Shadow sharpened). |
+
+Behaviour changes:
+- Krumar Initiate is refused while its life total can't change (CR 119.8): the survivor's guard now applies (Platinum Emperion test; X = 0 still allowed).
+- The 5 entwine cards are cast from exile for free instead of skipped (CR 118.9d; 3 Hazoret-driven Kaya's Guile tests). Fixes defect line 627.
+- A graveyard cast with all modes of an entwine card is refused. Before, entwine was unpaid (CR 702.42a; Past in Flames test). Escalate cards with one mode are now allowed from the graveyard (CR 702.120a).
+
+Cost-shape: payments stay where they were. Step 10's cost-combinator merge would join the spell `paySpellLifeCost` / `validateSpellLifeCost` with the activation and forced payers on `evaluateCost` and drop `fixedAmount()` from kicker and buyback.
+
+Seen, not changed:
+- The graveyard cast path never pays a tap escalate (Collective Effort with 2+ modes via a flashback grant taps nothing; CR 702.120a). Fairly sure from the code (no escalate payer after the refusal list).
+- The outside-game normal-cost modal path (`OutsideGameNormalCostCastSupport`, maximum `choicesMax + 1`) doesn't use `requiredOrAllModes`, so Kaya's 3-of-4 is refused only by the hand path's in-between check. Sure of the code; unchanged.
+
+For the next run: the copy pair (`BecomeCopyOfCardUntilEndOfTurnEffect` with `BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffect`: Dermotaxi, Protean War Engine, Lazav) onto `BecomeCopyOfSubjectEffect`. It needs a `CardSubject` option for the unlinked (imprint) ability's card, `abilityLink == null` (Dermotaxi ruling), and Lazav's pick as `ChooseCardEffect.oneOf` + `cardsThisWay(CHOOSE)` replacing `ExiledCreatureCopyChoice`.
 
 ## Prompt
 

@@ -311,8 +311,10 @@ public class ExileFreeCastQueueSupport {
                 return;
             }
             int maximumChoices = additionalCosts.hasEscalate()
-                    ? maxEscalateModes(gameData, playerId, cardToCast, additionalCosts, modal.choicesMax())
+                    ? maxEscalateModes(gameData, playerId, cardToCast, additionalCosts, modal)
                     : modal.choicesMax();
+            boolean requiredOrAllModes = additionalCosts.hasEscalate()
+                    && additionalCosts.escalateCost().kind() == EscalateCost.Kind.ENTWINE;
             if (modal.choicesRequired() > maximumChoices) {
                 skipCardWithUnsupportedCost(gameData, playerId, card, asCopy);
                 return;
@@ -326,7 +328,7 @@ public class ExileFreeCastQueueSupport {
             }
             playerInputService.beginExileFreeCastModeChoice(
                     gameData, playerId, runtimeCard, modal, spellType,
-                    List.of(), offeredModes, maximumChoices, asCopy);
+                    List.of(), offeredModes, maximumChoices, asCopy, false, requiredOrAllModes);
             return;
         }
 
@@ -427,6 +429,10 @@ public class ExileFreeCastQueueSupport {
             if (chosenModeIndices.size() < context.effect().choicesRequired()) {
                 throw new IllegalArgumentException("Not enough modes chosen");
             }
+            if (!context.mayStopAt(chosenModeIndices.size())) {
+                throw new IllegalArgumentException("Choose " + context.effect().choicesRequired()
+                        + " modes or every mode");
+            }
             gameData.interaction.clearAwaitingInput();
             finishModalCast(gameData, player, context, chosenModeIndices);
             return;
@@ -454,7 +460,7 @@ public class ExileFreeCastQueueSupport {
                 gameData, context.cardToCast(), context.controllerId(), context.effect(),
                 chosenModeIndices, context.maximumChoices());
         if (offeredModes.isEmpty()) {
-            if (chosenModeIndices.size() < context.effect().choicesRequired()) {
+            if (!context.mayStopAt(chosenModeIndices.size())) {
                 skipCardWithoutLegalMode(gameData, context.controllerId(), context.cardToCast(), context.copy());
             } else {
                 finishModalCast(gameData, player, context, chosenModeIndices);
@@ -464,7 +470,8 @@ public class ExileFreeCastQueueSupport {
 
         playerInputService.beginExileFreeCastModeChoice(
                 gameData, context.controllerId(), context.cardToCast(), context.effect(), context.spellType(),
-                chosenModeIndices, offeredModes, context.maximumChoices(), context.copy(), context.payManaCost());
+                chosenModeIndices, offeredModes, context.maximumChoices(), context.copy(), context.payManaCost(),
+                context.requiredOrAllModes());
     }
 
     private void finishModalCast(GameData gameData, Player player,
@@ -879,11 +886,18 @@ public class ExileFreeCastQueueSupport {
 
     /**
      * The most modes a free cast of an escalate spell may choose: one, plus one for each escalate
-     * payment the caster can still make (CR 702.120a). The spell is cast from exile, so every card in
-     * the caster's hand can be discarded.
+     * payment the caster can still make (CR 702.120a); for an entwine spell every mode when the caster
+     * can pay entwine, else the number specified (CR 702.42a). The spell is cast from exile, so every
+     * card in the caster's hand can be discarded.
      */
     private int maxEscalateModes(GameData gameData, UUID playerId, Card card,
-                                 AdditionalSpellCostService.ExtractedCosts costs, int choicesMax) {
+                                 AdditionalSpellCostService.ExtractedCosts costs, ChooseOneEffect modal) {
+        if (costs.escalateCost().kind() == EscalateCost.Kind.ENTWINE) {
+            int allModes = modal.options().size();
+            return allModes > modal.choicesRequired() && canPayEscalate(gameData, playerId, card, costs, allModes)
+                    ? allModes : modal.choicesRequired();
+        }
+        int choicesMax = modal.choicesMax();
         int modes = 1;
         while (modes < choicesMax && canPayEscalate(gameData, playerId, card, costs, modes + 1)) {
             modes++;

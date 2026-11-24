@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 
 @CardRegistration(set = "7ED", collectorNumber = "149")
 @CardRegistration(set = "EXO", collectorNumber = "68")
@@ -17,7 +17,7 @@ public class Necrologia extends Card {
         setSpellCastTimingRestriction(SpellCastTimingRestriction.YOUR_END_STEP);
 
         // As an additional cost to cast this spell, pay X life. Draw X cards.
-        addCastingCost(new PayXLifeCost());
+        addCastingCost(PayLifeCost.x());
         addSpellEffect(new DrawCardEffect(new XValue()));
     }
 }

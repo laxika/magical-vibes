@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KrumarInitiate.class})
+@CardUsed({KrumarInitiate.class, PlatinumEmperion.class})
 class KrumarInitiateTest extends BaseCardTest {
 
     @Test
@@ -153,6 +154,38 @@ class KrumarInitiateTest extends BaseCardTest {
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(findPermanents(player1, "Spirit")).hasSize(1);
     }
+    @Test
+    @DisplayName("Paying X life can't be chosen while its controller's life total can't change")
+    void cannotPayLifeWhileLifeTotalCantChange() {
+        Permanent initiate = addCreatureReady(player1, new KrumarInitiate());
+        harness.addToBattlefield(player1, new PlatinumEmperion());
+        harness.setLife(player1, 20);
+        addManaForX(2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't pay life");
+
+        assertThat(initiate.isTapped()).isFalse();
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("X of zero pays no life, so it can be activated while its controller's life total can't change")
+    void zeroXActivatesWhileLifeTotalCantChange() {
+        Permanent initiate = addCreatureReady(player1, new KrumarInitiate());
+        harness.addToBattlefield(player1, new PlatinumEmperion());
+        harness.setLife(player1, 20);
+        addManaForX(0);
+
+        harness.activateAbility(player1, 0, 0, null);
+
+        assertThat(initiate.isTapped()).isTrue();
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+    }
+
     private void addManaForX(int x) {
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.BLACK, 1);
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, x);

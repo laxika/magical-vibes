@@ -43,10 +43,10 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivate
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
-import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
@@ -519,13 +519,16 @@ class AbilityActivationServiceTest {
             card.addActivatedAbility(new ActivatedAbility(
                     false,
                     "{X}{B}",
-                    List.of(new PayXLifeCost()),
+                    List.of(PayLifeCost.x()),
                     "{X}{B}: Pay X life."
             ).withXValue());
             Permanent perm = addReadyPermanent(player1Id, card);
             gameData.playerManaPools.get(player1Id).add(ManaColor.BLACK, 1);
             gameData.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 2);
             gameData.playerLifeTotals.put(player1Id, 1);
+            when(amountEvaluationService.evaluateCost(eq(gameData), eq(new XValue()), eq(player1Id), eq(perm), eq(2)))
+                    .thenReturn(2);
+            when(gameQueryService.canPlayerLifeChange(gameData, player1Id)).thenReturn(true);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))

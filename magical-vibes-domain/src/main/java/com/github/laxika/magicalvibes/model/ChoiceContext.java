@@ -2470,17 +2470,31 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /**
+     * The modes of a modal spell cast during a resolution, chosen one at a time. With {@code requiredOrAllModes} the
+     * caster stops only at the number of modes the spell specifies or at {@code maximumChoices} (every mode): an
+     * entwine cost is paid for choosing all modes instead of the number specified, never for a count in between
+     * (CR 702.42a).
+     */
     record ExileFreeCastModeChoice(Card cardToCast, UUID controllerId, ChooseOneEffect effect,
                                    StackEntryType spellType, List<Integer> chosenModeIndices,
                                    List<Integer> offeredModeIndices, int maximumChoices,
-                                   boolean copy, boolean payManaCost) implements ChoiceContext {
+                                   boolean copy, boolean payManaCost, boolean requiredOrAllModes)
+            implements ChoiceContext {
 
         public ExileFreeCastModeChoice(Card cardToCast, UUID controllerId, ChooseOneEffect effect,
                                        StackEntryType spellType, List<Integer> chosenModeIndices,
                                        List<Integer> offeredModeIndices, int maximumChoices,
                                        boolean copy) {
             this(cardToCast, controllerId, effect, spellType, chosenModeIndices,
-                    offeredModeIndices, maximumChoices, copy, false);
+                    offeredModeIndices, maximumChoices, copy, false, false);
+        }
+
+        /** Whether the caster may stop choosing after {@code chosenModes} modes. */
+        public boolean mayStopAt(int chosenModes) {
+            return chosenModes >= effect.choicesRequired()
+                    && (!requiredOrAllModes || chosenModes == effect.choicesRequired()
+                    || chosenModes >= maximumChoices);
         }
 
         public ExileFreeCastModeChoice {

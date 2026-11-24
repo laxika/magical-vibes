@@ -32,7 +32,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateCost;
-import com.github.laxika.magicalvibes.model.effect.EntwineManaCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCardsFromHandCost;
@@ -46,7 +45,6 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeToReduceColoredCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeOrSacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnControlledCreatureOrPayManaCost;
@@ -81,6 +79,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import org.springframework.beans.factory.ObjectProvider;
@@ -143,7 +142,6 @@ public class AdditionalSpellCostService {
             ReturnCreatureToHandCost.class,
             PutCounterOnControlledCreatureCost.class,
             PutCountersOnControlledCreatureOrPayManaCost.class,
-            PayXLifeCost.class,
             PayLifeCost.class,
             PayLifeOrPayManaCost.class,
             PayLifeOrSacrificePermanentCost.class,
@@ -162,7 +160,6 @@ public class AdditionalSpellCostService {
             DiscardCardOrSacrificePermanentCost.class,
             DiscardHandCost.class,
             DiscardXCardsCost.class,
-            EntwineManaCost.class,
             RepeatableAdditionalManaCost.class,
             ChooseXValueCost.class,
             ChooseCreatureTypeCost.class,
@@ -180,11 +177,15 @@ public class AdditionalSpellCostService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final ObjectProvider<CastingCostService> castingCostService;
+    private final ObjectProvider<AmountEvaluationService> amountEvaluationService;
 
-    /** Compatibility constructor for isolated additional-cost queries without a casting-cost service. */
+    /**
+     * Compatibility constructor for isolated additional-cost queries without a casting-cost service. Without an amount
+     * evaluator, a life cost reads only a fixed amount.
+     */
     public AdditionalSpellCostService(GameQueryService gameQueryService,
                                       PredicateEvaluationService predicateEvaluationService) {
-        this(gameQueryService, predicateEvaluationService, null);
+        this(gameQueryService, predicateEvaluationService, null, null);
     }
 
     /** Returns the spell's optional counter-removal cost reduction, if it has one. */
@@ -268,7 +269,6 @@ public class AdditionalSpellCostService {
             boolean returnCreatureToHand,
             PutCounterOnControlledCreatureCost putCounterCost,
             PutCountersOnControlledCreatureOrPayManaCost putCountersOrPayManaCost,
-            boolean payXLife,
             PayLifeCost payLifeCost,
             PayLifeOrPayManaCost payLifeOrPayManaCost,
             ExileAnyNumberOfCardsFromHandCost exileAnyNumberOfCardsFromHandCost,
@@ -285,7 +285,6 @@ public class AdditionalSpellCostService {
             DiscardCardOrPayLifeCost discardCardOrPayLifeCost,
             boolean discardHand,
             DiscardXCardsCost discardXCardsCost,
-            EntwineManaCost entwineManaCost,
             RepeatableAdditionalManaCost repeatableManaCost,
             ChooseXValueCost chooseXValueCost,
             BeholdAndExileCost beholdCost,
@@ -322,7 +321,7 @@ public class AdditionalSpellCostService {
                     || teamworkCost != null
                     || returnPermanentToHand != null
                     || returnCreatureToHand || putCounterCost != null || putCountersOrPayManaCost != null
-                    || payXLife || payLifeCost != null || payLifeOrPayManaCost != null
+                    || payLifeCost != null || payLifeOrPayManaCost != null
                     || payLifeOrSacrificePermanentCost != null
                     || discardCardOrSacrificePermanentCost != null
                     || exileAnyNumberOfCardsFromHandCost != null
@@ -334,7 +333,7 @@ public class AdditionalSpellCostService {
                     || discardCost != null || discardRandomCost != null || discardCardOrPayManaCost != null
                     || discardCardOrPayLifeCost != null
                     || discardHand || discardXCardsCost != null
-                    || entwineManaCost != null || repeatableManaCost != null || chooseXValueCost != null
+                    || repeatableManaCost != null || chooseXValueCost != null
                     || beholdCost != null || beholdSelectionCost != null || delveCost != null
                     || chosenCreatureOrWarpedCardCost != null
                     || revealCardCost != null || chooseCreatureTypeCost != null
@@ -511,7 +510,6 @@ public class AdditionalSpellCostService {
         PutCounterOnControlledCreatureCost putCounterCost = removeFirst(effects, PutCounterOnControlledCreatureCost.class);
         PutCountersOnControlledCreatureOrPayManaCost putCountersOrPayManaCost =
                 removeFirst(effects, PutCountersOnControlledCreatureOrPayManaCost.class);
-        boolean payXLife = effects.removeIf(PayXLifeCost.class::isInstance);
         PayLifeCost payLifeCost = removeFirst(effects, PayLifeCost.class);
         List<PayLifeOrPayManaCost> lifeOrManaCosts = effects.stream()
                 .filter(PayLifeOrPayManaCost.class::isInstance)
@@ -543,7 +541,6 @@ public class AdditionalSpellCostService {
         DiscardCardOrPayLifeCost discardOrPayLife = removeFirst(effects, DiscardCardOrPayLifeCost.class);
         boolean discardHand = effects.removeIf(DiscardHandCost.class::isInstance);
         DiscardXCardsCost discardXCards = removeFirst(effects, DiscardXCardsCost.class);
-        EntwineManaCost entwineManaCost = removeFirst(effects, EntwineManaCost.class);
         List<RepeatableAdditionalManaCost> repeatableManaCosts = effects.stream()
                 .filter(RepeatableAdditionalManaCost.class::isInstance)
                 .map(RepeatableAdditionalManaCost.class::cast)
@@ -575,12 +572,12 @@ public class AdditionalSpellCostService {
                 sacAnyNumberCost, tapAnyNumberCost, tapCreaturesForManaCost, tapMultipleCost, teamworkCost, returnAnyNumberCost,
                 returnPermanentToHand, returnCreature,
                 putCounterCost, putCountersOrPayManaCost,
-                payXLife, payLifeCost, payLifeOrPayManaCost, exileAnyNumberOfCardsFromHandCost,
+                payLifeCost, payLifeOrPayManaCost, exileAnyNumberOfCardsFromHandCost,
                 exileAnyNumberOfCardsFromGraveyardCost,
                 exileGraveyardCost, exileXCardsCost, putOpponentOwnedExiledCardIntoGraveyardCost,
                 collectEvidenceCost, exileNCardsCost, exileNCardsOrPayManaCost, discardCost, discardRandomCost,
                 discardOrPay, discardOrPayLife,
-                discardHand, discardXCards, entwineManaCost, repeatableManaCost,
+                discardHand, discardXCards, repeatableManaCost,
                 chooseXValueCost, beholdCost, beholdSelectionCost, chosenCreatureOrWarpedCardCost,
                 delveCost, revealCardCost, chooseCreatureOrRevealCreatureCardCost, chooseCreatureTypeCost, tieredManaCost,
                 payLifeOrSacrificePermanentCost, spreeAdditionalManaCost, waterbendCost,
@@ -937,16 +934,15 @@ public class AdditionalSpellCostService {
                 case DiscardRandomCardCost ignored -> {
                     if (hand.stream().noneMatch(candidate -> !candidate.getId().equals(card.getId()))) return false;
                 }
-                // Paying X life is always payable — X may be announced as 0.
-                case PayXLifeCost ignored -> { }
                 // Choosing X consumes no resource and is always satisfiable within its declared range.
                 case ChooseXValueCost ignored -> { }
                 case ChooseCreatureTypeCost ignored -> { }
-                // A fixed life payment is only legal while the life total covers it (CR 119.4).
+                // A life payment is only legal while the life total covers it (CR 119.4); "pay X life" is always
+                // payable, as X may be announced as 0.
                 case PayLifeCost cost -> {
-                    if (!lifePaymentAllowed) return false;
-                    int life = gameData.getLife(playerId);
-                    if (life < cost.fixedAmount()) return false;
+                    int amount = spellLifePayment(gameData, playerId, cost, 0);
+                    if (amount > 0 && !lifePaymentAllowed) return false;
+                    if (gameData.getLife(playerId) < amount) return false;
                 }
                 case PayLifeOrSacrificePermanentCost cost -> {
                     int life = gameData.getLife(playerId);
@@ -967,7 +963,6 @@ public class AdditionalSpellCostService {
                  // playability by itself — concrete mode+payment selections are validated at cast.
                  case EscalateCost ignored -> { }
                  // Entwine is paid as a fixed mana suffix only when all modes are selected.
-                 case EntwineManaCost ignored -> { }
                  case TieredManaCost ignored -> { }
                 case SacrificeAllMatchingPermanentsCost cost -> {
                     if (battlefield.stream().anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(
@@ -1165,7 +1160,8 @@ public class AdditionalSpellCostService {
                     + " would sacrifice can't be sacrificed to cast it");
         }
         if (costs.payLifeCost() != null) {
-            validatePayLifeCost(gameData, player, card, costs.payLifeCost());
+            validateSpellLifeCost(gameData, player, card, costs.payLifeCost(),
+                    announcedXValue == null ? 0 : announcedXValue);
         }
         if (costs.payLifeOrSacrificePermanentCost() != null) {
             PayLifeOrSacrificePermanentCost cost = costs.payLifeOrSacrificePermanentCost();
@@ -1750,20 +1746,34 @@ public class AdditionalSpellCostService {
     }
 
     /**
-     * Validates the "pay X life" additional cast cost (Fire Covenant) against the announced X.
-     * A player may pay life only while their life total is at least the amount paid (CR 119.4).
-     * Kept out of {@link #validateAll} because only the cast path knows the announced X.
+     * Validates a spell's "pay [amount] life" additional cast cost (Fumarole's 3, Fire Covenant's X) with the X
+     * announced as it is cast (CR 107.3a, 601.2f). A player may pay life only while their life total is at least the
+     * amount paid (CR 119.4); paying 0 life is no life payment.
      */
-    public void validatePayXLifeCost(GameData gameData, Player player, Card card, int announcedX) {
-        if (announcedX > 0) {
-            validateCanPayLifeForCost(gameData, card);
-        }
-        if (announcedX < 0) {
+    public void validateSpellLifeCost(GameData gameData, Player player, Card card, PayLifeCost cost,
+                                      int announcedX) {
+        int amount = spellLifePayment(gameData, player.getId(), cost, announcedX);
+        if (amount < 0) {
             throw new IllegalStateException("X cannot be negative for " + card.getName());
         }
-        if (gameData.getLife(player.getId()) < announcedX) {
-            throw new IllegalStateException("Not enough life to pay " + announcedX + " life for " + card.getName());
+        if (amount > 0) {
+            validateCanPayLifeForCost(gameData, card);
         }
+        if (gameData.getLife(player.getId()) < amount) {
+            throw new IllegalStateException("Not enough life to pay " + amount + " life for " + card.getName());
+        }
+    }
+
+    /**
+     * The life a spell's "pay [amount] life" cost asks of its payer with the announced X, as the total cost is
+     * determined (CR 107.3a, 601.2f; {@code AmountEvaluationService.evaluateCost}). Without an amount evaluator (the
+     * compatibility constructor) only a fixed amount is read.
+     */
+    private int spellLifePayment(GameData gameData, UUID payerId, PayLifeCost cost, int announcedX) {
+        AmountEvaluationService evaluator = amountEvaluationService == null
+                ? null : amountEvaluationService.getIfAvailable();
+        return evaluator == null ? cost.fixedAmount()
+                : evaluator.evaluateCost(gameData, cost.amount(), payerId, null, announcedX);
     }
 
     /**
@@ -1799,25 +1809,6 @@ public class AdditionalSpellCostService {
                     + " modes, or all modes when paying entwine for " + card.getName());
         }
         return cost.payments(modesChosen, modal.choicesRequired());
-    }
-
-    /** Builds the fixed additional mana-cost suffix for an entwined modal spell. */
-    public String entwineManaSuffix(Card card, EntwineManaCost cost, int requiredModes,
-                                    int allModes, int modesChosen) {
-        if (cost == null) {
-            return "";
-        }
-        if (cost.manaCost() == null || cost.manaCost().isEmpty()) {
-            throw new IllegalStateException("Entwine mana cost is missing on " + card.getName());
-        }
-        if (modesChosen == requiredModes) {
-            return "";
-        }
-        if (modesChosen == allModes) {
-            return cost.manaCost();
-        }
-        throw new IllegalStateException("Choose exactly " + requiredModes
-                + " modes, or all modes when paying entwine for " + card.getName());
     }
 
     /** Builds the selected mode's additional mana-cost suffix for a tiered spell. */

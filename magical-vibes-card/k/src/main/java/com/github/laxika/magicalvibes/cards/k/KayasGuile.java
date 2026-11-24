@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EntwineManaCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateCost;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
@@ -22,7 +22,7 @@ import java.util.Set;
 public class KayasGuile extends Card {
 
     public KayasGuile() {
-        addCastingCost(new EntwineManaCost("{3}"));
+        addCastingCost(EscalateCost.entwine("{3}"));
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Each opponent sacrifices a creature of their choice",

@@ -99,7 +99,6 @@ import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayMulticoloredSourceManaCost;
-import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PowerBasedTapCost;
 import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardExiledWithSourceIntoGraveyardCost;
@@ -7102,8 +7101,7 @@ public class AbilityActivationService {
                 || !gameQueryService.canSacrificeCreaturesForCosts(gameData)) {
             for (CardEffect effect : abilityEffects) {
                 boolean paysPositiveLife = effect instanceof PayLifeCost lifeCost
-                        ? lifePaymentAmount(gameData, playerId, permanent, lifeCost, xValue) > 0
-                        : effect instanceof PayXLifeCost && xValue > 0;
+                        && lifePaymentAmount(gameData, playerId, permanent, lifeCost, xValue) > 0;
                 if (paysPositiveLife
                         && !gameQueryService.canPayLifeForCosts(gameData, manaAbility)) {
                     throw new IllegalStateException("Players can't pay life to activate abilities");
@@ -7266,13 +7264,6 @@ public class AbilityActivationService {
             }
             if (needed > 0 && life < needed) {
                 throw new IllegalStateException("Not enough life to pay (need " + needed + ", have " + life + ")");
-            }
-        }
-
-        if (abilityEffects.stream().anyMatch(PayXLifeCost.class::isInstance)) {
-            int life = gameData.playerLifeTotals.getOrDefault(playerId, 0);
-            if (life < xValue) {
-                throw new IllegalStateException("Not enough life to pay (need " + xValue + ", have " + life + ")");
             }
         }
 

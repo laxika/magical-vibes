@@ -116,7 +116,6 @@ class CostEffectClassificationTest {
      */
     private static final Set<String> NON_PERMANENT_SPELL_COST_TYPES = Set.of(
             "SacrificeAllMatchingPermanentsCost",
-            "PayXLifeCost",
             "LandDropCost",
             "PayLifeCost",
             "PayLifeOrPayManaCost",
@@ -136,7 +135,6 @@ class CostEffectClassificationTest {
             "DiscardCardOrPayLifeCost",
             "DiscardHandCost",
             "DiscardXCardsCost",
-            "EntwineManaCost",
             "TieredManaCost",
             "RepeatableAdditionalManaCost",
             "SpreeAdditionalManaCost",

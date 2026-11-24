@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.EntwineManaCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -20,7 +20,7 @@ public class FlourishingStrike extends Card {
 
     public FlourishingStrike() {
         setAllowSharedTargets(true);
-        addCastingCost(new EntwineManaCost("{2}{G}"));
+        addCastingCost(EscalateCost.entwine("{2}{G}"));
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Flourishing Strike deals 5 damage to target creature with flying",

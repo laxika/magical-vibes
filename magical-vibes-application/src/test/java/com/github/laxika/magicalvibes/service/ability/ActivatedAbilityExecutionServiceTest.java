@@ -45,10 +45,10 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
@@ -391,9 +391,11 @@ class ActivatedAbilityExecutionServiceTest {
         void payXLifeCostPaysTheAnnouncedX() {
             Card card = createCard("Krumar Initiate", CardType.CREATURE);
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new PayXLifeCost());
+            List<CardEffect> effects = List.of(PayLifeCost.x());
             ActivatedAbility ability = new ActivatedAbility(false, "{X}{B}", effects,
                     "{X}{B}: Pay X life.").withXValue();
+            when(amountEvaluationService.evaluateCost(eq(gameData), eq(new XValue()), eq(player1Id), eq(perm), eq(3)))
+                    .thenReturn(3);
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects,
                     3, null, null, false);

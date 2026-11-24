@@ -1233,14 +1233,27 @@ public class PlayerInputService {
             com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, StackEntryType spellType,
             List<Integer> chosenModeIndices, List<Integer> offeredModeIndices,
             int maximumChoices, boolean copy, boolean payManaCost) {
+        beginExileFreeCastModeChoice(gameData, controllerId, cardToCast, effect, spellType,
+                chosenModeIndices, offeredModeIndices, maximumChoices, copy, payManaCost, false);
+    }
+
+    /**
+     * Asks for the next mode of a modal spell cast during a resolution. With {@code requiredOrAllModes} (an entwined
+     * spell, CR 702.42a) "Done" is offered only once the specified number of modes is chosen, not for a count
+     * between it and every mode.
+     */
+    public void beginExileFreeCastModeChoice(GameData gameData, UUID controllerId, Card cardToCast,
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, StackEntryType spellType,
+            List<Integer> chosenModeIndices, List<Integer> offeredModeIndices,
+            int maximumChoices, boolean copy, boolean payManaCost, boolean requiredOrAllModes) {
         ChoiceContext.ExileFreeCastModeChoice ctx = new ChoiceContext.ExileFreeCastModeChoice(
                 cardToCast, controllerId, effect, spellType, chosenModeIndices,
-                offeredModeIndices, maximumChoices, copy, payManaCost);
+                offeredModeIndices, maximumChoices, copy, payManaCost, requiredOrAllModes);
         List<String> optionLabels = new java.util.ArrayList<>(offeredModeIndices.stream()
                 .map(effect.options()::get)
                 .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
                 .toList());
-        if (chosenModeIndices.size() >= effect.choicesRequired()) {
+        if (ctx.mayStopAt(chosenModeIndices.size())) {
             optionLabels.add(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.FINISH_MODE_SELECTION);
         }
         String prompt = maximumChoices > 1

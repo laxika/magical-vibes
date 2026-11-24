@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardsFromControllerGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -14,7 +14,7 @@ import java.util.List;
 public class FixWhatsBroken extends Card {
 
     public FixWhatsBroken() {
-        addCastingCost(new PayXLifeCost());
+        addCastingCost(PayLifeCost.x());
         addSpellEffect(new ReturnCardsFromControllerGraveyardToBattlefieldEffect(
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.ARTIFACT),

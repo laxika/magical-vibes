@@ -76,7 +76,6 @@ import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryCost;
@@ -388,8 +387,7 @@ public class ActivatedAbilityExecutionService {
     private List<DepartureIntent> lifeLossSacrifices(GameData gameData, UUID playerId, Permanent permanent,
                                                      ActivatedAbility ability, List<CardEffect> abilityEffects,
                                                      int xValue) {
-        // The completion pays its first "pay life" cost, then an X life cost, each one a separate payment; count the
-        // positive ones.
+        // The completion pays its first "pay life" cost (an X life cost too) as one payment; count it when positive.
         int payments = 0;
         PayLifeCost payLifeCost = abilityEffects.stream()
                 .filter(PayLifeCost.class::isInstance)
@@ -398,9 +396,6 @@ public class ActivatedAbilityExecutionService {
         if (payLifeCost != null) {
             payments += amountEvaluationService.evaluateCost(
                     gameData, payLifeCost.amount(), playerId, permanent, xValue) > 0 ? 1 : 0;
-        }
-        if (abilityEffects.stream().anyMatch(PayXLifeCost.class::isInstance) && xValue > 0) {
-            payments++;
         }
         Map<UUID, Integer> losses = new LinkedHashMap<>();
         losses.put(playerId, payments);
@@ -761,17 +756,6 @@ public class ActivatedAbilityExecutionService {
                             gameData, payLifeCost.amount(), playerId, permanent, costXValue);
                     if (amount > 0) {
                         lifeSupport.applyLifePayment(gameData, playerId, amount, FaceDownVisibility.publicName(gameData, permanent));
-                    }
-                });
-
-        int xLifeCost = effectiveXValue;
-        abilityEffects.stream()
-                .filter(PayXLifeCost.class::isInstance)
-                .findFirst()
-                .ifPresent(cost -> {
-                    if (xLifeCost > 0) {
-                        lifeSupport.applyLifePayment(gameData, playerId, xLifeCost,
-                                FaceDownVisibility.publicName(gameData, permanent));
                     }
                 });
 

@@ -4474,17 +4474,6 @@ public class SpellCastingService {
                  .findFirst()
                  .map(modal -> modal.decodeModeIndices(modeEncoding).size())
                  .orElse(0);
-         if (additionalCosts.entwineManaCost() != null) {
-             ChooseOneEffect entwineModal = filteredSpellEffects.stream()
-                     .filter(ChooseOneEffect::isCastersModal)
-                     .map(ChooseOneEffect.class::cast)
-                     .findFirst()
-                     .orElseThrow(() -> new IllegalStateException(
-                             "Entwine requires a modal spell: " + card.getName()));
-             escalateManaSuffix += additionalSpellCostService.entwineManaSuffix(
-                     card, additionalCosts.entwineManaCost(), entwineModal.choicesRequired(),
-                     entwineModal.options().size(), modalModeCount);
-         }
          String selectedModeManaCost = selectedModalManaCost(card, filteredSpellEffects, modeEncoding);
         // A split half keeps its own cost on the stack (CR 709.3b), so only other cost-bearing modes
         // restore the printed cost.
@@ -6405,9 +6394,6 @@ public class SpellCastingService {
             int delveReduction = additionalSpellCostService.delveReduction(additionalCosts,
                     costSelection.exileGraveyardCardIndices());
             validateSpliceCosts(gameData, player, card, pendingSpliceCosts, spliceCostPermanentIds);
-            if (additionalCosts.payXLife()) {
-                additionalSpellCostService.validatePayXLifeCost(gameData, player, card, resolvedXValue);
-            }
             if (additionalCosts.discardXCardsCost() != null) {
                 additionalSpellCostService.validateDiscardXCardsCost(gameData, player, card,
                         additionalCosts.discardXCardsCost(), resolvedXValue, discardHandCardIndices, handCostIndex);
@@ -8242,11 +8228,8 @@ public class SpellCastingService {
             additionalSpellCostService.validateLandDropCost(gameData, player, card);
             gameData.recordLandPlayedThisTurn(player.getId(), card);
         }
-        if (costs.payXLife()) {
-            payXLifeCost(gameData, player, card, resolvedXValue);
-        }
         if (costs.payLifeCost() != null) {
-            payLifeCost(gameData, player, card, costs.payLifeCost());
+            paySpellLifeCost(gameData, player, card, costs.payLifeCost(), resolvedXValue);
         }
         payLifeOrPayManaCost(gameData, player, card, costs.payLifeOrPayManaCost(),
                 selection.payLifeForAdditionalCost(), preManaPaymentPool);
@@ -8545,21 +8528,20 @@ public class SpellCastingService {
     }
 
     /**
-     * Pays the "pay X life" additional cast cost (Fire Covenant) for the announced X. Legality
-     * (life total at least X, CR 119.4) is checked by
-     * {@code AdditionalSpellCostService.validatePayXLifeCost} before any cost is consumed.
+     * Pays a spell's "pay [amount] life" additional cast cost (Fumarole's 3, Fire Covenant's X) with the X announced as
+     * it is cast (CR 107.3a, 601.2f). Legality (life total at least the amount, CR 119.4) is checked by
+     * {@code AdditionalSpellCostService.validateSpellLifeCost} before any cost is consumed.
      */
-    private void payXLifeCost(GameData gameData, Player player, Card card, int announcedX) {
-        if (announcedX <= 0) {
-            return;
+    private void paySpellLifeCost(GameData gameData, Player player, Card card, PayLifeCost cost, int announcedX) {
+        int amount = amountEvaluationService.evaluateCost(gameData, cost.amount(), player.getId(), null, announcedX);
+        if (amount > 0) {
+            lifeSupport.applyLifePayment(gameData, player.getId(), amount, card.getName());
         }
-        lifeSupport.applyLifePayment(gameData, player.getId(), announcedX, card.getName());
     }
 
     /**
-     * Pays a fixed "pay N life" additional cast cost (Fumarole). Legality (life total at least N,
-     * CR 119.4) is checked by {@code AdditionalSpellCostService.validatePayLifeCost} before any
-     * cost is consumed.
+     * Pays a fixed life payment of a cast (a kicker life cost, the life half of an "or pay life" cost). Legality (life
+     * total at least N, CR 119.4) is checked by {@code AdditionalSpellCostService} before any cost is consumed.
      */
     private void payLifeCost(GameData gameData, Player player, Card card, PayLifeCost cost) {
         UUID playerId = player.getId();
@@ -9215,10 +9197,8 @@ public class SpellCastingService {
                 && alternateCast.getCost(LifeCastingCost.class).map(LifeCastingCost::amount).orElse(0) > 0) {
             payments++;
         }
-        if (costs.payXLife() && xLife > 0) {
-            payments++;
-        }
-        if (costs.payLifeCost() != null && costs.payLifeCost().fixedAmount() > 0) {
+        if (costs.payLifeCost() != null && amountEvaluationService.evaluateCost(
+                gameData, costs.payLifeCost().amount(), player.getId(), null, xLife) > 0) {
             payments++;
         }
         if (costs.payLifeOrPayManaCost() != null && Boolean.TRUE.equals(selection.payLifeForAdditionalCost())) {
@@ -11073,6 +11053,12 @@ public class SpellCastingService {
         List<CardEffect> spellEffects = new ArrayList<>(castHalf.getCastingCostsAndSpellEffects());
         AdditionalSpellCostService.ExtractedCosts additionalCosts =
                 additionalSpellCostService.extractAndRemove(gameData, playerId, castHalf, spellEffects);
+        // An escalate or entwine cost is owed only for the modes it buys (CR 702.120a, 702.42a), read before the
+        // modes are unwrapped.
+        int escalatePaymentsOwed = additionalCosts.hasEscalate()
+                ? additionalSpellCostService.escalatePayments(castHalf, additionalCosts.escalateCost(),
+                        additionalSpellCostService.countChosenModes(castHalf, effectiveXValue))
+                : 0;
         if (spellEffects.stream().anyMatch(ChooseOneEffect::isCastersModal)) {
             // The modes are chosen as the spell is cast (CR 601.2b), so a jump-start or flashback cast
             // resolves only the chosen modes.
@@ -11132,7 +11118,7 @@ public class SpellCastingService {
                 || additionalCosts.exileNCardsOrPayManaCost() != null
                 || additionalCosts.discardRandomCost() != null
                 || additionalCosts.discardCardOrPayManaCost() != null || additionalCosts.discardHand()
-                || additionalCosts.escalateCost() != null && !additionalCosts.escalateCost().taps()
+                || escalatePaymentsOwed > 0 && !additionalCosts.escalateCost().taps()
                 || additionalCosts.sacrificeFractionRoundedUpCost() != null
                 || additionalCosts.tieredManaCost() != null
                 || additionalCosts.chooseCreatureTypeCost() != null

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.EntwineManaCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateCost;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -16,7 +16,7 @@ import java.util.List;
 public class UnboundedPotential extends Card {
 
     public UnboundedPotential() {
-        addCastingCost(new EntwineManaCost("{3}{W}"));
+        addCastingCost(EscalateCost.entwine("{3}{W}"));
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a +1/+1 counter on each of up to two target creatures",
