@@ -274,72 +274,7 @@ public class MayCastHandlerService {
         }
     }
 
-    public void handleCastFromLibraryChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        Card cardToCast = ability.sourceCard();
-        String playerName = player.getUsername();
-
-        if (accepted) {
-            List<Card> deck = gameData.playerDecks.get(player.getId());
-
-            // Verify the card is still on top of the library
-            if (deck.isEmpty() || !deck.getFirst().getId().equals(cardToCast.getId())) {
-                
-                gameLogService.append(gameData, GameLog.cardThen(cardToCast, " is no longer on top of the library."));
-                log.info("Game {} - {} no longer on top of library for cast-from-library", gameData.id, cardToCast.getName());
-            } else {
-                if (cardToCast.isCastOnlyFromGraveyard()) {
-                    gameLogService.append(gameData, GameLog.cardThen(cardToCast,
-                            " cannot be cast from the library."));
-                    inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-                    return;
-                }
-                if (resolutionCastProhibited(gameData, player.getId(), cardToCast)) {
-                    gameLogService.append(gameData, GameLog.cardThen(cardToCast,
-                            " can't be cast right now and stays on top of the library."));
-                    inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-                    return;
-                }
-                if (SplitCardCastSupport.isSplitCard(cardToCast)) {
-                    deck.removeFirst();
-                    if (splitCardCastSupport.begin(gameData, new SplitCardCast(player.getId(), cardToCast,
-                            Zone.LIBRARY, 0, player.getId(), false, Integer.MAX_VALUE, null, null))) {
-                        return;
-                    }
-                    gameLogService.append(gameData, GameLog.cardThen(cardToCast,
-                            " has no half that can be cast and stays on top of the library."));
-                    inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-                    return;
-                }
-
-                // CR 601.2b: a modal spell's mode is chosen as it is cast, before it can be responded to.
-                ChooseOneEffect modal = singleChoiceModal(cardToCast);
-                if (modal != null) {
-                    Map<String, Integer> modes = new LinkedHashMap<>();
-                    for (int mode = 0; mode < modal.options().size(); mode++) {
-                        if (modal.options().get(mode).handOnly()) continue;
-                        modes.put(modal.options().get(mode).label(), mode);
-                    }
-                    interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                            player.getId(), null, null,
-                            new ChoiceContext.LibraryFreeCastModeChoice(cardToCast.getId(), modes),
-                            new ArrayList<>(modes.keySet()), "Choose a mode for " + cardToCast.getName() + "."));
-                    return;
-                }
-
-                deck.removeFirst();
-                if (castFromLibraryWithoutPaying(gameData, player, cardToCast, null)) {
-                    return;
-                }
-            }
-        } else {
-            gameLogService.append(gameData, GameLog.textCardText(playerName + " declines to cast " , cardToCast, "."));
-            log.info("Game {} - {} declines to cast {} from library", gameData.id, playerName, cardToCast.getName());
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /** Completes the mode choice begun by {@link #handleCastFromLibraryChoice} and casts the spell. */
+    /** Completes a library free cast's mode choice ({@code LibraryFreeCastModeChoice}) and casts the spell. */
     public void completeLibraryFreeCastModeChoice(GameData gameData, Player player, String choice,
                                                   ChoiceContext.LibraryFreeCastModeChoice context) {
         Integer mode = context.modes().get(choice);

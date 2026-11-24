@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.m.MeddlingMage;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.Slagstorm;
@@ -96,11 +97,11 @@ class GalvanothTest extends BaseCardTest {
 
         // First may: look at top card
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true); // inner resolves inline → sees Pyroclasm → second may
+        harness.handleMayAbilityChosen(player1, true); // inner resolves inline → sees Pyroclasm → cast offer
 
-        // Second may: cast Pyroclasm
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true); // cast Pyroclasm
+        // The cast offer: cast Pyroclasm
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, 0); // cast Pyroclasm
 
         // Pyroclasm is on the stack
         assertThat(gd.stack).isNotEmpty();
@@ -140,11 +141,11 @@ class GalvanothTest extends BaseCardTest {
 
         // First may: look at top card
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true); // inner resolves inline → sees Shock → second may
+        harness.handleMayAbilityChosen(player1, true); // inner resolves inline → sees Shock → cast offer
 
-        // Second may: cast Shock
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true); // cast Shock
+        // The cast offer: cast Shock
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, 0); // cast Shock
 
         // Now should be prompted for target
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -178,10 +179,10 @@ class GalvanothTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve MayEffect from stack
-        harness.handleMayAbilityChosen(player1, true); // accept look — inner resolves inline → sees Shock → second may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept look — inner resolves inline → sees Shock → cast offer
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, false); // decline to cast
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, -1); // decline to cast
 
         // Card is still on top of library
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(shock);
@@ -213,8 +214,8 @@ class GalvanothTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).addFirst(pyroclasm);
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve MayEffect from stack
-        harness.handleMayAbilityChosen(player1, true); // accept look — inner resolves inline → second may prompt
-        harness.handleMayAbilityChosen(player1, true); // cast Pyroclasm
+        harness.handleMayAbilityChosen(player1, true); // accept look — inner resolves inline → cast offer
+        harness.handleCardChosen(player1, 0); // cast Pyroclasm
 
         assertThat(gd.getSpellsCastThisTurnCount(player1.getId())).isEqualTo(1);
     }
@@ -269,13 +270,36 @@ class GalvanothTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
-            harness.handleMayAbilityChosen(player1, true);
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.LibrarySearch) {
+            harness.handleCardChosen(player1, 0);
         }
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(rebirth);
         assertThat(gd.stack).noneMatch(entry -> entry.getCard() == rebirth);
         assertThat(gd.getSpellsCastThisTurnCount(player1.getId())).isZero();
+    }
+
+    @Test
+    @CardUsed({Ornithopter.class})
+    @DisplayName("A spell cast from the top still pays its mandatory artifact sacrifice")
+    void castFromTopPaysMandatorySacrifice() {
+        harness.addToBattlefield(player1, new Galvanoth());
+        harness.addToBattlefield(player1, new Ornithopter());
+        UUID ornithopterId = harness.getPermanentId(player1, "Ornithopter");
+        Card rebirth = new KuldothaRebirth();
+        harness.setLibrary(player1, List.of(rebirth));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, ornithopterId);
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == rebirth);
+        harness.assertNotOnBattlefield(player1, "Ornithopter");
+        harness.assertInGraveyard(player1, "Ornithopter");
     }
 
     @Test
@@ -290,7 +314,7 @@ class GalvanothTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handleListChoice(player1, "Slagstorm deals 3 damage to each player");
@@ -316,7 +340,7 @@ class GalvanothTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                 .containsExactly("Tear — Destroy target enchantment");
@@ -343,7 +367,7 @@ class GalvanothTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(wearTear.getId()));
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(wearTear);
@@ -362,7 +386,7 @@ class GalvanothTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                 .containsExactly("Wear — Destroy target artifact");
@@ -381,7 +405,7 @@ class GalvanothTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(pyroclasm.getId()));
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(pyroclasm);
@@ -405,7 +429,7 @@ class GalvanothTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(wearTear.getId()));

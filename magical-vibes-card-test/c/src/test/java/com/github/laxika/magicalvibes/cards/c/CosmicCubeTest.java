@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
+import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GiantOctopus;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -15,9 +18,11 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -45,7 +50,9 @@ class CosmicCubeTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
         assertThat(search.params().cards()).containsExactly(eligibleAtLimit, eligibleBelowLimit);
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(leftOnTop);
+        // Looking at cards doesn't move them (CR 701.20b, 701.20e).
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(eligibleAtLimit, tooExpensive,
+                eligibleBelowLimit, forest, mountain, forestAgain, leftOnTop);
     }
 
     @Test
@@ -143,6 +150,33 @@ class CosmicCubeTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(spell);
+    }
+
+    @Test
+    @CardUsed({WearTear.class, FountainOfYouth.class, AngelicChorus.class})
+    @DisplayName("A split card is offered when one half is within the bound, and only that half may be cast")
+    void splitCardIsJudgedByTheHalfCast() {
+        harness.addToBattlefield(player1, new CosmicCube());
+        addCreatureReady(player1, new LlanowarElves());
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new AngelicChorus());
+        UUID chorusId = harness.getPermanentId(player2, "Angelic Chorus");
+        WearTear wearTear = new WearTear();
+        harness.setLibrary(player1, List.of(wearTear, new Forest()));
+
+        // The greatest attacking power is 1: Wear // Tear's mana value is 3, Wear's 2 and Tear's 1 (CR 709.3a).
+        declareAttackers(List.of(1));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(wearTear);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Tear — Destroy target enchantment");
+        harness.handleListChoice(player1, "Tear — Destroy target enchantment");
+        harness.handlePermanentChosen(player1, chorusId);
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Tear"));
     }
 
     @Test

@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -120,10 +119,8 @@ public class MayAbilityHandlerService {
      * Routes the answer to the first pending "you may" question. In order: Word of Command's play, Raging River's
      * attacker choice, a pile choice, the "you may" of a resolving ability ({@link #handleResolutionTimeMayChoice}),
      * a pending Equipment attach, then the first effect of the ability, in list order, that has a
-     * {@code MayEffectHandlerBean} in the {@code MayEffectHandlerRegistry}. The one effect tested by class here is
-     * {@code CastTopOfLibraryWithoutPayingManaCostEffect} (Galvanoth), whose branch is skipped when the effect does
-     * not match the ability's source card. An answer none of these takes is logged when declined and carried out by
-     * {@link #resolveAcceptedInAskingResolution} when accepted.
+     * {@code MayEffectHandlerBean} in the {@code MayEffectHandlerRegistry}. An answer none of these takes is logged
+     * when declined and carried out by {@link #resolveAcceptedInAskingResolution} when accepted.
      */
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
         if (gameData.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) == null) {
@@ -211,19 +208,6 @@ public class MayAbilityHandlerService {
                 mayHandler.handle(gameData, player, accepted, ability);
                 return;
             }
-        }
-
-        // Cast-from-library-without-paying — e.g. Galvanoth (second phase: cast prompt)
-        CastTopOfLibraryWithoutPayingManaCostEffect castFromLibEffect = ability.effects().stream()
-                .filter(e -> e instanceof CastTopOfLibraryWithoutPayingManaCostEffect)
-                .map(e -> (CastTopOfLibraryWithoutPayingManaCostEffect) e)
-                .findFirst().orElse(null);
-        if (castFromLibEffect != null && castFromLibEffect.matches(ability.sourceCard())) {
-            if (accepted) {
-                markOncePerTurnTriggerOnAcceptance(gameData, ability);
-            }
-            mayCastHandlerService.handleCastFromLibraryChoice(gameData, player, accepted, ability);
-            return;
         }
 
         if (!accepted) {

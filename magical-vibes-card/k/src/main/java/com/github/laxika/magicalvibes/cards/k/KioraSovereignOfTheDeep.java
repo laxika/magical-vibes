@@ -4,7 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.KioraSovereignOfTheDeepRevealAndCastEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.Sum;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsAndMayCastEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,6 +27,7 @@ public class KioraSovereignOfTheDeep extends Card {
                         new CardSubtypePredicate(CardSubtype.LEVIATHAN),
                         new CardSubtypePredicate(CardSubtype.OCTOPUS),
                         new CardSubtypePredicate(CardSubtype.SERPENT)))).castFrom(Zone.HAND),
-                new KioraSovereignOfTheDeepRevealAndCastEffect());
+                LookAtTopCardsAndMayCastEffect.lookAt(new TargetSpellManaValue())
+                        .withSpellManaValueAtMost(new Sum(new TargetSpellManaValue(), new Fixed(-1))));
     }
 }

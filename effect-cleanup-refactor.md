@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d (each in Findings; the fold queue marks its rows). Fold runs 21b, 18c and 19d are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                     |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c (each in Findings; the fold queue marks its rows). Fold runs 21b, 19d and 22b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                      |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,600 / 2,873 (after fold run 17d) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,595 / 2,868 (after fold run 18c) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,696 rows over 4,440 classes (after fold run 17d). Latest verdict per class: `step-9` 746, unique 1,172, absorbed 787, split 626, blocked-other 503, survivor 308, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 746 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,702 rows over 4,440 classes (after fold run 18c). Latest verdict per class: `step-9` 740, unique 1,172, absorbed 792, split 626, blocked-other 503, survivor 309, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 740 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -764,6 +764,8 @@ Delayed and global triggers:
 - `Subjects.triggeringCardsAsTheyLastExisted(filter)` (`CardSubject.TriggeringCards.asLastKnown`): "a card from among those cards" after they left a zone, offered and copied as last known; `cardsToDuplicate(cardsThisWay(CHOOSE))` reads such a chosen card as last known (fold run 17d).
 - `BecomeCopyOfSubjectEffect.lasting(WHILE_ATTACHED)`: the "as this Equipment becomes attached" copy kept while attached (Dinosaur Headdress; fold run 17d).
 
+- `LookAtTopCardsAndMayCastEffect.lookAt(n | DynamicAmount)` / `.reveal(DynamicAmount)` + `.matching(filter)`, `.withSpellManaValueAtMost(bound)` ("less than X" = `Sum(X, Fixed(-1))`), `.leavingTheRest()`: "look at / reveal the top N, you may cast a spell from among them without paying its mana cost". The cards wait in the library and the spell is cast from it; a split card is judged by its half (CR 709.3a); choosing to cast takes a do-only-once action (CR 603.2h) (fold run 18c).
+
 ### Blocked causes still open
 
 Counts are ledger rows of existing classes whose latest note names the cause (approximate, by keyword).
@@ -897,7 +899,7 @@ the Oracle text leaves an uncast card). The flows, one by one, each with a faili
 
 | Flow | Where | Refused, the card | Test (restriction) |
 |---|---|---|---|
-| cast the library top for free (Galvanoth) | `handleCastFromLibraryChoice` | stays on top | `GalvanothTest` (Teferi) |
+| cast the library top for free (Galvanoth) | `LibraryChoiceHandlerService.handleCastWithoutPayingChoice` since fold run 18c (`handleCastFromLibraryChoice` is gone) | stays on top | `GalvanothTest` (Teferi) |
 | play the revealed top card (Djinn of Wishes, Leaf-Crowned Elder, Ziatora's Envoy, Quicksilver Sea, Descendants' Path) | `cannotPlayFromLibrary` | goes where a declined card goes | `DjinnOfWishesTest` (Teferi) |
 | the revealed and ripple casts (Talent of the Telepath, ripple) | `hasLegalFreeCastTarget` | goes where an uncast card goes | `TalentOfTheTelepathTest` (Rule of Law) |
 | the instant-or-sorcery graveyard casts (Dreadhorde Arcanist, Thunderblade Charge, Chandra's) | `handleCastFromGraveyardChoice` | stays in the graveyard | `DreadhordeArcanistTest` (Teferi) |
@@ -2772,6 +2774,45 @@ Fold runs 17 to 17c left these copy members in `copier` and `copy-exc`. Ratchet 
 **Seen, not changed.** None new.
 
 **For the next run.** Myriad Pools needs a card subject for a spell on the stack. The Metamorphic Alteration pair needs a static copy verb. `BecomeCopyOfCardUntilEndOfTurnEffect` folds with `BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffectHandler`'s cards (Dermotaxi, Lazav Wearer of Faces, Protean War Engine).
+
+### Step 9, fold run 18c (2026-11-24, parallel worktree)
+
+Batch `look-cast`. Ratchet 3,623 / 2,886 → 3,618 / 2,881. Ledger 6 rows (survivor 1, absorbed 5). 9 card files rewritten, Oracle text checked for all 9. Rulings checked for Velomachus, Sunbird, Kiora, Aetherworks, Cosmic Cube, Perception, Planetarium and Galvanoth. CR 118.8, 118.9, 601.2a, 601.2f, 601.3, 603.2h, 608.2g, 608.2h, 701.20a, 701.20b, 701.20e, 709.3a, 709.3b, 712.8b and 716.3 checked.
+
+**Record shape.** `LookAtTopCardsAndMayCastEffect(DynamicAmount count, CardPredicate castFilter, DynamicAmount spellManaValueAtMost, boolean reveals, boolean restOnBottom)`:
+- Factories: `lookAt(n | amount)`, `reveal(amount)`; withers `.matching`, `.withSpellManaValueAtMost`, `.leavingTheRest()`.
+- Count and bound are evaluated once (CR 608.2h).
+- The cards stay in the library (CR 701.20b, 701.20e), shown to the controller or to every player.
+- One LibrarySearch `CAST_WITHOUT_PAYING` prompt casts from the library during the resolution (CR 608.2g), paying additional costs (CR 118.8).
+- A land face is never offered. A modal double-faced card is offered by either face (CR 712.8b). A split card is offered by its cheapest half, and `mayCastManaValueAtMost` allows only fitting halves (CR 709.3a).
+- "Less than X" is written `Sum(X, Fixed(-1))`.
+
+**Where the cards wait.** The completion handled three placements: cards taken out of the library (into no zone), cards left in it, and Kiora's exile. Exile sent Kiora's spell through the exile queue, so it was cast from exile. The library placement is the rules one (Aetherworks ruling), and the library flow already pays additional costs through `beginSacrificeCostIfNeeded`. So every member now waits in the library.
+
+| Batch | Result |
+|---|---|
+| `look-cast` | 5 folded. Cosmic Cube (`lookAt(6).withSpellManaValueAtMost(GreatestPowerAmongControlled…)`); Perception (`lookAt(PermanentCount)`, bound 3); Aetherworks / Svella (`lookAt(6 / 4)`); Kiora (`lookAt(TargetSpellManaValue)`, bound `Sum(TSMV, -1)`); Sunbird (`reveal(TSMV)`, bound TSMV); Galvanoth (`MayEffect(lookAt(1).matching(instant or sorcery).leavingTheRest())`); Planetarium (`lookAt(1).leavingTheRest()`). Velomachus (survivor's card): `matching(instant or sorcery).withSpellManaValueAtMost(SourcePower(true))`. |
+
+**Completion changes (`handleCastWithoutPayingChoice`).**
+- `restStays` (the `reorderRemainingToTop` flag on this destination): only the cast card leaves the library.
+- Choosing to cast marks the resolving entry's "do this only once each turn" action (CR 603.2h; Planetarium's limit, previously marked by the deleted may branch).
+
+**Behaviour changes:**
+- Cards stay in the library during the choice (7 test assertions updated per CR 701.20b).
+- Kiora casts from the library, so Melek copies it (test).
+- The split-half bound now covers Cosmic Cube, Kiora, Velomachus and Perception (Cosmic Cube test).
+- Galvanoth and Planetarium pay mandatory additional costs. `handleCastFromLibraryChoice` never paid them (Kuldotha Rebirth test).
+- The looked-at cards are revealed privately to the controller even when none can be cast.
+- The Galvanoth and Planetarium cast prompt is the LibrarySearch prompt; their tests were updated.
+- Logs are the survivor's.
+
+**Seen, not changed:**
+- The library and exile free-cast flows (`castCardWithoutPaying`, `ExileFreeCastQueueSupport`) pay no cost increases (CR 601.2f): cascade, Sunbird, Aetherworks, Kiora and the rest. Sure of the code.
+- The library flow offers no Adventure (CR 716.3). Kiora's old exile path did, but with no mana-value bound on the Adventure. Sure of the code.
+- A modal double-faced card offered by its back face is then cast with both faces on offer (`legalModalOptions` ignores the cast filter). Velomachus could cast Jadzi's creature face. Fairly sure.
+- A refused cast (Teferi, Rule of Law) logs "has no legal targets". Low.
+
+**For the next run.** `LookAtTopCardsMayCastExiledNonlandCardEffect` (Duelist's Flame, Keldon Flamesage, The Key to the Vault) could join the survivor with an exile-first option. The cost-increase gap above needs a defect run over the two free-cast flows.
 
 ## Prompt
 

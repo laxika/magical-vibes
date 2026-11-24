@@ -494,7 +494,7 @@ public class LibraryChoiceHandlerService {
                         searchCards, sourceCards, deck, grantHaste, sacrificeAtEndStep,
                         librarySearch.mayCastManaValueAtMost() == null
                                 ? Integer.MAX_VALUE : librarySearch.mayCastManaValueAtMost(),
-                        restToExile);
+                        restToExile, reorderRemainingToTop && !reorderRemainingToBottom);
                 return;
             }
 
@@ -4636,15 +4636,19 @@ public class LibraryChoiceHandlerService {
                                                 boolean canFailToFind, List<Card> searchCards,
                                                 List<Card> sourceCards, List<Card> deck,
                                                 boolean grantHaste, boolean sacrificeAtEndStep,
-                                                int spellManaValueLimit, boolean restToExile) {
+                                                int spellManaValueLimit, boolean restToExile,
+                                                boolean restStays) {
         String playerName = player.getUsername();
         Set<UUID> exiledSourceIds = sourceCards.stream()
                 .filter(card -> gameData.findExiledCard(card.getId()) != null)
                 .map(Card::getId).collect(java.util.stream.Collectors.toSet());
-        // Cards that were only looked at (Svella, Ice Shaper) are still in the library; they leave it
-        // now that the player has chosen, and the uncast ones are put back on the bottom below.
+        // Cards that were only looked at (Svella, Ice Shaper) are still in the library (CR 701.20b); they leave it
+        // now that the player has chosen, and the uncast ones are put back on the bottom below, unless nothing
+        // moves them (restStays: Galvanoth), when only the cast card leaves.
         Set<UUID> sourceCardIds = sourceCards.stream().map(Card::getId).collect(java.util.stream.Collectors.toSet());
-        deck.removeIf(card -> sourceCardIds.contains(card.getId()));
+        if (!restStays) {
+            deck.removeIf(card -> sourceCardIds.contains(card.getId()));
+        }
 
         boolean chosenCardCastable = cardIndex == -1 || cardIndex < -1 || cardIndex >= searchCards.size()
                 || canCastWithoutPaying(gameData, player.getId(), searchCards.get(cardIndex), spellManaValueLimit);
@@ -4706,8 +4710,8 @@ public class LibraryChoiceHandlerService {
             }
         }
 
-        // Put remaining cards on the bottom of the library in a random order, unless they stay exiled
-        if (!restToExile && !sourceCards.isEmpty()) {
+        // Put remaining cards on the bottom of the library in a random order, unless they stay exiled or stay put
+        if (!restToExile && !restStays && !sourceCards.isEmpty()) {
             Collections.shuffle(sourceCards);
             sourceCards.forEach(card -> gameData.removeFromExile(card.getId()));
             deck.addAll(sourceCards);
@@ -4730,6 +4734,13 @@ public class LibraryChoiceHandlerService {
                 || gameData.findExiledCard(chosenCard.getId()) != null;
         if (castFromExile) {
             gameData.removeFromExile(chosenCard.getId());
+        }
+        UUID chosenCardId = chosenCard.getId();
+        deck.removeIf(card -> card.getId().equals(chosenCardId));
+        // "Do this only once each turn" (CR 603.2h; Planetarium of Wan Shi Tong): choosing to cast takes the action.
+        if (gameData.pendingEffectResolutionEntry != null) {
+            com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService
+                    .markActionTaken(gameData, gameData.pendingEffectResolutionEntry);
         }
         castCardWithoutPaying(gameData, player, chosenCard, null, grantHaste, sacrificeAtEndStep,
                 castFromExile ? Zone.EXILE : Zone.LIBRARY, spellManaValueLimit);

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayCastOneWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsAndMayCastEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -28,11 +28,10 @@ public class PerceptionBobblehead extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}",
-                List.of(new LookAtTopCardsMayCastOneWithoutPayingManaCostEffect(
-                        new PermanentCount(
+                List.of(LookAtTopCardsAndMayCastEffect.lookAt(new PermanentCount(
                                 new PermanentHasSubtypePredicate(CardSubtype.BOBBLEHEAD),
-                                CountScope.CONTROLLER),
-                        new Fixed(3))),
+                                CountScope.CONTROLLER))
+                        .withSpellManaValueAtMost(new Fixed(3))),
                 "{3}, {T}: Look at the top X cards of your library, where X is the number of "
                         + "Bobbleheads you control. You may cast a spell with mana value 3 or less "
                         + "from among them without paying its mana cost. Put the rest on the bottom "

@@ -52,7 +52,8 @@ class PerceptionBobbleheadTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
         assertThat(search.params().cards()).containsExactly(eligibleSpell);
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(leftOnTop);
+        // Looking at cards doesn't move them (CR 701.20b, 701.20e).
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(eligibleSpell, tooExpensive, leftOnTop);
     }
 
     @Test
@@ -152,7 +153,8 @@ class PerceptionBobbleheadTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
         assertThat(search.params().cards()).containsExactly(second);
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched);
+        // Looking at cards doesn't move them (CR 701.20b, 701.20e).
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second, untouched);
         harness.handleCardChosen(player1, -1);
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(untouched);
     }

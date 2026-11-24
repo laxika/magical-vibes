@@ -36,8 +36,8 @@ class PlanetariumOfWanShiTongTest extends BaseCardTest {
         harness.passBothPriorities();
         answerScry(List.of(0, 1), List.of());
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.passBothPriorities();
@@ -56,11 +56,11 @@ class PlanetariumOfWanShiTongTest extends BaseCardTest {
         addVillageMana(2);
 
         surveilWith(firstVillage);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, -1);
 
         surveilWith(secondVillage);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
     }
 
     @Test
@@ -75,7 +75,7 @@ class PlanetariumOfWanShiTongTest extends BaseCardTest {
         addVillageMana(2);
 
         surveilWith(firstVillage);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
         surveilWith(secondVillage);
@@ -95,7 +95,7 @@ class PlanetariumOfWanShiTongTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
         answerScry(List.of(1, 0), List.of());
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Otter-Penguin");
@@ -151,7 +151,7 @@ class PlanetariumOfWanShiTongTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
         answerScry(List.of(0, 1), List.of());
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
         surveilWith(village);
 
@@ -176,12 +176,12 @@ class PlanetariumOfWanShiTongTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(secondVillage), 1, null, null);
         harness.passBothPriorities();
         answerScry(List.of(0, 1), List.of());
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -200,8 +200,8 @@ class PlanetariumOfWanShiTongTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
         answerScry(List.of(0, 1), List.of());
-        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
-            harness.handleMayAbilityChosen(player1, true);
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.LibrarySearch) {
+            harness.handleCardChosen(player1, 0);
         }
 
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(spell);
@@ -220,8 +220,8 @@ class PlanetariumOfWanShiTongTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
         answerScry(List.of(0, 1), List.of());
-        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
-            harness.handleMayAbilityChosen(player1, true);
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.LibrarySearch) {
+            harness.handleCardChosen(player1, 0);
         }
 
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(creature);

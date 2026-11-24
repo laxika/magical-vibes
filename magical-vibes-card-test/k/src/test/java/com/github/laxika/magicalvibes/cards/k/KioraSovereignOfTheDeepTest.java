@@ -4,13 +4,16 @@ import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantOctopus;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.MelekIzzetParagon;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -35,7 +38,8 @@ class KioraSovereignOfTheDeepTest extends BaseCardTest {
         assertThat(search).isNotNull();
         assertThat(search.params().cards()).containsExactly(bears);
         assertThat(search.params().reveals()).isFalse();
-        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        // Looking at cards doesn't move them (CR 701.20b, 701.20e).
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
     }
 
     @Test
@@ -164,6 +168,25 @@ class KioraSovereignOfTheDeepTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(entry -> entry.getCard() == reunion
                 && (gd.playerHands.get(player1.getId()).contains(firstDiscard)
                 || gd.playerHands.get(player1.getId()).contains(secondDiscard)));
+    }
+
+    @Test
+    @CardUsed({MelekIzzetParagon.class, LightningBolt.class})
+    @DisplayName("The spell is cast from the library, so Melek copies it")
+    void spellIsCastFromTheLibrary() {
+        setupKiora();
+        harness.addToBattlefield(player1, new MelekIzzetParagon());
+        LightningBolt bolt = new LightningBolt();
+        harness.setLibrary(player1, List.of(bolt, new Forest(), new Mountain(), new Forest()));
+
+        castGiantOctopus();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == bolt);
+        assertThat(gd.stack).anyMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && entry.getCard().getName().equals("Melek, Izzet Paragon"));
     }
 
     private void setupKiora() {

@@ -39,7 +39,8 @@ class VelomachusLoreholdTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards()).extracting(Card::getName)
                 .containsExactly("Pyroclasm");
-        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        // Looking at cards doesn't move them (CR 701.20b, 701.20e).
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(pyroclasm, blasphemousAct, forest, bears);
         assertThat(velomachus.isTapped()).isFalse();
     }
 

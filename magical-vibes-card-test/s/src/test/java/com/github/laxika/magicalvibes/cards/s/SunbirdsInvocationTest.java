@@ -74,8 +74,8 @@ class SunbirdsInvocationTest extends BaseCardTest {
                 .map(Card::getName).toList();
         assertThat(castableNames).containsExactlyInAnyOrder("Llanowar Elves", "Grizzly Bears");
 
-        // Library should have 2 fewer cards (2 revealed)
-        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        // Revealing cards doesn't move them (CR 701.20b)
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
     }
 
     @Test
@@ -323,7 +323,8 @@ class SunbirdsInvocationTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 2, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth);
+        // Revealing cards doesn't move them (CR 701.20b).
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, bears, third, fourth);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class))
                 .isNotNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
@@ -341,7 +342,7 @@ class SunbirdsInvocationTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(elf);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
                 .params().cards()).containsExactly(elf);
         harness.handleCardChosen(player1, -1);
