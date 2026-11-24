@@ -3,11 +3,13 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ExchangeGraveyardAndLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 
 @CardRegistration(set = "JUD", collectorNumber = "70")
 public class MoralityShift extends Card {
 
     public MoralityShift() {
         addSpellEffect(new ExchangeGraveyardAndLibraryEffect());
+        addSpellEffect(new ShuffleLibraryEffect(false));
     }
 }

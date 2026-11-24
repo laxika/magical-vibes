@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44 (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 45 (follow-up), 46; merge queue 45. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                  |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45 (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 41c, 37b, 40b; merge queue 46. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                   |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,171 / 2,587 (after fold run 44) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,159 / 2,575 (after fold run 45) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,415 rows over 4,533 classes (after fold run 44). Latest verdict per class: `step-9` 213, unique 1,183, absorbed 1,211, split 663, blocked-other 540, survivor 417, blocked-step-model 140, blocked-player-loop 96, dead 70. Waiting: 213 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,441 rows over 4,536 classes (after fold run 45). Latest verdict per class: `step-9` 190, unique 1,187, absorbed 1,222, split 665, blocked-other 541, survivor 425, blocked-step-model 140, blocked-player-loop 96, dead 70. Waiting: 190 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1004,6 +1004,16 @@ Delayed and global triggers:
 Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671-d50e7ccdb4f0/scratchpad/fold-44:
 - ledger-rows.csv
 - test1.log
+
+- `CrewAndSaddlePowerModifierEffect.Action` (`CREW`, `SADDLE`, `STATION`) + `actions()` / `appliesTo`: "crews Vehicles [and saddles Mounts / and stations permanents] as though its power were N greater / using its toughness" (CR 702.184c) (fold run 45).
+- `MasterOfPredicamentsEffect(DynamicAmount threshold, PlayerSubject guesser, CardEffect ifNoSpellCast)`: the hidden-card mana-value guess (fold run 45).
+- `ChangeTargetOfTargetSpellToSourceEffect(spell, newTarget)` / `.triggeringSpellToEnchantedCreature()` (fold run 45).
+- `GatherSpecimensEffect(Kind CREATURES_ENTERING | TOKENS_CREATED)` / `.tokensCreated()` (fold run 45).
+- `CountScope.TARGET_PLAYERS`: counts what every still-legal target player controls (fold run 45).
+- `SpellsWithChosenNameCantBeCastEffect.spellsAndLands()` (`landsToo`, both chosen names) (fold run 45).
+- `ExchangeGraveyardAndLibraryEffect(Zone first, Zone second)`: exchange two of library, graveyard, hand; CR 404.3 order prompt; no shuffle (fold run 45).
+- `ExchangeControlOfTargetPermanentsEffect.sharedCardTypes` (`ANY_CARD_TYPE`, `ARTIFACT_OR_CREATURE`, `ARTIFACT_CREATURE_OR_LAND`), `.forControlledTargetsSharingOneOf(first, types)`, records GAIN_CONTROL; `GameQueryService.sharesCardTypeAmong`; `Subjects.thisWay(GAIN_CONTROL)` (fold run 45).
+- `CreateTokenEffect` with investigate: "investigate N times" is always N creation events (CR 701.16a) (fold run 45).
 
 ### Blocked causes still open
 
@@ -4428,6 +4438,36 @@ For the next run: a targets-x run (one target-aware reader that sums every categ
 - The copy-service turn-face-up path used by SBA does not check "can't be turned face up". Unverified.
 
 **For the next run (44b):** the next-spell-rider cast hook; Floral Spuzzem and Goblin Vandal's split together with `GainControlOfPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffect`.
+
+### Step 9, fold run 45 (2026-11-24, parallel worktree)
+13 absorbed, 2 split, 8 survivor, 5 unique, 1 blocked-other; `rest-of-set` and `spell-perm-exchange` are left for 45b. Ratchet 3,263 / 2,641 → 3,251 / 2,629. 13 card files rewritten. CR 111.7, 115.7d, 118.12, 404.3, 608.2b, 608.2h, 613.1f, 614.1, 614.5, 701.12a, 701.12b, 701.16a, 701.17c, 702.122a, 702.171a, 702.184a and 702.184c checked.
+
+| Batch | Result |
+|---|---|
+| crew-power | 1 folded. `CrewAndSaddlePowerModifierEffect.actions()` (`Action.CREW/SADDLE/STATION`) replaces `crewOnly`. Stoic Star-Captain is `PowerBoostForCrewAndSaddleEffect(2, {CREW, STATION})`. `StationPowerModifierEffect` is deleted. `UseToughnessForStationEffect` stays `unique`: Warden's rule covers your other creatures with T>P, a subject + filter only it would set, and a grant would wrongly be layer 6. |
+| guess | 1 folded. `MasterOfPredicamentsEffect(threshold, guesser, ifNoSpellCast)`. `ifNoSpellCast` has one user (Seventh Doctor), as the row named. |
+| retarget | 1 folded. The survivor gains a spell subject (`targetSpell`/`triggeringSpell`) and a new-target subject (`source`/`attachedCreature`). Captured now logs the survivor's lines. Muck Drubb stays `unique` (its every-occurrence mode). |
+| rest-of-set | not started. Four bespoke interaction chains with AI strategies, plus Deliver Unto Evil's casting branch: a run of its own (45b). |
+| entry-controller | 1 folded. `GatherSpecimensEffect(Kind)`, `.tokensCreated()`. |
+| target-players-count | 2 folded. New `CountScope.TARGET_PLAYERS`. Officious needed CreateTokenEffect to split investigate-N always (CR 701.16a), which also fixes Pilfered Proof for the other investigate-N cards. |
+| chosen-name-prohib | 1 folded. `SpellsWithChosenNameCantBeCastEffect(opponentsOnly, landsToo)` reads both chosen names; `landsToo` has one user, as the row named. |
+| zone-exchange | 2 folded. `ExchangeGraveyardAndLibraryEffect(Zone, Zone)`: no shuffle, CR 404.3 prompt, one batch. |
+| shared-exchange | 1 split. `sharedCardTypes` set + GAIN_CONTROL record + conditional Aura destroy over `attachmentsOf(thisWay(GAIN_CONTROL))`. `ThisWay` accepts GAIN_CONTROL. |
+| spell-perm-exchange | not started (R). The new-targets offer is queued the same way by three handlers (incl. `GainControlOfTargetSpellEffect`); compose a "[player] may choose new targets for [spell]" step instead of one-card options. |
+| opp-punisher | Gearhulk absorbed and Covenant split onto `MayEffect(..., else, TARGET_PLAYER)`. Willie stays `blocked-other`: "during their next turn" is measured from the attacking player, a duration no ban record has. |
+| weigh | 0 folded. Dwarven Catapult and Celestial Judgment stay `unique` (no second user). |
+
+**Behaviour changes.** The ones in the report above (Harness, investigate-N, Gauntlets, logs, AI view).
+**Tests.** The ones in the report above (Harness, `ArmedWithProofTest`, the retarget handler test).
+**Seen, not changed.**
+- Stoic Star-Captain and Zilortha model their source's rule as a granted ability, which a "loses all abilities" on the creature removes (CR 613.1f). Fairly sure.
+- Muck Drubb's "spell that targets only a single creature" is not enforced at targeting (its ruling). Sure.
+- `PutExiledCardsIntoOwnersGraveyardEffect` (Covenant, Dakra) gives no CR 404.3 order prompt. Sure, low.
+- Willie Lumpkin triggers on damage to any player, not "an opponent". Sure, low.
+
+**For the next run.** 45b: `rest-of-set`, then `spell-perm-exchange` (new exchange record + a new-targets step, folding `GainControlOfTargetSpellEffect`'s offer too).
+
+**Follow-up.** All 13 rewritten cards' Oracle text checked. The investigate split touches 14 "investigate N / X times / for each" cards; their 39 test classes (with the Esix and Pilfered Proof classes) pass, 311 tests. Fixed failing-first: Nyla, Shirshu Sleuth's "create X Clue tokens" is not investigating (CR 701.16a) but fired an investigated event per Clue; its Clues are now `withInvestigate(false)` (new `NylaShirshuSleuthTest` case with Val). An `ofClueToken(n)` for "create n Clue tokens" must be marked `.withInvestigate(false)`.
 
 ## Prompt
 

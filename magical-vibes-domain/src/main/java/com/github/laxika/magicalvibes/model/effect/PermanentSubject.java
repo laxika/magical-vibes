@@ -588,7 +588,8 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
      * ({@link StepKind#PUT_COUNTERS}, {@link StepKind#REMOVE_COUNTERS}, {@link StepKind#DEAL_DAMAGE},
      * {@link StepKind#MANIFEST}: "put a +1/+1 counter on it" after a manifest, {@link StepKind#CHOOSE}: "those
      * creatures" after {@code ChoosePermanentsEffect}, {@link StepKind#TAP}: "each of those Vampires" after a tap, {@link StepKind#GOAD},
-     * {@link StepKind#ATTACH}: "unattach it" after "attach an Equipment you control to that creature");
+     * {@link StepKind#ATTACH}: "unattach it" after "attach an Equipment you control to that creature";
+     * {@link StepKind#GAIN_CONTROL}: "those permanents" after an exchange of control);
      * tokens created
      * this way are {@link CreatedThisResolution} and permanents returned this way {@link ReturnedThisResolution}. A step
      * result.
@@ -605,7 +606,7 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
         public ThisWay {
             Objects.requireNonNull(kind, "kind");
             switch (kind) {
-                case PUT_COUNTERS, REMOVE_COUNTERS, DEAL_DAMAGE, MANIFEST, CHOOSE, TAP, GOAD, ATTACH -> {
+                case PUT_COUNTERS, REMOVE_COUNTERS, DEAL_DAMAGE, MANIFEST, CHOOSE, TAP, GOAD, ATTACH, GAIN_CONTROL -> {
                 }
                 case CREATE_TOKEN -> throw new IllegalArgumentException(
                         "Tokens created this way are Subjects.createdThisResolution()");

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
-import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -24,10 +23,8 @@ import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CombustibleGearhulkEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessBlightsEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
@@ -1399,106 +1396,6 @@ public class MayPenaltyChoiceHandlerService {
             String logEntry = opponentName + " declines. " + controllerName + " draws " + drawCount + " cards.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} declines exile return, {} draws {}", gameData.id, opponentName, controllerName, drawCount);
-        }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /**
-     * Covenant of Minds: the targeted opponent ({@code player}) decides for the spell's controller.
-     * The revealed cards are still on top of the controller's library. Accept puts those cards into
-     * the controller's hand; decline puts them into the controller's graveyard and the controller
-     * draws five cards. The opponent is the decision maker, so the controller is the other player.
-     */
-    public void handleCovenantOfMindsChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        UUID opponentId = ability.controllerId(); // opponent is the decision maker
-        UUID controllerId = null;
-        for (UUID pid : gameData.orderedPlayerIds) {
-            if (!pid.equals(opponentId)) {
-                controllerId = pid;
-                break;
-            }
-        }
-        if (controllerId == null) {
-            throw new IllegalStateException("Cannot find Covenant of Minds controller");
-        }
-
-        String controllerName = gameData.playerIdToName.get(controllerId);
-        String opponentName = gameData.playerIdToName.get(opponentId);
-
-        List<Card> deck = gameData.playerDecks.get(controllerId);
-        int count = deck == null ? 0 : Math.min(3, deck.size());
-        List<Card> revealed = new ArrayList<>();
-        for (int i = 0; i < count; i++) {
-            revealed.add(deck.removeFirst());
-        }
-
-        if (accepted) {
-            for (Card card : revealed) {
-                gameData.addCardToHand(controllerId, card);
-            }
-            gameLogService.append(gameData, GameLog.text(opponentName + " chooses: "
-                    + controllerName + " puts the " + revealed.size() + " revealed card(s) into their hand."));
-            log.info("Game {} - {} lets {} keep {} revealed card(s) (Covenant of Minds)",
-                    gameData.id, opponentName, controllerName, revealed.size());
-        } else {
-            for (Card card : revealed) {
-                graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
-            }
-            drawService.resolveDrawCards(gameData, controllerId, 5);
-            gameLogService.append(gameData, GameLog.text(opponentName + " declines: the "
-                    + revealed.size() + " revealed card(s) go to " + controllerName + "'s graveyard and they draw five cards."));
-            log.info("Game {} - {} declines; {} mills {} and draws five (Covenant of Minds)",
-                    gameData.id, opponentName, controllerName, revealed.size());
-        }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /**
-     * Combustible Gearhulk: the targeted opponent chooses whether the controller draws three cards
-     * or mills three cards and the source deals damage to that opponent equal to the mana values of
-     * the cards that were actually milled.
-     */
-    public void handleCombustibleGearhulkChoice(GameData gameData, Player player, boolean accepted,
-            PendingMayAbility ability) {
-        ability.effects().stream()
-                .filter(CombustibleGearhulkEffect.class::isInstance)
-                .findFirst()
-                .orElseThrow();
-
-        UUID targetPlayerId = ability.targetCardId();
-        UUID controllerId = ability.sourceControllerId();
-        if (controllerId == null) {
-            controllerId = gameQueryService.findPermanentController(gameData, ability.sourcePermanentId());
-        }
-        if (controllerId == null || targetPlayerId == null) {
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        String controllerName = gameData.playerIdToName.get(controllerId);
-        String opponentName = gameData.playerIdToName.get(targetPlayerId);
-        if (accepted) {
-            for (int i = 0; i < 3 && gameData.status != GameStatus.FINISHED; i++) {
-                drawService.resolveDrawCard(gameData, controllerId);
-            }
-            gameLogService.append(gameData, GameLog.text(opponentName + " chooses: " + controllerName
-                    + " draws three cards (Combustible Gearhulk)."));
-        } else {
-            List<Card> milled = graveyardService.resolveMillPlayerAndReturnAllMilledCards(gameData, controllerId, 3);
-            int damageAmount = milled.stream().mapToInt(Card::getManaValue).sum();
-            if (damageAmount > 0) {
-                DealDamageToPlayersEffect damage =
-                        new DealDamageToPlayersEffect(damageAmount, Subjects.targetPlayer());
-                StackEntry damageEntry = StackEntry.carrier(ability.sourceCard(), controllerId,
-                        ability.sourceCard().getName() + "'s ability", new ArrayList<>(List.of(damage)),
-                        targetPlayerId, ability.sourcePermanentId());
-                dealDamageToPlayersEffectHandler.resolve(gameData, damageEntry, damage);
-            }
-            gameLogService.append(gameData, GameLog.text(opponentName + " declines: " + controllerName
-                    + " mills " + milled.size() + " cards and " + ability.sourceCard().getName()
-                    + " deals " + damageAmount + " damage to them."));
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

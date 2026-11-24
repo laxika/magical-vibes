@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilE
 import com.github.laxika.magicalvibes.model.effect.MultiplyCombatDamageFromTargetCreatureToOpponentsUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetCreatureFromTargetingSpellOrAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.CraftyCutpurseEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GatherSpecimensEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerCreatureSpellsCantBeCounteredThisTurnEffect;
@@ -6445,18 +6444,20 @@ public class GameQueryService {
         if (bonus.losesAllAbilities()) {
             return power;
         }
+        CrewAndSaddlePowerModifierEffect.Action action = crewing
+                ? CrewAndSaddlePowerModifierEffect.Action.CREW : CrewAndSaddlePowerModifierEffect.Action.SADDLE;
         boolean usesToughnessInsteadOfPower = false;
         int powerBonus = 0;
         for (CardEffect effect : permanent.getCard().getStaticEffects()) {
             if (effect instanceof CrewAndSaddlePowerModifierEffect modifier) {
-                if (modifier.crewOnly() && !crewing) continue;
+                if (!modifier.appliesTo(action)) continue;
                 usesToughnessInsteadOfPower |= modifier.usesToughnessInsteadOfPower();
                 powerBonus += modifier.powerBonus();
             }
         }
         for (CardEffect effect : bonus.grantedEffects()) {
             if (effect instanceof CrewAndSaddlePowerModifierEffect modifier) {
-                if (modifier.crewOnly() && !crewing) continue;
+                if (!modifier.appliesTo(action)) continue;
                 usesToughnessInsteadOfPower |= modifier.usesToughnessInsteadOfPower();
                 powerBonus += modifier.powerBonus();
             }
@@ -11794,6 +11795,20 @@ public class GameQueryService {
                 || (isCreature(gameData, a) && isCreature(gameData, b));
     }
 
+    /**
+     * Returns whether the two permanents share at least one of {@code types} ("shares one of those types with it"):
+     * every card type is {@link #sharesCardType}; otherwise each listed type is read as {@link #isCreature} for a
+     * creature and {@link #hasEffectiveCardType} for any other.
+     */
+    public boolean sharesCardTypeAmong(GameData gameData, Permanent a, Permanent b, Set<CardType> types) {
+        if (types.containsAll(EnumSet.allOf(CardType.class))) {
+            return sharesCardType(gameData, a, b);
+        }
+        return types.stream().anyMatch(type -> type == CardType.CREATURE
+                ? isCreature(gameData, a) && isCreature(gameData, b)
+                : hasEffectiveCardType(gameData, a, type) && hasEffectiveCardType(gameData, b, type));
+    }
+
     /** Returns whether two permanents share at least one card type. */
     public boolean sharesCardType(GameData gameData, Permanent a, Permanent b) {
         Set<CardType> aTypes = getEffectiveCardTypes(gameData, a);
@@ -12602,7 +12617,7 @@ public class GameQueryService {
      * the creature would enter under one of its controller's opponents' control.
      */
     public UUID resolveGatherSpecimensController(GameData gameData, UUID controllerId) {
-        List<UUID> gatherers = gatherersOf(gameData, GatherSpecimensEffect.class);
+        List<UUID> gatherers = gatherersOf(gameData, GatherSpecimensEffect.Kind.CREATURES_ENTERING);
         Set<Integer> used = new HashSet<>();
         UUID effectiveControllerId = controllerId;
         UUID gatherer;
@@ -12612,9 +12627,10 @@ public class GameQueryService {
         return effectiveControllerId;
     }
 
-    /** The controllers of the resolved {@code type} effects that are still in force, one per effect, oldest first. */
-    private static List<UUID> gatherersOf(GameData gameData, Class<? extends CardEffect> type) {
-        return gameData.floatingEffectsOfTypes(type).stream()
+    /** The controllers of the resolved Gather Specimens effects of {@code kind} still in force, one per effect, oldest first. */
+    private static List<UUID> gatherersOf(GameData gameData, GatherSpecimensEffect.Kind kind) {
+        return gameData.floatingEffectsOfTypes(GatherSpecimensEffect.class).stream()
+                .filter(floating -> ((GatherSpecimensEffect) floating.effect()).kind() == kind)
                 .map(FloatingContinuousEffect::affectedPlayerId)
                 .toList();
     }
@@ -12633,9 +12649,9 @@ public class GameQueryService {
     /** Resolves control-changing replacement effects before a token is created. */
     public UUID resolveTokenCreationController(GameData gameData, UUID controllerId, boolean creatureToken) {
         UUID effectiveControllerId = controllerId;
-        List<UUID> creatureGatherers = gatherersOf(gameData, GatherSpecimensEffect.class);
+        List<UUID> creatureGatherers = gatherersOf(gameData, GatherSpecimensEffect.Kind.CREATURES_ENTERING);
         Set<Integer> usedGatherers = new HashSet<>();
-        List<UUID> tokenGatherers = gatherersOf(gameData, CraftyCutpurseEffect.class);
+        List<UUID> tokenGatherers = gatherersOf(gameData, GatherSpecimensEffect.Kind.TOKENS_CREATED);
         Set<Integer> usedTokenGatherers = new HashSet<>();
         boolean changed;
         do {

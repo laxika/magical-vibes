@@ -2,7 +2,14 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CombustibleGearhulkEffect;
+import com.github.laxika.magicalvibes.model.MayChoicePlayer;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -24,6 +31,13 @@ public class CombustibleGearhulk extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent."
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS), new CombustibleGearhulkEffect());
+        )).addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
+                new DrawCardEffect(3),
+                "Have your opponent draw three cards? If not, they mill three cards and this creature deals"
+                        + " damage to you equal to the total mana value of those cards.",
+                SequenceEffect.of(
+                        new MillEffect(3, Subjects.you()),
+                        new DealDamageToPlayersEffect(AmountThisWay.milledManaValue(), Subjects.targetPlayer())),
+                MayChoicePlayer.TARGET_PLAYER));
     }
 }

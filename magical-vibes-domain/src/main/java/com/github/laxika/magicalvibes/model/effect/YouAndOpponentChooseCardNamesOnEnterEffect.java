@@ -7,7 +7,7 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * <p>Both choices happen before the permanent enters the battlefield (CR 614.1c), so the effect is
  * handled in the enchantment resolution path rather than by a normal effect handler. Pair it with a
- * STATIC effect that reads both names, e.g. {@link SpellsAndLandsWithChosenNamesCantBePlayedEffect}.
+ * STATIC effect that reads both names, e.g. {@link SpellsWithChosenNameCantBeCastEffect#spellsAndLands()}.
  */
 public record YouAndOpponentChooseCardNamesOnEnterEffect() implements CardEffect {
 }

@@ -14,6 +14,11 @@ public enum CountScope {
      */
     TARGET_PLAYER,
     /**
+     * Every player the effect targets ("creatures target players control", "creatures those opponents
+     * control"): the stack entry's player targets, a target that has become illegal left out (CR 608.2b).
+     */
+    TARGET_PLAYERS,
+    /**
      * The player being attacked by the effect's source permanent (the source's attack target if it
      * is a player, otherwise the controller of the attacked planeswalker). Evaluates to nothing when
      * the source is not attacking. Used by combat characteristic-defining abilities that count what

@@ -7,14 +7,21 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/**
+ * Resolves {@link ChangeTargetOfTargetSpellToSourceEffect}: one target of the spell (the target spell, or the spell
+ * the trigger was about while it is on the stack) becomes the new-target permanent if that is legal for the spell
+ * (CR 115.7d); with several changeable targets the controller chooses which.
+ */
 @Component
 @RequiredArgsConstructor
 public class ChangeTargetOfTargetSpellToSourceEffectHandler implements NormalEffectHandlerBean {
@@ -23,6 +30,7 @@ public class ChangeTargetOfTargetSpellToSourceEffectHandler implements NormalEff
     private final GameLogService gameLogService;
     private final TargetRedirectionSupport targetRedirectionSupport;
     private final PlayerInputService playerInputService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -31,35 +39,39 @@ public class ChangeTargetOfTargetSpellToSourceEffectHandler implements NormalEff
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        StackEntry targetSpell = gameQueryService.findStackEntryByCardId(gameData, entry.getTargetId());
+        ChangeTargetOfTargetSpellToSourceEffect change = (ChangeTargetOfTargetSpellToSourceEffect) effect;
+        UUID spellId = change.spell() instanceof PermanentSubject.TriggeringSpell
+                ? entry.getTriggeringCardId() : entry.getTargetId();
+        StackEntry targetSpell = spellId == null ? null : gameQueryService.findStackEntryByCardId(gameData, spellId);
         if (targetSpell == null) {
             return;
         }
 
         if (!targetSpell.hasAnyTarget()) {
-            
             gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " has no effect (", targetSpell.getCard(), " has no targets)."));
             return;
         }
 
-        UUID sourcePermanentId = entry.getSourcePermanentId();
-        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (sourcePermanent == null) {
-            
-            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " has no effect (source permanent no longer on the battlefield)."));
+        Permanent newTarget = subjectResolutionService.permanent(gameData, entry, effect, change.newTarget());
+        if (newTarget == null) {
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                    change.newTarget() instanceof PermanentSubject.Source
+                            ? " has no effect (source permanent no longer on the battlefield)."
+                            : " has no effect (the new target is no longer on the battlefield)."));
             return;
         }
+        UUID sourcePermanentId = newTarget.getId();
 
         if (targetSpell.isSingleTarget() && targetSpell.getTargetCardIds().isEmpty()) {
             if (sourcePermanentId.equals(onlyTargetOf(targetSpell))) {
                 gameLogService.append(gameData,
-                        GameLog.cardTextCard(targetSpell.getCard(), " already targets ", entry.getCard(), "."));
+                        GameLog.cardTextCard(targetSpell.getCard(), " already targets ", newTarget.getCard(), "."));
                 return;
             }
             if (targetRedirectionSupport.isValidNewTargetForSpell(gameData, targetSpell, sourcePermanentId)) {
                 changeTarget(gameData, targetSpell, onlyTargetOf(targetSpell), sourcePermanentId);
             } else {
-                gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " is not a legal target for ", targetSpell.getCard(), ". Target not changed."));
+                gameLogService.append(gameData, GameLog.cardTextCard(newTarget.getCard(), " is not a legal target for ", targetSpell.getCard(), ". Target not changed."));
             }
             return;
         }
@@ -68,7 +80,7 @@ public class ChangeTargetOfTargetSpellToSourceEffectHandler implements NormalEff
         if (targetSpell.getTargetId() == null && targetSpell.getTargetCardIds().isEmpty()
                 && declaredTargets.size() > 1) {
             if (!targetRedirectionSupport.isValidNewTargetForSpell(gameData, targetSpell, sourcePermanentId)) {
-                gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " is not a legal target for ", targetSpell.getCard(), ". Target not changed."));
+                gameLogService.append(gameData, GameLog.cardTextCard(newTarget.getCard(), " is not a legal target for ", targetSpell.getCard(), ". Target not changed."));
                 return;
             }
             List<UUID> changeable = declaredTargets.stream()
@@ -77,7 +89,7 @@ public class ChangeTargetOfTargetSpellToSourceEffectHandler implements NormalEff
                     .toList();
             if (changeable.isEmpty()) {
                 gameLogService.append(gameData,
-                        GameLog.cardTextCard(targetSpell.getCard(), " already targets ", entry.getCard(), "."));
+                        GameLog.cardTextCard(targetSpell.getCard(), " already targets ", newTarget.getCard(), "."));
                 return;
             }
             if (changeable.size() == 1) {
@@ -90,7 +102,7 @@ public class ChangeTargetOfTargetSpellToSourceEffectHandler implements NormalEff
                     changeable.stream().filter(id -> !gameData.playerIds.contains(id)).toList(),
                     changeable.stream().filter(gameData.playerIds::contains).toList(),
                     "Choose the target of " + targetSpell.getCard().getName() + " to change to "
-                            + entry.getCard().getName() + ".");
+                            + newTarget.getCard().getName() + ".");
             return;
         }
 

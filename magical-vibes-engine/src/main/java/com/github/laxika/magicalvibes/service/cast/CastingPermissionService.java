@@ -75,7 +75,6 @@ import com.github.laxika.magicalvibes.model.effect.PlayerCantCastSpellsAndAttack
 import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
 import com.github.laxika.magicalvibes.model.effect.PlotNonlandCardsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingRestrictionEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellsAndLandsWithChosenNamesCantBePlayedEffect;
 import com.github.laxika.magicalvibes.model.effect.TopLibraryCardCastPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
@@ -799,13 +798,6 @@ public class CastingPermissionService {
                         if (chosenNameCast.opponentsOnly() && pid.equals(castingPlayerId)) {
                             continue;
                         }
-                        String chosenName = perm.getChosenName();
-                        if (chosenName != null) {
-                            forbidden.add(chosenName);
-                        }
-                    }
-                    if (effect instanceof SpellsAndLandsWithChosenNamesCantBePlayedEffect) {
-                        // Null Chamber: symmetric — both names are forbidden to every player.
                         if (perm.getChosenName() != null) {
                             forbidden.add(perm.getChosenName());
                         }
@@ -844,7 +836,7 @@ public class CastingPermissionService {
     }
 
     /**
-     * Null Chamber: "lands with the chosen names can't be played". Land plays deliberately bypass the
+     * "Lands with the chosen names can't be played" ({@code SpellsWithChosenNameCantBeCastEffect.landsToo}, Null Chamber). Land plays deliberately bypass the
      * spell-casting filters (they aren't spells), so the name check has its own entry point here.
      */
     public boolean isLandPlayForbiddenByChosenName(GameData gameData, Card card) {
@@ -853,7 +845,7 @@ public class CastingPermissionService {
                 : gameQueryService.activeStaticEffects(gameData, CardEffect.class)) {
             Permanent perm = active.source();
             CardEffect effect = active.effect();
-            if (effect instanceof SpellsAndLandsWithChosenNamesCantBePlayedEffect
+            if (effect instanceof SpellsWithChosenNameCantBeCastEffect chosenNames && chosenNames.landsToo()
                     && (card.hasName(perm.getChosenName())
                         || card.hasName(perm.getSecondChosenName()))) {
                 return true;

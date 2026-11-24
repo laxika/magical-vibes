@@ -296,18 +296,18 @@ run below.
 | 44 | `next-spell-rider` | `EmpowerNextCreatureSpellThisTurnEffect` with a `CardPredicate` Not taken in fold run 44: fold run 44b (needs an engine cast hook for the CardPredicate ahead of the enter-counter copy in `SpellEvents.cast`). | C | 3 (4) | MakeNextInstantSorceryUncounterableThisTurnEffect, MakeNextSpellUncounterableThisTurnEffect, EmpowerNextCreatureSpellThisTurnEffect |
 | 44 | `prepared` | `BecomePreparedEffect` with a `PermanentSubject` Done 2026-11-24 (fold run 44): 1 folded, 0 left. | S | 1 (2) | MakeTargetCreaturePreparedEffect |
 | 44 | `timing-perm` | one `ActivatedAbilityTimingEffect` with an ability filter Done 2026-11-24 (fold run 44): 0 folded, 2 `unique` (no ability-filter static; the equip-only option would be one card's). | R | 2 (2) | AllActivatedAbilitiesCanBeActivatedAtInstantSpeedEffect, EquipAbilitiesCanBeActivatedAtInstantSpeedEffect |
-| 45 | `crew-power` | `PowerBoostForCrewAndSaddleEffect` / `UseToughnessForCrewAndSaddleEffect` with action sets | C | 4 (24) | PowerBoostForCrewAndStationEffect, UseToughnessForStationEffect, PowerBoostForCrewAndSaddleEffect*, UseToughnessForCrewAndSaddleEffect* |
-| 45 | `guess` | `MasterOfPredicamentsEffect` with a threshold, guesser, "if you don't cast" step | C | 2 (2) | TheSeventhDoctorEffect, MasterOfPredicamentsEffect |
-| 45 | `retarget` | `ChangeTargetOfTargetSpellToSourceEffect` + a new-target subject | S | 3 (4) | ChangeAllTargetsOfTargetSpellToSourceEffect, ChangeTargetOfTargetSpellToSourceEffect*, ChangeTargetOfTargetSpellToEnchantedCreatureEffect* |
-| 45 | `rest-of-set` | a `CardSubject` "except" after a `ChooseCardEffect` | S | 4 (4) | DeliverUntoEvilEffect, DubiousChallengeEffect, EmergentUltimatumEffect, GenesisWaveEffect |
-| 45 | `entry-controller` | `GatherSpecimensEffect` + an object filter | C | 2 (2) | CraftyCutpurseEffect, GatherSpecimensEffect |
-| 45 | `target-players-count` | `CreateTokenEffect` + a count scope summing every target player | C | 2 (2) | InvestigateForEachTargetPlayerCreatureEffect, CreateTokensForEachTargetPlayerCreatureEffect* |
-| 45 | `chosen-name-prohib` | `SpellsWithChosenNameCantBeCastEffect` + every chosen name + `landsToo` | C | 1 (1) | SpellsAndLandsWithChosenNamesCantBePlayedEffect |
-| 45 | `zone-exchange` | `ExchangeGraveyardAndLibraryEffect` with a zone pair and the CR 404.3 order prompt | C | 3 (3) | ExchangeGraveyardAndLibraryEffect, ExchangeHandAndGraveyardEffect, ExchangeHandAndLibraryEffect |
-| 45 | `shared-exchange` | `ExchangeControlOfTargetPermanentsEffect` with a shared-types set, recording GAIN_CONTROL | C | 1 (1) | ExchangeControlOfSharedTypeTargetsAndDestroyAurasEffect |
-| 45 | `spell-perm-exchange` | one record over a permanent and a spell subject (CR 701.12a) | R | 2 (2) | ExchangeControlOfSourceAndTriggeringSpellEffect, ExchangeControlOfTargetSpellAndCreatureEffect |
-| 45 | `opp-punisher` | `MayEffect` with another player as chooser and a composed else branch | C | 3 (3) | CombustibleGearhulkEffect, CovenantOfMindsEffect, DamagedPlayerMayDrawAndCantAttackControllerUntilNextTurnEffect |
-| 45 | `weigh` | Singles needing an option only one card sets (weigh) (each note names its head) | C | 2 (2) | DealDamageDividedEvenlyAmongCreaturesTargetControlsEffect, CelestialJudgmentEffect |
+| 45 | `crew-power` | `PowerBoostForCrewAndSaddleEffect` / `UseToughnessForCrewAndSaddleEffect` with action sets Done 2026-11-24 (fold run 45): 1 folded (Stoic onto the action set), 1 left (`UseToughnessForStationEffect` unique: Warden's rule needs a one-card subject + filter). | C | 4 (24) | PowerBoostForCrewAndStationEffect, UseToughnessForStationEffect, PowerBoostForCrewAndSaddleEffect*, UseToughnessForCrewAndSaddleEffect* |
+| 45 | `guess` | `MasterOfPredicamentsEffect` with a threshold, guesser, "if you don't cast" step Done 2026-11-24 (fold run 45): 1 folded, 0 left. | C | 2 (2) | TheSeventhDoctorEffect, MasterOfPredicamentsEffect |
+| 45 | `retarget` | `ChangeTargetOfTargetSpellToSourceEffect` + a new-target subject Done 2026-11-24 (fold run 45): 1 folded (Captured), 1 left (Muck Drubb unique: every-occurrence mode). | S | 3 (4) | ChangeAllTargetsOfTargetSpellToSourceEffect, ChangeTargetOfTargetSpellToSourceEffect*, ChangeTargetOfTargetSpellToEnchantedCreatureEffect* |
+| 45 | `rest-of-set` | a `CardSubject` "except" after a `ChooseCardEffect` Not started in fold run 45: fold run 45b. | S | 4 (4) | DeliverUntoEvilEffect, DubiousChallengeEffect, EmergentUltimatumEffect, GenesisWaveEffect |
+| 45 | `entry-controller` | `GatherSpecimensEffect` + an object filter Done 2026-11-24 (fold run 45): 1 folded, 0 left. | C | 2 (2) | CraftyCutpurseEffect, GatherSpecimensEffect |
+| 45 | `target-players-count` | `CreateTokenEffect` + a count scope summing every target player Done 2026-11-24 (fold run 45): 2 folded, 0 left (`CountScope.TARGET_PLAYERS`; investigate-N always split, CR 701.16a). | C | 2 (2) | InvestigateForEachTargetPlayerCreatureEffect, CreateTokensForEachTargetPlayerCreatureEffect* |
+| 45 | `chosen-name-prohib` | `SpellsWithChosenNameCantBeCastEffect` + every chosen name + `landsToo` Done 2026-11-24 (fold run 45): 1 folded, 0 left. | C | 1 (1) | SpellsAndLandsWithChosenNamesCantBePlayedEffect |
+| 45 | `zone-exchange` | `ExchangeGraveyardAndLibraryEffect` with a zone pair and the CR 404.3 order prompt Done 2026-11-24 (fold run 45): 2 folded, 0 left (CR 404.3 prompt for Harness Infinity). | C | 3 (3) | ExchangeGraveyardAndLibraryEffect, ExchangeHandAndGraveyardEffect, ExchangeHandAndLibraryEffect |
+| 45 | `shared-exchange` | `ExchangeControlOfTargetPermanentsEffect` with a shared-types set, recording GAIN_CONTROL Done 2026-11-24 (fold run 45): 1 split, 0 left. | C | 1 (1) | ExchangeControlOfSharedTypeTargetsAndDestroyAurasEffect |
+| 45 | `spell-perm-exchange` | one record over a permanent and a spell subject (CR 701.12a) Not started in fold run 45: fold run 45b (compose a "[player] may choose new targets for [spell]" step, folding `GainControlOfTargetSpellEffect`'s offer too). | R | 2 (2) | ExchangeControlOfSourceAndTriggeringSpellEffect, ExchangeControlOfTargetSpellAndCreatureEffect |
+| 45 | `opp-punisher` | `MayEffect` with another player as chooser and a composed else branch Done 2026-11-24 (fold run 45): 2 folded (Gearhulk absorbed, Covenant split), 1 left (Willie blocked-other: attacker-measured duration). | C | 3 (3) | CombustibleGearhulkEffect, CovenantOfMindsEffect, DamagedPlayerMayDrawAndCantAttackControllerUntilNextTurnEffect |
+| 45 | `weigh` | Singles needing an option only one card sets (weigh) (each note names its head) Done 2026-11-24 (fold run 45): 0 folded, 2 left unique (no second user). | C | 2 (2) | DealDamageDividedEvenlyAmongCreaturesTargetControlsEffect, CelestialJudgmentEffect |
 | 46 | `pay-any` | `EachPlayerPaysAnyManaEffect` + payer subject and resource, recording its pay step | C, K | 25 (28), 1 cs | PayAnyAmountOfEnergyToCreateTokenEffect, PayXManaEffect, PayAnyAmountOfEnergyToBoostTargetCreatureEffect, PayEnergyToGainControlOfTargetEffect, PayXManaReturnTargetCreatureWithManaValueXEffect, PayAnyAmountOfColorManaToDealDamageToAnyTargetEffect, PayAnyAmountOfEnergyThenExileTopCardsAndMayPlayOneWithoutPayingEffect, PayAnyAmountOfEnergyToDealDamageToEachOtherCreatureEffect, PayAnyAmountOfEnergyToDealDamageToTargetCreatureEffect, PayAnyAmountOfEnergyToGrantIndestructibleToOwnCreaturesWithEqualPowerEffect, PayAnyAmountOfEnergyToPutCountersOnSelfEffect, PayAnyAmountOfLifeRevealAndExileEffect, PayEnergyThenDestroyTargetPermanentEffect, PayXLifeEffect, PayXManaBoostTargetCreatureEffect, PayXManaCastTargetInstantOrSorceryFromGraveyardEffect, PayXManaGainXLifeAndDrawXCardsEffect, PayXManaGainXLifeEffect, PayXManaMoveCountersFromSourceToTargetCreatureEffect, PayXManaReanimateCreatureWithManaValueXEffect, PayXManaReanimateCreaturesWithTotalManaValueXEffect, PayXManaRevealCardsChooseOneToDiscardEffect, PayXManaRevealTopCardsToHandRestToBottomRandomEffect, PayXManaSearchLibraryEffect, EnchantedControllerMayPayToPreventDamageEffect |
 | 47 | `punisher` | `MayPayManaEffect`'s any-player payer loop with non-mana payments | C | 17 (20), 17 cs | AnyOpponentMayDrawOrCreateTokenEffect, AnyOpponentMaySacrificeCreatureOrTransformSourceEffect, AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffect, AnyOpponentMaySacrificeCreatureTapAndGainLifeAndDrawSourceEffect, AnyOpponentMaySacrificeNontokenCreatureTapAndSeekLandSourceEffect, AnyOpponentMayTakeDamageSacrificeSourceEffect, AnyOpponentMayTapCreatureTapAndCreateTokenSourceEffect, AnyPlayerMayDiscardCardsToCounterSpellEffect, AnyPlayerMayPayLifeToCounterSpellEffect, AnyPlayerMaySacrificeCreatureToCounterSpellEffect, AnyPlayerMaySacrificeCreaturesThenSacrificeSourceEffect, AnyPlayerMaySacrificeLandPutSourceOnTopEffect, AnyPlayerMayTakeDamageOrBoostSelfEffect, AnyPlayerMayTakeDamageOrDestroyAllCreaturesEffect, AnyPlayerMayTakeDamageOrMillTargetPlayerEffect, AnyPlayerMayTakeDamageOrTargetPlayerDrawEffect, WormsOfTheEarthEffect |
 | 47 | `may-pay-fixed` | `MayPayManaEffect` | P | 2 (2) | PayManaAndSearchLibraryForCardNamedToBattlefieldEffect, PayManaThenMayTapOrUntapTargetCreatureEffect |
@@ -415,6 +415,7 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - `CombatHelper`'s first defender-condition scan reads the attacker's printed statics with no face-down or lost-ability check; it only pre-filters `getBlockableAttackerIndices` (`BlockLegalityService` decides). Seen in fold run 36b. Sure of the code, low.
 - Serra's Emissary's controller protection reads printed statics with no face-down check (CR 708.2a). Seen in fold run 35c. Sure of the code.
 - Tomorrow, Azami's Familiar and Underrealm Lich: the draw-replacement scan skips no face-down source (CR 708.2a). Run 39. Sure.
+- Stoic Star-Captain and Zilortha model their source's rule as a granted ability, which "loses all abilities" on the creature removes (CR 613.1f). Run 45. Fairly sure.
 
 **2. Two-player assumptions (`getOpponentId`, first seat).** All right with two players only.
 
@@ -471,6 +472,7 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - The recipient damage multipliers (Gisela, Castigator, floated) are one pool option and the controller and source multipliers another, so a "plus N" can't be ordered between two of them (CR 616.1). Fold run 25. Sure of the code.
 - Blind Fury's `getCombatDamageToCreatureMultiplier` skips Maro's Gone Nuts. Fold run 25. Sure.
 - Precursor Golem, Ink-Treader Nephilim: the copies' controller doesn't choose the order they go on the stack (rulings). Seen in fold run 29. Sure.
+- `PutExiledCardsIntoOwnersGraveyardEffect` (Covenant of Minds, Dakra Mystic) gives no CR 404.3 order prompt. Run 45. Sure, low.
 
 **4. Missing events or records (searches, coin flips, seeks, shuffles, counters, draws).**
 
@@ -526,7 +528,7 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - Delaying Shield and Force Bubble: damage goes to the first source found; the player should choose (CR 616.1). P06. Sure, rare.
 - ~~`AuraCopyService.beginChooseCreatureOnEnter` (Metamorphic Alteration), Ascent of the Worthy's choice: no can't-be-chosen check (CR 608.2d). P03. Sure. Fold: copier, redir-your. (Metamorphic Alteration fixed in fold run 17; Ascent of the Worthy open.)~~ Ascent fixed in fold run 27 (`ChoosePermanentsEffect`); line closed.
 - ~~Portal Mage, Capricopian: `getValidAttackTargetIds` keeps restrictions the reselection ignores (Portal Mage's ruling; Misleading Signpost uses `getValidReselectionTargetIds`). P09. Sure, low. Fold: reselect.~~ Fixed in fold run 19.
-- Harness Infinity puts the hand into the graveyard with no order prompt (CR 404.3). P06. Sure, low. Fold: zone-exchange.
+- ~~Harness Infinity puts the hand into the graveyard with no order prompt (CR 404.3). P06. Sure, low. Fold: zone-exchange.~~ Fixed in fold run 45.
 - Moving a control-changing Aura (Halvar, Codsworth, Heavenly Blademaster, Kudzu, Steam Vines) doesn't recompute control; Glamer Spinners only for the new host. P02. Sure of the code. Fold: attach. (Halvar, Codsworth, Heavenly Blademaster, Kudzu, Steam Vines fixed in fold run 15; Glamer Spinners open.)
 - ~~Gilgamesh's "When you put one or more Equipment onto the battlefield this way" is asked inline, not as a reflexive ability (CR 603.12). P02. Fairly sure. Fold: attach.~~ Stale (fold run 15b): its follow-up has been a reflexive ability since `a4fa57bd34`.
 - Wicked Guardian draws with no other creature to damage ("If you do"). P01. Fairly sure. Fold: p-dmg. Done in fold run 2 (2026-11-23): the CHOOSE step gates the draw (`WickedGuardianTest`).
@@ -573,6 +575,7 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - Pack Hunt: the AI aims it HARMFUL at an opposing creature, though its own creature is the one whose copies it wants. Run 41b. Unsure, AI only.
 - Avatar's Wrath: the AI reads its spared target as harmful removal. Run 44. Sure, AI only.
 - The copy-service turn-face-up path used by state-based actions doesn't check "can't be turned face up" (CR 101.2). Run 44. Unverified.
+- Muck Drubb: "spell that targets only a single creature" isn't enforced at targeting (its ruling). Run 45. Sure.
 
 **6. Payments and costs.**
 
@@ -757,6 +760,8 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - `CounterSpellEffect` with several targets and `LIBRARY_TOP_OR_BOTTOM` opens overlapping prompts. No card affected. Run 39. Sure.
 - Rasaad, Radiant Monk (HBG 4): the white specialized face also has an enters trigger, but its text says only "When this creature specializes". Run 43. Unsure (the face's Oracle text couldn't be fetched).
 - Goblin Vandal: once {R} is paid, the creature must assign no combat damage even if the artifact isn't destroyed (indestructible), but the handler returns early. Run 44. Sure.
+- Willie Lumpkin triggers on combat damage to any player, not only an opponent. Run 45. Sure, low.
+- ~~Nyla, Shirshu Sleuth's "create X Clue tokens" counted as investigating, firing an investigated event per Clue (CR 701.16a).~~ Fixed in fold run 45.
 
 Not a defect after all: `SuspectedEffect` (P08 "nothing reads it") is read by `LayerSystemService`, `UnsuspectEffectHandler` and
 `GameQueryService` (checked 2026-11-23; P14 is right). Betrayal of Flesh and Solar Tide on `EscalateSacrificeCost` pay the same as

@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,6 +56,7 @@ class ChangeTargetOfTargetSpellToSourceEffectHandlerTest {
     @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
     @Mock private TargetLegalityService targetLegalityService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
     @InjectMocks private TargetRedirectionSupport targetRedirectionSupport;
     private GameData gd;
     private UUID player1Id;
@@ -85,7 +88,8 @@ class ChangeTargetOfTargetSpellToSourceEffectHandlerTest {
         lenient().when(targetLegalityService.checkSpellTargetOnStack(any(), any(), any(), any()))
                 .thenReturn(Optional.empty());
         changeTargetToSourceHandler = new ChangeTargetOfTargetSpellToSourceEffectHandler(
-                gameQueryService, gameLogService, targetRedirectionSupport, playerInputService);
+                gameQueryService, gameLogService, targetRedirectionSupport, playerInputService,
+                new SubjectResolutionService(gameQueryService, predicateEvaluationService, targetLegalityService));
 
     }
 

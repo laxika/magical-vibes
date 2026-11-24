@@ -294,7 +294,9 @@ import com.github.laxika.magicalvibes.model.amount.WebSlingingReturnedCreatureMa
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CountAsNamedCardForSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
-import com.github.laxika.magicalvibes.model.effect.StationPowerModifierEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CrewAndSaddlePowerModifierEffect;
+import com.github.laxika.magicalvibes.model.effect.UseToughnessForStationEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostAmountPredicate;
@@ -1462,13 +1464,17 @@ public class AmountEvaluationService {
 
     private int stationPowerBonus(GameData gameData, Permanent permanent) {
         int bonus = permanent.getCard().getStaticEffects().stream()
-                .filter(StationPowerModifierEffect.class::isInstance)
-                .mapToInt(effect -> ((StationPowerModifierEffect) effect).powerBonus())
+                .mapToInt(AmountEvaluationService::stationPowerBonus)
                 .sum();
         return bonus + gameQueryService.computeStaticBonus(gameData, permanent).grantedEffects().stream()
-                .filter(StationPowerModifierEffect.class::isInstance)
-                .mapToInt(effect -> ((StationPowerModifierEffect) effect).powerBonus())
+                .mapToInt(AmountEvaluationService::stationPowerBonus)
                 .sum();
+    }
+
+    private static int stationPowerBonus(CardEffect effect) {
+        return effect instanceof CrewAndSaddlePowerModifierEffect modifier
+                && modifier.appliesTo(CrewAndSaddlePowerModifierEffect.Action.STATION)
+                ? modifier.powerBonus() : 0;
     }
 
     private boolean usesToughnessForStationing(GameData gameData, AmountContext ctx) {
@@ -1484,8 +1490,7 @@ public class AmountEvaluationService {
                         && !gameData.losesAllAbilitiesByEffect(permanent)
                         && !gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities()
                         && permanent.getCard().getStaticEffects().stream()
-                        .anyMatch(effect -> effect instanceof StationPowerModifierEffect modifier
-                                && modifier.usesToughnessInsteadOfPower()));
+                        .anyMatch(UseToughnessForStationEffect.class::isInstance));
     }
 
     private int chosenCreatureOrWarpedCardPower(GameData gameData, AmountContext ctx) {
@@ -4867,6 +4872,7 @@ public class AmountEvaluationService {
                     && playerId.equals(ctx.sourcePermanent().getRememberedTargetPlayerId());
             // The target channel carries the target player's id for player-targeting effects.
             case TARGET_PLAYER -> playerId.equals(targetPlayerId(gameData, ctx));
+            case TARGET_PLAYERS -> targetPlayerIds(ctx).contains(playerId);
             case DEFENDING_PLAYER -> playerId.equals(defendingPlayerId(gameData, ctx));
             case ATTACHED_CONTROLLER -> playerId.equals(attachedControllerId(gameData, ctx));
         };
@@ -4905,6 +4911,14 @@ public class AmountEvaluationService {
      * "that player or that planeswalker's controller" wordings (Goblin Lyre) with the same scope
      * that plain "target player" effects use.
      */
+    /** The players among the entry's targets (its single target when it has no target list). See {@link CountScope#TARGET_PLAYERS}. */
+    private static List<UUID> targetPlayerIds(AmountContext ctx) {
+        if (ctx.targetIds() != null && !ctx.targetIds().isEmpty()) {
+            return ctx.targetIds();
+        }
+        return ctx.targetPermanentId() == null ? List.of() : List.of(ctx.targetPermanentId());
+    }
+
     private UUID targetPlayerId(GameData gameData, AmountContext ctx) {
         UUID targetId = ctx.targetPermanentId();
         if (targetId == null || gameData.playerIds.contains(targetId)) {

@@ -124,13 +124,13 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
         if (amount <= 0) {
             return;
         }
-        // "Investigate N times" is N separate creation events, so a "first time you would create
-        // tokens" replacement (Esix, Mirrormind Crown, Moonlit Meditation) applies to the first
-        // investigation only; the rest resolve as their own effect afterwards.
+        // "Investigate N times" is N separate creation events (CR 701.16a: each investigation creates a Clue), so a
+        // "first time you would create tokens" replacement (Esix, Mirrormind Crown, Moonlit Meditation) applies to the
+        // first investigation only and a token-addition replacement (Case of the Pilfered Proof) to each one; the
+        // rest resolve as their own effect afterwards.
         if (e.investigate() && amount > 1 && e.simultaneousTokens().isEmpty()
                 && gameData.pendingTokenCreationReplacement == null
-                && entry.getResolvingEffectIndex() >= 0
-                && hasAvailableTokenCreationReplacement(gameData, controllerId)) {
+                && entry.getResolvingEffectIndex() >= 0) {
             entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
                     List.of(e.withAmount(amount - 1)));
             amount = 1;
@@ -215,11 +215,6 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
             attackTargetsHandler.createdTokensAttack(gameData, entry, tokenController, createdFromIndex, false);
         }
         entry.getCreatedPermanentIds().addAll(createdIds);
-    }
-
-    private boolean hasAvailableTokenCreationReplacement(GameData gameData, UUID controllerId) {
-        return esixTokenReplacementSupport.isAttachedCopyAvailable(gameData, controllerId)
-                || esixTokenReplacementSupport.isAvailable(gameData, controllerId);
     }
 
     /**

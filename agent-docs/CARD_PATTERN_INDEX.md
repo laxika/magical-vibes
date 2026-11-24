@@ -308,7 +308,7 @@
 | attack trigger scales a defending-player sacrifice count by that player's poison counters | `k/KozilekCompleated.java` + `DefendingPlayerPoisonCounters` + `SacrificePermanentsEffect(..., DEFENDING_PLAYER)` |
 | attack trigger makes each player tied for most lands sacrifice two lands | `t/TectonicHellion.java` + `SacrificePermanentsEffect(2, PermanentIsLandPredicate, Subjects.matching(Subjects.eachPlayer(), new PlayerControlsMostLandsPredicate()))` |
 | ETB flips once for each opponent, resolving a separate win/loss branch for that opponent | `Triggers.enters(ObjectRelation.THIS) FlipCoinForEachOpponentEffect(winEffect, lossEffect)` |
-| any number of target opponents; create one token for each creature they control | `CreateTokensForEachTargetPlayerCreatureEffect` + `target(opponent, 0, 99)` |
+| any number of target opponents; create one token for each creature they control | `CreateTokenEffect(...).withAmount(PermanentCount(creature, CountScope.TARGET_PLAYERS))` + `target(opponent, 0, 99)` |
 | upkeep: each opponent chooses one of three results; controller and chooser share the result | `EachOpponentChoosesMasterOfCeremoniesEffect` |
 | each player chooses friend or foe; friends copy a creature they control, foes return one | `ZndrsplatsJudgmentEffect` |
 | each opponent chooses fame or fortune; controller chooses a creature for each fame choice, or draws and creates a Treasure for each fortune choice | `SeizeTheSpotlightEffect` |

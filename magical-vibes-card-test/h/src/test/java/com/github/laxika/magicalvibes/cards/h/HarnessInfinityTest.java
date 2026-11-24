@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.w.WitherbloomCampus;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class HarnessInfinityTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Exchanges the hand and graveyard and exiles itself")
+    @DisplayName("Exchanges the hand and graveyard, lets the owner order the cards entering the graveyard, and exiles itself")
     void exchangesHandAndGraveyard() {
         HarnessInfinity harnessInfinity = new HarnessInfinity();
         FieryTemper handCard = new FieryTemper();
@@ -36,7 +37,11 @@ class HarnessInfinityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(graveyardCard, otherGraveyardCard);
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(handCard, otherHandCard);
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(otherHandCard, handCard);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(harnessInfinity);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }

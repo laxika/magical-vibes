@@ -4,7 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
-import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfSharedTypeTargetsAndDestroyAurasEffect;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -14,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
@@ -24,6 +32,11 @@ import java.util.List;
 @CardRegistration(set = "ME3", collectorNumber = "196")
 public class GauntletsOfChaos extends Card {
 
+    private static final PermanentPredicate ARTIFACT_CREATURE_OR_LAND = new PermanentAnyOfPredicate(List.of(
+            new PermanentIsArtifactPredicate(),
+            new PermanentIsCreaturePredicate(),
+            new PermanentIsLandPredicate()));
+
     public GauntletsOfChaos() {
         // {5}, Sacrifice this artifact: Exchange control of target artifact, creature, or land you
         // control and target permanent an opponent controls that shares one of those types with it.
@@ -31,24 +44,25 @@ public class GauntletsOfChaos extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{5}",
-                List.of(new SacrificeSelfCost(), new ExchangeControlOfSharedTypeTargetsAndDestroyAurasEffect()),
+                List.of(new SacrificeSelfCost(),
+                        ExchangeControlOfTargetPermanentsEffect.forControlledTargetsSharingOneOf(
+                                ARTIFACT_CREATURE_OR_LAND,
+                                ExchangeControlOfTargetPermanentsEffect.ARTIFACT_CREATURE_OR_LAND),
+                        new ConditionalEffect(new HappenedThisWay(StepKind.GAIN_CONTROL),
+                                new DestroyTargetPermanentEffect(Subjects.attachmentsOf(
+                                        Subjects.thisWay(StepKind.GAIN_CONTROL),
+                                        new PermanentHasSubtypePredicate(CardSubtype.AURA))))),
                 "{5}, Sacrifice this artifact: Exchange control of target artifact, creature, or land you "
                         + "control and target permanent an opponent controls that shares one of those types "
                         + "with it. If those permanents are exchanged this way, destroy all Auras attached to them.",
                 List.of(
                         new ControlledPermanentPredicateTargetFilter(
-                                new PermanentAnyOfPredicate(List.of(
-                                        new PermanentIsArtifactPredicate(),
-                                        new PermanentIsCreaturePredicate(),
-                                        new PermanentIsLandPredicate())),
+                                ARTIFACT_CREATURE_OR_LAND,
                                 "Target must be an artifact, creature, or land you control"),
                         new PermanentPredicateTargetFilter(
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
-                                        new PermanentAnyOfPredicate(List.of(
-                                                new PermanentIsArtifactPredicate(),
-                                                new PermanentIsCreaturePredicate(),
-                                                new PermanentIsLandPredicate())))),
+                                        ARTIFACT_CREATURE_OR_LAND)),
                                 "Target must be an artifact, creature, or land an opponent controls")
                 ),
                 2,

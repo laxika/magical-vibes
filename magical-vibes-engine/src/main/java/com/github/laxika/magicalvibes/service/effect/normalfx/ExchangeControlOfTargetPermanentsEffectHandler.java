@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepOutcome;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
@@ -50,6 +52,7 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ExchangeControlOfTargetPermanentsEffect exchange = (ExchangeControlOfTargetPermanentsEffect) effect;
+        entry.recordStep(StepKind.GAIN_CONTROL, StepOutcome.NONE);
 
         // In source-mode (Conjured Currency) the ability's own permanent stands in for the first
         // target, so only a single target is declared — it may arrive as the lone targetId.
@@ -138,10 +141,9 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
                 && (!exchange.requireOpponentPowerNotGreater()
                         || gameQueryService.getEffectivePower(gameData, opponentTarget)
                         <= gameQueryService.getEffectivePower(gameData, ownTarget))
-                && (!exchange.requireSharedArtifactOrCreatureType()
-                        || gameQueryService.sharesArtifactOrCreatureType(gameData, ownTarget, opponentTarget))
-                && (!exchange.requireSharedCardType()
-                        || gameQueryService.sharesCardType(gameData, ownTarget, opponentTarget))
+                && (exchange.sharedCardTypes().isEmpty()
+                        || gameQueryService.sharesCardTypeAmong(gameData, ownTarget, opponentTarget,
+                        exchange.sharedCardTypes()))
                 && (entry.getMultiTargetConstraint()
                         != MultiTargetConstraint.CONTROLLED_BY_PLAYER_DAMAGED_BY_FIRST_TARGET_THIS_COMBAT
                         || gameData.combatDamageToPlayersThisCombat
@@ -157,6 +159,8 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
         creatureControlService.exchangeControl(gameData, ownTarget, opponentController,
                 opponentTarget, ownController, controlEffect,
                 Duration.PERMANENT, entry.getCard().getName());
+        entry.recordStep(StepKind.GAIN_CONTROL, StepOutcome.ofObjects(
+                List.of(ownTarget.getId(), opponentTarget.getId()), List.of(opponentController, ownController)));
 
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(": ").card(ownTarget.getCard()).text(" and ").card(opponentTarget.getCard()).text(" exchange controllers.").build());
         log.info("Game {} - {} exchanges control of {} and {}", gameData.id, entry.getCard().getName(),

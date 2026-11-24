@@ -4,8 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachTargetPlayerCreatureEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -27,8 +29,8 @@ public class CallTheCoppercoats extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"), 0, 99)
-                .addSpellEffect(new CreateTokensForEachTargetPlayerCreatureEffect(
-                        new CreateTokenEffect("Human Soldier", 1, 1, CardColor.WHITE,
-                                List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of())));
+                .addSpellEffect(new CreateTokenEffect("Human Soldier", 1, 1, CardColor.WHITE,
+                        List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of())
+                        .withAmount(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.TARGET_PLAYERS)));
     }
 }

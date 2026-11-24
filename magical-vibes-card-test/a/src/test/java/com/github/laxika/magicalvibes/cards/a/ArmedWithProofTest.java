@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.c.CaseOfThePilferedProof;
+import com.github.laxika.magicalvibes.cards.g.GraniteWitness;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.v.ValMaroonedSurveyor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArmedWithProof.class, GrizzlyBears.class, ValMaroonedSurveyor.class})
+@CardUsed({ArmedWithProof.class, GrizzlyBears.class, ValMaroonedSurveyor.class, CaseOfThePilferedProof.class,
+        GraniteWitness.class})
 class ArmedWithProofTest extends BaseCardTest {
 
     @Test
@@ -42,6 +46,26 @@ class ArmedWithProofTest extends BaseCardTest {
         assertThat(clue.getAttachedTo()).isEqualTo(creature.getId());
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each investigation is its own token creation, so a solved Case of the Pilfered Proof adds a Clue to each")
+    void eachInvestigationGetsTheTokenAddition() {
+        harness.addToBattlefield(player1, new CaseOfThePilferedProof());
+        harness.addToBattlefield(player1, new GraniteWitness());
+        harness.addToBattlefield(player1, new GraniteWitness());
+        harness.addToBattlefield(player1, new GraniteWitness());
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+        assertThat(findPermanent(player1, "Case of the Pilfered Proof").isSolved()).isTrue();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        castArmedWithProof();
+
+        assertThat(findPermanents(player1, "Clue")).hasSize(4);
     }
 
     private void castArmedWithProof() {

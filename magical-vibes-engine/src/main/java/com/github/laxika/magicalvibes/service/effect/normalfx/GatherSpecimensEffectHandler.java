@@ -30,8 +30,11 @@ public class GatherSpecimensEffectHandler implements NormalEffectHandlerBean {
                 entry.getSourcePermanentId(), entry.getControllerId(), effect, controllerId, Duration.UNTIL_END_OF_TURN));
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        String logEntry = "Creatures that would enter under an opponent's control this turn enter under "
-                + playerName + "'s control instead.";
+        String logEntry = ((GatherSpecimensEffect) effect).kind() == GatherSpecimensEffect.Kind.TOKENS_CREATED
+                ? "Tokens that would be created under an opponent's control this turn are created under "
+                        + playerName + "'s control instead."
+                : "Creatures that would enter under an opponent's control this turn enter under "
+                        + playerName + "'s control instead.";
         gameLogService.append(gameData, GameLog.text(logEntry));
     }
 }

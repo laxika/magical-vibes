@@ -1,7 +1,11 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+
+import java.util.EnumSet;
+import java.util.Set;
 
 /**
  * Exchanges control of the two permanents stored in {@code StackEntry.targetIds}: the first target
@@ -34,11 +38,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
  * the ordinary targeted-trigger machinery picks the target; {@code targetPredicate} is then only
  * checked against that one target, never against the source.
  *
- * <p>{@code requireSharedArtifactOrCreatureType} re-checks Legerdemain's cross-target "another
- * target permanent that shares one of those types with it" restriction at resolution; at
- * announcement it is enforced by {@code MultiTargetConstraint.SHARE_ARTIFACT_OR_CREATURE_TYPE}.
- * {@code requireSharedCardType} is the corresponding restriction for cards whose wording allows
- * any shared card type, such as Daring Thief.
+ * <p>{@code sharedCardTypes} re-checks a cross-target "that shares one of those types with it" restriction at
+ * resolution: artifact and creature for Legerdemain ({@code MultiTargetConstraint.SHARE_ARTIFACT_OR_CREATURE_TYPE} at
+ * announcement), artifact, creature and land for Gauntlets of Chaos, every card type ({@link #ANY_CARD_TYPE}) for
+ * "shares a card type" (Daring Thief); empty for none.
+ *
+ * <p>The step records {@code StepKind.GAIN_CONTROL}: both permanents and their new controllers when the exchange
+ * happens, nothing otherwise, so "if those permanents are exchanged this way" is
+ * {@code HappenedThisWay(GAIN_CONTROL)} over {@code Subjects.thisWay(GAIN_CONTROL)}.
  */
 public record ExchangeControlOfTargetPermanentsEffect(
         PermanentPredicate targetPredicate,
@@ -46,12 +53,45 @@ public record ExchangeControlOfTargetPermanentsEffect(
         boolean requireOpponentPowerNotGreater,
         boolean requireFirstTargetControlledByController,
         boolean sourceIsFirstTarget,
-        boolean requireSharedArtifactOrCreatureType,
         boolean triggeringPermanentIsFirstTarget,
         boolean sacrificeSourceIfNoExchange,
-        boolean requireSharedCardType,
+        Set<CardType> sharedCardTypes,
         PermanentPredicate firstTargetPredicate,
         boolean targetPairInSingleGroup) implements CardEffect {
+
+    /** "Shares a card type with it": every card type. */
+    public static final Set<CardType> ANY_CARD_TYPE = Set.copyOf(EnumSet.allOf(CardType.class));
+
+    /** Artifact and creature (Legerdemain). */
+    public static final Set<CardType> ARTIFACT_OR_CREATURE = Set.of(CardType.ARTIFACT, CardType.CREATURE);
+
+    /** Artifact, creature and land (Gauntlets of Chaos). */
+    public static final Set<CardType> ARTIFACT_CREATURE_OR_LAND =
+            Set.of(CardType.ARTIFACT, CardType.CREATURE, CardType.LAND);
+
+    public ExchangeControlOfTargetPermanentsEffect {
+        sharedCardTypes = sharedCardTypes == null ? Set.of() : Set.copyOf(sharedCardTypes);
+    }
+
+    public ExchangeControlOfTargetPermanentsEffect(
+            PermanentPredicate targetPredicate,
+            boolean requireOpponentManaValueNotGreater,
+            boolean requireOpponentPowerNotGreater,
+            boolean requireFirstTargetControlledByController,
+            boolean sourceIsFirstTarget,
+            boolean requireSharedArtifactOrCreatureType,
+            boolean triggeringPermanentIsFirstTarget,
+            boolean sacrificeSourceIfNoExchange,
+            boolean requireSharedCardType,
+            PermanentPredicate firstTargetPredicate,
+            boolean targetPairInSingleGroup) {
+        this(targetPredicate, requireOpponentManaValueNotGreater, requireOpponentPowerNotGreater,
+                requireFirstTargetControlledByController, sourceIsFirstTarget, triggeringPermanentIsFirstTarget,
+                sacrificeSourceIfNoExchange,
+                requireSharedCardType ? ANY_CARD_TYPE
+                        : requireSharedArtifactOrCreatureType ? ARTIFACT_OR_CREATURE : Set.of(),
+                firstTargetPredicate, targetPairInSingleGroup);
+    }
 
     public ExchangeControlOfTargetPermanentsEffect(
             PermanentPredicate targetPredicate,
@@ -127,6 +167,17 @@ public record ExchangeControlOfTargetPermanentsEffect(
         return new ExchangeControlOfTargetPermanentsEffect(
                 new PermanentTruePredicate(),
                 false, false, true, false, false, false, false, true, targetPredicate, false);
+    }
+
+    /**
+     * "Exchange control of target [first filter] you control and target permanent an opponent controls that shares
+     * one of [types] with it" (Gauntlets of Chaos: artifact, creature, or land).
+     */
+    public static ExchangeControlOfTargetPermanentsEffect forControlledTargetsSharingOneOf(
+            PermanentPredicate firstTargetPredicate, Set<CardType> types) {
+        return new ExchangeControlOfTargetPermanentsEffect(
+                new PermanentTruePredicate(), false, false, true, false, false, false, types,
+                firstTargetPredicate, false);
     }
 
     public static ExchangeControlOfTargetPermanentsEffect withSharedCardType(

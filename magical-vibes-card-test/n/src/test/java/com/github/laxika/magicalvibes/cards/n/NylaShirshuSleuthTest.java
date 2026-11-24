@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.p.Panharmonicon;
+import com.github.laxika.magicalvibes.cards.v.ValMaroonedSurveyor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NylaShirshuSleuth.class, GrizzlyBears.class, Panharmonicon.class})
+@CardUsed({NylaShirshuSleuth.class, GrizzlyBears.class, Panharmonicon.class, ValMaroonedSurveyor.class})
 class NylaShirshuSleuthTest extends BaseCardTest {
 
     @Test
@@ -38,6 +39,22 @@ class NylaShirshuSleuthTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
         assertThat(gd.getCardsExiledByPermanent(nyla.getId())).containsExactly(bears);
         assertThat(findPermanents(player1, "Clue")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Creating the Clues is not investigating, so a whenever-you-investigate ability doesn't trigger")
+    void creatingCluesIsNotInvestigating() {
+        harness.addToBattlefield(player1, new ValMaroonedSurveyor());
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+        harness.castFromHand(player1, new NylaShirshuSleuth(), "{4}{B}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Clue")).hasSize(2);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
     @Test

@@ -35,7 +35,7 @@ public class NylaShirshuSleuth extends Card {
                         ExileGraveyardCardsEffect.upToOneTargetFromControllerGraveyardWithSource(creature),
                         new ConditionalEffect(HappenedThisWay.exiled(), SequenceEffect.of(
                                 new LoseLifeEffect(manaValue, Subjects.you()),
-                                CreateTokenEffect.ofClueToken(manaValue)))));
+                                CreateTokenEffect.ofClueToken(manaValue).withInvestigate(false)))));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new ControlsPermanentCountAtMost(0, new PermanentHasSubtypePredicate(CardSubtype.CLUE))),
