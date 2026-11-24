@@ -44,13 +44,10 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsAmongControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsLandsCouldProduceEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardManaOfTypeSacrificedLandCouldProduceEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardManaOfTypeUntappedLandCouldProduceEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaToChosenPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardOneManaOfEachColorAmongControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaOfColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardUncounterableGrantingManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -1760,14 +1757,8 @@ public class ActivatedAbilityExecutionService {
                     }
                 }
             } else if (effect instanceof AwardHasteGrantingManaEffect ahg) {
-                new AwardHasteGrantingManaEffect(
-                        ManaProductionSupport.effectiveColor(gameData, playerId, permanent, ahg.color()),
-                        ahg.amount() * manaMultiplier, ahg.creatureSubtype(), ahg.permanentHaste())
-                        .applyTo(gameData.playerManaPools.get(playerId));
-            } else if (effect instanceof AwardUncounterableGrantingManaEffect aug) {
-                new AwardUncounterableGrantingManaEffect(
-                        ManaProductionSupport.effectiveColor(gameData, playerId, permanent, aug.color()),
-                        aug.amount() * manaMultiplier).applyTo(gameData.playerManaPools.get(playerId));
+                ahg.withMana(ManaProductionSupport.effectiveColor(gameData, playerId, permanent, ahg.color()),
+                        ahg.amount() * manaMultiplier).applyTo(gameData.playerManaPools.get(playerId));
             } else if (effect instanceof AddNotedManaForLastExiledCardEffect) {
                 addNotedManaForLastExiledCard(gameData, player, permanent);
             } else if (effect instanceof AddNotedManaEffect) {
@@ -1868,52 +1859,6 @@ public class ActivatedAbilityExecutionService {
                             .text(player.getUsername() + " activates ")
                             .card(permanent.getCard())
                             .text(" but produces no mana (no matching land could produce colored mana).")
-                            .build());
-                }
-            } else if (effect instanceof AwardManaOfTypeUntappedLandCouldProduceEffect) {
-                Set<ManaColor> availableTypes = collectManaTypesUntappedLandCouldProduce(gameData, permanent);
-                if (availableTypes.size() == 1) {
-                    ManaColor onlyType = ManaProductionSupport.effectiveColor(gameData, playerId,
-                            permanent, availableTypes.iterator().next());
-                    gameData.playerManaPools.get(playerId).add(onlyType);
-                    gameLogService.append(gameData, GameLog.textCardText(
-                            player.getUsername() + " adds {" + onlyType.getCode() + "} from ", permanent.getCard(), "."));
-                } else if (availableTypes.size() > 1) {
-                    ChoiceContext.ManaColorChoice choiceContext = ChoiceContext.ManaColorChoice
-                            .fixedColorCombination(playerId, isCreatureSource, 1,
-                                    List.copyOf(availableTypes))
-                            .withArtifactSource(nonTreasureArtifactSource);
-                    List<String> types = availableTypes.stream().map(Enum::name).sorted().toList();
-                    interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                            playerId, null, null, choiceContext, types, "Choose a type of mana to add."));
-                    log.info("Game {} - Awaiting {} to choose a mana type from the untapped land", gameData.id, player.getUsername());
-                } else {
-                    gameLogService.append(gameData, GameLog.builder()
-                            .text(player.getUsername() + " activates ")
-                            .card(permanent.getCard())
-                            .text(" but produces no mana (the untapped land could produce none).")
-                            .build());
-                }
-            } else if (effect instanceof AwardManaOfTypeSacrificedLandCouldProduceEffect) {
-                Set<ManaColor> availableTypes = collectManaTypesSacrificedLandCouldProduce(gameData, permanent);
-                if (availableTypes.size() == 1) {
-                    ManaColor onlyType = ManaProductionSupport.effectiveColor(gameData, playerId,
-                            permanent, availableTypes.iterator().next());
-                    gameData.playerManaPools.get(playerId).add(onlyType);
-                    gameLogService.append(gameData, GameLog.textCardText(
-                            player.getUsername() + " adds {" + onlyType.getCode() + "} from ", permanent.getCard(), "."));
-                } else if (availableTypes.size() > 1) {
-                    ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource)
-                            .withArtifactSource(nonTreasureArtifactSource);
-                    List<String> types = availableTypes.stream().map(Enum::name).sorted().toList();
-                    interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                            playerId, null, null, choiceContext, types, "Choose a type of mana to add."));
-                    log.info("Game {} - Awaiting {} to choose a mana type from the sacrificed land", gameData.id, player.getUsername());
-                } else {
-                    gameLogService.append(gameData, GameLog.builder()
-                            .text(player.getUsername() + " activates ")
-                            .card(permanent.getCard())
-                            .text(" but produces no mana (the sacrificed land could produce none).")
                             .build());
                 }
             } else if (effect instanceof GainLifeEffect gain && isNonTargetedLifeGain(gain)) {
@@ -2107,8 +2052,6 @@ public class ActivatedAbilityExecutionService {
                         AmountContext.forManaAbility(permanent, playerId, xValue));
             } else if (effect instanceof AwardHasteGrantingManaEffect ahg) {
                 total += ahg.amount();
-            } else if (effect instanceof AwardUncounterableGrantingManaEffect aug) {
-                total += aug.amount();
             } else if (effect instanceof AwardManaOfColorsAmongControlledEffect manaAmong) {
                 Set<CardColor> colors = collectColorsAmongControlled(gameData, playerId, manaAmong);
                 if (!colors.isEmpty()) {
@@ -2118,14 +2061,6 @@ public class ActivatedAbilityExecutionService {
                 total += collectColorsAmongControlled(gameData, playerId, eachColor.predicate()).size();
             } else if (effect instanceof AwardManaOfColorsLandsCouldProduceEffect landColors) {
                 if (!collectColorsLandsCouldProduce(gameData, playerId, landColors).isEmpty()) {
-                    total += 1;
-                }
-            } else if (effect instanceof AwardManaOfTypeUntappedLandCouldProduceEffect) {
-                if (!collectManaTypesUntappedLandCouldProduce(gameData, permanent).isEmpty()) {
-                    total += 1;
-                }
-            } else if (effect instanceof AwardManaOfTypeSacrificedLandCouldProduceEffect) {
-                if (!collectManaTypesSacrificedLandCouldProduce(gameData, permanent).isEmpty()) {
                     total += 1;
                 }
             } else if (effect instanceof AddNotedManaForLastExiledCardEffect) {
@@ -2270,27 +2205,6 @@ public class ActivatedAbilityExecutionService {
             }
         }
         return colors;
-    }
-
-    /**
-     * The mana types the land untapped to pay this ability's untap cost could produce, colorless
-     * included ("one mana of any type that land could produce", Benthic Explorers). Empty if the
-     * recorded permanent is gone or is not a land that produces mana.
-     */
-    private Set<ManaColor> collectManaTypesUntappedLandCouldProduce(GameData gameData, Permanent source) {
-        UUID untappedLandId = source.getChosenPermanentId();
-        Permanent land = untappedLandId == null ? null : gameQueryService.findPermanentById(gameData, untappedLandId);
-        return landManaTypeSupport.manaTypesCouldProduce(gameData, land);
-    }
-
-    /**
-     * The mana types the land sacrificed to pay this ability's cost could produce, colorless
-     * included (Squandered Resources). Reads the last-known permanent snapshot recorded on the
-     * source at payment time because the sacrificed permanent itself is already gone.
-     */
-    private Set<ManaColor> collectManaTypesSacrificedLandCouldProduce(GameData gameData, Permanent source) {
-        return landManaTypeSupport.manaTypesCouldProduce(
-                gameData, source.getChosenSacrificedPermanentSnapshot());
     }
 
     /**

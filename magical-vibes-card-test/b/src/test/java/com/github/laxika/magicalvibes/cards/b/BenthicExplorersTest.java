@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.h.HallOfTheBanditLord;
 import com.github.laxika.magicalvibes.cards.h.HeartOfYavimaya;
 import com.github.laxika.magicalvibes.cards.l.LakeOfTheDead;
+import com.github.laxika.magicalvibes.cards.m.ManaReflection;
 import com.github.laxika.magicalvibes.cards.r.ReflectingPool;
 import com.github.laxika.magicalvibes.cards.s.SoldeviExcavations;
 import com.github.laxika.magicalvibes.cards.t.ThawingGlaciers;
@@ -34,6 +35,20 @@ class BenthicExplorersTest extends BaseCardTest {
         assertThat(explorers.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed(ManaReflection.class)
+    @DisplayName("Mana Reflection doubles the mana Explorers is tapped for")
+    void manaReflectionDoublesTheMana() {
+        harness.addToBattlefield(player1, new ManaReflection());
+        addReadyExplorers();
+        Permanent lake = harness.addToBattlefieldAndReturn(player2, new LakeOfTheDead());
+        lake.tap();
+
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
     }
 
     @Test

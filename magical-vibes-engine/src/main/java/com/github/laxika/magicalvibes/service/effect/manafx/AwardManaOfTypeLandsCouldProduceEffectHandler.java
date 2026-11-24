@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.ManaColorLandScope;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LandManaTypeSupport;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,7 @@ public class AwardManaOfTypeLandsCouldProduceEffectHandler implements ManaAbilit
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final LandManaTypeSupport landManaTypeSupport;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -48,14 +51,16 @@ public class AwardManaOfTypeLandsCouldProduceEffectHandler implements ManaAbilit
             return;
         }
 
-        Set<ManaColor> availableTypes = collectAvailableTypes(gameData, playerId, effect);
+        Set<ManaColor> availableTypes = effect.scope().paidInCost()
+                ? landManaTypeSupport.manaTypesCouldProduce(gameData, landPaidInCost(gameData, permanent, effect.scope()))
+                : collectAvailableTypes(gameData, playerId, effect);
         if (availableTypes.isEmpty()) {
             return;
         }
 
         if (availableTypes.size() == 1) {
-            addMana(gameData.playerManaPools.get(playerId), availableTypes.iterator().next(), amount,
-                    creatureSource);
+            addMana(gameData.playerManaPools.get(playerId), ManaProductionSupport.effectiveColor(gameData, playerId,
+                    permanent, availableTypes.iterator().next()), amount, creatureSource);
             return;
         }
 
@@ -93,6 +98,19 @@ public class AwardManaOfTypeLandsCouldProduceEffectHandler implements ManaAbilit
             }
         }
         return availableTypes;
+    }
+
+    /**
+     * The land a cost of the ability paid with, recorded on the source as the cost was paid: the sacrificed land as it
+     * last existed on the battlefield, or the untapped land as it is now; {@code null} when none was recorded or the
+     * untapped land left.
+     */
+    private Permanent landPaidInCost(GameData gameData, Permanent source, ManaColorLandScope scope) {
+        if (scope == ManaColorLandScope.SACRIFICED_FOR_COST) {
+            return source.getChosenSacrificedPermanentSnapshot();
+        }
+        UUID untappedLandId = source.getChosenPermanentId();
+        return untappedLandId == null ? null : gameQueryService.findPermanentById(gameData, untappedLandId);
     }
 
     private static void addMana(ManaPool pool, ManaColor color, int amount, boolean creatureSource) {

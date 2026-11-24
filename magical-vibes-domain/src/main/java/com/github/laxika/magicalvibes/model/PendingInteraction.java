@@ -2800,7 +2800,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public ColorChoice copyCardTypeOnEnterPermanent() {
             if (context instanceof ChoiceContext.LandManaDrainAbilityChoice drain) {
                 return new ColorChoice(playerId, permanentId, etbTargetId,
-                        new ChoiceContext.LandManaDrainAbilityChoice(drain.entry(), drain.landId(),
+                        new ChoiceContext.LandManaDrainAbilityChoice(drain.entry(), drain.playerId(), drain.landId(),
                                 drain.abilityIndices(), drain.remainingLandIds(), drain.delayedColorless()),
                         options, prompt, disabledOptions);
             }
@@ -5973,7 +5973,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * Resumes a land drain after the current mana ability's choices finish; see
      * {@link ChoiceContext.LandManaDrainAbilityChoice} for {@code delayedColorless}.
      */
-    record LandManaDrainContinuation(StackEntry entry, java.util.List<UUID> remainingLandIds,
+    record LandManaDrainContinuation(StackEntry entry, UUID playerId, java.util.List<UUID> remainingLandIds,
                                      boolean delayedColorless)
             implements PendingInteraction {
         public LandManaDrainContinuation {

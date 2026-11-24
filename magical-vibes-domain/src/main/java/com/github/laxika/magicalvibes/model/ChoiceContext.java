@@ -20,12 +20,14 @@ import java.util.UUID;
 
 public sealed interface ChoiceContext {
 
-    /** The affected player selects the mana ability used by a resolving land drain. */
     /**
+     * The affected player selects the mana ability used by a resolving land drain.
+     *
+     * @param playerId         the drained player, whose lands are activated
      * @param delayedColorless the drained mana is lost and its controller adds that much {C} later
      *                         (Pygmy Hippo) instead of taking the mana (Drain Power)
      */
-    record LandManaDrainAbilityChoice(StackEntry entry, UUID landId,
+    record LandManaDrainAbilityChoice(StackEntry entry, UUID playerId, UUID landId,
                                       List<Integer> abilityIndices, List<UUID> remainingLandIds,
                                       boolean delayedColorless)
             implements ChoiceContext {

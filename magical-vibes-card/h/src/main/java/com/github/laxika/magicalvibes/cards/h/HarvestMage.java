@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.LandManaProducesOneChosenColorUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ReplaceLandManaWithColorEffect;
 
 import java.util.List;
 
@@ -17,7 +18,8 @@ public class HarvestMage extends Card {
                 "{G}",
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new LandManaProducesOneChosenColorUntilEndOfTurnEffect()
+                        ReplaceLandManaWithColorEffect.colorOfYourChoice().producing(1).whenYouTap()
+                                .lasting(Duration.UNTIL_END_OF_TURN)
                 ),
                 "{G}, {T}, Discard a card: Until end of turn, if you tap a land for mana, it produces one mana of a color of your choice instead of any other type and amount."
         ));

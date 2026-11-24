@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AwardManaToCastingPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaToActivePlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -13,6 +14,6 @@ public class Tangleroot extends Card {
 
     public Tangleroot() {
         addTrigger(Triggers.playerCastsSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
-                new AwardManaToCastingPlayerEffect(ManaColor.GREEN));
+                new AwardManaToActivePlayerEffect(ManaColor.GREEN, 1).to(Subjects.triggeringPlayer()));
     }
 }

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
 
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToTargetFromChosenColorEffect;
-import com.github.laxika.magicalvibes.model.effect.AllLandsProduceChosenColorUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplaceLandManaWithColorEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
@@ -322,7 +322,7 @@ public class ChoiceHandlerService {
             int optionIndex = colorChoice.options().indexOf(colorName);
             if (optionIndex < 0) throw new IllegalArgumentException("Invalid mana ability");
             gameData.interaction.clearAwaitingInput();
-            landManaDrainHandler.activateLandAbility(gameData, choice.entry(), choice.landId(),
+            landManaDrainHandler.activateLandAbility(gameData, choice.entry(), choice.playerId(), choice.landId(),
                     choice.abilityIndices().get(optionIndex), choice.remainingLandIds(), choice.delayedColorless());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
@@ -4686,8 +4686,8 @@ public class ChoiceHandlerService {
     }
 
     /**
-     * Hall of Gemstone: record the chosen color as the color every land produces for the rest of the
-     * turn, a floating effect on every player.
+     * Hall of Gemstone: until end of turn, lands tapped for mana produce the chosen color instead of any other
+     * color, a floating land-mana replacement on every player.
      */
     private void handleAllLandsProduceChosenColorChoice(GameData gameData, String chosenValue,
             ChoiceContext.AllLandsProduceChosenColorChoice ctx) {
@@ -4696,8 +4696,8 @@ public class ChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
 
         gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(ctx.sourceCardName(), ctx.sourcePermanentId(),
-                ctx.controllerId(), new AllLandsProduceChosenColorUntilEndOfTurnEffect(color), null,
-                Duration.UNTIL_END_OF_TURN));
+                ctx.controllerId(), new ReplaceLandManaWithColorEffect(color).replacing(Set.copyOf(ManaColor.COLORS))
+                        .lasting(Duration.UNTIL_END_OF_TURN), null, Duration.UNTIL_END_OF_TURN));
 
         String playerName = gameData.playerIdToName.get(ctx.playerId());
         gameLogService.append(gameData, GameLog.text(playerName + " chooses "

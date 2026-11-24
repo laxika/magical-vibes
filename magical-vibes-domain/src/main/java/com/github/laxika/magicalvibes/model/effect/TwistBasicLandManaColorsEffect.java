@@ -3,21 +3,23 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 
+import java.util.EnumMap;
 import java.util.Map;
 
 /**
- * Capability marker for Reality Twist-style global mana replacement: while any permanent with this
- * effect is on the battlefield, lands with basic land types produce the remapped color given by
- * {@link #landColorMapping()} when tapped for mana, instead of any other type.
+ * STATIC replacement: "if tapped for mana, Plains produce {R}, Swamps produce {G}, … instead of any other type"
+ * (Reality Twist, Naked Singularity). One replacement of the mana production event (CR 614.1a, 106.12b) for every
+ * land with a listed basic land type; a land with only unlisted types is unaffected. A land with two basic land
+ * types produces either type's color (an unlisted type keeps its own), all its mana of one color (the cards'
+ * 2013-04-15 ruling).
  *
- * <p>Detected via {@code instanceof TwistBasicLandManaColorsEffect} in
- * {@code GameQueryService} (capability interface — not a concrete-effect dispatch).
+ * <p>Read by {@code StaticLandManaReplacements} and {@code GameQueryService.twistedLandManaColors}.
+ *
+ * @param landColorMapping basic land type to the color that type produces instead
  */
-public interface TwistBasicLandManaColorsEffect extends CardEffect {
+public record TwistBasicLandManaColorsEffect(Map<CardSubtype, ManaColor> landColorMapping) implements CardEffect {
 
-    /**
-     * Basic land type to the color that type produces while this effect is active. Types absent
-     * from the map are unaffected by this effect.
-     */
-    Map<CardSubtype, ManaColor> landColorMapping();
+    public TwistBasicLandManaColorsEffect {
+        landColorMapping = Map.copyOf(new EnumMap<>(landColorMapping));
+    }
 }

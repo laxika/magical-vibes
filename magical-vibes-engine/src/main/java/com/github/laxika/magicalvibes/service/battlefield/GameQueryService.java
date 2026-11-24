@@ -37,12 +37,8 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaValueParity;
 import com.github.laxika.magicalvibes.model.SaturatingMath;
-import com.github.laxika.magicalvibes.model.effect.AllLandsProduceChosenColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantSacrificeTargetThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.LandManaProducesFixedColorUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.LandsOfSubtypeProduceFixedManaColorUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.NonbasicLandsProduceFixedManaColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PayBlackManaWithLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MaxSpeedFreeFirstUnearthEffect;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -84,7 +80,6 @@ import com.github.laxika.magicalvibes.model.effect.CombatDamageAssignmentMode;
 import com.github.laxika.magicalvibes.model.effect.AttackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackWithoutTappingPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.BandsWithOtherEffect;
-import com.github.laxika.magicalvibes.model.effect.BasicLandManaProducesAnyColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockCostEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect;
@@ -161,6 +156,7 @@ import com.github.laxika.magicalvibes.model.effect.LifeGainReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.LifePaymentReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentLifeLossReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplaceLandManaWithColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceControlledCounterWithExileAndPlayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChosenPlayersDamageMultiplyingEffect;
@@ -230,7 +226,6 @@ import com.github.laxika.magicalvibes.model.effect.HandAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreOpponentCreatureHexproofEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreOpponentHexproofEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreOpponentHexproofUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.LandManaProducesFixedColorEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtFaceDownCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MadnessGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
@@ -2508,6 +2503,9 @@ public class GameQueryService {
                 continue;
             }
             for (Permanent source : battlefield) {
+                if (hasLostAllAbilities(gameData, source)) {
+                    continue;
+                }
                 for (CardEffect effect : source.getCard().getStaticEffects()) {
                     if (effect instanceof TwistBasicLandManaColorsEffect twist) {
                         twist.landColorMapping().forEach((type, color) -> mappings
@@ -2521,139 +2519,97 @@ public class GameQueryService {
     }
 
     /**
-     * Fixed color {@code permanent} produces under a land-mana replacement such as
-     * {@link LandManaProducesFixedColorEffect}. Null when inactive. Amount is unchanged; only the
-     * type is replaced.
+     * One {@link ReplaceLandManaWithColorEffect} that applies to a land: a static ability of a permanent
+     * on the battlefield, or a floating effect a resolved spell or ability made.
      *
-     * <p>A player-scoped replacement recorded in {@link #controllerLandsFixedColor}
-     * applies to lands that player currently controls and takes precedence. A turn-scoped,
-     * nonbasic-land replacement recorded in
-     * {@link #nonbasicLandsFixedColor} takes precedence over the
-     * subtype-scoped replacement. The subtype-scoped replacement recorded in
-     * {@link #landSubtypeFixedColors} (Chaos Moon's even branch) takes
-     * precedence, matched against the permanent's effective basic land types, followed by the
-     * turn-scoped all-lands replacement in {@link #allLandsFixedColor} (Hall of
-     * Gemstone).
+     * @param key          stable for as long as the replacement applies: the source and the index of the
+     *                     static ability, or the floating effect's id
+     * @param sourceName   the source's public name, for prompt labels
+     * @param controllerId the player the effect's "you" means
      */
-    /** Returns an amount imposed by an active land-mana replacement, or null when unchanged. */
-    public Integer fixedLandManaAmount(GameData gameData) {
-        for (Permanent source : gameData.playerBattlefields.values().stream().flatMap(List::stream).toList()) {
-            if (hasLostAllAbilities(gameData, source)) continue;
-            for (CardEffect effect : source.getCard().getStaticEffects()) {
-                if (effect instanceof LandManaProducesFixedColorEffect fixed && fixed.fixedAmount() != null) {
-                    return fixed.fixedAmount();
-                }
-            }
-        }
-        return null;
-    }
+    public record LandManaColorReplacement(String key, String sourceName, UUID controllerId,
+                                           ReplaceLandManaWithColorEffect effect) {}
 
     /**
-     * The color the lands {@code controllerId} controls are fixed to this turn by a resolved spell or ability
-     * ("your lands tapped for mana produce {R}"); null when none. The newest effect applies (CR 613.11).
+     * The {@link ReplaceLandManaWithColorEffect}s that would apply to {@code land} tapped for mana by
+     * {@code tappingPlayerId} (the land's controller when {@code null}), static ones first in seat
+     * order, then floating ones oldest first. A source that lost its abilities applies none. Whether a
+     * {@code replacedTypes} replacement applies also depends on the mana the tap makes, which the
+     * caller checks.
      */
-    public ManaColor controllerLandsFixedColor(GameData gameData, UUID controllerId) {
-        List<FloatingContinuousEffect> effects =
-                gameData.floatingEffectsOnPlayer(controllerId, LandManaProducesFixedColorUntilEndOfTurnEffect.class);
-        return effects.isEmpty() ? null
-                : ((LandManaProducesFixedColorUntilEndOfTurnEffect) effects.get(effects.size() - 1).effect()).color();
-    }
-
-    /** The color nonbasic lands are fixed to this turn (Pale Moon); null when none. The newest effect applies. */
-    public ManaColor nonbasicLandsFixedColor(GameData gameData) {
-        List<FloatingContinuousEffect> effects =
-                gameData.floatingEffectsOnPlayer(null, NonbasicLandsProduceFixedManaColorUntilEndOfTurnEffect.class);
-        return effects.isEmpty() ? null
-                : ((NonbasicLandsProduceFixedManaColorUntilEndOfTurnEffect) effects.get(effects.size() - 1).effect())
-                .color();
-    }
-
-    /** The color every land is fixed to this turn (Hall of Gemstone); null when none. The newest effect applies. */
-    public ManaColor allLandsFixedColor(GameData gameData) {
-        List<FloatingContinuousEffect> effects =
-                gameData.floatingEffectsOnPlayer(null, AllLandsProduceChosenColorUntilEndOfTurnEffect.class);
-        return effects.isEmpty() ? null
-                : ((AllLandsProduceChosenColorUntilEndOfTurnEffect) effects.get(effects.size() - 1).effect())
-                .chosenColor();
-    }
-
-    /** The color each land subtype is fixed to this turn (Chaos Moon); the newest effect of a subtype applies. */
-    public Map<CardSubtype, ManaColor> landSubtypeFixedColors(GameData gameData) {
-        Map<CardSubtype, ManaColor> colors = new LinkedHashMap<>();
-        for (FloatingContinuousEffect fe : gameData.floatingEffectsOnPlayer(null,
-                LandsOfSubtypeProduceFixedManaColorUntilEndOfTurnEffect.class)) {
-            var effect = (LandsOfSubtypeProduceFixedManaColorUntilEndOfTurnEffect) fe.effect();
-            colors.put(effect.subtype(), effect.color());
+    public List<LandManaColorReplacement> landManaColorReplacements(GameData gameData, Permanent land,
+                                                                   UUID tappingPlayerId) {
+        List<LandManaColorReplacement> replacements = new ArrayList<>();
+        if (gameData == null || land == null) {
+            return replacements;
         }
-        return colors;
-    }
-
-    public ManaColor fixedLandManaColor(GameData gameData, Permanent permanent) {
-        if (permanent != null) {
-            ManaColor controllerFixedColor =
-                    controllerLandsFixedColor(gameData, findPermanentController(gameData, permanent.getId()));
-            if (controllerFixedColor != null) {
-                return controllerFixedColor;
-            }
-        }
-        ManaColor nonbasicFixedColor = nonbasicLandsFixedColor(gameData);
-        if (permanent != null && nonbasicFixedColor != null
-                && !hasEffectiveSupertype(gameData, permanent, CardSupertype.BASIC)) {
-            return nonbasicFixedColor;
-        }
-        if (permanent != null) {
-            Map<CardSubtype, ManaColor> subtypeColors = landSubtypeFixedColors(gameData);
-            if (!subtypeColors.isEmpty()) {
-                Set<CardSubtype> types = effectiveBasicLandTypes(gameData, permanent);
-                for (var entry : subtypeColors.entrySet()) {
-                    if (types.contains(entry.getKey())) {
-                        return entry.getValue();
-                    }
-                }
-            }
-        }
-        ManaColor allLandsColor = allLandsFixedColor(gameData);
-        if (allLandsColor != null) {
-            return allLandsColor;
-        }
+        UUID landControllerId = findPermanentController(gameData, land.getId());
+        UUID tapperId = tappingPlayerId != null ? tappingPlayerId : landControllerId;
         for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) {
-                continue;
-            }
-            for (Permanent source : battlefield) {
-                for (var effect : source.getCard().getStaticEffects()) {
-                    if (effect instanceof LandManaProducesFixedColorEffect fixed
-                            && !hasLostAllAbilities(gameData, source)) {
-                        return fixed.color();
+            for (Permanent source : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                if (hasLostAllAbilities(gameData, source)) {
+                    continue;
+                }
+                List<CardEffect> statics = source.getCard().getStaticEffects();
+                for (int i = 0; i < statics.size(); i++) {
+                    if (statics.get(i) instanceof ReplaceLandManaWithColorEffect replacement
+                            && replacement.duration() == null
+                            && landManaReplacementApplies(gameData, replacement, playerId, land, tapperId, false)) {
+                        replacements.add(new LandManaColorReplacement(source.getId() + ":" + i,
+                                FaceDownVisibility.publicName(source), playerId, replacement));
                     }
                 }
+            }
+        }
+        synchronized (gameData.floatingEffects) {
+            for (FloatingContinuousEffect floating : gameData.floatingEffects) {
+                if (!(floating.effect() instanceof ReplaceLandManaWithColorEffect replacement)) {
+                    continue;
+                }
+                boolean onLand = floating.affectedPermanentId() != null;
+                if (onLand && !land.getId().equals(floating.affectedPermanentId())) {
+                    continue;
+                }
+                if (landManaReplacementApplies(gameData, replacement, floating.controllerId(), land, tapperId,
+                        onLand)) {
+                    replacements.add(new LandManaColorReplacement(floating.id().toString(),
+                            floating.sourceCardName(), floating.controllerId(), replacement));
+                }
+            }
+        }
+        return replacements;
+    }
+
+    private boolean landManaReplacementApplies(GameData gameData, ReplaceLandManaWithColorEffect replacement,
+                                               UUID controllerId, Permanent land, UUID tapperId, boolean onLand) {
+        if (replacement.onlyYourTaps() && !Objects.equals(controllerId, tapperId)) {
+            return false;
+        }
+        return onLand || replacement.lands() == null || predicateEvaluationService.matchesPermanentPredicate(land,
+                replacement.lands(), FilterContext.of(gameData).withSourceControllerId(controllerId));
+    }
+
+    /**
+     * The one color {@code permanent} produces under a land-mana color replacement, newest first, for
+     * previews that can't order replacements (CR 616.1); {@code null} when none fixes its color.
+     */
+    public ManaColor fixedLandManaColor(GameData gameData, Permanent permanent) {
+        List<LandManaColorReplacement> replacements = landManaColorReplacements(gameData, permanent, null);
+        for (int i = replacements.size() - 1; i >= 0; i--) {
+            ReplaceLandManaWithColorEffect effect = replacements.get(i).effect();
+            if (effect.color() != null && (effect.replacedTypes().isEmpty()
+                    || effect.replacedTypes().containsAll(ManaColor.COLORS))) {
+                return effect.color();
             }
         }
         return null;
     }
 
-    /**
-     * Returns whether a basic land currently produces mana of a color chosen by its controller due
-     * to a static effect controlled by that same player.
-     */
-    public boolean basicLandManaProducesAnyColor(GameData gameData, Permanent permanent) {
-        if (gameData == null || permanent == null
-                || !isLand(gameData, permanent)
-                || !hasEffectiveSupertype(gameData, permanent, CardSupertype.BASIC)) {
-            return false;
-        }
-        UUID controllerId = findPermanentController(gameData, permanent.getId());
-        if (controllerId == null) {
-            return false;
-        }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return false;
-        }
-        return battlefield.stream()
-                .flatMap(source -> source.getCard().getStaticEffects().stream())
-                .anyMatch(BasicLandManaProducesAnyColorEffect.class::isInstance);
+    /** Whether a land-mana replacement lets {@code permanent}'s mana be a color of its tapper's choice. */
+    public boolean landManaProducesColorOfChoice(GameData gameData, Permanent permanent) {
+        return gameData != null && permanent != null && isLand(gameData, permanent)
+                && landManaColorReplacements(gameData, permanent, null).stream()
+                .anyMatch(replacement -> replacement.effect().color() == null);
     }
 
     /**

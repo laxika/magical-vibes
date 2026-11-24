@@ -7,9 +7,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.AwardTargetedRestrictedManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaToActivePlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromControlledPermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -32,8 +33,9 @@ public class JetfireIngeniousScientist extends Card {
                 List.of(
                         new RemoveOneOrMoreCountersFromControlledPermanentsCost(
                                 CounterType.PLUS_ONE_PLUS_ONE, new PermanentIsArtifactPredicate()),
-                        new AwardTargetedRestrictedManaEffect(
-                                ManaColor.COLORLESS, new XValue(), new ManaRestriction.Powerstone()),
+                        new AwardManaToActivePlayerEffect(
+                                ManaColor.COLORLESS, new XValue(), new ManaRestriction.Powerstone())
+                                .to(Subjects.targetPlayer()),
                         new TransformSelfEffect()
                 ),
                 "Remove one or more +1/+1 counters from among artifacts you control: Target player adds that much {C}. This mana can't be spent to cast nonartifact spells. Convert Jetfire.",

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.d.DreadshipReef;
 import com.github.laxika.magicalvibes.cards.m.Mossdog;
+import com.github.laxika.magicalvibes.cards.p.Piracy;
 import com.github.laxika.magicalvibes.cards.r.RemoteFarm;
 import com.github.laxika.magicalvibes.cards.s.SubterraneanHangar;
 import com.github.laxika.magicalvibes.cards.t.TerrainGenerator;
@@ -129,6 +130,31 @@ class HarvestMageTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed(Piracy.class)
+    @DisplayName("Harvest Mage replaces the mana of an opponent's land you tap (\"if you tap a land for mana\")")
+    void replacesManaOfAnOpponentsLandYouTap() {
+        setupMainPhase();
+        addReadyHarvestMage();
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new Mossdog()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new Piracy(), "{U}{U}");
+        harness.passBothPriorities();
+
+        harness.tapForeignLandForMana(player1, forest.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        harness.handleListChoice(player1, "RED");
+
+        var pool = gd.playerManaPools.get(player1.getId());
+        assertThat(pool.get(ManaColor.RED)).isEqualTo(1);
+        assertThat(pool.getSpellOnlyMana(ManaColor.RED)).isEqualTo(1);
+        assertThat(pool.get(ManaColor.GREEN)).isZero();
     }
 
     @Test

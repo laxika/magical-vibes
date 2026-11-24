@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AwardManaToActivePlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -35,6 +36,7 @@ public class AwardManaToActivePlayerEffectHandler implements NormalEffectHandler
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -51,8 +53,14 @@ public class AwardManaToActivePlayerEffectHandler implements NormalEffectHandler
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }
-        UUID recipientId = entry.getActivePlayerId() != null ? entry.getActivePlayerId()
+        UUID recipientId = e.recipient() != null
+                ? subjectResolutionService.players(gameData, entry, effect, e.recipient()).stream().findFirst()
+                        .orElse(null)
+                : entry.getActivePlayerId() != null ? entry.getActivePlayerId()
                 : entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId();
+        if (recipientId == null) {
+            return;
+        }
         int amount = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source).withControllerId(recipientId));
         if (amount <= 0) {

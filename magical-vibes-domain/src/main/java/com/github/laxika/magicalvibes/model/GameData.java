@@ -10967,7 +10967,8 @@ public class GameData {
         this.pendingInteractions.forEach(pending -> copy.pendingInteractions.add(
                 copiedInteractions.computeIfAbsent(pending, original ->
                 original instanceof PendingInteraction.LandManaDrainContinuation drain
-                        ? new PendingInteraction.LandManaDrainContinuation(drain.entry(), drain.remainingLandIds(),
+                        ? new PendingInteraction.LandManaDrainContinuation(drain.entry(), drain.playerId(),
+                                drain.remainingLandIds(),
                                 drain.delayedColorless())
                         : original instanceof PendingInteraction.ColorChoice choice
                         ? choice.copyCardTypeOnEnterPermanent()

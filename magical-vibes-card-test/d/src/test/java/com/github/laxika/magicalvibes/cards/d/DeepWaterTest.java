@@ -218,7 +218,7 @@ class DeepWaterTest extends BaseCardTest {
         harness.addToBattlefield(player2, new InfernalDarkness());
 
         harness.tapPermanent(player1, 1);
-        chooseReplacement("Your lands produce {U}");
+        chooseReplacement("Deep Water");
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);

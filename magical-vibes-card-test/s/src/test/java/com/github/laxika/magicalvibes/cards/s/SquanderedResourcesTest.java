@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.e.ExoticOrchard;
+import com.github.laxika.magicalvibes.cards.f.FalseDawn;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GriffinCanyon;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -15,6 +16,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,6 +38,22 @@ class SquanderedResourcesTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed(FalseDawn.class)
+    @DisplayName("Under False Dawn the sacrificed Forest's green mana is added as white")
+    void falseDawnTurnsTheAddedManaWhite() {
+        harness.setHand(player1, List.of(new FalseDawn()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.addToBattlefield(player1, new SquanderedResources());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
     }
 
     @Test

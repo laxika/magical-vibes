@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.ManaColorLandScope;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaToChosenPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardUncounterableGrantingManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
@@ -135,7 +134,7 @@ public class LandManaTypeSupport {
                 if (producesAnyMana(gameData, source, mana)) {
                     addIfNonNull(types, mana.color());
                 }
-            } else if (effect instanceof AwardManaOfTypeLandsCouldProduceEffect mana) {
+            } else if (effect instanceof AwardManaOfTypeLandsCouldProduceEffect mana && !mana.scope().paidInCost()) {
                 UUID controllerId = gameQueryService.findPermanentController(gameData, source.getId());
                 for (UUID playerId : gameData.orderedPlayerIds) {
                     boolean isController = playerId.equals(controllerId);
@@ -189,8 +188,6 @@ public class LandManaTypeSupport {
                     addIfNonNull(types, mana.color());
                 }
             } else if (effect instanceof AwardRestrictedManaEffect mana) {
-                addIfNonNull(types, mana.color());
-            } else if (effect instanceof AwardUncounterableGrantingManaEffect mana) {
                 addIfNonNull(types, mana.color());
             } else if (effect instanceof AwardManaOfChosenColorEqualToDevotionEffect) {
                 UUID controllerId = gameQueryService.findPermanentController(gameData, source.getId());

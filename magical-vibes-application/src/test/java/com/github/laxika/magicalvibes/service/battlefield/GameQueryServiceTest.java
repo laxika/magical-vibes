@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 
 
 import com.github.laxika.magicalvibes.model.effect.GrantControllerCreatureSpellsCantBeCounteredThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.LandManaProducesFixedColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
@@ -318,10 +317,14 @@ class GameQueryServiceTest {
         card.addStaticEffect(new ReplaceLandManaWithColorEffect(ManaColor.BLACK));
         Permanent source = new Permanent(card);
         gd.playerBattlefields.get(player1Id).add(source);
+        Card landCard = new Card();
+        landCard.setType(CardType.LAND);
+        Permanent land = new Permanent(landCard);
+        gd.playerBattlefields.get(player2Id).add(land);
 
-        assertThat(gqs.fixedLandManaColor(gd, null)).isEqualTo(ManaColor.BLACK);
+        assertThat(gqs.fixedLandManaColor(gd, land)).isEqualTo(ManaColor.BLACK);
         PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, source);
-        assertThat(gqs.fixedLandManaColor(gd, null)).isNull();
+        assertThat(gqs.fixedLandManaColor(gd, land)).isNull();
     }
 
     @Test
@@ -361,8 +364,8 @@ class GameQueryServiceTest {
         Permanent secondPlayersLand = new Permanent(secondLandCard);
         gd.playerBattlefields.get(player2Id).add(secondPlayersLand);
         gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1Id,
-                new LandManaProducesFixedColorUntilEndOfTurnEffect(ManaColor.BLUE), player1Id,
-                Duration.UNTIL_END_OF_TURN));
+                new ReplaceLandManaWithColorEffect(ManaColor.BLUE).youControl().whenYouTap()
+                        .lasting(Duration.UNTIL_END_OF_TURN), null, Duration.UNTIL_END_OF_TURN));
 
         assertThat(gqs.fixedLandManaColor(gd, firstPlayersLand)).isEqualTo(ManaColor.BLUE);
         assertThat(gqs.fixedLandManaColor(gd, secondPlayersLand)).isNull();

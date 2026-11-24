@@ -333,7 +333,7 @@ public class PotentialManaService {
         if (fixedColor != null) {
             return amount > 0 ? new LandManaReplacementService.Preview(Set.of(fixedColor), amount, false) : null;
         }
-        if (gameQueryService.basicLandManaProducesAnyColor(gameData, land)) {
+        if (gameQueryService.landManaProducesColorOfChoice(gameData, land)) {
             return amount > 0 ? new LandManaReplacementService.Preview(Set.copyOf(ManaColor.COLORS), amount, true) : null;
         }
         Set<ManaColor> twisted = gameQueryService.twistedLandManaColors(gameData, land);

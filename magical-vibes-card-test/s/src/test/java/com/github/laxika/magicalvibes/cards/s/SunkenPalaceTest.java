@@ -221,7 +221,7 @@ class SunkenPalaceTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 1, null, null);
         PendingInteraction.ColorChoice order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, order.options().stream()
-                .filter(option -> option.startsWith("Your lands produce")).findFirst().orElseThrow());
+                .filter(option -> option.startsWith("Deep Water")).findFirst().orElseThrow());
 
         ManaPool pool = gd.playerManaPools.get(player1.getId());
         assertThat(pool.get(ManaColor.BLACK)).isEqualTo(1);

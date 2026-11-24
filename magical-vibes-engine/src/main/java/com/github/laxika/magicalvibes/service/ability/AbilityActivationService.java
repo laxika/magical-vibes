@@ -50,10 +50,11 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingP
 import com.github.laxika.magicalvibes.model.effect.ActivationCostModifierEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardManaOfTypeSacrificedLandCouldProduceEffect;
 import com.github.laxika.magicalvibes.model.effect.BlightXCost;
 import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaColorLandScope;
+import com.github.laxika.magicalvibes.model.effect.AwardManaOfTypeLandsCouldProduceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
@@ -6025,7 +6026,7 @@ public class AbilityActivationService {
 
     /**
      * Remembers the permanent untapped to pay a single-permanent {@link UntapMultiplePermanentsCost}
-     * so {@code AwardManaOfTypeUntappedLandCouldProduceEffect} can read which land was untapped
+     * so {@code AwardManaOfTypeLandsCouldProduceEffect} over {@code UNTAPPED_FOR_COST} can read which land was untapped
      * (Benthic Explorers).
      */
     private void recordUntappedCostPermanent(CardEffect costEffect, Permanent source, UUID chosenPermanentId) {
@@ -6096,7 +6097,8 @@ public class AbilityActivationService {
             return;
         }
         boolean recordsProducedManaTypes = abilities.get(abilityIndex).getEffects().stream()
-                .anyMatch(AwardManaOfTypeSacrificedLandCouldProduceEffect.class::isInstance);
+                .anyMatch(effect -> effect instanceof AwardManaOfTypeLandsCouldProduceEffect mana
+                        && mana.scope() == ManaColorLandScope.SACRIFICED_FOR_COST);
         boolean recordsLandTypes = abilities.get(abilityIndex).getEffects().stream()
                 .anyMatch(GrantLandwalkOfSacrificedLandToTargetEffect.class::isInstance);
         if (recordsProducedManaTypes || recordsLandTypes) {

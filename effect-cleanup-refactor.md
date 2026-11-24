@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c (each in Findings; the fold queue marks its rows). Fold run 33 is reported and waits to merge; 27, 32 and 29b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                        |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33 (each in Findings; the fold queue marks its rows). Fold runs 29b and 27 are reported and wait to merge; 32, 34b and 28c are running in worktrees, with a fix for fold run 26's Aura last-enchanted regression (Followed Footsteps). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                         |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,427 / 2,745 (after fold run 23c) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,414 / 2,737 (after fold run 33) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,941 rows over 4,458 classes (after fold run 23c). Latest verdict per class: `step-9` 551, unique 1,173, absorbed 946, split 641, blocked-other 509, survivor 340, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 551 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,966 rows over 4,464 classes (after fold run 33). Latest verdict per class: `step-9` 533, unique 1,174, absorbed 962, split 641, blocked-other 509, survivor 347, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 533 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -848,6 +848,13 @@ Delayed and global triggers:
 - `RemoveUpToCountersFromAllPermanentsEffect(kind, maxAmount, PermanentSubject)` / `.anyNumber(kind, permanents)`: "remove up to N / any number of [kind | ANY] counters from among [permanents]", one how-many question per permanent and kind, counters removed together, records REMOVE_COUNTERS (fold run 23c).
 - `ChoiceContext.MoveCountersAmountChoice.totalLimit` and removal slots (`CounterMoveSlot.toPermanentId == null`), answered by `RemoveUpToCountersFromAllPermanentsEffectHandler.answer` (fold run 23c).
 - "Remove a [kind] counter from each of any number of [permanents]": `ChoosePermanentsEffect.anyNumber(set, label)` + `RemoveCounterFromSourceEffect(thisWay(CHOOSE), kind)` + `AmountThisWay(REMOVE_COUNTERS)` (Chandra, Legacy of Fire; Garnet; fold run 23c).
+
+- `ReplaceLandManaWithColorEffect` (`colorOfYourChoice()`, `.forLands` `.youControl` `.whenYouTap` `.replacing` `.producing` `.on(subject)` `.lasting(Duration)`): every "if a land is tapped for mana, it produces X instead" replacement, static or floated, read by `GameQueryService.landManaColorReplacements` (fold run 33).
+- `TwistBasicLandManaColorsEffect(Map<CardSubtype, ManaColor>)`: the basic-land type to colour twist (fold run 33).
+- `DrainTargetPlayersLandManaEffect(PlayerSubject, delayedColorless)` / `.forDelayedColorless(player)` (fold run 33).
+- `ManaColorLandScope.SACRIFICED_FOR_COST` / `UNTAPPED_FOR_COST` on `AwardManaOfTypeLandsCouldProduceEffect` (fold run 33).
+- `AwardManaToActivePlayerEffect.to(PlayerSubject)`: "that player / target player adds" (fold run 33).
+- `AwardHasteGrantingManaEffect.Rider` (`HASTE_UNTIL_END_OF_TURN`, `PERMANENT_HASTE`, `INSTANT_OR_SORCERY_CANT_BE_COUNTERED`) (fold run 33).
 
 ### Blocked causes still open
 
@@ -3494,6 +3501,35 @@ Batches `counters-among` with Galloping Lizrog, and `asenters-counter-removal` (
 - player slots with `PlayerCounterType` (Price of Betrayal).
 
 The followers are `CreateTokenEffect(AmountThisWay)` tracked as created with the source (Tetravus) and `BoostSelfEffect(AmountThisWay)` (Hex Parasite). First decide whether the queue's survivor `RemoveChosenCountersFromTargetPermanentEffect` (5 cards, its own `RemoveChosenCountersChoice`) moves onto the same slots too. That rewrites 5 more cards' tests.
+
+### Step 9, fold run 33 (2026-11-24, parallel worktree)
+Batches `land-mana`, `mana-twist`, `mana-drain`, `cost-paid-land`, `player-mana` and `mana-rider` are done. `produced-mana` and `persistent-mana` are left. Ratchet 3,490 / 2,784 → 3,477 / 2,776. Ledger 24 rows (absorbed 14, survivor 7, unique 1, `step-9` 1). 14 card files rewritten, Oracle text checked for all 14. CR 106.4, 106.6, 106.6a, 106.7, 106.12a, 106.12b, 305.7, 605.1a, 605.1b, 605.3a, 608.2h, 614.1a and 616.1 checked.
+
+| Batch | Result |
+|---|---|
+| land-mana | 6 of 7 folded onto `ReplaceLandManaWithColorEffect` (filters `forLands`/`youControl`, `whenYouTap`, `replacing(types)`, `producing(n)`, `on(subject)`, `lasting(Duration)`). Static or floated by its new handler. One reader (`GameQueryService.landManaColorReplacements`) and one pool source (`LandManaColorReplacements`). Each text is a mana replacement (CR 614.1a, 106.12b), not a type change (CR 305.7). Hall of Gemstone keeps its choice record (unique); its floated payload is the survivor `.replacing(COLORS)`. |
+| mana-twist | `TwistBasicLandManaColorsEffect` became the record with the map. It stays apart from the survivor: a twist is one replacement whose multi-type lands choose a colour (2013-04-15 ruling). |
+| mana-drain | `DrainTargetPlayersLandManaEffect(PlayerSubject, delayedColorless)`. The drained player travels on `LandManaDrainAbilityChoice` / `LandManaDrainContinuation`. |
+| produced-mana | Not started: the two tap fallbacks differ (Ultima: the land's mana abilities, which covers Wastes; Caged Sun: basic land types). Check first whether any tap path still reports no produced type. |
+| persistent-mana | Left: the option would be Radha's alone. Fold it with `AwardPersistentManaEffect` (19) and `AwardPersistentAnyColorManaEffect` (3). |
+| cost-paid-land | `ManaColorLandScope.SACRIFICED_FOR_COST` / `UNTAPPED_FOR_COST` (`paidInCost()`) on `AwardManaOfTypeLandsCouldProduceEffect`. The inline branches and collectors are gone. |
+| player-mana | `AwardManaToActivePlayerEffect.to(PlayerSubject)`; `null` keeps the recorded active player. Jetfire is no longer a `ManaProducingEffect` (targeted, CR 605.1a). |
+| mana-rider | `AwardHasteGrantingManaEffect.Rider` (haste until end of turn, permanent haste, instant/sorcery can't be countered) takes Boseiju. `ManaCopyRiderEffect` stays the survivor; Primal Wellspring was not moved. |
+
+**Behaviour changes.**
+- Harvest Mage replaces an opponent's land you tap through Piracy ("if you tap a land"). Test.
+- Benthic Explorers' mana is doubled by Mana Reflection (CR 106.12b). Test.
+- A sole type from `AwardManaOfTypeLandsCouldProduceEffect` goes through False Dawn (`effectiveColor`), so Reflecting Pool now matches Squandered Resources. Test.
+- The survivors' labels and logs win.
+
+**Tests changed.** `DeepWaterTest` and `SunkenPalaceTest`: the option prefix is now "Deep Water". `GameQueryServiceTest`: asks about a real land. `RandomAiDecisionEngineTest` and `GameQueryServiceTest`: float the survivor. Three tests added.
+
+**Seen, not changed.**
+- Reality Twist offers U for a Volcanic Island (an unlisted Island type keeps its colour). `RealityTwistTest` asserts that, and the 2013 ruling is ambiguous for unlisted types. Unsure.
+- Reflecting Pool, Cactus Preserve, Horizon of Progress and Plaza of Harmony report base amount 0 to `LandManaReplacementService.produce`, so Infernal Darkness never replaces their mana. Fairly sure of the code.
+- Boseiju and Hall of the Bandit Lord: when a land-mana replacement applies, the produced mana may lose its rider (CR 106.6a). Unverified.
+
+**For the next run.** `produced-mana`: settle the fallback first, then one `AddManaOfTypeProducedByTappedPermanentEffect` with a colour (fixed or the source's chosen colour) and a recipient. Then `persistent-mana` with the two persistent siblings.
 
 ## Prompt
 

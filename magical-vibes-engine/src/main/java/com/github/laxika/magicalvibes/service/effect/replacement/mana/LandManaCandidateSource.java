@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.replacement.ReplacementCandidateSource;
 
+import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
@@ -50,5 +52,25 @@ abstract class LandManaCandidateSource implements ReplacementCandidateSource<Lan
 
     protected static Set<ManaColor> anyColor() {
         return Set.copyOf(ManaColor.COLORS);
+    }
+
+    /** {@code colors} with each of {@code replaced} turned into {@code replacements}. */
+    protected static Set<ManaColor> replaceColors(Set<ManaColor> colors, Collection<ManaColor> replaced,
+                                                  Collection<ManaColor> replacements) {
+        Set<ManaColor> result = EnumSet.noneOf(ManaColor.class);
+        for (ManaColor color : colors) {
+            if (replaced.contains(color)) {
+                result.addAll(replacements);
+            } else {
+                result.add(color);
+            }
+        }
+        return result;
+    }
+
+    /** {@code colors} with each of {@code replaced} turned into {@code replacement}. */
+    protected static Set<ManaColor> replaceColors(Set<ManaColor> colors, Collection<ManaColor> replaced,
+                                                  ManaColor replacement) {
+        return replaceColors(colors, replaced, Set.of(replacement));
     }
 }

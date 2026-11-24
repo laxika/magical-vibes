@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.ReplaceColoredManaWithWhiteUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ReplaceTargetLandManaWithColorEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplaceLandManaWithColorEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 import java.util.List;
@@ -28,7 +28,10 @@ public final class ManaProductionSupport {
         return color;
     }
 
-    /** Applies both turn-scoped replacements and replacements attached to a specific source land. */
+    /**
+     * Applies both turn-scoped replacements and the "instead of [type]" land-mana replacements floated on the
+     * specific source land (Quarum Trench Gnomes).
+     */
     public static ManaColor effectiveColor(GameData gameData, UUID sourceControllerId,
                                            Permanent source, ManaColor color) {
         ManaColor effectiveColor = effectiveColor(gameData, sourceControllerId, color);
@@ -38,11 +41,12 @@ public final class ManaProductionSupport {
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect floatingEffect : gameData.floatingEffects) {
                 if (!source.getId().equals(floatingEffect.affectedPermanentId())
-                        || !(floatingEffect.effect() instanceof ReplaceTargetLandManaWithColorEffect replacement)
-                        || effectiveColor != replacement.fromColor()) {
+                        || !(floatingEffect.effect() instanceof ReplaceLandManaWithColorEffect replacement)
+                        || replacement.color() == null
+                        || !replacement.replacedTypes().contains(effectiveColor)) {
                     continue;
                 }
-                return replacement.replacementColor();
+                return replacement.color();
             }
         }
         return effectiveColor;

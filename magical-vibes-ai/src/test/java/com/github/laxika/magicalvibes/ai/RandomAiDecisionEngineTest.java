@@ -118,7 +118,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.LandManaProducesFixedColorUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplaceLandManaWithColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -195,8 +195,8 @@ class RandomAiDecisionEngineTest {
         Permanent swamp = harness.addToBattlefieldAndReturn(aiPlayer, new Swamp());
         harness.setHand(aiPlayer, List.of(blueSpell));
         gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, aiPlayer.getId(),
-                new LandManaProducesFixedColorUntilEndOfTurnEffect(ManaColor.BLUE), aiPlayer.getId(),
-                Duration.UNTIL_END_OF_TURN));
+                new ReplaceLandManaWithColorEffect(ManaColor.BLUE).youControl().whenYouTap()
+                        .lasting(Duration.UNTIL_END_OF_TURN), null, Duration.UNTIL_END_OF_TURN));
         harness.forceActivePlayer(aiPlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
