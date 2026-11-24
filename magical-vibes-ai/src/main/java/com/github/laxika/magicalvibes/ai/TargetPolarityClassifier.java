@@ -514,9 +514,9 @@ public class TargetPolarityClassifier {
             return doubling.subject().declaresTarget() ? TargetPolarity.BENEFICIAL : null;
         }
         // Stripping every counter: from a creature it is a debuff (old target-creature record), from any permanent
-        // it swings both ways; the non-target Aura form has no polarity.
+        // or a target player it swings both ways; the non-target forms have no polarity.
         if (effect instanceof RemoveAllCountersFromTargetPermanentEffect removeEvery) {
-            if (!removeEvery.subject().declaresTarget()) {
+            if (removeEvery.targetSpec().equals(com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE)) {
                 return null;
             }
             return removeEvery.targetFilter() != null ? TargetPolarity.HARMFUL : TargetPolarity.NEUTRAL;
@@ -705,7 +705,6 @@ public class TargetPolarityClassifier {
             entry("GainControlOfTargetUntilRansomEffect", TargetPolarity.HARMFUL),
             entry("LockTargetPermanentEffect", TargetPolarity.HARMFUL),
             entry("LoseAllCreatureTypesEffect", TargetPolarity.HARMFUL),
-            entry("RemoveAllCountersAndLockPermanentEffect", TargetPolarity.HARMFUL),
             entry("LosesAllAbilitiesEffect", TargetPolarity.HARMFUL),
             entry("LosesAllNonManaAbilitiesEffect", TargetPolarity.HARMFUL),
             entry("EnchantedPermanentBecomesOnlyLandEffect", TargetPolarity.HARMFUL),

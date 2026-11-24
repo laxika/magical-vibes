@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -35,7 +36,7 @@ public class FinalAct extends Card {
                         new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_PLAYERS)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Each opponent loses all counters",
-                        new EachOpponentLosesAllCountersEffect())
+                        RemoveAllCountersFromTargetPermanentEffect.fromPlayers(Subjects.eachOpponent()))
         )));
     }
 }

@@ -6137,6 +6137,37 @@ public class GameData {
         return removed;
     }
 
+    /** The number of {@code kind} counters {@code playerId} has. */
+    public int playerCounterCount(UUID playerId, PlayerCounterType kind) {
+        return switch (kind) {
+            case POISON -> playerPoisonCounters.getOrDefault(playerId, 0);
+            case ENERGY -> playerEnergyCounters.getOrDefault(playerId, 0);
+            case EXPERIENCE -> playerExperienceCounters.getOrDefault(playerId, 0);
+            case RAD -> playerRadCounters.getOrDefault(playerId, 0);
+            case SPARK -> playerSparkCounters.getOrDefault(playerId, 0);
+        };
+    }
+
+    /**
+     * "That player loses all [kind] counters": removes every {@code kind} counter {@code playerId} has (energy through
+     * {@link #removePlayerEnergyCounters}, so the loss counts for "energy you paid or lost this turn") and returns how
+     * many were removed.
+     */
+    public int removeAllPlayerCounters(UUID playerId, PlayerCounterType kind) {
+        if (kind == PlayerCounterType.ENERGY) {
+            return removePlayerEnergyCounters(playerId, Integer.MAX_VALUE);
+        }
+        Map<UUID, Integer> store = switch (kind) {
+            case POISON -> playerPoisonCounters;
+            case EXPERIENCE -> playerExperienceCounters;
+            case RAD -> playerRadCounters;
+            case SPARK -> playerSparkCounters;
+            case ENERGY -> throw new IllegalStateException();
+        };
+        Integer removed = store.remove(playerId);
+        return removed == null ? 0 : Math.max(0, removed);
+    }
+
     /**
      * Routes a triggered-ability {@link StackEntry} to the main stack, or to
      * {@link #pendingManaAbilityTriggers} when a mana ability is currently resolving

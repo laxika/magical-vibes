@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.b.BurstOfStrength;
 import com.github.laxika.magicalvibes.cards.c.CaressOfPhyrexia;
 import com.github.laxika.magicalvibes.cards.g.GreenwoodSentinel;
 import com.github.laxika.magicalvibes.cards.m.Murder;
+import com.github.laxika.magicalvibes.cards.n.NuclearFallout;
 import com.github.laxika.magicalvibes.cards.r.RealityRipple;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -22,7 +23,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Suncleanser.class, GreenwoodSentinel.class, BurstOfStrength.class, Murder.class,
-        CaressOfPhyrexia.class, AetherMeltdown.class, RealityRipple.class})
+        CaressOfPhyrexia.class, AetherMeltdown.class, RealityRipple.class, NuclearFallout.class})
 class SuncleanserTest extends BaseCardTest {
 
     private static final String CREATURE_MODE =
@@ -140,7 +141,7 @@ class SuncleanserTest extends BaseCardTest {
     }
 
     @Nested
-    @CardUsed({Suncleanser.class, CaressOfPhyrexia.class, Murder.class, AetherMeltdown.class})
+    @CardUsed({Suncleanser.class, CaressOfPhyrexia.class, Murder.class, AetherMeltdown.class, NuclearFallout.class})
     @DisplayName("Mode 2: target opponent loses all counters and is locked")
     class PlayerMode {
 
@@ -228,6 +229,20 @@ class SuncleanserTest extends BaseCardTest {
             harness.addMana(player1, ManaColor.BLACK, 5);
             harness.castAndResolveSorcery(player1, 0, player2.getId());
             assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("The locked opponent can't get rad counters; its controller still gets them")
+        void lockedOpponentCannotGetRadCounters() {
+            castWithPlayerMode();
+            harness.passBothPriorities();
+
+            harness.setHand(player1, List.of(new NuclearFallout()));
+            harness.addMana(player1, ManaColor.BLACK, 3);
+            harness.castAndResolveSorcery(player1, 0, 1);
+
+            assertThat(gd.playerRadCounters.getOrDefault(player2.getId(), 0)).isZero();
+            assertThat(gd.playerRadCounters.getOrDefault(player1.getId(), 0)).isEqualTo(1);
         }
 
         private void castWithPlayerMode() {

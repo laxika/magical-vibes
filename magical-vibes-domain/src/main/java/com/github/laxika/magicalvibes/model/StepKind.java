@@ -28,7 +28,9 @@ package com.github.laxika.magicalvibes.model;
  *   <li>{@link #CREATE_TOKEN}: the number of tokens, the tokens, the players who got them;</li>
  *   <li>{@link #DEAL_DAMAGE}: the total damage dealt, the permanents dealt damage, the players dealt damage;</li>
  *   <li>{@link #GAIN_LIFE}, {@link #LOSE_LIFE}: the total life gained or lost, nothing, the players;</li>
- *   <li>{@link #PUT_COUNTERS}, {@link #REMOVE_COUNTERS}: the number of counters, the permanents, their controllers;</li>
+ *   <li>{@link #PUT_COUNTERS}, {@link #REMOVE_COUNTERS}: the number of counters, the permanents, their controllers
+ *       (a removal from players, {@code RemoveAllCountersFromTargetPermanentEffect}, adds the players that lost
+ *       counters);</li>
  *   <li>{@link #COUNTER_SPELL}, {@link #COPY_SPELL}: 1 when the spell was countered or copied, else 0; a countered
  *       spell's {@link StepOutcome#movedCards()} name the card it became in its graveyard or in exile;</li>
  *   <li>{@link #MANIFEST}: the number of permanents manifested or cloaked, those permanents, their controllers;</li>

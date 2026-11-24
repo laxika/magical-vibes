@@ -6,8 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllRadCountersFromTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.PlayerCounterType;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -22,7 +24,8 @@ public class SurvivorsMedKit extends Card {
                         "Fancy Lads Snack Cakes — Create a Food token.", CreateTokenEffect.ofFoodToken(1)),
                 new ChooseOneEffect.ChooseOneOption(
                         "RadAway — Target player loses all rad counters. Sacrifice this artifact.",
-                        List.of(new RemoveAllRadCountersFromTargetPlayerEffect(), new SacrificeSelfEffect()))
+                        List.of(RemoveAllCountersFromTargetPermanentEffect.fromPlayers(
+                                Subjects.targetPlayer(), PlayerCounterType.RAD), new SacrificeSelfEffect()))
         ));
 
         addActivatedAbility(new ActivatedAbility(

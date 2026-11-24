@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForNextMatchingSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentOrPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -22,7 +23,8 @@ public class MutatedCultist extends Card {
                 "Target must be a permanent or opponent"
         ), 0, 1)
                 .addTrigger(Triggers.youCastThisSpell(),
-                        new RemoveAllCountersFromTargetPermanentOrPlayerEffect(),
+                        RemoveAllCountersFromTargetPermanentEffect.fromPermanentsAndPlayers(
+                                Subjects.target(), Subjects.targetPlayer()),
                         new ReduceCastCostForNextMatchingSpellEffect(new CardTruePredicate(), new EventValue()));
     }
 }

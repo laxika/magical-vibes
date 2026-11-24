@@ -4804,7 +4804,7 @@ public class GameQueryService {
             return true;
         }
         if (gameData.hasFloatingEffectOnPermanent(permanent.getId(),
-                com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAndLockPermanentEffect.class)) {
+                com.github.laxika.magicalvibes.model.effect.CantGetCountersEffect.class)) {
             return true;
         }
         // Solemnity: "Counters can't be put on artifacts, creatures, enchantments, or lands."
@@ -4905,17 +4905,20 @@ public class GameQueryService {
     private record AttachedRestriction(Permanent source, CardEffect restriction) {
     }
 
-    /**
-     * Returns {@code true} if {@code subjectId} (a permanent or a player) is locked out of counters
-     * by a Suncleanser-style effect whose source permanent is still on the battlefield. Stale
-     * entries â€” those whose source has left â€” are ignored rather than cleaned up, matching the
-     * lifetime rule documented on the {@code â€¦WhileSourceOnBattlefield} maps.
-     */
-    /** Whether {@code playerId} can't get counters for as long as a source remains on the battlefield (Suncleanser). */
+    /** Whether a resolution's {@code CantGetCountersEffect} keeps {@code playerId} from getting counters (Suncleanser). */
     private static boolean playerCountersLocked(GameData gameData, UUID playerId) {
         return gameData.floatingEffectsOfTypes(
-                        com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAndLockPlayerEffect.class).stream()
+                        com.github.laxika.magicalvibes.model.effect.CantGetCountersEffect.class).stream()
                 .anyMatch(lock -> playerId.equals(lock.affectedPlayerId()));
+    }
+
+    /**
+     * Whether {@code playerId} can't get counters of any kind: players can't get counters (Solemnity), or a
+     * resolution's {@code CantGetCountersEffect} says that player can't (Suncleanser). Every player counter path asks
+     * it before a counter is put on the player.
+     */
+    public boolean playerCantGetCounters(GameData gameData, UUID playerId) {
+        return playersCantGetCounters(gameData) || playerId != null && playerCountersLocked(gameData, playerId);
     }
 
     private boolean isArtifactCreatureEnchantmentOrLand(
@@ -6075,7 +6078,7 @@ public class GameQueryService {
         if (count <= 0 || playerId == null) {
             return count;
         }
-        if (playersCantGetCounters(gameData)) {
+        if (playerCantGetCounters(gameData, playerId)) {
             return 0;
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
