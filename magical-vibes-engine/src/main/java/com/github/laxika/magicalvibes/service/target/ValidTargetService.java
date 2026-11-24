@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
@@ -167,6 +168,17 @@ public class ValidTargetService {
 
     public ValidTargetsResponse computeValidTargetsForSpell(GameData gameData, Card card, UUID controllerId, List<UUID> alreadySelectedIds, Integer xValue, Boolean kicked) {
         return computeValidTargetsForSpell(gameData, card, controllerId, alreadySelectedIds, xValue, kicked, true);
+    }
+
+    /**
+     * The permanents {@code spell} could target ("each other creature that spell could target", "nonland permanents
+     * that spell could target"): every permanent its controller could choose as one of its targets with its card, X
+     * and mode as it is on the stack, by the same rules as casting (CR 115.1). Not a choice made while casting, so no
+     * Flagbearer requirement applies.
+     */
+    public Set<UUID> permanentIdsSpellCouldTarget(GameData gameData, StackEntry spell) {
+        return Set.copyOf(computeValidTargetsForSpell(gameData, spell.getCard(), spell.getControllerId(), List.of(),
+                spell.getXValue(), null, false).validPermanentIds());
     }
 
     private ValidTargetsResponse computeValidTargetsForSpell(GameData gameData, Card card, UUID controllerId,

@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b (each in Findings; the fold queue marks its rows). Fold runs 29 and 26b are reported and wait to merge; 34, 33 and 23c are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                    |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29 (each in Findings; the fold queue marks its rows). Fold run 26b is reported and waits to merge; 34, 33 and 23c are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                     |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,459 / 2,764 (after fold run 31b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,453 / 2,758 (after fold run 29) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,894 rows over 4,456 classes (after fold run 31b). Latest verdict per class: `step-9` 592, unique 1,170, absorbed 917, split 638, blocked-other 508, survivor 333, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 592 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,904 rows over 4,457 classes (after fold run 29). Latest verdict per class: `step-9` 585, unique 1,170, absorbed 922, split 639, blocked-other 509, survivor 334, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 585 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -829,6 +829,10 @@ Delayed and global triggers:
 - `SetBasePowerToughnessToAmountEffect` with a null side, the live source on `target()`, and a benign target declared by `target()` or a target-reading amount: "this creature's base power becomes equal to target creature's power", "target creature's base P/T become this creature's" (fold run 31b).
 - `SourceToughness(true)` / `TargetToughness(true)` / `TriggeringPermanentToughness(true)`: keep negative toughness for P/T setters (CR 107.1b) (fold run 31b).
 - `PermanentDealtDamageToSourceThisTurnPredicate`: "each creature that dealt damage to it this turn", the source judged as it last existed (CR 603.10a; Brine Hag) (fold run 31b).
+
+- `CopyTriggeringSpellEffect.copiedBy(players)` / `.mayBeCopiedBy(players)`: "each other player [may] copy that spell" (`opponentsOf(controllerOf(triggeringSpell()))`), "target opponent may also copy that spell" (`targetPlayer()`); copiers in APNAP order (fold run 29).
+- `CopyTriggeringSpellEffect.targetingEach(PermanentSubject)`: "copy the spell for each other [permanent] that spell could target, each copy targeting a different one", "the copy targets the chosen permanent" over `thisWay(CHOOSE)` (fold run 29).
+- `ChoosePermanentsEffect.thatTheTriggeringSpellCouldTarget()` and `ValidTargetService.permanentIdsSpellCouldTarget(gameData, spell)` (fold run 29).
 
 ### Blocked causes still open
 
@@ -3341,6 +3345,29 @@ Both batches are done: 10 folded (9 absorbed, 1 split), plus one survivor row. R
 - Giant Albatross's blocked `DestroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffect` reads the same damager set by hand. Step 10 should use the new predicate.
 
 **For the next run.** `floated-name` should get a run of its own with The Irencrag (removing `Permanent.persistentName`).
+
+### Step 9, fold run 29 (2026-11-24, parallel worktree)
+Two batches of five. Ratchet 3,511 / 2,805 → 3,505 / 2,799. Ledger 10 rows: absorbed 6 (one split), survivor 3, blocked-other 1. 9 card files rewritten, Oracle text checked for all 9. Rulings read for Hive Mind, Curse of Echoes, Parnesse, Magmarch, Ink-Treader and Precursor Golem. CR 101.4, 115.1, 603.4, 608.2d, 608.2h, 707.10 and 707.10c checked.
+
+| Batch | Result |
+|---|---|
+| spell-copier | 2 folded, survivor kept. `CopyTriggeringSpellEffect.copiedBy(players)` / `.mayBeCopiedBy(players)`: each copier in APNAP order makes and retargets a copy through `CopyControllerCastSpellEffect`. A "may" is a `MayEffect.forPlayer` per copier. A declared `targetPlayer()` declares a benign player target (Parnesse). |
+| copy-per-perm | 3 members + the unaudited `CopySpellForEachOtherControlledCreatureEffect` (3 cards) folded. `.targetingEach(PermanentSubject)` makes one copy per named permanent the spell could target, with every target and the divided damage moved onto it and no retarget prompt. Ink-Treader's intervening "if" is a `ConditionalEffect(TriggeringSpellMatches)` (CR 603.4). Magmarch and Beamsplitter choose first with `ChoosePermanentsEffect.exactly(1, …).thatTheTriggeringSpellCouldTarget()`. Feather is left: cost-shape, step 10. |
+| card-copy-cast, exile-until-rel, land-or-cast | not started |
+
+**Behaviour changes.**
+- Hive Mind and Curse of Echoes copy in APNAP order, not seat order (rulings; new tests).
+- Precursor Golem judges Golems by effective subtypes, so a changeling gets a copy (new test).
+- "That spell could target" is the spell's full target rules from its controller (`ValidTargetService.permanentIdsSpellCouldTarget`, no Flagbearer; Ink-Treader ruling) for every copy-per-permanent card.
+- A copy of a multi-target spell for another player gets the per-target retarget prompt. The copy log line is the survivor's.
+- `SubjectResolutionService.controllerOf` reads a departed permanent's last controller from the departure snapshots (CR 608.2h). This keeps Magmarch's "another opponent" (new test).
+- The copy handler finds the triggering spell through `CopySupport.triggeringSpell`; a stack ability is never copied.
+
+**Seen, not changed.**
+- Precursor Golem and Ink-Treader: the copies' controller doesn't choose the order they go on the stack (rulings). Sure.
+- Feather's {2} per creature is still paid from the pool only. Fairly sure.
+
+**For the next run.** Do `card-copy-cast` next (7 members; it needs zones outside exile, a {2} reduction, an up-to-N cap and the accept path), then `exile-until-rel`, then `land-or-cast`. Feather can fold once a pay-per-chosen step with mana abilities exists.
 
 ## Prompt
 

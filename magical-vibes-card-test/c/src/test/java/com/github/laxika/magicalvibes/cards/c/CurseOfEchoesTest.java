@@ -7,11 +7,15 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -253,5 +257,47 @@ class CurseOfEchoesTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(originalTarget));
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(originalTarget));
+    }
+
+    @Test
+    @DisplayName("Each other player is offered the copy in APNAP order, starting after the active enchanted player")
+    void copiesAreOfferedInApnapOrder() {
+        Player player3 = addThirdPlayer();
+        attachCurseToPlayer2();
+        harness.setHand(player2, List.of(new CounselOfTheSoratami()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.forceActivePlayer(player2);
+
+        harness.castSorcery(player2, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player3.getId());
+        harness.handleMayAbilityChosen(player3, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).hasSize(3);
+        assertThat(gd.stack.get(1).getControllerId()).isEqualTo(player3.getId());
+        assertThat(gd.stack.get(2).getControllerId()).isEqualTo(player1.getId());
+    }
+
+    private Player addThirdPlayer() {
+        UUID thirdPlayerId = UUID.randomUUID();
+        Player player3 = new Player(thirdPlayerId, "Charlie");
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(thirdPlayerId, "Charlie");
+        gd.playerDecks.put(thirdPlayerId, new ArrayList<>());
+        gd.playerHands.put(thirdPlayerId, new ArrayList<>());
+        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
+        gd.playerGraveyards.put(thirdPlayerId, new ArrayList<>());
+        gd.playerCommandZones.put(thirdPlayerId, new ArrayList<>());
+        gd.playerManaPools.put(thirdPlayerId, new ManaPool());
+        gd.playerLifeTotals.put(thirdPlayerId, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), thirdPlayerId, "Charlie");
+        return player3;
     }
 }

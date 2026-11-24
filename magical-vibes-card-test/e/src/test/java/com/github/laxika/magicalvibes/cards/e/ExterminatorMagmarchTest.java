@@ -218,6 +218,31 @@ class ExterminatorMagmarchTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The targeted permanent's controller is still not another opponent after that permanent left")
+    void targetedPermanentsControllerStaysExcludedAfterItLeft() {
+        addThirdPlayer();
+        harness.addToBattlefield(player1, new ExterminatorMagmarch());
+        Permanent original = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent sameOpponents = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent otherOpponents = harness.addToBattlefieldAndReturn(player3, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, original.getId());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, original.getId());
+
+        harness.passBothPriorities();
+
+        // player3's creature is the only candidate, so it is chosen unasked.
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().isCopy()).isTrue();
+        assertThat(gd.stack.getLast().getTargetId()).isEqualTo(otherOpponents.getId());
+        assertThat(gd.stack.getLast().getTargetId()).isNotEqualTo(sameOpponents.getId());
+    }
+
+    @Test
     void doesNotTriggerWhenTheSpellTargetsTwoDifferentPermanents() {
         addThirdPlayer();
         harness.addToBattlefield(player1, new ExterminatorMagmarch());

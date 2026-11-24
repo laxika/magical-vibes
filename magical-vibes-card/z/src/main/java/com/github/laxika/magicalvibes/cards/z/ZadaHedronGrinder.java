@@ -3,15 +3,21 @@ package com.github.laxika.magicalvibes.cards.z;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsOnlySinglePermanentOrPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+
+import static com.github.laxika.magicalvibes.model.effect.Subjects.controlledBy;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.except;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.source;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.you;
 
 @CardRegistration(set = "BFZ", collectorNumber = "162")
 @CardRegistration(set = "A25", collectorNumber = "156")
@@ -31,6 +37,7 @@ public class ZadaHedronGrinder extends Card {
                         .withStackEntryFilter(new StackEntryAllOfPredicate(List.of(
                                 new StackEntryTargetsOnlySinglePermanentOrPlayerPredicate(),
                                 new StackEntryTargetsSourcePredicate()))),
-                new CopySpellForEachOtherControlledCreatureEffect());
+                new CopyTriggeringSpellEffect().copiedBy(you()).targetingEach(except(
+                        controlledBy(you(), new PermanentIsCreaturePredicate()), source())));
     }
 }

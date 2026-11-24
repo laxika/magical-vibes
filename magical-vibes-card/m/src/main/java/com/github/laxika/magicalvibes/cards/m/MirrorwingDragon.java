@@ -3,15 +3,22 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsOnlySinglePermanentOrPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+
+import static com.github.laxika.magicalvibes.model.effect.Subjects.controlledBy;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.controllerOf;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.except;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.source;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringSpell;
 
 @CardRegistration(set = "INR", collectorNumber = "165")
 @CardRegistration(set = "EMN", collectorNumber = "136")
@@ -31,6 +38,7 @@ public class MirrorwingDragon extends Card {
                         .withStackEntryFilter(new StackEntryAllOfPredicate(List.of(
                                 new StackEntryTargetsOnlySinglePermanentOrPlayerPredicate(),
                                 new StackEntryTargetsSourcePredicate()))),
-                new CopySpellForEachOtherControlledCreatureEffect());
+                new CopyTriggeringSpellEffect().targetingEach(except(
+                        controlledBy(controllerOf(triggeringSpell()), new PermanentIsCreaturePredicate()), source())));
     }
 }

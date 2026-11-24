@@ -41,11 +41,14 @@ import java.util.Objects;
  * @param hostFor    "another permanent [every one of those Auras could enchant]": only the candidates every permanent
  *                   this names could be attached to, none of them a candidate itself; {@code null} for no such
  *                   restriction
+ * @param triggeringSpellCouldTarget "[permanents] that spell could target": only the candidates the spell the trigger
+ *                   event was about could target, as its controller would target them (CR 115.1)
  */
 public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount minimum, DynamicAmount maximum,
                                      Different different, String label, PlayerSubject oneForEach,
                                      boolean random, PlayerSubject chooser, ForEachVote forEachVote,
-                                     PermanentSubject attachableTo, PermanentSubject hostFor)
+                                     PermanentSubject attachableTo, PermanentSubject hostFor,
+                                     boolean triggeringSpellCouldTarget)
         implements CardEffect {
 
     /**
@@ -122,7 +125,7 @@ public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount 
     public ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount minimum, DynamicAmount maximum,
                                   Different different, String label, PlayerSubject oneForEach,
                                   boolean random, PlayerSubject chooser) {
-        this(candidates, minimum, maximum, different, label, oneForEach, random, chooser, null, null, null);
+        this(candidates, minimum, maximum, different, label, oneForEach, random, chooser, null, null, null, false);
     }
 
     /** "Target opponent chooses …" declares that player target; the candidates never declare one. */
@@ -152,7 +155,7 @@ public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount 
     public static ChoosePermanentsEffect forEachVote(String option, PermanentSubject candidates, VoterRelation relation,
                                                      boolean byVoter, String label) {
         return new ChoosePermanentsEffect(candidates, new Fixed(1), new Fixed(1), null, label, null, false, null,
-                new ForEachVote(option, relation, byVoter), null, null);
+                new ForEachVote(option, relation, byVoter), null, null, false);
     }
 
     /** "[Count] of [candidates] chosen at random." */
@@ -180,13 +183,14 @@ public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount 
     public ChoosePermanentsEffect withDifferent(Different quality) {
         return new ChoosePermanentsEffect(candidates, minimum, maximum, quality,
                 label + " with different " + quality.plural(), oneForEach, random, chooser, forEachVote,
-                attachableTo, hostFor);
+                attachableTo, hostFor, triggeringSpellCouldTarget);
     }
 
     /** The same choice made by {@code player} ("target opponent chooses a creature they control"). */
     public ChoosePermanentsEffect chosenBy(PlayerSubject player) {
         return new ChoosePermanentsEffect(candidates, minimum, maximum, different, label, oneForEach, random,
-                Objects.requireNonNull(player, "player"), forEachVote, attachableTo, hostFor);
+                Objects.requireNonNull(player, "player"), forEachVote, attachableTo, hostFor,
+                triggeringSpellCouldTarget);
     }
 
     /**
@@ -196,7 +200,7 @@ public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount 
      */
     public ChoosePermanentsEffect thatCanBeAttachedTo(PermanentSubject host) {
         return new ChoosePermanentsEffect(candidates, minimum, maximum, different, label, oneForEach, random, chooser,
-                forEachVote, Objects.requireNonNull(host, "host"), hostFor);
+                forEachVote, Objects.requireNonNull(host, "host"), hostFor, triggeringSpellCouldTarget);
     }
 
     /**
@@ -206,7 +210,18 @@ public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount 
      */
     public ChoosePermanentsEffect thatCanHost(PermanentSubject attachments) {
         return new ChoosePermanentsEffect(candidates, minimum, maximum, different, label, oneForEach, random, chooser,
-                forEachVote, attachableTo, Objects.requireNonNull(attachments, "attachments"));
+                forEachVote, attachableTo, Objects.requireNonNull(attachments, "attachments"),
+                triggeringSpellCouldTarget);
+    }
+
+    /**
+     * Only the candidates the spell the trigger event was about could target ("choose one of those permanents" of
+     * "another opponent controls nonland permanents that spell could target", Exterminator Magmarch, Beamsplitter
+     * Mage); with no such spell, none.
+     */
+    public ChoosePermanentsEffect thatTheTriggeringSpellCouldTarget() {
+        return new ChoosePermanentsEffect(candidates, minimum, maximum, different, label, oneForEach, random, chooser,
+                forEachVote, attachableTo, hostFor, true);
     }
 
     /** Who makes the choice. */

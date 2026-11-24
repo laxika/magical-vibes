@@ -3,7 +3,10 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -17,12 +20,18 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
+import static com.github.laxika.magicalvibes.model.effect.Subjects.controlledBy;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.except;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.source;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.thisWay;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.you;
+
 @CardRegistration(set = "GRN", collectorNumber = "155")
 public class BeamsplitterMage extends Card {
 
     public BeamsplitterMage() {
         // The intervening "if" ("if you control one or more other creatures that spell could target") is the last
-        // stack-entry filter; the copy effect makes no copy when no such creature is left as it resolves.
+        // stack-entry filter; with no such creature left as the ability resolves, none is chosen and nothing is copied.
         addTrigger(Triggers.youCastSpell()
                         .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),
@@ -33,6 +42,9 @@ public class BeamsplitterMage extends Card {
                                 new StackEntryCouldTargetAnotherPermanentPredicate(new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentControlledBySourceControllerPredicate())), false)))),
-                new CopySpellForEachOtherControlledCreatureEffect(true));
+                SequenceEffect.of(
+                        ChoosePermanentsEffect.exactly(1, except(controlledBy(you(), new PermanentIsCreaturePredicate()),
+                                source()), "another creature to copy the spell onto").thatTheTriggeringSpellCouldTarget(),
+                        new CopyTriggeringSpellEffect().copiedBy(you()).targetingEach(thisWay(StepKind.CHOOSE))));
     }
 }

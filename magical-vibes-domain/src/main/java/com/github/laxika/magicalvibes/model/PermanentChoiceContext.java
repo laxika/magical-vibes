@@ -7,8 +7,6 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CopySpellForAnotherOpponentPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileChosenPermanentsEffect;
@@ -1583,12 +1581,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** Deepfathom Echo: choose another creature the source controller controls to copy until end of turn. */
     record DeepfathomEchoCreatureChoice(UUID controllerId, UUID sourcePermanentId)
-            implements PermanentChoiceContext {}
-
-    record CopySpellForOtherControlledCreatureChoice(CopySpellForEachOtherControlledCreatureEffect effect)
-            implements PermanentChoiceContext {}
-
-    record CopySpellForAnotherOpponentPermanentChoice(CopySpellForAnotherOpponentPermanentEffect effect)
             implements PermanentChoiceContext {}
 
     /** Populate (CR 701.36a): the controller chooses which creature token they control is copied. */

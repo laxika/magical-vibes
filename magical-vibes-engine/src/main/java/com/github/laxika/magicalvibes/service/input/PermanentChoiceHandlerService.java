@@ -845,10 +845,6 @@ public class PermanentChoiceHandlerService {
                     gameData, permanentId, chosenLand);
         } else if (context instanceof PermanentChoiceContext.DeepfathomEchoCreatureChoice deepfathomEcho) {
             battlefieldHandler.handleDeepfathomEchoCreatureChoice(gameData, permanentId, deepfathomEcho);
-        } else if (context instanceof PermanentChoiceContext.CopySpellForOtherControlledCreatureChoice copyChoice) {
-            triggerHandler.handleCopySpellForOtherControlledCreature(gameData, permanentId, copyChoice);
-        } else if (context instanceof PermanentChoiceContext.CopySpellForAnotherOpponentPermanentChoice copyChoice) {
-            triggerHandler.handleCopySpellForAnotherOpponentPermanent(gameData, permanentId, copyChoice);
         } else if (context instanceof PermanentChoiceContext.DemonstrateOpponentChoice demonstrate) {
             triggerHandler.handleDemonstrateOpponentChoice(gameData, permanentId, demonstrate);
         } else if (context instanceof PermanentChoiceContext.SoulbondChoosePartner soulbondChoose) {

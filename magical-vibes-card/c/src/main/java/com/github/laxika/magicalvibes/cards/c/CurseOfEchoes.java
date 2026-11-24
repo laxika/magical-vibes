@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
@@ -11,6 +11,10 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+
+import static com.github.laxika.magicalvibes.model.effect.Subjects.controllerOf;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.opponentsOf;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringSpell;
 
 @CardRegistration(set = "DKA", collectorNumber = "34")
 public class CurseOfEchoes extends Card {
@@ -21,6 +25,6 @@ public class CurseOfEchoes extends Card {
         addTrigger(Triggers.playerCastsSpell().withStackEntryFilter(new StackEntryAllOfPredicate(List.of(
                         new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),
                         new StackEntryControlledByEnchantedPlayerPredicate()))),
-                new CopySpellForEachOtherPlayerEffect(true));
+                new CopyTriggeringSpellEffect().mayBeCopiedBy(opponentsOf(controllerOf(triggeringSpell()))));
     }
 }

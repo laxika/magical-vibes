@@ -2295,6 +2295,14 @@ public class SubjectResolutionService {
         if (lastKnown == null && permanentId.equals(ctx.entry().getSourcePermanentId())) {
             lastKnown = ctx.entry().getSourcePermanentControllerId();
         }
+        if (lastKnown == null) {
+            // A permanent that left before this entry resolved: the controller it had as it left (CR 608.2h).
+            lastKnown = ctx.gameData().departedPermanentSnapshots.values().stream()
+                    .filter(departed -> permanentId.equals(departed.getId()))
+                    .findFirst()
+                    .map(departed -> ctx.gameData().departedPermanentControllerIds.get(departed.getCard().getId()))
+                    .orElse(null);
+        }
         return lastKnown;
     }
 

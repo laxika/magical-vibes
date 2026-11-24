@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import java.util.Collections;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +47,7 @@ public class ChoosePermanentsEffectHandler implements NormalEffectHandlerBean {
     private final PlayerInputService playerInputService;
     private final GameLogService gameLogService;
     private final EquipSupport equipSupport;
+    private final ValidTargetService validTargetService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -151,7 +153,8 @@ public class ChoosePermanentsEffectHandler implements NormalEffectHandlerBean {
      * {@code candidates} narrowed by the choice's attach restrictions ({@link ChoosePermanentsEffect#attachableTo()},
      * {@link ChoosePermanentsEffect#hostFor()}), judged by the attach verb's legality ({@link EquipSupport#canAttach});
      * an attachment already attached to the host is no option either, as attaching it there would do nothing
-     * (CR 701.3b).
+     * (CR 701.3b). With {@link ChoosePermanentsEffect#triggeringSpellCouldTarget()}, only those the triggering spell
+     * could target.
      */
     private List<Permanent> attachFits(GameData gameData, StackEntry entry, ChoosePermanentsEffect choose,
                                        List<Permanent> candidates) {
@@ -171,6 +174,12 @@ public class ChoosePermanentsEffectHandler implements NormalEffectHandlerBean {
                                     && !candidate.getId().equals(attachment.getAttachedTo())
                                     && equipSupport.canAttach(gameData, attachment, candidate)))
                     .toList();
+        }
+        if (choose.triggeringSpellCouldTarget()) {
+            StackEntry spell = CopySupport.triggeringSpell(gameData, entry);
+            Set<UUID> couldTarget = spell == null ? Set.of()
+                    : validTargetService.permanentIdsSpellCouldTarget(gameData, spell);
+            fits = fits.stream().filter(candidate -> couldTarget.contains(candidate.getId())).toList();
         }
         return fits;
     }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -17,6 +17,11 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+
+import static com.github.laxika.magicalvibes.model.effect.Subjects.controlledBy;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.eachPlayer;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.except;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringSpellTargets;
 
 @CardRegistration(set = "SOM", collectorNumber = "194")
 @CardRegistration(set = "MM2", collectorNumber = "225")
@@ -39,6 +44,8 @@ public class PrecursorGolem extends Card {
                                 new StackEntryTargetsOnlySinglePermanentOrPlayerPredicate(),
                                 new StackEntryTargetsPermanentPredicate(
                                         new PermanentHasSubtypePredicate(CardSubtype.GOLEM))))),
-                new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM));
+                new CopyTriggeringSpellEffect().targetingEach(except(
+                        controlledBy(eachPlayer(), new PermanentHasSubtypePredicate(CardSubtype.GOLEM)),
+                        triggeringSpellTargets())));
     }
 }

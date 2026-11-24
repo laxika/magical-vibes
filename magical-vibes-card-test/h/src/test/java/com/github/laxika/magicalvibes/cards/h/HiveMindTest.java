@@ -14,11 +14,15 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -445,5 +449,43 @@ class HiveMindTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         assertThat(copyEntry.getControllerId()).isEqualTo(player1.getId());
         assertThat(copyEntry.getTargetId()).isEqualTo(bearsPermId);
+    }
+
+    @Test
+    @DisplayName("Each other player copies in APNAP order, so the copy of the player after the active player resolves first")
+    void copiesAreMadeInApnapOrder() {
+        Player player3 = addThirdPlayer();
+        harness.addToBattlefield(player1, new HiveMind());
+        harness.setHand(player2, List.of(new CounselOfTheSoratami()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.forceActivePlayer(player2);
+
+        harness.castSorcery(player2, 0, 0);
+        harness.passBothPriorities();
+
+        // Turn order from the active player2 is player3, then player1: player3 puts its copy on the stack first.
+        assertThat(gd.stack).hasSize(3);
+        assertThat(gd.stack.get(1).isCopy()).isTrue();
+        assertThat(gd.stack.get(1).getControllerId()).isEqualTo(player3.getId());
+        assertThat(gd.stack.get(2).isCopy()).isTrue();
+        assertThat(gd.stack.get(2).getControllerId()).isEqualTo(player1.getId());
+    }
+
+    private Player addThirdPlayer() {
+        UUID thirdPlayerId = UUID.randomUUID();
+        Player player3 = new Player(thirdPlayerId, "Charlie");
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(thirdPlayerId, "Charlie");
+        gd.playerDecks.put(thirdPlayerId, new ArrayList<>());
+        gd.playerHands.put(thirdPlayerId, new ArrayList<>());
+        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
+        gd.playerGraveyards.put(thirdPlayerId, new ArrayList<>());
+        gd.playerCommandZones.put(thirdPlayerId, new ArrayList<>());
+        gd.playerManaPools.put(thirdPlayerId, new ManaPool());
+        gd.playerLifeTotals.put(thirdPlayerId, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), thirdPlayerId, "Charlie");
+        return player3;
     }
 }

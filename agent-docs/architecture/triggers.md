@@ -416,7 +416,7 @@ Fells declares its groups with `CONTROLLED_BY_FIRST_TARGET`).
 - Card advantage (Toofer, Keeper of the Full Grip): `StackEntry.cardCountsBeforeResolution`, judged by
   `StackResolutionService` as the spell finishes.
 - Trial and Error's "this spell is countered or fizzles" has the spell as it last existed as triggering spell. A copy
-  trigger's "that spell" is the copy (Parnesse, the Subtle Brush's `CopyCopiedSpellForTargetPlayerEffect`), the copier
+  trigger's "that spell" is the copy (Parnesse, the Subtle Brush's `CopyTriggeringSpellEffect().mayBeCopiedBy(targetPlayer())`), the copier
   "that player", the copy's mana value the event value. Simultaneous cast triggers keep their spell identity;
   separate next-spell-copy effects each make their own entry.
 

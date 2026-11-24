@@ -50,7 +50,7 @@ reverts one of them is a regression:
 |---|---|
 | "Sacrifice it. If you do" (was `SacrificeSelfThenEffectHandler`, which absorbed the `SacrificeSelfAndDrawCards` / `SacrificeSelfAndTargetPlayerDiscards` / `SacrificeSelfThenDealDamageToTargetPlayer` handlers in Step 2; split in effect-cleanup step 8 into `SequenceEffect.of(new SacrificeSelfEffect(), new ConditionalEffect(HappenedThisWay.sacrificed(), payload))`) | The sacrifice departs through `DepartureService` (ally-sacrifice triggers, orphaned Auras) and the payload is gated on the removal succeeding ("If you do"). **Never** write `SequenceEffect.of(SacrificeSelfEffect(), payload)` without the `ConditionalEffect` gate — a sequence splices its steps unconditionally |
 | `AttachSourceEquipmentToTargetCreatureEffectHandler` (absorbed `AttachTargetEquipmentToTargetCreatureEffectHandler` and the other target/triggering Equipment shapes) | Success path logs an attach message, not a fizzle message |
-| `CopySpellForEachOtherSubtypePermanentEffectHandler` | Has the `isCantBeCopied()` guard (CR 707.10) |
+| `CopyTriggeringSpellEffectHandler` (absorbed `CopySpellForEachOtherSubtypePermanentEffectHandler` and the other copy-for-each handlers, fold run 29) | Has the `isCantBeCopied()` guard (CR 707.10) |
 | `DealDamageEqualToChosenTypeCountEffectHandler` (absorbed the `DealDamageToAnyTargetEqualToChosenTypeCount` / `DealDamageToTargetCreatureEqualToChosenTypeCount` handlers) | Applies `applyDamageMultiplier` |
 | `DestroyEachTargetPermanentEffectHandler`, `DestroyPermanentsTargetPlayerControlsEffectHandler` | Route through `DestructionSupport.destroyBatchCollecting` so deaths are simultaneous |
 | `UntapPermanentsEffectHandler.resolveChosenControlled` (absorbed the `UntapUpToControlledPermanentsEffect` handler in Step 11) | Prompts the controller via `MultiPermanentChoiceContext.UntapChosenPermanents` — does not untap the first N in battlefield order |
@@ -1832,6 +1832,8 @@ which is exactly why colorless needed its own record.
 ---
 
 ### Step 25 — Copy-spell-for-each-other
+
+**Done** (effect-cleanup step 9, fold run 29): both absorbed into `CopyTriggeringSpellEffect.targetingEach(PermanentSubject)`, with Ink-Treader Nephilim's and Exterminator Magmarch's records.
 
 **Target**: `CopySpellForEachOtherMatchingPermanentEffect(PermanentPredicate filter)` (the effects read the triggering spell from the stack entry).
 **Absorbs**: `CopySpellForEachOtherControlledCreatureEffect` (1),

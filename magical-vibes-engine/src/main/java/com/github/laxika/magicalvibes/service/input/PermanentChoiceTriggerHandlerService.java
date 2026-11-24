@@ -25,8 +25,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DemonstrateEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellForAnotherOpponentPermanentEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellForEachOtherControlledCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RevealUntilCardPredicateRestOnBottomRandomEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TheMasterGallifreysEndEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseAttackTargetsForCreatedTokensEffectHandler;
@@ -61,8 +59,6 @@ public class PermanentChoiceTriggerHandlerService {
     private final InputCompletionService inputCompletionService;
     private final ETBTokenTargetService etbTokenTargetService;
     private final CreatureControlService creatureControlService;
-    private final CopySpellForEachOtherControlledCreatureEffectHandler copySpellHandler;
-    private final CopySpellForAnotherOpponentPermanentEffectHandler copySpellForAnotherOpponentPermanentHandler;
     private final DemonstrateEffectHandler demonstrateEffectHandler;
     private final TokenCopySupport tokenCopySupport;
     private final RevealUntilCardPredicateRestOnBottomRandomEffectHandler revealUntilCardHandler;
@@ -109,18 +105,6 @@ public class PermanentChoiceTriggerHandlerService {
         }
         String message = "Invalid permanent: " + chosenId;
         return restriction == null ? message : message + ". " + restriction;
-    }
-
-    public void handleCopySpellForOtherControlledCreature(GameData gameData, UUID permanentId,
-                                                          PermanentChoiceContext.CopySpellForOtherControlledCreatureChoice context) {
-        copySpellHandler.completeChoice(gameData, permanentId, context);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleCopySpellForAnotherOpponentPermanent(GameData gameData, UUID permanentId,
-                                                            PermanentChoiceContext.CopySpellForAnotherOpponentPermanentChoice context) {
-        copySpellForAnotherOpponentPermanentHandler.completeChoice(gameData, permanentId, context);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleDemonstrateOpponentChoice(GameData gameData, UUID opponentId,

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.a.AgonyWarp;
+import com.github.laxika.magicalvibes.cards.c.ChangelingOutcast;
 import com.github.laxika.magicalvibes.cards.d.Disembowel;
 import com.github.laxika.magicalvibes.cards.f.ForkedBolt;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -21,7 +22,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PrecursorGolem.class, Shock.class, GrizzlyBears.class, AgonyWarp.class, ForkedBolt.class, Disembowel.class})
+@CardUsed({PrecursorGolem.class, ChangelingOutcast.class, Shock.class, GrizzlyBears.class, AgonyWarp.class, ForkedBolt.class, Disembowel.class})
 class PrecursorGolemTest extends BaseCardTest {
 
     
@@ -271,5 +272,21 @@ class PrecursorGolemTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("No Golem token found"))
                 .getId();
+    }
+
+    @Test
+    @DisplayName("A creature that is a Golem only through changeling also gets a copy")
+    void changelingCreatureIsAGolemForTheCopies() {
+        castAndResolveGolemWithTokens();
+        Permanent changeling = harness.addToBattlefieldAndReturn(player2, new ChangelingOutcast());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, getAnyGolemTokenId(player1));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(4);
+        assertThat(gd.stack.stream().filter(entry -> entry.isCopy())
+                .map(entry -> entry.getTargetId())).contains(changeling.getId());
     }
 }
