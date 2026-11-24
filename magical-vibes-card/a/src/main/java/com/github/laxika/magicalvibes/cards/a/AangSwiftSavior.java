@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AirbendTargetCreatureOrSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -16,6 +15,8 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
+import com.github.laxika.magicalvibes.model.effect.AirbendTargetPermanentEffect;
 
 @CardRegistration(set = "TLA", collectorNumber = "204")
 public class AangSwiftSavior extends Card {
@@ -29,7 +30,8 @@ public class AangSwiftSavior extends Card {
         ));
         target(new PermanentPredicateTargetFilter(anotherCreature,
                 "Target must be another creature"), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new AirbendTargetCreatureOrSpellEffect());
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), AirbendTargetPermanentEffect.targeting(
+                        TargetPredicates.anyOf(TargetPredicates.creature(), TargetPredicates.spellOnStack())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

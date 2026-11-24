@@ -37,6 +37,7 @@ class LethalSchemeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        harness.handlePermanentChosen(player1, firstConvoker.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
 
         harness.handleCardChosen(player1, 0);
@@ -45,6 +46,31 @@ class LethalSchemeTest extends BaseCardTest {
 
         assertThat(firstConvoker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(secondConvoker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The convoking creatures connive one at a time in the order their controller chooses")
+    void controllerChoosesTheConniveOrder() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent firstConvoker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent secondConvoker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LethalScheme()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castInstantWithConvoke(player1, 0, List.of(target.getId()),
+                List.of(firstConvoker.getId(), secondConvoker.getId()));
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice order =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(order.validIds()).containsExactlyInAnyOrder(firstConvoker.getId(), secondConvoker.getId());
+        harness.handlePermanentChosen(player1, secondConvoker.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(secondConvoker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(firstConvoker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test

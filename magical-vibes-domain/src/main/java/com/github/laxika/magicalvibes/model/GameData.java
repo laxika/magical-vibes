@@ -4832,14 +4832,9 @@ public class GameData {
      */
     public boolean removesOwnStaticAbility(UUID permanentId, Class<? extends CardEffect> type) {
         for (FloatingContinuousEffect fe : floatingEffectsOnPermanent(permanentId,
-                com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectUntilEndOfTurnEffect.class,
-                com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectOnTargetUntilEndOfTurnEffect.class)) {
-            Class<? extends CardEffect> removed = fe.effect()
-                    instanceof com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectUntilEndOfTurnEffect self
-                    ? self.effectType()
-                    : ((com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectOnTargetUntilEndOfTurnEffect)
-                    fe.effect()).effectType();
-            if (removed == type) {
+                com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectUntilEndOfTurnEffect.class)) {
+            if (((com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectUntilEndOfTurnEffect) fe.effect())
+                    .effectType() == type) {
                 return true;
             }
         }

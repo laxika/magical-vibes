@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToEachOtherCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TurnTargetCreatureFaceUpIfFaceDownEffect;
+import com.github.laxika.magicalvibes.model.effect.TurnSourceFaceUpEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -15,7 +15,7 @@ public class ShowstoppingSurprise extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature you control"
-        )).addSpellEffect(new TurnTargetCreatureFaceUpIfFaceDownEffect())
+        )).addSpellEffect(TurnSourceFaceUpEffect.ofTarget())
                 .addSpellEffect(new TargetCreatureDealsPowerDamageToEachOtherCreatureEffect());
     }
 }

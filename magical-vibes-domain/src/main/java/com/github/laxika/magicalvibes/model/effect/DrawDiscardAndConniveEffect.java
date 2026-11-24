@@ -3,45 +3,50 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
-import java.util.UUID;
+import java.util.Objects;
 
 /**
- * Makes the controller draw and then discard the given number of cards. The source or targeted
- * permanent gets a +1/+1 counter for each nonland card discarded this way. Any permanent can
- * connive (CR 701.50a); the card's own target filter narrows which permanents are legal ("target
- * creature connives", "target Villain you control connives").
+ * "[Permanent] connives [N]" (CR 701.50a): the conniving permanent's controller draws and then discards that many cards,
+ * and the permanent gets a +1/+1 counter for each nonland card discarded this way. Any permanent can connive; the card's
+ * own target filter narrows which permanents are legal ("target creature connives", "target Villain you control
+ * connives"). A permanent that left the battlefield still connives, by its last known information (CR 701.50b), and
+ * it connives even if some or all of the actions were impossible (CR 701.50f).
  *
- * @param amount number of cards to draw and discard
- * @param targetPermanent whether the counter is applied to this effect's targeted permanent
- * @param triggeringPermanent whether "it connives": the conniving permanent is the stack entry's triggering
- *                            permanent (the creature that entered or attacked), read as the ability resolves
- * @param fixedSourcePermanentId optional non-targeting permanent reference used by effects that
- *                               capture a permanent outside the ordinary target system
+ * <p>When the subject names several permanents ("each of X target creatures you control connive", "each creature that
+ * convoked this spell connives"), they connive one at a time (CR 701.50c): the first player in APNAP order who controls
+ * (or last controlled) one of them chooses which connives next, and so on for the rest.
+ *
+ * @param amount  how many cards are drawn and discarded
+ * @param subject who connives: {@code source()} ("this creature connives"), {@code target()} ("target creature
+ *                connives", every target of a bound multi-target group), {@code triggering()} ("it connives"),
+ *                {@code convokedThisSpell()} (Lethal Scheme) or one named permanent
  */
-public record DrawDiscardAndConniveEffect(DynamicAmount amount, boolean targetPermanent,
-                                          boolean triggeringPermanent,
-                                          UUID fixedSourcePermanentId)
+public record DrawDiscardAndConniveEffect(DynamicAmount amount, PermanentSubject subject)
         implements CardDrawingEffect {
 
+    public DrawDiscardAndConniveEffect {
+        Objects.requireNonNull(amount, "amount");
+        Objects.requireNonNull(subject, "subject");
+    }
+
+    /** "This creature connives N." */
     public DrawDiscardAndConniveEffect(DynamicAmount amount) {
-        this(amount, false, false, null);
+        this(amount, Subjects.source());
     }
 
+    /** "Target creature connives" when {@code targetPermanent}, else "this creature connives". */
     public DrawDiscardAndConniveEffect(boolean targetPermanent) {
-        this(new Fixed(1), targetPermanent, false, null);
+        this(new Fixed(1), targetPermanent);
     }
 
+    /** "This creature connives." */
     public DrawDiscardAndConniveEffect() {
-        this(new Fixed(1), false, false, null);
+        this(new Fixed(1), Subjects.source());
     }
 
+    /** "Target creature connives N" when {@code targetPermanent}, else "this creature connives N". */
     public DrawDiscardAndConniveEffect(DynamicAmount amount, boolean targetPermanent) {
-        this(amount, targetPermanent, false, null);
-    }
-
-    private DrawDiscardAndConniveEffect(DynamicAmount amount, boolean targetPermanent,
-                                        boolean triggeringPermanent) {
-        this(amount, targetPermanent, triggeringPermanent, null);
+        this(amount, targetPermanent ? Subjects.target() : Subjects.source());
     }
 
     /** "It connives": the stack entry's triggering permanent connives. */
@@ -51,12 +56,12 @@ public record DrawDiscardAndConniveEffect(DynamicAmount amount, boolean targetPe
 
     /** "It connives X" (Mask of the Schemer): the stack entry's triggering permanent connives {@code amount}. */
     public static DrawDiscardAndConniveEffect ofTriggeringPermanent(DynamicAmount amount) {
-        return new DrawDiscardAndConniveEffect(amount, false, true);
+        return new DrawDiscardAndConniveEffect(amount, Subjects.triggering());
     }
 
-    /** Binds connive to a captured permanent reference rather than a spell target. */
-    public static DrawDiscardAndConniveEffect forPermanent(UUID permanentId) {
-        return new DrawDiscardAndConniveEffect(new Fixed(1), false, false, permanentId);
+    /** "[Permanents] connive": each permanent {@code subject} names connives once, one at a time. */
+    public static DrawDiscardAndConniveEffect of(PermanentSubject subject) {
+        return new DrawDiscardAndConniveEffect(new Fixed(1), subject);
     }
 
     @Override
@@ -66,11 +71,11 @@ public record DrawDiscardAndConniveEffect(DynamicAmount amount, boolean targetPe
 
     @Override
     public TargetSpec targetSpec() {
-        if (fixedSourcePermanentId != null) {
-            return TargetSpec.NONE;
+        if (subject.declaresTarget()) {
+            return TargetSpec.benign(TargetPredicates.permanent());
         }
-        return targetPermanent
-                ? TargetSpec.benign(TargetPredicates.permanent())
-                : new TargetSpec(null, false, null, true, 1);
+        return subject instanceof PermanentSubject.Source || subject instanceof PermanentSubject.Triggering
+                ? new TargetSpec(null, false, null, true, 1)
+                : TargetSpec.NONE;
     }
 }

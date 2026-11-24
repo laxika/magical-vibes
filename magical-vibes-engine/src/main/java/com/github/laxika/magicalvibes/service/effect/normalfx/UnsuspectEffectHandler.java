@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.SuspectedEffect;
 import com.github.laxika.magicalvibes.model.effect.UnsuspectEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -41,10 +40,6 @@ public class UnsuspectEffectHandler implements NormalEffectHandlerBean {
                 continue;
             }
             target.setSuspected(false);
-            synchronized (gameData.floatingEffects) {
-                gameData.expireFloatingEffects(floating -> targetId.equals(floating.affectedPermanentId())
-                        && floating.effect() instanceof SuspectedEffect);
-            }
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is no longer suspected."));
         }
     }

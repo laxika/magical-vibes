@@ -12,13 +12,28 @@ import java.util.Objects;
  * manifests the top card of their library" after an exile is {@code new ManifestTopCardEffect(new Fixed(1),
  * Subjects.controllerOf(Subjects.target()))} (Reality Shift).
  *
- * @param amount how many cards to manifest
- * @param player who manifests from their own library
+ * <p>"You manifest the top card of that player's library" names the library apart ({@code libraryOwner}): the manifested
+ * permanent is the manifesting player's, whoever owns the card (Orochi Soul-Reaver, Thieving Amalgam).
+ *
+ * @param amount       how many cards to manifest
+ * @param player       who manifests
+ * @param libraryOwner whose library the cards come from, or {@code null} for each manifesting player's own
  */
-public record ManifestTopCardEffect(DynamicAmount amount, PlayerSubject player) implements CardEffect {
+public record ManifestTopCardEffect(DynamicAmount amount, PlayerSubject player, PlayerSubject libraryOwner)
+        implements CardEffect {
 
     public ManifestTopCardEffect {
         Objects.requireNonNull(player, "player");
+    }
+
+    /** {@code player} manifests {@code amount} cards from their own library. */
+    public ManifestTopCardEffect(DynamicAmount amount, PlayerSubject player) {
+        this(amount, player, null);
+    }
+
+    /** "You manifest the top card of that player's library." */
+    public static ManifestTopCardEffect fromLibraryOf(PlayerSubject libraryOwner) {
+        return new ManifestTopCardEffect(new Fixed(1), Subjects.you(), Objects.requireNonNull(libraryOwner));
     }
 
     /** The effect's controller manifests {@code amount} cards. */

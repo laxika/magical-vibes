@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTargetFaceDownPermanentAndMayTurnFaceUpEffect;
-import com.github.laxika.magicalvibes.model.effect.TurnTargetFaceUpEffect;
+import com.github.laxika.magicalvibes.model.effect.TurnSourceFaceUpEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameService;
@@ -57,7 +57,7 @@ public class RevealTargetFaceDownPermanentAndMayTurnFaceUpEffectHandler implemen
                 GameEventFact.RevealZone.PERMANENT, List.of(target.getOriginalCard()));
         if (target.getOriginalCard().hasType(CardType.CREATURE)) {
             mayEffectHandler.resolve(gameData, entry,
-                    new MayEffect(new TurnTargetFaceUpEffect(), "Turn it face up?"));
+                    new MayEffect(TurnSourceFaceUpEffect.ofTarget(), "Turn it face up?"));
         }
     }
 

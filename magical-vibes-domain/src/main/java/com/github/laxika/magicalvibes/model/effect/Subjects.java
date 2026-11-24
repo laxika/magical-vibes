@@ -29,6 +29,7 @@ public final class Subjects {
     private static final PermanentSubject TARGET = new PermanentSubject.Target(null);
     private static final PermanentSubject TARGET_DECLARED_ELSEWHERE = new PermanentSubject.TargetDeclaredElsewhere();
     private static final PermanentSubject PAID_AS_COST = new PermanentSubject.PaidAsCost();
+    private static final PermanentSubject CONVOKED = new PermanentSubject.Convoked();
     private static final PermanentSubject ALL_TARGETS = new PermanentSubject.AllTargets();
     private static final PermanentSubject ATTACHED = new PermanentSubject.Attached();
     private static final PermanentSubject ATTACHED_CREATURE = new PermanentSubject.Attached(true);
@@ -311,6 +312,14 @@ public final class Subjects {
      */
     public static PermanentSubject paidAsCost() {
         return PAID_AS_COST;
+    }
+
+    /**
+     * "Each creature that convoked this spell": the creatures tapped to pay its convoke cost (see
+     * {@link PermanentSubject.Convoked}).
+     */
+    public static PermanentSubject convokedThisSpell() {
+        return CONVOKED;
     }
 
     /**

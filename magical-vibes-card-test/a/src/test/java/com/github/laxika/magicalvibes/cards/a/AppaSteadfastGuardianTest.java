@@ -71,6 +71,7 @@ class AppaSteadfastGuardianTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can enter choosing no permanents to airbend")
     void canChooseZeroTargets() {
         Permanent crawler = harness.addToBattlefieldAndReturn(player1, new CanyonCrawler());
         harness.setHand(player1, List.of(new AppaSteadfastGuardian()));
@@ -86,6 +87,7 @@ class AppaSteadfastGuardianTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can't airbend a permanent an opponent controls")
     void cannotTargetOpponentsPermanent() {
         Permanent crawler = harness.addToBattlefieldAndReturn(player2, new CanyonCrawler());
         harness.setHand(player1, List.of(new AppaSteadfastGuardian()));
@@ -96,6 +98,7 @@ class AppaSteadfastGuardianTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can airbend a noncreature artifact token, which ceases to exist")
     void canAirbendNoncreatureArtifactToken() {
         harness.enterBattlefieldAndReturn(player1, new CanyonCrawler());
         resolveAllTriggers();
@@ -114,6 +117,7 @@ class AppaSteadfastGuardianTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Casting a spell from your hand creates no Ally")
     void castingFromHandDoesNotCreateAlly() {
         harness.addToBattlefield(player1, new AppaSteadfastGuardian());
         harness.setHand(player1, List.of(new CanyonCrawler()));
@@ -128,6 +132,7 @@ class AppaSteadfastGuardianTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Ally is created before the spell cast from exile resolves")
     void allyIsCreatedBeforeExiledSpellResolves() {
         Permanent crawler = harness.addToBattlefieldAndReturn(player1, new CanyonCrawler());
         harness.setHand(player1, List.of(new AppaSteadfastGuardian()));
@@ -147,6 +152,7 @@ class AppaSteadfastGuardianTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent casting from exile doesn't trigger your Appa")
     void opponentsExileCastDoesNotTriggerYourAppa() {
         harness.addToBattlefield(player1, new AppaSteadfastGuardian());
         Permanent crawler = harness.addToBattlefieldAndReturn(player2, new CanyonCrawler());
@@ -168,6 +174,7 @@ class AppaSteadfastGuardianTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Appa can be cast during an opponent's turn")
     void canCastAppaDuringOpponentsTurn() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -182,6 +189,7 @@ class AppaSteadfastGuardianTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A creature without flying or reach can't block Appa")
     void flyingPreventsGroundCreatureFromBlocking() {
         addCreatureReady(player1, new AppaSteadfastGuardian());
         addCreatureReady(player2, new CanyonCrawler());
@@ -194,6 +202,7 @@ class AppaSteadfastGuardianTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The remaining legal target is airbent when another target leaves")
     void remainingLegalTargetIsAirbentWhenAnotherTargetLeaves() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new CanyonCrawler());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new CanyonCrawler());
@@ -212,6 +221,7 @@ class AppaSteadfastGuardianTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The airbend cast permission remains after Appa leaves the battlefield")
     void airbendPermissionRemainsAfterAppaLeaves() {
         Permanent crawler = harness.addToBattlefieldAndReturn(player1, new CanyonCrawler());
         harness.setHand(player1, List.of(new AppaSteadfastGuardian()));

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TurnTargetCreatureFaceUpEffect;
+import com.github.laxika.magicalvibes.model.effect.TurnSourceFaceUpEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,7 +25,7 @@ public class SkirkAlarmist extends Card {
                 true,
                 null,
                 List.of(
-                        new TurnTargetCreatureFaceUpEffect(),
+                        TurnSourceFaceUpEffect.ofTarget(),
                         RegisterDelayedStepTriggerEffect.aboutAtNext(Triggers.endStep(ActivePlayer.ANY),
                                 Subjects.target(),
                                 SacrificeSelfEffect.ofTriggeringPermanent())

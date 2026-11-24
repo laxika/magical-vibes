@@ -790,7 +790,7 @@ public class TargetPolarityClassifier {
             // Feint can save either an attacker or its blockers depending on the combat state.
             entry("TapAndPreventCombatDamageByTargetAndBlockersEffect", TargetPolarity.NEUTRAL),
             entry("TurnTargetCreatureFaceDownEffect", TargetPolarity.NEUTRAL),
-            entry("TurnTargetCreatureFaceUpEffect", TargetPolarity.NEUTRAL),
+            entry("TurnSourceFaceUpEffect", TargetPolarity.NEUTRAL),
 
             // The target's side comes out ahead: pumps, shields, blinks, lure, animation.
             entry("AnimatePermanentsEffect", TargetPolarity.BENEFICIAL),
@@ -804,7 +804,6 @@ public class TargetPolarityClassifier {
             entry("DoublePlusOneCountersOnTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("DoubleTargetCreaturePowerEffect", TargetPolarity.BENEFICIAL),
             entry("DrawDiscardAndConniveEffect", TargetPolarity.BENEFICIAL),
-            entry("ConniveEachTargetEffect", TargetPolarity.BENEFICIAL),
             entry("PhaseOutChosenTargetCreaturesEffect", TargetPolarity.BENEFICIAL),
             entry("FlickerEffect", TargetPolarity.BENEFICIAL),
             entry("ExileTargetPermanentThenDiscardAndReturnToBattlefieldEffect", TargetPolarity.BENEFICIAL),
@@ -820,7 +819,6 @@ public class TargetPolarityClassifier {
             entry("GrantActivatedAbilityEffect", TargetPolarity.BENEFICIAL),
             entry("CanBlockAnyNumberOfCreaturesUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("CantBeBlockedEffect", TargetPolarity.BENEFICIAL),
-            entry("TurnTargetCreatureFaceUpIfFaceDownEffect", TargetPolarity.BENEFICIAL),
             entry("GrantAdditionalBlockToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantChosenKeywordEffect", TargetPolarity.BENEFICIAL),
             entry("GrantEffectToTargetEffect", TargetPolarity.BENEFICIAL),
@@ -893,8 +891,7 @@ public class TargetPolarityClassifier {
             entry("SetTargetPermanentSupertypeEffect", TargetPolarity.NEUTRAL),
             entry("SetCardTypesEffect", TargetPolarity.HARMFUL),
             entry("BecomeColorlessUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
-            entry("SwitchPowerToughnessEffect", TargetPolarity.NEUTRAL),
-            entry("SuspectTargetCreatureEffect", TargetPolarity.NEUTRAL)
+            entry("SwitchPowerToughnessEffect", TargetPolarity.NEUTRAL)
     );
 
     /**

@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SuspectReturnedPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "89")
 @CardRegistration(set = "MKM", collectorNumber = "299")
@@ -18,6 +19,6 @@ public class ItDoesntAddUp extends Card {
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .targetGraveyard(true)
                 .build());
-        addSpellEffect(new SuspectReturnedPermanentEffect());
+        addSpellEffect(new SuspectEffect(Subjects.returnedThisResolution()));
     }
 }

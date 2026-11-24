@@ -6,16 +6,16 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
-import com.github.laxika.magicalvibes.model.effect.UnsuspectAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.UnsuspectEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "2")
 public class AbsolvingLammasu extends Card {
 
     public AbsolvingLammasu() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new UnsuspectAllCreaturesEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new UnsuspectEffect(Subjects.allCreatures()));
 
         target(TargetFilters.creatureAnOpponentControls(), 0, 1)
                 .addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(

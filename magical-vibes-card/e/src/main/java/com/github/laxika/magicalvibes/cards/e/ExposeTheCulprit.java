@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileFaceDownPileEffect;
-import com.github.laxika.magicalvibes.model.effect.TurnTargetFaceUpEffect;
+import com.github.laxika.magicalvibes.model.effect.TurnSourceFaceUpEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -22,7 +23,10 @@ public class ExposeTheCulprit extends Card {
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Turn target face-down creature face up",
-                        new TurnTargetFaceUpEffect()),
+                        TurnSourceFaceUpEffect.ofTarget(),
+                        new PermanentPredicateTargetFilter(new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(), new PermanentIsFaceDownPredicate())),
+                                "Target must be a face-down creature")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile any number of face-up creatures you control with disguise in a face-down pile, shuffle that pile, then cloak them",
                         ExileFaceDownPileEffect.thenCloak(new ExileFaceDownPileEffect.AnyNumberYouControl(

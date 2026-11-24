@@ -21,14 +21,6 @@ public record PendingConnive(UUID sourcePermanentId, int remainingDiscards, Perm
         this(sourcePermanentId, remainingDiscards, lastKnownSource, lastKnownControllerId, 0);
     }
 
-    public PendingConnive(UUID sourcePermanentId, int remainingDiscards) {
-        this(sourcePermanentId, remainingDiscards, null, null);
-    }
-
-    public PendingConnive(UUID sourcePermanentId) {
-        this(sourcePermanentId, 1);
-    }
-
     public PendingConnive withRemainingDiscards(int remaining) {
         return new PendingConnive(sourcePermanentId, remaining, lastKnownSource, lastKnownControllerId,
                 nonlandDiscards);

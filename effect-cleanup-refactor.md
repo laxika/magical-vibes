@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 44, 45, 46; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                 |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44 (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 45 (follow-up), 46; merge queue 45. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                  |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,190 / 2,605 (after fold run 41b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,171 / 2,587 (after fold run 44) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,379 rows over 4,530 classes (after fold run 41b). Latest verdict per class: `step-9` 238, unique 1,181, absorbed 1,194, split 662, blocked-other 540, survivor 410, blocked-step-model 140, blocked-player-loop 96, dead 69. Waiting: 238 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,415 rows over 4,533 classes (after fold run 44). Latest verdict per class: `step-9` 213, unique 1,183, absorbed 1,211, split 663, blocked-other 540, survivor 417, blocked-step-model 140, blocked-player-loop 96, dead 70. Waiting: 213 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -993,6 +993,17 @@ Delayed and global triggers:
 - `SearchLibraryEffect.targetSpec` declares a benign permanent target when its filter reads a target subject ("cards with the same name as target creature", Pack Hunt; fold run 41b).
 - `LookAtTopCardsOfTargetLibraryEffect.lookingAt(count, PlayerSubject)`: private, promptless LOOK_ONLY at `you()`, `eachPlayer()` or `targetPlayerDeclaredElsewhere()` libraries (fold run 41b).
 - `LookAtFaceDownCreatureEffect(PermanentSubject)`: look at each face-down creature a set names (Revealing Wind, Spy Network; fold run 41b).
+
+- `Subjects.convokedThisSpell()` (`PermanentSubject.Convoked`): "each creature that convoked this spell / it"; `permanentIds` names those that left too (connive, Venerated Loxodon, Zephyr Singer) (fold run 44).
+- `DrawDiscardAndConniveEffect(amount, PermanentSubject)` / `.of(subject)` and `PermanentChoiceContext.ConniveOrderChoice`: several permanents connive one at a time, the APNAP player choosing (CR 701.50c) (fold run 44).
+- `AirbendTargetPermanentEffect(PermanentSubject, TargetSpec)` / `.targeting(TargetPredicate)` / `.of(subject)`: airbend permanents (one exile event) and a target spell (fold run 44).
+- `ManifestTopCardEffect.fromLibraryOf(player)` / `CloakTopCardOfControllerLibraryEffect.fromLibraryOf(player)` and `ManifestService.manifestTopCard(gd, libraryOwner, controller, source)`: manifest or cloak from another player's library, tracked as the manifester's (fold run 44).
+- `TurnSourceFaceUpEffect.ofTarget()`: every effect turn-face-up goes through `GameService.turnPermanentFaceUpWithoutPayingManaCost` and reveals a face-down instant or sorcery (CR 701.40g) (fold run 44).
+- `AssignNoCombatDamageEffect(PermanentSubject, thisCombatOnly)` / `.of(subject)`, `SuppressStaticEffectUntilEndOfTurnEffect(type, subject)`, `SimultaneouslyFlipAllPermanentsTapStatesEffect(PermanentSubject)`, `BecomePreparedEffect.ofTarget()` / `(asTriggeredAbility, subject)` (fold run 44).
+
+Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671-d50e7ccdb4f0/scratchpad/fold-44:
+- ledger-rows.csv
+- test1.log
 
 ### Blocked causes still open
 
@@ -4387,6 +4398,36 @@ For the next run: a targets-x run (one target-aware reader that sums every categ
 **For the next run.**
 - may-reveal-hand (3) and topcard-bf (4): their records stage may-abilities through `pendingMayAbilities` with `Stage` enums; the fold moves the stages onto the survivors.
 - Descendants' Fury: the recipe is in its ledger row; `CardSharesCreatureTypeWithPermanentsPredicate(departedThisWay(SACRIFICE))` now exists. Compare the old `cantBeChosenToSacrifice` filter with `ChoosePermanentsEffect`'s.
+
+### Step 9, fold run 44 (2026-11-24, parallel worktree)
+10 of 12 batches done (next-spell-rider waits for 44b, timing-perm stays `unique`). Ratchet 3,274 / 2,650 → 3,255 / 2,632. Ledger 37 rows: survivor 10, absorbed 20, split 1, dead 1, unique 3, step-9 4. 29 card files rewritten; Oracle text checked for 13. CR numbers checked: 101.2, 400.7, 603.10a, 608.2b, 613.1f, 613.7, 701.40a, 701.40g, 701.50b, 701.50c, 701.50f, 701.60b, 701.60c, 701.60d, 701.65a, 701.65b, 702.51a, 708.8.
+
+| Batch | Result |
+|---|---|
+| airbend | 2 folded. `AirbendTargetPermanentEffect(PermanentSubject, TargetSpec declaredTarget)` with `targeting(TargetPredicate)` (Aang's spell branch is the verb's rules, CR 701.65a) and `of(subject)` (Monk Gyatso's `triggering()`). Avatar's Wrath is `except(allCreatures(), targetDeclaredElsewhere())` with its spared target. One exile event, one airbend event if anything was exiled. AirbendSupport is gone. |
+| connive | 2 folded, plus PutCounterOnConvokeCreaturesEffect. `DrawDiscardAndConniveEffect(amount, PermanentSubject)`; the flags became subjects. Several conniving permanents go one at a time (CR 701.50c) through `ConniveOrderChoice`, inserting single connives the way explore does. |
+| suspect | 2 absorbed, SuspectedEffect dead, Snarlfang `unique` (its trigger would have to contain itself). |
+| unsuspect | 1 folded over set subjects. |
+| suppression | 1 folded (`target()`). |
+| tap-flip | 1 folded (`controlledBy(activePlayer(), …)`). |
+| turn-face-up | 3 folded onto `TurnSourceFaceUpEffect.ofTarget()`. Every subject now uses the GameService path (prevention check, turn tracking) plus the CR 701.40g reveal. Expose the Culprit's option got a face-down creature filter. |
+| no-combat-dmg | 1 absorbed, 1 split (Cloak of Confusion: the no-damage step + `DiscardEffect(defendingPlayer(), random)`). `AssignNoCombatDamageEffect(PermanentSubject, thisCombatOnly)`. Floral Spuzzem and Goblin Vandal's record left for 44b: does a regeneration count for HappenedThisWay.destroyed()? Vandal's "if you do" is the payment; the TriggerTargetCollector special case is shared. |
+| manifest-other | 2 folded. A library-owner PlayerSubject on `ManifestTopCardEffect` and `CloakTopCardOfControllerLibraryEffect` (`fromLibraryOf(triggeringPlayer())`). One `ManifestService.manifestTopCard(owner, controller)`. |
+| next-spell-rider | 0 folded. `GameData.applyNextSpellRiders` (domain) checks hard-coded types; a CardPredicate needs an engine cast hook ahead of the enter-counter copy in `SpellEvents.cast`, reached by every recordSpellCast path. |
+| prepared | 1 folded (`BecomePreparedEffect.ofTarget()`; the flag became a subject). The copy goes to the prepared permanent's controller. |
+| timing-perm | 0 folded, 2 `unique`. No existing static carries an activated-ability filter, and an equip-only option would be Leonin's alone (guard rail). |
+
+**Behaviour changes:** as listed in the report above. Two survivor guards now cover the absorbed cards: the CR 701.60d skip for J. Jonah Jameson, and the manifest-blocked check for Orochi Soul-Reaver and Thieving Amalgam.
+
+**Tests changed:** LethalSchemeTest (the order prompt, CR 701.50c); 4 tests added.
+
+**Seen, not changed:**
+- Goblin Vandal with an indestructible artifact: once you pay, the creature must still assign no combat damage (Oracle text), but the handler returns early. Sure.
+- The AI reads Avatar's Wrath's spared target as harmful removal. Sure.
+- AvatarsWrathTest and AppaSteadfastGuardianTest have methods without `@DisplayName`. Sure.
+- The copy-service turn-face-up path used by SBA does not check "can't be turned face up". Unverified.
+
+**For the next run (44b):** the next-spell-rider cast hook; Floral Spuzzem and Goblin Vandal's split together with `GainControlOfPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffect`.
 
 ## Prompt
 

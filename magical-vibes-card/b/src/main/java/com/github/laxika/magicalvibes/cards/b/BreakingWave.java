@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.effect.SimultaneouslyFlipAllPermanentsTapStatesEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -15,6 +15,6 @@ public class BreakingWave extends Card {
     public BreakingWave() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{4}{U}{U}")), null, true)
                 .withFlashAdditionalGenericCost(2));
-        addSpellEffect(new SimultaneouslyFlipAllPermanentsTapStatesEffect(new PermanentIsCreaturePredicate()));
+        addSpellEffect(new SimultaneouslyFlipAllPermanentsTapStatesEffect(Subjects.allCreatures()));
     }
 }

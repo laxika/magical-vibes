@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentExiles
 import com.github.laxika.magicalvibes.service.effect.normalfx.RiskyMoveEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.MemoriesReturningEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BoostEquippedCreatureUntilEndOfTurnEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DrawDiscardAndConniveEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExploreEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChangeTargetOfTargetSpellToSourceEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveCounterFromControlledCreatureThenDrawEffectHandler;
@@ -112,6 +113,7 @@ public class PermanentChoiceHandlerService {
             removeCounterFromControlledCreatureThenDrawEffectHandler;
     private final ChangeTargetOfTargetSpellToSourceEffectHandler changeTargetOfTargetSpellToSourceEffectHandler;
     private final ExploreEffectHandler exploreEffectHandler;
+    private final DrawDiscardAndConniveEffectHandler drawDiscardAndConniveEffectHandler;
     private final BoostEquippedCreatureUntilEndOfTurnEffectHandler boostEquippedCreatureUntilEndOfTurnEffectHandler;
     private final InputCompletionService inputCompletionService;
     private final EarthbendTargetLandThenFightEffectHandler earthbendThenFightHandler;
@@ -781,8 +783,10 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleHandAbilityCostChoice(gameData, player, permanentId, handCostChoice);
         } else if (context instanceof PermanentChoiceContext.MayAbilityTapCostChoice mayTapCostChoice) {
             battlefieldHandler.handleMayAbilityTapCostChoice(gameData, player, permanentId, mayTapCostChoice);
-        } else if (context instanceof PermanentChoiceContext.ConniveNextCreatureChoice
-                || context instanceof PermanentChoiceContext.ChosenPermanentReference) {
+        } else if (context instanceof PermanentChoiceContext.ConniveOrderChoice conniveOrder) {
+            drawDiscardAndConniveEffectHandler.completeOrderChoice(gameData, permanentId, conniveOrder);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        } else if (context instanceof PermanentChoiceContext.ChosenPermanentReference) {
             gameData.pendingEffectResolutionEntry.setChosenPermanentId(permanentId);
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.RecordChosenPermanents chosen) {

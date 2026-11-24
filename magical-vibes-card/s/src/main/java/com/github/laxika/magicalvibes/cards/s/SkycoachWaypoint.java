@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.MakeTargetCreaturePreparedEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class SkycoachWaypoint extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}",
-                List.of(new MakeTargetCreaturePreparedEffect()),
+                List.of(BecomePreparedEffect.ofTarget()),
                 "{3}, {T}: Target creature becomes prepared.",
                 TargetFilters.creature()
         ));

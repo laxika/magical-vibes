@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ConniveConvokeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -10,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
 
 @CardRegistration(set = "MSC", collectorNumber = "157")
 @CardRegistration(set = "MSC", collectorNumber = "353")
@@ -33,6 +34,6 @@ public class LethalScheme extends Card {
                 )),
                 "Target must be a creature or planeswalker"
         )).addSpellEffect(new DestroyTargetPermanentEffect());
-        addSpellEffect(new ConniveConvokeCreaturesEffect());
+        addSpellEffect(DrawDiscardAndConniveEffect.of(Subjects.convokedThisSpell()));
     }
 }

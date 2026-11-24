@@ -26,7 +26,8 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
         PermanentSubject.TriggeringSpellTargets, PermanentSubject.CreatedThisResolution, PermanentSubject.BandmatesOf,
         PermanentSubject.WithCreaturesSharingAColor, PermanentSubject.OtherPermanentsSharing, PermanentSubject.AttachedAndSharingCreatureType,
         PermanentSubject.Searched, PermanentSubject.Picked, PermanentSubject.ThisWay, PermanentSubject.DepartedThisWay,
-        PermanentSubject.TargetDeclaredElsewhere, PermanentSubject.PaidAsCost, PermanentSubject.Voted {
+        PermanentSubject.TargetDeclaredElsewhere, PermanentSubject.PaidAsCost, PermanentSubject.Voted,
+        PermanentSubject.Convoked {
 
     /** Whether this subject is the effect's own target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -670,6 +671,25 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
 
         @Override
         public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * "Each creature that convoked this spell", "each creature that convoked it" (CR 702.51a): the creatures the stack
+     * entry recorded as tapped to pay the spell's convoke cost (an enters ability of a permanent spell reads its
+     * spell's). A verb acting on permanents finds those still on the battlefield; one acting on last-known information
+     * (connive, CR 701.50b) names those that left too.
+     */
+    record Convoked() implements PermanentSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+
+        @Override
+        public boolean isSet() {
             return true;
         }
     }

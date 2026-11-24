@@ -6,9 +6,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SimultaneouslyFlipAllPermanentsTapStatesEffect;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -17,15 +16,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Resolves {@link SimultaneouslyFlipAllPermanentsTapStatesEffect} from a pre-resolution
- * battlefield snapshot.
+ * Resolves {@link SimultaneouslyFlipAllPermanentsTapStatesEffect}: the subject's permanents are found and split by
+ * tap state before either half is applied.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class SimultaneouslyFlipAllPermanentsTapStatesEffectHandler implements NormalEffectHandlerBean {
 
-    private final PredicateEvaluationService predicateEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
     private final TapUntapSupport tapUntapSupport;
     private final GameLogService gameLogService;
 
@@ -37,22 +36,13 @@ public class SimultaneouslyFlipAllPermanentsTapStatesEffectHandler implements No
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (SimultaneouslyFlipAllPermanentsTapStatesEffect) effect;
-        FilterContext filterContext = FilterContext.of(gameData)
-                .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
-                .withSourceControllerId(entry.getControllerId());
-
         List<Permanent> toUntap = new ArrayList<>();
         List<Permanent> toTap = new ArrayList<>();
-        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
-            for (Permanent permanent : battlefield) {
-                if (!predicateEvaluationService.matchesPermanentPredicate(permanent, e.filter(), filterContext)) {
-                    continue;
-                }
-                if (permanent.isTapped()) {
-                    toUntap.add(permanent);
-                } else {
-                    toTap.add(permanent);
-                }
+        for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect, e.permanents())) {
+            if (permanent.isTapped()) {
+                toUntap.add(permanent);
+            } else {
+                toTap.add(permanent);
             }
         }
 
@@ -70,10 +60,9 @@ public class SimultaneouslyFlipAllPermanentsTapStatesEffectHandler implements No
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
-                .text(" simultaneously flips the tap state of " + flipped
-                        + " permanent(s) on all battlefields.")
+                .text(" simultaneously flips the tap state of " + flipped + " permanent(s).")
                 .build());
-        log.info("Game {} - {} flips tap state of {} permanents on all battlefields",
+        log.info("Game {} - {} flips tap state of {} permanents",
                 gameData.id,
                 entry.getCard() != null ? entry.getCard().getName() : "effect",
                 flipped);

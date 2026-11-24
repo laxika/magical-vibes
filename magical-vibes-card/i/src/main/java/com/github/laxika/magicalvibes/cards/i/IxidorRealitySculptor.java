@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TurnTargetCreatureFaceUpEffect;
+import com.github.laxika.magicalvibes.model.effect.TurnSourceFaceUpEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
@@ -18,7 +18,7 @@ public class IxidorRealitySculptor extends Card {
 
     public IxidorRealitySculptor() {
         addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreatures(), new PermanentIsFaceDownPredicate()));
-        addActivatedAbility(new ActivatedAbility(false, "{2}{U}", List.of(new TurnTargetCreatureFaceUpEffect()),
+        addActivatedAbility(new ActivatedAbility(false, "{2}{U}", List.of(TurnSourceFaceUpEffect.ofTarget()),
                 "{2}{U}: Turn target face-down creature face up.",
                 new PermanentPredicateTargetFilter(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(), new PermanentIsFaceDownPredicate())),

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -16,11 +17,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AvatarsWrath.class, HogMonkey.class, AvatarAang.class, AirbendersReversal.class,
+@CardUsed({AvatarsWrath.class, HogMonkey.class, AangAirbendingMaster.class, AvatarAang.class, AirbendersReversal.class,
         MishrasFactory.class, FireNationAttacks.class, Plains.class})
 class AvatarsWrathTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Airbends every creature but the chosen one, then exiles itself")
     void airbendsAllOtherCreaturesAndExilesItself() {
         Permanent chosen = harness.addToBattlefieldAndReturn(player1, new HogMonkey());
         Permanent other = harness.addToBattlefieldAndReturn(player2, new HogMonkey());
@@ -36,6 +38,7 @@ class AvatarsWrathTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With no creature chosen, every creature is airbent")
     void withoutATargetAirbendsEveryCreature() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new HogMonkey());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new HogMonkey());
@@ -50,6 +53,7 @@ class AvatarsWrathTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Opponents can't cast their airbent creatures from exile until your next turn")
     void opponentsCannotCastAirbentCreaturesUntilYourNextTurn() {
         Permanent chosen = harness.addToBattlefieldAndReturn(player1, new HogMonkey());
         Permanent other = harness.addToBattlefieldAndReturn(player2, new HogMonkey());
@@ -69,6 +73,7 @@ class AvatarsWrathTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Doesn't resolve when its only target leaves the battlefield first")
     void doesNotResolveWhenItsChosenTargetLeavesTheBattlefield() {
         Permanent chosen = harness.addToBattlefieldAndReturn(player2, new HogMonkey());
         Permanent other = harness.addToBattlefieldAndReturn(player1, new HogMonkey());
@@ -97,6 +102,7 @@ class AvatarsWrathTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Airbending nothing doesn't trigger \"whenever you airbend\" abilities")
     void doesNotTriggerAirbendingWhenTheOnlyCreatureIsChosen() {
         Permanent aang = harness.addToBattlefieldAndReturn(player1, new AvatarAang());
         harness.setHand(player1, List.of(new AvatarsWrath()));
@@ -110,6 +116,7 @@ class AvatarsWrathTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("You can cast your own airbent creature for two generic mana")
     void controllerCanRecastAnAirbentCreatureForTwoGenericMana() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new HogMonkey());
         harness.setHand(player1, List.of(new AvatarsWrath()));
@@ -125,6 +132,7 @@ class AvatarsWrathTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The casting restriction lasts through the opponent's turn and ends on your next turn")
     void restrictionLastsThroughOpponentsTurnAndExpiresOnControllersNextTurn() {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
@@ -149,6 +157,7 @@ class AvatarsWrathTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Opponents can still cast creature spells from their hands")
     void opponentsCanStillCastCreaturesFromTheirHands() {
         harness.castFromHand(player1, new AvatarsWrath(), "{2}{W}{W}");
         harness.passBothPriorities();
@@ -162,6 +171,7 @@ class AvatarsWrathTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An airbent animated land can't be played from exile")
     void airbendingAnAnimatedLandDoesNotGrantPermissionToPlayIt() {
         Permanent factory = harness.addToBattlefieldAndReturn(player1, new MishrasFactory());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -178,6 +188,7 @@ class AvatarsWrathTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Noncreature permanents stay on the battlefield")
     void leavesNoncreaturePermanentsOnTheBattlefield() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Plains());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new HogMonkey());
@@ -191,6 +202,7 @@ class AvatarsWrathTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Opponents can't cast flashback spells from their graveyards")
     void opponentsCannotCastFlashbackSpells() {
         FireNationAttacks attacks = new FireNationAttacks();
         harness.setGraveyard(player2, List.of(attacks));
@@ -207,6 +219,7 @@ class AvatarsWrathTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Airbent creature tokens cease to exist")
     void airbentCreatureTokensCeaseToExist() {
         harness.castFromHand(player1, new FireNationAttacks(), "{4}{R}");
         harness.passBothPriorities();
@@ -221,6 +234,23 @@ class AvatarsWrathTest extends BaseCardTest {
         for (java.util.UUID tokenId : tokenIds) {
             assertThat(gd.findExiledCard(tokenId)).isNull();
         }
+    }
+
+    @Test
+    @DisplayName("All other creatures are airbent as one exile, so a one-or-more leave ability triggers once")
+    void airbendsAllOtherCreaturesAsOneEvent() {
+        Permanent aang = harness.addToBattlefieldAndReturn(player1, new AangAirbendingMaster());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new HogMonkey());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new HogMonkey());
+        harness.setHand(player1, List.of(new AvatarsWrath()));
+        addAvatarWrathMana();
+
+        harness.castAndResolveSorcery(player1, 0, aang.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(first.getOriginalCard().getId())).isNotNull();
+        assertThat(gd.findExiledCard(second.getOriginalCard().getId())).isNotNull();
+        assertThat(gd.playerExperienceCounters).containsEntry(player1.getId(), 1);
     }
 
     private void addAvatarWrathMana() {

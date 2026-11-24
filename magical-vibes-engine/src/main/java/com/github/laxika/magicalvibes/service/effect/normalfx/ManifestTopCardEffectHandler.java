@@ -17,7 +17,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves manifesting the top cards of a library, one at a time (CR 701.40e), and records the MANIFEST step: the
+ * Resolves manifesting the top cards of a library (the manifesting player's own, or the library owner's), one at a
+ * time (CR 701.40e), and records the MANIFEST step: the
  * permanents manifested and their controllers ("put a +1/+1 counter on it" reads {@code Subjects.thisWay(MANIFEST)}).
  */
 @Component
@@ -40,9 +41,16 @@ public class ManifestTopCardEffectHandler implements NormalEffectHandlerBean {
                 AmountContext.forStackEntry(entry, null));
         List<UUID> manifested = new ArrayList<>();
         List<UUID> controllers = new ArrayList<>();
+        UUID libraryOwnerId = manifest.libraryOwner() == null
+                ? null : subjectResolutionService.player(gameData, entry, manifest, manifest.libraryOwner());
+        if (manifest.libraryOwner() != null && libraryOwnerId == null) {
+            entry.recordStep(StepKind.MANIFEST, StepOutcome.NONE);
+            return;
+        }
         for (UUID playerId : subjectResolutionService.players(gameData, entry, manifest, manifest.player())) {
             for (int i = 0; i < amount; i++) {
-                Permanent permanent = manifestService.manifestTopCard(gameData, playerId, entry.getCard());
+                Permanent permanent = manifestService.manifestTopCard(gameData,
+                        libraryOwnerId != null ? libraryOwnerId : playerId, playerId, entry.getCard());
                 if (permanent != null) {
                     manifested.add(permanent.getId());
                     controllers.add(playerId);

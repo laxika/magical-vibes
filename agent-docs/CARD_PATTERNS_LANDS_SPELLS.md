@@ -93,7 +93,7 @@ on what the mana may pay for.
 
 ## Spells
 
-| Optional creature target plus airbend-all-others and non-hand cast lock | `a/AvatarsWrath.java` | `target(TargetFilters.creature(), 0, 1).addSpellEffect(AirbendAllOtherCreaturesEffect())` + `PlayerRestrictionEffect(eachOpponent(), castingSpells().fromAnywhereBut(HAND), UNTIL_YOUR_NEXT_TURN)` + `ExileSpellEffect()` |
+| Optional creature target plus airbend-all-others and non-hand cast lock | `a/AvatarsWrath.java` | `target(TargetFilters.creature(), 0, 1).addSpellEffect(new AirbendTargetPermanentEffect(except(allCreatures(), targetDeclaredElsewhere()), TargetSpec.harmful(TargetPredicates.creature())))` + `PlayerRestrictionEffect(eachOpponent(), castingSpells().fromAnywhereBut(HAND), UNTIL_YOUR_NEXT_TURN)` + `ExileSpellEffect()` |
 | Any number of target creatures exile and tapped-return plus next-turn player prevention | `m/MorningtidesLight.java` | `target(PermanentIsCreaturePredicate, 0, 99)` + `FlickerEffect.exileTargetReturnAtEndStep(true)` + `PreventDamageEffect.allToControllerUntilNextTurn()` + `ExileSpellEffect` |
 | Pattern | Reference | Notes |
 |---------|-----------|-------|

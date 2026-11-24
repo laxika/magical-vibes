@@ -1,27 +1,37 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-/**
- * The stack entry's source permanent ({@code sourcePermanentId}) assigns no combat damage this
- * turn — a floating effect that prevents its combat damage until end of turn, and another that makes it assign none
- * (this record is its payload, {@code GameData.assignsNoCombatDamage}), both ending at cleanup. Pair with damage (or similar) inside a {@link MayEffect}/{@link SequenceEffect} for
- * "you may [effect]. If you do, it assigns no combat damage this turn" (Gaze of Pain).
- *
- * <p>When {@code useTargetId} is true the creature is the stack entry's {@code targetId} instead, for
- * abilities whose source permanent is something else (Delif's Cube's delayed trigger: the Cube is the
- * source, "it" is the watched attacker). It applies even if the source has left the battlefield.</p>
- *
- * <p>When {@code thisCombatOnly} is true the restriction ends with the current combat instead of
- * lasting the whole turn ("assigns no combat damage this combat").</p>
- */
-public record AssignNoCombatDamageEffect(boolean useTargetId, boolean thisCombatOnly,
-                                         boolean useTriggeringPermanent) implements CardEffect {
+import java.util.Objects;
 
-    public AssignNoCombatDamageEffect(boolean useTargetId, boolean thisCombatOnly) {
-        this(useTargetId, thisCombatOnly, false);
+/**
+ * "[Creature] assigns no combat damage this turn": a floating effect that prevents its combat damage until end of turn,
+ * and another that makes it assign none (this record is its payload, {@code GameData.assignsNoCombatDamage}), both
+ * ending at cleanup. Pair with damage (or similar) inside a {@link MayEffect}/{@link SequenceEffect} for "you may
+ * [effect]. If you do, it assigns no combat damage this turn" (Gaze of Pain). It applies to the creature as it is named
+ * even if it has left the battlefield.
+ *
+ * @param subject        the creature: {@code source()} (this creature), {@code triggering()} ("the attacking
+ *                       creature", the enchanted attacker of an Aura's trigger), {@code attachedAtTrigger()} ("the
+ *                       first creature" of an Aura's trigger: the host as the ability triggered, Laccolith Rig)
+ * @param thisCombatOnly the restriction ends with the current combat instead of lasting the whole turn ("assigns no
+ *                       combat damage this combat")
+ */
+public record AssignNoCombatDamageEffect(PermanentSubject subject, boolean thisCombatOnly) implements CardEffect {
+
+    public AssignNoCombatDamageEffect {
+        Objects.requireNonNull(subject, "subject");
+        if (subject.declaresTarget()) {
+            throw new IllegalArgumentException("Assigning no combat damage targets nothing: " + subject);
+        }
     }
 
-    public AssignNoCombatDamageEffect(boolean useTargetId) {
-        this(useTargetId, false);
+    /** "This creature assigns no combat damage this turn." */
+    public AssignNoCombatDamageEffect() {
+        this(Subjects.source(), false);
+    }
+
+    /** "[Creature] assigns no combat damage this turn." */
+    public static AssignNoCombatDamageEffect of(PermanentSubject subject) {
+        return new AssignNoCombatDamageEffect(subject, false);
     }
 
     /**
@@ -29,20 +39,11 @@ public record AssignNoCombatDamageEffect(boolean useTargetId, boolean thisCombat
      * combat damage", Farrel's Mantle's enchanted creature).
      */
     public static AssignNoCombatDamageEffect ofTriggeringPermanent() {
-        return new AssignNoCombatDamageEffect(false, false, true);
-    }
-
-    public AssignNoCombatDamageEffect() {
-        this(false);
+        return of(Subjects.triggering());
     }
 
     /** The source permanent assigns no combat damage this combat only (Master of Cruelties). */
     public static AssignNoCombatDamageEffect thisCombat() {
-        return new AssignNoCombatDamageEffect(false, true);
-    }
-
-    /** The entry's {@code targetId} creature assigns no combat damage this turn. */
-    public static AssignNoCombatDamageEffect ofTargetId() {
-        return new AssignNoCombatDamageEffect(true);
+        return new AssignNoCombatDamageEffect(Subjects.source(), true);
     }
 }

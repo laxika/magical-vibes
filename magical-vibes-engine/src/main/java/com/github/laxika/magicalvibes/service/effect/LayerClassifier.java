@@ -127,7 +127,6 @@ import com.github.laxika.magicalvibes.model.effect.PermanentsCantPhaseInEffect;
 import com.github.laxika.magicalvibes.model.effect.ShrinkEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.SuspectedEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.layer.Layer;
 
@@ -400,8 +399,6 @@ public final class LayerClassifier {
         map.put(RemoveAllProtectionUntilEndOfTurnEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectUntilEndOfTurnEffect.class,
                 fixed(Layer.L6_ABILITIES));
-        map.put(com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectOnTargetUntilEndOfTurnEffect.class,
-                fixed(Layer.L6_ABILITIES));
         map.put(CountAsCreaturesEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(AllCreaturesAreTokensEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(MaroGoneNutsEffect.class, fixed(Layer.L6_ABILITIES));
@@ -415,7 +412,6 @@ public final class LayerClassifier {
         map.put(GrantNonAbilityEffectEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(CantHaveOrGainKeywordEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(IncreaseDevotionEffect.class, fixed(Layer.L6_ABILITIES));
-        map.put(SuspectedEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantStaticEffectToSourceEffect.class, new Entry(Set.of(Layer.L6_ABILITIES, Layer.L7B_SET_PT),
                 (effect, fromOwnStaticSlot) -> {
                     GrantStaticEffectToSourceEffect grant = (GrantStaticEffectToSourceEffect) effect;

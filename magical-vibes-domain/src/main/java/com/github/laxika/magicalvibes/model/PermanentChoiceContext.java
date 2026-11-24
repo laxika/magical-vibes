@@ -2794,8 +2794,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Lynde: choose the opponent to which the selected Curse will be attached. */
     record LyndeOpponentChoice(UUID controllerId, UUID curseId) implements PermanentChoiceContext {}
 
-    /** Selects the next creature to connive while a multi-creature effect resolves. */
-    record ConniveNextCreatureChoice() implements PermanentChoiceContext {}
+    /**
+     * Several permanents are instructed to connive at the same time (Change of Plans, Lethal Scheme): the player
+     * choosing picks which of {@code conniverIds} connives next (CR 701.50c); the rest connive after it, each
+     * {@code amount}.
+     */
+    record ConniveOrderChoice(StackEntry resolvingEntry, List<UUID> conniverIds, DynamicAmount amount)
+            implements PermanentChoiceContext {}
 
     /** Records a non-targeting permanent choice on the resolving stack entry. */
     record ChosenPermanentReference() implements PermanentChoiceContext {}

@@ -5,14 +5,17 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
 /**
- * Resolves {@link BecomePreparedEffect}: the source permanent becomes prepared.
+ * Resolves {@link BecomePreparedEffect}: the permanent its subject names becomes prepared, the prepare copy going to
+ * that permanent's controller.
  */
 @Component
 @RequiredArgsConstructor
@@ -21,6 +24,7 @@ public class BecomePreparedEffectHandler implements NormalEffectHandlerBean,
 
     private final GameQueryService gameQueryService;
     private final PreparedSupport preparedSupport;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,16 +42,17 @@ public class BecomePreparedEffectHandler implements NormalEffectHandlerBean,
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         BecomePreparedEffect preparedEffect = (BecomePreparedEffect) effect;
-        var preparedPermanentId = preparedEffect.preparesGrantingPermanent()
-                ? entry.requireGrantingPermanentId()
-                : entry.getSourcePermanentId();
-        if (preparedPermanentId == null) {
+        if (preparedEffect.subject() instanceof PermanentSubject.Granter granter
+                && granter.boundPermanentId() == null) {
+            // A granted ability always knows its granter; one that doesn't is an engine error.
+            entry.requireGrantingPermanentId();
+        }
+        Permanent prepared = subjectResolutionService.permanent(gameData, entry, effect, preparedEffect.subject());
+        if (prepared == null) {
             return;
         }
-        Permanent source = gameQueryService.findPermanentById(gameData, preparedPermanentId);
-        UUID controllerId = preparedEffect.preparesGrantingPermanent()
-                ? gameQueryService.findPermanentController(gameData, preparedPermanentId)
-                : entry.getControllerId();
-        preparedSupport.preparePermanent(gameData, source, controllerId);
+        UUID controllerId = gameQueryService.findPermanentController(gameData, prepared.getId());
+        preparedSupport.preparePermanent(gameData, prepared,
+                controllerId != null ? controllerId : entry.getControllerId());
     }
 }

@@ -1927,7 +1927,7 @@ Do these individually; each is self-contained. Reassess before starting — seve
 | `PutAuraFromHandOntoSelfEffect(capByX, exileIfDeclined)` | 2 classes | X variant passes an extra arg to `beginTargetedCardChoice` for the decline path |
 | `LookAtTopCardMayPutMatchingOntoBattlefieldEffect` | `LookAtTopCardPutLandOrCreatureWithinLoyaltyEffect` (1) | Both mayfx handlers already delegate to the same method; needs a library-card predicate for "MV ≤ loyalty counters" |
 | `GrantFlashbackToGraveyardCardsEffect(+ targeted)` | 1 class | Mass path skips cards with a native `FlashbackCast`; target path has fizzle logging. Both must survive |
-| `AssignNoCombatDamageAndDefendingPlayerDiscardsEffect` → composition | 1 class | **Blocked**: `CombatBlockService:940-957` bakes the defender into `targetId`, but `DiscardEffectHandler`'s `DEFENDING_PLAYER` branch reads `getAttackedTargetId()` (`:104`). Fix the block-trigger code first |
+| `AssignNoCombatDamageAndDefendingPlayerDiscardsEffect` → composition | 1 class | **Done** (effect cleanup fold run 44): `MayEffect(SequenceEffect.of(AssignNoCombatDamageEffect.ofTriggeringPermanent(), DiscardEffect(1, defendingPlayer(), true)))` |
 | `BoostSelfWhenCombatOpponentMatchesEffect` | `BoostSelfWhenBlockingKeywordEffect` (3) | **Rules question, not mechanical**: keyword variant is checked at trigger time, survivor re-checks at resolution. Settle which is right (verify the CR with the `rules` MCP) before merging |
 | `CreateTokenCopyOfSourceEffect` + subject selector | — (`CreateTokenCopyOfEquippedCreatureEffect` is gone: `CreateTokenCopyOfTargetPermanentEffect.ofAttached()`) | Prefer extracting a shared `TokenCopyFactory` over merging the records |
 

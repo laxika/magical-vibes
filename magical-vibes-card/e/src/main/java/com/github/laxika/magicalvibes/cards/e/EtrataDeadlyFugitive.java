@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.CloakTopCardOfDamagedPlayerLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.CloakTopCardOfControllerLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TurnSourceFaceUpOrExileAndMayCastEffect;
@@ -36,6 +36,6 @@ public class EtrataDeadlyFugitive extends Card {
         addTrigger(Triggers.creatureDealsCombatDamageToOpponent().withFilter(new PermanentAllOfPredicate(List.of(
                         new PermanentControlledBySourceControllerPredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.ASSASSIN)))),
-                new CloakTopCardOfDamagedPlayerLibraryEffect());
+                CloakTopCardOfControllerLibraryEffect.fromLibraryOf(Subjects.triggeringPlayer()));
     }
 }

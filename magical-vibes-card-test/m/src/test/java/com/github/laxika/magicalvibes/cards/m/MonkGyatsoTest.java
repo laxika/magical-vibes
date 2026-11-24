@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.a.AnnieJoinsUp;
+import com.github.laxika.magicalvibes.cards.b.BlackKnight;
 import com.github.laxika.magicalvibes.cards.e.ElaborateFirecannon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -17,9 +18,25 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MonkGyatso.class, GrizzlyBears.class, Shock.class, ElaborateFirecannon.class, MishrasFactory.class,
+@CardUsed({MonkGyatso.class, BlackKnight.class, GrizzlyBears.class, Shock.class, ElaborateFirecannon.class, MishrasFactory.class,
         AnnieJoinsUp.class})
 class MonkGyatsoTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Airbends that creature without targeting it, so protection from white doesn't stop it")
+    void airbendsThatCreatureWithoutTargetingIt() {
+        harness.addToBattlefield(player1, new MonkGyatso());
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new BlackKnight());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, knight.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.findExiledCard(knight.getOriginalCard().getId())).isNotNull();
+        assertThat(gd.exilePlayPermissionHolder(knight.getOriginalCard().getId())).isEqualTo(player1.getId());
+    }
 
     @Test
     @DisplayName("May airbend another creature you control targeted by your spell")

@@ -4,7 +4,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingConnive;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawBeforeConniveReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
@@ -13,6 +19,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +35,8 @@ public class DrawDiscardAndConniveEffectHandler implements NormalEffectHandlerBe
     private final PlayerInteractionSupport playerInteractionSupport;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,19 +46,80 @@ public class DrawDiscardAndConniveEffectHandler implements NormalEffectHandlerBe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DrawDiscardAndConniveEffect) effect;
-        List<UUID> targetIds = e.targetPermanent()
-                ? entry.targetsForEffect(effect)
-                : null;
-        UUID sourcePermanentId = e.fixedSourcePermanentId() != null
-                ? e.fixedSourcePermanentId()
-                : e.triggeringPermanent()
-                ? entry.getTriggeringPermanentId()
-                : e.targetPermanent()
-                ? targetIds == null ? entry.getTargetId() : targetIds.stream().findFirst().orElse(entry.getTargetId())
-                : entry.getSourcePermanentId();
-        if (e.targetPermanent() && sourcePermanentId == null) {
+        PermanentSubject subject = e.subject();
+        List<UUID> conniverIds = subjectResolutionService.permanentIds(gameData, entry, effect, subject);
+        if (subject.declaresTarget()) {
+            // An illegal target is not affected (CR 608.2b).
+            conniverIds = conniverIds.stream()
+                    .filter(id -> gameQueryService.findPermanentById(gameData, id) != null)
+                    .toList();
+        }
+        if (conniverIds.size() > 1) {
+            conniveOneAtATime(gameData, entry, e, conniverIds);
             return;
         }
+        UUID conniverId = conniverIds.isEmpty() ? null : conniverIds.getFirst();
+        if (conniverId == null && !(subject instanceof PermanentSubject.Source)
+                && !(subject instanceof PermanentSubject.Triggering)) {
+            return;
+        }
+        connive(gameData, entry, e, conniverId);
+    }
+
+    /**
+     * Several permanents connive one at a time (CR 701.50c): the first player in APNAP order who controls, or last
+     * controlled, one of them chooses which connives next; the rest connive after it, in the same way.
+     */
+    private void conniveOneAtATime(GameData gameData, StackEntry entry, DrawDiscardAndConniveEffect connive,
+                                   List<UUID> conniverIds) {
+        for (UUID playerId : subjectResolutionService.players(gameData, entry, connive, Subjects.eachPlayer())) {
+            List<UUID> theirs = conniverIds.stream()
+                    .filter(id -> playerId.equals(connivingPlayerId(gameData, entry, id)))
+                    .toList();
+            if (theirs.isEmpty()) {
+                continue;
+            }
+            List<UUID> live = theirs.stream()
+                    .filter(id -> gameQueryService.findPermanentById(gameData, id) != null)
+                    .toList();
+            if (live.size() > 1) {
+                playerInputService.beginPermanentChoice(gameData, playerId, live,
+                        new PermanentChoiceContext.ConniveOrderChoice(entry, List.copyOf(conniverIds),
+                                connive.amount()),
+                        "Choose the next creature to connive.");
+                return;
+            }
+            conniveNextThenTheRest(entry, connive.amount(), conniverIds,
+                    live.isEmpty() ? theirs.getFirst() : live.getFirst());
+            return;
+        }
+    }
+
+    /** The chosen permanent connives first, then the rest one at a time. */
+    public void completeOrderChoice(GameData gameData, UUID chosenId, PermanentChoiceContext.ConniveOrderChoice choice) {
+        if (!choice.conniverIds().contains(chosenId)) {
+            throw new IllegalStateException("Invalid creature to connive");
+        }
+        conniveNextThenTheRest(choice.resolvingEntry(), choice.amount(), choice.conniverIds(), chosenId);
+    }
+
+    private static void conniveNextThenTheRest(StackEntry entry, DynamicAmount amount, List<UUID> conniverIds,
+                                               UUID nextId) {
+        List<CardEffect> steps = new ArrayList<>();
+        steps.add(new DrawDiscardAndConniveEffect(amount, Subjects.named(nextId)));
+        List<PermanentSubject> rest = conniverIds.stream()
+                .filter(id -> !id.equals(nextId))
+                .<PermanentSubject>map(Subjects::named)
+                .toList();
+        if (rest.size() == 1) {
+            steps.add(new DrawDiscardAndConniveEffect(amount, rest.getFirst()));
+        } else if (rest.size() > 1) {
+            steps.add(new DrawDiscardAndConniveEffect(amount, Subjects.allOf(rest.toArray(PermanentSubject[]::new))));
+        }
+        entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, steps);
+    }
+
+    private void connive(GameData gameData, StackEntry entry, DrawDiscardAndConniveEffect e, UUID sourcePermanentId) {
         UUID controllerId = connivingPlayerId(gameData, entry, sourcePermanentId);
 
         int replacementDraws = gameQueryService.countPlayerControlledStaticEffects(

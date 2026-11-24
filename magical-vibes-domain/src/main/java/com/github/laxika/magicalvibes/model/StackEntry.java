@@ -903,10 +903,6 @@ public class StackEntry {
     @Setter private int sacrificedToughness;
     /** Permanents tapped to pay this spell's convoke cost, captured for effects that refer to them. */
     private List<UUID> convokeCreatureIds = List.of();
-    /** Remaining convoke creatures for a resolving effect that makes them connive one at a time. */
-    private List<UUID> convokeConniveCreatureIdsToProcess;
-    /** Remaining target creatures for a resolving effect that makes them connive one at a time. */
-    private List<UUID> targetConniveCreatureIdsToProcess;
     /** Permanents chosen to pay a cost and retained for a later effect in the same ability. */
     private List<UUID> chosenCostPermanentIds = List.of();
     /** Last-known snapshots of permanents chosen to pay a tracked cost. */
@@ -1546,10 +1542,6 @@ public class StackEntry {
         this.activatedAbilityExiledCardIds = source.activatedAbilityExiledCardIds;
         this.convokeCreatureIds = source.convokeCreatureIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.convokeCreatureIds);
-        this.convokeConniveCreatureIdsToProcess = source.convokeConniveCreatureIdsToProcess == null
-                ? null : new ArrayList<>(source.convokeConniveCreatureIdsToProcess);
-        this.targetConniveCreatureIdsToProcess = source.targetConniveCreatureIdsToProcess == null
-                ? null : new ArrayList<>(source.targetConniveCreatureIdsToProcess);
         this.chosenCostPermanentIds = source.chosenCostPermanentIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.chosenCostPermanentIds);
         this.chosenCostPermanentSnapshots = source.chosenCostPermanentSnapshots.isEmpty()
@@ -2390,14 +2382,6 @@ public class StackEntry {
 
     public void setConvokeCreatureIds(List<UUID> convokeCreatureIds) {
         this.convokeCreatureIds = convokeCreatureIds == null ? List.of() : List.copyOf(convokeCreatureIds);
-    }
-
-    public void setConvokeConniveCreatureIdsToProcess(List<UUID> creatureIds) {
-        this.convokeConniveCreatureIdsToProcess = creatureIds == null ? null : List.copyOf(creatureIds);
-    }
-
-    public void setTargetConniveCreatureIdsToProcess(List<UUID> creatureIds) {
-        this.targetConniveCreatureIdsToProcess = creatureIds == null ? null : List.copyOf(creatureIds);
     }
 
     public void setChosenCostPermanentIds(List<UUID> chosenCostPermanentIds) {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -25,42 +26,45 @@ public class ManifestService {
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final ObjectProvider<GraveyardReturnSupport> graveyardReturnSupport;
 
     public Permanent manifestTopCard(GameData gameData, UUID playerId, Card sourceCard) {
-        List<Card> library = gameData.playerDecks.get(playerId);
+        return manifestTopCard(gameData, playerId, playerId, sourceCard);
+    }
+
+    /**
+     * {@code controllerId} manifests the top card of {@code libraryOwnerId}'s library (CR 701.40a): it enters face
+     * down as a 2/2 under the manifesting player's control, which holds as a control effect when the card came from
+     * another player's library.
+     */
+    public Permanent manifestTopCard(GameData gameData, UUID libraryOwnerId, UUID controllerId, Card sourceCard) {
+        List<Card> library = gameData.playerDecks.get(libraryOwnerId);
+        boolean ownLibrary = libraryOwnerId.equals(controllerId);
+        String libraryName = ownLibrary ? "its controller's library"
+                : gameData.playerIdToName.get(libraryOwnerId) + "'s library";
         if (library == null || library.isEmpty()) {
             gameLogService.append(gameData, GameLog.cardThen(sourceCard,
-                    " cannot manifest because its controller's library is empty."));
+                    ownLibrary ? " cannot manifest because its controller's library is empty."
+                            : " cannot manifest because " + libraryName + " is empty."));
             return null;
         }
 
         if (gameQueryService.isManifestBlockedFromZone(gameData, library.getFirst(), Zone.LIBRARY)) {
             gameLogService.append(gameData, GameLog.cardThen(sourceCard,
-                    " cannot manifest the top card of its controller's library."));
-            return null;
-        }
-
-        Card manifestedCard = library.removeFirst();
-        return manifestCardAndReturnPermanent(gameData, playerId, sourceCard, manifestedCard);
-    }
-
-    public Permanent manifestTopCardOfLibraryUnderController(GameData gameData, UUID libraryOwnerId,
-                                                              UUID controllerId, Card sourceCard) {
-        List<Card> library = gameData.playerDecks.get(libraryOwnerId);
-        String libraryOwnerName = gameData.playerIdToName.get(libraryOwnerId);
-        if (library == null || library.isEmpty()) {
-            gameLogService.append(gameData, GameLog.cardThen(sourceCard,
-                    " cannot manifest because " + libraryOwnerName + "'s library is empty."));
+                    " cannot manifest the top card of " + libraryName + "."));
             return null;
         }
 
         Card manifestedCard = library.removeFirst();
         Permanent manifested = putManifestedCard(gameData, controllerId, manifestedCard, new ArrayList<>(),
                 battlefieldEntryService.snapshotEnterTappedTypes(gameData));
+        if (!ownLibrary) {
+            graveyardReturnSupport.getObject().trackStolenCreature(
+                    gameData, manifested.getId(), controllerId, libraryOwnerId);
+        }
         battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, controllerId, manifestedCard);
 
-        gameLogService.append(gameData, GameLog.cardThen(sourceCard,
-                " manifests the top card of " + libraryOwnerName + "'s library."));
+        gameLogService.append(gameData, GameLog.cardThen(sourceCard, " manifests the top card of " + libraryName + "."));
         return manifested;
     }
 

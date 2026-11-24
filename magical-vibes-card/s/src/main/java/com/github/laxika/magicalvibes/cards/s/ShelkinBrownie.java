@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BandsWithOtherEffect;
-import com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectOnTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -16,7 +17,7 @@ public class ShelkinBrownie extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new SuppressStaticEffectOnTargetUntilEndOfTurnEffect(BandsWithOtherEffect.class)),
+                List.of(new SuppressStaticEffectUntilEndOfTurnEffect(BandsWithOtherEffect.class, Subjects.target())),
                 "{T}: Target creature loses all \"bands with other\" abilities until end of turn.",
                 TargetFilters.creature()
         ));

@@ -1742,6 +1742,7 @@ public class SubjectResolutionService {
             case PermanentSubject.DepartedThisWay departed -> departedThisWayIds(ctx, departed);
             case PermanentSubject.TargetDeclaredElsewhere ignored -> targetIds(ctx, null);
             case PermanentSubject.PaidAsCost ignored -> paidAsCostIds(ctx.entry());
+            case PermanentSubject.Convoked ignored -> List.copyOf(ctx.entry().getConvokeCreatureIds());
             case PermanentSubject.BandmatesOf bandmates -> bandmateIds(ctx, bandmates.permanent());
             case PermanentSubject.WithCreaturesSharingAColor sharing -> sharingAColorIds(ctx, sharing.permanent());
             case PermanentSubject.OtherPermanentsSharing sharing -> otherPermanentsSharingIds(ctx, sharing);

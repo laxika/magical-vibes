@@ -69,7 +69,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantSupertypeUntilEndOfTurnE
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllLandTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectOnTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PrimevalCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
@@ -88,7 +87,6 @@ import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEff
 import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
 import com.github.laxika.magicalvibes.model.effect.SetChosenNameAndCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkersWithLoyaltyBecomeCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.SuspectedEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.SetCreatureTypesToImprintedCreatureEffect;
@@ -3443,21 +3441,10 @@ public class LayerSystemService {
                             state.removeAllProtection();
                     case SuppressStaticEffectUntilEndOfTurnEffect remove ->
                             state.removeStaticAbilities(remove.effectType());
-                    case SuppressStaticEffectOnTargetUntilEndOfTurnEffect remove ->
-                            state.removeStaticAbilities(remove.effectType());
                     case GrantKeywordEffect grant -> {
                         state.addKeywords(grant.keywords());
                         board.recordProvenance(target.permanent().getId(),
                                 ModifierLine.abilities(provenanceSourceName(instance), grant.keywords(), Set.of(), false));
-                    }
-                    case SuspectedEffect ignored -> {
-                        state.addKeyword(Keyword.MENACE);
-                        CantBlockEffect cantBlock = new CantBlockEffect();
-                        state.addStaticEffect(cantBlock);
-                        board.recordProvenance(target.permanent().getId(),
-                                ModifierLine.abilities(provenanceSourceName(instance), Set.of(Keyword.MENACE), Set.of(), false));
-                        board.recordGrantedEffect(target.permanent().getId(),
-                                provenanceSourceName(instance), cantBlock);
                     }
                     case GrantActivatedAbilityEffect grant -> {
                         // An ability that already names the permanent that granted it (one gained from another

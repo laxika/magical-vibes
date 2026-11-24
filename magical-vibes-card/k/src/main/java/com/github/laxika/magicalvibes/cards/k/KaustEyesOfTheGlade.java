@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.TurnTargetFaceUpEffect;
+import com.github.laxika.magicalvibes.model.effect.TurnSourceFaceUpEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -32,7 +32,7 @@ public class KaustEyesOfTheGlade extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new TurnTargetFaceUpEffect()),
+                List.of(TurnSourceFaceUpEffect.ofTarget()),
                 "{T}: Turn target face-down attacking creature you control face up.",
                 new ControlledPermanentPredicateTargetFilter(
                         targetPredicate, "Target must be a face-down attacking creature you control")));

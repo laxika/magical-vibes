@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.f.FoothillGuide;
+import com.github.laxika.magicalvibes.cards.k.KarlovWatchdog;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Set;
@@ -13,7 +15,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({IxidorRealitySculptor.class, FoothillGuide.class})
+@CardUsed({IxidorRealitySculptor.class, FoothillGuide.class, KarlovWatchdog.class})
 class IxidorRealitySculptorTest extends BaseCardTest {
 
     @Test
@@ -63,6 +65,22 @@ class IxidorRealitySculptorTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         assertThat(ixidor.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature that can't be turned face up stays face down")
+    void cantBeTurnedFaceUpWins() {
+        addCreatureReady(player1, new IxidorRealitySculptor());
+        harness.addToBattlefield(player1, new KarlovWatchdog());
+        Permanent target = addCreatureReady(player2, new FoothillGuide());
+        target.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isFaceDown()).isTrue();
     }
 
     @Test

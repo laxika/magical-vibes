@@ -284,18 +284,18 @@ run below.
 | 42 | `own-sign` | `ReduceOwnCastCostEffect` / `...IfTargetingPermanentEffect` with an increase direction Done 2026-11-24 (fold run 42): 2 folded, 0 left. | C | 2 (4) | IncreaseOwnCastCostEffect, IncreaseOwnCastCostIfTargetingPermanentEffect |
 | 43 | `specialize` | one `SpecializeEffect(color)` and one handler; faces through a card-side hook Done 2026-11-24 (fold run 43): 18 folded onto `SpecializeEffect(color, Card::specializedFace)`, 2 left `unique` (Karlach's graveyard specialize and return; Lukamina's unspecialize). | R | 20 (19) | SpecializeAloraEffect, SpecializeAmbergrisEffect, SpecializeGaleEffect, SpecializeGutEffect, SpecializeImoenEffect, SpecializeJaheiraEffect, SpecializeKarlachEffect, SpecializeKlementEffect, SpecializeLaezelEffect, SpecializeLukaminaEffect, SpecializeLuluEffect, SpecializeRasaadEffect, SpecializeSarevokEffect, SpecializeShadowheartEffect, SpecializeSkanosEffect, SpecializeVhalEffect, SpecializeViconiaEffect, SpecializeWilsonEffect, SpecializeWyllEffect, UnspecializeLukaminaEffect |
 | 43 | `room-door` | `UnlockControlledRoomDoorEffect` + a Room subject + lock mode Done 2026-11-24 (fold run 43): 1 folded (`LockOrUnlockTargetRoomDoorEffect` into `UnlockControlledRoomDoorEffect.lockOrUnlockTargetRoom()`); the survivor takes a Room `PermanentSubject` and a lock mode. | S | 1 (2) | UnlockControlledRoomDoorEffect |
-| 44 | `airbend` | `AirbendTargetPermanentEffect` + a `PermanentSubject` | S | 2 (2) | AirbendAllOtherCreaturesEffect, AirbendTargetCreatureOrSpellEffect |
-| 44 | `connive` | `DrawDiscardAndConniveEffect` + a `PermanentSubject` | S | 3 (46) | ConniveConvokeCreaturesEffect, ConniveEachTargetEffect, DrawDiscardAndConniveEffect* |
-| 44 | `suspect` | `SuspectEffect` over subjects | S | 4 (4) | SuspectAndPerpetuallyGrantAbilityToTargetCreatureEffect, SuspectReturnedPermanentEffect, SuspectTargetCreatureEffect, SuspectedEffect |
-| 44 | `unsuspect` | `UnsuspectEffect` with a subject | S | 2 (4) | UnsuspectAllCreaturesEffect, UnsuspectEffect |
-| 44 | `suppression` | `SuppressStaticEffectUntilEndOfTurnEffect` + a subject | S | 2 (4) | SuppressStaticEffectOnTargetUntilEndOfTurnEffect, SuppressStaticEffectUntilEndOfTurnEffect |
-| 44 | `tap-flip` | `SimultaneouslyFlipAllPermanentsTapStatesEffect` + a subject | S | 2 (2) | SimultaneouslyFlipAllPermanentsTapStatesEffect, SimultaneouslyFlipControlledPermanentsTapStatesEffect |
-| 44 | `turn-face-up` | `TurnSourceFaceUpEffect` with `target()` on one path | S | 3 (6) | TurnTargetCreatureFaceUpIfFaceDownEffect, TurnTargetCreatureFaceUpEffect*, TurnTargetFaceUpEffect* |
-| 44 | `no-combat-dmg` | `AssignNoCombatDamageEffect` + a `PermanentSubject` | S | 3 (4) | DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffect, AssignNoCombatDamageAndDefendingPlayerDiscardsEffect, AssignNoCombatDamageToEnchantedCreatureEffect |
-| 44 | `manifest-other` | `ManifestTopCardEffect` + a library-owner subject | S | 2 (3) | ManifestTopCardOfDamagedPlayerLibraryEffect, CloakTopCardOfDamagedPlayerLibraryEffect* |
-| 44 | `next-spell-rider` | `EmpowerNextCreatureSpellThisTurnEffect` with a `CardPredicate` | C | 3 (4) | MakeNextInstantSorceryUncounterableThisTurnEffect, MakeNextSpellUncounterableThisTurnEffect, EmpowerNextCreatureSpellThisTurnEffect |
-| 44 | `prepared` | `BecomePreparedEffect` with a `PermanentSubject` | S | 1 (2) | MakeTargetCreaturePreparedEffect |
-| 44 | `timing-perm` | one `ActivatedAbilityTimingEffect` with an ability filter | R | 2 (2) | AllActivatedAbilitiesCanBeActivatedAtInstantSpeedEffect, EquipAbilitiesCanBeActivatedAtInstantSpeedEffect |
+| 44 | `airbend` | `AirbendTargetPermanentEffect` + a `PermanentSubject` Done 2026-11-24 (fold run 44): 2 folded (subject + declared TargetSpec, one exile event), 0 left. | S | 2 (2) | AirbendAllOtherCreaturesEffect, AirbendTargetCreatureOrSpellEffect |
+| 44 | `connive` | `DrawDiscardAndConniveEffect` + a `PermanentSubject` Done 2026-11-24 (fold run 44): 2 folded (+PutCounterOnConvokeCreaturesEffect onto `convokedThisSpell()`), survivor kept, 0 left. | S | 3 (46) | ConniveConvokeCreaturesEffect, ConniveEachTargetEffect, DrawDiscardAndConniveEffect* |
+| 44 | `suspect` | `SuspectEffect` over subjects Done 2026-11-24 (fold run 44): 2 absorbed, SuspectedEffect dead, 1 left `unique` (Snarlfang: a self-containing trigger grant). | S | 4 (4) | SuspectAndPerpetuallyGrantAbilityToTargetCreatureEffect, SuspectReturnedPermanentEffect, SuspectTargetCreatureEffect, SuspectedEffect |
+| 44 | `unsuspect` | `UnsuspectEffect` with a subject Done 2026-11-24 (fold run 44): 1 folded, 0 left. | S | 2 (4) | UnsuspectAllCreaturesEffect, UnsuspectEffect |
+| 44 | `suppression` | `SuppressStaticEffectUntilEndOfTurnEffect` + a subject Done 2026-11-24 (fold run 44): 1 folded, 0 left. | S | 2 (4) | SuppressStaticEffectOnTargetUntilEndOfTurnEffect, SuppressStaticEffectUntilEndOfTurnEffect |
+| 44 | `tap-flip` | `SimultaneouslyFlipAllPermanentsTapStatesEffect` + a subject Done 2026-11-24 (fold run 44): 1 folded, 0 left. | S | 2 (2) | SimultaneouslyFlipAllPermanentsTapStatesEffect, SimultaneouslyFlipControlledPermanentsTapStatesEffect |
+| 44 | `turn-face-up` | `TurnSourceFaceUpEffect` with `target()` on one path Done 2026-11-24 (fold run 44): 3 folded (one GameService path, CR 101.2, 701.40g), 0 left. | S | 3 (6) | TurnTargetCreatureFaceUpIfFaceDownEffect, TurnTargetCreatureFaceUpEffect*, TurnTargetFaceUpEffect* |
+| 44 | `no-combat-dmg` | `AssignNoCombatDamageEffect` + a `PermanentSubject` Done 2026-11-24 (fold run 44): 2 folded (1 absorbed, 1 split), 1 left for fold run 44b (Floral Spuzzem and Goblin Vandal: regeneration vs `destroyed()`, Vandal's payment condition, the collector special case). | S | 3 (4) | DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffect, AssignNoCombatDamageAndDefendingPlayerDiscardsEffect, AssignNoCombatDamageToEnchantedCreatureEffect |
+| 44 | `manifest-other` | `ManifestTopCardEffect` + a library-owner subject Done 2026-11-24 (fold run 44): 2 folded (library-owner subject on manifest and cloak), 0 left. | S | 2 (3) | ManifestTopCardOfDamagedPlayerLibraryEffect, CloakTopCardOfDamagedPlayerLibraryEffect* |
+| 44 | `next-spell-rider` | `EmpowerNextCreatureSpellThisTurnEffect` with a `CardPredicate` Not taken in fold run 44: fold run 44b (needs an engine cast hook for the CardPredicate ahead of the enter-counter copy in `SpellEvents.cast`). | C | 3 (4) | MakeNextInstantSorceryUncounterableThisTurnEffect, MakeNextSpellUncounterableThisTurnEffect, EmpowerNextCreatureSpellThisTurnEffect |
+| 44 | `prepared` | `BecomePreparedEffect` with a `PermanentSubject` Done 2026-11-24 (fold run 44): 1 folded, 0 left. | S | 1 (2) | MakeTargetCreaturePreparedEffect |
+| 44 | `timing-perm` | one `ActivatedAbilityTimingEffect` with an ability filter Done 2026-11-24 (fold run 44): 0 folded, 2 `unique` (no ability-filter static; the equip-only option would be one card's). | R | 2 (2) | AllActivatedAbilitiesCanBeActivatedAtInstantSpeedEffect, EquipAbilitiesCanBeActivatedAtInstantSpeedEffect |
 | 45 | `crew-power` | `PowerBoostForCrewAndSaddleEffect` / `UseToughnessForCrewAndSaddleEffect` with action sets | C | 4 (24) | PowerBoostForCrewAndStationEffect, UseToughnessForStationEffect, PowerBoostForCrewAndSaddleEffect*, UseToughnessForCrewAndSaddleEffect* |
 | 45 | `guess` | `MasterOfPredicamentsEffect` with a threshold, guesser, "if you don't cast" step | C | 2 (2) | TheSeventhDoctorEffect, MasterOfPredicamentsEffect |
 | 45 | `retarget` | `ChangeTargetOfTargetSpellToSourceEffect` + a new-target subject | S | 3 (4) | ChangeAllTargetsOfTargetSpellToSourceEffect, ChangeTargetOfTargetSpellToSourceEffect*, ChangeTargetOfTargetSpellToEnchantedCreatureEffect* |
@@ -447,11 +447,11 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - ~~Hive Mind, Curse of Echoes copy in seat order from the first seat, not APNAP (Curse of Echoes ruling); Hive Mind's optional branch is unreachable. T7. Sure.~~ Fixed in fold run 29 (APNAP; the old record and its branch are gone).
 - The "any opponent may sacrifice" handlers disagree: Desecration Demon, Clackbridge Troll, Gitrog, Argothian Wurm sacrifice as chosen; Innocent Traveler, Brain Gorgers collect first (the PLC ruling supports acting at once for the counters). P04. Sure of the code. Fold: punisher.
 - ~~Tempt with Glory, Bunnies, Mayhem, Immortality act as each opponent accepts (C13 ruling: all decide first). P07. Sure, low. Fold: tempting. Fold run 19c: Glory and Bunnies fixed; Mayhem is not a defect (its M3C ruling has each opponent choose the copy's targets while deciding); Immortality still open (19d).~~ Fold run 19d: Immortality fixed (all decide, then the acceptors return together); line closed.
-- Avatar's Wrath airbends each creature as its own exile. P10. Sure. Fold: airbend.
+- ~~Avatar's Wrath airbends each creature as its own exile. P10. Sure. Fold: airbend.~~ Fixed in fold run 44.
 - ~~The per-card free-cast queues fix the order and drop a declined card (CR 608.2g); Power Without Equal partly. P01. Fold: free-cast.~~ Fixed in fold runs 18 and 18b (Chandra Ablaze casts in the chosen order, a declined card offered again).
 - ~~Bane of Bala Ged exiles the chosen permanents one at a time. P09. Fairly sure, low. Fold: opp-perm.~~ Fixed in fold run 10 (one leave batch).
 - ~~Teferi, Temporal Pilgrim's -12 removes permanents one at a time. P03. Low. Fold: perm-shuffle.~~ Fixed in fold run 21b (one leave batch; Imperial Cosmographer test).
-- Lethal Scheme's convoking creatures connive in cast order (CR 701.50c, its ruling). P10. Sure, low. Fold: connive.
+- ~~Lethal Scheme's convoking creatures connive in cast order (CR 701.50c, its ruling). P10. Sure, low. Fold: connive.~~ Fixed in fold run 44.
 - Glimpse of Tomorrow, Morphic Tide put each Aura in its own continuation, not one batch. P09. Medium, low.
 - `ExileTargetPermanentEffect`'s target path exiles several targets one at a time; the subject path batches. Run 6. Unverified.
 - Descent into Madness, Sothera exile the chosen permanents one at a time (Sothera before the next opponent chooses). Runs 8, 9. Unverified.
@@ -571,6 +571,8 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - Player "hexproof from [colour]" checks one effective colour of a multicolour source (CR 702.11d). Seen in fold run 35c. Fairly sure.
 - Katabatic Winds' lock names noncreature permanents with flying too (its text: "creatures with flying"). Run 37. Sure of the code.
 - Pack Hunt: the AI aims it HARMFUL at an opposing creature, though its own creature is the one whose copies it wants. Run 41b. Unsure, AI only.
+- Avatar's Wrath: the AI reads its spared target as harmful removal. Run 44. Sure, AI only.
+- The copy-service turn-face-up path used by state-based actions doesn't check "can't be turned face up" (CR 101.2). Run 44. Unverified.
 
 **6. Payments and costs.**
 
@@ -703,7 +705,7 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - Mug's graveyard and exile permissions don't share "a spell". P13. Sure, rare.
 - Hazoret's Undying Fury's `isCastableSpell` leaves out battles and Adventure halves. P13. Sure, low. Fold: exile-cast. Fixed in fold run 5.
 - Kaima counts creatures already goaded as goaded this way (CR 701.15d); Vislor Turlough's goad isn't gated on "if you do". P08. Unsure / unreachable. Fold: goad.
-- Laccolith Rig's assign-none reads the current attachment, its damage `attachedAtTrigger()`; Disarm fires `EquipmentUnattached` first, reads printed subtypes and all targets. P08. Low. Fold: no-combat-dmg, unattach.
+- Laccolith Rig's assign-none reads the current attachment, its damage `attachedAtTrigger()`; Disarm fires `EquipmentUnattached` first, reads printed subtypes and all targets. P08. Low. Fold: no-combat-dmg, unattach. Partly fixed in fold run 44: the Rig's assign-none reads `attachedAtTrigger()`; the Disarm half remains.
 - Jailbreak's "when that permanent enters" takes the returned permanent as source (CR 603.7d: the spell). P09. Not verified.
 - Dismantle's counter total skips SILVER counters (reason unknown). P12.
 - Putrefying Rotboar never freezes its exchanged cards. P16. Low.
@@ -754,6 +756,7 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - Red Sun's Twilight and any token copy of departed permanents: `CreateTokenCopyOfTargetPermanentEffectHandler.resolveEsixReplacement` counts only copy sources still on the battlefield, so Esix's first-token-creation offer is skipped. Run 41. Fairly sure.
 - `CounterSpellEffect` with several targets and `LIBRARY_TOP_OR_BOTTOM` opens overlapping prompts. No card affected. Run 39. Sure.
 - Rasaad, Radiant Monk (HBG 4): the white specialized face also has an enters trigger, but its text says only "When this creature specializes". Run 43. Unsure (the face's Oracle text couldn't be fetched).
+- Goblin Vandal: once {R} is paid, the creature must assign no combat damage even if the artifact isn't destroyed (indestructible), but the handler returns early. Run 44. Sure.
 
 Not a defect after all: `SuspectedEffect` (P08 "nothing reads it") is read by `LayerSystemService`, `UnsuspectEffectHandler` and
 `GameQueryService` (checked 2026-11-23; P14 is right). Betrayal of Flesh and Solar Tide on `EscalateSacrificeCost` pay the same as

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
-import com.github.laxika.magicalvibes.model.effect.SimultaneouslyFlipControlledPermanentsTapStatesEffect;
+import com.github.laxika.magicalvibes.model.effect.SimultaneouslyFlipAllPermanentsTapStatesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -31,6 +31,7 @@ public class SandsOfTime extends Card {
         // At the beginning of each player's upkeep, simultaneously flip tap states of that
         // player's artifacts, creatures, and lands.
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
-                new SimultaneouslyFlipControlledPermanentsTapStatesEffect(ARTIFACT_CREATURE_OR_LAND));
+                new SimultaneouslyFlipAllPermanentsTapStatesEffect(
+                        Subjects.controlledBy(Subjects.activePlayer(), ARTIFACT_CREATURE_OR_LAND)));
     }
 }

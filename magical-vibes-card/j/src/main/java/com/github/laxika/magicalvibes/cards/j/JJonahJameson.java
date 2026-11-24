@@ -4,11 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SuspectTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
 
 @CardRegistration(set = "SPM", collectorNumber = "81")
 @CardRegistration(set = "SPM", collectorNumber = "261")
@@ -17,7 +18,7 @@ public class JJonahJameson extends Card {
 
     public JJonahJameson() {
         target(TargetFilters.creature(), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new SuspectTargetCreatureEffect());
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new SuspectEffect(Subjects.target()));
         addTrigger(Triggers.creatureYouControlAttacks().withFilter(new PermanentHasKeywordPredicate(Keyword.MENACE)),
                 CreateTokenEffect.ofTreasureToken(1));
     }

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BandsWithOtherEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectOnTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -30,7 +30,7 @@ public class Tolaria extends Card {
                 null,
                 List.of(
                         new RemoveKeywordEffect(Keyword.BANDING, Subjects.target()),
-                        new SuppressStaticEffectOnTargetUntilEndOfTurnEffect(BandsWithOtherEffect.class)
+                        new SuppressStaticEffectUntilEndOfTurnEffect(BandsWithOtherEffect.class, Subjects.target())
                 ),
                 "{T}: Target creature loses banding and all \"bands with other\" abilities until end of turn.",
                 TargetFilters.creature(),
