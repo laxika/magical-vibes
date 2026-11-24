@@ -1471,9 +1471,10 @@ public class GameData {
     public final Map<UUID, List<PendingExileReturn>> exileReturnOnPermanentLeave = new ConcurrentHashMap<>();
     /** Exile returns keyed by the player whose opponent must become monarch. */
     public final Map<UUID, List<PendingExileReturn>> exileReturnOnOpponentBecomesMonarch = new ConcurrentHashMap<>();
-    /** Opal-Eye shields already consumed by the open simultaneous damage event; they keep redirecting the
-     *  rest of that event's damage from the same source and are dropped once the event is dealt. */
-    public final List<SourceNextDamageRedirectToPermanentShield> sourceRedirectShieldsUsedInOpenEvent =
+    /** One-shot {@link SourceKeyedRedirectShield}s already used by the open simultaneous damage event, as their
+     *  floating effects; they keep redirecting the rest of that event's damage from the same source and are dropped
+     *  once the event is dealt. */
+    public final List<FloatingContinuousEffect> sourceRedirectShieldsUsedInOpenEvent =
             Collections.synchronizedList(new ArrayList<>());
     /** Shadowbane-style creature shields already consumed by the open simultaneous damage event; they keep
      *  preventing the rest of that event's damage from the same source and are dropped once it is dealt. */
@@ -9739,7 +9740,7 @@ public class GameData {
         CombatDamageState copy = new CombatDamageState();
         copy.sharedRedirectShields = new ArrayList<>(source.sharedRedirectShields);
         copy.sourceDamageShields = new ArrayList<>(source.sourceDamageShields);
-        copy.reflectDamageShields = new ArrayList<>(source.reflectDamageShields);
+        copy.usedSourceKeyedRedirects.addAll(source.usedSourceKeyedRedirects);
         copy.pendingOptionalDamageChoices = source.pendingOptionalDamageChoices;
         copy.awaitingOptionalDamageChoices = source.awaitingOptionalDamageChoices;
         copy.proliferateLinksChecked = source.proliferateLinksChecked;

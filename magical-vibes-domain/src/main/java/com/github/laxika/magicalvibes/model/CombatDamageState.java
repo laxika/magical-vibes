@@ -17,15 +17,13 @@ public class CombatDamageState {
     public List<com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect> sharedRedirectShields = List.of();
     /** The next-damage shields ({@link SourceNextDamageToAnyTargetShield}) in force at the start of the event. */
     public List<com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect> sourceDamageShields = List.of();
-    /** The Reflect Damage shields ({@link ReflectDamageToSourceControllerShield}) in force at the start of the event. */
-    public List<com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect> reflectDamageShields = List.of();
-
     /**
-     * Sources whose next-combat-damage-to-controller shield was consumed during this simultaneous
-     * damage event, mapped to the player the damage is redirected to. The shield replaces the whole
-     * event (CR 510.2), so every portion this source deals in it is redirected.
+     * The one-shot {@link SourceKeyedRedirectShield}s a damage step's combat damage already used: all of a step's combat
+     * damage is dealt at once (CR 510.2), so each keeps redirecting the rest of its source's damage in that step.
+     * Cleared as each damage step begins.
      */
-    public final Map<UUID, UUID> consumedSourceCombatDamageRedirects = new HashMap<>();
+    public final List<com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect> usedSourceKeyedRedirects =
+            new ArrayList<>();
 
     /** Pending replacement choices must finish before simultaneous damage is applied. */
     public int pendingOptionalDamageChoices;

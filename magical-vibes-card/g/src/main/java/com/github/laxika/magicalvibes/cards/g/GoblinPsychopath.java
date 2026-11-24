@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
-import com.github.laxika.magicalvibes.model.effect.RedirectNextCombatDamageFromSourceToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageFromChosenSourceToSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -15,7 +16,8 @@ public class GoblinPsychopath extends Card {
 
     public GoblinPsychopath() {
         CardEffect effect = new FlipCoinWinEffect(null,
-                new RedirectNextCombatDamageFromSourceToControllerEffect());
+                RedirectNextDamageFromChosenSourceToSelfEffect.toPlayer(Subjects.source(), Subjects.you())
+                        .combatDamageOnly());
         addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), TriggerOptions.ONE_OR_MORE, effect);
     }
 }

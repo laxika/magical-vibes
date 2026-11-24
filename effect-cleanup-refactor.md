@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c (each in Findings; the fold queue marks its rows). Fold runs 27b and 32b are reported and wait to merge; 29d, 38 and 35b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                   |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b (each in Findings; the fold queue marks its rows). Fold runs 32b and 35b are reported and wait to merge; 29d (fixing its payment window), 38 and 36b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                    |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,331 / 2,682 (after fold run 29c) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,325 / 2,676 (after fold run 27b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,125 rows over 4,489 classes (after fold run 29c). Latest verdict per class: `step-9` 434, unique 1,173, absorbed 1,044, split 649, blocked-other 521, survivor 367, blocked-step-model 140, blocked-player-loop 96, dead 65. Waiting: 434 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,138 rows over 4,490 classes (after fold run 27b). Latest verdict per class: `step-9` 423, unique 1,173, absorbed 1,048, split 652, blocked-other 523, survivor 370, blocked-step-model 140, blocked-player-loop 96, dead 65. Waiting: 423 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -913,6 +913,11 @@ Delayed and global triggers:
 - `SubjectResolutionService.bindResolutionFilter(gd, entry, effect, filter)`: card subjects plus the triggering spell's types, name and mana value, bound as the step resolves. Read by the exile-until stop, the reveal-until predicate and the cast-now filter, so "that card" is `cardsThisWay(EXILE)` with the step's own stop (fold run 29c).
 - `CardSharesCardTypeWithPermanentsPredicate(PermanentSubject)` + `SubjectResolutionService.cardTypes`: "shares a card type with the sacrificed permanent", read live or from the removal step's `DepartureResult.lastKnownCardTypes` (Reweave; Reality Scramble once its put-on-bottom step records a departure; fold run 29c).
 - `TargetPolarityClassifier.tradesTheTargetForAnother`: an edict on the target followed by a reveal-onto-battlefield for its controller is NEUTRAL (Shape Anew, Reweave; fold run 29c).
+
+- `ChooseDamageSourceEffect.any()` / `.youControl()`: "choose a source [you control]" as a CHOOSE step over CR 609.7a's candidates (`DamageSourceChoiceSupport`: candidates, controllerOf, sourceCard). A lone source is chosen unasked; read with `thisWay(CHOOSE)` via `SubjectResolutionService.damageSourceIds` (fold run 27b).
+- `RedirectNextDamageFromChosenSourceToSelfEffect.to(source, permanent)` / `.toPlayer(source, player)` / `.toItsController(source)` + `.dealtTo(players)` / `.allThisTurn()` / `.combatDamageOnly()`: every source-keyed redirection. One `SourceKeyedRedirectShield` per source, read by `DamagePreventionService.applicableSourceKeyedRedirects` / `applySourceKeyedRedirect` (CR 614.9) (fold run 27b).
+- `PreventNextDamageByTargetCreatureEffect.preventing(source)` / `.doubling(source)` + `.combatDamageOnly()`: "the next time [source] would deal damage this turn, prevent it / it deals double instead", with `target()`, `triggering()` or `thisWay(CHOOSE)` (fold run 27b).
+- `SubjectResolutionService.damageSourceIds(...)`: the ids of damage sources a subject names, a chosen spell and `targetSpell()` included (fold run 27b).
 
 ### Blocked causes still open
 
@@ -3901,6 +3906,36 @@ Okk, Champions of Minas Tirith, Call for Aid, Seeker of Slaanesh, Viashino Bey, 
 - Wild Evocation: `RevealCardsFromHandEffect.atRandom` + the step over the hand card.
 - The "Fold:" defect on Omen Machine is fixed with it.
 - Eye of the Storm can use `ExileTargetSpellEffect.triggeringSpellWithSource()` once `CopyImprintedCardAndMayCastCopyEffect` has a caster.
+
+### Step 9, fold run 27b (2026-11-24, parallel worktree)
+2 of 3 batches done: 7 folded (4 absorbed, 3 split), 1 unique, 2 blocked-other. Ratchet 3,396 / 2,724 → 3,390 / 2,718. 8 card files rewritten; Oracle text checked for all 8. Rulings read for Desperate Gambit, Reverberation, Soltari, Psychopath, Impulsive Maneuvers, Reflect Damage and Opal-Eye. CR 400.7, 510.2, 608.2b, 608.2d, 608.2h, 608.2n, 609.7, 609.7a, 609.7b, 611.2c, 614.5, 614.9, 615.7, 615.8, 615.12, 616.1 checked.
+
+| Batch | Result |
+|---|---|
+| `redir-source` | 6 of 8. Survivor `RedirectNextDamageFromChosenSourceToSelfEffect(source, recipients, toPermanent, toPlayer, wholeTurn, combatOnly)` with `.to`, `.toPlayer`, `.toItsController`, `.dealtTo`, `.allThisTurn()`, `.combatDamageOnly()`. Sources: `thisWay(CHOOSE)` (Opal-Eye, Reflect Damage), `source()` (Psychopath, Soltari), `target()` (Mirror Strike), `targetSpell()` (Reverberation). Six shields became one `SourceKeyedRedirectShield` (a spell keeps its graveyard stay). One `SourceKeyedRedirect` rule per recipient kind, one option per shield, redirected via `pendingSourceRedirectDamage` + `processRedirects` (CR 614.9, 614.5). Harsh Judgment and Aegis of Honor are `blocked-other`: they are keyed by a source property, not an object, and each would set its own option. |
+| `next-dmg-shields` | 2 of 3, plus the survivor. `PreventNextDamageByTargetCreatureEffect(source, gainLife, doubling, combatOnly)` with `.preventing`, `.doubling`, `.combatDamageOnly()`. Desperate Gambit is `ChooseDamageSourceEffect.youControl()` + `FlipCoinWinEffect`. Impulsive Maneuvers is `FlipCoinWinEffect` over `triggering()`. Barbed Wire is `unique`: a fixed amount only it sets. combatOnly is set only by Impulsive on this record, but it is the shield's existing component (Ria Ivor) and the queue row named it. |
+| `redir-absorb` | Not started. This tree's `GrantStaticEffectToPlayerEffect` floats with no source (fold run 35 is not here). |
+
+**New shared step.** `ChooseDamageSourceEffect.any()` / `.youControl()` takes its CR 609.7a candidates from `DamageSourceChoiceSupport`: permanents; spells on the stack, the resolving one included; ability sources, even after they left; cards that stack objects refer to; sources of waiting shields. A lone candidate is chosen unasked. It records CHOOSE (id and controller), and later steps read it with `SubjectResolutionService.damageSourceIds`. `PreventDamageFromChosenSourceEffect` now uses the same collector.
+
+**One-shot redirect, one event.** A used shield keeps applying to the rest of the event: `CombatDamageState.usedSourceKeyedRedirects` for a combat damage step (CR 510.2), `GameData.sourceRedirectShieldsUsedInOpenEvent` for simultaneous noncombat damage. This replaces Psychopath's consumed map and Reflect Damage's combat reinstating.
+
+**Behaviour changes.**
+- A lone source is chosen unasked; the resolving spell is a legal source; Desperate Gambit flips even with no other source (tests).
+- Reflect Damage redirects in the same event, not a fresh event. Untested.
+- Opal-Eye redirects all of a source's simultaneous combat damage (test).
+- Destinations follow CR 614.9 (creature, planeswalker or battle); all redirects respect "can't be redirected" on a permanent. Untested.
+- Options and log lines are the survivor's.
+
+**Tests changed.** DesperateGambitTest (the spell is a candidate; lone-source test), OpalEyeKondasYojimboTest (+1), shield class in ReflectDamageTest and SoltariGuerrillasTest, lenient stubs in CombatDamageServiceTest and AbstractDamageHandlerTest.
+
+**Seen, not changed.**
+- `TargetPolarityClassifier` marks `PreventNextDamageByTargetCreatureEffect` BENEFICIAL, but Awe Strike is used on an opponent's attacker. Fairly sure.
+- EyeForAnEye, Harm's Way, Jade Monolith, Shaman en-Kor, General's Regalia and Nova Pentacle still collect damage sources their own way (`PreventionSupport.collectAllDamageSourceIds` / battlefield-only lists). Sure.
+
+**For the next run.**
+- Move the other chosen-source records onto `ChooseDamageSourceEffect` + `thisWay(CHOOSE)`: `PreventDamageFromChosenSourceEffect`'s scopes, EyeForAnEye, `PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect`, `RedirectTargetCreature*FromChosenSource*`, `RedirectNextDamageFromChosenSourceToTargetCreatureEffect`. Their shields could join `SourceKeyedRedirectShield` (with an amount) or `SourceNextDamageToAnyTargetShield`.
+- Then do `redir-absorb` once fold run 35 is in.
 
 ## Prompt
 

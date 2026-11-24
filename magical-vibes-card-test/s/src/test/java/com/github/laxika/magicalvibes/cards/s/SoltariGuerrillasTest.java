@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.SourceNextCombatDamageToOpponentRedirectShield;
+import com.github.laxika.magicalvibes.model.SourceKeyedRedirectShield;
 import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -46,7 +46,7 @@ class SoltariGuerrillasTest extends BaseCardTest {
         harness.passBothPriorities();
 
         attackUnblocked(guerrillas);
-        assertThat(gd.shields(SourceNextCombatDamageToOpponentRedirectShield.class)).isEmpty();
+        assertThat(gd.shields(SourceKeyedRedirectShield.class)).isEmpty();
 
         int lifeBefore = gd.getLife(player2.getId());
         attackUnblocked(guerrillas);
@@ -73,13 +73,13 @@ class SoltariGuerrillasTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, guerrillas), null, destination.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.shields(SourceNextCombatDamageToOpponentRedirectShield.class)).hasSize(1);
+        assertThat(gd.shields(SourceKeyedRedirectShield.class)).hasSize(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.shields(SourceNextCombatDamageToOpponentRedirectShield.class)).isEmpty();
+        assertThat(gd.shields(SourceKeyedRedirectShield.class)).isEmpty();
     }
 
     @Test

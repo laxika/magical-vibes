@@ -17,10 +17,10 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Redirection effects (CR 614.9) for damage to a player: Harsh Judgment, Aegis of Honor, Harm's
- * Way, General's Regalia, Reflect Damage, Opal-Eye, Saving Grace, Glarecaster, Martyrdom, Mirror
- * Strike, Soltari Guerrillas, Vengeful Archon and the creatures and Auras that absorb their
- * controller's damage. A redirect to another player keeps the same event, so that player's effects
+ * Redirection effects (CR 614.9) for damage to a player: Harsh Judgment, the source-keyed redirections
+ * (Reflect Damage, Opal-Eye, Mirror Strike, Soltari Guerrillas, Goblin Psychopath, Reverberation), Aegis of
+ * Honor, Harm's Way, General's Regalia, Saving Grace, Glarecaster, Martyrdom, Vengeful Archon and the creatures
+ * and Auras that absorb their controller's damage. A redirect to another player keeps the same event, so that player's effects
  * now apply to it (CR 616.2) while effects already applied stay spent (CR 614.5); damage redirected
  * to a permanent is dealt to it at once.
  */
@@ -47,29 +47,23 @@ class PlayerDamageRedirects extends PlayerDamageCandidateSource {
                         ctx -> "Harsh Judgment: " + ctx.sourceName() + "'s damage is dealt to its controller",
                         ctx -> ctx.event().withRecipient(harshJudgmentTarget(ctx)),
                         this::logRedirectedToController),
-                pure("TargetSorceryRedirect", REDIRECT,
-                        ctx -> targetSorceryController(ctx) != null,
-                        ctx -> ctx.sourceName() + "'s damage is dealt to its controller",
-                        ctx -> ctx.event().withRecipient(targetSorceryController(ctx)),
-                        this::logRedirectedToController),
+                new Rule<PlayerDamageContext>("SourceKeyedRedirect", REDIRECT, false,
+                        ctx -> prevention.applicableSourceKeyedRedirects(ctx.gameData(), ctx.damageSourceId(),
+                                ctx.sourceControllerId(), ctx.playerId(), null, ctx.combat()),
+                        (ctx, instance) -> ctx.sourceName() + "'s damage is dealt to "
+                                + destinationName(ctx, prevention.sourceKeyedRedirectDestination(ctx.gameData(),
+                                        instance, ctx.sourceControllerId(), ctx.combat())) + " instead",
+                        (ctx, instance) -> ctx.event(),
+                        (ctx, instance) -> new ApplyResult.Applied<>(redirected(ctx,
+                                prevention.applySourceKeyedRedirect(ctx.gameData(), instance, ctx.damageSourceId(),
+                                        ctx.sourceControllerId(), ctx.playerId(), null, ctx.amount(),
+                                        ctx.combat())))),
                 effect("NextInstantOrSorceryRedirect", REDIRECT,
                         ctx -> prevention.hasNextInstantOrSorceryDamageRedirectShield(
                                 ctx.gameData(), ctx.entry(), ctx.playerId()),
                         ctx -> "Aegis of Honor: the damage is dealt to the spell's controller",
                         ctx -> ctx.event().withRecipient(prevention.applyNextInstantOrSorceryDamageRedirectShield(
                                 ctx.gameData(), ctx.entry(), ctx.playerId(), ctx.amount()))),
-                effect("SourceNextCombatDamageToController", REDIRECT,
-                        ctx -> ctx.combat() && prevention.hasSourceNextCombatDamageToControllerShield(
-                                ctx.gameData(), ctx.damageSourceId()),
-                        ctx -> "The next combat damage from " + ctx.sourceName() + " is dealt to another player",
-                        ctx -> redirected(ctx, prevention.applySourceNextCombatDamageToControllerShield(
-                                ctx.gameData(), ctx.damageSourceId(), ctx.amount()))),
-                effect("TurnSourceRedirectToController", REDIRECT,
-                        ctx -> ctx.combat() && prevention.hasTurnSourceDamageRedirectToController(
-                                ctx.gameData(), ctx.playerId(), ctx.damageSourceId()),
-                        ctx -> "Mirror Strike: " + ctx.sourceName() + " deals the damage to its controller",
-                        ctx -> redirected(ctx, prevention.applyTurnSourceDamageRedirectToController(
-                                ctx.gameData(), ctx.playerId(), ctx.damageSourceId(), ctx.amount()))),
                 effect("SourceRedirectShield", REDIRECT,
                         ctx -> prevention.hasSourceRedirectShield(ctx.gameData(), ctx.playerId(), ctx.damageSourceId()),
                         ctx -> "Redirect damage from " + ctx.sourceName() + " (Harm's Way)",
@@ -81,33 +75,6 @@ class PlayerDamageRedirects extends PlayerDamageCandidateSource {
                         ctx -> "Redirect the next damage from " + ctx.sourceName() + " to a creature",
                         ctx -> redirected(ctx, prevention.applyPlayerSourceNextDamageRedirectShield(
                                 ctx.gameData(), ctx.playerId(), ctx.damageSourceId(), ctx.amount()))),
-                new Rule<PlayerDamageContext>("SourceNextCombatDamageToOpponentRedirect", REDIRECT, false,
-                        ctx -> ctx.combat() && !ctx.playerId().equals(ctx.sourceControllerId())
-                                ? prevention.applicableSourceNextCombatDamageToOpponentRedirects(
-                                        ctx.gameData(), ctx.damageSourceId())
-                                : List.<String>of(),
-                        (ctx, instance) -> "Soltari Guerrillas: " + ctx.sourceName()
-                                + "'s damage is dealt to " + redirectDestinationName(ctx, instance),
-                        (ctx, instance) -> ctx.event(),
-                        (ctx, instance) -> new ApplyResult.Applied<>(redirected(ctx,
-                                prevention.applySourceNextCombatDamageToOpponentRedirectTo(ctx.gameData(),
-                                        ctx.playerId(), ctx.damageSourceId(), UUID.fromString(instance),
-                                        ctx.amount())))),
-                effect("ReflectDamage", REDIRECT,
-                        ctx -> prevention.hasReflectDamageToSourceControllerShield(ctx.gameData(), ctx.damageSourceId()),
-                        ctx -> "Reflect Damage: " + ctx.sourceName() + " deals the damage to its controller",
-                        ctx -> {
-                            int remaining = prevention.applyReflectDamageToSourceControllerShield(
-                                    ctx.gameData(), ctx.damageSourceId(), ctx.amount());
-                            damageSupport.getObject().processEyeForAnEyeReflections(ctx.gameData());
-                            return ctx.event().withAmount(remaining);
-                        }),
-                effect("SourceNextRedirectToPermanent", REDIRECT,
-                        ctx -> prevention.hasSourceNextDamageRedirectToPermanent(
-                                ctx.gameData(), ctx.damageSourceId(), null),
-                        ctx -> "Redirect the next damage from " + ctx.sourceName() + " to a creature (Opal-Eye)",
-                        ctx -> redirected(ctx, prevention.applySourceNextDamageRedirectToPermanent(
-                                ctx.gameData(), ctx.damageSourceId(), null, ctx.amount()))),
                 new Rule<PlayerDamageContext>("TurnRedirectToCreature", REDIRECT, false,
                         ctx -> prevention.applicableTurnDamageRedirectToCreatureShields(ctx.gameData(),
                                         ctx.playerId(), null, ctx.damageSourceId(), ctx.combat())
@@ -197,11 +164,6 @@ class PlayerDamageRedirects extends PlayerDamageCandidateSource {
         return damageSupport.getObject().findHarshJudgmentRedirectTarget(ctx.gameData(), ctx.entry(), ctx.playerId());
     }
 
-    private UUID targetSorceryController(PlayerDamageContext ctx) {
-        UUID controllerId = prevention.getTargetSorceryDamageRedirectController(ctx.gameData(), ctx.entry());
-        return controllerId == null || controllerId.equals(ctx.playerId()) ? null : controllerId;
-    }
-
     private String turnRedirectDestinationName(PlayerDamageContext ctx, String shieldIndex) {
         UUID destinationId = ctx.gameData().shields(TurnDamageRedirectToCreatureShield.class)
                 .get(Integer.parseInt(shieldIndex)).redirectTargetCreatureId();
@@ -209,8 +171,14 @@ class PlayerDamageRedirects extends PlayerDamageCandidateSource {
         return destination == null ? "a creature" : ctx.nameShownToChooser(destination);
     }
 
-    private String redirectDestinationName(PlayerDamageContext ctx, String destinationId) {
-        Permanent destination = gameQueryService.findPermanentById(ctx.gameData(), UUID.fromString(destinationId));
+    private String destinationName(PlayerDamageContext ctx, UUID destinationId) {
+        if (destinationId == null) {
+            return "another player";
+        }
+        if (ctx.gameData().playerIds.contains(destinationId)) {
+            return ctx.gameData().playerIdToName.get(destinationId);
+        }
+        Permanent destination = gameQueryService.findPermanentById(ctx.gameData(), destinationId);
         return destination == null ? "a creature" : ctx.nameShownToChooser(destination);
     }
 

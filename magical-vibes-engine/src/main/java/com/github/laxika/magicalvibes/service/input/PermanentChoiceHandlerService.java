@@ -787,6 +787,8 @@ public class PermanentChoiceHandlerService {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.RecordChosenPermanents chosen) {
             battlefieldHandler.handleRecordChosenPermanents(gameData, permanentId, chosen);
+        } else if (context instanceof PermanentChoiceContext.RecordChosenDamageSource chosen) {
+            battlefieldHandler.handleRecordChosenDamageSource(gameData, permanentId, chosen);
         } else if (context instanceof PermanentChoiceContext.RecordChosenPlayer chosen) {
             battlefieldHandler.handleRecordChosenPlayer(gameData, permanentId, chosen);
         } else if (context instanceof PermanentChoiceContext.BackdraftPlayerChoice) {
@@ -873,22 +875,14 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handlePreventNextCombatDamageFromUnblockedCreatureChoice(gameData, permanentId, forcefield);
         } else if (context instanceof PermanentChoiceContext.PreventNextDamageFromSourceToAnyTargetChoice preventNextAnyTarget) {
             battlefieldHandler.handlePreventNextDamageFromSourceToAnyTargetChoice(gameData, permanentId, preventNextAnyTarget);
-        } else if (context instanceof PermanentChoiceContext.DoubleOrPreventNextDamageFromSourceChoice doubleOrPrevent) {
-            battlefieldHandler.handleDoubleOrPreventNextDamageFromSourceChoice(gameData, permanentId, doubleOrPrevent,
-                    new GameData.InteractionAnswerReplay(player, permanentChoice,
-                            new InteractionAnswer.PermanentChosen(permanentId)));
         } else if (context instanceof PermanentChoiceContext.PreventNextDamageFromSourceToPermanentChoice preventNextPermanent) {
             battlefieldHandler.handlePreventNextDamageFromSourceToPermanentChoice(gameData, permanentId, preventNextPermanent);
         } else if (context instanceof PermanentChoiceContext.PreventNextDamageFromSourceToYouAndYourCreaturesChoice preventNextYouAndCreatures) {
             battlefieldHandler.handlePreventNextDamageFromSourceToYouAndYourCreaturesChoice(gameData, permanentId, preventNextYouAndCreatures);
         } else if (context instanceof PermanentChoiceContext.EyeForAnEyeSourceChoice eyeForAnEye) {
             battlefieldHandler.handleEyeForAnEyeSourceChoice(gameData, permanentId, eyeForAnEye);
-        } else if (context instanceof PermanentChoiceContext.RedirectNextDamageFromChosenSourceToPermanentChoice redirectToPermanent) {
-            battlefieldHandler.handleRedirectNextDamageFromChosenSourceToPermanentChoice(gameData, permanentId, redirectToPermanent);
         } else if (context instanceof PermanentChoiceContext.RedirectPlayerDamageSourceChoice redirectToPlayer) {
             battlefieldHandler.handleRedirectPlayerDamageSourceChoice(gameData, permanentId, redirectToPlayer);
-        } else if (context instanceof PermanentChoiceContext.ReflectDamageToSourceControllerChoice reflectDamage) {
-            battlefieldHandler.handleReflectDamageToSourceControllerChoice(gameData, permanentId, reflectDamage);
         } else if (context instanceof PermanentChoiceContext.RandomOpponentDamageChoice randomDamage) {
             triggerHandler.handleRandomOpponentDamageChoice(gameData, permanentId, randomDamage);
         } else if (context instanceof PermanentChoiceContext.EarthbendThenFightTarget earthbendFight) {

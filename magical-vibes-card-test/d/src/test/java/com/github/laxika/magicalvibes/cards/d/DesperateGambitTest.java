@@ -24,9 +24,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DesperateGambitTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Resolving prompts for a source choice among the permanents you control only")
+    @DisplayName("Resolving prompts for a source choice among the sources you control only, this spell included")
     void resolvingPromptsForOwnSourceChoice() {
-        castGambit(player1);
+        DesperateGambit gambit = castGambit(player1);
         Permanent own = addReadyBerserker(player1);
         addReadyBerserker(player2);
 
@@ -35,7 +35,7 @@ class DesperateGambitTest extends BaseCardTest {
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validPermanentIds()).containsExactly(own.getId());
+        assertThat(choice.validPermanentIds()).containsExactlyInAnyOrder(own.getId(), gambit.getId());
     }
 
     @Test
@@ -211,15 +211,19 @@ class DesperateGambitTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Controlling no permanents leaves no prompt and no shield")
-    void noOwnPermanentsNoShield() {
-        castGambit(player1);
+    @DisplayName("Controlling no other source, the spell itself is chosen unasked and the coin is flipped")
+    void noOtherOwnSourceChoosesTheSpellUnasked() {
+        DesperateGambit gambit = castGambit(player1);
         addReadyBerserker(player2);
 
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class))
+                .extracting(SourceNextDamageToAnyTargetShield::sourceId)
+                .containsExactly(gambit.getId());
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText).toList())
+                .anyMatch(entry -> entry.contains("the coin flip for Desperate Gambit"));
     }
 
     @Test
@@ -236,8 +240,10 @@ class DesperateGambitTest extends BaseCardTest {
         assertThat(gd.pendingEffectResolutionEntry).isNull();
     }
 
-    private void castGambit(Player player) {
-        harness.castFromHand(player, new DesperateGambit(), "{R}");
+    private DesperateGambit castGambit(Player player) {
+        DesperateGambit gambit = new DesperateGambit();
+        harness.castFromHand(player, gambit, "{R}");
+        return gambit;
     }
 
     private Permanent addReadyBerserker(Player player) {

@@ -134,26 +134,6 @@ public record SourceNextDamageToAnyTargetShield(
         return new SourceNextDamageToAnyTargetShield(sourceId, false, null, null, recipientId, 0, null);
     }
 
-    /** Awe Strike: source-wide prevention plus life gain for the spell's controller. */
-    public static SourceNextDamageToAnyTargetShield withLifeGain(UUID sourceId, UUID lifeGainPlayerId) {
-        return new SourceNextDamageToAnyTargetShield(sourceId, false, null, null, null, 0, lifeGainPlayerId);
-    }
-
-    /** Desperate Gambit's won flip: the next damage event from this source is doubled, not prevented. */
-    public static SourceNextDamageToAnyTargetShield doubling(UUID sourceId) {
-        return new SourceNextDamageToAnyTargetShield(sourceId, false, null, null, null, 2, null);
-    }
-
-    /** Impulsive Maneuvers's won flip: the next combat damage event from this source is doubled. */
-    public static SourceNextDamageToAnyTargetShield combatDoubling(UUID sourceId) {
-        return new SourceNextDamageToAnyTargetShield(sourceId, false, null, null, null, 2, null, true);
-    }
-
-    /** Impulsive Maneuvers's lost flip: the next combat damage event from this source is prevented. */
-    public static SourceNextDamageToAnyTargetShield combatPrevention(UUID sourceId) {
-        return new SourceNextDamageToAnyTargetShield(sourceId, false, null, null, null, 0, null, true);
-    }
-
     /** Ria Ivor: prevent the chosen creature's next combat damage to players in this combat. */
     public static SourceNextDamageToAnyTargetShield combatPlayerPreventionWithTokens(
             UUID sourceId, CreateTokenEffect token, UUID tokenControllerId, String tokenSourceSetCode,

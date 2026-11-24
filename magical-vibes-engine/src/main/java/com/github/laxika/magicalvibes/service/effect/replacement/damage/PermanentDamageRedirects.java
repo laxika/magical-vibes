@@ -3,12 +3,10 @@ package com.github.laxika.magicalvibes.service.effect.replacement.damage;
 import com.github.laxika.magicalvibes.model.TurnDamageRedirectToCreatureShield;
 import java.util.Set;
 import com.github.laxika.magicalvibes.model.effect.RedirectAllCreatureDamageToControllerEffect;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
-import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatDamageService;
@@ -22,8 +20,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * Redirection effects (CR 614.9) for damage to a permanent: a sorcery's damage sent back to its
- * controller, Harm's Way, Reflect Damage, Opal-Eye, Saving Grace, Palisade Giant, Ascent of the
+ * Redirection effects (CR 614.9) for damage to a permanent: the source-keyed redirections (Reverberation,
+ * Reflect Damage, Opal-Eye, Goblin Psychopath), Harm's Way, Saving Grace, Palisade Giant, Ascent of the
  * Worthy, the "have it dealt to you instead" choice, Treacherous Link, Glarecaster and Oracle's
  * Attendants. Damage that can't be redirected skips all of them. A redirect to a player keeps the
  * same event (CR 616.2); damage redirected to another permanent is dealt to it at once.
@@ -46,23 +44,20 @@ class PermanentDamageRedirects extends PermanentDamageCandidateSource {
         this.damageSupport = damageSupport;
         this.combatDamageService = combatDamageService;
         this.rules = List.of(
-                pure("TargetSorceryRedirect", REDIRECT,
-                        ctx -> redirectable(ctx) && !ctx.targetProtectedFromPrevention() && ctx.dealtByStackEntry()
-                                && prevention.getTargetSorceryDamageRedirectController(ctx.gameData(), ctx.entry()) != null,
-                        ctx -> ctx.sourceName() + "'s damage is dealt to its controller",
-                        ctx -> ctx.event().withRecipient(
-                                prevention.getTargetSorceryDamageRedirectController(ctx.gameData(), ctx.entry())),
-                        (ctx, result) -> {
-                            gameLogService.append(ctx.gameData(), GameLog.cardThen(ctx.entry().getEffectiveDamageSourceCard(),
-                                    "'s damage to " + FaceDownVisibility.publicName(ctx.gameData(), ctx.target())
-                                            + " is dealt to its controller instead."));
-                            return null;
-                        }),
-                redirect("SourceNextCombatDamageToController", "The next combat damage from the source is dealt to another player",
-                        ctx -> ctx.combat() && prevention.hasSourceNextCombatDamageToControllerShield(
-                                ctx.gameData(), ctx.sourcePermanentId()),
-                        ctx -> prevention.applySourceNextCombatDamageToControllerShield(
-                                ctx.gameData(), ctx.sourcePermanentId(), ctx.amount())),
+                new Rule<PermanentDamageContext>("SourceKeyedRedirect", REDIRECT, false,
+                        ctx -> redirectable(ctx) && !ctx.targetProtectedFromPrevention()
+                                ? prevention.applicableSourceKeyedRedirects(ctx.gameData(), ctx.damageSourceKey(),
+                                        ctx.sourceControllerId(), ctx.targetControllerId(), ctx.target().getId(),
+                                        ctx.combat())
+                                : List.of(),
+                        (ctx, instance) -> ctx.sourceName() + "'s damage is dealt to "
+                                + destinationName(ctx, prevention.sourceKeyedRedirectDestination(ctx.gameData(),
+                                        instance, ctx.sourceControllerId(), ctx.combat())) + " instead",
+                        (ctx, instance) -> ctx.event(),
+                        (ctx, instance) -> new ApplyResult.Applied<>(redirected(ctx,
+                                prevention.applySourceKeyedRedirect(ctx.gameData(), instance, ctx.damageSourceKey(),
+                                        ctx.sourceControllerId(), ctx.targetControllerId(), ctx.target().getId(),
+                                        ctx.amount(), ctx.combat())))),
                 redirect("SourceRedirectShield", "Redirect damage from the chosen source (Harm's Way)",
                         ctx -> ctx.targetControllerId() != null
                                 && (ctx.sourcePermanentId() != null || ctx.entry() != null)
@@ -70,21 +65,6 @@ class PermanentDamageRedirects extends PermanentDamageCandidateSource {
                                 ctx.gameData(), ctx.targetControllerId(), chosenSourceId(ctx)),
                         ctx -> prevention.applySourceRedirectShields(ctx.gameData(), ctx.targetControllerId(),
                                 chosenSourceId(ctx), ctx.amount())),
-                effect("ReflectDamage", REDIRECT,
-                        ctx -> redirectable(ctx)
-                                && prevention.hasReflectDamageToSourceControllerShield(ctx.gameData(), chosenSourceId(ctx)),
-                        ctx -> "Reflect Damage: the source deals the damage to its controller",
-                        ctx -> {
-                            int remaining = prevention.applyReflectDamageToSourceControllerShield(
-                                    ctx.gameData(), chosenSourceId(ctx), ctx.amount());
-                            damageSupport.getObject().processEyeForAnEyeReflections(ctx.gameData());
-                            return ctx.event().withAmount(remaining);
-                        }),
-                redirect("SourceNextRedirectToPermanent", "Redirect the next damage from the source to a creature (Opal-Eye)",
-                        ctx -> prevention.hasSourceNextDamageRedirectToPermanent(
-                                ctx.gameData(), chosenSourceId(ctx), ctx.target().getId()),
-                        ctx -> prevention.applySourceNextDamageRedirectToPermanent(
-                                ctx.gameData(), chosenSourceId(ctx), ctx.target().getId(), ctx.amount())),
                 new Rule<PermanentDamageContext>("TurnRedirectToCreature", REDIRECT, false,
                         ctx -> redirectable(ctx) && !turnRedirectAlreadyMoved(ctx)
                                 ? prevention.applicableTurnDamageRedirectToCreatureShields(ctx.gameData(),
@@ -197,6 +177,17 @@ class PermanentDamageRedirects extends PermanentDamageCandidateSource {
 
     private Permanent absorber(PermanentDamageContext ctx, String instance) {
         return gameQueryService.findPermanentById(ctx.gameData(), UUID.fromString(instance));
+    }
+
+    private String destinationName(PermanentDamageContext ctx, UUID destinationId) {
+        if (destinationId == null) {
+            return "another player";
+        }
+        if (ctx.gameData().playerIds.contains(destinationId)) {
+            return ctx.gameData().playerIdToName.get(destinationId);
+        }
+        Permanent destination = gameQueryService.findPermanentById(ctx.gameData(), destinationId);
+        return destination == null ? "a creature" : ctx.nameShownToChooser(destination);
     }
 
     private DamageEvent redirected(PermanentDamageContext ctx, int remaining) {

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.model.SourceNextDamageRedirectToPermanentShield;
+import com.github.laxika.magicalvibes.model.SourceKeyedRedirectShield;
 import com.github.laxika.magicalvibes.cards.f.FirstVolley;
 import com.github.laxika.magicalvibes.cards.f.Frostling;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -17,6 +17,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -106,7 +107,7 @@ class OpalEyeKondasYojimboTest extends BaseCardTest {
 
         harness.assertLife(player2, 20);
         assertThat(opalEye.getMarkedDamage()).isEqualTo(1);
-        assertThat(gd.shields(SourceNextDamageRedirectToPermanentShield.class)).isEmpty();
+        assertThat(gd.shields(SourceKeyedRedirectShield.class)).isEmpty();
     }
 
     @Test
@@ -162,7 +163,7 @@ class OpalEyeKondasYojimboTest extends BaseCardTest {
 
         harness.assertLife(player2, 19);
         assertThat(opalEye.getMarkedDamage()).isEqualTo(0);
-        assertThat(gd.shields(SourceNextDamageRedirectToPermanentShield.class)).isNotEmpty();
+        assertThat(gd.shields(SourceKeyedRedirectShield.class)).isNotEmpty();
     }
 
     @Test
@@ -197,13 +198,13 @@ class OpalEyeKondasYojimboTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, gd.playerBattlefields.get(player2.getId()).getFirst().getId());
 
-        assertThat(gd.shields(SourceNextDamageRedirectToPermanentShield.class)).isNotEmpty();
+        assertThat(gd.shields(SourceKeyedRedirectShield.class)).isNotEmpty();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.shields(SourceNextDamageRedirectToPermanentShield.class)).isEmpty();
+        assertThat(gd.shields(SourceKeyedRedirectShield.class)).isEmpty();
     }
 
     @Test
@@ -368,6 +369,30 @@ class OpalEyeKondasYojimboTest extends BaseCardTest {
 
         harness.assertLife(player2, 19);
         assertThat(opalEye.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("All the combat damage the chosen attacker deals its two blockers at once is dealt to Opal-Eye")
+    void redirectsAllSimultaneousCombatDamageOfTheSource() {
+        Permanent attacker = addReadyStats(player1, 2, 2);
+        Permanent opalEye = addCreatureReady(player1, new OpalEyeKondasYojimbo());
+        Permanent firstBlocker = addReadyStats(player2, 2, 2);
+        Permanent secondBlocker = addReadyStats(player2, 2, 2);
+
+        harness.activateAbility(player1, indexOf(player1, opalEye), 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, attacker.getId());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveCombat(player1);
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                firstBlocker.getId(), 1, secondBlocker.getId(), 1));
+
+        assertThat(firstBlocker.getMarkedDamage()).isZero();
+        assertThat(secondBlocker.getMarkedDamage()).isZero();
+        assertThat(opalEye.getMarkedDamage()).isEqualTo(2);
     }
 
     private Permanent addReadyStats(Player player, int power, int toughness) {

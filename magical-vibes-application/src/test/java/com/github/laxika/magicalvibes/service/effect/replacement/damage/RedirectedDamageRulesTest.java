@@ -19,9 +19,9 @@ class RedirectedDamageRulesTest {
     @Test
     @DisplayName("A redirect of the source's own damage stays spent for the damage it redirected")
     void sourceSideRedirectsStaySpent() {
-        assertThat(RedirectedDamageRules.staysSpent("SourceNextCombatDamageToController@a1b2")).isTrue();
-        assertThat(RedirectedDamageRules.staysSpent("SourceNextRedirectToPermanent")).isTrue();
-        assertThat(RedirectedDamageRules.staysSpent("SourceNextCombatDamageToOpponentRedirect")).isTrue();
+        assertThat(RedirectedDamageRules.staysSpent("SourceKeyedRedirect@a1b2")).isTrue();
+        assertThat(RedirectedDamageRules.staysSpent("SourceKeyedRedirect:9e")).isTrue();
+        assertThat(RedirectedDamageRules.staysSpent("TurnRedirectToCreature")).isTrue();
     }
 
     @Test

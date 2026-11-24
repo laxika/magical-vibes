@@ -110,14 +110,6 @@ abstract class AbstractDamageHandlerTest {
         lenient().when(gameQueryService.applyOjerAxonilDamageReplacement(
                         eq(gd), anyInt(), any(), any(), any()))
                 .thenAnswer(inv -> inv.getArgument(1));
-        // Reflect Damage is a pass-through when no replacement shield is set up.
-        lenient().when(damagePreventionService.applyReflectDamageToSourceControllerShield(
-                        eq(gd), nullable(UUID.class), anyInt()))
-                .thenAnswer(inv -> inv.getArgument(2));
-        // Opal-Eye redirect is likewise a pass-through when no shield is set up.
-        lenient().when(damagePreventionService.applySourceNextDamageRedirectToPermanent(
-                        eq(gd), nullable(UUID.class), nullable(UUID.class), anyInt()))
-                .thenAnswer(inv -> inv.getArgument(3));
         lenient().when(damagePreventionService.applySourcePermanentAndControllerNextDamageRedirectToPermanent(
                         eq(gd), any(), nullable(UUID.class), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(3));

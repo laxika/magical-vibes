@@ -5,9 +5,7 @@ import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnStepSupport;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
-import com.github.laxika.magicalvibes.model.ReflectDamageToSourceControllerShield;
 import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
-import com.github.laxika.magicalvibes.model.SourceNextDamageRedirectToPermanentShield;
 import com.github.laxika.magicalvibes.model.EyeForAnEyeShield;
 import com.github.laxika.magicalvibes.model.PlayerSourceDamagePrevention;
 import com.github.laxika.magicalvibes.model.Card;
@@ -86,7 +84,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.AttachTargetAuraTo
 import com.github.laxika.magicalvibes.service.effect.normalfx.AuspiciousStarrixSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BecomeCopyOfChosenCreatureYouControlUntilEndOfTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CipherSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.CoinFlipService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokensAndAttachEquipmentSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
@@ -227,6 +224,10 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final DamageSupport damageSupport;
 
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageSourceChoiceSupport damageSourceChoiceSupport;
+
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseDamageSourceEffectHandler chooseDamageSourceEffectHandler;
+
     private final DestructionSupport destructionSupport;
 
     private final DepartureService departureService;
@@ -244,8 +245,6 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.DrawService drawService;
 
     private final SoulbondSupport soulbondSupport;
-
-    private final CoinFlipService coinFlipService;
 
     private final MayAbilityTapCostService mayAbilityTapCostService;
 
@@ -1353,6 +1352,12 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleRecordChosenDamageSource(GameData gameData, UUID sourceId,
+            PermanentChoiceContext.RecordChosenDamageSource context) {
+        chooseDamageSourceEffectHandler.completeChoice(gameData, sourceId);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleRecordChosenPlayer(GameData gameData, UUID playerId,
             PermanentChoiceContext.RecordChosenPlayer context) {
         choosePlayerEffectHandler.completeChoice(gameData, playerId, context);
@@ -1885,54 +1890,6 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    public void handleRedirectNextDamageFromChosenSourceToPermanentChoice(GameData gameData, UUID permanentId,
-                                                                          PermanentChoiceContext.RedirectNextDamageFromChosenSourceToPermanentChoice ctx) {
-        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
-        StackEntry chosenSpell = chosenPermanent == null
-                ? gameQueryService.findStackEntryByCardId(gameData, permanentId) : null;
-        StackEntry chosenAbility = chosenPermanent == null && chosenSpell == null
-                ? gameData.stack.stream()
-                        .filter(entry -> permanentId.equals(entry.getSourcePermanentId()))
-                        .findFirst().orElse(null)
-                : null;
-        if (chosenPermanent == null && chosenSpell == null && chosenAbility == null) {
-            throw new IllegalStateException("Chosen source no longer exists");
-        }
-
-        gameData.addShield(
-                new com.github.laxika.magicalvibes.model.SourceNextDamageRedirectToPermanentShield(
-                        permanentId, ctx.destinationPermanentId()));
-
-        Permanent destination = gameQueryService.findPermanentById(gameData, ctx.destinationPermanentId());
-        String sourceName = FaceDownVisibility.publicName(gameData, chosenPermanent != null ? chosenPermanent.getCard()
-                : chosenSpell != null ? chosenSpell.getCard() : chosenAbility.getCard());
-        String destinationName = destination != null ? FaceDownVisibility.publicName(gameData, destination) : "it";
-        gameLogService.append(gameData, GameLog.text("The next time " + sourceName + " would deal damage this turn, "
-                + "that damage is dealt to " + destinationName + " instead."));
-        log.info("Game {} - {} chose {} as damage redirect source", gameData.id,
-                gameData.playerIdToName.get(ctx.controllerId()), sourceName);
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleReflectDamageToSourceControllerChoice(GameData gameData, UUID permanentId,
-                                                            PermanentChoiceContext.ReflectDamageToSourceControllerChoice ctx) {
-        Card chosenSource = findDamageSourceCard(gameData, permanentId);
-        if (chosenSource == null) {
-            throw new IllegalStateException("Chosen source no longer exists");
-        }
-
-        gameData.addShield(new ReflectDamageToSourceControllerShield(permanentId));
-
-        String sourceName = FaceDownVisibility.publicName(gameData, chosenSource);
-        gameLogService.append(gameData, GameLog.text("The next time " + sourceName + " would deal damage this turn, "
-                + "that damage is dealt to " + sourceName + "'s controller instead."));
-        log.info("Game {} - {} chose {} as Reflect Damage source", gameData.id,
-                gameData.playerIdToName.get(ctx.controllerId()), sourceName);
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
     public void handlePreventNextDamageFromSourceToPermanentChoice(GameData gameData, UUID permanentId,
                                                                     PermanentChoiceContext.PreventNextDamageFromSourceToPermanentChoice ctx) {
         Card chosenSource = findDamageSourceCard(gameData, permanentId);
@@ -1980,137 +1937,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     }
 
     private Card findDamageSourceCard(GameData gameData, UUID sourceId) {
-        Permanent permanent = gameQueryService.findPermanentById(gameData, sourceId);
-        if (permanent != null) {
-            return permanent.getCard();
-        }
-        Card abilitySource = gameData.stack.stream()
-                .filter(entry -> sourceId.equals(entry.getSourcePermanentId())
-                        || entry.getSourcePermanentSnapshot() != null
-                        && entry.getSourcePermanentSnapshot().getId().equals(sourceId))
-                .map(StackEntry::getCard)
-                .findFirst().orElse(null);
-        if (abilitySource != null) {
-            return abilitySource;
-        }
-        Card cardSourcedAbility = gameData.stack.stream()
-                .filter(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                        && entry.getSourcePermanentSnapshot() == null && entry.getSourcePermanentId() == null
-                        && entry.getCard() != null && sourceId.equals(entry.getCard().getId()))
-                .map(StackEntry::getCard)
-                .findFirst().orElse(null);
-        if (cardSourcedAbility != null) {
-            return cardSourcedAbility;
-        }
-        StackEntry parkedEntry = gameData.pendingEffectResolutionEntry;
-        if (parkedEntry != null && parkedEntry.getSourcePermanentSnapshot() != null
-                && sourceId.equals(parkedEntry.getSourcePermanentSnapshot().getId())) {
-            return parkedEntry.getSourcePermanentSnapshot().getCard();
-        }
-        return gameData.stack.stream()
-                .filter(entry -> entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
-                        && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
-                .filter(entry -> entry.getTargetableId().equals(sourceId))
-                .map(StackEntry::getCard)
-                .findFirst()
-                .orElseGet(() -> findCardReferencedByStackEntryOrWaitingRedirect(gameData, sourceId));
-    }
-
-    /**
-     * A departed card a waiting damage redirect still refers to is a legal damage source (CR 609.7a),
-     * so it can be chosen again while that redirect is waiting to apply.
-     */
-    private Card findCardReferencedByStackEntryOrWaitingRedirect(GameData gameData, UUID sourceId) {
-        Card referenced = findCardReferencedByStackEntry(gameData, sourceId);
-        if (referenced != null) {
-            return referenced;
-        }
-        boolean waitingRedirect = gameData.shields(CreatureDamageRedirectShield.class).stream()
-                .anyMatch(shield -> sourceId.equals(shield.damageSourceId()))
-                || gameData.shields(PlayerSourceNextDamageRedirectShield.class).stream()
-                .anyMatch(shield -> sourceId.equals(shield.sourcePermanentId()));
-        return waitingRedirect ? gameData.waitingDamageSourceCard(sourceId) : null;
-    }
-
-    /**
-     * A card in a graveyard or in exile that a spell or ability on the stack refers to (Reanimate's
-     * target) is still a legal damage source even though it is not a permanent.
-     */
-    private Card findCardReferencedByStackEntry(GameData gameData, UUID sourceId) {
-        boolean referenced = gameData.stack.stream().anyMatch(entry ->
-                sourceId.equals(entry.getTargetId())
-                        || entry.getTargetIds().contains(sourceId)
-                        || entry.getTargetCardIds().contains(sourceId));
-        if (!referenced) {
-            return null;
-        }
-        Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, sourceId);
-        if (graveyardCard != null) {
-            return graveyardCard;
-        }
-        var exiled = gameData.findExiledCard(sourceId);
-        if (exiled != null) {
-            return exiled.card();
-        }
-        for (StackEntry stackEntry : gameData.stack) {
-            Card lastKnown = stackEntry.lastKnownPermanentCard(sourceId);
-            if (lastKnown != null) {
-                return lastKnown;
-            }
-        }
-        // A permanent the ability targets that has since left the battlefield: look back to how it last existed.
-        return gameData.departedPermanentSnapshots.values().stream()
-                .filter(snapshot -> snapshot.getId().equals(sourceId))
-                .map(Permanent::getCard)
-                .findFirst().orElse(null);
-    }
-
-    /**
-     * Desperate Gambit: the source has been chosen, so flip the coin now. A won flip installs the
-     * doubling variant of the same one-shot any-target shield; a lost flip installs the plain
-     * prevention variant. The flip is the first thing the answer changes, so a Krark's Thumb choice on it completes
-     * the answer again through {@code replay} once the kept result is chosen.
-     */
-    public void handleDoubleOrPreventNextDamageFromSourceChoice(GameData gameData, UUID permanentId,
-                                                                PermanentChoiceContext.DoubleOrPreventNextDamageFromSourceChoice ctx,
-                                                                GameData.CoinFlipChoiceReplay replay) {
-        Card chosenSource = findDamageSourceCard(gameData, permanentId);
-        if (chosenSource == null) {
-            throw new IllegalStateException("Chosen source no longer exists");
-        }
-        coinFlipService.answerChoosingResultsFirst(gameData,
-                () -> flipForDoubleOrPreventNextDamage(gameData, permanentId, chosenSource, ctx), replay);
-    }
-
-    private void flipForDoubleOrPreventNextDamage(GameData gameData, UUID permanentId, Card chosenSource,
-                                                  PermanentChoiceContext.DoubleOrPreventNextDamageFromSourceChoice ctx) {
-        CoinFlipService.CoinFlipResult result = coinFlipService.flip(gameData, ctx.controllerId());
-        boolean wonFlip = result.heads();
-        String playerName = gameData.playerIdToName.get(ctx.controllerId());
-        String sourceName = FaceDownVisibility.publicName(gameData, chosenSource);
-        gameLogService.append(gameData, GameLog.text(wonFlip
-                ? playerName + " wins the coin flip for Desperate Gambit"
-                        + coinFlipService.replacementDetails(result) + "."
-                : playerName + " loses the coin flip for Desperate Gambit"
-                        + coinFlipService.replacementDetails(result) + "."));
-
-        if (wonFlip && result.isActualCoinFlip()) {
-            ActionEvents.coinFlipWon(gameData, ctx.controllerId());
-        } else if (result.isActualCoinFlip()) {
-            ActionEvents.coinFlipLost(gameData, ctx.controllerId());
-        }
-
-        gameData.addShield(wonFlip
-                ? com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield.doubling(permanentId)
-                : new com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield(permanentId));
-
-        gameLogService.append(gameData, GameLog.text(wonFlip
-                ? "The next time " + sourceName + " would deal damage this turn, it deals double that damage instead."
-                : "The next time " + sourceName + " would deal damage this turn, that damage is prevented."));
-        log.info("Game {} - {} chose {} for Desperate Gambit (won flip: {})", gameData.id, playerName, sourceName,
-                wonFlip);
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        return damageSourceChoiceSupport.sourceCard(gameData, sourceId);
     }
 
     public void handleSacrificeArtifactForDividedDamage(GameData gameData, UUID permanentId, PermanentChoiceContext.SacrificeArtifactForDividedDamage sadd) {

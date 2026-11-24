@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.combat;
 
-import com.github.laxika.magicalvibes.model.ReflectDamageToSourceControllerShield;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.rules.CombatDamageStepEvent;
 import com.github.laxika.magicalvibes.model.rules.DamageDealtEvent;
@@ -1200,7 +1199,7 @@ public class CombatDamageService {
                                      DamagePhase phase) {
         state.sharedRedirectShields = gameData.shieldEffects(SourcePermanentAndControllerNextDamageRedirectShield.class);
         state.sourceDamageShields = gameData.shieldEffects(SourceNextDamageToAnyTargetShield.class);
-        state.reflectDamageShields = gameData.shieldEffects(ReflectDamageToSourceControllerShield.class);
+        state.usedSourceKeyedRedirects.clear();
         captureCombatDamageBaselines(gameData, state, atkBf, defBf);
         // CR 510.4: all combat damage in this step is dealt simultaneously, so every value used
         // to assign and deal it (P/T, combat keywords, protection, prevention) comes from one
@@ -2515,11 +2514,6 @@ public class CombatDamageService {
         restoreSharedRedirectForCombatChunk(gameData, state, recipientId, playerRecipient);
         for (DamagePortion portion : event.portions()) {
             restoreSourceShieldForCombatChunk(gameData, state, portion.sourceId(), recipientId, playerRecipient);
-            for (FloatingContinuousEffect fe : state.reflectDamageShields) {
-                if (portion.sourceId().equals(((ReflectDamageToSourceControllerShield) fe.effect()).sourcePermanentId())) {
-                    gameData.reinstateShield(fe);
-                }
-            }
         }
     }
 

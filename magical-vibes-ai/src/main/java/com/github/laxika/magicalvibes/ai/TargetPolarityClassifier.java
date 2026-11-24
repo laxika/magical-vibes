@@ -730,7 +730,7 @@ public class TargetPolarityClassifier {
             // Divine Deflection prevents damage to its controller, but the target is who the
             // prevented damage is then dealt to.
             entry("PreventNextDamageAndRedirectEffect", TargetPolarity.HARMFUL_DAMAGE),
-            entry("RedirectCombatDamageFromTargetUnblockedCreatureToItsControllerEffect", TargetPolarity.HARMFUL_DAMAGE),
+            entry("RedirectNextDamageFromChosenSourceToSelfEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RedirectNextDamageFromTargetToAnotherTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DoubleDamageFromTargetPermanentThisTurnEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("ChannelHarmEffect", TargetPolarity.HARMFUL_DAMAGE),

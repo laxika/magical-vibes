@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.RedirectAllDamageFromTargetSorceryToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageFromChosenSourceToSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
@@ -16,6 +17,7 @@ public class Reverberation extends Card {
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryTypeInPredicate(Set.of(StackEntryType.SORCERY_SPELL)),
                 "Target must be a sorcery spell."
-        )).addSpellEffect(new RedirectAllDamageFromTargetSorceryToControllerEffect());
+        )).addSpellEffect(RedirectNextDamageFromChosenSourceToSelfEffect.toItsController(Subjects.targetSpell())
+                .allThisTurn());
     }
 }

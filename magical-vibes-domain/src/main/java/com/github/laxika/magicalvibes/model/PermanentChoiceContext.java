@@ -1055,11 +1055,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    /** "Choose a source you control and flip a coin. If you win the flip, the next time that source
-     *  would deal damage this turn, it deals double that damage instead. If you lose the flip, the next
-     *  time it would deal damage this turn, prevent that damage." (Desperate Gambit). The coin is
-     *  flipped once the source has been chosen. */
-    record DoubleOrPreventNextDamageFromSourceChoice(UUID controllerId) implements PermanentChoiceContext {}
+    /**
+     * {@code ChooseDamageSourceEffect}: the chosen source of damage (a permanent, a spell or another object CR 609.7a
+     * names) becomes the resolving entry's CHOOSE step.
+     */
+    record RecordChosenDamageSource(com.github.laxika.magicalvibes.model.effect.ChooseDamageSourceEffect effect)
+            implements PermanentChoiceContext {}
 
     /** "The next time a source of your choice would deal damage to enchanted creature this turn,
      *  prevent that damage." (Kithkin Armor). {@code protectedPermanentId} is the creature the
@@ -1076,15 +1077,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  deals that much damage to you and Eye for an Eye deals that much damage to that source's
      *  controller." (Eye for an Eye). */
     record EyeForAnEyeSourceChoice(UUID controllerId, Card eyeCard) implements PermanentChoiceContext {}
-
-    /** "The next time a source of your choice would deal damage this turn, that damage is dealt to
-     *  that source's controller instead." (Reflect Damage). */
-    record ReflectDamageToSourceControllerChoice(UUID controllerId) implements PermanentChoiceContext {}
-
-    /** "The next time a source of your choice would deal damage this turn, that damage is dealt to
-     *  this creature instead." (Opal-Eye, Konda's Yojimbo). */
-    record RedirectNextDamageFromChosenSourceToPermanentChoice(UUID controllerId, UUID destinationPermanentId)
-            implements PermanentChoiceContext {}
 
     /** A targeted attack trigger. {@code choosingPlayerId} defaults to the ability controller and
      *  differs only for text such as Erithizon's "of defending player's choice". {@code eventValue} is

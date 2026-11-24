@@ -7,7 +7,7 @@ import java.util.Set;
  * redirected to another player or permanent (CR 614.5). An effect of the damage's source or of the
  * whole game (Furnace of Rath, a source's "deals that much damage plus 1") is the same effect
  * whoever is dealt the damage, so it can't apply again; that includes a redirect of the source's
- * own damage (Goblin Psychopath, Opal-Eye) that sent it there. An effect of the original recipient (its
+ * own damage (Goblin Psychopath, Opal-Eye, Reflect Damage) that sent it there. An effect of the original recipient (its
  * prevention shields, "damage dealt to this creature is doubled") is not an effect of the new
  * recipient, so the new recipient's own effects of that family still apply.
  */
@@ -16,8 +16,7 @@ public final class RedirectedDamageRules {
     private static final Set<String> SOURCE_SIDE_FAMILIES = Set.of(
             "GlobalDamageMultiplier", "SourceMultiplier", "SourceBonus", "AdditionalDamageBonus",
             "ControllerNoncombatBonus", "PerpetualNoncombatBonus", "SpellDamageReduction", "OjerAxonil",
-            "ReflectDamage", "TargetSorceryRedirect", "SourceNextCombatDamageToController",
-            "SourceNextCombatDamageToOpponentRedirect", "SourceNextRedirectToPermanent",
+            "SourceKeyedRedirect",
             // A redirect shield that already moved this damage can't move it again (CR 614.5).
             "TurnRedirectToCreature");
 

@@ -139,6 +139,22 @@ public class SubjectResolutionService {
         return ids(new Context(gameData, entry, effect, null, entry.getControllerId()), subject);
     }
 
+    /**
+     * The ids of the sources of damage {@code subject} names for a resolving effect (CR 609.7a): as
+     * {@link #permanentIds}, a chosen source that is a spell or another object included by the id the choice recorded,
+     * and the target spell ({@code Subjects.targetSpell()}) by its card's id while it is on the stack.
+     */
+    public List<UUID> damageSourceIds(GameData gameData, StackEntry entry, CardEffect effect,
+                                      PermanentSubject subject) {
+        if (subject instanceof PermanentSubject.TargetSpell) {
+            UUID spellCardId = entry.getTargetId();
+            return spellCardId != null && gameData.stack.stream()
+                    .anyMatch(onStack -> spellCardId.equals(onStack.getTargetableId()))
+                    ? List.of(spellCardId) : List.of();
+        }
+        return permanentIds(gameData, entry, effect, subject);
+    }
+
     /** The players {@code subject} names, in APNAP order, for a resolving effect. */
     public List<UUID> players(GameData gameData, StackEntry entry, CardEffect effect, PlayerSubject subject) {
         return players(new Context(gameData, entry, effect, null, entry.getControllerId()), subject);

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.model.ReflectDamageToSourceControllerShield;
 import com.github.laxika.magicalvibes.model.EyeForAnEyeShield;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextInstantOrSorceryDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectAllCreatureDamageToControllerEffect;
@@ -37,17 +36,13 @@ import com.github.laxika.magicalvibes.model.PlayerNextDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.SaturatingMath;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
-import com.github.laxika.magicalvibes.model.SourceNextDamageRedirectToPermanentShield;
+import com.github.laxika.magicalvibes.model.SourceKeyedRedirectShield;
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
-import com.github.laxika.magicalvibes.model.SourceNextCombatDamageToOpponentRedirectShield;
-import com.github.laxika.magicalvibes.model.SourceNextCombatDamageToControllerShield;
 import com.github.laxika.magicalvibes.model.SourcePermanentAndControllerNextDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
-import com.github.laxika.magicalvibes.model.TargetSorceryDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.TurnDamageRedirectToCreatureShield;
-import com.github.laxika.magicalvibes.model.TurnSourceDamageRedirectToControllerShield;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
@@ -2113,104 +2108,129 @@ public class DamagePreventionService {
         return damage;
     }
 
-    /**
-     * Applies one-shot Reflect Damage shields: if a shield matches this source, the entire next damage
-     * event it would deal (to any recipient) is instead dealt to that source's controller. The
-     * reflected event is scheduled in {@link GameData#pendingEyeForAnEyeReflections} and dealt by the
-     * source itself. This is a redirection (replacement) effect, not prevention, so it applies even
-     * when damage can't be prevented. Returns the remaining damage (0 when redirected).
-     */
-    public int applyReflectDamageToSourceControllerShield(GameData gameData, UUID sourcePermanentId, int damage) {
-        if (damage <= 0 || sourcePermanentId == null
-                || !gameData.hasShields(ReflectDamageToSourceControllerShield.class)) {
-            return damage;
-        }
-        UUID sourceControllerId = reflectSourceControllerId(gameData, sourcePermanentId);
-        Card sourceCard = reflectSourceCard(gameData, sourcePermanentId);
-        if (sourceControllerId == null || sourceCard == null) return damage;
-        // A single shield is consumed per event: the oldest one that names the source.
-        FloatingContinuousEffect reflect = gameData.shieldEffects(ReflectDamageToSourceControllerShield.class).stream()
-                .filter(fe -> sourcePermanentId.equals(
-                        ((ReflectDamageToSourceControllerShield) fe.effect()).sourcePermanentId()))
-                .findFirst().orElse(null);
-        if (reflect == null) return damage;
-        gameData.endFloatingEffect(reflect);
-
-        gameData.pendingEyeForAnEyeReflections.add(new EyeForAnEyeReflection(
-                sourceControllerId, damage, sourceCard, sourceControllerId,
-                gameQueryService.findPermanentById(gameData, sourcePermanentId) != null ? sourcePermanentId : null));
-        return 0;
-    }
-
-    /** Controller of a Reflect Damage source: its permanent's controller, or the controller of a spell on the stack. */
-    private UUID reflectSourceControllerId(GameData gameData, UUID sourceId) {
-        if (gameQueryService.findPermanentById(gameData, sourceId) != null) {
-            return gameQueryService.findPermanentController(gameData, sourceId);
-        }
-        StackEntry spell = reflectSourceSpell(gameData, sourceId);
-        return spell == null ? null : spell.getControllerId();
-    }
-
-    private Card reflectSourceCard(GameData gameData, UUID sourceId) {
-        Permanent permanent = gameQueryService.findPermanentById(gameData, sourceId);
-        if (permanent != null) {
-            return permanent.getCard();
-        }
-        StackEntry spell = reflectSourceSpell(gameData, sourceId);
-        return spell == null ? null : spell.getCard();
-    }
-
-    private StackEntry reflectSourceSpell(GameData gameData, UUID sourceId) {
-        return gameData.stack.stream()
-                .filter(entry -> entry.getEntryType() == StackEntryType.INSTANT_SPELL
-                        || entry.getEntryType() == StackEntryType.SORCERY_SPELL)
-                .filter(entry -> entry.getCard() != null && sourceId.equals(entry.getCard().getId()))
-                .findFirst().orElse(null);
-    }
-
     private CombatDamageState activeCombatDamageState(GameData gameData) {
         return gameData.combatDamageStateInProgress != null
                 ? gameData.combatDamageStateInProgress : gameData.pendingCombatDamageState;
     }
 
-    /** Redirects a source's next combat damage to the stored controller of the effect that created the shield. */
-    public int applySourceNextCombatDamageToControllerShield(GameData gameData, UUID sourcePermanentId, int damage) {
-        if (damage <= 0 || sourcePermanentId == null) {
-            return damage;
-        }
-
-        CombatDamageState combatState = activeCombatDamageState(gameData);
-        UUID alreadyConsumedRecipient = combatState == null ? null
-                : combatState.consumedSourceCombatDamageRedirects.get(sourcePermanentId);
-        if (alreadyConsumedRecipient != null) {
-            gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
-                    null, sourcePermanentId, damage, alreadyConsumedRecipient));
-            return 0;
-        }
-
-        if (!gameData.hasShields(SourceNextCombatDamageToControllerShield.class)) {
-            return damage;
-        }
-
-        SourceNextCombatDamageToControllerShield matchingShield = null;
-        for (FloatingContinuousEffect fe : gameData.shieldEffects(SourceNextCombatDamageToControllerShield.class)) {
-            var shield = (SourceNextCombatDamageToControllerShield) fe.effect();
-            if (sourcePermanentId.equals(shield.sourcePermanentId())) {
-                matchingShield = shield;
-                gameData.endFloatingEffect(fe);
-                break;
+    /**
+     * The {@link SourceKeyedRedirectShield}s that would redirect this damage from {@code sourceId} now, as their
+     * floating effects' ids: one option each, so the affected player chooses among them (CR 616.1). A spell's shield
+     * covers the permanent it became (CR 609.7a), not a later cast of its card. A shield does nothing while its
+     * destination is no longer a player in the game or a creature, planeswalker or battle (CR 614.9). A one-shot shield
+     * the same damage event already used still applies to the rest of that event's damage: all of a combat damage
+     * step's damage (CR 510.2), or all the damage one resolution deals at once.
+     *
+     * @param sourceControllerId  the source's controller, the destination of a shield that names none
+     * @param recipientPermanentId the damaged permanent, or {@code null} for damage to {@code recipientPlayerId}
+     */
+    public List<String> applicableSourceKeyedRedirects(GameData gameData, UUID sourceId, UUID sourceControllerId,
+                                                       UUID recipientPlayerId, UUID recipientPermanentId,
+                                                       boolean combat) {
+        if (sourceId == null) return List.of();
+        List<String> instances = new ArrayList<>();
+        for (FloatingContinuousEffect fe : sourceKeyedRedirects(gameData, combat)) {
+            var shield = (SourceKeyedRedirectShield) fe.effect();
+            if (sourceKeyedRedirectApplies(gameData, shield, sourceId, sourceControllerId, recipientPlayerId,
+                    recipientPermanentId, combat) && !instances.contains(fe.id().toString())) {
+                instances.add(fe.id().toString());
             }
         }
-        if (matchingShield == null || !gameData.playerIds.contains(matchingShield.controllerId())) {
+        return instances;
+    }
+
+    /** Where the {@link SourceKeyedRedirectShield} {@code instance} would send the damage, or {@code null}. */
+    public UUID sourceKeyedRedirectDestination(GameData gameData, String instance, UUID sourceControllerId,
+                                               boolean combat) {
+        FloatingContinuousEffect fe = sourceKeyedRedirect(gameData, instance, combat);
+        return fe == null ? null : destination((SourceKeyedRedirectShield) fe.effect(), sourceControllerId);
+    }
+
+    /**
+     * Applies the {@link SourceKeyedRedirectShield} {@code instance}: queues the damage in
+     * {@link GameData#pendingSourceRedirectDamage} for its destination, dealt by the same source (CR 614.9), and uses a
+     * one-shot shield up. A one-shot shield whose destination is the damage's own recipient is used up without moving
+     * the damage. Returns the damage left with the original recipient.
+     */
+    public int applySourceKeyedRedirect(GameData gameData, String instance, UUID sourceId, UUID sourceControllerId,
+                                        UUID recipientPlayerId, UUID recipientPermanentId, int damage,
+                                        boolean combat) {
+        FloatingContinuousEffect fe = sourceKeyedRedirect(gameData, instance, combat);
+        if (fe == null || damage <= 0) {
             return damage;
         }
-
-        if (combatState != null) {
-            combatState.consumedSourceCombatDamageRedirects.put(sourcePermanentId, matchingShield.controllerId());
+        var shield = (SourceKeyedRedirectShield) fe.effect();
+        UUID destinationId = destination(shield, sourceControllerId);
+        if (destinationId == null) {
+            return damage;
+        }
+        if (!shield.allThisTurn() && gameData.shieldEffects(SourceKeyedRedirectShield.class).contains(fe)) {
+            gameData.endFloatingEffect(fe);
+            List<FloatingContinuousEffect> used = usedInThisEvent(gameData, combat);
+            if (used != null) {
+                used.add(fe);
+            }
+        }
+        if (destinationId.equals(recipientPermanentId)
+                || recipientPermanentId == null && destinationId.equals(recipientPlayerId)) {
+            return damage;
         }
         gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
-                null, sourcePermanentId, damage, matchingShield.controllerId()));
+                recipientPlayerId, sourceId, damage, destinationId));
         return 0;
+    }
+
+    private boolean sourceKeyedRedirectApplies(GameData gameData, SourceKeyedRedirectShield shield, UUID sourceId,
+                                               UUID sourceControllerId, UUID recipientPlayerId,
+                                               UUID recipientPermanentId, boolean combat) {
+        if (!chosenSourceMatches(gameData, shield.sourceId(), sourceId)
+                || shield.sourceStay() >= 0 && shield.sourceStay() != gameData.graveyardEntryVersion(shield.sourceId())
+                || shield.combatOnly() && !combat) {
+            return false;
+        }
+        if (shield.protectedPlayerIds() != null && (recipientPermanentId != null
+                || !shield.protectedPlayerIds().contains(recipientPlayerId))) {
+            return false;
+        }
+        UUID destinationId = destination(shield, sourceControllerId);
+        if (!isRedirectDestination(gameData, destinationId)) {
+            return false;
+        }
+        boolean toItsRecipient = destinationId.equals(recipientPermanentId)
+                || recipientPermanentId == null && destinationId.equals(recipientPlayerId);
+        return !(toItsRecipient && shield.allThisTurn());
+    }
+
+    private static UUID destination(SourceKeyedRedirectShield shield, UUID sourceControllerId) {
+        return shield.destinationId() != null ? shield.destinationId() : sourceControllerId;
+    }
+
+    /** The live shields, then those the damage event in progress already used. */
+    private List<FloatingContinuousEffect> sourceKeyedRedirects(GameData gameData, boolean combat) {
+        List<FloatingContinuousEffect> shields = new ArrayList<>(gameData.shieldEffects(SourceKeyedRedirectShield.class));
+        List<FloatingContinuousEffect> used = usedInThisEvent(gameData, combat);
+        if (used != null) {
+            shields.addAll(used);
+        }
+        return shields;
+    }
+
+    private FloatingContinuousEffect sourceKeyedRedirect(GameData gameData, String instance, boolean combat) {
+        return sourceKeyedRedirects(gameData, combat).stream()
+                .filter(fe -> fe.id().toString().equals(instance))
+                .findFirst().orElse(null);
+    }
+
+    /**
+     * The one-shot shields the damage event in progress used: the combat damage step's, or the open simultaneous
+     * damage event's; {@code null} when the damage is an event of its own.
+     */
+    private List<FloatingContinuousEffect> usedInThisEvent(GameData gameData, boolean combat) {
+        if (combat) {
+            CombatDamageState combatState = activeCombatDamageState(gameData);
+            return combatState == null ? null : combatState.usedSourceKeyedRedirects;
+        }
+        return gameData.pendingSimultaneousDamage.isEmpty() ? null : gameData.sourceRedirectShieldsUsedInOpenEvent;
     }
 
     /**
@@ -2230,69 +2250,6 @@ public class DamagePreventionService {
         gameData.endFloatingEffect(gameData.floatingEffectsOnPlayer(protectedPlayerId,
                 RedirectNextInstantOrSorceryDamageToControllerEffect.class).getFirst());
         return entry.getControllerId();
-    }
-
-    /** Returns the controller receiving damage redirected from a targeted sorcery, if any. */
-    public UUID getTargetSorceryDamageRedirectController(GameData gameData, StackEntry entry) {
-        if (entry == null || entry.getSourcePermanentId() != null
-                || entry.getEntryType() != StackEntryType.SORCERY_SPELL
-                || entry.getCard() == null
-                || !gameData.hasShields(TargetSorceryDamageRedirectShield.class)) {
-            return null;
-        }
-        UUID sorceryCardId = entry.getCard().getId();
-        return gameData.shields(TargetSorceryDamageRedirectShield.class).stream()
-                .filter(shield -> sorceryCardId.equals(shield.sorceryCardId())
-                        && shield.graveyardEntryVersion() == gameData.graveyardEntryVersion(sorceryCardId))
-                .map(TargetSorceryDamageRedirectShield::controllerId)
-                .findFirst()
-                .orElse(null);
-    }
-
-    /**
-     * Applies one-shot Opal-Eye shields: if a shield matches this source, the entire next damage event
-     * it would deal (to any recipient) is instead dealt to the shield's destination permanent. The
-     * redirected event is queued in {@link GameData#pendingSourceRedirectDamage} for the caller's
-     * {@code processSourceRedirectDamage}. This is a redirection (replacement) effect, not prevention,
-     * so it applies even when damage can't be prevented. The shield is left in place while the
-     * destination is no longer a creature on the battlefield, and damage dealt to the destination
-     * itself is dealt normally, but still uses up the shield.
-     *
-     * @param damagedPermanentId the permanent being damaged, or {@code null} when the damage is to a player
-     * @return the remaining damage after redirection (0 if redirected)
-     */
-    public int applySourceNextDamageRedirectToPermanent(GameData gameData, UUID sourcePermanentId,
-                                                        UUID damagedPermanentId, int damage) {
-        // No isDamagePreventable check — this is redirection (replacement), not prevention.
-        if (damage <= 0 || sourcePermanentId == null) {
-            return damage;
-        }
-        List<SourceNextDamageRedirectToPermanentShield> usedShields =
-                new ArrayList<>(gameData.sourceRedirectShieldsUsedInOpenEvent);
-        List<FloatingContinuousEffect> liveShields =
-                gameData.shieldEffects(SourceNextDamageRedirectToPermanentShield.class);
-        for (int i = 0; i < usedShields.size() + liveShields.size(); i++) {
-            FloatingContinuousEffect fe = i < usedShields.size() ? null : liveShields.get(i - usedShields.size());
-            SourceNextDamageRedirectToPermanentShield shield = fe == null
-                    ? usedShields.get(i) : (SourceNextDamageRedirectToPermanentShield) fe.effect();
-            if (!shield.sourceId().equals(sourcePermanentId)) continue;
-            UUID destinationId = shield.destinationPermanentId();
-            Permanent destination = gameQueryService.findPermanentById(gameData, destinationId);
-            if (destination == null || !gameQueryService.isCreature(gameData, destination)) continue;
-            if (fe != null) {
-                gameData.endFloatingEffect(fe);
-                if (!gameData.pendingSimultaneousDamage.isEmpty()) {
-                    gameData.sourceRedirectShieldsUsedInOpenEvent.add(shield);
-                }
-            }
-            // Redirecting damage to the destination itself changes nothing (it is dealt normally),
-            // but the one-shot replacement effect has still been used up (CR 614.5).
-            if (destinationId.equals(damagedPermanentId)) return damage;
-            gameData.pendingSourceRedirectDamage.add(
-                    new SourceDamageRedirectShield(null, sourcePermanentId, damage, destinationId));
-            return 0;
-        }
-        return damage;
     }
 
     /**
@@ -2622,83 +2579,6 @@ public class DamagePreventionService {
     }
 
     /**
-     * Soltari Guerrillas: the next time the given source would deal combat damage to an opponent
-     * this turn, that damage is dealt to the shield's destination creature instead. Keyed on the
-     * damage <em>source</em> rather than on the damaged object, one-shot, and matched only for
-     * combat damage dealt to a player. This is a redirection (replacement) effect, so it applies
-     * even when damage can't be prevented. The redirect only happens while the destination is still
-     * a creature on the battlefield; otherwise the damage is dealt normally and the shield is left
-     * in place. Redirected damage is queued in {@link GameData#pendingSourceRedirectDamage} for the
-     * caller's {@code processSourceRedirectDamage}.
-     *
-     * @param damagedPlayerId  the opponent that would have taken the combat damage
-     * @param sourcePermanentId the attacking permanent dealing the damage
-     * @param damage           the raw damage amount
-     * @return the remaining damage after redirection (0 if redirected)
-     */
-    public int applySourceNextCombatDamageToOpponentRedirect(GameData gameData, UUID damagedPlayerId,
-                                                             UUID sourcePermanentId, int damage) {
-        if (damage <= 0 || sourcePermanentId == null || damagedPlayerId == null
-                || !gameData.hasShields(SourceNextCombatDamageToOpponentRedirectShield.class)) {
-            return damage;
-        }
-
-        for (FloatingContinuousEffect fe : gameData.shieldEffects(SourceNextCombatDamageToOpponentRedirectShield.class)) {
-            SourceNextCombatDamageToOpponentRedirectShield shield = (SourceNextCombatDamageToOpponentRedirectShield) fe.effect();
-            if (!shield.sourcePermanentId().equals(sourcePermanentId)) continue;
-
-            UUID destinationId = shield.destinationPermanentId();
-            Permanent destination = gameQueryService.findPermanentById(gameData, destinationId);
-            if (destination == null || !gameQueryService.isCreature(gameData, destination)) continue;
-
-            gameData.endFloatingEffect(fe);
-            gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
-                    damagedPlayerId, sourcePermanentId, damage, destinationId));
-            return 0;
-        }
-        return damage;
-    }
-
-    /**
-     * The distinct destinations of Soltari Guerrillas shields that currently apply to combat damage
-     * from {@code sourcePermanentId}, as UUID strings. When more than one applies, the damaged player
-     * chooses which replacement effect applies (CR 616.1).
-     */
-    public List<String> applicableSourceNextCombatDamageToOpponentRedirects(GameData gameData,
-                                                                             UUID sourcePermanentId) {
-        if (sourcePermanentId == null) return List.of();
-        return gameData.shields(SourceNextCombatDamageToOpponentRedirectShield.class).stream()
-                .filter(shield -> shield.sourcePermanentId().equals(sourcePermanentId)
-                        && isCreatureOnBattlefield(gameData, shield.destinationPermanentId()))
-                .map(shield -> shield.destinationPermanentId().toString())
-                .distinct()
-                .toList();
-    }
-
-    /**
-     * Applies one Soltari Guerrillas shield, chosen by destination: consumes it and queues the
-     * redirected damage. Any other shield from the same source stays, since that damage is no longer
-     * dealt to an opponent.
-     *
-     * @return the remaining damage after redirection (0 if redirected)
-     */
-    public int applySourceNextCombatDamageToOpponentRedirectTo(GameData gameData, UUID damagedPlayerId,
-                                                               UUID sourcePermanentId, UUID destinationId,
-                                                               int damage) {
-        if (damage <= 0) return damage;
-        for (FloatingContinuousEffect fe : gameData.shieldEffects(SourceNextCombatDamageToOpponentRedirectShield.class)) {
-            SourceNextCombatDamageToOpponentRedirectShield shield = (SourceNextCombatDamageToOpponentRedirectShield) fe.effect();
-            if (!shield.sourcePermanentId().equals(sourcePermanentId)
-                    || !shield.destinationPermanentId().equals(destinationId)) continue;
-            gameData.endFloatingEffect(fe);
-            gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
-                    damagedPlayerId, sourcePermanentId, damage, destinationId));
-            return 0;
-        }
-        return damage;
-    }
-
-    /**
      * Martyrdom: redirect the next N damage this turn dealt to a protected player onto a fixed
      * permanent. Any source, amount-limited, consumed as it absorbs damage. This is a redirection
      * (replacement) effect, so it applies even when damage can't be prevented. The redirect only
@@ -2826,32 +2706,6 @@ public class DamagePreventionService {
         return shield.allowsPlaneswalker()
                 ? isRedirectDestination(gameData, shield.redirectTargetCreatureId())
                 : isCreatureOnBattlefield(gameData, shield.redirectTargetCreatureId());
-    }
-
-    /** Redirects combat damage from a chosen source to a protected player onto that source's controller. */
-    public int applyTurnSourceDamageRedirectToController(GameData gameData, UUID protectedPlayerId,
-                                                         UUID sourcePermanentId, int damage) {
-        if (damage <= 0 || protectedPlayerId == null || sourcePermanentId == null
-                || !gameData.hasShields(TurnSourceDamageRedirectToControllerShield.class)) {
-            return damage;
-        }
-
-        for (TurnSourceDamageRedirectToControllerShield shield
-                : gameData.shields(TurnSourceDamageRedirectToControllerShield.class)) {
-            if (!shield.protectedPlayerId().equals(protectedPlayerId)
-                    || !shield.sourcePermanentId().equals(sourcePermanentId)) {
-                continue;
-            }
-            UUID controllerId = gameQueryService.findPermanentController(gameData, sourcePermanentId);
-            if (controllerId == null || !gameData.playerIds.contains(controllerId)
-                    || controllerId.equals(protectedPlayerId)) {
-                continue;
-            }
-            gameData.pendingSourceRedirectDamage.add(
-                    new SourceDamageRedirectShield(protectedPlayerId, sourcePermanentId, damage, controllerId));
-            return 0;
-        }
-        return damage;
     }
 
     public boolean isUnblockedCreatureSource(GameData gameData, UUID sourcePermanentId) {
@@ -3567,24 +3421,6 @@ public class DamagePreventionService {
                         && isCreatureOnBattlefield(gameData, shield.redirectTargetPermanentId()));
     }
 
-    /** Whether Reflect Damage turns the next damage from {@code sourcePermanentId} back on its controller. */
-    public boolean hasReflectDamageToSourceControllerShield(GameData gameData, UUID sourcePermanentId) {
-        return sourcePermanentId != null
-                && gameData.shields(ReflectDamageToSourceControllerShield.class).stream()
-                .anyMatch(shield -> sourcePermanentId.equals(shield.sourcePermanentId()))
-                && reflectSourceControllerId(gameData, sourcePermanentId) != null;
-    }
-
-    /** Whether Opal-Eye-style shields redirect the next damage from {@code sourcePermanentId}. */
-    public boolean hasSourceNextDamageRedirectToPermanent(GameData gameData, UUID sourcePermanentId,
-                                                          UUID damagedPermanentId) {
-        return sourcePermanentId != null && java.util.stream.Stream.concat(
-                        gameData.shields(SourceNextDamageRedirectToPermanentShield.class).stream(),
-                        gameData.sourceRedirectShieldsUsedInOpenEvent.stream())
-                .anyMatch(shield -> shield.sourceId().equals(sourcePermanentId)
-                        && isCreatureOnBattlefield(gameData, shield.destinationPermanentId()));
-    }
-
     /** Whether Glarecaster's shared shield redirects the next damage to this player. */
     public boolean hasSourcePermanentAndControllerNextDamageRedirectToPlayer(GameData gameData,
                                                                              UUID protectedPlayerId) {
@@ -3802,36 +3638,6 @@ public class DamagePreventionService {
         permanentControlSupportProvider.getObject().applyCreateToken(
                 gameData, playerId, tokenShield.token(), damage, tokenShield.sourceSetCode());
         return 0;
-    }
-
-    /** Whether the next combat damage from {@code sourceId} is dealt to a stored controller instead. */
-    public boolean hasSourceNextCombatDamageToControllerShield(GameData gameData, UUID sourceId) {
-        CombatDamageState combatState = activeCombatDamageState(gameData);
-        if (sourceId != null && combatState != null
-                && combatState.consumedSourceCombatDamageRedirects.containsKey(sourceId)) {
-            return true;
-        }
-        return sourceId != null && gameData.shields(SourceNextCombatDamageToControllerShield.class).stream()
-                .anyMatch(shield -> sourceId.equals(shield.sourcePermanentId())
-                        && gameData.playerIds.contains(shield.controllerId()));
-    }
-
-    /** Whether Mirror Strike sends combat damage from {@code sourceId} to this player back to its controller. */
-    public boolean hasTurnSourceDamageRedirectToController(GameData gameData, UUID protectedPlayerId, UUID sourceId) {
-        if (protectedPlayerId == null || sourceId == null) return false;
-        UUID controllerId = gameQueryService.findPermanentController(gameData, sourceId);
-        return controllerId != null && gameData.playerIds.contains(controllerId)
-                && !controllerId.equals(protectedPlayerId)
-                && gameData.shields(TurnSourceDamageRedirectToControllerShield.class).stream()
-                .anyMatch(shield -> shield.protectedPlayerId().equals(protectedPlayerId)
-                        && shield.sourcePermanentId().equals(sourceId));
-    }
-
-    /** Whether Soltari Guerrillas sends the next combat damage from {@code sourceId} to a creature. */
-    public boolean hasSourceNextCombatDamageToOpponentRedirect(GameData gameData, UUID sourceId) {
-        return sourceId != null && gameData.shields(SourceNextCombatDamageToOpponentRedirectShield.class).stream()
-                .anyMatch(shield -> shield.sourcePermanentId().equals(sourceId)
-                        && isCreatureOnBattlefield(gameData, shield.destinationPermanentId()));
     }
 
     /**

@@ -311,9 +311,6 @@ class CombatDamageServiceTest {
         lenient().when(damagePreventionService.applyPlayerNextSourceDamageShield(
                 eq(gameData), any(UUID.class), any(UUID.class), anyInt(), eq(true), any(), anyBoolean()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
-        lenient().when(damagePreventionService.applySourceNextCombatDamageToControllerShield(
-                eq(gameData), any(UUID.class), anyInt()))
-                .thenAnswer(inv -> (int) inv.getArgument(2));
         lenient().when(gameQueryService.applyDamageReplacementEffects(eq(gameData), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(1));
         lenient().when(gameQueryService.getEnchantedPlayerDamageMultiplier(eq(gameData), any(UUID.class)))
@@ -375,21 +372,6 @@ class CombatDamageServiceTest {
                 .thenAnswer(inv -> inv.getArgument(2));
         lenient().when(damagePreventionService.applyChannelHarmPreventionToPermanent(
                         eq(gameData), any(Permanent.class), any(UUID.class), anyInt()))
-                .thenAnswer(inv -> (int) inv.getArgument(3));
-        // Soltari Guerrillas' "next combat damage to an opponent hits a creature instead" redirect is
-        // a pass-through here — no such shield is set up. Only the player-damage path calls it.
-        lenient().when(damagePreventionService.applySourceNextCombatDamageToOpponentRedirect(
-                eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
-                .thenAnswer(inv -> (int) inv.getArgument(3));
-        lenient().when(damagePreventionService.applyTurnSourceDamageRedirectToController(
-                eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
-                .thenAnswer(inv -> (int) inv.getArgument(3));
-        lenient().when(damagePreventionService.applyReflectDamageToSourceControllerShield(
-                eq(gameData), any(UUID.class), anyInt()))
-                .thenAnswer(inv -> (int) inv.getArgument(2));
-        // Opal-Eye redirect is likewise a pass-through here — no such shield is set up.
-        lenient().when(damagePreventionService.applySourceNextDamageRedirectToPermanent(
-                eq(gameData), any(UUID.class), any(), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         lenient().when(damagePreventionService.applySourcePermanentAndControllerNextDamageRedirectToPlayer(
                 eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
