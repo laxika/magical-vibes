@@ -78,9 +78,9 @@ public class BasicLandSearchQueueSupport {
             LibrarySearchFollowUp.BasicLandsPick pick = remaining.removeFirst();
             LibrarySearchFollowUp.BasicLandSearchQueue nextQueue = queue.withRemainingPicks(remaining);
             // "May search" that can't be done isn't chosen (CR 608.2d), so only a search that was instructed still
-            // shuffles the library of a player who can't search.
+            // shuffles the library of a player who can't search, unless a later step does the shuffling.
             boolean searchAllowed = !librarySearchSupport.isSearchPrevented(
-                    gameData, pick.playerId(), !markSearchedOnPick(queue));
+                    gameData, pick.playerId(), !markSearchedOnPick(queue) && !queue.leavesLibrariesUnshuffled());
             if (searchAllowed && !markSearchedOnPick(queue)) {
                 nextQueue = nextQueue.withSearchedPlayer(pick.playerId());
             }
@@ -252,7 +252,7 @@ public class BasicLandSearchQueueSupport {
 
     private void shuffleAfterQueue(GameData gameData,
                                    LibrarySearchFollowUp.BasicLandSearchQueue queue) {
-        if (!queue.shuffleAfterQueue()) {
+        if (!queue.shuffleAfterQueue() || queue.leavesLibrariesUnshuffled()) {
             return;
         }
         for (UUID playerId : queue.searchedPlayerIds()) {

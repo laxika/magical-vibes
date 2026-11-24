@@ -164,7 +164,7 @@ class TemptWithDiscoveryTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A prevented opponent search neither shuffles nor earns a reward")
+    @DisplayName("An opponent who can't search isn't offered the search, so neither shuffles nor earns a reward")
     void preventedOpponentSearchDoesNotShuffle() {
         harness.addToBattlefield(player1, new Stranglehold());
         harness.addToBattlefield(player1, new CosisTrickster());
@@ -174,13 +174,58 @@ class TemptWithDiscoveryTest extends BaseCardTest {
         castTemptWithDiscovery();
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
-        harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A controller who can't search doesn't shuffle, while an accepting opponent searches and shuffles once")
+    void preventedControllerDoesNotShuffle() {
+        harness.addToBattlefield(player2, new Stranglehold());
+        harness.addToBattlefield(player2, new CosisTrickster());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+
+        castTemptWithDiscovery();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof Forest);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Each player who searched shuffles exactly once, after the last search")
+    void eachSearcherShufflesOnce() {
+        harness.addToBattlefield(player1, new CosisTrickster());
+        harness.addToBattlefield(player2, new CosisTrickster());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+
+        castTemptWithDiscovery();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player2, 0);
+        assertThat(gd.stack).noneMatch(stackEntry -> stackEntry.getCard() instanceof CosisTrickster);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack).allMatch(stackEntry -> stackEntry.getCard() instanceof CosisTrickster);
+        assertThat(gd.stack).extracting(stackEntry -> stackEntry.getControllerId())
+                .containsExactlyInAnyOrder(player1.getId(), player2.getId());
     }
 
     private void castTemptWithDiscovery() {

@@ -29,5 +29,6 @@ public sealed interface PlayerPredicate permits
         PlayerOtherThanTriggeringPlayerPredicate,
         PlayerChosenBySourcePredicate,
         PlayerOtherThanSourceOwnerPredicate,
-        PlayerIsActiveOpponentPredicate {
+        PlayerIsActiveOpponentPredicate,
+        PlayerCanSearchTheirLibraryPredicate {
 }

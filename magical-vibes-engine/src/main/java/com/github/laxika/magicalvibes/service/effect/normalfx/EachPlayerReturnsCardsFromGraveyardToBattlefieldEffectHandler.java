@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
@@ -24,6 +25,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import com.github.laxika.magicalvibes.model.PendingGraveyardReturnBatch;
 
+/**
+ * Each named player's graveyard return: the players {@code players} names (in APNAP order, CR 101.4) take their matching
+ * cards or queue their choices, then every chosen card enters at once.
+ */
 @Component
 @RequiredArgsConstructor
 public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler implements NormalEffectHandlerBean {
@@ -32,6 +37,7 @@ public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler imple
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final GraveyardService graveyardService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,7 +56,7 @@ public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler imple
         Map<UUID, List<String>> returnedNamesByPlayer = new LinkedHashMap<>();
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
-            for (UUID playerId : apnapPlayers(gameData)) {
+            for (UUID playerId : subjectResolutionService.players(gameData, entry, effect, e.players())) {
                 List<Card> graveyard = gameData.playerGraveyards.get(playerId);
                 if (graveyard == null || graveyard.isEmpty()) {
                     continue;
@@ -105,17 +111,5 @@ public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler imple
         }
 
         graveyardReturnSupport.beginNextGraveyardReturnFromQueue(gameData);
-    }
-
-    /** Players in APNAP order: the active player first, then the rest in seat order. */
-    private static List<UUID> apnapPlayers(GameData gameData) {
-        List<UUID> ordered = new ArrayList<>(gameData.orderedPlayerIds);
-        int activeIndex = ordered.indexOf(gameData.activePlayerId);
-        if (activeIndex <= 0) {
-            return ordered;
-        }
-        List<UUID> rotated = new ArrayList<>(ordered.subList(activeIndex, ordered.size()));
-        rotated.addAll(ordered.subList(0, activeIndex));
-        return rotated;
     }
 }

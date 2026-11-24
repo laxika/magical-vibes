@@ -3,13 +3,18 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -32,10 +37,8 @@ class TemptWithImmortalityTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNotNull();
-        harness.handleGraveyardCardChosen(player2, 0);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNotNull();
-        harness.handleGraveyardCardChosen(player1, 0);
+        // Each player then has one creature card to return, so it returns unasked (CR 608.2d).
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getId())
@@ -54,7 +57,6 @@ class TemptWithImmortalityTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(opponentCreature));
 
         castTemptWithImmortality();
-        harness.handleGraveyardCardChosen(player1, 0);
         harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -73,7 +75,6 @@ class TemptWithImmortalityTest extends BaseCardTest {
 
         castTemptWithImmortality();
         harness.handleMayAbilityChosen(player2, true);
-        harness.handleGraveyardCardChosen(player2, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -116,9 +117,7 @@ class TemptWithImmortalityTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(opponentNoncreature, opponentCreature));
 
         Card spell = castTemptWithImmortality();
-        harness.handleGraveyardCardChosen(player1, 1);
         harness.handleMayAbilityChosen(player2, true);
-        harness.handleGraveyardCardChosen(player2, 1);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getId())
@@ -130,6 +129,89 @@ class TemptWithImmortalityTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentNoncreature);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.pendingEffectResolutionEntry).isNull();
+    }
+
+    @Test
+    @DisplayName("No opponent returns a creature until every opponent has decided; then they return together")
+    void opponentsDecideBeforeAnyCreatureReturns() {
+        Player player3 = addThirdPlayer();
+        Card second = new GrizzlyBears();
+        Card third = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(second));
+        harness.setGraveyard(player3, List.of(third));
+        harness.setHand(player1, List.of(new TemptWithImmortality()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.castSorcery(player1, 0);
+        passUntilAwaitingInput(player3);
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        PendingInteraction.MayAbilityChoice offer = gd.interaction.activeInteraction(
+                PendingInteraction.MayAbilityChoice.class);
+        assertThat(offer).isNotNull();
+        assertThat(offer.playerId()).isEqualTo(player3.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(second);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+
+        harness.handleMayAbilityChosen(player3, true);
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactly(second.getId());
+        assertThat(gd.playerBattlefields.get(player3.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactly(third.getId());
+    }
+
+    @Test
+    @DisplayName("Only an opponent with a creature card in their graveyard is offered the return")
+    void opponentWithoutCreatureCardIsNotAsked() {
+        Player player3 = addThirdPlayer();
+        Card third = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(new TemptWithImmortality()));
+        harness.setGraveyard(player3, List.of(third));
+        harness.setHand(player1, List.of(new TemptWithImmortality()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.castSorcery(player1, 0);
+        passUntilAwaitingInput(player3);
+
+        PendingInteraction.MayAbilityChoice offer = gd.interaction.activeInteraction(
+                PendingInteraction.MayAbilityChoice.class);
+        assertThat(offer).isNotNull();
+        assertThat(offer.playerId()).isEqualTo(player3.getId());
+        harness.handleMayAbilityChosen(player3, true);
+
+        assertThat(gd.playerBattlefields.get(player3.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactly(third.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    private void passUntilAwaitingInput(Player player3) {
+        for (int i = 0; i < 20 && !gd.interaction.isAwaitingInput(); i++) {
+            UUID priorityId = gqs.getPriorityPlayerId(gd);
+            Player priorityPlayer = List.of(player1, player2, player3).stream()
+                    .filter(player -> player.getId().equals(priorityId)).findFirst().orElseThrow();
+            harness.passPriority(priorityPlayer);
+        }
+    }
+
+    private Player addThirdPlayer() {
+        UUID id = UUID.randomUUID();
+        Player player = new Player(id, "Charlie");
+        gd.playerIds.add(id);
+        gd.orderedPlayerIds.add(id);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(id, "Charlie");
+        gd.playerDecks.put(id, new ArrayList<>());
+        gd.playerHands.put(id, new ArrayList<>());
+        gd.playerBattlefields.put(id, new ArrayList<>());
+        gd.playerGraveyards.put(id, new ArrayList<>());
+        gd.playerCommandZones.put(id, new ArrayList<>());
+        gd.playerManaPools.put(id, new ManaPool());
+        gd.playerLifeTotals.put(id, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), id, "Charlie");
+        return player;
     }
 
     /** Casts and resolves the spell, returning its card (which ends up in its owner's graveyard). */

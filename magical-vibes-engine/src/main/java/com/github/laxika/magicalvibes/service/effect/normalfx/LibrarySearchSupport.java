@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.effect.PlayersCantSearchLibrariesThisTurnEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -15,17 +14,14 @@ import com.github.laxika.magicalvibes.model.PendingEachPlayerLibraryExile;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySearchCastPermission;
 import com.github.laxika.magicalvibes.model.effect.LibraryNinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.OppositionAgentEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantSearchLibrariesAtAllEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentSearchesTopCardsInsteadEffect;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.library.LibrarySearchRestrictions;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
@@ -661,64 +657,23 @@ public class LibrarySearchSupport {
 
     public boolean checkSearchRestriction(GameData gameData, UUID searchingPlayerId,
                                           UUID libraryOwnerId, UUID causingControllerId) {
-        if (gameData.hasFloatingEffectOnPlayer(searchingPlayerId, PlayersCantSearchLibrariesThisTurnEffect.class)) {
-            String playerName = gameData.playerIdToName.get(searchingPlayerId);
+        LibrarySearchRestrictions.Restriction restriction = LibrarySearchRestrictions.find(
+                gameData, gameQueryService, searchingPlayerId, libraryOwnerId, causingControllerId);
+        if (restriction == null) {
+            return true;
+        }
+        String playerName = gameData.playerIdToName.get(searchingPlayerId);
+        if (restriction.source() == null) {
             gameLogService.append(gameData, GameLog.text(
                     playerName + "'s library search is prevented this turn."));
             log.info("Game {} - {} search prevented this turn", gameData.id, playerName);
             return false;
         }
-
-        for (GameQueryService.ActiveStaticEffect<CardEffect> active
-                : gameQueryService.activeStaticEffects(gameData, CardEffect.class)) {
-            Permanent perm = active.source();
-            UUID pid = active.controllerId();
-            CardEffect effect = active.effect();
-            if (effect instanceof OpponentsCantSearchLibrariesAtAllEffect) {
-                if (pid.equals(searchingPlayerId)) {
-                    continue;
-                }
-                String playerName = gameData.playerIdToName.get(searchingPlayerId);
-                String sourceName = FaceDownVisibility.publicName(gameData, perm);
-                gameLogService.append(gameData, GameLog.text(
-                        playerName + "'s library search is prevented by " + sourceName + "."));
-                log.info("Game {} - {} search prevented by {}",
-                        gameData.id, playerName, sourceName);
-                return false;
-            }
-            if (effect instanceof OpponentsCantSearchLibrariesEffect) {
-                if (causingControllerId == null
-                        || !libraryOwnerId.equals(causingControllerId)
-                        || pid.equals(causingControllerId)) {
-                    continue;
-                }
-                String playerName = gameData.playerIdToName.get(searchingPlayerId);
-                String sourceName = FaceDownVisibility.publicName(gameData, perm);
-                gameLogService.append(gameData, GameLog.text(
-                        playerName + "'s library search is prevented by " + sourceName + "."));
-                log.info("Game {} - {} search prevented by {}",
-                        gameData.id, playerName, sourceName);
-                return false;
-            }
-            if (effect instanceof CantSearchLibrariesEffect restriction) {
-                boolean paid = false;
-                if (restriction.payableToIgnore()) {
-                    Set<UUID> paidSet = gameData.paidSearchTaxPermanentIds.get(searchingPlayerId);
-                    paid = paidSet != null && paidSet.contains(perm.getId());
-                }
-                if (!paid) {
-                    String playerName = gameData.playerIdToName.get(searchingPlayerId);
-                    String sourceName = FaceDownVisibility.publicName(gameData, perm);
-                    String logMsg = playerName + "'s library search is prevented by " + sourceName + ".";
-                    gameLogService.append(gameData, GameLog.text(logMsg));
-                    log.info("Game {} - {} search prevented by {}",
-                            gameData.id, playerName, sourceName);
-                    return false;
-                }
-            }
-        }
-
-        return true;
+        String sourceName = FaceDownVisibility.publicName(gameData, restriction.source());
+        gameLogService.append(gameData, GameLog.text(
+                playerName + "'s library search is prevented by " + sourceName + "."));
+        log.info("Game {} - {} search prevented by {}", gameData.id, playerName, sourceName);
+        return false;
     }
 
     private UUID resolvingControllerId(GameData gameData) {

@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b (each in Findings; the fold queue marks its rows). Fold runs 21c, 23 and 25 are running in worktrees; 19d waits to merge. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                        |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d (each in Findings; the fold queue marks its rows). Fold runs 23, 25 and 28 are running in worktrees; 21c waits to merge. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                         |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,578 / 2,861 (after fold run 22b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,576 / 2,857 (after fold run 19d) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,724 rows over 4,440 classes (after fold run 22b). Latest verdict per class: `step-9` 720, unique 1,173, absorbed 805, split 630, blocked-other 503, survivor 311, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 720 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,730 rows over 4,442 classes (after fold run 19d). Latest verdict per class: `step-9` 718, unique 1,173, absorbed 807, split 630, blocked-other 503, survivor 313, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 718 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -772,6 +772,11 @@ Delayed and global triggers:
 
 - `AddTokenCreationEffect.plus(token, when)` / `.plusThatMany(token)` / `.oneOfEach(when, tokens…)` with `TokenKind.any()` / `creature()` / `artifact()` / `withAnySubtype(…)` and the shared blueprints `TREASURE`, `CLUE`, `FOOD`, `MAP`, `MUTAGEN`, `THOPTER`, `FROG`, `SQUIRREL`, `SOLDIER`: every static token addition, read by `TokenAdditionReplacements` for the tokens' creator after Crafty Cutpurse (fold run 22b).
 - `TokenCreationReplacementSupport.withEventModifiers(token, original)`: the one rider rule for added and substituted tokens (attacking, untapped attacking, granted keywords, delayed exile; a noncreature enters tapped instead of attacking, CR 506.3) (fold run 22b).
+
+- `TemptingOfferEffect.offeredOnlyTo(PlayerSubject)`: the offer goes only to opponents who could do the payload (CR 608.2d): `ownersOf(cardsInGraveyards(eachOpponent(), creature))`, `matching(eachOpponent(), new PlayerCanSearchTheirLibraryPredicate())` (fold run 19d).
+- `EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect.by(players)`: "return a [filter] card from your graveyard" over any player subject; returners control what they return (fold run 19d).
+- `EachPlayerSearchesLibraryEffect.leavingLibrariesUnshuffled()` + `ShuffleLibraryEffect(PlayerSubject)`: "then each player who searched a library this way shuffles" after several searches, one shuffle each (fold run 19d).
+- `PlayerCanSearchTheirLibraryPredicate` / `LibrarySearchRestrictions.find`: the quiet "may this player search" check (fold run 19d).
 
 ### Blocked causes still open
 
@@ -2892,6 +2897,35 @@ Only the `perm-shuffle` batch. Ratchet 3,623 / 2,886 → 3,616 / 2,879. Ledger: 
 - Stridehangar Automaton's "Thopters you control get +1/+1" uses `otherCreaturesYouControl()`, so it would skip itself if it became a Thopter. Sure, low.
 
 **For the next run.** 19d as fold run 19c's plan says. The two remaining fixed-order `getTokenMultiplier` callers (`CreateTokensAttachedToControlledCreaturesEffectHandler`, `ReturnTargetCreatureToHandAndCreateTokenCopyEffectHandler`) could move onto the ordered event in a defect run.
+
+### Step 9, fold run 19d (2026-11-24, parallel worktree)
+
+`tempting` leftovers: 2 of 2 folded. Ratchet 3,617 / 2,877 → 3,615 / 2,873. Ledger 6 rows (absorbed 2, survivor 4). 2 card files rewritten, Oracle text and rulings checked for both. CR 101.4, 110.2a, 608.2d, 701.23a, 701.23b, 701.24a checked.
+
+**Shape.**
+- `TemptingOfferEffect.offeredOnlyTo(PlayerSubject)`: only the opponents the subject names are asked, in turn order. These are the ones who could do the payload (CR 608.2d). Nothing changes while they decide, so every acceptor still can, and `RepeatEffect(accepted count)` counts exactly those who did it.
+- `EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect.by(players)`: a `PlayerSubject` component (`eachPlayer()` by default). It is resolved through the subject resolver in the same APNAP order as the old private list. Each returner controls what they return (the batch's graveyard owner, CR 110.2a); `underOwnersControl` is unchanged. Its 15 cards are untouched.
+- `EachPlayerSearchesLibraryEffect.leavingLibrariesUnshuffled()` (`BasicLandSearchQueue.leavesLibrariesUnshuffled`): no library is shuffled, not even a prevented must-search.
+- `ShuffleLibraryEffect(PlayerSubject players)`: each named player shuffles once, in APNAP order. The boolean form maps to `you()` / `targetPlayer()`.
+- `PlayerCanSearchTheirLibraryPredicate`, evaluated by `LibrarySearchRestrictions.find`. This is the quiet form of `checkSearchRestriction`, which now calls it.
+
+| Member | Result |
+|---|---|
+| TemptingOfferReturnCreatureFromGraveyardEffect | absorbed: `returnOne(you())` + offer(`returnOne`).offeredOnlyTo(`ownersOf(cardsInGraveyards(eachOpponent(), creature))`), with `returnOne = mandatory(1, creature).by(players)` |
+| TemptingOfferSearchLibraryForLandToBattlefieldEffect | absorbed: `search(you())` + offer(`search`).offeredOnlyTo(`matching(eachOpponent(), canSearch)`) + `ShuffleLibraryEffect(allOf(matching(you(), canSearch), acceptedPlayers()))` |
+
+**Behaviour changes.**
+- Immortality waits for every opponent's decision; the acceptors choose in turn order and their creatures enter together (C13 rulings, CR 101.4). Fixes the remaining part of the "Fold:" defect; new 3-player test.
+- Immortality returns a lone creature card unasked (CR 608.2d); 4 tests drop the prompt.
+- Discovery no longer offers the search to an opponent who can't search (CR 608.2d); the Stranglehold test changed. Previously such an opponent was asked, accepted, and then did nothing.
+- "Each player who searched" is read as the acceptors plus you if you could search. Acceptors always search once the filter applies, and your must-search happens exactly when you could.
+- Logs are the survivors' lines ("X shuffles their library.", "returns X from graveyard to the battlefield").
+
+**Tests changed.** Immortality: 4 changed, 2 added. Discovery: 1 changed, 2 added (a controller who can't search doesn't shuffle; each searcher shuffles once).
+
+**Seen, not changed.** None new.
+
+**For the next run.** The four `CreateTokenFor*` records (token-controller cause) need their own run; Terrapact Intimidator's is a may-carrier with a target.
 
 ## Prompt
 

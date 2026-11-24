@@ -18,24 +18,36 @@ import java.util.function.Function;
  * the text before "each opponent may" ("Put a +1/+1 counter on each creature you control.") is the payload over
  * {@link Subjects#you()} as its own step before this one.
  *
+ * <p>An opponent who couldn't do the payload can't accept the offer and isn't asked (CR 608.2d): with
+ * {@link #offeredOnlyTo(PlayerSubject)} the offer goes only to the opponents that subject names as the offer begins
+ * ("each opponent may return a creature card from their graveyard" is offered to the owners of creature cards in
+ * opponents' graveyards). Nothing changes while the opponents decide, so every acceptor can still do it.
+ *
  * @param prompt               the question each opponent is asked
  * @param forAcceptors         the payload over {@link Subjects#acceptedPlayers()}
  * @param forYou               the payload over {@link Subjects#you()}, repeated once for each opponent who accepted
  * @param remainingOpponentIds opponents still to decide, in turn order; {@code null} before the first is asked
  * @param acceptedOpponentIds  opponents who accepted so far, in turn order
+ * @param offeredTo            the opponents who could accept ({@link Subjects#eachOpponent()} unless narrowed); never a
+ *                             declared target
  */
 public record TemptingOfferEffect(
         String prompt,
         CardEffect forAcceptors,
         CardEffect forYou,
         List<UUID> remainingOpponentIds,
-        List<UUID> acceptedOpponentIds
+        List<UUID> acceptedOpponentIds,
+        PlayerSubject offeredTo
 ) implements CardEffect {
 
     public TemptingOfferEffect {
         Objects.requireNonNull(prompt, "prompt");
         Objects.requireNonNull(forAcceptors, "forAcceptors");
         Objects.requireNonNull(forYou, "forYou");
+        Objects.requireNonNull(offeredTo, "offeredTo");
+        if (offeredTo.declaresTarget()) {
+            throw new IllegalArgumentException("A tempting offer declares no target: " + offeredTo);
+        }
         if (remainingOpponentIds != null) {
             remainingOpponentIds = List.copyOf(remainingOpponentIds);
         }
@@ -49,12 +61,21 @@ public record TemptingOfferEffect(
      */
     public static TemptingOfferEffect of(String prompt, Function<PlayerSubject, CardEffect> payload) {
         return new TemptingOfferEffect(prompt, payload.apply(Subjects.acceptedPlayers()),
-                payload.apply(Subjects.you()), null, List.of());
+                payload.apply(Subjects.you()), null, List.of(), Subjects.eachOpponent());
+    }
+
+    /**
+     * This offer made only to the opponents {@code couldAccept} names among your opponents: those who can do the
+     * payload (CR 608.2d).
+     */
+    public TemptingOfferEffect offeredOnlyTo(PlayerSubject couldAccept) {
+        return new TemptingOfferEffect(prompt, forAcceptors, forYou, remainingOpponentIds, acceptedOpponentIds,
+                couldAccept);
     }
 
     /** This offer with the opponents still to decide and those who accepted so far. */
     public TemptingOfferEffect deciding(List<UUID> remaining, List<UUID> accepted) {
-        return new TemptingOfferEffect(prompt, forAcceptors, forYou, remaining, accepted);
+        return new TemptingOfferEffect(prompt, forAcceptors, forYou, remaining, accepted, offeredTo);
     }
 
     /**

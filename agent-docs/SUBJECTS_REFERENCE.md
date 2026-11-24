@@ -72,7 +72,7 @@ control" includes the source, "other creatures you control" does not; a one-shot
 | `opponentsOf(player)` | "each of that player's opponents", "each other player" (APNAP order; nobody if `player` names nobody) | no | if `player` may |
 | `controllerOf(permanent)` | "its controller", "that creature's controller" (last-known once it left) | no | if `permanent` may |
 | `ownerOf(permanent)` | "its owner" | no | if `permanent` may |
-| `ownersOf(cards)` | "the exiled card's owner": the owner of each card a `CardSubject` names, each once (APNAP order) | no | no |
+| `ownersOf(cards)` | "the exiled card's owner": the owner of each card a `CardSubject` names, each once (APNAP order); `ownersOf(cardsInGraveyards(eachOpponent(), creature))` is "each opponent with a creature card in their graveyard" (Tempt with Immortality's offer) | no | no |
 | `triggeringPlayer()` | "that player" (the player the trigger event was about) | no | no |
 | `activePlayer()` | "the active player" | no | yes |
 | `defendingPlayer()` | "defending player" | no | no |
@@ -88,7 +88,7 @@ control" includes the source, "other creatures you control" does not; a one-shot
 | `subgameWinners()` | "each player who doesn't win that game" is `except(eachPlayer(), subgameWinners())`: the winners of the subgame an earlier step of the same resolution played (step result; Shahrazad; resolving it with no recorded result is an engine error) | no | no |
 | `except(players, excluded)` | "the other chosen player": `except(chosenPlayers(), triggeringPlayer())` | no | if both may |
 | `allOf(players...)` | "that player or that planeswalker's controller": `allOf(targetPlayerDeclaredElsewhere(), controllerOf(target()))` over a "target player or planeswalker" another effect declares (each player once, APNAP order) | no | if every part may |
-| `matching(players, PlayerPredicate)` | "each player who controls the most lands": the players `players` names who match the filter as the effect is applied (`matching(eachPlayer(), new PlayerControlsMostLandsPredicate())`, Tectonic Hellion; also `PlayerControlsMostCreaturesPredicate`, `PlayerControlsPermanentPredicate(filter)` (with `except`: "who doesn't control"), `PlayerHasNoCardsInHandPredicate`, `PlayerAttackedBySourceThisTurnPredicate`, `PlayerLostLifeThisTurnPredicate(minimum)`; the filter is a `PlayerPredicate`, evaluated with the effect's controller as the comparing player) | no | if `players` may |
+| `matching(players, PlayerPredicate)` | "each player who controls the most lands": the players `players` names who match the filter as the effect is applied (`matching(eachPlayer(), new PlayerControlsMostLandsPredicate())`, Tectonic Hellion; also `PlayerControlsMostCreaturesPredicate`, `PlayerControlsPermanentPredicate(filter)` (with `except`: "who doesn't control"), `PlayerHasNoCardsInHandPredicate`, `PlayerAttackedBySourceThisTurnPredicate`, `PlayerLostLifeThisTurnPredicate(minimum)`, `PlayerCanSearchTheirLibraryPredicate` ("each opponent who could search", Tempt with Discovery); the filter is a `PlayerPredicate`, evaluated with the effect's controller as the comparing player) | no | if `players` may |
 
 ## CardSubject
 

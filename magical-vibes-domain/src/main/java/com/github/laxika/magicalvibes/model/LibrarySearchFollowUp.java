@@ -401,7 +401,8 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     /**
      * The carry-over of an each-player basic-land search: the APNAP-ordered picks still to be
      * offered, and the forced land sacrifices to run once the last pick has resolved (empty unless
-     * the flow has a sacrifice half, as Natural Balance does).
+     * the flow has a sacrifice half, as Natural Balance does). With {@code leavesLibrariesUnshuffled} no library is
+     * shuffled, not even one whose search was prevented: a later step shuffles each searcher's library once.
      */
     public record BasicLandSearchQueue(List<BasicLandsPick> remainingPicks,
                                       List<PendingForcedSacrifice> sacrifices,
@@ -410,14 +411,15 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                                       boolean destinationToHand, boolean optionalSearch,
                                       boolean enterAfterAllSearches,
                                       List<DeferredBasicLand> selectedLands,
-                                      CardPredicate filter) {
+                                      CardPredicate filter,
+                                      boolean leavesLibrariesUnshuffled) {
 
         public BasicLandSearchQueue(List<BasicLandsPick> remainingPicks,
                                     List<PendingForcedSacrifice> sacrifices,
                                     boolean shuffleAfterQueue, List<UUID> searchedPlayerIds,
                                     boolean destinationToHand, boolean optionalSearch) {
             this(remainingPicks, sacrifices, shuffleAfterQueue, searchedPlayerIds,
-                    destinationToHand, optionalSearch, false, List.of(), null);
+                    destinationToHand, optionalSearch, false, List.of(), null, false);
         }
 
         public BasicLandSearchQueue(List<BasicLandsPick> remainingPicks,
@@ -429,19 +431,22 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
 
         public BasicLandSearchQueue withOptionalSearch(boolean optional) {
             return new BasicLandSearchQueue(remainingPicks, sacrifices, shuffleAfterQueue,
-                    searchedPlayerIds, destinationToHand, optional, enterAfterAllSearches, selectedLands, filter);
+                    searchedPlayerIds, destinationToHand, optional, enterAfterAllSearches, selectedLands, filter,
+                    leavesLibrariesUnshuffled);
         }
 
         public BasicLandSearchQueue deferBattlefieldEntry() {
             return new BasicLandSearchQueue(remainingPicks, sacrifices, shuffleAfterQueue,
-                    searchedPlayerIds, destinationToHand, optionalSearch, true, selectedLands, filter);
+                    searchedPlayerIds, destinationToHand, optionalSearch, true, selectedLands, filter,
+                    leavesLibrariesUnshuffled);
         }
 
         public BasicLandSearchQueue withSelectedLand(DeferredBasicLand selected) {
             List<DeferredBasicLand> updated = new java.util.ArrayList<>(selectedLands);
             updated.add(selected);
             return new BasicLandSearchQueue(remainingPicks, sacrifices, shuffleAfterQueue,
-                    searchedPlayerIds, destinationToHand, optionalSearch, enterAfterAllSearches, updated, filter);
+                    searchedPlayerIds, destinationToHand, optionalSearch, enterAfterAllSearches, updated, filter,
+                    leavesLibrariesUnshuffled);
         }
 
         public BasicLandSearchQueue(List<BasicLandsPick> remainingPicks,
@@ -473,12 +478,14 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
         /** The queue searching for cards matching {@code searchedFor} instead of basic land cards. */
         public BasicLandSearchQueue withFilter(CardPredicate searchedFor) {
             return new BasicLandSearchQueue(remainingPicks, sacrifices, shuffleAfterQueue, searchedPlayerIds,
-                    destinationToHand, optionalSearch, enterAfterAllSearches, selectedLands, searchedFor);
+                    destinationToHand, optionalSearch, enterAfterAllSearches, selectedLands, searchedFor,
+                    leavesLibrariesUnshuffled);
         }
 
         public BasicLandSearchQueue withRemainingPicks(List<BasicLandsPick> remaining) {
             return new BasicLandSearchQueue(remaining, sacrifices, shuffleAfterQueue, searchedPlayerIds,
-                    destinationToHand, optionalSearch, enterAfterAllSearches, selectedLands, filter);
+                    destinationToHand, optionalSearch, enterAfterAllSearches, selectedLands, filter,
+                    leavesLibrariesUnshuffled);
         }
 
         public BasicLandSearchQueue withSearchedPlayer(UUID playerId) {
@@ -488,12 +495,20 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
             List<UUID> updated = new java.util.ArrayList<>(searchedPlayerIds);
             updated.add(playerId);
             return new BasicLandSearchQueue(remainingPicks, sacrifices, shuffleAfterQueue, updated,
-                    destinationToHand, optionalSearch, enterAfterAllSearches, selectedLands, filter);
+                    destinationToHand, optionalSearch, enterAfterAllSearches, selectedLands, filter,
+                    leavesLibrariesUnshuffled);
+        }
+
+        /** The queue shuffling no library: a later step of the resolution shuffles the searchers' libraries. */
+        public BasicLandSearchQueue leavingLibrariesUnshuffled() {
+            return new BasicLandSearchQueue(remainingPicks, sacrifices, shuffleAfterQueue, searchedPlayerIds,
+                    destinationToHand, optionalSearch, enterAfterAllSearches, selectedLands, filter, true);
         }
 
         public BasicLandSearchQueue toHand() {
             return new BasicLandSearchQueue(remainingPicks, sacrifices, shuffleAfterQueue,
-                    searchedPlayerIds, true, optionalSearch, enterAfterAllSearches, selectedLands, filter);
+                    searchedPlayerIds, true, optionalSearch, enterAfterAllSearches, selectedLands, filter,
+                    leavesLibrariesUnshuffled);
         }
     }
 

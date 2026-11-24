@@ -81,6 +81,9 @@ public class EachPlayerSearchesLibraryEffectHandler implements NormalEffectHandl
         if (search.destination() == LibrarySearchDestination.HAND) {
             queue = queue.toHand();
         }
+        if (search.unshuffled()) {
+            queue = queue.leavingLibrariesUnshuffled();
+        }
         basicLandSearchQueueSupport.advance(gameData, followUp.withBasicLandSearchQueue(queue));
     }
 }

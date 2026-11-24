@@ -31,12 +31,17 @@ import java.util.Objects;
  * Wave of Vitriol, Winds of Abandon); a "may" is asked for each of them, and a player who takes a card in any of them
  * has searched. What all of them found still moves together after the last.
  *
+ * <p>With {@code unshuffled} nobody shuffles: the shuffle is a later step of the same resolution covering several
+ * searches ("then each player who searched a library this way shuffles", Tempt with Discovery), so each searcher
+ * shuffles once; a player who can't search doesn't shuffle either.
+ *
  * @param optional      "may search"
  * @param oneSearchEach {@code count} separate searches for one card each, not one search for up to {@code count}
+ * @param unshuffled    no library is shuffled by this step
  */
 public record EachPlayerSearchesLibraryEffect(PlayerSubject players, CardPredicate filter, DynamicAmount count,
                                               LibrarySearchDestination destination, boolean optional,
-                                              boolean oneSearchEach)
+                                              boolean oneSearchEach, boolean unshuffled)
         implements CardEffect {
 
     public EachPlayerSearchesLibraryEffect {
@@ -56,6 +61,15 @@ public record EachPlayerSearchesLibraryEffect(PlayerSubject players, CardPredica
         if (oneSearchEach && destination == LibrarySearchDestination.TOP_OF_LIBRARY) {
             throw new IllegalArgumentException("A search to the top of the library is one search for one card");
         }
+        if (unshuffled && destination == LibrarySearchDestination.TOP_OF_LIBRARY) {
+            throw new IllegalArgumentException("A search to the top of the library shuffles before the card goes on top");
+        }
+    }
+
+    public EachPlayerSearchesLibraryEffect(PlayerSubject players, CardPredicate filter, DynamicAmount count,
+                                           LibrarySearchDestination destination, boolean optional,
+                                           boolean oneSearchEach) {
+        this(players, filter, count, destination, optional, oneSearchEach, false);
     }
 
     public EachPlayerSearchesLibraryEffect(PlayerSubject players, CardPredicate filter, DynamicAmount count,
@@ -63,12 +77,17 @@ public record EachPlayerSearchesLibraryEffect(PlayerSubject players, CardPredica
         this(players, filter, count, destination, optional, false);
     }
 
+    /** The same searches, leaving every library unshuffled for a later shuffle step. */
+    public EachPlayerSearchesLibraryEffect leavingLibrariesUnshuffled() {
+        return new EachPlayerSearchesLibraryEffect(players, filter, count, destination, optional, oneSearchEach, true);
+    }
+
     /**
      * The same searches, {@code count} of them for each searcher, each for one card: "for each [object] this way, its
      * controller [may search] their library for a [filter] card".
      */
     public EachPlayerSearchesLibraryEffect oneSearchForEach() {
-        return new EachPlayerSearchesLibraryEffect(players, filter, count, destination, optional, true);
+        return new EachPlayerSearchesLibraryEffect(players, filter, count, destination, optional, true, unshuffled);
     }
 
     /** "[Players] may each search their library for up to [count] [filter] cards and put them [destination]." */
