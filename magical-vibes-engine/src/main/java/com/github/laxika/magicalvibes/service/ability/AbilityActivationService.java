@@ -4271,8 +4271,9 @@ public class AbilityActivationService {
         }
 
         // "any target chosen at random" (Goblin Test Pilot): the target is picked uniformly among the
-        // legal targets as part of activating the ability, so players can respond knowing it.
-        if (targetId == null && (targetIds == null || targetIds.isEmpty())
+        // legal targets as part of activating the ability, so players can respond knowing it (CR 601.2c);
+        // no player chooses it, so a target the activating player names is not used.
+        if ((targetIds == null || targetIds.isEmpty())
                 && activationEffects.stream().anyMatch(CardEffect::targetChosenAtRandom)) {
             var validTargets = validTargetService.computeValidTargetsForAbility(
                     gameData, permanent.getCard(), ability, playerId, permanentIndex, List.of(), effectiveXValue);

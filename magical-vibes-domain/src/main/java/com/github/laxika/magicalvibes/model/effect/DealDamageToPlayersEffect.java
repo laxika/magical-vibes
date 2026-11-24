@@ -195,7 +195,8 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, PlayerSubject play
     @Override
     public TargetSpec targetSpec() {
         if (player.declaresTarget()) {
-            return TargetSpec.benign(TargetPredicates.player());
+            TargetSpec spec = TargetSpec.benign(TargetPredicates.player());
+            return player.targetChosenAtRandom() ? spec.atRandom() : spec;
         }
         if (player instanceof PlayerSubject.ControllerOf controllerOf) {
             if (controllerOf.permanent() instanceof PermanentSubject.Target) {

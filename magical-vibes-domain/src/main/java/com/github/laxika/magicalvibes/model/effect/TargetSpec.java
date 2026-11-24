@@ -36,16 +36,33 @@ import java.util.Optional;
  * @param selfTargeting    {@code true} when the effect implicitly targets its own source
  *                         permanent (boost-self, regenerate-self, …)
  * @param playerTargetCount how many distinct player targets the effect requires (default 1)
+ * @param chosenAtRandom   {@code true} when the target is "chosen at random" ("any target chosen at random", "target
+ *                         opponent chosen at random", "select target player at random"): no player chooses it; it is
+ *                         picked among the legal targets as the spell or ability is put on the stack (CR 601.2c,
+ *                         603.3d) and is a target like any other, checked again on resolution (CR 608.2b).
+ *                         {@code CardEffect.targetChosenAtRandom()} reads it
  */
 public record TargetSpec(
         TargetPredicate declaredTarget,
         boolean harmful,
         PermanentPredicate predicate,
         boolean selfTargeting,
-        int playerTargetCount) {
+        int playerTargetCount,
+        boolean chosenAtRandom) {
 
     /** The spec for an effect that targets nothing — every derived legacy value is its default. */
     public static final TargetSpec NONE = new TargetSpec(null, false, null, false, 1);
+
+    /** A spec whose target a player chooses. */
+    public TargetSpec(TargetPredicate declaredTarget, boolean harmful, PermanentPredicate predicate,
+                      boolean selfTargeting, int playerTargetCount) {
+        this(declaredTarget, harmful, predicate, selfTargeting, playerTargetCount, false);
+    }
+
+    /** The same spec with its target chosen at random among the legal targets instead of by a player. */
+    public TargetSpec atRandom() {
+        return new TargetSpec(declaredTarget, harmful, predicate, selfTargeting, playerTargetCount, true);
+    }
 
     /** A harmful spec for the given target, no narrowing predicate. */
     public static TargetSpec harmful(TargetPredicate declaredTarget) {

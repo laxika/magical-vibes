@@ -9,7 +9,11 @@ import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToRandomOpponentEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChoosePlayerAtRandomEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -33,7 +37,9 @@ public class ZaffaiThunderConductor extends Card {
         List<CardEffect> magecraft = List.of(
                 new ScryEffect(1),
                 new ConditionalEffect(new EventValueAtLeast(5), ELEMENTAL_TOKEN),
-                new ConditionalEffect(new EventValueAtLeast(10), new DealDamageToRandomOpponentEffect(10)));
+                new ConditionalEffect(new EventValueAtLeast(10), SequenceEffect.of(
+                        new ChoosePlayerAtRandomEffect(Subjects.eachOpponent()),
+                        new DealDamageToPlayersEffect(10, Subjects.playersThisWay(StepKind.CHOOSE)))));
 
         addTrigger(Triggers.youCastSpell().withFilter(INSTANT_OR_SORCERY), magecraft.toArray(CardEffect[]::new));
         addTrigger(Triggers.youCopySpell().withFilter(INSTANT_OR_SORCERY), magecraft.toArray(CardEffect[]::new));

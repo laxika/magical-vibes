@@ -1334,7 +1334,8 @@ public class TriggeredAbilityStackService extends StackDoor {
     /**
      * Puts {@code entry} on the stack with its target, a permanent or player ("target opponent chosen at random",
      * Witch Hunt), picked at random among the legal ones as it goes there (CR 603.3d); without a legal one the ability is
-     * removed.
+     * removed. The pick is a target like a chosen one: "becomes the target" abilities trigger (CR 601.2c) and targeting
+     * an opponent or what one controls is a crime (CR 700.13).
      */
     private void putWithRandomTarget(GameData gameData, Permanent sourcePermanent, StackEntry entry,
                                      List<CardEffect> effects) {
@@ -1361,6 +1362,10 @@ public class TriggeredAbilityStackService extends StackDoor {
                 : java.util.Optional.ofNullable(gameQueryService.findPermanentById(gameData, chosen))
                         .map(permanent -> FaceDownVisibility.publicName(gameData, permanent)).orElse("a permanent");
         gameLogService.append(gameData, GameLog.cardThen(card, "'s ability randomly targets " + targetName + "."));
+        if (!gameData.stack.isEmpty() && gameData.stack.getLast() == entry) {
+            targetTriggers.checkBecomesTargetOfAbilityTriggers(gameData);
+            ActionEvents.crimeCommitted(gameData, entry);
+        }
     }
 
     /**

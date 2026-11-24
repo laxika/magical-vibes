@@ -375,7 +375,7 @@ Fells declares its groups with `CONTROLLED_BY_FIRST_TARGET`).
   lifelink, infect and colors apply (Greatbow Doyen, Saskia, Kediss). Delayed damage triggers keep the watched
   permanent as damage source, its controller in `StackEntry.damageSourceControllerId`.
 - "When that creature deals combat damage to a player this turn" is a registered delayed ability (Optimus Prime,
-  Autobot Leader). A target declared as chosen at random (`CardEffect.targetChosenAtRandom()`, Power Pack) is picked as
+  Autobot Leader). A target declared as chosen at random (`TargetSpec.chosenAtRandom`, read by `CardEffect.targetChosenAtRandom()`; Power Pack) is picked as
   the ability goes on the stack.
 
 ### Spells, activations and land plays
@@ -600,7 +600,8 @@ The door also stamps `TriggeredAbility.targetFilter()`, read by the target choic
   `targetChosenByAnOpponent` (Karplusan Minotaur: parked with no chooser, its pump naming the opponent or asking,
   `ChooseOpponentToChooseTriggerTarget`); else the controller.
 - **Other.** `AttackCounterMoveEffect` (Decimator Beetle) parks for two choices. A random permanent or player target
-  (Witch Hunt, Furnace Layer) is picked among legal ones (CR 603.3d). A spell-or-ability target is offered what its
+  (Witch Hunt, Furnace Layer) is picked among legal ones (CR 603.3d); it is a target, so "becomes the target" abilities
+  trigger and targeting an opponent is a crime (CR 700.13). A spell-or-ability target is offered what its
   `StackEntryPredicateTargetFilter` admits (`TargetLegalityService.checkSpellTargetOnStack`). Choices offer players as
   players, filtered by the player filter, with the record's triggering permanent and X; the group walk applies each
   effect's restriction (Irma, Part-Time Mutant).

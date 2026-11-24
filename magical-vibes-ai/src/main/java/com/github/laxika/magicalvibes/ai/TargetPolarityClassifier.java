@@ -704,8 +704,6 @@ public class TargetPolarityClassifier {
             entry("EnteringCreatureFightsTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("FightTargetsEffect", TargetPolarity.HARMFUL),
             entry("SourceFightsTargetCreatureEffect", TargetPolarity.HARMFUL),
-            // Scab-Clan Giant: the random opposing creature is the target.
-            entry("SourceFightsRandomOpponentCreatureEffect", TargetPolarity.HARMFUL),
             // Perpetually granted by Traumatic Prank.
             entry("CantBlockEffect", TargetPolarity.HARMFUL),
             entry("GainControlOfTargetAuraEffect", TargetPolarity.HARMFUL),

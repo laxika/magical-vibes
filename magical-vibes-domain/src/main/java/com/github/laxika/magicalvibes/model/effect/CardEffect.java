@@ -80,10 +80,10 @@ public interface CardEffect {
     default boolean targetChosenByTriggeringPermanentController() { return false; }
 
     /**
-     * Returns whether a target is selected randomly as this triggered ability is put onto the
-     * stack, rather than chosen by a player.
+     * Returns whether this effect's target is chosen at random among the legal targets as its spell or ability is put
+     * on the stack, rather than by a player: its {@link TargetSpec#chosenAtRandom()}.
      */
-    default boolean targetChosenAtRandom() { return false; }
+    default boolean targetChosenAtRandom() { return targetSpec().chosenAtRandom(); }
 
     /**
      * Returns whether this effect reads the numeric value captured from the event that triggered

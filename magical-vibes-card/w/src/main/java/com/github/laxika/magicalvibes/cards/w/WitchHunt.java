@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.RandomOpponentGainsControlOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -23,6 +24,7 @@ public class WitchHunt extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new DealDamageToPlayersEffect(4, Subjects.you()));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new RandomOpponentGainsControlOfSourceEffect());
+                GainControlOfTargetEffect.of(Subjects.source(), Duration.PERMANENT)
+                        .gainedBy(Subjects.targetPlayerChosenAtRandom()));
     }
 }

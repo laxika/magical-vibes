@@ -8,8 +8,12 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToRandomOpponentEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExplosionOfRichesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +25,10 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class ExplosionOfRichesEffectHandler implements NormalEffectHandlerBean {
+
+    /** "Target opponent chosen at random from among your opponents". */
+    private static final PlayerPredicateTargetFilter TARGET_OPPONENT = new PlayerPredicateTargetFilter(
+            new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent");
 
     private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final PlayerInteractionSupport playerInteractionSupport;
@@ -103,9 +111,11 @@ public class ExplosionOfRichesEffectHandler implements NormalEffectHandlerBean {
         StackEntry resolving = ReflexiveAbilitySupport.resolvingEntryOf(gameData, sourceCard, null);
         for (int i = 0; i < count; i++) {
             gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-            triggeredAbilityStackService.putMade(gameData, ReflexiveAbilitySupport.recordFor(gameData, resolving,
-                    sourceCard, controllerId, List.of(DealDamageToRandomOpponentEffect.targeted(5)),
-                    sourceCard.getName() + "'s reflexive ability", null));
+            StackEntry damage = ReflexiveAbilitySupport.recordFor(gameData, resolving, sourceCard, controllerId,
+                    List.of(new DealDamageToPlayersEffect(5, Subjects.targetPlayerChosenAtRandom())),
+                    sourceCard.getName() + "'s reflexive ability", null);
+            damage.setTargetFilter(TARGET_OPPONENT);
+            triggeredAbilityStackService.putMade(gameData, damage);
         }
     }
 

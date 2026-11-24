@@ -133,7 +133,10 @@ public record DiscardEffect(DynamicAmount amount, PlayerSubject player, boolean 
 
     @Override
     public TargetSpec targetSpec() {
-        return player.declaresTarget()
-                ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
+        if (!player.declaresTarget()) {
+            return TargetSpec.NONE;
+        }
+        TargetSpec spec = TargetSpec.benign(TargetPredicates.player());
+        return player.targetChosenAtRandom() ? spec.atRandom() : spec;
     }
 }

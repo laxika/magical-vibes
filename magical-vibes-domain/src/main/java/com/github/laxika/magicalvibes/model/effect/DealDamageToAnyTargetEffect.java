@@ -25,7 +25,9 @@ import java.util.List;
  *                           this turn is exiled instead (replacement effect, CR 614.6 —
  *                           e.g. Red Sun's Zenith)
  * @param targetGroup        which target the damage applies to: {@code -1} (default) resolves
- *                           against the entry's single target ({@code targetId}); {@code >= 0}
+ *                           against the entry's single target ({@code targetId}), as do the negative
+ *                           markers of the factories ({@link #toAnyOtherTarget}, {@link #toEventObject},
+ *                           {@link #toAnyTargetOfAnOpponentsChoice}, {@link #toAnyTargetChosenAtRandom}); {@code >= 0}
  *                           resolves against that target group's chosen targets (see
  *                           {@code StackEntry.targetsForGroup} — for cards without
  *                           {@code target(...)} declarations the index addresses the flat
@@ -94,6 +96,7 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
     private static final int ANY_OTHER_TARGET = -2;
     private static final int EVENT_OBJECT = -3;
     private static final int OF_AN_OPPONENTS_CHOICE = -4;
+    private static final int CHOSEN_AT_RANDOM = -5;
 
     public DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
                                        boolean exileInsteadOfDie, int targetGroup,
@@ -174,6 +177,14 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
         return new DealDamageToAnyTargetEffect(new Fixed(damage), false, false, OF_AN_OPPONENTS_CHOICE, null);
     }
 
+    /**
+     * Damage to "any target chosen at random" (Goblin Test Pilot): the target is picked among the legal targets as the
+     * ability is activated or put on the stack (CR 601.2c, 603.3d), and checked again on resolution (CR 608.2b).
+     */
+    public static DealDamageToAnyTargetEffect toAnyTargetChosenAtRandom(DynamicAmount damage) {
+        return new DealDamageToAnyTargetEffect(damage, false, false, CHOSEN_AT_RANDOM, null);
+    }
+
     @Override
     public boolean targetChosenByAnOpponent() {
         return targetGroup == OF_AN_OPPONENTS_CHOICE;
@@ -193,6 +204,9 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
     public TargetSpec targetSpec() {
         if (targetGroup == EVENT_OBJECT) {
             return TargetSpec.NONE;
+        }
+        if (targetGroup == CHOSEN_AT_RANDOM) {
+            return TargetSpec.harmful(TargetPredicates.anyTarget()).atRandom();
         }
         return targetGroup == ANY_OTHER_TARGET
                 ? TargetSpec.harmful(TargetPredicates.anyTarget(),

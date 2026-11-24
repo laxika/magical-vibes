@@ -69,6 +69,19 @@ class GoblinTestPilotTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A target the activating player names is not used: the target is still chosen at random")
+    void namedTargetIsNotUsed() {
+        Permanent pilot = addCreatureReady(player1, new GoblinTestPilot());
+        Permanent land = addCreatureReady(player2, new Forest());
+
+        harness.activateAbility(player1, 0, null, land.getId());
+
+        // No player chooses a target "chosen at random" (CR 601.2c): it is picked among the legal ones.
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isIn(pilot.getId(), player1.getId(), player2.getId());
+    }
+
+    @Test
     @DisplayName("Noncreature, nonplaneswalker permanents are never in the random pool")
     void neverHitsNoncreaturePermanents() {
         addCreatureReady(player1, new GoblinTestPilot());

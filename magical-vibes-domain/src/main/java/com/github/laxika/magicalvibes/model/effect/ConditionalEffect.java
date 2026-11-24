@@ -108,11 +108,6 @@ public record ConditionalEffect(Condition condition, CardEffect wrapped)
     }
 
     @Override
-    public boolean targetChosenAtRandom() {
-        return wrapped.targetChosenAtRandom();
-    }
-
-    @Override
     public boolean hasOptionalTarget() {
         return wrapped.hasOptionalTarget();
     }

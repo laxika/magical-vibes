@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29 (each in Findings; the fold queue marks its rows). Fold run 26b is reported and waits to merge; 34, 33 and 23c are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                     |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b (each in Findings; the fold queue marks its rows). Fold runs 34 and 23c are reported and wait to merge; 33, 27 and 32 are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                      |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,453 / 2,758 (after fold run 29) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,448 / 2,753 (after fold run 26b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,904 rows over 4,457 classes (after fold run 29). Latest verdict per class: `step-9` 585, unique 1,170, absorbed 922, split 639, blocked-other 509, survivor 334, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 585 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,910 rows over 4,457 classes (after fold run 26b). Latest verdict per class: `step-9` 579, unique 1,170, absorbed 925, split 641, blocked-other 509, survivor 335, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 579 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -833,6 +833,10 @@ Delayed and global triggers:
 - `CopyTriggeringSpellEffect.copiedBy(players)` / `.mayBeCopiedBy(players)`: "each other player [may] copy that spell" (`opponentsOf(controllerOf(triggeringSpell()))`), "target opponent may also copy that spell" (`targetPlayer()`); copiers in APNAP order (fold run 29).
 - `CopyTriggeringSpellEffect.targetingEach(PermanentSubject)`: "copy the spell for each other [permanent] that spell could target, each copy targeting a different one", "the copy targets the chosen permanent" over `thisWay(CHOOSE)` (fold run 29).
 - `ChoosePermanentsEffect.thatTheTriggeringSpellCouldTarget()` and `ValidTargetService.permanentIdsSpellCouldTarget(gameData, spell)` (fold run 29).
+
+- `TargetSpec.chosenAtRandom` / `atRandom()`: "target … chosen at random", read by `CardEffect.targetChosenAtRandom()` at the stack door and the activation path; it fires "becomes the target" abilities and the crime event (CR 601.2c, 603.3d, 700.13) (fold run 26b).
+- `Subjects.targetPlayerChosenAtRandom()` (`PlayerSubject.TargetPlayer.chosenAtRandom`): "target opponent chosen at random", "select target player at random", for `DealDamageToPlayersEffect`, `DiscardEffect` and `GainControlOfTargetEffect.gainedBy`; opponent-only through the card's target filter (fold run 26b).
+- `DealDamageToAnyTargetEffect.toAnyTargetChosenAtRandom(amount)` and `SourceFightsTargetCreatureEffect.atRandom()`; the survivor's fight form goes through `FightSupport.fight` (fold run 26b).
 
 ### Blocked causes still open
 
@@ -3368,6 +3372,50 @@ Two batches of five. Ratchet 3,511 / 2,805 → 3,505 / 2,799. Ledger 10 rows: ab
 - Feather's {2} per creature is still paid from the pool only. Fairly sure.
 
 **For the next run.** Do `card-copy-cast` next (7 members; it needs zones outside exile, a {2} reduction, an up-to-N cap and the accept path), then `exile-until-rel`, then `land-or-cast`. Feather can fold once a pay-per-chosen step with mana abilities exists.
+
+### Step 9, fold run 26b (2026-11-24, parallel worktree)
+The `random-target` batch: 6 rows; 3 absorbed, 2 split, 1 survivor, 0 left. Ratchet 3,495 / 2,789 → 3,490 / 2,784. CR 601.2c, 603.3d, 608.2b, 700.13, 701.14a and 701.14b were checked.
+
+**Which "random" each card is.** "Target … chosen at random" is a real target, picked as the ability goes on the stack. These cards are:
+- Goblin Test Pilot (any target);
+- Scab-Clan Giant (a creature an opponent controls);
+- Witch Hunt (target opponent);
+- Furnace Layer (target player);
+- Knight Rampager's death trigger (target opponent);
+- Explosion of Riches' reflexive ability (target opponent).
+
+"An opponent chosen at random" with no "target" is a choice made on resolution: Zaffai and Truth or Consequences, done with `ChoosePlayerAtRandomEffect` + `playersThisWay(CHOOSE)`. Knight Rampager's combat trigger is also the non-target kind, but it is not in this batch.
+
+**Design.**
+- `TargetSpec.chosenAtRandom` (wither `atRandom()`) is the one switch, and `CardEffect.targetChosenAtRandom()` reads it. The stack door and the activation path read only that.
+- Player verbs set it with `Subjects.targetPlayerChosenAtRandom()`. `DealDamageToPlayersEffect`, `DiscardEffect` and `GainControlOfTargetEffect`'s gainer pass it into their specs.
+- `DealDamageToAnyTargetEffect` sets it with `toAnyTargetChosenAtRandom`, a negative group marker like the existing opponent's-choice factory. `SourceFightsTargetCreatureEffect` sets it with `atRandom()`.
+- Power Pack's record now declares it through its spec as well.
+- An opponent-only player target is the card's target filter (Witch Hunt, Knight Rampager) or the reflexive record's own filter (Explosion of Riches).
+
+**Survivor.** `SourceFightsTargetCreatureEffect`'s fight form now goes through `FightSupport.fight`, which the Scab-Clan Giant handler already used.
+- Every fight card now counts as having fought (Boxing Ring).
+- "Can't deal damage" is checked.
+- Each creature deals damage as itself.
+- The log is "X fights Y.".
+
+The not-a-fight departed-source form (`false`) keeps its own path.
+
+**Behaviour changes.**
+- A target chosen at random by a trigger fires "becomes the target" abilities and the crime event (Frost Titan, Blood Hustler tests). Before, `putWithRandomTarget` fired neither.
+- Goblin Test Pilot no longer uses a target the activating player names.
+- Witch Hunt is not a steal in the AI's view.
+- The random player specs (Knight Rampager, Furnace Layer, Explosion of Riches) are now benign. Nobody chooses these targets.
+- Truth or Consequences chooses its opponent even with no consequences votes, as the Oracle text says (log only).
+
+**Tests changed.** None rewritten. Added one each to Scab-Clan Giant, Witch Hunt, Goblin Test Pilot, Knight Rampager and Pheres-Band Brawler.
+
+**Seen, not changed.**
+- No seeded game random source exists: about 180 `ThreadLocalRandom` sites. The random picks stay unfixable in tests.
+- `ActivatedAbility.isNeedsTarget` still makes the client ask for Goblin Test Pilot's target, which the server now ignores.
+- Power Pack's random graveyard target goes on the stack as `nonTargeting(true)`: no targets-chosen event (CR 601.2c).
+
+**For the next run.** The seeded-random question is for the owner. Power Pack's non-targeting random graveyard target could join a defect run.
 
 ## Prompt
 

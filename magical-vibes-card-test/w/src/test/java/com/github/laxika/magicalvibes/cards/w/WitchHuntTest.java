@@ -1,15 +1,18 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.b.BloodHustler;
 import com.github.laxika.magicalvibes.cards.r.RenewedFaith;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WitchHunt.class, RenewedFaith.class})
+@CardUsed({WitchHunt.class, RenewedFaith.class, BloodHustler.class})
 class WitchHuntTest extends BaseCardTest {
 
     @Test
@@ -128,6 +131,19 @@ class WitchHuntTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Witch Hunt");
         harness.assertNotOnBattlefield(player2, "Witch Hunt");
+    }
+
+    @Test
+    @DisplayName("The opponent chosen at random is targeted: its controller commits a crime and Blood Hustler grows")
+    void targetingTheRandomOpponentIsACrime() {
+        harness.addToBattlefield(player1, new WitchHunt());
+        Permanent hustler = harness.addToBattlefieldAndReturn(player1, new BloodHustler());
+
+        advanceToEndStep(player1);
+
+        // A triggered ability put on the stack that targets an opponent is a crime (CR 700.13).
+        assertThat(findPermanents(player2, "Witch Hunt")).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, hustler)).isEqualTo(2);
     }
 
     @Test

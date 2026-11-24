@@ -37,6 +37,15 @@ public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.T
         return false;
     }
 
+    /**
+     * Whether this subject's declared player target is chosen at random among the legal players as the spell or
+     * ability is put on the stack ("target opponent chosen at random", "select target player at random"): the
+     * declaring effect's {@code TargetSpec.chosenAtRandom()}.
+     */
+    default boolean targetChosenAtRandom() {
+        return false;
+    }
+
     /** Which players {@link Each} names. */
     enum Relation {
         /** Every player, the controller included. */
@@ -53,19 +62,32 @@ public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.T
      * "Target player": the effect's player target. {@code group} is the target group the effect reads, or
      * {@code null} for the targets the stack entry assigns to the effect. {@code declared} is whether this effect
      * declares the target; when it doesn't, another effect of the same spell or ability, or the card's target filter,
-     * declares it and this one only reads it ("target player draws two cards and loses 2 life").
+     * declares it and this one only reads it ("target player draws two cards and loses 2 life"). {@code chosenAtRandom}
+     * is whether a declared target is chosen at random instead of by a player.
      */
-    record TargetPlayer(Integer group, boolean declared) implements PlayerSubject {
+    record TargetPlayer(Integer group, boolean declared, boolean chosenAtRandom) implements PlayerSubject {
 
         public TargetPlayer {
             if (group != null && group < 0) {
                 throw new IllegalArgumentException("A target group is not negative: " + group);
             }
+            if (chosenAtRandom && !declared) {
+                throw new IllegalArgumentException("Only a declared target is chosen at random");
+            }
+        }
+
+        public TargetPlayer(Integer group, boolean declared) {
+            this(group, declared, false);
         }
 
         @Override
         public boolean declaresTarget() {
             return declared;
+        }
+
+        @Override
+        public boolean targetChosenAtRandom() {
+            return chosenAtRandom;
         }
 
         @Override

@@ -55,6 +55,7 @@ public final class Subjects {
     private static final PlayerSubject YOU = new PlayerSubject.You();
     private static final PlayerSubject TARGET_PLAYER = new PlayerSubject.TargetPlayer(null, true);
     private static final PlayerSubject TARGET_PLAYER_DECLARED_ELSEWHERE = new PlayerSubject.TargetPlayer(null, false);
+    private static final PlayerSubject TARGET_PLAYER_CHOSEN_AT_RANDOM = new PlayerSubject.TargetPlayer(null, true, true);
     private static final PlayerSubject EACH_PLAYER = new PlayerSubject.Each(PlayerSubject.Relation.ALL);
     private static final PlayerSubject EACH_OPPONENT = new PlayerSubject.Each(PlayerSubject.Relation.OPPONENTS);
     private static final PlayerSubject TRIGGERING_PLAYER = new PlayerSubject.TriggeringPlayer();
@@ -793,6 +794,15 @@ public final class Subjects {
     /** The player targets chosen for target group {@code group}. */
     public static PlayerSubject targetPlayer(int group) {
         return new PlayerSubject.TargetPlayer(group, true);
+    }
+
+    /**
+     * "Target player chosen at random", "target opponent chosen at random", "select target player at random": the
+     * effect's player target, picked at random among the legal players as the spell or ability is put on the stack
+     * (CR 601.2c, 603.3d). An opponent-only target is the card's target filter.
+     */
+    public static PlayerSubject targetPlayerChosenAtRandom() {
+        return TARGET_PLAYER_CHOSEN_AT_RANDOM;
     }
 
     /**

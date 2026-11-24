@@ -77,6 +77,19 @@ class KnightRampagerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only an opponent can be the death trigger's target: with the only opponent hexproof, you are not hit")
+    void deathTriggerNeverTargetsItsController() {
+        Permanent knight = addReadyKnight(player1);
+        harness.addToBattlefield(player2, new LeylineOfSanctity());
+        harness.setLife(player1, 20);
+
+        killKnight(knight);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
     @DisplayName("Frenzied Rampage does not trigger during an opponent's combat")
     void doesNotRequireAttackingDuringOpponentsCombat() {
         Permanent knight = addReadyKnight(player1);

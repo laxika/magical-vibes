@@ -33,7 +33,9 @@ import java.util.Objects;
  *                           ("choose a creature at random. You gain control of that creature")
  * @param gainer             who gains control: {@code null} for the effect's controller ("gain control of"), or the
  *                           player it names ("target player gains control of up to three target creatures until end
- *                           of turn", "target opponent gains control of all other permanents you control"); another
+ *                           of turn", "target opponent gains control of all other permanents you control", "target
+ *                           opponent chosen at random gains control of this enchantment" with
+ *                           {@code targetPlayerChosenAtRandom()}); another
  *                           player gains control only permanently or until end of turn, with no rider
  */
 public record GainControlOfTargetEffect(Duration duration, CardSubtype grantedSubtype,
@@ -134,7 +136,10 @@ public record GainControlOfTargetEffect(Duration duration, CardSubtype grantedSu
         if (subject instanceof PermanentSubject.Target) {
             return TargetSpec.benign(TargetPredicates.permanent(), targetPredicate);
         }
-        return gainer != null && gainer.declaresTarget() ? TargetSpec.benign(TargetPredicates.player())
-                : TargetSpec.NONE;
+        if (gainer == null || !gainer.declaresTarget()) {
+            return TargetSpec.NONE;
+        }
+        TargetSpec spec = TargetSpec.benign(TargetPredicates.player());
+        return gainer.targetChosenAtRandom() ? spec.atRandom() : spec;
     }
 }

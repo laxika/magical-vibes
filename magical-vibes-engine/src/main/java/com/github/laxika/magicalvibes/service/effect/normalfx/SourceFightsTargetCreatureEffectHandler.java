@@ -11,14 +11,20 @@ import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/**
+ * Resolves {@link SourceFightsTargetCreatureEffect}. A fight goes through {@link FightSupport#fight} (CR 701.14a):
+ * both creatures must be on the battlefield (CR 701.14b), each deals damage as itself, and both are recorded as having
+ * fought. The not-a-fight form ("it deals damage equal to its power to target creature. That creature deals damage
+ * equal to its power to it") lets a source that left deal its damage as it last existed and takes none.
+ */
 @Component
 @RequiredArgsConstructor
 public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHandlerBean {
 
+    private final FightSupport fightSupport;
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
@@ -45,19 +51,22 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
         UUID sourcePermanentId = entry.getSourcePermanentId();
         Permanent source = sourcePermanentId != null
                 ? gameQueryService.findPermanentById(gameData, sourcePermanentId) : null;
+        if (fight.requiresSourceOnBattlefield()) {
+            if (source == null || !gameQueryService.isCreature(gameData, source)
+                    || !gameQueryService.isCreature(gameData, target)) {
+                return;
+            }
+            gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " fights ", target.getCard(), "."));
+            fightSupport.fight(gameData, entry, source, target);
+            gameOutcomeService.checkWinCondition(gameData);
+            return;
+        }
         Permanent sourceForPower = source != null ? source : entry.getSourcePermanentSnapshot();
-        if ((fight.requiresSourceOnBattlefield() && source == null)
-                || sourceForPower == null
+        if (sourceForPower == null
                 || (source != null && !gameQueryService.isCreature(gameData, source))
                 || !gameQueryService.isCreature(gameData, target)) {
             return;
         }
-
-        UUID sourceControllerId = source != null
-                ? gameQueryService.findPermanentController(gameData, source.getId()) : null;
-        UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
-        boolean sourceIsCreature = source != null && gameQueryService.isCreature(gameData, source);
-        boolean targetIsCreature = gameQueryService.isCreature(gameData, target);
 
         String cardName = FaceDownVisibility.sourceName(gameData, entry);
 
@@ -87,12 +96,6 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
             gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text("'s damage to " + cardName + " is prevented.").build());
         }
 
-        if (fight.requiresSourceOnBattlefield() && sourceIsCreature && targetIsCreature) {
-            ActionEvents.fought(gameData, source, sourceControllerId);
-            ActionEvents.fought(gameData, target, targetControllerId);
-        }
-
         gameOutcomeService.checkWinCondition(gameData);
-    
     }
 }

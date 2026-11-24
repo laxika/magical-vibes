@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AscendedLawmage;
+import com.github.laxika.magicalvibes.cards.f.FrostTitan;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
@@ -19,7 +20,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ScabClanGiant.class, GrizzlyBears.class, HillGiant.class, AscendedLawmage.class})
+@CardUsed({ScabClanGiant.class, GrizzlyBears.class, HillGiant.class, AscendedLawmage.class, FrostTitan.class})
 class ScabClanGiantTest extends BaseCardTest {
 
     @Test
@@ -83,6 +84,20 @@ class ScabClanGiantTest extends BaseCardTest {
         }
 
         assertThat(foughtSlots).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The creature chosen at random becomes the ability's target: Frost Titan's ability triggers")
+    void randomTargetTriggersBecomesTargetAbilities() {
+        Permanent titan = addCreature(player2, new FrostTitan());
+
+        castGiantAndResolveSpell();
+
+        // The target is chosen at random as the ability goes on the stack, and it becomes the target then (CR 601.2c,
+        // 603.3d): Frost Titan's "whenever this becomes the target of a spell or ability an opponent controls".
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(titan.getId());
+        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Frost Titan");
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.b.BoxingRing;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SternDismissal;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -15,7 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PheresBandBrawler.class, GrizzlyBears.class, SternDismissal.class, PolukranosUnchained.class})
+@CardUsed({PheresBandBrawler.class, GrizzlyBears.class, SternDismissal.class, PolukranosUnchained.class,
+        BoxingRing.class})
 class PheresBandBrawlerTest extends BaseCardTest {
 
     @Test
@@ -31,6 +33,22 @@ class PheresBandBrawlerTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getId().equals(opponentCreature.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getId().equals(brawler.getId()));
+    }
+
+    @Test
+    @DisplayName("The Brawler and its target have fought this turn: Boxing Ring's Treasure ability can be activated")
+    void fightCountsAsFightingThisTurn() {
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        castBrawler();
+        harness.handlePermanentChosen(player1, opponentCreature.getId());
+        harness.passBothPriorities();
+        Permanent ring = harness.addToBattlefieldAndReturn(player1, new BoxingRing());
+
+        // "Activate only if you control a creature that fought this turn" (CR 701.14a: it fought).
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(ring), null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
     }
 
     @Test

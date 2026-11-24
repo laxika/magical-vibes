@@ -13,7 +13,7 @@ import java.util.List;
  * instead of being put into a graveyard.
  *
  * <p>The card is the trigger's target, "target instant or sorcery card from your graveyard chosen at random": the
- * effect declares it ({@link #targetSpec()}) and that it is chosen at random ({@link #targetChosenAtRandom()}), so the
+ * effect declares it, chosen at random ({@link #targetSpec()}, {@link TargetSpec#chosenAtRandom()}), so the
  * collector picks it as the ability is put onto the stack; it is the stack entry's {@code targetId} (in the
  * graveyard), and the ability does nothing if the card has left the graveyard (CR 608.2b).</p>
  */
@@ -24,11 +24,6 @@ public record ExileRandomInstantOrSorceryFromGraveyardAndCastNextUpkeepEffect() 
         return TargetSpec.benign(TargetPredicates.graveyardCards(
                 new CardAnyOfPredicate(List.of(new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY))),
-                GraveyardSearchScope.CONTROLLERS_GRAVEYARD));
-    }
-
-    @Override
-    public boolean targetChosenAtRandom() {
-        return true;
+                GraveyardSearchScope.CONTROLLERS_GRAVEYARD)).atRandom();
     }
 }
