@@ -6,10 +6,16 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfEnergyToPutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaEffect.Resource;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaEffect;
 
 @CardRegistration(set = "DRC", collectorNumber = "15")
 @CardRegistration(set = "DRC", collectorNumber = "31")
@@ -22,6 +28,8 @@ public class RampagingAetherhood extends Card {
         // The energy gain and the optional payment are one ability, so they resolve in order.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 new EnergyCountersEffect(new SourcePower()),
-                new PayAnyAmountOfEnergyToPutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
+                EachPlayerPaysAnyManaEffect.byYou(Resource.ENERGY),
+                new ConditionalEffect(new HappenedThisWay(StepKind.PAY_ENERGY),
+                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, AmountThisWay.energyPaid()))));
     }
 }

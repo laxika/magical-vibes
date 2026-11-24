@@ -777,7 +777,6 @@ public class TargetPolarityClassifier {
             entry("TargetCreatureDealsPowerDamageToAnyTargetEffect", TargetPolarity.HARMFUL),
             entry("TargetCreaturesDealToughnessDamageToEachOtherEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("UnattachEquipmentFromTargetPermanentsEffect", TargetPolarity.HARMFUL),
-            entry("PayAnyAmountOfEnergyToBoostTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("PayEnergyToGainControlOfTargetEffect", TargetPolarity.HARMFUL),
             entry("PutCounterOnEitherTargetPermanentEffect", TargetPolarity.HARMFUL),
 

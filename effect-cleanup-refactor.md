@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45 (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 41c, 37b, 40b; merge queue 46. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                   |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46 (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 41c, 37b, 40b; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                    |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,159 / 2,575 (after fold run 45) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,147 / 2,563 (after fold run 46) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,441 rows over 4,536 classes (after fold run 45). Latest verdict per class: `step-9` 190, unique 1,187, absorbed 1,222, split 665, blocked-other 541, survivor 425, blocked-step-model 140, blocked-player-loop 96, dead 70. Waiting: 190 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,461 rows over 4,536 classes (after fold run 46). Latest verdict per class: `step-9` 174, unique 1,189, absorbed 1,234, split 665, blocked-other 543, survivor 425, blocked-step-model 140, blocked-player-loop 96, dead 70. Waiting: 174 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1014,6 +1014,9 @@ Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671
 - `ExchangeGraveyardAndLibraryEffect(Zone first, Zone second)`: exchange two of library, graveyard, hand; CR 404.3 order prompt; no shuffle (fold run 45).
 - `ExchangeControlOfTargetPermanentsEffect.sharedCardTypes` (`ANY_CARD_TYPE`, `ARTIFACT_OR_CREATURE`, `ARTIFACT_CREATURE_OR_LAND`), `.forControlledTargetsSharingOneOf(first, types)`, records GAIN_CONTROL; `GameQueryService.sharesCardTypeAmong`; `Subjects.thisWay(GAIN_CONTROL)` (fold run 45).
 - `CreateTokenEffect` with investigate: "investigate N times" is always N creation events (CR 701.16a) (fold run 45).
+
+- `EachPlayerPaysAnyManaEffect(startingWithYou, PlayerSubject payers, Resource)` / `.byYou(Resource)`: Resource `MANA`, `X_MANA` ("pay {X}"), `ENERGY`, `LIFE`. "Pay any amount", "you may pay one or more {E}" and "you may pay {X}" at resolution. Records PAY_MANA / PAY_ENERGY / PAY_LIFE, read by `AmountThisWay.manaPaid()` / `energyPaid()` / `lifePaid()` and `HappenedThisWay(kind)`. "You may pay {X}. If you do" where X = 0 matters is `MayEffect(SequenceEffect.of(pay, …))` (fold run 46).
+- `StepKind.PAY_ENERGY`, `StepKind.PAY_LIFE` (fold run 46).
 
 ### Blocked causes still open
 
@@ -4468,6 +4471,47 @@ For the next run: a targets-x run (one target-aware reader that sums every categ
 **For the next run.** 45b: `rest-of-set`, then `spell-perm-exchange` (new exchange record + a new-targets step, folding `GainControlOfTargetSpellEffect`'s offer too).
 
 **Follow-up.** All 13 rewritten cards' Oracle text checked. The investigate split touches 14 "investigate N / X times / for each" cards; their 39 test classes (with the Esix and Pilfered Proof classes) pass, 311 tests. Fixed failing-first: Nyla, Shirshu Sleuth's "create X Clue tokens" is not investigating (CR 701.16a) but fired an investigated event per Clue; its Clues are now `withInvestigate(false)` (new `NylaShirshuSleuthTest` case with Val). An `ofClueToken(n)` for "create n Clue tokens" must be marked `.withInvestigate(false)`.
+
+### Step 9, fold run 46 (2026-11-24, parallel worktree)
+`pay-any`: 12 absorbed, 1 survivor widened, 2 unique, 2 blocked-other, 9 left for 46b. Ratchet 3,225 / 2,620 → 3,213 / 2,608. 14 card files rewritten; Oracle text checked for all 26 batch cards, rulings for 15. CR 101.4, 107.1c, 107.3a, 107.14, 118.3, 118.3a, 118.12, 118.12a, 119.4, 119.4b, 119.8, 601.2g, 603.12, 605.3a, 608.2b, 608.2d, 608.2g, 608.2h checked.
+
+| Batch | Result |
+|---|---|
+| pay-any | Absorbed into `EachPlayerPaysAnyManaEffect(startingWithYou, PlayerSubject payers, Resource)`, `byYou(resource)`: PayXMana (Karn MANA, Rose Room X_MANA), PayXLife (Plunge), the energy token/boost/damage/each-other/counters records (Aether Refinery, Pia, Die Young, Harnessed Lightning, Territorial Aetherkite, Rampaging Aetherhood), PayXManaGainXLife (Vigil), PayXManaBoost (Squealing Devil), PayXManaSearchLibrary (Taj-Nar, `MayEffect(SequenceEffect.of(pay, search))`), PayAnyAmountOfLifeRevealAndExile (Vizkopa, `RevealCardsChooseOneToExileEffect(lifePaid())`), PayXManaRevealCardsChooseOneToDiscard (Hollow Specter). "If you paid one or more" is `ConditionalEffect(HappenedThisWay(kind))`. |
+
+**The survivor.**
+- `Resource` MANA ("any amount of mana"), X_MANA ("pay {X}": a cost with {X}, so X-only mana pays it), ENERGY (removes counters, CR 107.14), LIFE (up to the life total, none while life can't be lost, CR 119.4, 119.8; asks death replacements first).
+- Mana is paid as a resolution cost through `ManaCost.payResolutionCost`, so Powerstone mana pays it. The prompt's maximum counts untapped sources (CR 605.3a, 608.2g).
+- A payer who can pay nothing isn't asked. Records PAY_MANA / PAY_ENERGY / PAY_LIFE.
+- The payers are never a target.
+
+**Behaviour changes.**
+- Pia creates one X/X Aetherjet (was X tokens).
+- Aetherkite's damage is a reflexive ability (CR 603.12; ruling).
+- Plunge can't pay life while its controller can't lose life (CR 119.8).
+- Powerstone mana pays the join forces, Taj-Nar and Hollow Specter payments.
+- Karn's −1 no longer takes X-only mana.
+- Vizkopa's exiled card is linked to Vizkopa.
+- Squealing Devil's ability with an illegal target no longer resolves (CR 608.2b); the sacrifice trigger is separate and unaffected.
+- Log lines are the survivor's.
+
+**Tests changed.**
+- Aetherkite: resolves the reflexive ability before asserting the damage.
+- Taj-Nar: 3 tests no longer expect an X prompt with max 0.
+- 5 new tests (Pia ×2, Aetherkite, Plunge, Collective Voyage).
+- Ran 56 classes: 684 cases, 0 failures.
+
+**Left.**
+- `unique`: Leyline Tyrant ("any amount of {R}": a colour option only it would set) and Azor ({X}{W}{U}{U}: a fixed part only it would set).
+- `blocked-other`: Confiscation Coup and Behemoth of Vault 0. "May pay an amount of {E} equal to N" is a fixed may-cost (CR 118.12), so they go to step 10's cost-combinator merge beside `ForcedCostOrElseEffect(PayEnergyCost)`.
+- 46b: Vault 112, Localized Destruction (a grant's controlledBy filter needs `bindAmounts` at resolution), Relentless Dead (MayEffect + a mana-value-equals-paid check; fixes the X = 0 defect), Halo Forager, Tester, Isareth, Fire Lord Sozin (reflexive X target filters through `QueueReflexiveAbilityEffect.withEventValue`), Depala (a reveal-top-N step with a DynamicAmount and a random bottom), Errant Minion/Power Leak (the upkeep player as payer + prevention of X of the damage).
+
+**Seen, not changed.**
+- The AI's `XValueChoiceAiStrategy` answers a life payment with its maximum: it pays all its life (Plunge, Vizkopa; existing behaviour). Sure of the code.
+- Depala's payable pool counts artifact-only and Myr-only mana. Sure of the code.
+- AI value readers don't see the payoffs inside `ConditionalEffect` or the reflexive ability (Aether Refinery, Pia, Aetherkite).
+
+**For the next run.** 46b: the reflexive four first (one pattern), then Relentless Dead with `MayEffect`, then Errant Minion/Power Leak with a non-you payer.
 
 ## Prompt
 

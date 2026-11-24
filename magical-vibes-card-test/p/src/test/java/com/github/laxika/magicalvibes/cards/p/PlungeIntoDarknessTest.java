@@ -12,11 +12,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.cards.e.EverybodyLives;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PlungeIntoDarkness.class, AuriokChampion.class, KrarkClanIronworks.class})
+@CardUsed({PlungeIntoDarkness.class, AuriokChampion.class, KrarkClanIronworks.class, EverybodyLives.class})
 class PlungeIntoDarknessTest extends BaseCardTest {
 
     @Test
@@ -248,5 +249,26 @@ class PlungeIntoDarknessTest extends BaseCardTest {
 
     private void addMana(int amount) {
         harness.addMana(player1, ManaColor.BLACK, amount);
+    }
+
+    @Test
+    @DisplayName("No life can be paid while its caster can't lose life, so no cards are looked at")
+    void lifePaymentModePaysNothingWhileLifeCantBeLost() {
+        Card first = new AuriokChampion();
+        Card second = new KrarkClanIronworks();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new EverybodyLives()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0);
+        cast(1);
+
+        int lifeBefore = gd.getLife(player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNull();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 }

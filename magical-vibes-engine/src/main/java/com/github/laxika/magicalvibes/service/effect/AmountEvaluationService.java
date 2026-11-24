@@ -1185,7 +1185,8 @@ public class AmountEvaluationService {
                 && !thisWay.includesUnremoved()) {
             return results.outcome(thisWay.kind()).amount();
         }
-        if (thisWay.kind() == StepKind.PAY_MANA || thisWay.kind() == StepKind.SHUFFLE_INTO_LIBRARY) {
+        if (thisWay.kind() == StepKind.PAY_MANA || thisWay.kind() == StepKind.PAY_ENERGY
+                || thisWay.kind() == StepKind.PAY_LIFE || thisWay.kind() == StepKind.SHUFFLE_INTO_LIBRARY) {
             return ctx.controllerId() == null ? 0
                     : results.outcome(thisWay.kind()).amountByPlayer().getOrDefault(ctx.controllerId(), 0);
         }

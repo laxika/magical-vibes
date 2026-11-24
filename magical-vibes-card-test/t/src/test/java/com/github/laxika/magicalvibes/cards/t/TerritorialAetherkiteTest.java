@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import org.junit.jupiter.api.DisplayName;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,6 +27,7 @@ class TerritorialAetherkiteTest extends BaseCardTest {
         assertThat(choice.maxValue()).isEqualTo(2);
 
         harness.handleXValueChosen(player1, 1);
+        harness.passBothPriorities();
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
         assertThat(ownCreature.getMarkedDamage()).isEqualTo(1);
@@ -54,5 +56,23 @@ class TerritorialAetherkiteTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard() instanceof TerritorialAetherkite)
                 .findFirst()
                 .orElseThrow();
+    }
+
+    @Test
+    @DisplayName("The damage is a reflexive ability that goes on the stack after the payment")
+    void damageIsAReflexiveAbilityPlayersCanRespondTo() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        cast();
+
+        harness.handleXValueChosen(player1, 2);
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(creature.getMarkedDamage()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 }

@@ -219,7 +219,7 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
             case SEEK -> "sought";
             case CHOOSE -> "chosen";
             case REVEAL -> "revealed";
-            case PAY_MANA -> "paid";
+            case PAY_MANA, PAY_ENERGY, PAY_LIFE -> "paid";
             case SHUFFLE_INTO_LIBRARY -> "shuffled into a library";
             case PUT_INTO_LIBRARY -> "put into a library";
             case NOTE -> "noted";

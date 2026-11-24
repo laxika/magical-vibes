@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DisplayName;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -63,5 +64,41 @@ class PiaNalaarChiefMechanicTest extends BaseCardTest {
         Permanent pentavus = harness.enterBattlefieldAndReturn(player1, new Pentavus());
         pentavus.setSummoningSick(false);
         return pentavus;
+    }
+
+    @Test
+    @DisplayName("Paying three energy creates one 3/3 Aetherjet, not three")
+    void createsOneAetherjetWhateverTheAmountPaid() {
+        harness.addToBattlefield(player1, new PiaNalaarChiefMechanic());
+        gd.playerEnergyCounters.put(player1.getId(), 3);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+        harness.handleXValueChosen(player1, 3);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Nalaar Aetherjet"))
+                .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Paying no energy creates no Aetherjet")
+    void payingNoEnergyCreatesNothing() {
+        harness.addToBattlefield(player1, new PiaNalaarChiefMechanic());
+        gd.playerEnergyCounters.put(player1.getId(), 2);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+        harness.handleXValueChosen(player1, 0);
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getName().equals("Nalaar Aetherjet"));
     }
 }

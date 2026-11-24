@@ -53,8 +53,7 @@ class TajNarSwordsmithTest extends BaseCardTest {
         resolveEnterAbility();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).maxValue()).isZero();
-        harness.handleXValueChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNull();
 
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
@@ -145,7 +144,7 @@ class TajNarSwordsmithTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).maxValue()).isZero();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).getArtifactOnlyColorless()).isEqualTo(3);
     }
 
@@ -159,7 +158,7 @@ class TajNarSwordsmithTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).maxValue()).isZero();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).getMyrOnlyColorless()).isEqualTo(2);
     }
     private void castSwordsmithWithMana(int mana) {

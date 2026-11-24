@@ -3,18 +3,19 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.PayXManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaEffect.Resource;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaEffect;
 
 @CardRegistration(set = "DMU", collectorNumber = "1")
 public class KarnLivingLegacy extends Card {
@@ -33,8 +34,8 @@ public class KarnLivingLegacy extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -1,
                 List.of(
-                        new PayXManaEffect(),
-                        LookAtTopCardsEffect.chooseNToHandRestOnBottomRandom(new EventValue(), 1)
+                        EachPlayerPaysAnyManaEffect.byYou(Resource.MANA),
+                        LookAtTopCardsEffect.chooseNToHandRestOnBottomRandom(AmountThisWay.manaPaid(), 1)
                 ),
                 "−1: Pay any amount of mana. Look at that many cards from the top of your library, "
                         + "then put one of those cards into your hand and the rest on the bottom of "

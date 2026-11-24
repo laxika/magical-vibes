@@ -111,8 +111,8 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
             throw new IllegalArgumentException(
                     "Only a sacrifice or destroy step records what it removed and whether it died: " + kind);
         }
-        boolean perPlayer = kind == StepKind.REVEAL || kind == StepKind.PAY_MANA
-                || kind == StepKind.SHUFFLE_INTO_LIBRARY;
+        boolean perPlayer = kind == StepKind.REVEAL || kind == StepKind.PAY_MANA || kind == StepKind.PAY_ENERGY
+                || kind == StepKind.PAY_LIFE || kind == StepKind.SHUFFLE_INTO_LIBRARY;
         if (yours && !removal && !perPlayer && (kind != StepKind.EXILE || cardFilter != null
                 || stat == Stat.STILL_EXILED || stat == Stat.FROM_HAND)) {
             throw new IllegalArgumentException(
@@ -286,6 +286,16 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
     /** "The total amount of mana paid this way" after a payment step. */
     public static AmountThisWay manaPaid() {
         return new AmountThisWay(StepKind.PAY_MANA);
+    }
+
+    /** "That many", "the amount of {E} paid this way" after an energy payment step. */
+    public static AmountThisWay energyPaid() {
+        return new AmountThisWay(StepKind.PAY_ENERGY);
+    }
+
+    /** "That many", "the life paid this way" after a life payment step. */
+    public static AmountThisWay lifePaid() {
+        return new AmountThisWay(StepKind.PAY_LIFE);
     }
 
     /** "The amount of mana they paid this way": what the amount's controller paid. */

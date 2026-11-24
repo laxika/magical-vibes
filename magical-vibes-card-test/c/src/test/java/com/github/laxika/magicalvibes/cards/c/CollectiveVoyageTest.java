@@ -171,4 +171,25 @@ class CollectiveVoyageTest extends BaseCardTest {
     private PendingInteraction.LibrarySearch activeSearch() {
         return gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
     }
+
+    @Test
+    @DisplayName("Powerstone mana pays the join forces payment, which is no spell")
+    void powerstoneManaPaysTheJoinForcesPayment() {
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Plains()));
+        harness.setHand(player1, List.of(new CollectiveVoyage()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castSorcery(player1, 0);
+        gd.playerManaPools.get(player1.getId()).addPowerstoneOnlyColorless(2);
+        harness.passBothPriorities();
+
+        PendingInteraction.XValueChoice choice = gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.maxValue()).isEqualTo(2);
+        harness.handleXValueChosen(player1, 2);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(activeSearch().params().remainingCount()).isEqualTo(2);
+    }
 }

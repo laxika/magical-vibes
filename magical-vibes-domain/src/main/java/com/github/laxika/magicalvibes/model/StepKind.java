@@ -62,6 +62,8 @@ package com.github.laxika.magicalvibes.model;
  *       ({@link StepOutcome#amountByPlayer()});</li>
  *   <li>{@link #PAY_MANA}: the total mana paid ({@code EachPlayerPaysAnyManaEffect}), nothing, the players who paid
  *       some, and how much each paid ({@link StepOutcome#amountByPlayer()});</li>
+ *   <li>{@link #PAY_ENERGY}, {@link #PAY_LIFE}: the same for a payment of energy or life
+ *       ({@code EachPlayerPaysAnyManaEffect} with that resource);</li>
  *   <li>{@link #PUT_INTO_LIBRARY}: the number of cards put into libraries on top or on the bottom
  *       ({@code PutCardsIntoLibraryEffect}), those cards, their owners: a hidden zone, so no card subject names them
  *       there.</li>
@@ -165,6 +167,8 @@ public enum StepKind {
     CHOOSE,
     REVEAL,
     PAY_MANA,
+    PAY_ENERGY,
+    PAY_LIFE,
     SHUFFLE_INTO_LIBRARY,
     PUT_INTO_LIBRARY,
     GAIN_CONTROL,

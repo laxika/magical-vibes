@@ -9,13 +9,15 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.PayXManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaEffect.Resource;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaEffect;
 
 @CardRegistration(set = "NCC", collectorNumber = "51")
 @CardRegistration(set = "NCC", collectorNumber = "151")
@@ -36,8 +38,9 @@ public class RoseRoomTreasurer extends Card {
                                         new NthAbilityResolutionThisTurn(1),
                                         new NthAbilityResolutionThisTurn(2)))),
                                 SequenceEffect.of(
-                                        new PayXManaEffect(),
-                                        new QueueReflexiveAbilityEffect(
-                                                new DealDamageToAnyTargetEffect(new EventValue()))))));
+                                        EachPlayerPaysAnyManaEffect.byYou(Resource.X_MANA),
+                                        QueueReflexiveAbilityEffect.withEventValue(
+                                                new DealDamageToAnyTargetEffect(new EventValue()),
+                                                AmountThisWay.manaPaid())))));
     }
 }
