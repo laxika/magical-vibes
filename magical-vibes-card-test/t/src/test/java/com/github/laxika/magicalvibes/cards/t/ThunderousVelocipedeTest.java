@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.AirResponseUnit;
+import com.github.laxika.magicalvibes.cards.a.AkromaAngelOfFury;
 import com.github.laxika.magicalvibes.cards.a.AutarchMammoth;
 import com.github.laxika.magicalvibes.cards.b.BeastriderVanguard;
 import com.github.laxika.magicalvibes.cards.c.CryptcallerChariot;
@@ -9,12 +10,14 @@ import com.github.laxika.magicalvibes.cards.j.JibbirikOmnivore;
 import com.github.laxika.magicalvibes.cards.v.ValorsFlagship;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -23,7 +26,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ThunderousVelocipede.class, AirResponseUnit.class, AutarchMammoth.class,
+@CardUsed({ThunderousVelocipede.class, AirResponseUnit.class, AkromaAngelOfFury.class, AutarchMammoth.class,
         BeastriderVanguard.class, CryptcallerChariot.class, JibbirikOmnivore.class,
         ValorsFlagship.class, Forest.class})
 class ThunderousVelocipedeTest extends BaseCardTest {
@@ -75,6 +78,21 @@ class ThunderousVelocipedeTest extends BaseCardTest {
         assertThat(vehicle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.isCreature(gd, vehicle)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A face-down creature has mana value 0, so it enters with one counter")
+    void faceDownCreatureWithHighPrintedManaValueGetsOneCounter() {
+        harness.addToBattlefield(player1, new ThunderousVelocipede());
+        harness.setHand(player1, List.of(new AkromaAngelOfFury()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent faceDown = findPermanent(player1, "Akroma, Angel of Fury");
+        assertThat(faceDown.isFaceDown()).isTrue();
+        assertThat(faceDown.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test

@@ -2439,7 +2439,8 @@ public class BattlefieldPlacementService {
     private EnteringSubtypes resolveEnteringSubtypes(GameData gameData, Permanent entering, UUID controllerId,
                                                       List<Permanent> simultaneouslyEntered) {
         Set<CardSubtype> subtypes = EnumSet.noneOf(CardSubtype.class);
-        subtypes.addAll(entering.getCard().getSubtypes());
+        // A face-down permanent has only the subtypes the effect that turned it face down lists (CR 708.2a).
+        subtypes.addAll(entering.isFaceDown() ? entering.getFaceDownSubtypes() : entering.getCard().getSubtypes());
         for (TextReplacement replacement : gameData.textReplacements(entering.getId())) {
             CardSubtype from = TextChangeTransformer.creatureTypeForWord(replacement.fromWord());
             CardSubtype to = TextChangeTransformer.creatureTypeForWord(replacement.toWord());
@@ -2450,7 +2451,7 @@ public class BattlefieldPlacementService {
         for (FloatingContinuousEffect fe : gameData.floatingEffectsOnPermanent(entering.getId(), GrantSubtypeEffect.class)) {
             subtypes.add(((GrantSubtypeEffect) fe.effect()).subtype());
         }
-        boolean changeling = !gameData.losesAllAbilitiesByEffect(entering.getId())
+        boolean changeling = !entering.isFaceDown() && !gameData.losesAllAbilitiesByEffect(entering.getId())
                 && entering.getCard().hasKeyword(Keyword.CHANGELING);
 
         List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
@@ -2472,15 +2473,14 @@ public class BattlefieldPlacementService {
     /**
      * Replacement effect (MTG Rule 614.1c): checks the controller's graveyard for cards with
      * {@link GraveyardEnterWithAdditionalCountersEffect} and adds +1/+1 counters to matching
-     * creatures as they enter the battlefield. Uses CR 614.12 lookahead via
-     * {@link #permanentWouldHaveSubtype} to determine subtypes.
+     * creatures as they enter the battlefield. Judges creature-ness and subtypes as the permanent would
+     * exist on the battlefield (CR 614.12), through {@link #isCreatureAsEntering} and
+     * {@link #resolveEnteringSubtypes}.
      *
      * @param simultaneouslyEntered permanents to exclude from lookahead (see CR 614.12)
      */
     private void applyGraveyardEnterWithAdditionalCounters(GameData gameData, UUID controllerId,
                                                             Permanent permanent, List<Permanent> simultaneouslyEntered) {
-        if (!permanent.getCard().hasType(CardType.CREATURE)) return;
-
         if (gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
         // The ability functions from the graveyard, so it is lost with the graveyard's abilities (Yixlid Jailer).
         if (gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) return;
@@ -2493,7 +2493,7 @@ public class BattlefieldPlacementService {
                 .filter(GraveyardEnterWithAdditionalCountersEffect.class::isInstance)
                 .map(GraveyardEnterWithAdditionalCountersEffect.class::cast)
                 .toList();
-        if (effects.isEmpty()) return;
+        if (effects.isEmpty() || !isCreatureAsEntering(gameData, controllerId, permanent)) return;
 
         EnteringSubtypes resolved = resolveEnteringSubtypes(gameData, permanent, controllerId, simultaneouslyEntered);
         int additionalCounters = effects.stream()
@@ -2524,8 +2524,6 @@ public class BattlefieldPlacementService {
     private void applyControlledCreaturesEnterWithAdditionalCounters(GameData gameData, UUID controllerId,
                                                                      Permanent permanent, List<Permanent> simultaneouslyEntered,
                                                                      boolean afterSubtypeChoice) {
-        boolean enteringIsCreature = permanent.getCard().hasType(CardType.CREATURE);
-
         if (gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
@@ -2544,8 +2542,12 @@ public class BattlefieldPlacementService {
                                 ? active.effect().subtype() : active.source().getChosenSubtype(),
                         active.effect().count(),
                         active.effect().allCreatures()))
-                .filter(sourced -> sourced.allCreatures() ? enteringIsCreature : sourced.subtype() != null)
+                .filter(sourced -> sourced.allCreatures() ? !afterSubtypeChoice : sourced.subtype() != null)
                 .toList();
+        if (effects.stream().anyMatch(SourcedCounters::allCreatures)
+                && !isCreatureAsEntering(gameData, controllerId, permanent)) {
+            effects = effects.stream().filter(sourced -> !sourced.allCreatures()).toList();
+        }
         if (effects.isEmpty()) return;
 
         EnteringSubtypes resolved;
@@ -2608,8 +2610,10 @@ public class BattlefieldPlacementService {
                                     counterType, Math.max(0, replacementCount), Integer::sum));
                 } else {
                     CounterType counterType = replacement.counterType();
-                    int replacementCount = amountEvaluationService.evaluate(gameData, dynamicAmount,
-                            new AmountContext(controllerId, source, null, 0, 0));
+                    AmountContext amountContext = replacement.amountReadsEnteringPermanent()
+                            ? AmountContext.forEnteringPermanent(controllerId, permanent, 0)
+                            : new AmountContext(controllerId, source, null, 0, 0);
+                    int replacementCount = amountEvaluationService.evaluate(gameData, dynamicAmount, amountContext);
                     if (counterType != null) {
                         additionalCounters.merge(counterType, Math.max(0, replacementCount), Integer::sum);
                     }

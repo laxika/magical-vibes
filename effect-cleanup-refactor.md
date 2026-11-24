@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 48, 24c, 8c; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                      |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 8c, 8d, 7c; merge queue 48. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                       |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,055 / 2,479 (after fold run 47c) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,052 / 2,479 (after fold run 24c) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,645 rows over 4,566 classes (after fold run 47c). Latest verdict per class: `step-9` 61, unique 1,193, absorbed 1,326, split 670, blocked-other 552, survivor 453, blocked-step-model 140, blocked-player-loop 96, dead 75. Waiting: 61 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,651 rows over 4,567 classes (after fold run 24c). Latest verdict per class: `step-9` 56, unique 1,195, absorbed 1,329, split 670, blocked-other 552, survivor 454, blocked-step-model 140, blocked-player-loop 96, dead 75. Waiting: 56 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1108,6 +1108,9 @@ Ledger rows are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cd
 - `ColorsInCommandersColorIdentity` (`DynamicAmount`): the colours in the controller's commanders' colour identity (CR 903.4), 0 without a commander, unpayable as a cost then (fold run 47c).
 
 Ledger rows are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671-d50e7ccdb4f0/scratchpad/fold-47c/ledger-rows.csv (3 absorbed, 2 survivor).
+
+- `ControlledPermanentsEnterWithAdditionalCountersByAmountEffect.ofEnteringPermanent(predicate, amount)`: an "enters with additional counters" amount evaluated with the entering permanent as its source, as it would exist on the battlefield (CR 614.12): mana spent to cast it, its mana value (0 face down).
+- `ArtifactManaSpentToCast()` (DynamicAmount): mana from artifact sources, Treasures included, spent to cast the source spell or the entering permanent.
 
 ### Blocked causes still open
 
@@ -5061,6 +5064,25 @@ For the next run: fold `EntwineManaCost` (5 cards) onto `EscalateCost.entwine` o
 - Battlefield and hand `PayLifeCost` validation checks `canPlayerLifeChange` but not `canPlayerLoseLife` (`PlayersCantLoseLifeThisTurnEffect`); the graveyard path checks both (CR 119.8). Fairly sure from the code; not tested.
 
 **For the next run.** `PayXLifeCost` (8 cards, unaudited) folds onto `PayLifeCost(new XValue())`; its spell path must then call `evaluateCost` with the announced X instead of `fixedAmount()`.
+
+### Step 9, fold run 24c (2026-11-24, parallel worktree)
+- **enter-counters**: 3 of 5 folded, batch closed.
+- New option `ControlledPermanentsEnterWithAdditionalCountersByAmountEffect.ofEnteringPermanent(predicate, amount)` (`readsEnteringPermanent`). It evaluates the amount with `AmountContext.forEnteringPermanent`, so the entering permanent is the amount's source. The handler reads it through `ControlledPermanentEntryReplacementEffect.amountReadsEnteringPermanent()`.
+- Velocipede uses `FixedIfCondition(SourceMatchesPermanentPredicate(PermanentMaxManaValuePredicate(4)), 1, 3)`. The predicate reads `getPermanentManaValue`, which is 0 face down.
+- Coin of Mastery uses the new `ArtifactManaSpentToCast` (same snapshot as before, Treasures included).
+- Kalain uses `TreasureManaSpentToCast` (same read by the entering card's id).
+- Master Biomancer stays `unique`: the "as a Mutant in addition" half is a layer-4 grant from the replacement. No other card in the 730 cached sets says it (guard rail). Splitting off the counter half would keep the record and cut one replacement in two.
+- Dearly Departed stays `unique` (the graveyard form is one card's, guard rail).
+- **Defects fixed** (each test failed on the old code in a run):
+- Thunderous Velocipede read the printed mana value: a face-down Akroma got 3 counters, now 1 (CR 202.3a, 708.2a).
+- `ControlledCreaturesEnterWithAdditionalCountersEffect`'s `allCreatures` path and Dearly Departed's reader checked whether the printed card was a creature. Both now use `isCreatureAsEntering`, which looks at the permanent as it would exist on the battlefield (CR 614.12, Dearly Departed's ruling). Mind Stone under March of the Machines now gets Arwen's counters.
+- `resolveEnteringSubtypes` gave a face-down permanent its card's subtypes and changeling. It now uses `getFaceDownSubtypes()` and no changeling (CR 708.2a): a face-down Daru Lancer no longer gets Dearly Departed's counter. This applies to every subtype-counter card on the path.
+- **Seen, not changed**:
+- The subtype path of `ControlledCreaturesEnterWithAdditionalCountersEffect` never checks that the entering permanent is a creature. Sage of Fables, Bramblewood Paragon, Metallic Mimic and Oona's Blackguard say "creature"; Dragonstorm Globe, Giada and Vampire Socialite don't. A noncreature Kindred Wizard (Diviner's Wand) would get Sage's counter. Likely; untested.
+- The per-card mana-spent snapshots (Treasure, artifact) are keyed by card id. A copy of a permanent spell, or a countered spell that is later put onto the battlefield, might read a stale value. Unverified.
+- **Tests changed**: none. New: Velocipede face-down; Arwen animated artifact and plain artifact; Dearly Departed face-down Human, animated Kindred Human, plain Kindred Human.
+- **Ratchet**: 3,067 / 2,480 → 3,064 / 2,480.
+- **For the next run**: none in this batch. The creature check on the subtype path (above) needs a per-record "creature" flag; leave it to a defect run.
 
 ## Prompt
 

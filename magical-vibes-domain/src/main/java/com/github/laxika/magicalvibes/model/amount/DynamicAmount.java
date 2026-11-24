@@ -185,6 +185,7 @@ public sealed interface DynamicAmount permits
         TreasuresCreatedThisTurn,
         SnowManaSpentToCast,
         CaveManaSpentToCast,
+        ArtifactManaSpentToCast,
         DesertManaSpentToCast,
         MatchingCardsInHand,
         MatchingCardsInLibrary,

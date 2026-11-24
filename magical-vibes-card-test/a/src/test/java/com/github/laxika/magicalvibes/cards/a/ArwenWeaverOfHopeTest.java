@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.e.ElvishMystic;
 import com.github.laxika.magicalvibes.cards.l.Lignify;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
+import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +14,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArwenWeaverOfHope.class, GrizzlyBears.class, ElvishMystic.class, Lignify.class})
+@CardUsed({ArwenWeaverOfHope.class, GrizzlyBears.class, ElvishMystic.class, Lignify.class,
+        MarchOfTheMachines.class, MindStone.class})
 class ArwenWeaverOfHopeTest extends BaseCardTest {
 
     @Test
@@ -79,5 +82,26 @@ class ArwenWeaverOfHopeTest extends BaseCardTest {
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A noncreature artifact that will be a creature on the battlefield enters with the counters")
+    void artifactAnimatedByAnExistingEffectGetsCounters() {
+        harness.addToBattlefield(player1, new ArwenWeaverOfHope());
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+
+        Permanent mindStone = harness.enterBattlefieldAndReturn(player1, new MindStone());
+
+        assertThat(mindStone.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A noncreature artifact gets no counters without an effect making it a creature")
+    void noncreatureArtifactGetsNoCounters() {
+        harness.addToBattlefield(player1, new ArwenWeaverOfHope());
+
+        Permanent mindStone = harness.enterBattlefieldAndReturn(player1, new MindStone());
+
+        assertThat(mindStone.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

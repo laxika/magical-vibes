@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControlledPermanentsEnterWithAdditionalCountersForTreasureManaEffect;
+import com.github.laxika.magicalvibes.model.amount.TreasureManaSpentToCast;
+import com.github.laxika.magicalvibes.model.effect.ControlledPermanentsEnterWithAdditionalCountersByAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -14,7 +15,7 @@ public class KalainReclusivePainter extends Card {
 
     public KalainReclusivePainter() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.ofTreasureToken(1));
-        addStaticEffect(new ControlledPermanentsEnterWithAdditionalCountersForTreasureManaEffect(
-                new PermanentIsCreaturePredicate()));
+        addStaticEffect(ControlledPermanentsEnterWithAdditionalCountersByAmountEffect.ofEnteringPermanent(
+                new PermanentIsCreaturePredicate(), new TreasureManaSpentToCast()));
     }
 }

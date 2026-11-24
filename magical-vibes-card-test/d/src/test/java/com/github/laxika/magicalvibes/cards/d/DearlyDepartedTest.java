@@ -1,7 +1,11 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AbbeyGriffin;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
 import com.github.laxika.magicalvibes.cards.y.YixlidJailer;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,10 +16,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DearlyDeparted.class, DoomedTraveler.class, AbbeyGriffin.class, YixlidJailer.class})
+@CardUsed({DearlyDeparted.class, DoomedTraveler.class, AbbeyGriffin.class, YixlidJailer.class,
+        DaruLancer.class, MarchOfTheMachines.class})
 class DearlyDepartedTest extends BaseCardTest {
 
     @Test
@@ -172,5 +178,52 @@ class DearlyDepartedTest extends BaseCardTest {
 
         Permanent traveler = findPermanent(player1, "Doomed Traveler");
         assertThat(traveler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A face-down creature has no creature types, so it gets no counter")
+    void faceDownHumanGetsNoCounter() {
+        harness.setGraveyard(player1, List.of(new DearlyDeparted()));
+        harness.setHand(player1, List.of(new DaruLancer()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent faceDown = findPermanent(player1, "Daru Lancer");
+        assertThat(faceDown.isFaceDown()).isTrue();
+        assertThat(faceDown.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A Human that will be a creature on the battlefield gets the counter")
+    void humanAnimatedByAnExistingEffectGetsCounter() {
+        harness.setGraveyard(player1, List.of(new DearlyDeparted()));
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+
+        Permanent relic = harness.enterBattlefieldAndReturn(player1, kindredHumanArtifact());
+
+        assertThat(gqs.isCreature(gd, relic)).isTrue();
+        assertThat(relic.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A noncreature Human gets no counter")
+    void noncreatureHumanGetsNoCounter() {
+        harness.setGraveyard(player1, List.of(new DearlyDeparted()));
+
+        Permanent relic = harness.enterBattlefieldAndReturn(player1, kindredHumanArtifact());
+
+        assertThat(relic.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    private static Card kindredHumanArtifact() {
+        Card card = new Card();
+        card.setName("Kindred Human Relic");
+        card.setType(CardType.KINDRED);
+        card.setAdditionalTypes(Set.of(CardType.ARTIFACT));
+        card.setSubtypes(List.of(CardSubtype.HUMAN));
+        card.setManaCost("{2}");
+        return card;
     }
 }

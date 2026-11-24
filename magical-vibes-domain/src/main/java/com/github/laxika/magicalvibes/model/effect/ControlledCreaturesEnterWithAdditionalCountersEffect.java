@@ -47,6 +47,11 @@ public record ControlledCreaturesEnterWithAdditionalCountersEffect(
         return new ControlledCreaturesEnterWithAdditionalCountersEffect(null, count);
     }
 
+    /**
+     * "Each other creature you control enters with {@code count} additional +1/+1 counters": the
+     * entering permanent is a creature as it would exist on the battlefield (CR 614.12), so a
+     * noncreature artifact under March of the Machines counts and a face-down permanent is a creature.
+     */
     public static ControlledCreaturesEnterWithAdditionalCountersEffect forAllCreatures(DynamicAmount count) {
         return new ControlledCreaturesEnterWithAdditionalCountersEffect(null, count, true);
     }

@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsLookedAtWhileScrying;
 import com.github.laxika.magicalvibes.model.amount.DefendingPlayerPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.CardsPutIntoGraveyardByTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsPutIntoGraveyardFromHandOrLibraryThisTurn;
+import com.github.laxika.magicalvibes.model.amount.ArtifactManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.CaveManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.DesertManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.ChosenCreatureOrRevealedCardPower;
@@ -503,6 +504,8 @@ public class AmountEvaluationService {
                     ctx.sourceCard() == null ? 0 : gameData.getSpellCastTreasureManaSpent(ctx.sourceCard().getId());
             case TreasureManaSpentToActivate ignored ->
                     ctx.stackEntry() == null ? 0 : ctx.stackEntry().getActivationTreasureManaSpent();
+            case ArtifactManaSpentToCast ignored ->
+                    ctx.sourceCard() == null ? 0 : gameData.getSpellCastArtifactManaSpent(ctx.sourceCard().getId());
             case CaveManaSpentToCast ignored ->
                     ctx.sourceCard() == null ? 0 : gameData.getSpellCastCaveManaSpent(ctx.sourceCard().getId());
             case DesertManaSpentToCast ignored ->

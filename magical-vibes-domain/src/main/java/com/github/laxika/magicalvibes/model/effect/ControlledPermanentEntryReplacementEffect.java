@@ -48,4 +48,12 @@ public interface ControlledPermanentEntryReplacementEffect extends CardEffect {
     default DynamicAmount additionalCounterAmount() {
         return null;
     }
+
+    /**
+     * Whether {@link #additionalCounterAmount()} is evaluated with the entering permanent as its
+     * source ("for each mana from a Treasure spent to cast it") instead of this effect's source.
+     */
+    default boolean amountReadsEnteringPermanent() {
+        return false;
+    }
 }
