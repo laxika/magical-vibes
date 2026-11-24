@@ -10830,12 +10830,6 @@ public class GameData {
                 this.graveyardTargetOperation.resolutionTimePhyrexianGrimoireResume;
         copy.graveyardTargetOperation.phyrexianGrimoireChosenCardId =
                 this.graveyardTargetOperation.phyrexianGrimoireChosenCardId;
-        copy.graveyardTargetOperation.resolutionTimeOpponentChoosesCardToHandResume =
-                this.graveyardTargetOperation.resolutionTimeOpponentChoosesCardToHandResume;
-        copy.graveyardTargetOperation.opponentChoosesCardToHandChosenOpponentId =
-                this.graveyardTargetOperation.opponentChoosesCardToHandChosenOpponentId;
-        copy.graveyardTargetOperation.opponentChoosesCardToHandChosenCardId =
-                this.graveyardTargetOperation.opponentChoosesCardToHandChosenCardId;
         copy.graveyardTargetOperation.resolutionTimeDawnbreakReclaimerOpponentCardChoiceResume =
                 this.graveyardTargetOperation.resolutionTimeDawnbreakReclaimerOpponentCardChoiceResume;
         copy.graveyardTargetOperation.resolutionTimeDawnbreakReclaimerOwnCardChoiceResume =

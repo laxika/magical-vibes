@@ -51,7 +51,7 @@ class IntuitionTest extends BaseCardTest {
         List<UUID> revealed = List.of(library.get(0).getId(), library.get(1).getId(), library.get(2).getId());
         harness.handleMultipleCardsChosen(player1, revealed);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class).playerId())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).playerId())
                 .isEqualTo(player2.getId());
 
         harness.handleMultipleCardsChosen(player2, List.of(revealed.get(1)));

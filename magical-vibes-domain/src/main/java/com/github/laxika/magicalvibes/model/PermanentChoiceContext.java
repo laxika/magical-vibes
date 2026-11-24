@@ -704,22 +704,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    /** Murmurs from Beyond: the controller chooses which opponent makes the revealed-card choice. */
-    record MurmursFromBeyondOpponentChoice(UUID controllerId, List<Card> revealedCards)
-            implements PermanentChoiceContext {
-        public MurmursFromBeyondOpponentChoice {
-            revealedCards = List.copyOf(revealedCards);
-        }
-    }
-
-    /** Animal Magnetism: the controller chooses which opponent makes the revealed-card choice. */
-    record AnimalMagnetismOpponentChoice(UUID controllerId, List<Card> revealedCards)
-            implements PermanentChoiceContext {
-        public AnimalMagnetismOpponentChoice {
-            revealedCards = List.copyOf(revealedCards);
-        }
-    }
-
     /** Allure of the Unknown: the controller chooses which opponent makes the revealed-card choice. */
     record AllureOfTheUnknownOpponentChoice(UUID controllerId, List<Card> revealedCards)
             implements PermanentChoiceContext {
@@ -2796,8 +2780,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** Bend or Break: a player chooses which opponent will choose one of their land piles. */
     record BendOrBreakOpponentChoice(UUID playerId) implements PermanentChoiceContext {}
-
-    record OpponentChoosesCardFromGraveyardToHand() implements PermanentChoiceContext {}
 
     /** Dawnbreak Reclaimer: choose which opponent makes the second graveyard choice. */
     record DawnbreakReclaimerOpponentChoice() implements PermanentChoiceContext {}

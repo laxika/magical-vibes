@@ -4,10 +4,15 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.OpponentChoosesOneOfActivatedExiledCreatureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,7 +30,12 @@ public class CoinOfFate extends Card {
                 List.of(
                         new ExileNCardsFromGraveyardCost(2, CardType.CREATURE, null, false, true),
                         new SacrificeSelfCost(),
-                        new OpponentChoosesOneOfActivatedExiledCreatureCardsEffect(),
+                        ChoosePlayerEffect.opponent(),
+                        ChooseCardEffect.oneOf(Subjects.exiledAsCost(), "one of the exiled cards")
+                                .by(Subjects.playersThisWay(StepKind.CHOOSE)),
+                        PutCardsIntoLibraryEffect.onBottom(Subjects.cardsThisWay(StepKind.CHOOSE)),
+                        new PutCardsOntoBattlefieldEffect(Subjects.except(Subjects.exiledAsCost(),
+                                Subjects.cardsThisWay(StepKind.CHOOSE))).enteringTapped(),
                         new BecomeMonarchEffect()),
                 "{3}{W}, {T}, Exile two creature cards from your graveyard, Sacrifice this artifact: "
                         + "An opponent chooses one of the exiled cards. You put that card on the bottom "

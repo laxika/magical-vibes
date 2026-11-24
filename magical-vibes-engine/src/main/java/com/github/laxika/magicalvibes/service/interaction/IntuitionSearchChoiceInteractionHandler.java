@@ -2,14 +2,9 @@ package com.github.laxika.magicalvibes.service.interaction;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.PendingOpponentChoosesCardToHandRestToGraveyard;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.exile.ExileService;
-import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
+import com.github.laxika.magicalvibes.service.effect.normalfx.IntuitionEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -18,14 +13,15 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
- * Handles Intuition and Burning-Rune Demon's searches: the controller picks exactly the required
- * number of library cards and reveals them, then the opponent is prompted to choose which of them
- * goes into the controller's hand ({@link PendingOpponentChoosesCardToHandRestToGraveyard} routes
- * that answer). The picked cards leave the library here; the shuffle happens once the opponent has
- * chosen.
+ * Answers {@link com.github.laxika.magicalvibes.model.effect.IntuitionEffect}'s search: the searcher (or Opposition
+ * Agent's controller) picks the cards, exactly the required number, or for a search for "exactly" that many cards with
+ * different names either that many or none (CR 701.23b). {@link IntuitionEffectHandler#found} then reveals and records
+ * them, and the parked resolution goes on.
  */
 @Slf4j
 @Component
@@ -33,10 +29,11 @@ import org.springframework.stereotype.Component;
 public class IntuitionSearchChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.IntuitionSearchChoice> {
 
-    private final GameLogService gameLogService;
-    private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final InputCompletionService inputCompletionService;
-    private final ExileService exileService;
+
+    @Autowired
+    @Lazy
+    private IntuitionEffectHandler intuitionEffectHandler;
 
     @Override
     public Class<PendingInteraction.IntuitionSearchChoice> handledType() {
@@ -59,9 +56,11 @@ public class IntuitionSearchChoiceInteractionHandler
         if (cardIds == null) {
             cardIds = List.of();
         }
-        if (cardIds.size() > interaction.count()
-                || !interaction.requireDifferentNames() && cardIds.size() != interaction.count()) {
-            throw new IllegalStateException("Must choose exactly " + interaction.count() + " cards");
+        if (interaction.requireDifferentNames()
+                ? !cardIds.isEmpty() && cardIds.size() != interaction.count()
+                : cardIds.size() != interaction.count()) {
+            throw new IllegalStateException("Must choose exactly " + interaction.count() + " cards"
+                    + (interaction.requireDifferentNames() ? " or none" : ""));
         }
 
         List<UUID> validIds = interaction.validCardIds();
@@ -85,9 +84,6 @@ public class IntuitionSearchChoiceInteractionHandler
             }
         }
 
-        UUID controllerId = interaction.playerId();
-        String controllerName = gameData.playerIdToName.get(controllerId);
-
         List<Card> chosen = new ArrayList<>();
         for (Card card : interaction.pool()) {
             if (chosenIds.contains(card.getId())) {
@@ -96,45 +92,10 @@ public class IntuitionSearchChoiceInteractionHandler
         }
 
         gameData.interaction.clearAwaitingInput();
-        if (chosen.isEmpty()) {
-            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        List<Card> deck = gameData.playerDecks.get(controllerId);
-        deck.removeIf(card -> chosenIds.contains(card.getId()));
-
-        if (interaction.decisionPlayerId() != null) {
-            // Opposition Agent: the searching player exiles each card found instead of revealing them.
-            for (Card card : chosen) {
-                exileService.exileCard(gameData, controllerId, card);
-                gameData.grantExilePlayPermission(card.getId(), interaction.decisionPlayerId(), Duration.PERMANENT);
-                gameData.updateExilePlayPermission(card.getId(), granted -> granted.withAnyManaType(true));
-                gameLogService.append(gameData, GameLog.textCardText(
-                        controllerName + " exiles ", card, " (Opposition Agent)."));
-            }
-            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        GameLog.Builder revealBuilder = GameLog.builder().text(controllerName + " reveals ");
-        for (int i = 0; i < chosen.size(); i++) {
-            if (i > 0) revealBuilder.text(", ");
-            revealBuilder.card(chosen.get(i));
-        }
-        revealBuilder.text(".");
-        gameLogService.append(gameData, revealBuilder.build());
-
-        gameData.queueInteraction(new PendingOpponentChoosesCardToHandRestToGraveyard(controllerId));
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
-                interaction.opponentId(), chosen, chosen.stream().map(Card::getId).toList(),
-                false, true, false, false, false, 0, null, 1,
-                "Choose a card to put into " + controllerName
-                        + "'s hand. The rest go into their graveyard.", 1, false));
-
-        log.info("Game {} - library search: {} revealed {} cards, opponent must choose",
-                gameData.id, controllerName, chosen.size());
+        intuitionEffectHandler.found(gameData, gameData.pendingEffectResolutionEntry, interaction.playerId(), chosen,
+                interaction.decisionPlayerId());
+        log.info("Game {} - library search: {} found {} cards",
+                gameData.id, gameData.playerIdToName.get(interaction.playerId()), chosen.size());
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 }

@@ -46,13 +46,13 @@ class TasigurTheGoldenFangTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        PendingInteraction.GraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        int existingCardIndex = choice.cardPool().indexOf(existingCard);
-        assertThat(existingCardIndex).isGreaterThanOrEqualTo(0);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.cards()).contains(existingCard);
 
-        harness.handleGraveyardCardChosen(player2, existingCardIndex);
+        harness.handleMultipleCardsChosen(player2, List.of(existingCard.getId()));
 
         harness.assertInHand(player1, "Shock");
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -76,6 +76,7 @@ class TasigurTheGoldenFangTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Delve can exile lands and be combined with mana")
     void delveCanExileLandsAndBeCombinedWithMana() {
         Card exiled = new Forest();
         Card retained = new TasigurTheGoldenFang();
@@ -93,6 +94,7 @@ class TasigurTheGoldenFangTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Delve cannot pay the black mana requirement")
     void delveCannotPayTheBlackManaRequirement() {
         List<Card> graveyard = List.of(new Forest(), new Forest(), new Forest(), new Forest(), new Forest());
         harness.setGraveyard(player1, graveyard);
@@ -109,6 +111,7 @@ class TasigurTheGoldenFangTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The opponent may choose a card just milled but not a land card")
     void opponentCanChooseNewlyMilledCardAndCannotChooseLand() {
         Card existing = new TasigurTheGoldenFang();
         Card milled = new TasigurTheGoldenFang();
@@ -121,11 +124,11 @@ class TasigurTheGoldenFangTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        PendingInteraction.GraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.cardPool()).containsExactlyInAnyOrder(existing, milled);
-        harness.handleGraveyardCardChosen(player2, choice.cardPool().indexOf(milled));
+        assertThat(choice.cards()).containsExactlyInAnyOrder(existing, milled);
+        harness.handleMultipleCardsChosen(player2, List.of(milled.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(milled).doesNotContain(existing, land);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(existing, land);
@@ -134,6 +137,7 @@ class TasigurTheGoldenFangTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With one nonland card in the graveyard it is returned unasked")
     void shortLibraryStillReturnsOnlyEligibleCardWithMixedHybridPayment() {
         Card milled = new TasigurTheGoldenFang();
         harness.addToBattlefield(player1, new TasigurTheGoldenFang());
@@ -154,6 +158,7 @@ class TasigurTheGoldenFangTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An empty library does not stop the return of a nonland card already in the graveyard")
     void emptyLibraryDoesNotPreventReturningExistingNonlandCard() {
         Card existing = new TasigurTheGoldenFang();
         harness.addToBattlefield(player1, new TasigurTheGoldenFang());

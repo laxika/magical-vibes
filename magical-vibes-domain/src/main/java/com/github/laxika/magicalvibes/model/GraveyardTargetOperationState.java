@@ -217,12 +217,6 @@ public class GraveyardTargetOperationState {
     public boolean resolutionTimeDefendingPlayerChoosesCardFromGraveyardResume;
     /** In-progress Dawnbreak Reclaimer cross-graveyard choices. */
     public DawnbreakReclaimerContext dawnbreakReclaimer;
-    /** Whether an opponent's resolution-time graveyard choice returns the card to its owner's hand. */
-    public boolean resolutionTimeOpponentChoosesCardToHandResume;
-    /** Opponent selected by the controller for the resolution-time graveyard choice. */
-    public UUID opponentChoosesCardToHandChosenOpponentId;
-    /** Card selected by the opponent for the resolution-time graveyard choice. */
-    public UUID opponentChoosesCardToHandChosenCardId;
     /** Whether Dawnbreak Reclaimer is awaiting the controller's opponent-graveyard card choice. */
     public boolean resolutionTimeDawnbreakReclaimerOpponentCardChoiceResume;
     /** Whether Dawnbreak Reclaimer is awaiting the chosen opponent's own-graveyard card choice. */

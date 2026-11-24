@@ -30,8 +30,8 @@ class MurmursFromBeyondTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        PendingInteraction.LibraryRevealChoice choice = gd.interaction
-                .activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice.playerId()).isEqualTo(player2.getId());
         assertThat(choice.validCardIds()).containsExactly(first.getId(), second.getId(), third.getId());
         assertThat(choice.minCount()).isEqualTo(1);
@@ -71,8 +71,8 @@ class MurmursFromBeyondTest extends BaseCardTest {
         harness.castFromHand(player1, new MurmursFromBeyond(), "{2}{U}");
         harness.passBothPriorities();
 
-        PendingInteraction.LibraryRevealChoice choice = gd.interaction
-                .activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice.playerId()).isEqualTo(player2.getId());
         assertThat(choice.validCardIds()).containsExactly(first.getId(), second.getId());
         assertThat(choice.minCount()).isEqualTo(1);
@@ -111,16 +111,16 @@ class MurmursFromBeyondTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2, List.of()))
-                .hasMessageContaining("Invalid number");
+                .hasMessageContaining("Must choose 1");
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2,
                 List.of(first.getId(), second.getId())))
-                .hasMessageContaining("Invalid number");
+                .hasMessageContaining("Too many cards");
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2,
                 List.of(first.getId(), first.getId())))
-                .hasMessageContaining("Duplicate");
+                .hasMessageContaining("Too many cards");
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2, List.of(untouched.getId())))
                 .hasMessageContaining("Invalid card");
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class))
                 .isNotNull();
 
         harness.handleMultipleCardsChosen(player2, List.of(second.getId()));
@@ -144,7 +144,7 @@ class MurmursFromBeyondTest extends BaseCardTest {
         harness.castFromHand(player2, new MurmursFromBeyond(), "{2}{U}");
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class).playerId())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).playerId())
                 .isEqualTo(player1.getId());
         harness.handleMultipleCardsChosen(player1, List.of(third.getId()));
 

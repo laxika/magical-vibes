@@ -29,11 +29,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingMemoriesReturningChoice,
         PendingSphinxAmbassadorChoice,
         PendingKarnScionRevealChoice, PendingKarnScionExileReturn,
-        PendingOpponentChoosesCardToHandRestToGraveyard,
         PendingManifoldInsightsChoice,
         PendingValkiCopyChoice, PendingValkiHandExileChoice,
-        PendingMurmursFromBeyondChoice,
-        PendingAnimalMagnetismChoice,
         PendingAllureOfTheUnknownChoice,
         PendingThranTomeChoice,
         PendingDubiousChallengeChoice,
@@ -110,8 +107,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice,
         PendingInteraction.MagesContestBidChoice,
         PendingInteraction.PainsRewardBidChoice,
-        PendingInteraction.ActivatedExiledCardOpponentChoice,
-        PendingInteraction.ActivatedExiledCardChoice,
         PendingInteraction.HitCounterExiledCardChoice,
         PendingInteraction.RemoveTimeCounterCostChoice,
         PendingInteraction.MultiZoneExileChoice,
@@ -2190,26 +2185,17 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /**
-     * Intuition's search: the controller picks exactly {@code count} cards from {@code pool}
-     * (their whole library) to reveal. {@code opponentId} — the spell's target — then chooses one
-     * of them through the library-reveal prompt; the unchosen library cards are never held out, so
-     * only the picked cards leave the library before the shuffle.
+     * The search of {@code IntuitionEffect} (Intuition, Burning-Rune Demon): the searcher picks {@code count} cards
+     * from {@code pool} (what of their library may be found) to reveal; with {@code requireDifferentNames} the cards
+     * have different names and none may be found instead. The found cards stay in the library for the steps that
+     * follow.
      */
-    record IntuitionSearchChoice(UUID playerId, UUID opponentId, java.util.List<Card> pool, int count,
+    record IntuitionSearchChoice(UUID playerId, java.util.List<Card> pool, int count,
                                  boolean requireDifferentNames, UUID decisionPlayerId)
             implements PendingInteraction {
 
         public IntuitionSearchChoice {
             pool = java.util.List.copyOf(pool);
-        }
-
-        public IntuitionSearchChoice(UUID playerId, UUID opponentId, java.util.List<Card> pool, int count,
-                                     boolean requireDifferentNames) {
-            this(playerId, opponentId, pool, count, requireDifferentNames, null);
-        }
-
-        public IntuitionSearchChoice(UUID playerId, UUID opponentId, java.util.List<Card> pool, int count) {
-            this(playerId, opponentId, pool, count, false, null);
         }
 
         /** The selectable card IDs, in begin-time pool order. */
@@ -2744,48 +2730,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds(), minCount, maxCount);
-        }
-    }
-
-    /** The controller chooses which opponent makes an activated exiled-card choice. */
-    record ActivatedExiledCardOpponentChoice(UUID controllerId, java.util.List<UUID> opponentIds,
-                                             java.util.List<UUID> validCardIds, String sourceName)
-            implements PendingInteraction {
-
-        public ActivatedExiledCardOpponentChoice {
-            opponentIds = java.util.List.copyOf(opponentIds);
-            validCardIds = java.util.List.copyOf(validCardIds);
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return controllerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiPermanentPick(
-                    java.util.List.of(), opponentIds, 1, 1);
-        }
-    }
-
-    /** An opponent chooses one of the cards exiled as an activated ability's cost. */
-    record ActivatedExiledCardChoice(UUID opponentId, UUID controllerId,
-                                     java.util.List<UUID> validCardIds, String sourceName)
-            implements PendingInteraction {
-
-        public ActivatedExiledCardChoice {
-            validCardIds = java.util.List.copyOf(validCardIds);
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return opponentId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
         }
     }
 

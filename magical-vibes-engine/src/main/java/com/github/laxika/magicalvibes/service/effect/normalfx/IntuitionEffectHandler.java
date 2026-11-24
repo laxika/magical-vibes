@@ -3,15 +3,20 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.IntuitionEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
+import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -20,25 +25,23 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link IntuitionEffect}: the controller searches their library for three cards (as many
- * as the library holds if fewer) via a {@link PendingInteraction.IntuitionSearchChoice}. The
- * targeted opponent then picks one of the revealed cards; that card goes to the controller's hand
- * and the rest into their graveyard, then the library is shuffled.
- *
- * <p>A library of one card leaves the opponent no decision, so it is put into the controller's
- * hand here without prompting; an empty or unsearchable library just shuffles.
+ * Resolves {@link IntuitionEffect}: the controller searches their library (as many cards as it holds if fewer) via a
+ * {@link PendingInteraction.IntuitionSearchChoice} and reveals what they find, recording {@link StepKind#REVEAL} with
+ * the found cards still in the library. A step that pauses at its end: the search records {@code REVEAL} as nothing
+ * before it asks, and the answer ({@link #found}) records what was found before the resolution goes on. A library with
+ * one card leaves no choice, so that card is found unasked; a prevented search, an empty library or a search with
+ * nothing that can be found finds nothing. Shuffling is a later step.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class IntuitionEffectHandler implements NormalEffectHandlerBean {
 
-    private static final int SEARCH_COUNT = 3;
-
     private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final ExileService exileService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -47,18 +50,19 @@ public class IntuitionEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var search = (IntuitionEffect) effect;
         UUID controllerId = entry.getControllerId();
-        if (librarySearchSupport.isSearchPrevented(gameData, controllerId)) return;
-        com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper
-                .recordSearchAndQueueTriggers(gameData, controllerId);
+        entry.recordStep(StepKind.REVEAL, StepOutcome.NONE);
+        if (librarySearchSupport.isSearchPrevented(gameData, controllerId, false)) {
+            return;
+        }
+        LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, controllerId);
 
         String controllerName = gameData.playerIdToName.get(controllerId);
         List<Card> deck = gameData.playerDecks.get(controllerId);
-
         if (deck == null || deck.isEmpty()) {
-            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             gameLogService.append(gameData, GameLog.text(
-                    controllerName + " searches their library but it is empty. Library is shuffled."));
+                    controllerName + " searches their library but it is empty."));
             return;
         }
 
@@ -68,37 +72,64 @@ public class IntuitionEffectHandler implements NormalEffectHandlerBean {
         if (topLimit < deck.size()) {
             searchable = deck.subList(0, topLimit);
         }
-
-        if (searchable.size() == 1) {
-            Card onlyCard = searchable.getFirst();
-            deck.remove(onlyCard);
-            if (searchControllerId != null) {
-                exileFoundCardForOppositionAgent(gameData, controllerId, onlyCard, searchControllerId);
-            } else {
-                gameData.addCardToHand(controllerId, onlyCard);
-                gameLogService.append(gameData, GameLog.textCardText(
-                        controllerName + " reveals ", onlyCard, " and puts it into their hand."));
-            }
-            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+        List<Card> candidates = searchable.stream()
+                .filter(card -> search.filter() == null || predicateEvaluationService.matchesCardPredicate(
+                        card, search.filter(), null, gameData, controllerId))
+                .toList();
+        if (candidates.isEmpty() || search.differentNames()
+                && candidates.stream().map(Card::getName).distinct().count() < search.count()) {
+            gameLogService.append(gameData, GameLog.text(controllerName + " searches their library and finds "
+                    + (search.differentNames() ? "no " + search.count() + " cards with different names." : "nothing.")));
+            return;
+        }
+        if (candidates.size() == 1) {
+            found(gameData, entry, controllerId, candidates, searchControllerId);
             return;
         }
 
-        int count = Math.min(SEARCH_COUNT, searchable.size());
-        interactionHandlerRegistry.begin(gameData,
-                new PendingInteraction.IntuitionSearchChoice(
-                        controllerId, entry.getTargetId(), new ArrayList<>(searchable), count, false,
-                        searchControllerId));
-
-        log.info("Game {} - {} searches library for {} cards for Intuition", gameData.id, controllerName, count);
+        int count = Math.min(search.count(), candidates.size());
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.IntuitionSearchChoice(
+                controllerId, new ArrayList<>(candidates), count, search.differentNames(), searchControllerId));
+        log.info("Game {} - {} searches their library for {} cards", gameData.id, controllerName, count);
     }
 
-    /** Opposition Agent: a card found by the searching opponent is exiled and playable by the Agent's controller. */
-    private void exileFoundCardForOppositionAgent(GameData gameData, UUID libraryOwnerId, Card card,
-                                                 UUID agentControllerId) {
-        exileService.exileCard(gameData, libraryOwnerId, card);
-        gameData.grantExilePlayPermission(card.getId(), agentControllerId, Duration.PERMANENT);
-        gameData.updateExilePlayPermission(card.getId(), granted -> granted.withAnyManaType(true));
-        gameLogService.append(gameData, GameLog.textCardText(
-                gameData.playerIdToName.get(libraryOwnerId) + " exiles ", card, " (Opposition Agent)."));
+    /**
+     * The cards the search of {@code controllerId}'s library found: revealed and recorded as the step's
+     * {@link StepKind#REVEAL} result, still in the library; under Opposition Agent ({@code agentControllerId}) exiled
+     * instead, playable by the Agent's controller, and nothing is revealed.
+     */
+    public void found(GameData gameData, StackEntry entry, UUID controllerId, List<Card> found,
+                      UUID agentControllerId) {
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        if (found.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(controllerName + " searches their library and finds nothing."));
+            return;
+        }
+        if (agentControllerId != null) {
+            List<Card> deck = gameData.playerDecks.get(controllerId);
+            for (Card card : found) {
+                deck.remove(card);
+                exileService.exileCard(gameData, controllerId, card);
+                gameData.grantExilePlayPermission(card.getId(), agentControllerId, Duration.PERMANENT);
+                gameData.updateExilePlayPermission(card.getId(), granted -> granted.withAnyManaType(true));
+                gameLogService.append(gameData, GameLog.textCardText(
+                        controllerName + " exiles ", card, " (Opposition Agent)."));
+            }
+            return;
+        }
+        GameLog.Builder reveal = GameLog.builder().text(controllerName + " reveals ");
+        List<UUID> cardIds = new ArrayList<>();
+        List<MovedCard> whereTheyAre = new ArrayList<>();
+        for (int i = 0; i < found.size(); i++) {
+            Card card = found.get(i);
+            if (i > 0) {
+                reveal.text(", ");
+            }
+            reveal.card(card);
+            cardIds.add(card.getId());
+            whereTheyAre.add(new MovedCard(card.getId(), card.getId(), Zone.LIBRARY, controllerId));
+        }
+        gameLogService.append(gameData, reveal.text(" from their library.").build());
+        entry.recordStep(StepKind.REVEAL, StepOutcome.ofObjects(cardIds, List.of(controllerId), whereTheyAre));
     }
 }

@@ -26,7 +26,6 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingAllureOfTheUnknownChoice;
-import com.github.laxika.magicalvibes.model.PendingAnimalMagnetismChoice;
 import com.github.laxika.magicalvibes.model.PendingDubiousChallengeChoice;
 import com.github.laxika.magicalvibes.model.PendingEachPlayerLibraryExile;
 import com.github.laxika.magicalvibes.model.PendingGuildFeud;
@@ -37,8 +36,6 @@ import com.github.laxika.magicalvibes.model.PendingLibraryRevealRemainder;
 import com.github.laxika.magicalvibes.model.PendingManifoldInsightsChoice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingMemoriesReturningChoice;
-import com.github.laxika.magicalvibes.model.PendingMurmursFromBeyondChoice;
-import com.github.laxika.magicalvibes.model.PendingOpponentChoosesCardToHandRestToGraveyard;
 import com.github.laxika.magicalvibes.model.PendingOpponentExileChoice;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.PendingPortalPileSearch;
@@ -173,10 +170,6 @@ public class LibraryChoiceHandlerService {
     private final DrawService drawService;
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport animationSupport;
-
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.MurmursFromBeyondEffectHandler murmursFromBeyondEffectHandler;
-
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.AnimalMagnetismEffectHandler animalMagnetismEffectHandler;
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MemoriesReturningEffectHandler memoriesReturningEffectHandler;
 
@@ -3565,28 +3558,12 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
-        // Intuition: the targeted opponent chose which revealed card goes to the controller's hand
-        if (gameData.hasPendingInteraction(PendingOpponentChoosesCardToHandRestToGraveyard.class)) {
-            handleOpponentChoosesCardToHandRestToGraveyard(gameData, allRevealedCards, cardIds);
-            return;
-        }
-
         if (gameData.hasPendingInteraction(PendingManifoldInsightsChoice.class)) {
             boolean finished = manifoldInsightsEffectHandler.completeCardChoice(
                     gameData, cardIds);
             if (finished) {
                 finishSearchAndResume(gameData);
             }
-            return;
-        }
-
-        if (gameData.hasPendingInteraction(PendingMurmursFromBeyondChoice.class)) {
-            handleMurmursFromBeyondRevealChoice(gameData, allRevealedCards, cardIds);
-            return;
-        }
-
-        if (gameData.hasPendingInteraction(PendingAnimalMagnetismChoice.class)) {
-            handleAnimalMagnetismRevealChoice(gameData, allRevealedCards, cardIds);
             return;
         }
 
@@ -4557,65 +4534,6 @@ public class LibraryChoiceHandlerService {
                 toHand != null ? toHand.getName() : "none",
                 toExile != null ? toExile.getName() : "none");
 
-        finishSearchAndResume(gameData);
-    }
-
-    /**
-     * Intuition: the targeted opponent picked one of the revealed cards. That card goes into the
-     * controller's hand, the rest into their graveyard, then their library is shuffled. An empty
-     * answer is treated as picking the first revealed card — the choice is mandatory.
-     */
-    private void handleOpponentChoosesCardToHandRestToGraveyard(
-            GameData gameData, List<Card> allRevealedCards, List<UUID> selectedCardIds) {
-        UUID controllerId = gameData.pollPendingInteraction(
-                PendingOpponentChoosesCardToHandRestToGraveyard.class).controllerId();
-        String controllerName = gameData.playerIdToName.get(controllerId);
-
-        UUID chosenId = selectedCardIds.isEmpty()
-                ? allRevealedCards.getFirst().getId()
-                : selectedCardIds.getFirst();
-
-        Card toHand = null;
-        List<Card> toGraveyard = new ArrayList<>();
-        for (Card card : allRevealedCards) {
-            if (toHand == null && card.getId().equals(chosenId)) {
-                toHand = card;
-            } else {
-                toGraveyard.add(card);
-            }
-        }
-
-        if (toHand != null) {
-            gameData.addCardToHand(controllerId, toHand);
-            gameLogService.append(gameData, GameLog.textCardText(
-                    controllerName + " puts ", toHand, " into their hand."));
-        }
-        for (Card card : toGraveyard) {
-            graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
-        }
-        if (!toGraveyard.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text("The rest are put into " + controllerName
-                    + "'s graveyard."));
-        }
-
-        LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-        gameLogService.append(gameData, GameLog.text(controllerName + " shuffles their library."));
-
-        log.info("Game {} - Intuition resolved: {} to hand, {} to graveyard",
-                gameData.id, toHand != null ? toHand.getName() : "none", toGraveyard.size());
-
-        finishSearchAndResume(gameData);
-    }
-
-    private void handleMurmursFromBeyondRevealChoice(GameData gameData, List<Card> allRevealedCards,
-                                                     List<UUID> selectedCardIds) {
-        murmursFromBeyondEffectHandler.completeCardChoice(gameData, allRevealedCards, selectedCardIds);
-        finishSearchAndResume(gameData);
-    }
-
-    private void handleAnimalMagnetismRevealChoice(GameData gameData, List<Card> allRevealedCards,
-                                                   List<UUID> selectedCardIds) {
-        animalMagnetismEffectHandler.completeCardChoice(gameData, allRevealedCards, selectedCardIds);
         finishSearchAndResume(gameData);
     }
 

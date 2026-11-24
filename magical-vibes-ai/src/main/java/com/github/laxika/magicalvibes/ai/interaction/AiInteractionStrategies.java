@@ -52,10 +52,8 @@ public final class AiInteractionStrategies {
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.HeistCardChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.AminatousAuguryChoice.class, 0));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.CommanderBattlefieldChoice.class, 1));
-        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ActivatedExiledCardChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.HitCounterExiledCardChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.EspersToMagiciteCreatureChoice.class, 0));
-        register(new ActivatedExiledCardOpponentChoiceAiStrategy());
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualTargetCardChoice.class));
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualCreatureCardChoice.class));
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualOffspringCardChoice.class));

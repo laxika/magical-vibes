@@ -4,9 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentChoosesCardFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -29,10 +32,14 @@ public class TasigurTheGoldenFang extends Card {
                 "{2}{G/U}{G/U}",
                 List.of(
                         new MillEffect(2, Subjects.you()),
-                        new OpponentChoosesCardFromGraveyardToHandEffect(
-                                new CardNotPredicate(new CardTypePredicate(CardType.LAND)))
+                        ChoosePlayerEffect.opponent(),
+                        ChooseCardEffect.oneOf(Subjects.cardsInYourGraveyard(
+                                                new CardNotPredicate(new CardTypePredicate(CardType.LAND))),
+                                        "a nonland card in your opponent's graveyard")
+                                .by(Subjects.playersThisWay(StepKind.CHOOSE)),
+                        new PutCardsIntoHandEffect(Subjects.cardsThisWay(StepKind.CHOOSE))
                 ),
-                "{2}{G/U}{G/U}: Mill two cards, then return a nonland card from your graveyard to your hand.")
+                "{2}{G/U}{G/U}: Mill two cards, then return a nonland card of an opponent's choice from your graveyard to your hand.")
         );
     }
 }

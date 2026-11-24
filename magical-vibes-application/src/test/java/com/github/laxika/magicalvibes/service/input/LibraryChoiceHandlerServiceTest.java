@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingDubiousChallengeChoice;
-import com.github.laxika.magicalvibes.model.PendingMurmursFromBeyondChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -93,8 +92,6 @@ class LibraryChoiceHandlerServiceTest {
     @Mock private ExileService exileService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
-    @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.MurmursFromBeyondEffectHandler murmursFromBeyondEffectHandler;
-    @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.AnimalMagnetismEffectHandler animalMagnetismEffectHandler;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.MemoriesReturningEffectHandler memoriesReturningEffectHandler;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport librarySearchSupport;
@@ -126,8 +123,6 @@ class LibraryChoiceHandlerServiceTest {
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport.class),
                 mock(com.github.laxika.magicalvibes.service.DrawService.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport.class),
-                murmursFromBeyondEffectHandler,
-                animalMagnetismEffectHandler,
                 memoriesReturningEffectHandler,
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.ManifoldInsightsEffectHandler.class),
                 mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),
@@ -291,46 +286,6 @@ class LibraryChoiceHandlerServiceTest {
             verify(stateBasedActionService).performStateBasedActions(gd);
             verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
         }
-    }
-
-    @Test
-    @DisplayName("Routes Murmurs from Beyond's opponent choice through its effect handler")
-    void murmursFromBeyondChoiceUsesEffectHandler() {
-        Card first = createCard("First Card");
-        Card second = createCard("Second Card");
-        Card third = createCard("Third Card");
-        List<Card> revealed = List.of(first, second, third);
-        gd.queueInteraction(new PendingMurmursFromBeyondChoice(player1Id));
-        gd.interaction.beginInteraction(new PendingInteraction.LibraryRevealChoice(
-                player2Id, revealed,
-                List.of(first.getId(), second.getId(), third.getId()),
-                false, false, false, false, false, 0, null, 1,
-                "Choose one.", 1, false));
-
-        service.handleLibraryRevealChoice(gd, player2, List.of(second.getId()));
-
-        verify(murmursFromBeyondEffectHandler).completeCardChoice(gd, revealed, List.of(second.getId()));
-        verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
-    }
-
-    @Test
-    @DisplayName("Routes Animal Magnetism's opponent choice through its effect handler")
-    void animalMagnetismChoiceUsesEffectHandler() {
-        Card first = createCard("First Card", CardType.CREATURE);
-        Card second = createCard("Second Card", CardType.CREATURE);
-        Card third = createCard("Third Card");
-        List<Card> revealed = List.of(first, second, third);
-        gd.queueInteraction(new com.github.laxika.magicalvibes.model.PendingAnimalMagnetismChoice(player1Id));
-        gd.interaction.beginInteraction(new PendingInteraction.LibraryRevealChoice(
-                player2Id, revealed,
-                List.of(first.getId(), second.getId()),
-                true, false, false, false, false, 0, null, 1,
-                "Choose one.", false, 1, false));
-
-        service.handleLibraryRevealChoice(gd, player2, List.of(second.getId()));
-
-        verify(animalMagnetismEffectHandler).completeCardChoice(gd, revealed, List.of(second.getId()));
-        verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
     }
 
     // =========================================================================

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -26,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TheKamiWarTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Chapter I exiles only a nonland permanent an opponent controls")
     void chapterIExilesOnlyAnOpponentsNonlandPermanent() {
         Permanent ownPermanent = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opposingPermanent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -51,6 +53,7 @@ class TheKamiWarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter II returns another nonland permanent, then each opponent discards")
     void chapterIIReturnsAnotherNonlandPermanentThenEachOpponentDiscards() {
         Permanent ownPermanent = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opposingPermanent = harness.addToBattlefieldAndReturn(player2, new HillGiant());
@@ -79,6 +82,7 @@ class TheKamiWarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter II makes each opponent discard even with no other nonland permanent to return")
     void chapterIIDiscardsEvenWhenNoOtherNonlandPermanentCanBeChosen() {
         Card discarded = new Shock();
         harness.setHand(player2, List.of(discarded));
@@ -94,6 +98,7 @@ class TheKamiWarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter III returns the Saga transformed")
     void chapterIIIReturnsTheSagaTransformed() {
         addSagaWithLore(2);
 
@@ -108,6 +113,7 @@ class TheKamiWarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("O-Kagachi's attack lets the defending player choose the nonland card returned and gets +X/+0 for its mana value")
     void transformedFaceLetsDefendingPlayerChooseANonlandCardAndBoostsItsPower() {
         TheKamiWar front = new TheKamiWar();
         Permanent kami = addCreatureReady(player1, front);
@@ -123,12 +129,13 @@ class TheKamiWarTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
 
-        PendingInteraction.GraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
-        assertThat(choice.cardPool()).extracting(Card::getId)
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.cards()).extracting(Card::getId)
                 .containsExactly(chosen.getId(), otherNonland.getId());
 
-        harness.handleGraveyardCardChosen(player2, 0);
+        harness.handleMultipleCardsChosen(player2, List.of(chosen.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(chosen);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(chosen);
@@ -136,6 +143,7 @@ class TheKamiWarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter II may return nothing and still makes each opponent discard")
     void chapterIICanDeclineAnAvailableTargetAndStillDiscard() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Card discarded = new Shock();
@@ -152,6 +160,7 @@ class TheKamiWarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter II may return its controller's permanent without making that player discard")
     void chapterIICanReturnItsControllersPermanentWithoutMakingItsControllerDiscard() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Card retained = new Shock();
@@ -170,6 +179,7 @@ class TheKamiWarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A single-faced copy is exiled by chapter III and does not return")
     void singleFacedCopyIsExiledByChapterIIIAndDoesNotReturn() {
         Permanent original = addSagaWithLore(0);
         Mirrormade copyCard = new Mirrormade();
@@ -193,6 +203,7 @@ class TheKamiWarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("O-Kagachi's attack returns the only nonland card unasked and the bonus ends with the turn")
     void attackReturnsTheOnlyNonlandCardAndPowerBonusExpires() {
         TheKamiWar front = new TheKamiWar();
         Permanent kami = addCreatureReady(player1, front);
@@ -217,6 +228,7 @@ class TheKamiWarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("O-Kagachi's attack with only lands in the graveyard returns nothing and gives no bonus")
     void attackWithOnlyLandsInGraveyardDoesNotReturnACardOrBoostPower() {
         TheKamiWar front = new TheKamiWar();
         Permanent kami = addCreatureReady(player1, front);
@@ -236,6 +248,7 @@ class TheKamiWarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter II does nothing when its only chosen target becomes illegal")
     void chapterIIDoesNotDiscardWhenItsOnlyChosenTargetBecomesIllegal() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Card retained = new HillGiant();
@@ -255,6 +268,7 @@ class TheKamiWarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter III returns a new untapped creature without lore counters")
     void chapterIIIReturnsANewUntappedCreatureWithoutLoreCounters() {
         Permanent saga = addSagaWithLore(2);
         saga.tap();

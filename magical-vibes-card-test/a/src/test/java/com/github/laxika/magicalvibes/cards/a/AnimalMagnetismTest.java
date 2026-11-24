@@ -33,8 +33,8 @@ class AnimalMagnetismTest extends BaseCardTest {
         harness.castFromHand(player1, spell, "{4}{G}");
         harness.passBothPriorities();
 
-        PendingInteraction.LibraryRevealChoice choice = gd.interaction
-                .activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice.playerId()).isEqualTo(player2.getId());
         assertThat(choice.validCardIds()).containsExactly(firstCreature.getId(), secondCreature.getId());
         assertThat(choice.minCount()).isEqualTo(1);
@@ -110,7 +110,7 @@ class AnimalMagnetismTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A short library reveals and processes all remaining cards")
+    @DisplayName("A short library reveals all remaining cards, and a lone revealed creature is put onto the battlefield unasked")
     void shortLibraryRevealsAllRemainingCards() {
         Card creature = new ElvishWarrior();
         Card nonCreature = new Shock();
@@ -120,21 +120,13 @@ class AnimalMagnetismTest extends BaseCardTest {
         harness.castFromHand(player1, spell, "{4}{G}");
         harness.passBothPriorities();
 
-        PendingInteraction.LibraryRevealChoice choice = gd.interaction
-                .activeInteraction(PendingInteraction.LibraryRevealChoice.class);
-        assertThat(choice.validCardIds()).containsExactly(creature.getId());
-        assertThat(choice.minCount()).isEqualTo(1);
-        assertThat(choice.maxCount()).isEqualTo(1);
-
-        harness.handleMultipleCardsChosen(player2, List.of(creature.getId()));
-
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard())
                 .containsExactly(creature);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .containsExactlyInAnyOrder(spell, nonCreature, anotherNonCreature);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test

@@ -44,6 +44,9 @@ import java.util.Objects;
  * <p>A return to hand records each permanent as it last existed on the battlefield: "counters equal to that
  * creature's power" after "return another creature you control to its owner's hand" (First Responder, CR 608.2h).
  *
+ * <p>A card choice's {@link Stat#MANA_VALUE} ({@link #chosenManaValue()}) totals the chosen cards, each as it is now
+ * wherever it went: a mana value doesn't change as a face-up card moves.
+ *
  * <p>A mill step's {@link Stat#MANA_VALUE} is "the total mana value of cards milled this way" ({@link #milledManaValue()}),
  * or with a {@code cardFilter} "its mana value" of the matching cards milled this way ({@link #milledManaValue(CardPredicate)}),
  * each as it is in the public zone it went to (CR 701.17c): a card a replacement put into a hidden zone wasn't recorded.
@@ -98,7 +101,7 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
         boolean removal = kind == StepKind.SACRIFICE || kind == StepKind.DESTROY;
         if ((stat == Stat.POWER || stat == Stat.TOUGHNESS || stat == Stat.MANA_VALUE)
                 && !removal && kind != StepKind.EXILE && kind != StepKind.RETURN && kind != StepKind.REVEAL
-                && !(stat == Stat.MANA_VALUE && kind == StepKind.MILL)) {
+                && !(stat == Stat.MANA_VALUE && (kind == StepKind.MILL || kind == StepKind.CHOOSE))) {
             throw new IllegalArgumentException(
                     "Only a sacrifice, destroy, exile or return step records last-known " + stat + ": " + kind);
         }
@@ -310,6 +313,15 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
     /** "The exiled card's toughness" after an exile step. */
     public static AmountThisWay exiledToughness() {
         return new AmountThisWay(StepKind.EXILE, Stat.TOUGHNESS);
+    }
+
+    /**
+     * "Where X is the mana value of that card" after a card choice ({@code ChooseCardEffect}): the total mana value of
+     * the cards the most recent {@link StepKind#CHOOSE} step chose, each as it is now wherever it went (O-Kagachi Made
+     * Manifest's card returned to a hand).
+     */
+    public static AmountThisWay chosenManaValue() {
+        return new AmountThisWay(StepKind.CHOOSE, Stat.MANA_VALUE);
     }
 
     /** "The exiled card's mana value", "that card's mana value" after an exile step. */

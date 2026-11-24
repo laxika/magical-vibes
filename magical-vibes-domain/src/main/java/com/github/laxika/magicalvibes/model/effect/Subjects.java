@@ -339,7 +339,10 @@ public final class Subjects {
         return new CardSubject.TriggeringCards(null);
     }
 
-    /** "The exiled card" after "exile a card from your graveyard" as a cost: {@link CardSubject.ExiledAsCost}. */
+    /**
+     * "The exiled card" after "exile a card from your graveyard" as a cost, "the exiled cards" after "exile two creature
+     * cards from your graveyard": {@link CardSubject.ExiledAsCost}.
+     */
     public static CardSubject exiledAsCost() {
         return new CardSubject.ExiledAsCost();
     }

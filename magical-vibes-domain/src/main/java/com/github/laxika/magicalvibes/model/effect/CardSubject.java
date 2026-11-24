@@ -107,7 +107,8 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
 
     /**
      * "The exiled card" of an ability whose cost exiled it: the card this ability or spell exiled to pay for itself,
-     * while it is in exile (CR 400.7j, 608.2h), whatever the source imprinted or exiled before or since.
+     * while it is in exile (CR 400.7j, 608.2h), whatever the source imprinted or exiled before or since; "the exiled
+     * cards" of an activated ability whose cost exiled several from a graveyard (Coin of Fate), those still in exile.
      */
     record ExiledAsCost() implements CardSubject {
     }

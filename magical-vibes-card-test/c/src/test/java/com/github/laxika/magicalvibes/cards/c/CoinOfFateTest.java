@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -20,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class CoinOfFateTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Entering surveils 1")
     void enteringSurveilsOne() {
         Card topCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(topCard, new Forest()));
@@ -38,6 +40,7 @@ class CoinOfFateTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The opponent chooses the card put on the bottom, the other returns tapped and the controller becomes the monarch")
     void opponentChoosesBottomCardAndOtherReturnsTappedAsMonarch() {
         Card bottomCard = new GrizzlyBears();
         Card returnedCard = new HillGiant();
@@ -50,8 +53,8 @@ class CoinOfFateTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        PendingInteraction.ActivatedExiledCardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.ActivatedExiledCardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.decidingPlayerId()).isEqualTo(player2.getId());
         assertThat(choice.validCardIds()).containsExactly(bottomCard.getId(), returnedCard.getId());
@@ -68,6 +71,7 @@ class CoinOfFateTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Surveil can keep the top card on top")
     void surveilCanKeepTheTopCard() {
         Card topCard = new GrizzlyBears();
         Card nextCard = new Forest();
@@ -86,6 +90,7 @@ class CoinOfFateTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Entering with an empty library asks no surveil choice")
     void enteringWithAnEmptyLibraryDoesNotRequireASurveilChoice() {
         harness.setLibrary(player1, List.of());
         harness.setHand(player1, List.of(new CoinOfFate()));
@@ -102,6 +107,7 @@ class CoinOfFateTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The controller chooses the two creature cards and pays the costs before the ability resolves")
     void controllerChoosesTwoCreaturesAndPaysCostsBeforeResolution() {
         Card unchosenCard = new GrizzlyBears();
         Card returnedCard = new GrizzlyBears();
@@ -138,6 +144,7 @@ class CoinOfFateTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot be activated with only one creature card in the graveyard")
     void cannotActivateWithOnlyOneCreatureAndALandInGraveyard() {
         Card creature = new GrizzlyBears();
         Card land = new Forest();
@@ -156,6 +163,7 @@ class CoinOfFateTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot be activated while tapped")
     void cannotActivateWhileTapped() {
         Card first = new GrizzlyBears();
         Card second = new HillGiant();

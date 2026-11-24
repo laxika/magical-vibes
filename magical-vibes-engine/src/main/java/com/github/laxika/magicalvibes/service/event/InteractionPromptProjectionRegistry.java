@@ -209,10 +209,6 @@ public class InteractionPromptProjectionRegistry {
                 this::projectReturnAurasFromGraveyardChoice);
         register(PendingInteraction.MultiPermanentChoice.class, this::projectMultiPermanentChoice);
         register(PendingInteraction.MultiGraveyardChoice.class, this::projectMultiGraveyardChoice);
-        register(PendingInteraction.ActivatedExiledCardOpponentChoice.class,
-                this::projectActivatedExiledCardOpponentChoice);
-        register(PendingInteraction.ActivatedExiledCardChoice.class,
-                this::projectActivatedExiledCardChoice);
         register(PendingInteraction.HitCounterExiledCardChoice.class,
                 this::projectHitCounterExiledCardChoice);
         register(PendingInteraction.CommanderReplacementChoice.class, (game, choice) -> InteractionPromptMessage.acceptDecline(
@@ -941,9 +937,9 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()),
                 cardViews(interaction.pool()),
                 interaction.count(),
-                "Search your library for " + interaction.count()
-                        + " cards to reveal. Your opponent chooses one of them for your hand; "
-                        + "the rest go into your graveyard.");
+                "Search your library for " + (interaction.requireDifferentNames() ? "exactly " : "")
+                        + interaction.count() + " cards" + (interaction.requireDifferentNames()
+                        ? " with different names (or none)" : "") + " to reveal.");
     }
 
     private InteractionPromptMessage projectTurtlesForeverSearchChoice(
@@ -1340,23 +1336,6 @@ public class InteractionPromptProjectionRegistry {
                         .map(card -> exiledCardView(gameData, interaction.decidingPlayerId(), card)).toList(),
                 interaction.maxCount(),
                 interaction.prompt());
-    }
-
-    private InteractionPromptMessage projectActivatedExiledCardOpponentChoice(
-            GameData gameData, PendingInteraction.ActivatedExiledCardOpponentChoice interaction) {
-        return InteractionPromptMessage.multiPermanentPick(
-                List.of(), new ArrayList<>(interaction.opponentIds()), 1,
-                "Choose an opponent to choose one of the exiled cards with "
-                        + interaction.sourceName() + ".");
-    }
-
-    private InteractionPromptMessage projectActivatedExiledCardChoice(
-            GameData gameData, PendingInteraction.ActivatedExiledCardChoice interaction) {
-        return InteractionPromptMessage.multiCardPick(
-                new ArrayList<>(interaction.validCardIds()),
-                exiledCardViews(gameData, interaction.decidingPlayerId(), interaction.validCardIds()), 1,
-                "Choose one of the exiled cards with " + interaction.sourceName()
-                        + " to put on the bottom of its owner's library.");
     }
 
     private InteractionPromptMessage projectHitCounterExiledCardChoice(

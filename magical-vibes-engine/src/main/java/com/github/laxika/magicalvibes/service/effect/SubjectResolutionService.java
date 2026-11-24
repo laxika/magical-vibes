@@ -499,10 +499,22 @@ public class SubjectResolutionService {
         return exiledMatching(gameData, entry, inZone, with.filter());
     }
 
+    /**
+     * {@link CardSubject.ExiledAsCost}: the card a cast or activation cost exiled, and the cards an activated ability's
+     * tracked graveyard-exile cost exiled ("exile two creature cards from your graveyard: ... one of the exiled
+     * cards"), those still in exile.
+     */
     private List<LocatedCard> exiledAsCost(GameData gameData, StackEntry entry) {
-        UUID cardId = entry.getExiledCostCardId();
-        ExiledCardEntry held = cardId == null ? null : gameData.findExiledCard(cardId);
-        return held == null ? List.of() : exiledMatching(gameData, entry, List.of(held), null);
+        Set<UUID> cardIds = new LinkedHashSet<>();
+        if (entry.getExiledCostCardId() != null) {
+            cardIds.add(entry.getExiledCostCardId());
+        }
+        cardIds.addAll(entry.getActivatedAbilityExiledCardIds());
+        List<ExiledCardEntry> held = cardIds.stream()
+                .map(gameData::findExiledCard)
+                .filter(Objects::nonNull)
+                .toList();
+        return exiledMatching(gameData, entry, held, null);
     }
 
     private List<LocatedCard> exiledMatching(GameData gameData, StackEntry entry, List<ExiledCardEntry> exiled,

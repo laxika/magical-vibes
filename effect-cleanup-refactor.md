@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b (each in Findings; the fold queue marks its rows). Fold runs 8 to 12a run in parallel worktrees from 2026-11-24. Next: fold runs 10b and 12a (running), 11c (Elrond, Expropriate), `drafted-step`, 8b. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).        |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b (each in Findings; the fold queue marks its rows). Fold runs 8 to 14 run in parallel worktrees from 2026-11-24. Next: fold runs 12a and 14 (running), 13 (SEARCH, with `IntuitionEffect`), 11c, `drafted-step`, 8b. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).         |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,845 / 3,106 (after fold run 11b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,840 / 3,101 (after fold run 10b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,265 rows over 4,412 classes (after fold run 11b). Latest verdict per class: `step-9` 1,041, unique 1,165, absorbed 606, split 551, blocked-other 474, survivor 277, blocked-step-model 140, blocked-player-loop 97, dead 61. Waiting: 1,041 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,273 rows over 4,412 classes (after fold run 10b). Latest verdict per class: `step-9` 1,033, unique 1,165, absorbed 607, split 555, blocked-other 476, survivor 278, blocked-step-model 140, blocked-player-loop 97, dead 61. Waiting: 1,033 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -576,6 +576,15 @@ Delayed and global triggers:
   `VotesReceived.byPlayer()` / `.byPermanent()`: votes received by the player or permanent an amount is evaluated for (fold run 11b).
 - `EachPlayerMayPutCardFromHandToBattlefieldEffect.by(players, predicate, label)`: Show and Tell's put, limited to the players a
   subject names (fold run 11b).
+
+- `AmountThisWay.chosenManaValue()`: "where X is the mana value of that card" after a `ChooseCardEffect` (O-Kagachi; fold run 10b).
+- `Subjects.exiledAsCost()` also names the cards a tracked exile-N-from-graveyard activation cost exiled (Coin of Fate; fold run 10b).
+- `IntuitionEffect.cards(n)` / `.exactlyDifferentlyNamed(n, filter)`: "search your library for N cards and reveal them", the found
+  cards staying in the library as the REVEAL result, then `ChooseCardEffect.oneOf(revealedThisWay()).by(...)` + movers +
+  `ShuffleLibraryEffect(false)` (Intuition, Burning-Rune Demon; fold run 10b).
+- "An opponent chooses one of the revealed cards": `ChoosePlayerEffect.opponent()` + `ChooseCardEffect.oneOf(revealedThisWay(filter))
+  .by(playersThisWay(CHOOSE))`; "the rest" is `revealedThisWay()` once the chosen card has moved (Murmurs from Beyond, Animal
+  Magnetism; fold run 10b).
 
 ### Blocked causes still open
 
@@ -1679,6 +1688,35 @@ prompt, which the AI answers.
 
 **For the next run.** The per-vote choose step for Elrond and Expropriate: one choice per vote, made by or about that vote's voter, in
 voting order; a `ChoosePermanentsEffect` form over `StepOutcome.votes()` of one option, then their gain-control and counter steps.
+
+### Step 9, fold run 10b (2026-11-24, parallel worktree)
+
+Batch `opp-card` (8 rows): split 4, absorbed 1, survivor 1, blocked-other 2. Ratchet in its worktree 3,861 / 3,123 → 3,856 / 3,118. 7
+card files rewritten; Oracle text checked for all 9 cards, rulings for Allure, Animal Magnetism, Coin of Fate and Burning-Rune Demon.
+CR 400.7, 608.2c, 608.2d, 701.20b, 701.23a–d checked.
+
+| Member | Result |
+|---|---|
+| Murmurs from Beyond | `RevealTopCardOfLibraryEffect.topCards(you(), 3)` + `ChoosePlayerEffect.opponent()` + `ChooseCardEffect.oneOf(revealedThisWay()).by(playersThisWay(CHOOSE))` + `PutExiledCardsIntoOwnersGraveyardEffect(cardsThisWay(CHOOSE))` + `PutCardsIntoHandEffect(revealedThisWay())` |
+| Animal Magnetism | the same with five cards and a creature filter + `PutCardsOntoBattlefieldEffect(cardsThisWay(CHOOSE))` (entry batch) + the rest to the graveyard |
+| Tasigur / O-Kagachi | `ChoosePlayerEffect.opponent()` (O-Kagachi: `.by(defendingPlayer())`) + the graveyard choice + `PutCardsIntoHandEffect`; O-Kagachi's boost reads `AmountThisWay.chosenManaValue()` behind `HappenedThisWay(CHOOSE)` |
+| Coin of Fate | `ChooseCardEffect.oneOf(exiledAsCost())` + `PutCardsIntoLibraryEffect.onBottom` + `PutCardsOntoBattlefieldEffect(except(exiledAsCost(), cardsThisWay(CHOOSE))).enteringTapped()`; `ExiledAsCost` names a tracked exile-N cost's cards |
+| Intuition (survivor) / Burning-Rune Demon | `IntuitionEffect(count, filter, differentNames)` is the search-and-reveal step: the found cards stay in the library as its REVEAL result (CR 701.20b), the search recorded as the answer ends the step; then the choice, hand, rest to graveyard, `ShuffleLibraryEffect(false)` |
+| Allure of the Unknown | `blocked-other`: the cast-now step offers only the controller (Possibility Storm needs the same), and after a card CHOOSE `playersThisWay(CHOOSE)` is the cards' owner, not the chooser |
+| Phyrexian Grimoire | `blocked-other`: no "top two cards of your graveyard" subject (one card would set the count) |
+
+**Where the triage was wrong.** Intuition's note leaned on a SEARCH step that doesn't exist yet (fold run 13 may move it to
+`StepKind.SEARCH`; take `IntuitionEffect` as its first member). Coin of Fate's `exiledAsCost()` named only a single cost-exiled card.
+
+**Behaviour changes.** Burning-Rune Demon's search is recorded (Ob Nixilis triggers) and obeys Opposition Agent and Aven Mindcensor;
+its chooser is the controller's choice of opponent, not the first seat; "exactly two" finds two or none (one was accepted; no ruling
+covers it, read from "exactly" with the right to fail to find, CR 701.23b — the orchestrator's judgement). A lone legal card is taken
+unasked (Animal Magnetism, Coin of Fate; CR 608.2d). Animal Magnetism and Coin of Fate enter through the entry batch. The AI search
+answer comes from the deciding player and respects different names. Prompts are `ChooseCardEffect` prompts; logs the survivors'.
+
+**For the next run.** Allure waits for a caster `PlayerSubject` on `MayCastDiscardedCardWithoutPayingManaCostEffect` (with
+Possibility Storm, `exile-until-rel`, run 29) and a "chooser of the last card choice" subject. Grimoire waits for a counted
+`TopOfGraveyard`.
 
 ## Prompt
 

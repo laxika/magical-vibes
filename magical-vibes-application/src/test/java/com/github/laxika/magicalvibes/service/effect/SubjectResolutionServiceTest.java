@@ -1579,6 +1579,22 @@ class SubjectResolutionServiceTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("The cards an activated ability's cost exiled are named while they are in exile")
+        void exiledAsCostNamesEveryCostExiledCard() {
+            Card bears = new GrizzlyBears();
+            Card giant = new HillGiant();
+            gd.addToExile(player1.getId(), bears);
+            gd.addToExile(player1.getId(), giant);
+            StackEntry entry = entry(player1, null, null);
+            entry.setActivatedAbilityExiledCardIds(List.of(bears.getId(), giant.getId()));
+
+            assertThat(subjects.cards(gd, entry, EFFECT, Subjects.exiledAsCost())).containsExactly(bears, giant);
+
+            gd.removeFromExile(bears.getId());
+            assertThat(subjects.cards(gd, entry, EFFECT, Subjects.exiledAsCost())).containsExactly(giant);
+        }
+
+        @Test
         @DisplayName("An exception names a set's permanents but the excluded ones")
         void exceptExcludesPermanents() {
             Permanent source = addCreatureReady(player1, new GrizzlyBears());

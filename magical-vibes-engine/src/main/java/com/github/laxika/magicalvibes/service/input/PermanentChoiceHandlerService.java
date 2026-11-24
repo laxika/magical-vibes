@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.CelestialJudgmentE
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachCurseToOpponentAndDrawEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AllureOfTheUnknownEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.AnimalMagnetismEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DawnbreakReclaimerEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopyOfChosenCreatureEffectHandler;
@@ -38,7 +37,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ChangeTargetOfTarg
 import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveCounterFromControlledCreatureThenDrawEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TurnOwnCreatureFaceUpEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetOpponentChoosesPlayerForRestrictionEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.MurmursFromBeyondEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveCounterFromChosenOwnPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveAllMireCountersFromChosenLandEffectHandler;
@@ -49,7 +47,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.RedHerringExchange
 import com.github.laxika.magicalvibes.service.effect.normalfx.RingTemptsYouEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TemptTheRingEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.InfernalOfferingEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesCardFromGraveyardToHandEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ToymakersTrapEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ZndrsplatsJudgmentEffectHandler;
 import com.github.laxika.magicalvibes.service.battlefield.DeathReplacementChoicePending;
@@ -95,7 +92,6 @@ public class PermanentChoiceHandlerService {
     private final PermanentChoiceBattlefieldHandlerService battlefieldHandler;
     private final AbilityActivationService abilityActivationService;
     private final BendOrBreakEffectHandler bendOrBreakEffectHandler;
-    private final OpponentChoosesCardFromGraveyardToHandEffectHandler opponentChoosesCardHandler;
     private final DawnbreakReclaimerEffectHandler dawnbreakReclaimerEffectHandler;
     private final AllureOfTheUnknownEffectHandler allureOfTheUnknownEffectHandler;
     private final EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffectHandler dispersalEffectHandler;
@@ -113,8 +109,6 @@ public class PermanentChoiceHandlerService {
             contractualSafeguardEffectHandler;
     private final ChooseCounterTypeOnControlledPermanentThenPutOnTargetPermanentEffectHandler
             avenCourierEffectHandler;
-    private final MurmursFromBeyondEffectHandler murmursFromBeyondEffectHandler;
-    private final AnimalMagnetismEffectHandler animalMagnetismEffectHandler;
     private final RiskyMoveEffectHandler riskyMoveEffectHandler;
     private final MemoriesReturningEffectHandler memoriesReturningEffectHandler;
     private final TurnOwnCreatureFaceUpEffectHandler turnOwnCreatureFaceUpEffectHandler;
@@ -765,10 +759,6 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleOpponentChoosesPermanentToExile(gameData, permanentId, exileChoice);
         } else if (context instanceof PermanentChoiceContext.ExileChosenPermanents exileChoice) {
             battlefieldHandler.handleExileChosenPermanents(gameData, permanentId, exileChoice);
-        } else if (context instanceof PermanentChoiceContext.MurmursFromBeyondOpponentChoice murmursChoice) {
-            murmursFromBeyondEffectHandler.completeOpponentChoice(gameData, permanentId, murmursChoice);
-        } else if (context instanceof PermanentChoiceContext.AnimalMagnetismOpponentChoice animalMagnetismChoice) {
-            animalMagnetismEffectHandler.completeOpponentChoice(gameData, permanentId, animalMagnetismChoice);
         } else if (context instanceof PermanentChoiceContext.AllureOfTheUnknownOpponentChoice allureChoice) {
             allureOfTheUnknownEffectHandler.completeOpponentChoice(gameData, permanentId, allureChoice);
         } else if (context instanceof PermanentChoiceContext.MemoriesReturningOpponentChoice memoriesChoice) {
@@ -1057,8 +1047,6 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleManaAbilityAddToChosenPlayer(gameData, permanentId, manaChosen);
         } else if (context instanceof PermanentChoiceContext.BendOrBreakOpponentChoice) {
             bendOrBreakEffectHandler.completeOpponentChoice(gameData, permanentId);
-        } else if (context instanceof PermanentChoiceContext.OpponentChoosesCardFromGraveyardToHand) {
-            opponentChoosesCardHandler.completeOpponentChoice(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.DawnbreakReclaimerOpponentChoice) {
             dawnbreakReclaimerEffectHandler.completeOpponentChoice(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.CuratorOpponentChoice) {
