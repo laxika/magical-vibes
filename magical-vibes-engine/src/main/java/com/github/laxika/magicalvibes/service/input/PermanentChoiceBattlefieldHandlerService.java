@@ -105,7 +105,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.PutCounterOnEither
 import com.github.laxika.magicalvibes.service.effect.normalfx.PutSacrificedPermanentCountersAndAttachEquipmentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.SearchLibraryForUpToTwoBasicLandsWithSameNameAsChosenLandEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SoulbondSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesAttackingCreatureThenCreateTokensEqualToToughnessEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureOrCreatesTokenEffectHandler;
@@ -276,7 +275,6 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final AnimationSupport animationSupport;
 
-    private final SearchLibraryForUpToTwoBasicLandsWithSameNameAsChosenLandEffectHandler sameNameBasicLandSearchHandler;
 
     private final BecomeCopyOfChosenCreatureYouControlUntilEndOfTurnEffectHandler deepfathomEchoHandler;
 
@@ -1555,25 +1553,6 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleSearchLibraryForUpToTwoBasicLandsWithSameNameAsChosenLand(
-            GameData gameData, UUID chosenPermanentId,
-            PermanentChoiceContext.SearchLibraryForUpToTwoBasicLandsWithSameNameAsChosenLand context) {
-        Permanent chosen = gameQueryService.findPermanentById(gameData, chosenPermanentId);
-        if (chosen == null
-                || !context.controllerId().equals(gameQueryService.findPermanentController(gameData, chosenPermanentId))
-                || !gameQueryService.isLand(gameData, chosen)) {
-            throw new IllegalStateException("Chosen permanent is not a land you control");
-        }
-
-        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-        if (pendingEntry == null) {
-            throw new IllegalStateException("Same-name basic-land search is no longer pending");
-        }
-
-        sameNameBasicLandSearchHandler.search(gameData, pendingEntry, chosen.getCard().getName());
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

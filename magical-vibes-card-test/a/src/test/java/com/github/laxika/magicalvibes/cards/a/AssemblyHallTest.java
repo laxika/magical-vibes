@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.d.DeepwoodWolverine;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.o.ObNixilisUnshackled;
 import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AssemblyHall.class, Forest.class, DeepwoodWolverine.class, PsychogenicProbe.class})
+@CardUsed({AssemblyHall.class, Forest.class, DeepwoodWolverine.class, PsychogenicProbe.class,
+        ObNixilisUnshackled.class})
 class AssemblyHallTest extends BaseCardTest {
 
     @Test
@@ -28,12 +30,8 @@ class AssemblyHallTest extends BaseCardTest {
 
         activateAndResolve();
 
-        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.options()).containsExactly("Deepwood Wolverine");
-
-        harness.handleListChoice(player1, "Deepwood Wolverine");
-
+        // The lone creature card in hand is the one revealed, unasked (CR 608.2d).
+        assertThat(gameLogContains("reveals Deepwood Wolverine from their hand")).isTrue();
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
         assertThat(search.params().cards()).extracting(Card::getName).containsExactly("Deepwood Wolverine");
@@ -53,7 +51,6 @@ class AssemblyHallTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
 
         activateAndResolve();
-        harness.handleListChoice(player1, "Deepwood Wolverine");
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInHand(player1, "Deepwood Wolverine");
@@ -140,7 +137,6 @@ class AssemblyHallTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(matching, new Forest()));
 
         activateAndResolve();
-        harness.handleListChoice(player1, "Deepwood Wolverine");
         harness.handleCardChosen(player1, -1);
         resolveAllTriggers();
 
@@ -162,7 +158,6 @@ class AssemblyHallTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(first, second));
 
         activateAndResolve();
-        harness.handleListChoice(player1, "Deepwood Wolverine");
         harness.handleCardChosen(player1, 0);
         resolveAllTriggers();
 
@@ -183,14 +178,36 @@ class AssemblyHallTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Forest(), new DeepwoodWolverine(), new DeepwoodWolverine()));
         harness.passBothPriorities();
 
-        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.options()).containsExactly("Deepwood Wolverine");
-        harness.handleListChoice(player1, "Deepwood Wolverine");
+        assertThat(choice.cards()).extracting(Card::getName)
+                .containsExactly("Deepwood Wolverine", "Deepwood Wolverine");
+        chooseOfferedCards(player1, 0);
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Searches the library, finding nothing, when there is no creature card to reveal")
+    void searchesWithoutCreatureCardToReveal() {
+        // "Search your library for a card with the same name as that card": with nothing revealed there is no such
+        // card, but the library is still searched (CR 701.23a), so a "whenever an opponent searches" trigger fires.
+        addAssemblyHallAndMana();
+        harness.addToBattlefield(player2, new ObNixilisUnshackled());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new DeepwoodWolverine()));
+
+        activateAndResolve();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 10);
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Deepwood Wolverine");
     }
 
     private void addAssemblyHallAndMana() {

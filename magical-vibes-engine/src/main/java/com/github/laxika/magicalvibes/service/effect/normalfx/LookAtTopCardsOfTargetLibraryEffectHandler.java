@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -80,6 +81,7 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
     private final CardRevealService cardRevealService;
     private final AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -90,6 +92,10 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         LookAtTopCardsOfTargetLibraryEffect e = (LookAtTopCardsOfTargetLibraryEffect) effect;
         UUID controllerId = entry.getControllerId();
+        if (e.libraries() != null) {
+            lookAtNamedLibraries(gameData, entry, e, controllerId);
+            return;
+        }
         UUID targetPlayerId = entry.getTargetId() != null ? entry.getTargetId() : controllerId;
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         String controllerName = gameData.playerIdToName.get(controllerId);
@@ -156,6 +162,36 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
                     targetPlayerId, deck, actual, targetName);
             case KEEP_ONE_ON_TOP_REST_TO_GRAVEYARD -> resolveKeepOneOnTopRestToGraveyard(gameData, entry,
                     controllerId, targetPlayerId, deck, actual, controllerName, targetName);
+        }
+    }
+
+    /**
+     * "Look at the top card of your library / of each player's library": the controller looks, privately, at the top
+     * cards of each library {@code e.libraries()} names, in APNAP order. Nothing is asked and nothing moves; the log
+     * names no card (CR 400.2).
+     */
+    private void lookAtNamedLibraries(GameData gameData, StackEntry entry, LookAtTopCardsOfTargetLibraryEffect e,
+                                      UUID controllerId) {
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        int requested = amountEvaluationService.evaluate(gameData, e.count(),
+                AmountContext.forStackEntry(entry, entry.getSourcePermanentSnapshot()));
+        if (requested <= 0) {
+            return;
+        }
+        for (UUID playerId : subjectResolutionService.players(gameData, entry, e, e.libraries())) {
+            List<Card> deck = gameData.playerDecks.getOrDefault(playerId, List.of());
+            String ownerName = gameData.playerIdToName.get(playerId);
+            if (deck.isEmpty()) {
+                gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
+                        .text(": " + ownerName + "'s library is empty.").build());
+                continue;
+            }
+            int actual = Math.min(requested, deck.size());
+            gameLogService.append(gameData, GameLog.text(controllerName + " looks at the top "
+                    + (actual == 1 ? "card" : LibraryRevealSupport.pluralCards(actual)) + " of " + ownerName
+                    + "'s library."));
+            cardRevealService.revealToPlayer(gameData, playerId, GameEventFact.RevealZone.LIBRARY,
+                    new ArrayList<>(deck.subList(0, actual)), controllerId);
         }
     }
 

@@ -75,10 +75,12 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
                 .withXValue(entry.getXValue());
         // "With that spell's mana value" (Celestial Kirin) reads the triggering spell as the ability resolves.
         // "Power greater than target creature's power", "power at least the chosen number": the amount is read once,
-        // as the wipe resolves (CR 608.2h).
-        PermanentPredicate filter = amountEvaluationService.bindAmounts(gameData,
-                AmountEvaluationService.bindTriggeringSpellManaValue(gameData, e.filter(), entry),
-                AmountContext.forStackEntry(entry, null));
+        // as the wipe resolves (CR 608.2h). "That share a creature type with the sacrificed creature": the named
+        // permanents' creature types, read once as it resolves too.
+        PermanentPredicate filter = subjectResolutionService.bindPermanentSubjects(gameData, entry, e,
+                amountEvaluationService.bindAmounts(gameData,
+                        AmountEvaluationService.bindTriggeringSpellManaValue(gameData, e.filter(), entry),
+                        AmountContext.forStackEntry(entry, null)));
 
         // "Destroy all other creatures" (Martial Coup), "destroy the rest" (Duneblast): spare what an earlier step of
         // this resolution created or chose.

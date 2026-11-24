@@ -331,6 +331,13 @@ public class TargetPolarityClassifier {
             return TargetPolarity.HARMFUL_REMOVAL;
         }
 
+        // A search whose filter reads a target permanent ("cards with the same name as target creature", Pack Hunt) kept
+        // the aim of its former record's name entry: the opposing creature.
+        if (effect instanceof com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect search
+                && search.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+            return TargetPolarity.HARMFUL;
+        }
+
         // A wipe that reads the target's power as a threshold and spares the target itself (Fell the Mighty, Mandate of
         // Abaddon) aims at no board.
         if (effect instanceof com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect wipe
@@ -837,8 +844,7 @@ public class TargetPolarityClassifier {
             entry("PreventNextDamageToTargetAndAddToughnessCountersEffect", TargetPolarity.BENEFICIAL),
             entry("ReturnTargetCardOnDeathThisTurnEffect", TargetPolarity.BENEFICIAL),
 
-            // Pack Hunt searches for cards named after the opposing creature it targets.
-            entry("SearchLibraryForCardsWithTargetCreatureNameEffect", TargetPolarity.HARMFUL),
+            // Mimeofacture copies a card named after the opposing permanent it targets.
             entry("SearchTargetPermanentControllerLibraryForSameNameToBattlefieldEffect", TargetPolarity.HARMFUL),
 
             // Deliberately directionless: copies, color/type tweaks, symmetric moves — and

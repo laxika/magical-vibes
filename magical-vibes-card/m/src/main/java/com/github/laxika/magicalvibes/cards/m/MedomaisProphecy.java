@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChosenNameSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfEachLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,6 +20,6 @@ public class MedomaisProphecy extends Card {
         addTrigger(Triggers.chapter(2), new ChooseCardNameAtResolutionEffect());
         addTrigger(Triggers.chapter(3),
                 new ChosenNameSpellCastTriggerEffect(List.of(new DrawCardEffect(2))));
-        addTrigger(Triggers.chapter(4), new LookAtTopCardOfEachLibraryEffect());
+        addTrigger(Triggers.chapter(4), LookAtTopCardsOfTargetLibraryEffect.lookingAt(1, Subjects.eachPlayer()));
     }
 }

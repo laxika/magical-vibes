@@ -859,8 +859,7 @@ where the code stands. Open limitations:
   yet rewritten; a text-changed filter shared across an ability's parts misses the CR 613.6
   verdict memo in the legacy funnel (acceptable drift, no current card hits it).
 - **Ad-hoc characteristic reads outside the layered funnel**: `BoostBySharedCreatureTypeEffectHandler`
-  (Coat of Arms) and `LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffectHandler` (Call to the
-  Kindred) compare the permanents' own subtypes and intrinsic changeling, so they never see statically or
+  (Coat of Arms) compares the permanents' own subtypes and intrinsic changeling, so it never sees statically or
   floating-granted subtypes (e.g. Arcane Adaptation).
 
 ## 10. Board cache (cross-query memoization, step 13)

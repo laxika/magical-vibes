@@ -200,6 +200,29 @@ class SubjectResolutionServiceTest extends BaseCardTest {
             assertThat(predicates.matchesCardPredicate(new CurseOfStalkedPrey(),
                     subjects.bindCardSubjects(gd, entry, EFFECT, sameName), null, gd, player1.getId())).isFalse();
         }
+
+        @Test
+        @DisplayName("Binds a shared-creature-type filter to the named permanent's creature types, for cards and permanents")
+        void bindsSharedCreatureTypeFilter() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            Permanent runeclaw = addCreatureReady(player1, new RuneclawBear());
+            Permanent giant = addCreatureReady(player1, new HillGiant());
+            StackEntry entry = entry(player1, bears.getId(), null);
+            PredicateEvaluationService predicates =
+                    GameTestEngineContext.get().getBean(PredicateEvaluationService.class);
+
+            CardPredicate cards = subjects.bindCardSubjects(gd, entry, EFFECT,
+                    new com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithPermanentsPredicate(
+                            Subjects.target()));
+            PermanentPredicate permanents = subjects.bindPermanentSubjects(gd, entry, EFFECT,
+                    new com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWithPermanentsPredicate(
+                            Subjects.target()));
+
+            assertThat(predicates.matchesCardPredicate(new RuneclawBear(), cards, null, gd, player1.getId())).isTrue();
+            assertThat(predicates.matchesCardPredicate(new HillGiant(), cards, null, gd, player1.getId())).isFalse();
+            assertThat(predicates.matchesPermanentPredicate(gd, runeclaw, permanents)).isTrue();
+            assertThat(predicates.matchesPermanentPredicate(gd, giant, permanents)).isFalse();
+        }
     }
 
     @Nested

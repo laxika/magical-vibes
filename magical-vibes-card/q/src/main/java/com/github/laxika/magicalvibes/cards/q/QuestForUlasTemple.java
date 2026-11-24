@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfControllersLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -30,7 +30,7 @@ public class QuestForUlasTemple extends Card {
 
     public QuestForUlasTemple() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(SequenceEffect.of(
-                new LookAtTopCardOfControllersLibraryEffect(),
+                LookAtTopCardsOfTargetLibraryEffect.lookingAt(1, Subjects.you()),
                 new ConditionalEffect(new TopCardOfLibraryType(CardType.CREATURE), new MayEffect(SequenceEffect.of(
                         new RevealTopCardOfLibraryEffect(Subjects.you()),
                         new PutCountersOnSelfEffect(CounterType.QUEST)),

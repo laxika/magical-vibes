@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42 (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 41b, 44, 45; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 44, 45, 46; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                 |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,204 / 2,619 (after fold run 42) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,190 / 2,605 (after fold run 41b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,360 rows over 4,529 classes (after fold run 42). Latest verdict per class: `step-9` 254, unique 1,182, absorbed 1,184, split 658, blocked-other 538, survivor 408, blocked-step-model 140, blocked-player-loop 96, dead 69. Waiting: 254 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,379 rows over 4,530 classes (after fold run 41b). Latest verdict per class: `step-9` 238, unique 1,181, absorbed 1,194, split 662, blocked-other 540, survivor 410, blocked-step-model 140, blocked-player-loop 96, dead 69. Waiting: 238 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -987,6 +987,12 @@ Delayed and global triggers:
 - `ReduceOwnColoredCastCostEffect("{2}{U}")`: a mana unit times its amount.
 - `ReduceOwnCastCostEffect.increase` and `ReduceOwnCastCostIfTargetingPermanentEffect.increaseIfTargeting`.
 - `CostModificationScope.names(controller, player)`.
+
+- `CardSharesCreatureTypeWithPermanentsPredicate(PermanentSubject)` / `PermanentSharesCreatureTypeWithPermanentsPredicate(PermanentSubject)` + `SubjectResolutionService.creatureTypes` / `bindPermanentSubjects`: "shares a creature type with [the sacrificed / enchanted / that creature]", live or last known, changeling = every type, bound once (Pyre of Heroes, Endemic Plague, Call to the Kindred, Conjurer's Mantle; fold run 41b).
+- `CardSharesNameWithCardsPredicate(CardSubject)`: "a card with the same name as that card" over `revealedThisWay()` (Infernal Tutor, Assembly Hall; fold run 41b).
+- `SearchLibraryEffect.targetSpec` declares a benign permanent target when its filter reads a target subject ("cards with the same name as target creature", Pack Hunt; fold run 41b).
+- `LookAtTopCardsOfTargetLibraryEffect.lookingAt(count, PlayerSubject)`: private, promptless LOOK_ONLY at `you()`, `eachPlayer()` or `targetPlayerDeclaredElsewhere()` libraries (fold run 41b).
+- `LookAtFaceDownCreatureEffect(PermanentSubject)`: look at each face-down creature a set names (Revealing Wind, Spy Network; fold run 41b).
 
 ### Blocked causes still open
 
@@ -4361,6 +4367,26 @@ Seen, not changed:
 - The per-target readers still have no lost-abilities or face-down check. Sure.
 
 For the next run: a targets-x run (one target-aware reader that sums every category, one preview), then fold the 6 rows and `ReduceOwnCastCostIfTargetingStackEntryEffect`.
+
+### Step 9, fold run 41b (2026-11-24, parallel worktree)
+3 of 5 batches taken (same-quality partly, topcard-look and facedown-look whole); may-reveal-hand and topcard-bf not started (run length). Ratchet 3,287 / 2,655 → 3,273 / 2,641. Ledger 19 rows: absorbed 10, split 4, survivor 2, blocked-other 2, step-9 1. 17 card files rewritten, Oracle text checked for all; rulings read for Call to the Kindred, Endemic Plague, Pyre of Heroes, Infernal Tutor, Pattern Matcher, Conjurer's Mantle, Followed Footsteps, Mechanized Production. CR 201.2a, 400.2, 608.2b, 608.2h, 701.20a, 701.20b, 701.20e, 701.23a, 702.73a, 704.5m, 708.2a, 708.5 checked.
+
+| Batch | Result |
+|---|---|
+| same-quality | 9 folded, 3 left. New `CardSharesCreatureTypeWithPermanentsPredicate` and `PermanentSharesCreatureTypeWithPermanentsPredicate`, bound by `SubjectResolutionService.bindCardSubjects` / new `bindPermanentSubjects` from `creatureTypes(...)` (live layered subtypes, else the entry's sacrificed/triggering/attached/source snapshot, `DepartureResult.lastKnownSubtypes` or the departure snapshot; changeling = every type; a face-down snapshot without recorded types names none). New `CardSharesNameWithCardsPredicate(CardSubject)`. Pyre (`paidAsCost()`), Endemic Plague (wipe, bound next to `bindAmounts`), Call to the Kindred (`attachedCreature()`), Conjurer's Mantle (`triggering()`), Pattern Matcher, Canoptek Wraith (`thisWay(CHOOSE)`), Infernal Tutor and Assembly Hall (choose + reveal + `revealedThisWay()`), Pack Hunt (`SearchLibraryEffect.targetSpec` declares a benign permanent target when its filter reads a target subject). `LookAtTopCardsEffectHandler` binds card subjects. Left: Mimeofacture and Kasmina blocked-other (one-card options), Descendants' Fury step-9 (not reached). |
+| topcard-look | 3 folded onto `LookAtTopCardsOfTargetLibraryEffect.lookingAt(count, PlayerSubject)`: a LOOK_ONLY over named libraries, private, promptless, APNAP (6 cards). |
+| facedown-look | 2 folded: `LookAtFaceDownCreatureEffect(PermanentSubject)` (`target()` default); Spy Network split into hand look + `lookingAt(1, targetPlayerDeclaredElsewhere())` + face-down look. |
+| may-reveal-hand, topcard-bf | not started |
+
+**Behaviour changes.** Call to the Kindred: a creature that left first leaves the Aura enchanting nothing, so no match (CR 608.2h, 704.5m; Followed Footsteps and Mechanized Production rulings); failing-first, as the old handler used the creature's snapshot. Assembly Hall with no creature card searches, finding nothing (CR 701.23a); new Ob Nixilis test, failing on the old code. Infernal Tutor and Assembly Hall reveal a lone card unasked (CR 608.2d) through the card prompt. Endemic Plague records DESTROY; spell-cost sacrifice snapshots keep effective subtypes. Prompts and look lines are the survivors'.
+
+**Tests changed.** AssemblyHallTest, InfernalTutorTest (prompt mechanics); CallToTheKindredTest (rules); MedomaisProphecyTest (log line); DestroyAllPermanentsEffectHandlerTest, LookAtTopCardsEffectHandlerTest, LookAtTopCardsOfTargetLibraryEffectHandlerTest (wiring). Added: Assembly Hall empty reveal, Endemic Plague changeling, SubjectResolutionServiceTest creature-type binding.
+
+**Seen, not changed.** Pack Hunt's AI aim stays HARMFUL (the old name entry), although your own creature is the useful target. AI only, unsure.
+
+**For the next run.**
+- may-reveal-hand (3) and topcard-bf (4): their records stage may-abilities through `pendingMayAbilities` with `Stage` enums; the fold moves the stages onto the survivors.
+- Descendants' Fury: the recipe is in its ledger row; `CardSharesCreatureTypeWithPermanentsPredicate(departedThisWay(SACRIFICE))` now exists. Compare the old `cantBeChosenToSacrifice` filter with `ChoosePermanentsEffect`'s.
 
 ## Prompt
 

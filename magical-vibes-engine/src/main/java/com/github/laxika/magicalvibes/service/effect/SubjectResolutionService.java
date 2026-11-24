@@ -40,6 +40,10 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithCardsPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithPermanentsPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithPermanentsPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithPermanentsPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithCardsPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWithPermanentsPredicate;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -240,8 +244,10 @@ public class SubjectResolutionService {
      * names have as the effect applies ("a card that doesn't share a card type with the discarded card"): it becomes
      * "is any of those types", which matches nothing when the subject names no card; and each
      * {@link CardSharesNameWithPermanentsPredicate} to the names those permanents have ({@link #names}), which matches
-     * nothing when they have none; and each {@link CardSharesCardTypeWithPermanentsPredicate} to their card types
-     * ({@link #cardTypes}). A filter without the predicates is returned as it is.
+     * nothing when they have none; each {@link CardSharesCardTypeWithPermanentsPredicate} to their card types
+     * ({@link #cardTypes}); each {@link CardSharesCreatureTypeWithPermanentsPredicate} to their creature types
+     * ({@link #creatureTypes}); and each {@link CardSharesNameWithCardsPredicate} to the names of the cards its subject
+     * names. A filter without the predicates is returned as it is.
      */
     public CardPredicate bindCardSubjects(GameData gameData, StackEntry entry, CardEffect effect, CardPredicate filter) {
         return switch (filter) {
@@ -264,11 +270,48 @@ public class SubjectResolutionService {
             case CardSharesCardTypeWithPermanentsPredicate shares -> new CardAnyOfPredicate(
                     cardTypes(gameData, entry, effect, shares.permanents()).stream()
                             .<CardPredicate>map(CardTypePredicate::new).toList());
+            // A changeling card is every creature type (CR 702.73a), which CardSubtypePredicate counts.
+            case CardSharesCreatureTypeWithPermanentsPredicate shares -> new CardAnyOfPredicate(
+                    creatureTypes(gameData, entry, effect, shares.permanents()).stream()
+                            .<CardPredicate>map(CardSubtypePredicate::new).toList());
+            case CardSharesNameWithCardsPredicate shares -> {
+                Set<String> cardNames = new LinkedHashSet<>();
+                for (LocatedCard located : locatedCards(gameData, entry, effect, shares.cards())) {
+                    if (located.card().getName() != null && !located.card().getName().isEmpty()) {
+                        cardNames.addAll(located.card().getNames());
+                    }
+                }
+                yield new CardAnyOfPredicate(cardNames.stream().<CardPredicate>map(CardNamedPredicate::new).toList());
+            }
             case CardAllOfPredicate all -> new CardAllOfPredicate(all.predicates().stream()
                     .map(part -> bindCardSubjects(gameData, entry, effect, part)).toList());
             case CardAnyOfPredicate any -> new CardAnyOfPredicate(any.predicates().stream()
                     .map(part -> bindCardSubjects(gameData, entry, effect, part)).toList());
             case CardNotPredicate not -> new CardNotPredicate(bindCardSubjects(gameData, entry, effect, not.predicate()));
+            default -> filter;
+        };
+    }
+
+    /**
+     * {@code filter} with each {@link PermanentSharesCreatureTypeWithPermanentsPredicate} bound to the creature types the
+     * permanents its subject names have as the effect applies ({@link #creatureTypes}, CR 608.2h): it becomes "has any of
+     * those creature types", which matches nothing when they have none ("destroy all creatures that share a creature
+     * type with the sacrificed creature", Endemic Plague). A filter without the predicate is returned as it is.
+     */
+    public PermanentPredicate bindPermanentSubjects(GameData gameData, StackEntry entry, CardEffect effect,
+                                                    PermanentPredicate filter) {
+        return switch (filter) {
+            case null -> null;
+            // A changeling permanent is every creature type (CR 702.73a), which PermanentHasSubtypePredicate counts.
+            case PermanentSharesCreatureTypeWithPermanentsPredicate shares -> new PermanentAnyOfPredicate(
+                    creatureTypes(gameData, entry, effect, shares.permanents()).stream()
+                            .<PermanentPredicate>map(PermanentHasSubtypePredicate::new).toList());
+            case PermanentAllOfPredicate all -> new PermanentAllOfPredicate(all.predicates().stream()
+                    .map(part -> bindPermanentSubjects(gameData, entry, effect, part)).toList());
+            case PermanentAnyOfPredicate any -> new PermanentAnyOfPredicate(any.predicates().stream()
+                    .map(part -> bindPermanentSubjects(gameData, entry, effect, part)).toList());
+            case PermanentNotPredicate not -> new PermanentNotPredicate(
+                    bindPermanentSubjects(gameData, entry, effect, not.predicate()));
             default -> filter;
         };
     }
@@ -433,6 +476,76 @@ public class SubjectResolutionService {
                     .ifPresent(departure -> types.addAll(departure.lastKnownCardTypes()));
         }
         return types;
+    }
+
+    /**
+     * The creature types of what {@code subject} names, for "shares a creature type with the sacrificed creature": each
+     * permanent's as it is on the battlefield, else as it last existed there (CR 608.2h), read from the entry's snapshot
+     * of it (the sacrificed, triggering, attached or source permanent), a removal step's
+     * {@code DepartureResult.lastKnownSubtypes} or the game's departure snapshot. A changeling is every creature type
+     * (CR 702.73a); a face-down permanent has only the creature types effects give it (CR 708.2a).
+     */
+    public Set<CardSubtype> creatureTypes(GameData gameData, StackEntry entry, CardEffect effect,
+                                          PermanentSubject subject) {
+        Set<CardSubtype> types = EnumSet.noneOf(CardSubtype.class);
+        for (UUID id : permanentIds(gameData, entry, effect, subject)) {
+            Permanent live = gameQueryService.findPermanentById(gameData, id);
+            Permanent permanent = live != null ? live : lastKnownSnapshot(gameData, entry, id);
+            if (permanent != null) {
+                if (live == null && permanent.isFaceDown() && permanent.getLastKnownSubtypes() == null) {
+                    // A face-down snapshot that recorded no subtypes would read its hidden card's (CR 708.2a).
+                    continue;
+                }
+                if (!permanent.isFaceDown() && gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING)) {
+                    addEveryCreatureType(types);
+                } else {
+                    types.addAll(gameQueryService.effectiveCreatureSubtypes(gameData, permanent));
+                }
+                continue;
+            }
+            entry.getResolutionResults().departures().stream()
+                    .filter(departure -> departure.permanentId().equals(id))
+                    .findFirst()
+                    .ifPresent(departure -> departure.lastKnownSubtypes().stream()
+                            .filter(gameQueryService::isCreatureSubtype)
+                            .forEach(types::add));
+        }
+        return types;
+    }
+
+    private void addEveryCreatureType(Set<CardSubtype> types) {
+        for (CardSubtype subtype : CardSubtype.values()) {
+            if (gameQueryService.isCreatureSubtype(subtype)) {
+                types.add(subtype);
+            }
+        }
+    }
+
+    /**
+     * The entry's own record of the permanent {@code permanentId} as it last existed on the battlefield: its sacrificed,
+     * triggering, attached or source permanent snapshot, else the game's departure snapshot, else a permanent made from
+     * the card the entry last knew it as; {@code null} when none names it.
+     */
+    private Permanent lastKnownSnapshot(GameData gameData, StackEntry entry, UUID permanentId) {
+        for (Permanent snapshot : java.util.Arrays.asList(entry.getSacrificedPermanentSnapshot(),
+                entry.getTriggeringPermanentSnapshot(), entry.getAttachedPermanentSnapshot(),
+                entry.getSourcePermanentSnapshot())) {
+            if (snapshot != null && permanentId.equals(snapshot.getId())) {
+                return snapshot;
+            }
+        }
+        if (entry.getResolutionResults().departures().stream()
+                .anyMatch(departure -> departure.permanentId().equals(permanentId))) {
+            return null;
+        }
+        Permanent departed = gameData.departedPermanentSnapshots.values().stream()
+                .filter(snapshot -> permanentId.equals(snapshot.getId()))
+                .findFirst().orElse(null);
+        if (departed != null) {
+            return departed;
+        }
+        Card lastKnownCard = entry.lastKnownPermanentCard(permanentId);
+        return lastKnownCard == null ? null : new Permanent(lastKnownCard);
     }
 
     /**

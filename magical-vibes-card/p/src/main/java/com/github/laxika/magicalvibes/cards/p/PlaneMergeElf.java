@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfControllersLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -32,7 +32,7 @@ public class PlaneMergeElf extends Card {
         CreateTokenEffect elfWarrior = new CreateTokenEffect(
                 "Elf Warrior", 1, 1, CardColor.GREEN,
                 List.of(CardSubtype.ELF, CardSubtype.WARRIOR), Set.of(), Set.of());
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new LookAtTopCardOfControllersLibraryEffect(),
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), LookAtTopCardsOfTargetLibraryEffect.lookingAt(1, Subjects.you()),
                 new ConditionalEffect(
                 new TopCardOfLibraryType(CardType.LAND),
                 new MayEffect(

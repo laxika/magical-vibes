@@ -109,6 +109,8 @@ public sealed interface CardPredicate permits
         CardSharesNameWithAPermanentPredicate,
         CardSharesNameWithPermanentsPredicate,
         CardSharesCardTypeWithPermanentsPredicate,
+        CardSharesCreatureTypeWithPermanentsPredicate,
+        CardSharesNameWithCardsPredicate,
         CardCouldEnchantPredicate,
         CardSharesNameWithTriggeringSpellPredicate,
         CardSharesCardTypeWithTriggeringSpellPredicate,

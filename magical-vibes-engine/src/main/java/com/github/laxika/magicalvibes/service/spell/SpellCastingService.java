@@ -9611,6 +9611,9 @@ public class SpellCastingService {
         int toughness = gameQueryService.getEffectiveToughness(gameData, toSacrifice);
         Card sacrificedCardSnapshot = permanentRemovalService.snapshotEffectivePermanentCard(gameData, toSacrifice);
         Permanent permanentSnapshot = new Permanent(toSacrifice);
+        // The snapshot keeps the sacrificed permanent's subtypes as they were when it was sacrificed (CR 608.2h),
+        // including ones granted by a permanent that may leave before the spell resolves.
+        permanentSnapshot.setLastKnownSubtypes(Set.copyOf(gameQueryService.getEffectiveSubtypes(gameData, toSacrifice)));
         UUID previousCauseControllerId = gameData.currentlyResolvingControllerId;
         try {
             gameData.currentlyResolvingControllerId = player.getId();

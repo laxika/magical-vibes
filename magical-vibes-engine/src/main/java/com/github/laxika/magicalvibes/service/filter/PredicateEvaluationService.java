@@ -1430,6 +1430,8 @@ public class PredicateEvaluationService {
             case CardSharesCardTypeWithCardsPredicate ignored -> false;
             case CardSharesNameWithPermanentsPredicate ignored -> false;
             case CardSharesCardTypeWithPermanentsPredicate ignored -> false;
+            case com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithPermanentsPredicate ignored -> false;
+            case com.github.laxika.magicalvibes.model.filter.CardSharesNameWithCardsPredicate ignored -> false;
             // Bound to the matching library cards by the search that has the resolving entry (SearchLibraryEffectHandler).
             case CardCouldEnchantPredicate ignored -> false;
             case CardSharesNameWithLegendaryControlledPermanentPredicate ignored -> {
@@ -2732,6 +2734,10 @@ public class PredicateEvaluationService {
             case PermanentPowerLessThanTargetPredicate ignored -> false;
             case com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastAmountPredicate ignored -> false;
             case com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostAmountPredicate ignored -> false;
+            // Bound to the named permanents' creature types by the handler that has the resolving entry
+            // (SubjectResolutionService.bindPermanentSubjects).
+            case com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWithPermanentsPredicate ignored ->
+                    false;
             case PermanentIsSpecificPermanentPredicate specific ->
                     specific.permanentId() != null && specific.permanentId().equals(permanent.getId());
             case PermanentControlledBySourceControllerPredicate ignored -> {

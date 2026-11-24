@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfControllersLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -38,7 +38,7 @@ public class DelverOfSecrets extends Card {
         // You may reveal that card. If an instant or sorcery card is revealed this way,
         // transform Delver of Secrets.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
-                new LookAtTopCardOfControllersLibraryEffect(),
+                LookAtTopCardsOfTargetLibraryEffect.lookingAt(1, Subjects.you()),
                 new ConditionalEffect(new CardsInLibraryAtLeast(1),
                         new MayEffect(new RevealTopCardOfLibraryEffect(Subjects.you()), "Reveal the top card of your library?")),
                 new ConditionalEffect(HappenedThisWay.toACard(StepKind.REVEAL, new CardAnyOfPredicate(List.of(

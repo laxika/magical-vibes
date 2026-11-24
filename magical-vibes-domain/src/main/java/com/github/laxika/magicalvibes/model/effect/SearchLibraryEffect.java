@@ -5,7 +5,14 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.FixedIfTargetPlayerControlsMoreLands;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardCouldEnchantPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithPermanentsPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithPermanentsPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithPermanentsPredicate;
 
 /**
  * Search your library for up to {@code count} cards matching {@code filter} and move them to
@@ -380,15 +387,38 @@ public record SearchLibraryEffect(
                 null, null, 0, false, 3);
     }
 
+    /**
+     * The player target of "target player searches" and the battlefield-under-target-player destination, else the
+     * permanent target a filter reads ("cards with the same name as target creature", Pack Hunt): only a target
+     * subject declares it, so declaration and the bound filter can't disagree; the card's target filter narrows it.
+     */
     @Override
     public TargetSpec targetSpec() {
         if (destination == LibrarySearchDestination.BATTLEFIELD_TAPPED_UNDER_TARGET_PLAYER
                 || searchPlayer.declaresTarget()) {
             return TargetSpec.benign(TargetPredicates.player());
         }
+        if (readsTargetPermanent(filter)) {
+            return TargetSpec.benign(TargetPredicates.permanent());
+        }
         // Tithe: count scales off whether the targeted opponent controls more lands.
         return count instanceof FixedIfTargetPlayerControlsMoreLands
                 ? TargetSpec.benign(TargetPredicates.player())
                 : TargetSpec.NONE;
+    }
+
+    /** Whether a part of {@code filter} is about the permanents a target subject names. */
+    private static boolean readsTargetPermanent(CardPredicate filter) {
+        return switch (filter) {
+            case null -> false;
+            case CardSharesNameWithPermanentsPredicate shares -> shares.permanents().declaresTarget();
+            case CardSharesCreatureTypeWithPermanentsPredicate shares -> shares.permanents().declaresTarget();
+            case CardSharesCardTypeWithPermanentsPredicate shares -> shares.permanents().declaresTarget();
+            case CardCouldEnchantPredicate couldEnchant -> couldEnchant.permanents().declaresTarget();
+            case CardAllOfPredicate all -> all.predicates().stream().anyMatch(SearchLibraryEffect::readsTargetPermanent);
+            case CardAnyOfPredicate any -> any.predicates().stream().anyMatch(SearchLibraryEffect::readsTargetPermanent);
+            case CardNotPredicate not -> readsTargetPermanent(not.predicate());
+            default -> false;
+        };
     }
 }

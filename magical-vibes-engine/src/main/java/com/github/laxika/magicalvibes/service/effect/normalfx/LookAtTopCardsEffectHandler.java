@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +61,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
     @Lazy
     private GraveyardService graveyardService;
     private final LifeSupport lifeSupport;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -173,11 +175,13 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         }
 
         UUID sourceCardId = entry.getCard() != null ? entry.getCard().getId() : null;
+        CardPredicate choosePredicate = subjectResolutionService.bindCardSubjects(gameData, entry, e,
+                e.choosePredicate());
         List<Card> matchingCards = topCards.stream()
                 .filter(card -> card.getManaValue() <= chooseManaValueAtMost)
                 .filter(card -> card.getManaValue() <= chooseTotalManaValueAtMost)
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
-                        card, e.choosePredicate(), sourceCardId, gameData, controllerId,
+                        card, choosePredicate, sourceCardId, gameData, controllerId,
                         entry.getSourcePermanentId(), null, null, entry.getSourcePermanentSnapshot()))
                 .toList();
 
@@ -314,7 +318,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
 
         List<Card> matchingCards = e.choosePredicate() == null
                 ? topCards
-                : filterEligibleCards(topCards, e.choosePredicate(), entry, gameData, controllerId);
+                : filterEligibleCards(topCards, e.choosePredicate(), e, entry, gameData, controllerId);
         if (matchingCards.isEmpty()) {
             if (e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM) {
                 bottomInRandomOrder(gameData, controllerId, playerName, topCards);
@@ -387,7 +391,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         }
 
         List<Card> matchingCards = filterEligibleCards(result.topCards(), effect.choosePredicate(),
-                entry, gameData, result.controllerId());
+                effect, entry, gameData, result.controllerId());
         if (matchingCards.isEmpty()) {
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
                     result.controllerId(), result.topCards(), true, result.controllerId(),
@@ -544,7 +548,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         }
 
         List<Card> matchingCards = filterEligibleCards(topCards, e.choosePredicate(),
-                entry, gameData, controllerId).stream()
+                e, entry, gameData, controllerId).stream()
                 .filter(card -> card.getManaValue() <= chooseManaValueAtMost)
                 .toList();
         if (matchingCards.isEmpty()) {
@@ -770,7 +774,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             List<Card> topCards, String playerName, LookAtTopCardsEffect e, int chooseCount,
             boolean randomRemaining) {
         List<Card> eligibleCards = filterEligibleCards(topCards, e.choosePredicate(),
-                entry, gameData, controllerId);
+                e, entry, gameData, controllerId);
 
         if (eligibleCards.isEmpty()) {
             if (randomRemaining) {
@@ -852,7 +856,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         }
 
         List<Card> eligibleCards = filterEligibleCards(topCards, handChoicePredicate,
-                entry, gameData, controllerId);
+                e, entry, gameData, controllerId);
 
         if (eligibleCards.isEmpty()) {
             List<Card> entered = graveyardService.addCardsFromLibraryToGraveyard(gameData, controllerId, topCards);
@@ -981,17 +985,22 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         if (!filterEligibleCards(List.of(selectedCards.getFirst()), effect.selectedCardPredicate(),
-                entry, gameData, controllerId).isEmpty()) {
+                effect, entry, gameData, controllerId).isEmpty()) {
             insertEffectAfterCurrent(entry, effect, effect.effectIfSelectedCardMatches());
         }
     }
 
-    private List<Card> filterEligibleCards(List<Card> topCards, CardPredicate predicate,
+    /**
+     * The looked-at cards {@code predicate} admits, its card subjects ("a creature card that shares a creature type
+     * with enchanted creature") bound to what they name as the effect applies (CR 608.2h).
+     */
+    private List<Card> filterEligibleCards(List<Card> topCards, CardPredicate predicate, LookAtTopCardsEffect effect,
             StackEntry entry, GameData gameData, UUID controllerId) {
+        CardPredicate bound = subjectResolutionService.bindCardSubjects(gameData, entry, effect, predicate);
         List<Card> eligibleCards = new ArrayList<>();
         for (Card card : topCards) {
             if (predicateEvaluationService.matchesCardPredicate(
-                    card, predicate, entry.getCard().getId(), gameData, controllerId,
+                    card, bound, entry.getCard().getId(), gameData, controllerId,
                     entry.getSourcePermanentId(), null, null, entry.getSourcePermanentSnapshot())) {
                 eligibleCards.add(card);
             }

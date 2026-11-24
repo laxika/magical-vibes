@@ -1476,12 +1476,6 @@ public sealed interface ChoiceContext {
     record CreateTokenWithChosenNameChoice(Card sourceCard, UUID controllerId, CreateTokenEffect tokenTemplate,
                                            int amount, int power, int toughness) implements ChoiceContext {}
 
-    /** Assembly Hall: choose the name of a creature card currently in your hand to reveal. */
-    record AssemblyHallCreatureCardChoice(UUID controllerId) implements ChoiceContext {}
-
-    /** Infernal Tutor: choose the name of any card currently in your hand to reveal. */
-    record InfernalTutorCardChoice(UUID controllerId) implements ChoiceContext {}
-
     /**
      * First half of Mindblaze: the controller picks a card name. The answer chains into
      * {@link RevealLibraryNumberGuessChoice}, which asks for the number.

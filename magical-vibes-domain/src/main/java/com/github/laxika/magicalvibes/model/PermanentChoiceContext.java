@@ -1564,10 +1564,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  creatures (the source itself is a legal choice) as the effect resolves. (Nulltread Gargantuan.) */
     record PutControlledCreatureOnTopOfLibrary(UUID controllerId) implements PermanentChoiceContext {}
 
-    /** Canoptek Wraith: choose a land before searching for same-name basic lands. */
-    record SearchLibraryForUpToTwoBasicLandsWithSameNameAsChosenLand(UUID controllerId)
-            implements PermanentChoiceContext {}
-
     /** Deepfathom Echo: choose another creature the source controller controls to copy until end of turn. */
     record DeepfathomEchoCreatureChoice(UUID controllerId, UUID sourcePermanentId)
             implements PermanentChoiceContext {}

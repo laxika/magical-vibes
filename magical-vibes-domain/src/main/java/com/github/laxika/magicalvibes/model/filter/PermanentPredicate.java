@@ -28,6 +28,7 @@ public sealed interface PermanentPredicate permits
         PermanentCastFromZonePredicate,
         PermanentEnteredOrCastFromZonePredicate,
         PermanentPowerLessThanTargetPredicate,
+        PermanentSharesCreatureTypeWithPermanentsPredicate,
         PermanentReturnedWhenSourceLeftPredicate,
         PermanentWasCastPredicate,
         PermanentCastForWarpCostPredicate,

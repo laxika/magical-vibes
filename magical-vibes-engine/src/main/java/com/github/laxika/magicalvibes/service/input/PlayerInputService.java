@@ -2358,52 +2358,6 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a card name for {}", gameData.id, playerName, ctx.card().getName());
     }
 
-    /** Begins Assembly Hall's choice of a creature card name from the controller's hand. */
-    public void beginAssemblyHallCreatureCardChoice(GameData gameData, UUID controllerId) {
-        List<Card> hand = gameData.playerHands.getOrDefault(controllerId, List.of());
-        List<String> creatureNames = hand.stream()
-                .filter(card -> card.hasType(CardType.CREATURE))
-                .map(Card::getName)
-                .distinct()
-                .sorted()
-                .toList();
-
-        String playerName = gameData.playerIdToName.get(controllerId);
-        if (creatureNames.isEmpty()) {
-            log.info("Game {} - {} has no creature card in hand for Assembly Hall", gameData.id, playerName);
-            com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            return;
-        }
-
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                controllerId, null, null, new ChoiceContext.AssemblyHallCreatureCardChoice(controllerId),
-                creatureNames, "Choose a creature card in your hand to reveal."));
-        log.info("Game {} - Awaiting {} to choose a creature card in hand for Assembly Hall",
-                gameData.id, playerName);
-    }
-
-    /** Begins Infernal Tutor's choice of a card name from the controller's hand. */
-    public void beginInfernalTutorCardChoice(GameData gameData, UUID controllerId) {
-        List<Card> hand = gameData.playerHands.getOrDefault(controllerId, List.of());
-        List<String> cardNames = hand.stream()
-                .map(Card::getName)
-                .distinct()
-                .sorted()
-                .toList();
-
-        String playerName = gameData.playerIdToName.get(controllerId);
-        if (cardNames.isEmpty()) {
-            log.info("Game {} - {} has no card in hand for Infernal Tutor", gameData.id, playerName);
-            return;
-        }
-
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                controllerId, null, null, new ChoiceContext.InfernalTutorCardChoice(controllerId),
-                cardNames, "Choose a card in your hand to reveal."));
-        log.info("Game {} - Awaiting {} to choose a card in hand for Infernal Tutor",
-                gameData.id, playerName);
-    }
-
     /**
      * Mindblaze, first prompt: the controller chooses a card name. {@link #beginRevealLibraryNumberGuessChoice}
      * follows once the name is in.

@@ -90,7 +90,10 @@ class MedomaisProphecyTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).first().isInstanceOf(Forest.class);
         assertThat(gd.playerDecks.get(player2.getId())).first().isInstanceOf(Island.class);
-        assertThat(gameLogContains("looks at the top card of each player's library")).isTrue();
+        assertThat(gameLogContains("looks at the top card of " + gd.playerIdToName.get(player1.getId())
+                + "'s library")).isTrue();
+        assertThat(gameLogContains("looks at the top card of " + gd.playerIdToName.get(player2.getId())
+                + "'s library")).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
     }
 

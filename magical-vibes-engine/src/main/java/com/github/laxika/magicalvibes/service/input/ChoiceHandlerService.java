@@ -966,14 +966,6 @@ public class ChoiceHandlerService {
             return;
         }
 
-        if (colorChoice.context() instanceof ChoiceContext.AssemblyHallCreatureCardChoice ctx) {
-            handleAssemblyHallCreatureCardChoice(gameData, colorName, ctx);
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.InfernalTutorCardChoice ctx) {
-            handleInfernalTutorCardChoice(gameData, colorName, ctx);
-            return;
-        }
         if (colorChoice.context() instanceof ChoiceContext.RevealLibraryNameGuessChoice ctx) {
             handleRevealLibraryNameGuessChoice(gameData, colorName, ctx);
             return;
@@ -6210,68 +6202,6 @@ public class ChoiceHandlerService {
                 ctx.sourcePermanentId());
 
         damageSupport.dealDamageToPlayer(gameData, damageEntry, targetPlayerId, ctx.damageOnMiss());
-    }
-
-    private void handleAssemblyHallCreatureCardChoice(GameData gameData, String cardName,
-                                                       ChoiceContext.AssemblyHallCreatureCardChoice ctx) {
-        PendingInteraction.ColorChoice choice =
-                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        if (choice == null || !choice.options().contains(cardName)) {
-            throw new IllegalArgumentException("Invalid Assembly Hall creature card name: " + cardName);
-        }
-
-        List<Card> hand = gameData.playerHands.getOrDefault(ctx.controllerId(), List.of());
-        Card revealed = hand.stream()
-                .filter(card -> card.getName().equals(cardName) && card.hasType(CardType.CREATURE))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Chosen creature card is no longer in hand"));
-
-        gameData.interaction.clearAwaitingInput();
-        String playerName = gameData.playerIdToName.get(ctx.controllerId());
-        gameLogService.append(gameData,
-                GameLog.textCardText(playerName + " reveals ", revealed, " from their hand."));
-        cardRevealService.revealToAllPlayers(gameData, ctx.controllerId(),
-                com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.HAND,
-                List.of(revealed));
-
-        StackEntry entry = gameData.pendingEffectResolutionEntry;
-        if (entry == null) {
-            throw new IllegalStateException("No effect resolution is waiting for Assembly Hall's choice");
-        }
-        entry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
-                List.of(new SearchLibraryEffect(new CardNamedPredicate(cardName), LibrarySearchDestination.HAND)));
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    private void handleInfernalTutorCardChoice(GameData gameData, String cardName,
-                                                ChoiceContext.InfernalTutorCardChoice ctx) {
-        PendingInteraction.ColorChoice choice =
-                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        if (choice == null || !choice.options().contains(cardName)) {
-            throw new IllegalArgumentException("Invalid Infernal Tutor card name: " + cardName);
-        }
-
-        List<Card> hand = gameData.playerHands.getOrDefault(ctx.controllerId(), List.of());
-        Card revealed = hand.stream()
-                .filter(card -> card.getName().equals(cardName))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Chosen card is no longer in hand"));
-
-        gameData.interaction.clearAwaitingInput();
-        String playerName = gameData.playerIdToName.get(ctx.controllerId());
-        gameLogService.append(gameData,
-                GameLog.textCardText(playerName + " reveals ", revealed, " from their hand."));
-        cardRevealService.revealToAllPlayers(gameData, ctx.controllerId(),
-                com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.HAND,
-                List.of(revealed));
-
-        StackEntry entry = gameData.pendingEffectResolutionEntry;
-        if (entry == null) {
-            throw new IllegalStateException("No effect resolution is waiting for Infernal Tutor's choice");
-        }
-        entry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
-                List.of(new SearchLibraryEffect(new CardNamedPredicate(cardName), LibrarySearchDestination.HAND)));
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     /**

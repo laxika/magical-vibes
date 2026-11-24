@@ -1919,9 +1919,7 @@ public class InteractionPromptProjectionRegistry {
     }
 
     private static boolean isCardNameChoice(ChoiceContext context) {
-        return ChoiceHandlerService.isCardNameChoice(context)
-                || context instanceof ChoiceContext.AssemblyHallCreatureCardChoice
-                || context instanceof ChoiceContext.InfernalTutorCardChoice;
+        return ChoiceHandlerService.isCardNameChoice(context);
     }
 
     private <T extends PendingInteraction> void register(

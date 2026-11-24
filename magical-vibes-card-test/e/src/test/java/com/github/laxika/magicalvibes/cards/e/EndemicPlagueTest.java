@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.c.ChangelingOutcast;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.g.GoblinSkyRaider;
@@ -22,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({EndemicPlague.class, ElvishWarrior.class, WirewoodElf.class, GoblinSkyRaider.class,
-        GlorySeeker.class, Hystrodon.class})
+        GlorySeeker.class, Hystrodon.class, ChangelingOutcast.class})
 class EndemicPlagueTest extends BaseCardTest {
 
     @Test
@@ -137,6 +138,24 @@ class EndemicPlagueTest extends BaseCardTest {
         assertThat(zombieTokenCount()).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Sacrificing a changeling destroys every creature that has a creature type")
+    void sacrificingAChangelingDestroysEveryCreatureWithACreatureType() {
+        // A changeling is every creature type (CR 702.73a), so it shares one with any creature that has one.
+        Permanent sacrificed = addCreatureReady(player1, new ChangelingOutcast());
+        harness.addToBattlefield(player1, new WirewoodElf());
+        harness.addToBattlefield(player2, new GoblinSkyRaider());
+        harness.addToBattlefield(player2, new GlorySeeker());
+        prepareCast();
+
+        harness.castSorceryWithSacrifice(player1, 0, sacrificed.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Wirewood Elf");
+        harness.assertNotOnBattlefield(player2, "Goblin Sky Raider");
+        harness.assertNotOnBattlefield(player2, "Glory Seeker");
     }
 
     private void prepareCast() {

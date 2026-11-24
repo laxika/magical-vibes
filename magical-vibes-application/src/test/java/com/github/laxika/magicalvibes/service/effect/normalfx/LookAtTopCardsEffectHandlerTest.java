@@ -113,8 +113,14 @@ class LookAtTopCardsEffectHandlerTest {
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
         InteractionHandlerRegistry interactionHandlerRegistry =
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService);
+        com.github.laxika.magicalvibes.service.effect.SubjectResolutionService subjectResolutionService =
+                mock(com.github.laxika.magicalvibes.service.effect.SubjectResolutionService.class);
+        lenient().when(subjectResolutionService.bindCardSubjects(any(), any(), any(),
+                        any(com.github.laxika.magicalvibes.model.filter.CardPredicate.class)))
+                .thenAnswer(inv -> inv.getArgument(3));
         handler = new LookAtTopCardsEffectHandler(gameLogService, libraryRevealSupport, gameQueryService,
-                predicateEvaluationService, amountEvaluationService, interactionHandlerRegistry, lifeSupport);
+                predicateEvaluationService, amountEvaluationService, interactionHandlerRegistry, lifeSupport,
+                subjectResolutionService);
         ReflectionTestUtils.setField(handler, "graveyardService", graveyardService);
     }
 

@@ -86,7 +86,8 @@ class LookAtTopCardsOfTargetLibraryEffectHandlerTest {
 
         handler = new LookAtTopCardsOfTargetLibraryEffectHandler(gameLogService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService),
-                cardRevealService, amountEvaluationService, gameQueryService);
+                cardRevealService, amountEvaluationService, gameQueryService,
+                mock(com.github.laxika.magicalvibes.service.effect.SubjectResolutionService.class));
     }
 
     private static Card createCard(String name) {

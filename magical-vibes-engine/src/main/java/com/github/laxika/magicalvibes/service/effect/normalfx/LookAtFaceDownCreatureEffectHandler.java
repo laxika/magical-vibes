@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtFaceDownCreatureEffect;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +17,7 @@ public class LookAtFaceDownCreatureEffectHandler implements NormalEffectHandlerB
 
     private final CardRevealService cardRevealService;
     private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -24,10 +26,11 @@ public class LookAtFaceDownCreatureEffectHandler implements NormalEffectHandlerB
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target == null || !target.isFaceDown() || !gameQueryService.isCreature(gameData, target)) {
-            return;
+        var look = (LookAtFaceDownCreatureEffect) effect;
+        for (Permanent creature : subjectResolutionService.permanents(gameData, entry, look, look.creatures())) {
+            if (creature.isFaceDown() && gameQueryService.isCreature(gameData, creature)) {
+                cardRevealService.lookAtFaceDownPermanent(gameData, entry.getControllerId(), creature);
+            }
         }
-        cardRevealService.lookAtFaceDownPermanent(gameData, entry.getControllerId(), target);
     }
 }

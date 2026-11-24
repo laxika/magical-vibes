@@ -270,8 +270,11 @@ class CallToTheKindredTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Removing the enchanted creature in response uses its last known creature types")
-    void destroyedCreatureUsesLastKnownTypes() {
+    @DisplayName("Removing the enchanted creature in response leaves no enchanted creature to share a type with")
+    void destroyedCreatureLeavesNoEnchantedCreature() {
+        // The Aura goes to the graveyard as a state-based action after its creature left, so as it last existed it
+        // enchanted nothing (CR 608.2h, 704.5m; the Followed Footsteps and Mechanized Production rulings): no card
+        // shares a creature type with "enchanted creature", and the looked-at cards go to the bottom.
         setupAuraOnBears();
         GrizzlyBears bear = new GrizzlyBears();
         harness.setLibrary(player1, List.of(bear, new Plains()));
@@ -280,13 +283,13 @@ class CallToTheKindredTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, findPermanent(player1, "Grizzly Bears").getId());
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Call to the Kindred");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
-                .containsExactly(bear);
-        harness.handleCardChosen(player1, 0);
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).contains(bear);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test

@@ -21,14 +21,40 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  *               {@link DynamicAmount} — {@link Fixed} for a printed number, {@code XValue} for an
  *               {@code {X}} spell (Sealed Fate)
  * @param action what the controller does with the looked-at cards
+ * <p>{@link #lookingAt} names the libraries instead ("look at the top card of your library", "of each player's
+ * library", "of that player's library" after another step declared the player target): a {@code LOOK_ONLY} look
+ * at each named player's library in APNAP order, private to the controller (CR 701.20e's look; a hidden card stays
+ * "a card" to everyone else), with no prompt and no rearranging. It records nothing.
+ *
  * @param graveyardCount number of cards chosen together for the graveyard actions (defaults to one)
+ * @param libraries      whose libraries a {@code LOOK_ONLY} look is at, or {@code null} for the entry's target (else
+ *                       its controller)
  */
 public record LookAtTopCardsOfTargetLibraryEffect(DynamicAmount count, TargetLibraryAction action,
-                                                  int graveyardCount)
+                                                  int graveyardCount, PlayerSubject libraries)
         implements CardEffect {
+
+    public LookAtTopCardsOfTargetLibraryEffect {
+        if (libraries != null && action != TargetLibraryAction.LOOK_ONLY) {
+            throw new IllegalArgumentException("Only a LOOK_ONLY look names its libraries: " + action);
+        }
+    }
+
+    public LookAtTopCardsOfTargetLibraryEffect(DynamicAmount count, TargetLibraryAction action, int graveyardCount) {
+        this(count, action, graveyardCount, null);
+    }
 
     public LookAtTopCardsOfTargetLibraryEffect(DynamicAmount count, TargetLibraryAction action) {
         this(count, action, 1);
+    }
+
+    /**
+     * "Look at the top [count] card(s) of [libraries]": {@code you()} (Delver of Secrets), {@code eachPlayer()} (Case the
+     * Joint), {@code targetPlayerDeclaredElsewhere()} (Spy Network); only {@code targetPlayer()} declares a target.
+     */
+    public static LookAtTopCardsOfTargetLibraryEffect lookingAt(int count, PlayerSubject libraries) {
+        return new LookAtTopCardsOfTargetLibraryEffect(new Fixed(count), TargetLibraryAction.LOOK_ONLY, 1,
+                java.util.Objects.requireNonNull(libraries, "libraries"));
     }
 
     public LookAtTopCardsOfTargetLibraryEffect(int count, TargetLibraryAction action) {
@@ -41,6 +67,9 @@ public record LookAtTopCardsOfTargetLibraryEffect(DynamicAmount count, TargetLib
 
     @Override
     public TargetSpec targetSpec() {
+        if (libraries != null) {
+            return libraries.declaresTarget() ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
+        }
         return switch (action) {
             case MAY_SHUFFLE -> TargetSpec.benign(TargetPredicates.player());
             case KEEP_ONE_ON_TOP_EXILE_REST, KEEP_ONE_ON_TOP_REST_TO_GRAVEYARD,

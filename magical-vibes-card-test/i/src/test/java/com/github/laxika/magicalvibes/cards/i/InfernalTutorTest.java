@@ -27,11 +27,8 @@ class InfernalTutorTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        PendingInteraction.ColorChoice handChoice =
-                harness.getGameData().interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        assertThat(handChoice.options()).containsExactly("Aethermage's Touch");
-
-        harness.handleListChoice(player1, "Aethermage's Touch");
+        // The lone card in hand is the one revealed, unasked (CR 608.2d).
+        assertThat(gameLogContains("reveals Aethermage's Touch from their hand")).isTrue();
 
         PendingInteraction.LibrarySearch search =
                 harness.getGameData().interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -79,7 +76,6 @@ class InfernalTutorTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "Aethermage's Touch");
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
@@ -100,10 +96,12 @@ class InfernalTutorTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        PendingInteraction.ColorChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        assertThat(choice.options()).containsExactlyInAnyOrder("Aethermage's Touch", "Azorius Herald");
-        harness.handleListChoice(player1, "Azorius Herald");
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.cards()).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Aethermage's Touch", "Azorius Herald");
+        int herald = choice.cards().stream().map(Card::getName).toList().indexOf("Azorius Herald");
+        chooseOfferedCards(player1, herald);
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -126,7 +124,6 @@ class InfernalTutorTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "Aethermage's Touch");
         harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
@@ -145,7 +142,6 @@ class InfernalTutorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AzoriusHerald()));
 
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "Azorius Herald");
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
