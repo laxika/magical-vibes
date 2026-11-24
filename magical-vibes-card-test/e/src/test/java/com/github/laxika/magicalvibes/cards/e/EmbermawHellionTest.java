@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.c.ConsumeSpirit;
 import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
+import com.github.laxika.magicalvibes.cards.g.GhostlyFlame;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -23,7 +24,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({EmbermawHellion.class, Shock.class, ConsumeSpirit.class, SerraAngel.class, RagingGoblin.class,
-        TurnToFrog.class, ProdigalPyromancer.class, FurnaceOfRath.class})
+        TurnToFrog.class, ProdigalPyromancer.class, FurnaceOfRath.class, GhostlyFlame.class})
 class EmbermawHellionTest extends BaseCardTest {
 
     @Test
@@ -298,5 +299,19 @@ class EmbermawHellionTest extends BaseCardTest {
         assertThat(choice.playerId()).isEqualTo(player2.getId());
         harness.handleListChoice(player2, choice.options().stream()
                 .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
+    }
+
+    @Test
+    @DisplayName("A red spell made a colourless source of damage by Ghostly Flame gets no bonus")
+    void colourlessDamageSourceGetsNoBonus() {
+        harness.addToBattlefield(player1, new EmbermawHellion());
+        harness.addToBattlefield(player2, new GhostlyFlame());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
     }
 }

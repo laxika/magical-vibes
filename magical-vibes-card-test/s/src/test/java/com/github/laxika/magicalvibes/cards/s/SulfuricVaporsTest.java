@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.cards.c.ConsumeSpirit;
 import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.p.PitFight;
+import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -21,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SulfuricVapors.class, Shock.class, SerraAngel.class, ConsumeSpirit.class,
         ProdigalPyromancer.class, PitFight.class, GrizzlyBears.class, HillGiant.class,
-        Blaze.class, FurnaceOfRath.class})
+        Blaze.class, FurnaceOfRath.class, Opalescence.class, TurnToFrog.class})
 class SulfuricVaporsTest extends BaseCardTest {
 
     @Test
@@ -152,5 +154,23 @@ class SulfuricVaporsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Hill Giant");
         assertThat(hillGiant.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A Sulfuric Vapors that has lost its abilities adds no damage")
+    void lostAbilitiesAddNoDamage() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent vapors = harness.addToBattlefieldAndReturn(player1, new SulfuricVapors());
+        harness.setHand(player1, List.of(new TurnToFrog(), new Shock()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, vapors.getId());
+        assertThat(gqs.hasLostAllAbilities(gd, vapors)).isTrue();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
     }
 }

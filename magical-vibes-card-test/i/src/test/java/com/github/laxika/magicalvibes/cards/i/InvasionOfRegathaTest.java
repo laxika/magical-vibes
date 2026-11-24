@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.d.DisciplesOfTheInferno;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RalsReinforcements;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,15 +13,17 @@ import com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DisciplesOfTheInferno.class, GrizzlyBears.class, InvasionOfRegatha.class,
-        RalsReinforcements.class, Shock.class})
+        RalsReinforcements.class, Shock.class, TurnToFrog.class})
 class InvasionOfRegathaTest extends BaseCardTest {
 
     @Test
@@ -250,5 +254,37 @@ class InvasionOfRegathaTest extends BaseCardTest {
     private void addInvasionMana() {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+    }
+
+    @Test
+    @DisplayName("A face-down Disciples of the Inferno adds no damage")
+    void faceDownBackFaceAddsNoDamage() {
+        Permanent disciples = harness.addToBattlefieldAndReturn(player1, new InvasionOfRegatha().getBackFaceCard());
+        disciples.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Disciples of the Inferno that has lost its abilities adds no damage")
+    void backFaceWithoutAbilitiesAddsNoDamage() {
+        Permanent disciples = harness.addToBattlefieldAndReturn(player1, new InvasionOfRegatha().getBackFaceCard());
+        harness.setHand(player1, List.of(new TurnToFrog(), new Shock()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, disciples.getId());
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
     }
 }

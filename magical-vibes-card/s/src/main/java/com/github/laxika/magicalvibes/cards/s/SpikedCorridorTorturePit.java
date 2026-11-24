@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageToOpponentsEffect;
+import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
+import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -40,6 +40,6 @@ public class SpikedCorridorTorturePit extends Card {
 
         addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(1),
-                new AdditionalControllerDamageToOpponentsEffect(2, true)));
+                new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(2, true).toOpponentsOnly()));
     }
 }

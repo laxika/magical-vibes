@@ -52,12 +52,10 @@ import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.AdditionalColorSourceDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageSourcesOfColorsAreColorlessEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToOpponentsFromColorSourcesEffect;
-import com.github.laxika.magicalvibes.model.effect.AdditionalDamageFromColorSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostControllerDamageThisTurnEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
@@ -2872,66 +2870,153 @@ class GameQueryServiceTest {
     }
 
     @Nested
-    @DisplayName("getControllerDamageToOpponentBonus")
-    class ControllerDamageToOpponentBonus {
+    @DisplayName("getAdditionalDamageBonuses")
+    class AdditionalDamageBonuses {
 
-        @Test
-        @DisplayName("returns the bonus for an opponent and not for the controller")
-        void returnsBonusOnlyForOpponents() {
-            addPermanent(player1Id, createEnchantmentWithStaticEffect(
-                    "Far Fortune", new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(1)));
+        private static final AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect TORBRAN =
+                new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(2)
+                        .fromSources(new PermanentColorInPredicate(Set.of(CardColor.RED)));
 
-            assertThat(gqs.getControllerDamageToOpponentBonus(gd, player1Id, player2Id)).isEqualTo(1);
-            assertThat(gqs.getControllerDamageToOpponentBonus(gd, player1Id, player1Id)).isZero();
+        private StackEntry spell(Card card, UUID controllerId) {
+            return new StackEntry(StackEntryType.INSTANT_SPELL, card, controllerId, card.getName(),
+                    new ArrayList<>(), null);
+        }
+
+        private int bonusFromSpell(Card card, UUID controllerId, UUID recipientPlayerId) {
+            return gqs.getAdditionalDamageBonuses(gd, gqs.additionalDamageEvent(spell(card, controllerId), null, card,
+                            controllerId, true, false, recipientPlayerId, null)).stream()
+                    .mapToInt(GameQueryService.DamageBonus::amount).sum();
+        }
+
+        private int combatBonus(Permanent source, UUID controllerId, UUID recipientPlayerId) {
+            return gqs.getAdditionalDamageBonuses(gd, gqs.additionalDamageEvent(null, source, source.getCard(),
+                            controllerId, true, true, recipientPlayerId, null)).stream()
+                    .mapToInt(GameQueryService.DamageBonus::amount).sum();
         }
 
         @Test
-        @DisplayName("evaluates a dynamic bonus from the source permanent's counters")
+        @DisplayName("Adds the bonus for an opponent and not for the controller")
+        void returnsBonusOnlyForOpponents() {
+            addPermanent(player1Id, createEnchantmentWithStaticEffect(
+                    "Far Fortune", new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(1)));
+            Card shock = createCreature("Shock", 0, 0, CardColor.RED);
+
+            assertThat(bonusFromSpell(shock, player1Id, player2Id)).isEqualTo(1);
+            assertThat(bonusFromSpell(shock, player1Id, player1Id)).isZero();
+            assertThat(bonusFromSpell(shock, player2Id, player1Id)).isZero();
+        }
+
+        @Test
+        @DisplayName("Evaluates a dynamic bonus from the carrying permanent's counters")
         void evaluatesDynamicBonusFromSourceCounters() {
             Permanent fatedFirepower = addPermanent(player1Id, createEnchantmentWithStaticEffect(
                     "Fated Firepower", new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(
                             new CountersOnSource(CounterType.FIRE))));
             fatedFirepower.setCounterCount(CounterType.FIRE, 3);
 
-            assertThat(gqs.getControllerDamageToOpponentBonus(gd, player1Id, player2Id)).isEqualTo(3);
-            assertThat(gqs.getControllerDamageToOpponentBonus(gd, player1Id, player1Id)).isZero();
+            assertThat(bonusFromSpell(createCreature("Shock", 0, 0, CardColor.RED), player1Id, player2Id))
+                    .isEqualTo(3);
         }
 
         @Test
-        @DisplayName("lists each bonus effect separately, adding up to the total")
+        @DisplayName("Lists each bonus effect separately, keyed by its permanent")
         void listsEachBonusEffectSeparately() {
             Permanent first = addPermanent(player1Id, createEnchantmentWithStaticEffect(
                     "Far Fortune", new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(1)));
             Permanent second = addPermanent(player1Id, createEnchantmentWithStaticEffect(
                     "Far Fortune", new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(1)));
+            Card shock = createCreature("Shock", 0, 0, CardColor.RED);
 
-            assertThat(gqs.getControllerDamageToOpponentBonuses(gd, player1Id, player2Id, false, false, null))
+            assertThat(gqs.getAdditionalDamageBonuses(gd, gqs.additionalDamageEvent(spell(shock, player1Id), null,
+                    shock, player1Id, true, false, player2Id, null)))
                     .extracting(GameQueryService.DamageBonus::instance, GameQueryService.DamageBonus::amount)
                     .containsExactlyInAnyOrder(
                             tuple(first.getId() + "/0", 1),
                             tuple(second.getId() + "/0", 1));
-            assertThat(gqs.getControllerDamageToOpponentBonus(gd, player1Id, player2Id)).isEqualTo(2);
         }
-    }
-
-    @Nested
-    @DisplayName("getAdditionalDamageToOpponentsBonus")
-    class AdditionalDamageToOpponentsBonus {
 
         @Test
-        @DisplayName("applies only to matching-color sources and opponents")
-        void appliesOnlyToMatchingColorSourcesAndOpponents() {
-            addPermanent(player1Id, createEnchantmentWithStaticEffect(
-                    "Torbran", new AdditionalDamageToOpponentsFromColorSourcesEffect(2, CardColor.RED)));
-            Card redSource = createCreature("Red Source", 1, 1, CardColor.RED);
-            Card greenSource = createCreature("Green Source", 1, 1, CardColor.GREEN);
+        @DisplayName("A source filter adds only for a matching source")
+        void appliesOnlyToMatchingColorSources() {
+            addPermanent(player1Id, createEnchantmentWithStaticEffect("Torbran", TORBRAN));
 
-            assertThat(gqs.getAdditionalDamageToOpponentsBonus(gd, player1Id, redSource, null, player2Id))
+            assertThat(bonusFromSpell(createCreature("Red Source", 1, 1, CardColor.RED), player1Id, player2Id))
                     .isEqualTo(2);
-            assertThat(gqs.getAdditionalDamageToOpponentsBonus(gd, player1Id, greenSource, null, player2Id))
+            assertThat(bonusFromSpell(createCreature("Green Source", 1, 1, CardColor.GREEN), player1Id, player2Id))
                     .isZero();
-            assertThat(gqs.getAdditionalDamageToOpponentsBonus(gd, player1Id, redSource, null, player1Id))
-                    .isZero();
+        }
+
+        @Test
+        @DisplayName("A red source made colourless for damage by Ghostly Flame gets no red-source bonus")
+        void colourlessDamageSourceGetsNoColourBonus() {
+            addPermanent(player1Id, createEnchantmentWithStaticEffect("Torbran", TORBRAN));
+            addPermanent(player2Id, createEnchantmentWithStaticEffect("Ghostly Flame",
+                    new DamageSourcesOfColorsAreColorlessEffect(Set.of(CardColor.BLACK, CardColor.RED))));
+            Permanent redCreature = addPermanent(player1Id, createCreature("Red Goblin", 2, 1, CardColor.RED));
+
+            assertThat(combatBonus(redCreature, player1Id, player2Id)).isZero();
+        }
+
+        @Test
+        @DisplayName("A face-down permanent's bonus doesn't apply")
+        void faceDownCarrierAddsNothing() {
+            Permanent torbran = addPermanent(player1Id, createCreatureWithStaticEffect("Torbran", 2, 4,
+                    CardColor.RED, TORBRAN));
+            torbran.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+            Permanent redCreature = addPermanent(player1Id, createCreature("Red Goblin", 2, 1, CardColor.RED));
+
+            assertThat(combatBonus(redCreature, player1Id, player2Id)).isZero();
+        }
+
+        @Test
+        @DisplayName("Another source excludes the carrying permanent, and two copies boost each other")
+        void anotherSourceExcludesItself() {
+            AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect hellion =
+                    new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(1).anotherSource()
+                            .fromSources(new PermanentColorInPredicate(Set.of(CardColor.RED)))
+                            .toAnyPermanentOrPlayer();
+            Permanent first = addPermanent(player1Id, createCreatureWithStaticEffect("Embermaw Hellion", 4, 5,
+                    CardColor.RED, hellion));
+
+            assertThat(combatBonus(first, player1Id, player2Id)).isZero();
+
+            addPermanent(player1Id, createCreatureWithStaticEffect("Embermaw Hellion", 4, 5, CardColor.RED, hellion));
+
+            assertThat(combatBonus(first, player1Id, player2Id)).isEqualTo(1);
+            assertThat(combatBonus(first, player1Id, player1Id)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("A spell bonus adds to any player's spell but not to an activated ability or combat damage")
+        void spellBonusOnlyForSpells() {
+            addPermanent(player1Id, createEnchantmentWithStaticEffect("Sulfuric Vapors",
+                    new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(1).fromAnyonesSources()
+                            .fromSpells().fromSources(new PermanentColorInPredicate(Set.of(CardColor.RED)))
+                            .toAnyPermanentOrPlayer()));
+            Card redCard = createCreature("Prodigal Pyromancer", 1, 1, CardColor.RED);
+            StackEntry ability = new StackEntry(StackEntryType.ACTIVATED_ABILITY, redCard, player2Id,
+                    "Prodigal Pyromancer's ability", new ArrayList<>(), null);
+
+            assertThat(bonusFromSpell(redCard, player2Id, player2Id)).isEqualTo(1);
+            assertThat(gqs.getAdditionalDamageBonuses(gd, gqs.additionalDamageEvent(ability, null, redCard,
+                    player2Id, true, false, player1Id, null))).isEmpty();
+            assertThat(combatBonus(addPermanent(player2Id, redCard), player2Id, player1Id)).isZero();
+        }
+
+        @Test
+        @DisplayName("A players-only bonus adds to damage to any player from anyone's source, not to permanents")
+        void playersOnlyBonus() {
+            addPermanent(player2Id, createCreatureWithStaticEffect("Tok-Tok, Volcano Born", 2, 2, CardColor.RED,
+                    new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(1).fromAnyonesSources()
+                            .fromSources(new PermanentColorInPredicate(Set.of(CardColor.RED)))
+                            .to(Subjects.eachPlayer(), null)));
+            Permanent redCreature = addPermanent(player1Id, createCreature("Red Goblin", 2, 1, CardColor.RED));
+            Permanent bears = addPermanent(player2Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+
+            assertThat(combatBonus(redCreature, player1Id, player2Id)).isEqualTo(1);
+            assertThat(combatBonus(redCreature, player1Id, player1Id)).isEqualTo(1);
+            assertThat(gqs.getAdditionalDamageBonuses(gd, gqs.additionalDamageEvent(null, redCreature,
+                    redCreature.getCard(), player1Id, true, true, player2Id, bears))).isEmpty();
         }
     }
 
@@ -3257,65 +3342,6 @@ class GameQueryServiceTest {
                     "Shock's ability", new ArrayList<>(), null, UUID.randomUUID());
 
             assertThat(gqs.getControllerDamageBonus(gd, entry)).isEqualTo(1);
-        }
-    }
-
-    @Nested
-    @DisplayName("getColorSourcePermanentDamageBonus")
-    class ColorSourcePermanentDamageBonus {
-
-        private Permanent addHellion(UUID playerId) {
-            return addPermanent(playerId, createCreatureWithStaticEffect("Embermaw Hellion", 4, 5, CardColor.RED,
-                    new AdditionalColorSourceDamageEffect(1, CardColor.RED)));
-        }
-
-        @Test
-        @DisplayName("returns 0 by default")
-        void returnsZeroByDefault() {
-            assertThat(gqs.getColorSourcePermanentDamageBonus(gd, player1Id, List.of(CardColor.RED), null)).isZero();
-        }
-
-        @Test
-        @DisplayName("returns amount for a matching color source")
-        void returnsAmountForMatchingColor() {
-            addHellion(player1Id);
-
-            assertThat(gqs.getColorSourcePermanentDamageBonus(gd, player1Id, List.of(CardColor.RED), null)).isEqualTo(1);
-        }
-
-        @Test
-        @DisplayName("returns 0 for a nonmatching color source")
-        void returnsZeroForNonMatchingColor() {
-            addHellion(player1Id);
-
-            assertThat(gqs.getColorSourcePermanentDamageBonus(gd, player1Id, List.of(CardColor.BLACK), null)).isZero();
-        }
-
-        @Test
-        @DisplayName("does not affect an opponent's source")
-        void doesNotAffectOpponent() {
-            addHellion(player1Id);
-
-            assertThat(gqs.getColorSourcePermanentDamageBonus(gd, player2Id, List.of(CardColor.RED), null)).isZero();
-        }
-
-        @Test
-        @DisplayName("excludes the permanent carrying the effect")
-        void excludesTheSourcePermanentItself() {
-            Permanent hellion = addHellion(player1Id);
-
-            assertThat(gqs.getColorSourcePermanentDamageBonus(gd, player1Id, List.of(CardColor.RED), hellion.getId()))
-                    .isZero();
-        }
-
-        @Test
-        @DisplayName("two copies boost each other")
-        void twoCopiesBoostEachOther() {
-            Permanent first = addHellion(player1Id);
-            addHellion(player1Id);
-
-            assertThat(gqs.getColorSourcePermanentDamageBonus(gd, player1Id, List.of(CardColor.RED), first.getId()))
-                    .isEqualTo(1);
         }
     }
 
@@ -4321,77 +4347,6 @@ class GameQueryServiceTest {
             assertThat(gqs.canCastSpellFromZone(gd, instant, Zone.EXILE)).isFalse();
             assertThat(gqs.canCastSpellFromZone(gd, instant, Zone.HAND)).isTrue();
             assertThat(gqs.canCastSpellFromZone(gd, creature, Zone.GRAVEYARD)).isTrue();
-        }
-    }
-
-    @Nested
-    @DisplayName("getSpellDamageBonus")
-    class SpellDamageBonus {
-
-        @Test
-        @DisplayName("applies globally to matching spells regardless of controller")
-        void appliesGloballyToMatchingSpells() {
-            addPermanent(player1Id, createEnchantmentWithStaticEffect("Sulfuric Vapors",
-                    new AdditionalDamageFromColorSpellsEffect(Set.of(CardColor.RED), 1)));
-
-            Card redSpell = new Card();
-            redSpell.setName("Shock");
-            redSpell.setColors(List.of(CardColor.RED));
-            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, redSpell, player2Id,
-                    "Shock", new ArrayList<>(), null);
-
-            assertThat(gqs.getSpellDamageBonus(gd, entry)).isEqualTo(1);
-        }
-
-        @Test
-        @DisplayName("does not apply to activated abilities")
-        void doesNotApplyToActivatedAbilities() {
-            addPermanent(player1Id, createEnchantmentWithStaticEffect("Sulfuric Vapors",
-                    new AdditionalDamageFromColorSpellsEffect(Set.of(CardColor.RED), 1)));
-
-            Card redSource = new Card();
-            redSource.setName("Prodigal Pyromancer");
-            redSource.setColors(List.of(CardColor.RED));
-            StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, redSource, player2Id,
-                    "Prodigal Pyromancer's ability", new ArrayList<>(), null);
-
-            assertThat(gqs.getSpellDamageBonus(gd, entry)).isZero();
-        }
-    }
-
-    @Nested
-    @DisplayName("getDamageToPlayerColorSourceBonus")
-    class GetDamageToPlayerColorSourceBonus {
-
-        @Test
-        @DisplayName("Adds the bonus when the source shares a colour, whoever controls the permanent")
-        void addsBonusForMatchingSourceColor() {
-            addPermanent(player2Id, createCreatureWithStaticEffect("Tok-Tok, Volcano Born", 2, 2, CardColor.RED,
-                    new AdditionalDamageToPlayersFromColorSourcesEffect(Set.of(CardColor.RED), 1)));
-
-            assertThat(gqs.getDamageToPlayerColorSourceBonus(gd, Set.of(CardColor.RED))).isEqualTo(1);
-        }
-
-        @Test
-        @DisplayName("Adds nothing for a source of another colour or of no colour")
-        void addsNothingForNonMatchingSource() {
-            addPermanent(player1Id, createCreatureWithStaticEffect("Tok-Tok, Volcano Born", 2, 2, CardColor.RED,
-                    new AdditionalDamageToPlayersFromColorSourcesEffect(Set.of(CardColor.RED), 1)));
-
-            assertThat(gqs.getDamageToPlayerColorSourceBonus(gd, Set.of(CardColor.GREEN))).isZero();
-            assertThat(gqs.getDamageToPlayerColorSourceBonus(gd, Set.of())).isZero();
-            assertThat(gqs.getDamageToPlayerColorSourceBonus(gd, null)).isZero();
-        }
-
-        @Test
-        @DisplayName("Multiple instances stack additively")
-        void multipleInstancesStackAdditively() {
-            addPermanent(player1Id, createCreatureWithStaticEffect("Tok-Tok, Volcano Born", 2, 2, CardColor.RED,
-                    new AdditionalDamageToPlayersFromColorSourcesEffect(Set.of(CardColor.RED), 1)));
-            addPermanent(player2Id, createCreatureWithStaticEffect("Tok-Tok, Volcano Born", 2, 2, CardColor.RED,
-                    new AdditionalDamageToPlayersFromColorSourcesEffect(Set.of(CardColor.RED), 1)));
-
-            assertThat(gqs.getDamageToPlayerColorSourceBonus(gd, Set.of(CardColor.RED))).isEqualTo(2);
         }
     }
 }

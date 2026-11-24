@@ -40,19 +40,10 @@ class PermanentDamageModifiers extends PermanentDamageCandidateSource {
                         ? gameQueryService.getCombatSourceDamageBonuses(ctx.gameData(), ctx.damageSource())
                         : gameQueryService.getDealingSourceDamageBonuses(ctx.gameData(), ctx.entry(), ctx.damageSource())),
                 spellDamageReductionRule(),
-                bonusRule("NoncreatureSourceBonus", ctx -> ctx.combat() || isCreatureExplicitSource(ctx) ? List.of()
-                        : gameQueryService.getNoncreatureSourceDamageBonuses(ctx.gameData(), ctx.entry(), null, ctx.target())),
-                bonusRule("PlayersAndBattlesBonus", ctx ->
-                        gameQueryService.getPlayersAndBattlesDamageBonuses(ctx.gameData(), false, ctx.target())),
-                bonusRule("ToOpponentsBonus", ctx -> gameQueryService.getAdditionalDamageToOpponentsBonuses(
-                        ctx.gameData(), ctx.sourceControllerId(), ctx.sourceCard(), ctx.damageSource(),
-                        ctx.targetControllerId())),
-                bonusRule("ControllerToOpponentBonus", ctx -> gameQueryService.getControllerDamageToOpponentBonuses(
-                        ctx.gameData(), ctx.sourceControllerId(), ctx.targetControllerId(), ctx.combat(), true,
-                        ctx.damageSource() == null ? ctx.entry().getSourcePermanentId() : ctx.damageSource().getId())),
-                bonusRule("SpellToOpponentsBonus", ctx -> ctx.combat() ? List.of()
-                        : gameQueryService.getAdditionalSpellDamageToOpponentsBonuses(
-                        ctx.gameData(), ctx.entry(), ctx.targetControllerId())),
+                bonusRule("AdditionalDamageBonus", ctx -> gameQueryService.getAdditionalDamageBonuses(ctx.gameData(),
+                        gameQueryService.additionalDamageEvent(ctx.entry(), ctx.damageSource(), ctx.sourceCard(),
+                                ctx.sourceControllerId(), ctx.dealtByStackEntry(), ctx.combat(),
+                                ctx.targetControllerId(), ctx.target()))),
                 bonusRule("ControllerNoncombatBonus", ctx -> ctx.combat() ? List.of()
                         : gameQueryService.getControllerNoncombatDamageBonuses(ctx.gameData(), ctx.sourceControllerId())),
                 bonusRule("PerpetualNoncombatBonus", ctx -> ctx.combat() ? List.of()
@@ -94,15 +85,6 @@ class PermanentDamageModifiers extends PermanentDamageCandidateSource {
      * own doublings count too when it isn't the stack entry's source. Combat damage to a creature
      * also gets that creature's own doublings.
      */
-    /**
-     * A permanent that deals damage on its own behalf (a Dragon making Sarkhan's trigger deal damage) is a
-     * creature source, so noncreature-source damage bonuses from the stack entry's spell or ability don't apply.
-     */
-    private boolean isCreatureExplicitSource(PermanentDamageContext ctx) {
-        Permanent explicitSource = ctx.event().explicitSource();
-        return explicitSource != null && gameQueryService.isCreature(ctx.gameData(), explicitSource);
-    }
-
     private int sourceMultiplier(PermanentDamageContext ctx) {
         if (ctx.combat()) {
             int multiplier = gameQueryService.getCombatSourceDamageMultiplier(ctx.gameData(), ctx.damageSource(),

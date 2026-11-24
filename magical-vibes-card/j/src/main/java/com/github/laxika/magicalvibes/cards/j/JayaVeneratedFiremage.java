@@ -4,17 +4,20 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.AdditionalColorSourceDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "WAR", collectorNumber = "135")
 @CardRegistration(set = "SLD", collectorNumber = "513")
 public class JayaVeneratedFiremage extends Card {
 
     public JayaVeneratedFiremage() {
-        addStaticEffect(new AdditionalColorSourceDamageEffect(1, CardColor.RED));
+        addStaticEffect(new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(1).anotherSource()
+                .fromSources(new PermanentColorInPredicate(Set.of(CardColor.RED))).toAnyPermanentOrPlayer());
 
         addActivatedAbility(new ActivatedAbility(
                 -2,

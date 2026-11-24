@@ -59,10 +59,9 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNam
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityManaColorPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityTimingEffect;
-import com.github.laxika.magicalvibes.model.effect.AdditionalColorSourceDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCreatureDeathTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalSpellCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.AllCardsAreColorlessEffect;
@@ -172,7 +171,6 @@ import com.github.laxika.magicalvibes.model.effect.CombatTaxKind;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesMatchingCantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledNonlandPermanentsAreColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerDamageMultiplyingEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerOpponentDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerRecipientDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterLimitEffect;
@@ -183,7 +181,6 @@ import com.github.laxika.magicalvibes.model.effect.CreatureDyingDontCauseTrigger
 import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewAndSaddlePowerModifierEffect;
 import com.github.laxika.magicalvibes.model.effect.DamagePreventionBySelfEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageToPlayersAndBattlesBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleCombatDamageToCreaturesThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageToOpponentsAndTheirPermanentsEffect;
@@ -249,8 +246,6 @@ import com.github.laxika.magicalvibes.model.effect.MiracleGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.HalveTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.NoncreatureSourceDamageBonusEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentEffectsCantCauseDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentEffectsCantCauseSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentLifeGainBecomesLifeLossEffect;
@@ -301,11 +296,8 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCreatureOutsideBattlefi
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SharedColorDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceDamageMultiplyingEffect;
-import com.github.laxika.magicalvibes.model.effect.SourceOpponentDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.SubtypeSourceDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
 import com.github.laxika.magicalvibes.model.effect.TargetedSpellDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
@@ -326,6 +318,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -12146,201 +12140,169 @@ public class GameQueryService {
     }
 
     /**
-     * Returns the additive damage bonus from red or artifact sources controlled by the given
-     * player when they would damage the given opponent. The bonus is summed across matching static
-     * effects controlled by that source's controller.
-     */
-    public int getAdditionalDamageToOpponentsBonus(GameData gameData, UUID sourceControllerId,
-                                                   Card sourceCard, Permanent sourcePermanent,
-                                                   UUID recipientPlayerId) {
-        return totalBonus(getAdditionalDamageToOpponentsBonuses(
-                gameData, sourceControllerId, sourceCard, sourcePermanent, recipientPlayerId));
-    }
-
-    /** {@link #getAdditionalDamageToOpponentsBonus}, one entry per effect. */
-    public List<DamageBonus> getAdditionalDamageToOpponentsBonuses(GameData gameData, UUID sourceControllerId,
-                                                                   Card sourceCard, Permanent sourcePermanent,
-                                                                   UUID recipientPlayerId) {
-        if (sourceControllerId == null || recipientPlayerId == null
-                || sourceControllerId.equals(recipientPlayerId)) {
-            return List.of();
-        }
-
-        Set<CardColor> sourceColors;
-        boolean artifactSource;
-        if (sourcePermanent != null) {
-            sourceColors = getDamageSourceColors(gameData, getEffectiveColors(gameData, sourcePermanent));
-            artifactSource = isArtifact(gameData, sourcePermanent);
-        } else if (sourceCard != null) {
-            sourceColors = getDamageSourceColors(gameData, getEffectiveCardColors(gameData, sourceCard));
-            artifactSource = sourceCard.hasType(CardType.ARTIFACT);
-        } else {
-            return List.of();
-        }
-        Set<CardColor> effectiveSourceColors = sourceColors;
-        List<DamageBonus> bonuses = new ArrayList<>();
-        gameData.forEachPermanent((controllerId, permanent) -> {
-            if (!sourceControllerId.equals(controllerId)) return;
-            if (gameData.losesAllAbilitiesByEffect(permanent)
-                    || !printsStaticEffect(gameData, permanent, SourceOpponentDamageBonusEffect.class)
-                    || computeStaticBonus(gameData, permanent).losesAllAbilities()) return;
-            forEachStaticEffect(permanent, (effect, instance) -> {
-                if (effect instanceof SourceOpponentDamageBonusEffect additional
-                        && additional.appliesTo(effectiveSourceColors, artifactSource)) {
-                    bonuses.add(new DamageBonus(instance, FaceDownVisibility.publicName(gameData, permanent), additional.amount()));
-                }
-            });
-        });
-        return bonuses;
-    }
-
-    /**
-     * Returns the additive damage bonus from static effects controlled by {@code sourceControllerId}
-     * when that controller's source would deal damage to {@code recipientPlayerId}.
-     */
-    public int getControllerDamageToOpponentBonus(GameData gameData, UUID sourceControllerId,
-                                                   UUID recipientPlayerId) {
-        return getControllerDamageToOpponentBonus(
-                gameData, sourceControllerId, recipientPlayerId, false, false, null);
-    }
-
-    public int getControllerDamageToOpponentBonus(GameData gameData, UUID sourceControllerId,
-                                                   UUID recipientPlayerId, boolean combatDamage) {
-        return getControllerDamageToOpponentBonus(
-                gameData, sourceControllerId, recipientPlayerId, combatDamage, false, null);
-    }
-
-    public int getControllerDamageToOpponentBonus(GameData gameData, UUID sourceControllerId,
-                                                   UUID recipientPlayerId, boolean combatDamage,
-                                                   UUID damageSourcePermanentId) {
-        return getControllerDamageToOpponentBonus(gameData, sourceControllerId, recipientPlayerId,
-                combatDamage, false, damageSourcePermanentId);
-    }
-
-    public int getControllerDamageToOpponentBonus(GameData gameData, UUID sourceControllerId,
-                                                   UUID recipientPlayerId, boolean combatDamage,
-                                                   boolean opponentPermanent) {
-        return getControllerDamageToOpponentBonus(gameData, sourceControllerId, recipientPlayerId,
-                combatDamage, opponentPermanent, null);
-    }
-
-    public int getControllerDamageToOpponentBonus(GameData gameData, UUID sourceControllerId,
-                                                   UUID recipientPlayerId, boolean combatDamage,
-                                                   boolean opponentPermanent, UUID damageSourcePermanentId) {
-        return totalBonus(getControllerDamageToOpponentBonuses(gameData, sourceControllerId, recipientPlayerId,
-                combatDamage, opponentPermanent, damageSourcePermanentId));
-    }
-
-    /** {@link #getControllerDamageToOpponentBonus}, one entry per effect. */
-    public List<DamageBonus> getControllerDamageToOpponentBonuses(GameData gameData, UUID sourceControllerId,
-                                                                  UUID recipientPlayerId, boolean combatDamage,
-                                                                  boolean opponentPermanent,
-                                                                  UUID damageSourcePermanentId) {
-        if (sourceControllerId == null || recipientPlayerId == null
-                || sourceControllerId.equals(recipientPlayerId)) {
-            return List.of();
-        }
-
-        List<DamageBonus> bonuses = new ArrayList<>();
-        gameData.forEachPermanent((controllerId, permanent) -> {
-            if (!sourceControllerId.equals(controllerId)
-                    || !printsStaticEffect(gameData, permanent, ControllerOpponentDamageBonusEffect.class,
-                    ConditionalEffect.class)
-                    || hasLostPrintedAbilities(gameData, permanent)) return;
-            forEachStaticEffect(permanent, (effect, instance) -> {
-                int amount = getControllerDamageToOpponentBonus(
-                        gameData, effect, permanent, controllerId, combatDamage,
-                        opponentPermanent, damageSourcePermanentId);
-                if (amount != 0) {
-                    bonuses.add(new DamageBonus(instance, FaceDownVisibility.publicName(gameData, permanent), amount));
-                }
-            });
-        });
-        return bonuses;
-    }
-
-    /**
-     * Returns the additive damage bonus from static effects that apply to spell damage dealt to an
-     * opponent of the effect controller or to a permanent that opponent controls.
-     */
-    public int getAdditionalSpellDamageToOpponentsBonus(GameData gameData, StackEntry entry,
-                                                        UUID recipientControllerId) {
-        return totalBonus(getAdditionalSpellDamageToOpponentsBonuses(gameData, entry, recipientControllerId));
-    }
-
-    /** {@link #getAdditionalSpellDamageToOpponentsBonus}, one entry per effect. */
-    public List<DamageBonus> getAdditionalSpellDamageToOpponentsBonuses(GameData gameData, StackEntry entry,
-                                                                        UUID recipientControllerId) {
-        if (entry == null || recipientControllerId == null || !isSpellStackEntry(entry.getEntryType())) {
-            return List.of();
-        }
-
-        List<DamageBonus> bonuses = new ArrayList<>();
-        gameData.forEachPermanent((controllerId, permanent) -> {
-            if (recipientControllerId.equals(controllerId)) return;
-            if (!printsStaticEffect(gameData, permanent, OpponentDamageBonusEffect.class)
-                    || hasLostAllAbilities(gameData, permanent)) return;
-            forEachStaticEffect(permanent, (effect, instance) -> {
-                if (effect instanceof OpponentDamageBonusEffect damageBonus) {
-                    bonuses.add(new DamageBonus(instance, FaceDownVisibility.publicName(gameData, permanent), damageBonus.amount()));
-                }
-            });
-        });
-        return bonuses;
-    }
-
-    private int getControllerDamageToOpponentBonus(GameData gameData, CardEffect effect,
-                                                     Permanent source, UUID controllerId,
-                                                     boolean combatDamage, boolean opponentPermanent,
-                                                     UUID damageSourcePermanentId) {
-        if (effect instanceof ControllerOpponentDamageBonusEffect damageBonus
-                && (!combatDamage || damageBonus.appliesToCombatDamage())
-                && (!opponentPermanent || damageBonus.appliesToOpponentPermanents())
-                && (!damageBonus.excludesSource() || damageSourcePermanentId == null
-                || !source.getId().equals(damageSourcePermanentId))) {
-            return amountEvaluationService.evaluate(gameData, damageBonus.amount(),
-                    AmountContext.forStaticEffect(source, controllerId));
-        }
-        if (effect instanceof ConditionalEffect conditional
-                && conditionEvaluationService.isMet(gameData, conditional.condition(),
-                ConditionContext.forStaticEffect(source, controllerId))) {
-            return getControllerDamageToOpponentBonus(
-                    gameData, conditional.wrapped(), source, controllerId, combatDamage,
-                    opponentPermanent, damageSourcePermanentId);
-        }
-        return 0;
-    }
-
-    /**
-     * Returns the flat bonus added to damage a source with any of {@code sourceColors} would deal to a
-     * player, from {@link AdditionalDamageToPlayersFromColorSourcesEffect} permanents anywhere on the
-     * battlefield (Tok-Tok, Volcano Born). Multiple instances stack additively. Returns {@code 0} when
-     * no such permanent is on the battlefield or the source shares none of their colours.
+     * One damage event as the "deals that much damage plus N" bonuses
+     * ({@link AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect}) see it.
      *
-     * <p>Source-colour scoped, so it is applied at the two player damage entry points, where the source
-     * colours have already been resolved through {@link #getDamageSourceColor} (Ghostly Flame).
+     * @param sourceControllerId the damage source's controller
+     * @param sourcePermanent    the permanent dealing the damage, on the battlefield or as it last existed (CR 113.7a),
+     *                           or {@code null} when a card is the source (a spell)
+     * @param sourceCard         the source's card, judged when no permanent is the source
+     * @param sourcePermanentId  the dealing permanent's id, for "another source"
+     * @param spell              the damage is dealt by a spell on the stack itself, not by an object it has deal damage
+     * @param combat             combat damage
+     * @param recipientPlayerId  the damaged player, or the damaged permanent's controller
+     * @param recipientPermanent the damaged permanent, or {@code null} when a player is dealt the damage
      */
-    public int getDamageToPlayerColorSourceBonus(GameData gameData, Set<CardColor> sourceColors) {
-        return totalBonus(getDamageToPlayerColorSourceBonuses(gameData, sourceColors));
+    public record AdditionalDamageEvent(UUID sourceControllerId, Permanent sourcePermanent, Card sourceCard,
+                                        UUID sourcePermanentId, boolean spell, boolean combat,
+                                        UUID recipientPlayerId, Permanent recipientPermanent) {
     }
 
-    /** {@link #getDamageToPlayerColorSourceBonus}, one entry per effect. */
-    public List<DamageBonus> getDamageToPlayerColorSourceBonuses(GameData gameData, Set<CardColor> sourceColors) {
-        if (sourceColors == null || sourceColors.isEmpty()) return List.of();
+    /**
+     * The {@link AdditionalDamageEvent} of damage caused by {@code entry}: {@code dealingPermanent} deals it (null:
+     * the entry's source permanent as it last existed, if it left the battlefield and still deals the damage, else
+     * {@code sourceCard}); {@code dealtByEntry} when the spell or ability itself deals it rather than a fighting or
+     * biting permanent.
+     */
+    public AdditionalDamageEvent additionalDamageEvent(StackEntry entry, Permanent dealingPermanent, Card sourceCard,
+                                                       UUID sourceControllerId, boolean dealtByEntry, boolean combat,
+                                                       UUID recipientPlayerId, Permanent recipientPermanent) {
+        Permanent source = dealingPermanent;
+        if (source == null && dealtByEntry && entry != null && entry.getDamageSourceCard() == null
+                && entry.getSourcePermanentSnapshot() != null && entry.getSourcePermanentId() != null
+                && entry.getSourcePermanentId().equals(entry.getSourcePermanentSnapshot().getId())) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        UUID sourcePermanentId = source != null ? source.getId() : entry != null ? entry.getSourcePermanentId() : null;
+        boolean spell = dealtByEntry && !combat && entry != null && isSpellStackEntry(entry.getEntryType());
+        return new AdditionalDamageEvent(sourceControllerId, source, sourceCard, sourcePermanentId, spell, combat,
+                recipientPlayerId, recipientPermanent);
+    }
 
+    /**
+     * The "deals that much damage plus N" bonuses ({@link AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect})
+     * that apply to {@code event}, one per effect: the static abilities of permanents (none of a permanent that lost
+     * its abilities or is face down, CR 613.1f, 708.2a; a conditional one while its condition holds) and the copies
+     * floated on a player, whose "you" is that player. Each is its own replacement effect, which the damaged player
+     * or the damaged permanent's controller orders (CR 616.1).
+     */
+    public List<DamageBonus> getAdditionalDamageBonuses(GameData gameData, AdditionalDamageEvent event) {
+        if (event == null || event.recipientPlayerId() == null) {
+            return List.of();
+        }
+        List<Set<CardColor>> damageColors = new ArrayList<>(1);
         List<DamageBonus> bonuses = new ArrayList<>();
-        gameData.forEachPermanent((controllerId, p) -> {
-            if (!printsStaticEffect(gameData, p, AdditionalDamageToPlayersFromColorSourcesEffect.class)
-                    || hasLostPrintedAbilities(gameData, p)) return;
-            forEachStaticEffect(p, (effect, instance) -> {
-                if (effect instanceof AdditionalDamageToPlayersFromColorSourcesEffect e
-                        && !Collections.disjoint(e.colors(), sourceColors)) {
-                    bonuses.add(new DamageBonus(instance, FaceDownVisibility.publicName(gameData, p), e.amount()));
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            if (!printsAdditionalDamage(LayerSystemService.currentCard(gameData, permanent).getStaticEffects())) {
+                return;
+            }
+            List<CardEffect> active = getActiveStaticEffects(gameData, permanent, controllerId);
+            for (int i = 0; i < active.size(); i++) {
+                if (active.get(i) instanceof AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect bonus
+                        && addsDamage(gameData, bonus, permanent, controllerId, event, damageColors)) {
+                    int amount = amountEvaluationService.evaluate(gameData, bonus.amount(),
+                            AmountContext.forStaticEffect(permanent, controllerId));
+                    if (amount != 0) {
+                        bonuses.add(new DamageBonus(permanent.getId() + "/" + i,
+                                FaceDownVisibility.publicName(gameData, permanent), amount));
+                    }
                 }
-            });
+            }
         });
+        List<FloatingContinuousEffect> floated;
+        synchronized (gameData.floatingEffects) {
+            floated = gameData.floatingEffects.stream()
+                    .filter(floating -> floating.effect()
+                            instanceof AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect)
+                    .toList();
+        }
+        for (FloatingContinuousEffect floating : floated) {
+            var bonus = (AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect) floating.effect();
+            UUID you = floating.affectedPlayerId() != null ? floating.affectedPlayerId() : floating.controllerId();
+            if (addsDamage(gameData, bonus, null, you, event, damageColors)) {
+                int amount = amountEvaluationService.evaluate(gameData, bonus.amount(),
+                        AmountContext.forStaticEffect(null, you));
+                if (amount != 0) {
+                    bonuses.add(new DamageBonus(String.valueOf(floating.id()), floating.sourceCardName(), amount));
+                }
+            }
+        }
         return bonuses;
     }
+
+    private static boolean printsAdditionalDamage(List<CardEffect> effects) {
+        for (CardEffect effect : effects) {
+            if (effect instanceof AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect
+                    || effect instanceof ConditionalEffect conditional
+                    && printsAdditionalDamage(List.of(conditional.wrapped()))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Whether {@code bonus}, of {@code carrier} (null for a floated copy) with {@code you} its controller, applies to
+     * {@code event}. {@code damageColors} memoizes the source's colours for damage.
+     */
+    private boolean addsDamage(GameData gameData, AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect bonus,
+                               Permanent carrier, UUID you, AdditionalDamageEvent event,
+                               List<Set<CardColor>> damageColors) {
+        if (bonus.noncombatOnly() && event.combat()
+                || bonus.spellsOnly() && !event.spell()
+                || bonus.excludesSource() && carrier != null && carrier.getId().equals(event.sourcePermanentId())
+                || !SubjectResolutionService.namesPlayer(carrier, you, event.sourceControllerId(),
+                bonus.sourceControllers())) {
+            return false;
+        }
+        if (event.recipientPermanent() == null) {
+            if (bonus.players() == null
+                    || !SubjectResolutionService.namesPlayer(carrier, you, event.recipientPlayerId(), bonus.players())) {
+                return false;
+            }
+        } else if (!(bonus.permanents() instanceof PermanentSubject.ControlledBy their)
+                || !SubjectResolutionService.namesPlayer(carrier, you, event.recipientPlayerId(), their.players())
+                || !predicateEvaluationService.matchesPermanentPredicate(event.recipientPermanent(), their.filter(),
+                FilterContext.of(gameData).withSourceControllerId(you))) {
+            return false;
+        }
+        if (bonus.sourceFilter() == null) {
+            return true;
+        }
+        if (damageColors.isEmpty()) {
+            damageColors.add(getDamageSourceColors(gameData, event.sourcePermanent() != null
+                    ? getEffectiveColors(gameData, event.sourcePermanent())
+                    : getEffectiveCardColors(gameData, event.sourceCard())));
+        }
+        PermanentPredicate filter = withDamageColors(bonus.sourceFilter(), damageColors.getFirst());
+        if (event.sourcePermanent() != null) {
+            return predicateEvaluationService.matchesPermanentPredicate(event.sourcePermanent(), filter,
+                    FilterContext.of(gameData));
+        }
+        return event.sourceCard() != null
+                && predicateEvaluationService.matchesPermanentPredicate(new Permanent(event.sourceCard()), filter, null);
+    }
+
+    /**
+     * {@code filter} with its colour leaves judged on {@code colors}, the colours the source has as it deals damage
+     * (Ghostly Flame makes a black or red source colourless for damage; a spell's colours are its own, CR 609.7b).
+     */
+    private static PermanentPredicate withDamageColors(PermanentPredicate filter, Set<CardColor> colors) {
+        return switch (filter) {
+            case PermanentColorInPredicate colorIn ->
+                    Collections.disjoint(colorIn.colors(), colors) ? NO_PERMANENT : new PermanentTruePredicate();
+            case PermanentIsColorlessPredicate ignored ->
+                    colors.isEmpty() ? new PermanentTruePredicate() : NO_PERMANENT;
+            case PermanentAllOfPredicate all -> new PermanentAllOfPredicate(all.predicates().stream()
+                    .map(predicate -> withDamageColors(predicate, colors)).toList());
+            case PermanentAnyOfPredicate any -> new PermanentAnyOfPredicate(any.predicates().stream()
+                    .map(predicate -> withDamageColors(predicate, colors)).toList());
+            case PermanentNotPredicate not -> new PermanentNotPredicate(withDamageColors(not.predicate(), colors));
+            default -> filter;
+        };
+    }
+
+    private static final PermanentPredicate NO_PERMANENT = new PermanentNotPredicate(new PermanentTruePredicate());
 
     /**
      * True if {@code playerId} is enchanted by a Curse carrying
@@ -12688,7 +12650,8 @@ public class GameQueryService {
 
     /**
      * The "deals that much damage plus N" bonuses for noncombat damage {@code entry} deals, whoever
-     * is dealt it: color and subtype source bonuses, the controller's bonuses and spell bonuses.
+     * is dealt it: the turn's colour and controller bonuses and the controller's Pyromancer's Gauntlet-style bonuses;
+     * the static "plus N" abilities are {@link #getAdditionalDamageBonuses}, judged with the recipient.
      */
     public int getDealingSourceDamageBonus(GameData gameData, StackEntry entry) {
         return totalBonus(getDealingSourceDamageBonuses(gameData, entry));
@@ -12711,17 +12674,12 @@ public class GameQueryService {
         List<DamageBonus> bonuses = new ArrayList<>();
         bonuses.addAll(getColorSourceDamageBonusesThisTurn(gameData, controllerId,
                 damageSourceColors(gameData, source, entry.getCard())));
-        bonuses.addAll(getColorSourcePermanentDamageBonuses(gameData, controllerId,
-                damageSourceColors(gameData, source, entry.getEffectiveDamageSourceCard()),
-                source != null ? source.getId() : entry.getSourcePermanentId()));
-        bonuses.addAll(getSubtypeSourceDamageBonuses(gameData, controllerId, entry.getEffectiveDamageSourceCard(), source));
         bonuses.addAll(getControllerDamageBonusesThisTurn(gameData, controllerId));
         boolean dealtByEntry = damageSource == null
                 || entry.getSourcePermanentId() != null && damageSource.getId().equals(entry.getSourcePermanentId());
         if (dealtByEntry) {
             bonuses.addAll(getControllerDamageBonuses(gameData, entry, controllerId,
                     source != null ? source.getId() : entry.getSourcePermanentId(), false));
-            bonuses.addAll(getSpellDamageBonuses(gameData, entry));
         } else {
             bonuses.addAll(getControllerDamageBonuses(gameData, entry, controllerId,
                     source != null ? source.getId() : null, true));
@@ -12750,39 +12708,6 @@ public class GameQueryService {
         UUID controllerId = dealingSourceController(gameData, entry, source);
         return getControllerDamageMultiplier(gameData, controllerId, entry, false, source)
                 * getPermanentDamageMultiplier(gameData, entry != null ? entry.getSourcePermanentId() : null);
-    }
-
-    /**
-     * Returns the additive damage bonus from static effects that modify damage dealt by matching
-     * colored spells. These effects are global to the game and therefore do not depend on either
-     * the spell's controller or the effect's controller.
-     */
-    int getSpellDamageBonus(GameData gameData, StackEntry entry) {
-        return totalBonus(getSpellDamageBonuses(gameData, entry));
-    }
-
-    private List<DamageBonus> getSpellDamageBonuses(GameData gameData, StackEntry entry) {
-        if (entry == null || entry.getCard() == null || !isSpellEntry(entry.getEntryType())) {
-            return List.of();
-        }
-
-        Set<CardColor> spellColors = EnumSet.noneOf(CardColor.class);
-        spellColors.addAll(entry.getCard().getColors());
-        if (entry.getCard().getColor() != null) {
-            spellColors.add(entry.getCard().getColor());
-        }
-        if (spellColors.isEmpty()) {
-            return List.of();
-        }
-
-        List<DamageBonus> bonuses = new ArrayList<>();
-        gameData.forEachPermanent((playerId, permanent) -> forEachStaticEffect(permanent, (effect, instance) -> {
-            if (effect instanceof SpellDamageBonusEffect spellDamageBonus
-                    && spellDamageBonus.colors().stream().anyMatch(spellColors::contains)) {
-                bonuses.add(new DamageBonus(instance, FaceDownVisibility.publicName(gameData, permanent), spellDamageBonus.amount()));
-            }
-        }));
-        return bonuses;
     }
 
     private static boolean isSpellEntry(StackEntryType entryType) {
@@ -12833,68 +12758,6 @@ public class GameQueryService {
             });
         });
         return bonuses;
-    }
-
-    public int getNoncreatureSourceDamageBonus(GameData gameData, StackEntry entry,
-                                                UUID recipientPlayerId, Permanent recipientPermanent) {
-        return totalBonus(getNoncreatureSourceDamageBonuses(gameData, entry, recipientPlayerId, recipientPermanent));
-    }
-
-    /** {@link #getNoncreatureSourceDamageBonus}, one entry per effect. */
-    public List<DamageBonus> getNoncreatureSourceDamageBonuses(GameData gameData, StackEntry entry,
-                                                               UUID recipientPlayerId, Permanent recipientPermanent) {
-        if (entry == null || entry.getControllerId() == null) {
-            return List.of();
-        }
-        Permanent sourcePermanent = entry.getSourcePermanentId() == null
-                ? null : findPermanentById(gameData, entry.getSourcePermanentId());
-        boolean creatureSource = sourcePermanent != null
-                ? isCreature(gameData, sourcePermanent)
-                : entry.getEffectiveDamageSourceCard() != null
-                && entry.getEffectiveDamageSourceCard().hasType(CardType.CREATURE);
-        if (creatureSource) {
-            return List.of();
-        }
-        boolean eligibleRecipient = recipientPermanent != null
-                ? isCreature(gameData, recipientPermanent) || isBattle(gameData, recipientPermanent)
-                : recipientPlayerId != null && !entry.getControllerId().equals(recipientPlayerId);
-        if (!eligibleRecipient) {
-            return List.of();
-        }
-
-        List<DamageBonus> bonuses = new ArrayList<>();
-        gameData.forEachPermanent((controllerId, permanent) -> {
-            if (!controllerId.equals(entry.getControllerId())) {
-                return;
-            }
-            forEachStaticEffect(permanent, (effect, instance) -> {
-                if (effect instanceof NoncreatureSourceDamageBonusEffect damageBonus) {
-                    bonuses.add(new DamageBonus(instance, FaceDownVisibility.publicName(gameData, permanent), damageBonus.amount()));
-                }
-            });
-        });
-        return bonuses;
-    }
-
-    public int getPlayersAndBattlesDamageBonus(GameData gameData, boolean playerRecipient,
-                                                Permanent recipientPermanent) {
-        return totalBonus(getPlayersAndBattlesDamageBonuses(gameData, playerRecipient, recipientPermanent));
-    }
-
-    /** {@link #getPlayersAndBattlesDamageBonus}, one entry per floating effect. */
-    public List<DamageBonus> getPlayersAndBattlesDamageBonuses(GameData gameData, boolean playerRecipient,
-                                                               Permanent recipientPermanent) {
-        if (!playerRecipient
-                && (recipientPermanent == null || !isBattle(gameData, recipientPermanent))) {
-            return List.of();
-        }
-        synchronized (gameData.floatingEffects) {
-            return gameData.floatingEffects.stream()
-                    .filter(floating -> floating.effect() instanceof DamageToPlayersAndBattlesBonusEffect)
-                    .map(floating -> new DamageBonus(String.valueOf(floating.id()), floating.sourceCardName(),
-                            ((DamageToPlayersAndBattlesBonusEffect) floating.effect()).amount()))
-                    .toList();
-        }
     }
 
     /**
@@ -13120,9 +12983,6 @@ public class GameQueryService {
         List<DamageBonus> bonuses = new ArrayList<>();
         bonuses.addAll(getColorSourceDamageBonusesThisTurn(gameData, controllerId,
                 damageSourceColors(gameData, source, source.getCard())));
-        bonuses.addAll(getColorSourcePermanentDamageBonuses(gameData, controllerId,
-                damageSourceColors(gameData, source, source.getCard()), source.getId()));
-        bonuses.addAll(getSubtypeSourceDamageBonuses(gameData, controllerId, source.getCard(), source));
         bonuses.addAll(getControllerDamageBonusesThisTurn(gameData, controllerId));
         return bonuses;
     }
@@ -13171,30 +13031,6 @@ public class GameQueryService {
             }
         }
         return multiplier;
-    }
-
-    private List<DamageBonus> getSubtypeSourceDamageBonuses(GameData gameData, UUID controllerId,
-                                                            Card sourceCard, Permanent source) {
-        if (controllerId == null || sourceCard == null) {
-            return List.of();
-        }
-        List<DamageBonus> bonuses = new ArrayList<>();
-        gameData.forEachPermanent((playerId, permanent) -> {
-            if (!playerId.equals(controllerId) || permanent.isFaceDown()
-                    || !printsStaticEffect(gameData, permanent, SubtypeSourceDamageBonusEffect.class)
-                    || hasLostAllAbilities(gameData, permanent)) {
-                return;
-            }
-            forEachStaticEffect(permanent, (effect, instance) -> {
-                if (effect instanceof SubtypeSourceDamageBonusEffect subtypeBonus
-                        && subtypeBonus.subtypes().stream().anyMatch(subtype -> source != null
-                                ? hasEffectiveSubtype(gameData, source, subtype)
-                                : sourceCard.getSubtypes().contains(subtype))) {
-                    bonuses.add(new DamageBonus(instance, FaceDownVisibility.publicName(gameData, permanent), subtypeBonus.amount()));
-                }
-            });
-        });
-        return bonuses;
     }
 
     /**
@@ -13263,40 +13099,6 @@ public class GameQueryService {
         }
         return grantBonuses("perpetual", gameData.perpetualNoncombatDamageBonuses.get(
                 entry.getEffectiveDamageSourceCard().getId()), null);
-    }
-
-    /**
-     * Returns the additive damage bonus from {@link AdditionalColorSourceDamageEffect} permanents
-     * controlled by the damage source's controller (e.g. Embermaw Hellion). The bonus applies to
-     * any source of the matching color â€” spell, ability or combat damage â€” except the permanent
-     * carrying the effect itself, which {@code sourcePermanentId} identifies ("another red source").
-     * Multiple instances stack additively.
-     */
-    int getColorSourcePermanentDamageBonus(GameData gameData, UUID controllerId,
-                                           List<CardColor> sourceColors, UUID sourcePermanentId) {
-        return totalBonus(getColorSourcePermanentDamageBonuses(gameData, controllerId, sourceColors, sourcePermanentId));
-    }
-
-    private List<DamageBonus> getColorSourcePermanentDamageBonuses(GameData gameData, UUID controllerId,
-                                                                   List<CardColor> sourceColors,
-                                                                   UUID sourcePermanentId) {
-        if (controllerId == null || sourceColors == null || sourceColors.isEmpty()) {
-            return List.of();
-        }
-        List<DamageBonus> bonuses = new ArrayList<>();
-        gameData.forEachPermanent((playerId, p) -> {
-            if (!playerId.equals(controllerId)) return;
-            if (p.getId().equals(sourcePermanentId)
-                    || !printsStaticEffect(gameData, p, AdditionalColorSourceDamageEffect.class)
-                    || hasLostAllAbilities(gameData, p)) return;
-            forEachStaticEffect(p, (effect, instance) -> {
-                if (effect instanceof AdditionalColorSourceDamageEffect acsde
-                        && sourceColors.contains(acsde.color())) {
-                    bonuses.add(new DamageBonus(instance, FaceDownVisibility.publicName(gameData, p), acsde.amount()));
-                }
-            });
-        });
-        return bonuses;
     }
 
     /**

@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.d.DazzlingLights;
 import com.github.laxika.magicalvibes.cards.d.DimirGuildgate;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.o.OrneryGoblin;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EnhancedSurveillance.class, DazzlingLights.class, OrneryGoblin.class, DimirGuildgate.class})
+@CardUsed({EnhancedSurveillance.class, DazzlingLights.class, OrneryGoblin.class, DimirGuildgate.class, Opalescence.class, TurnToFrog.class})
 class EnhancedSurveillanceTest extends BaseCardTest {
 
     @Test
@@ -207,5 +209,28 @@ class EnhancedSurveillanceTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(libraryCard, ownGraveyardCard);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentGraveyardCard);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(surveillance);
+    }
+
+    @Test
+    @DisplayName("An Enhanced Surveillance that has lost its abilities adds no cards to a surveil")
+    void lostAbilitiesAddNoCards() {
+        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new OrneryGoblin());
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent surveillance = harness.addToBattlefieldAndReturn(player1, new EnhancedSurveillance());
+        Card first = new OrneryGoblin();
+        Card second = new DimirGuildgate();
+        Card third = new OrneryGoblin();
+        harness.setLibrary(player1, List.of(first, second, third));
+        harness.setHand(player1, List.of(new TurnToFrog(), new DazzlingLights()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, surveillance.getId());
+        harness.castAndResolveInstant(player1, 0, goblin.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        PendingInteraction.Scry surveil = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(surveil).isNotNull();
+        assertThat(surveil.cards()).containsExactly(first, second);
     }
 }

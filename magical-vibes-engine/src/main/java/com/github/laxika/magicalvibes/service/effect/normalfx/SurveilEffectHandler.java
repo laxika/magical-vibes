@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -29,6 +30,7 @@ public class SurveilEffectHandler implements NormalEffectHandlerBean {
     private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -107,17 +109,15 @@ public class SurveilEffectHandler implements NormalEffectHandlerBean {
         ));
     }
 
+    /**
+     * The "look at an additional N cards each time you surveil" abilities of the surveilling player's permanents
+     * (Enhanced Surveillance); none of a permanent that lost its abilities or is face down (CR 613.1f, 708.2a).
+     */
     private List<Integer> additionalSurveilCounts(GameData gameData, UUID controllerId) {
         List<Integer> counts = new ArrayList<>();
-        List<com.github.laxika.magicalvibes.model.Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return counts;
-        }
-        for (var permanent : battlefield) {
-            for (CardEffect staticEffect : permanent.getCard().getStaticEffects()) {
-                if (staticEffect instanceof AdditionalSurveilCardsEffect additional && additional.amount() > 0) {
-                    counts.add(additional.amount());
-                }
+        for (var active : gameQueryService.activeStaticEffects(gameData, controllerId, AdditionalSurveilCardsEffect.class)) {
+            if (active.effect().amount() > 0) {
+                counts.add(active.effect().amount());
             }
         }
         return counts;

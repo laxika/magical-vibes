@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
+import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
 import java.util.Set;
 
@@ -18,6 +20,7 @@ public class TokTokVolcanoBorn extends Card {
 
         // "If a red source would deal damage to a player, it deals that much damage plus 1 to that
         // player instead." - every player is affected, whoever controls the source.
-        addStaticEffect(new AdditionalDamageToPlayersFromColorSourcesEffect(Set.of(CardColor.RED), 1));
+        addStaticEffect(new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(1).fromAnyonesSources()
+                .fromSources(new PermanentColorInPredicate(Set.of(CardColor.RED))).to(Subjects.eachPlayer(), null));
     }
 }

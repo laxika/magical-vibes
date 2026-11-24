@@ -19,7 +19,7 @@ import java.util.function.ToIntFunction;
 /**
  * Replacement effects that change how much damage a player is dealt: global multipliers such as
  * Furnace of Rath, Curse of Bloodletting and other recipient multipliers, the "that much damage
- * plus N" bonuses (Torbran-style), Benevolent Unicorn's reduction, and the halving, capping and
+ * plus N" bonuses (Torbran, one option per effect), Benevolent Unicorn's reduction, and the halving, capping and
  * Ojer Axonil replacements. They only rewrite the amount, so they are pure; when they meet each
  * other or a prevention shield, the order is the affected player's (CR 616.1).
  */
@@ -46,23 +46,13 @@ class PlayerDamageModifiers extends PlayerDamageCandidateSource {
                         ctx.gameData(), ctx.playerId(), ctx.sourceControllerId(), true)
                         : gameQueryService.getDamageToRecipientMultiplier(
                         ctx.gameData(), ctx.playerId(), ctx.sourceControllerId())));
-        all.add(bonusRule("NoncreatureSourceBonus", ctx -> gameQueryService.getNoncreatureSourceDamageBonuses(
-                ctx.gameData(), ctx.entry(), ctx.playerId(), null)));
-        all.add(bonusRule("PlayersAndBattlesBonus", ctx ->
-                gameQueryService.getPlayersAndBattlesDamageBonuses(ctx.gameData(), true, null)));
-        all.add(bonusRule("ControllerToOpponentBonus", ctx -> gameQueryService.getControllerDamageToOpponentBonuses(
-                ctx.gameData(), ctx.sourceControllerId(), ctx.playerId(), ctx.combat(), false,
-                ctx.sourcePermanent() == null ? ctx.entry().getSourcePermanentId() : ctx.sourcePermanent().getId())));
-        all.add(bonusRule("SpellToOpponentsBonus", ctx -> gameQueryService.getAdditionalSpellDamageToOpponentsBonuses(
-                ctx.gameData(), ctx.entry(), ctx.playerId())));
+        all.add(bonusRule("AdditionalDamageBonus", ctx -> gameQueryService.getAdditionalDamageBonuses(ctx.gameData(),
+                gameQueryService.additionalDamageEvent(ctx.entry(), ctx.sourcePermanent(), ctx.source(),
+                        ctx.sourceControllerId(), true, ctx.combat(), ctx.playerId(), null))));
         all.add(bonusRule("ControllerNoncombatBonus", ctx -> ctx.combat() ? List.of()
                 : gameQueryService.getControllerNoncombatDamageBonuses(ctx.gameData(), ctx.sourceControllerId())));
         all.add(bonusRule("PerpetualNoncombatBonus", ctx -> ctx.combat() ? List.of()
                 : gameQueryService.getPerpetualNoncombatDamageBonuses(ctx.gameData(), ctx.entry())));
-        all.add(bonusRule("ColorSourceToPlayerBonus", ctx -> gameQueryService.getDamageToPlayerColorSourceBonuses(
-                ctx.gameData(), ctx.damageSourceColors())));
-        all.add(bonusRule("ToOpponentsBonus", ctx -> gameQueryService.getAdditionalDamageToOpponentsBonuses(
-                ctx.gameData(), ctx.sourceControllerId(), ctx.source(), ctx.sourcePermanent(), ctx.playerId())));
         all.add(spellDamageReductionRule());
         all.add(pure("DamageReplacement", REPLACEMENT,
                 ctx -> replacedDamage(ctx) != ctx.amount(),

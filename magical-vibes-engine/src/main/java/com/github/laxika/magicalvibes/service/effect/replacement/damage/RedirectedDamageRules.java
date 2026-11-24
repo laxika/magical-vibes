@@ -14,8 +14,7 @@ import java.util.Set;
 public final class RedirectedDamageRules {
 
     private static final Set<String> SOURCE_SIDE_FAMILIES = Set.of(
-            "GlobalDamageMultiplier", "SourceMultiplier", "SourceBonus", "NoncreatureSourceBonus",
-            "PlayersAndBattlesBonus", "ToOpponentsBonus", "ControllerToOpponentBonus", "SpellToOpponentsBonus",
+            "GlobalDamageMultiplier", "SourceMultiplier", "SourceBonus", "AdditionalDamageBonus",
             "ControllerNoncombatBonus", "PerpetualNoncombatBonus", "SpellDamageReduction", "OjerAxonil",
             "ReflectDamage", "TargetSorceryRedirect", "SourceNextCombatDamageToController",
             "SourceNextCombatDamageToOpponentRedirect", "SourceNextRedirectToPermanent",

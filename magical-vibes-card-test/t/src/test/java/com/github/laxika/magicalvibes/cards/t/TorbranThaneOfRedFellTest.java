@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.Frogify;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HealingSalve;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -148,5 +150,19 @@ class TorbranThaneOfRedFellTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A face-down Torbran adds no damage")
+    void faceDownTorbranAddsNoDamage() {
+        Permanent torbran = harness.addToBattlefieldAndReturn(player1, new TorbranThaneOfRedFell());
+        torbran.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
     }
 }
