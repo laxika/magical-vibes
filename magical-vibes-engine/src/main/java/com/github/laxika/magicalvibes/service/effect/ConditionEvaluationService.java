@@ -1420,7 +1420,9 @@ public class ConditionEvaluationService {
                             && gameData.playersWhosePermanentsLeftBattlefieldThisTurn
                                     .contains(ctx.controllerId());
             case VoteResult c -> voteResult(ctx.resolutionResults().outcome(StepKind.VOTE), c);
-            case HappenedThisWay c -> c.kind() == StepKind.REVEAL && c.cardFilter() != null
+            case HappenedThisWay c -> c.player() != null
+                    ? recordedPlayerMatches(ctx, c)
+                    : c.kind() == StepKind.REVEAL && c.cardFilter() != null
                     ? revealedCardMatches(gameData, ctx, c)
                     : c.kind() == StepKind.SEARCH && c.cardFilter() != null
                     ? searchedCardMatches(gameData, ctx, c)
@@ -2975,6 +2977,19 @@ public class ConditionEvaluationService {
                     ctx.sourceCard() == null ? null : ctx.sourceCard().getId(), gameData, gameData.ownerOf(card),
                     ctx.sourcePermanentId(), null, ctx.xValue(), ctx.sourcePermanent());
         });
+    }
+
+    /**
+     * A player the most recent step of the condition's kind recorded has the condition's relation to the controller
+     * ("if a player is dealt damage this way", "if you win the bidding").
+     */
+    private static boolean recordedPlayerMatches(ConditionContext ctx, HappenedThisWay condition) {
+        return ctx.resolutionResults().outcome(condition.kind()).playerIds().stream().anyMatch(playerId ->
+                switch (condition.player()) {
+                    case ANY -> true;
+                    case SELF -> playerId.equals(ctx.controllerId());
+                    case OPPONENT -> ctx.controllerId() != null && !playerId.equals(ctx.controllerId());
+                });
     }
 
     private boolean revealedCardMatches(GameData gameData, ConditionContext ctx, HappenedThisWay condition) {

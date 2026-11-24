@@ -87,6 +87,9 @@ package com.github.laxika.magicalvibes.model;
  *       ({@code Subjects.searched()} names the permanent). A search that is prevented, finds nothing or searches an
  *       empty library records nothing found (CR 701.23a, 701.23b); a card Opposition Agent exiled instead is not
  *       found this way.</li>
+ *   <li>{@link #BID}: the high bid once it stands ({@code BidLifeEffect}), nothing, the high bidder: "the high bidder
+ *       loses life equal to the high bid" ({@code AmountThisWay(BID)}, {@code playersThisWay(BID)}), "if you win the
+ *       bidding" ({@code HappenedThisWay.toAPlayer(BID, SELF)}).</li>
  * </ul>
  *
  * <p>A later step may read a step only if that step finishes before the next one starts (CR 608.2c): its handler never
@@ -115,7 +118,7 @@ package com.github.laxika.magicalvibes.model;
  * the tap ({@code TapPermanentsEffect}: its up-to-N choice adds what it taps as it is answered), the goad
  * ({@code GoadTargetCreatureUntilNextTurnEffect}, never prompting), the shuffle of each player's zones into their library
  * ({@code EachPlayerShufflesZonesIntoLibraryEffect}, never prompting), the vote ({@code VoteEffect}: it records as its last
- * vote is cast), the library search ({@code SearchLibraryEffect}, {@code SearchTargetLibraryEffect}: nothing as it begins,
+ * vote is cast), the life bid ({@code BidLifeEffect}: it resolves again for each bid and records as the high bid stands), the library search ({@code SearchLibraryEffect}, {@code SearchTargetLibraryEffect}: nothing as it begins,
  * each card as its pick is answered; {@code IntuitionEffect}: as its answer ends it), the put onto the battlefield
  * ({@code PutCardsOntoBattlefieldEffect}: its entry choices come before
  * anything moves and it records as its batch enters); deal damage, return a card from a graveyard,
@@ -155,5 +158,6 @@ public enum StepKind {
     CONJURE,
     TAP,
     GOAD,
-    SEARCH
+    SEARCH,
+    BID
 }

@@ -552,7 +552,7 @@ class LichsDuelMasteryLifePaymentEffectTest extends BaseCardTest {
     @Test
     @CardUsed({MagesContest.class, AlabasterLeech.class, KalitasTraitorOfGhet.class, Opalescence.class})
     @FailOnLegacyDepartureFallback
-    @DisplayName("Mages' Contest's high bid asks the Mastery's sacrifice before the bid is recorded")
+    @DisplayName("Mages' Contest asks the high bidder's Mastery sacrifice once the bidding ends, before any life is lost")
     void magesContestHighBidAsksTheMasteryFirst() {
         Permanent mastery = animatedShieldlessMasteryAgainstKalitas(player2);
         AlabasterLeech leech = new AlabasterLeech();
@@ -583,7 +583,7 @@ class LichsDuelMasteryLifePaymentEffectTest extends BaseCardTest {
     @Test
     @CardUsed(IllicitAuction.class)
     @FailOnLegacyDepartureFallback
-    @DisplayName("Illicit Auction's high bid asks the Mastery's sacrifice before the bid is recorded")
+    @DisplayName("Illicit Auction asks the high bidder's Mastery sacrifice once the bidding ends, before any life is lost")
     void illicitAuctionHighBidAsksTheMasteryFirst() {
         Permanent mastery = shieldlessMasteryBetweenWheelAndLeyline(player2);
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());

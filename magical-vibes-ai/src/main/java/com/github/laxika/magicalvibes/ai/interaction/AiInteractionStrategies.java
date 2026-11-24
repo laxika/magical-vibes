@@ -104,9 +104,7 @@ public final class AiInteractionStrategies {
         register(new TurtlesForeverOpponentChoiceAiStrategy());
         register(new GuidedPassageChoiceAiStrategy());
         register(new PermanentAuctionChoiceAiStrategy());
-        register(new IllicitAuctionBidChoiceAiStrategy());
-        register(new MagesContestBidChoiceAiStrategy());
-        register(new PainsRewardBidChoiceAiStrategy());
+        register(new LifeBidChoiceAiStrategy());
         register(new ExileNonlandCardFromTargetHandOrGraveyardChoiceAiStrategy());
         register(new MultiZoneExileChoiceAiStrategy());
         register(new ExilePermanentsOrHandCardsChoiceAiStrategy());

@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b (each in Findings; the fold queue marks its rows). Fold runs 8 to 14c run in parallel worktrees from 2026-11-24. Next: fold runs 12c and 14c (running), 11c, `drafted-step`, 8b, 15. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).               |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c (each in Findings; the fold queue marks its rows). Fold runs 8 to 16 run in parallel worktrees from 2026-11-24. Next: fold run 16 (running), 12c (merging), 15, 11c, `drafted-step`, 8b, 12d. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,774 / 3,037 (after fold run 13b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,771 / 3,034 (after fold run 14c) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,387 rows over 4,416 classes (after fold run 13b). Latest verdict per class: `step-9` 952, unique 1,165, absorbed 658, split 572, blocked-other 487, survivor 284, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 952 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,393 rows over 4,417 classes (after fold run 14c). Latest verdict per class: `step-9` 949, unique 1,165, absorbed 659, split 575, blocked-other 486, survivor 285, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 949 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -633,6 +633,12 @@ Delayed and global triggers:
   search for a card with the same name"; one search, one pick per permanent, records SEARCH (fold run 13b).
 - `EachPlayerSearchesLibraryEffect.oneSearchForEach()`: "for each [object] this way, its controller [may] search for a [card]";
   `SacrificeEachMatchingPermanentEffect` is a SACRIFICE step (fold run 13b).
+
+- `BidLifeEffect(bidders, openingBid, prize)` / `.eachPlayerStartingAt(n, prize)` / `.eachPlayerStartingAtAnyNumber(prize)`: the BID
+  step (`StepKind.BID`: the high bid, the high bidder); the controller opens, the others follow in turn order; read by
+  `AmountThisWay(BID)` and `playersThisWay(BID)`. One `LifeBidChoice` prompt (fold run 14c).
+- `HappenedThisWay.toAPlayer(kind, PlayerRelation)`: "if a player is dealt damage this way" (`ANY`), "if you win the bidding"
+  (`SELF`) (fold run 14c).
 
 ### Blocked causes still open
 
@@ -1961,6 +1967,39 @@ permanent finds nothing. SEARCH is now recorded by same-name picks and the defer
 **For the next run.** Queue-based searches still without SEARCH: subtype and colour picks, held-out pools, d20, the may-put-selected
 branch, `HAND_OR_GRAVEYARD`. The "may search … then shuffle" shuffle under a search prohibition needs a may-search option on
 `SearchLibraryEffect` or a shuffle gated on `HappenedThisWay.searched()` (defect queue).
+
+### Step 9, fold run 14c (2026-11-24, parallel worktree)
+
+Batch `auction` (3 rows) taken, plus `ScryIfPlayerDealtDamageThisWayEffect` (blocked since fold run 2 on a player form of
+`HappenedThisWay`). Ratchet in its worktree 3,787 / 3,049 → 3,784 / 3,046. Ledger 6 rows (split 3, absorbed 1, survivor 1, blocked-other
+1). 4 card files rewritten, Oracle text checked for all; rulings for Illicit Auction and Pain's Reward (Mages' Contest has none). CR
+101.4, 608.2c, 608.2h, 616.1 checked.
+
+**The BID step.** `BidLifeEffect(PlayerSubject bidders, Integer openingBid, Prize prize)` (`eachPlayerStartingAt(n, prize)`,
+`eachPlayerStartingAtAnyNumber(prize)`). The controller opens, at `openingBid` or asked when that is `null`; the other bidders follow in
+turn order from the controller, round after round, as the cards' text says ("in turn order, each player may top the high bid"; CR
+101.4). A player who passed may top a later bid (Pain's Reward ruling). The bidding ends when it comes back to the high bidder; a lone
+bidder's opening bid stands unasked. It resolves again on each answer, changing nothing but `GameData.lifeBid` and the bid log lines;
+once the high bid stands it records `StepKind.BID` (the high bid as the amount, the high bidder as the player). One prompt,
+`PendingInteraction.LifeBidChoice` (with `prize` and `prizeTargetId`), one projection (face-down names masked), one interaction
+handler, one AI strategy (bids 0). `Prize` (`CONTROL_OF_TARGET`, `COUNTER_TARGET_SPELL`, `CARDS`) drives the prompt text and keeps the
+AI's views (HARMFUL target polarity, COUNTERSPELL category).
+
+**The player form of `HappenedThisWay`.** `HappenedThisWay.toAPlayer(kind, PlayerRelation)`: a player the step recorded has that
+relation to the controller. Two users: Mages' Contest (`BID`, `SELF`) and Play with Fire (`DEAL_DAMAGE`, `ANY`).
+
+| Batch | Result |
+|---|---|
+| `auction` | 3 split. Illicit Auction: `target(creature)` + `BidLifeEffect.eachPlayerStartingAt(0, CONTROL_OF_TARGET)` + `LoseLifeEffect(new AmountThisWay(BID), playersThisWay(BID))` + `GainControlOfTargetEffect(PERMANENT).gainedBy(playersThisWay(BID))`. Mages' Contest: `BidLifeEffect(allOf(you(), controllerOf(targetSpell())), 1, COUNTER_TARGET_SPELL)` + the loss + `ConditionalEffect(toAPlayer(BID, SELF), CounterSpellEffect())`. Pain's Reward: `eachPlayerStartingAtAnyNumber(CARDS)` + the loss + `DrawCardEffect(4, playersThisWay(BID))`. Gone: 3 records, 3 handlers, 3 prompts with their projections, AI strategies and handlers, `LifeBidAuctionSupport`, `IllicitAuctionState` (now `LifeBidState`) |
+| Play with Fire (fold run 2 leftover) | `ScryIfPlayerDealtDamageThisWayEffect` absorbed into `ConditionalEffect(HappenedThisWay.toAPlayer(DEAL_DAMAGE, ANY), ScryEffect(1))` |
+
+**Behaviour changes.** Bidders after the caster follow turn order from the caster (the old order was seat order with the caster moved
+to the front); test: Pain's Reward with three players. The Mastery sacrifice that replaces the high bidder's loss is asked in the loss
+step, after the bid is recorded and before any life is lost (CR 616.1); test assertions unchanged. An opening bid of 0 logs "bids 0
+life". Illicit Auction's extra "gains control of" line is gone.
+
+**For the next run.** `ResolveRiderForPlayerEffect` now has one user, `DestroyTargetPermanentThenEffectHandler`'s riders. The
+life-bid AI always bids 0; `LifeBidChoice.prize()` is there for an AI that values the prize.
 
 ## Prompt
 

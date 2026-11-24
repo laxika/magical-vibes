@@ -13,8 +13,10 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.model.effect.BidLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -459,10 +461,11 @@ class SpecializedInteractionAiStrategiesTest {
     }
 
     @Test
-    void magesContestPassesTheBid() throws Exception {
-        new MagesContestBidChoiceAiStrategy().answer(
-                new PendingInteraction.MagesContestBidChoice(
-                        aiPlayerId, 3, 10, "Mages' Contest", UUID.randomUUID(), UUID.randomUUID()),
+    @DisplayName("A life bid is passed with 0, whatever the prize")
+    void lifeBidPassesTheBid() throws Exception {
+        new LifeBidChoiceAiStrategy().answer(
+                new PendingInteraction.LifeBidChoice(aiPlayerId, 3, 10, "Mages' Contest", UUID.randomUUID(), false,
+                        BidLifeEffect.Prize.COUNTER_TARGET_SPELL, UUID.randomUUID()),
                 context);
 
         assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.NumberChosen(0));
@@ -552,7 +555,7 @@ class SpecializedInteractionAiStrategiesTest {
                 PendingInteraction.ShuffleCardsFromOutsideGameChoice.class,
                 PendingInteraction.TargetHandSpellCopyChoice.class,
                 PendingInteraction.TargetedHandBattlefieldChoice.class,
-                PendingInteraction.MagesContestBidChoice.class,
+                PendingInteraction.LifeBidChoice.class,
                 PendingInteraction.TargetLibraryDestinationChoice.class,
                 PendingInteraction.VividCardChoice.class,
                 PendingInteraction.PutCardFromHandOrGraveyardChoice.class,

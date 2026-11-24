@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.BidLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
@@ -97,13 +98,15 @@ class SpecializedInteractionProjectionTest {
                 new PendingInteraction.PermanentAuctionChoice(
                         controllerId, List.of(), List.of(controllerId), List.of()));
         InteractionPromptMessage illicitAuction = prompt(
-                new PendingInteraction.IllicitAuctionBidChoice(
+                new PendingInteraction.LifeBidChoice(
                         opponentId,
                         4,
                         999,
                         "Illicit Auction",
-                        target.getId(),
-                        controllerId));
+                        controllerId,
+                        false,
+                        BidLifeEffect.Prize.CONTROL_OF_TARGET,
+                        target.getId()));
 
         assertThat(permanentAuction.prompt())
                 .isEqualTo("Choose one of the auctioned cards to put onto the battlefield tapped "

@@ -1324,8 +1324,8 @@ public class GameData {
     public final GoblinGameState goblinGame = new GoblinGameState();
     /** Progress state for Expert-Level Safe's two-player hidden-number choice. */
     public final ExpertLevelSafeState expertLevelSafe = new ExpertLevelSafeState();
-    /** Progress state for Illicit Auction's "each player may bid life for control" auction. */
-    public final IllicitAuctionState illicitAuction = new IllicitAuctionState();
+    /** Progress state for the life-bid step ({@code BidLifeEffect}: Illicit Auction, Mages' Contest, Pain's Reward). */
+    public final LifeBidState lifeBid = new LifeBidState();
     /** Progress state for Torment of Hailfire's "repeat X times: each opponent loses life unless…" flow. */
     public final TormentState torment = new TormentState();
     /** Progress state for Indulgent Tormentor's target-opponent choice. */
@@ -9961,12 +9961,13 @@ public class GameData {
         copy.expertLevelSafe.currentPlayerId = this.expertLevelSafe.currentPlayerId;
         copy.expertLevelSafe.controllerChoice = this.expertLevelSafe.controllerChoice;
         copy.expertLevelSafe.opponentChoice = this.expertLevelSafe.opponentChoice;
-        copy.illicitAuction.active = this.illicitAuction.active;
-        copy.illicitAuction.order.addAll(this.illicitAuction.order);
-        copy.illicitAuction.index = this.illicitAuction.index;
-        copy.illicitAuction.highBid = this.illicitAuction.highBid;
-        copy.illicitAuction.highBidderId = this.illicitAuction.highBidderId;
-        copy.illicitAuction.currentBidderId = this.illicitAuction.currentBidderId;
+        copy.lifeBid.active = this.lifeBid.active;
+        copy.lifeBid.order.addAll(this.lifeBid.order);
+        copy.lifeBid.index = this.lifeBid.index;
+        copy.lifeBid.highBid = this.lifeBid.highBid;
+        copy.lifeBid.highBidderId = this.lifeBid.highBidderId;
+        copy.lifeBid.currentBidderId = this.lifeBid.currentBidderId;
+        copy.lifeBid.awaitingOpeningBid = this.lifeBid.awaitingOpeningBid;
         copy.torment.active = this.torment.active;
         copy.torment.remainingIterations = this.torment.remainingIterations;
         copy.torment.remaining.addAll(this.torment.remaining);

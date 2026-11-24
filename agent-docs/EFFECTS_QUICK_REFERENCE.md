@@ -953,7 +953,7 @@ Planar source note: `PutCountersOnSelfEffect(CounterType)` can place the counter
 - `DistinctManaValuesAmongOtherSpellsAndLandsPlayedThisTurn()` - the different mana values among the controller's other spells cast (X included) and lands played this turn; "other" is the stack entry's triggering spell (coststorm)
 - `TotalManaValueOfOtherSpellsCastThisTurn()` - dynamic amount for the total mana value of the controller's spells cast this turn, excluding the resolving spell.
 - `CardTypesAmongControlledPermanents(PermanentPredicate filter, CountScope scope[, boolean excludeSource])` - dynamic amount for distinct effective card types among matching battlefield permanents; multi-type permanents contribute each type, and `excludeSource` models “other”
-- `PainsRewardEffect()` — SPELL: controller chooses the opening life bid, then players top the high bid in turn order; the high bidder loses that much life and draws four cards (Pain's Reward)
+- `BidLifeEffect(bidders, openingBid, prize)` / `.eachPlayerStartingAt(n, prize)` / `.eachPlayerStartingAtAnyNumber(prize)` — the life-bid step: the controller opens, the other bidders top the high bid in turn order until it stands; records `StepKind.BID` (high bid, high bidder) for `AmountThisWay(BID)` / `playersThisWay(BID)` / `HappenedThisWay.toAPlayer(BID, SELF)` (Illicit Auction, Mages' Contest, Pain's Reward)
 - `SetSelfBasePowerToughnessFromCombatOpponentEffect()` — combat-trigger effect: sets the source's base P/T to the current effective P/T of its combat opponent until end of turn; the opponent is carried as the trigger's non-targeting target (Shape Stealer)
 - `ExchangePowerWithTargetUntilEndOfCombatEffect()` — targeted combat effect: locks the source and target creatures' current powers, then sets each creature's base power to the other's former power until end of combat; other power modifiers still apply (Serene Master)
 - `SetSelfBasePowerToughnessFromTargetCreatureUntilEndOfNextUpkeepEffect()` — targeted upkeep effect that locks a target creature's current P/T into the source's base P/T through the end of the effect controller's next upkeep (Halfdane)
@@ -985,7 +985,6 @@ Planar source note: `PutCountersOnSelfEffect(CounterType)` can place the counter
 
 - `DiscardIfPlayerDealtDamageThisWayEffect` — **Gone** (fold run 2): write `DiscardEffect(1, Subjects.playersDealtDamageThisResolution(), false)` (Sonic Shrieker).
 
-- `ScryIfPlayerDealtDamageThisWayEffect()` — same-resolution rider: queues `ScryEffect(1)` when an earlier effect in the stack entry actually dealt damage to a player; fully prevented damage and damage to permanents do not qualify
 
 `SearchLibraryEffect(CardPredicate, LibrarySearchDestination, CounterType)` additionally puts one
 counter of the specified type on each permanent entering from that search before its
@@ -3136,7 +3135,6 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `CounterSpellAndMayCastCardFromGraveyardWithTargetSpellManaValueEffect(CardPredicate)` — counter target spell when possible, then independently offer one matching card from the controller's graveyard for a free cast when its mana value is at most the target spell's effective mana value; reuses `CastCardFromGraveyardEffect` for resolution-time selection and may-cast handling
 - `CounterUnlessExilesGraveyardEffect()` — counter target spell unless its controller exiles all cards from their graveyard; the spell controller may choose this even when their graveyard is empty (Grip of Amnesia)
 - `RegisterDelayedStepTriggerEffect.atNextMainPhase(ActivePlayer.YOU, effects)` — "at the beginning of your next main phase", precombat or postcombat, no stated duration; Mana Sculpt: `NoteAmountEffect(new TargetSpellManaSpent())` first, then `AwardManaEffect(C, AmountThisWay.noted())` in it
-- `MagesContestEffect()` — resolution-time life-bid auction between the caster and the targeted spell's controller; the high bidder loses the bid and the caster counters the spell only when they win (Mages' Contest)
 - `CounterSpellEffect(CounteredSpellDestination.EXILE)` — counter + exile instead of graveyard (Dissipate, Faerie Trickery)
 - `CounterSpellAndExileWithSuspendCountersEffect(int counters)` — counter target spell and exile it
   under its owner's identity with the specified number of time counters, registering it for suspend
@@ -4177,7 +4175,6 @@ source card is no longer in the graveyard, the library card is not exiled and no
 - `PutAllPermanentsOnBottomOfLibraryEffect(PermanentPredicate)` — put all matching permanents on the bottom of their owners' libraries (Hallowed Burial, `new PermanentIsCreaturePredicate()`)
 - `ShuffleTargetPlayerPermanentsIntoLibraryEffect(PermanentPredicate filter)` — shuffle each matching permanent controlled by the target player into its owner's library, shuffling each affected owner's library as each permanent moves. Used by Teferi, Temporal Pilgrim's ultimate.
 - `PermanentAuctionEffect()` — SPELL: exile all nontoken permanents, then players take turns (controller first) claiming one exiled card each onto the battlefield tapped until the pool empties (Thieves' Auction)
-- `IllicitAuctionEffect()` — SPELL (targets a creature): each player may bid life for control of target creature; controller opens at 0, players top the high bid in turn order, high bidder loses that much life (a life loss — can exceed their life total) and gains control indefinitely (Illicit Auction)
 - `ExileTargetPermanentAndTrackWithSourceEffect([String abilityLink])` — exile + track exiled card with source permanent and optional linked ability (cards "exiled with" it)
 - `ExileTargetPermanentAndTrackWithSourceAndAllowPlayEffect()` — exile + track a target permanent with the source and let its owner play the card while it remains exiled (Prowl, Stoic Strategist)
 - `ExileSupport.exilePermanentAndTrackWithSource(...)` — shared implementation for exiling a permanent and tracking its card with a source permanent; use for non-targeting choice effects as well as targeted effects

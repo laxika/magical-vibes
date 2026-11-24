@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.effect.BidLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -404,6 +405,12 @@ public class TargetPolarityClassifier {
             return TargetPolarity.HARMFUL;
         }
 
+        // "Each player may bid life for control of target creature" (Illicit Auction): the controller opens the bidding
+        // and the AI never outbids, so the target is a creature it would take from an opponent.
+        if (effect instanceof BidLifeEffect bid && bid.prize() == BidLifeEffect.Prize.CONTROL_OF_TARGET) {
+            return TargetPolarity.HARMFUL;
+        }
+
         // "Target player gains control of up to three target creatures" (Domineering Will) may hand the AI's own
         // creatures to an ally or take an opponent's: no side is implied.
         if (effect instanceof GainControlOfTargetEffect gain && !(gain.gainingPlayer() instanceof PlayerSubject.You)) {
@@ -654,7 +661,6 @@ public class TargetPolarityClassifier {
             entry("CantBlockEffect", TargetPolarity.HARMFUL),
             entry("GainControlOfTargetAuraEffect", TargetPolarity.HARMFUL),
             entry("GainControlOfTargetUntilRansomEffect", TargetPolarity.HARMFUL),
-            entry("IllicitAuctionEffect", TargetPolarity.HARMFUL),
             entry("LockTargetPermanentEffect", TargetPolarity.HARMFUL),
             entry("LoseAllCreatureTypesEffect", TargetPolarity.HARMFUL),
             entry("RemoveAllCountersAndLockPermanentEffect", TargetPolarity.HARMFUL),

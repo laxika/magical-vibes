@@ -103,10 +103,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.VerdantMasteryLandChoice,
         PendingInteraction.GuidedPassageChoice,
         PendingInteraction.PermanentAuctionChoice,
-        PendingInteraction.IllicitAuctionBidChoice,
+        PendingInteraction.LifeBidChoice,
         PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice,
-        PendingInteraction.MagesContestBidChoice,
-        PendingInteraction.PainsRewardBidChoice,
         PendingInteraction.HitCounterExiledCardChoice,
         PendingInteraction.RemoveTimeCounterCostChoice,
         PendingInteraction.MultiZoneExileChoice,
@@ -2331,17 +2329,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /**
-     * One bid in Illicit Auction's life-bid auction: {@code playerId} is the player being prompted to
-     * top the {@code highBid} for control of the target creature. A bid greater than {@code highBid}
-     * (up to {@code maxBid}) tops it; any value {@code <= highBid} is a pass. The bid is a life loss,
-     * so {@code maxBid} is a generous cap that lets a player bid more life than they have. The numeric
-     * prompt reuses the X-value-choice wire message; {@code targetPermanentId} and
-     * {@code highBidderId} are the immutable identities needed to reconstruct its text. The answer
-     * ({@link com.github.laxika.magicalvibes.model.effect.CardEffect}-agnostic {@code NumberChosen})
-     * re-runs the auction handler, which advances to the next bidder or finishes.
+     * One bid of the life-bid step ({@code BidLifeEffect}): {@code playerId} is asked to top the {@code highBid} held by
+     * {@code highBidderId}, or, when {@code openingBid}, to choose the opening bid ("a bid of any number"). A value greater
+     * than {@code highBid} (up to {@code maxBid}) tops it and any other value passes; an opening bid is any value. A bid is
+     * a life loss, so {@code maxBid} lets a player bid more life than they have. {@code prize} is what the high bidder
+     * wins and {@code prizeTargetId} the target it is about (the creature or the spell), {@code null} for none: the prompt
+     * names it as the deciding player may see it. The answer ({@code NumberChosen}) resolves the bid step again.
      */
-    record IllicitAuctionBidChoice(UUID playerId, int highBid, int maxBid, String cardName,
-                                   UUID targetPermanentId, UUID highBidderId)
+    record LifeBidChoice(UUID playerId, int highBid, int maxBid, String cardName, UUID highBidderId,
+                         boolean openingBid,
+                         com.github.laxika.magicalvibes.model.effect.BidLifeEffect.Prize prize, UUID prizeTargetId)
             implements PendingInteraction {
 
         @Override
@@ -2351,39 +2348,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            // Any value <= highBid is a pass, so 0 (pass) through maxBid are all legal.
-            return new InteractionOptions.NumberPick(0, maxBid);
-        }
-    }
-
-    /** A life bid for the targeted spell in Mages' Contest. */
-    record MagesContestBidChoice(UUID playerId, int highBid, int maxBid, String cardName,
-                                 UUID targetSpellId, UUID highBidderId)
-            implements PendingInteraction {
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.NumberPick(0, maxBid);
-        }
-    }
-
-    /** A life bid for Pain's Reward. */
-    record PainsRewardBidChoice(UUID playerId, int highBid, int maxBid, String cardName,
-                                UUID highBidderId, boolean openingBid)
-            implements PendingInteraction {
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
+            // A value not above highBid is a pass, so 0 through maxBid are all legal.
             return new InteractionOptions.NumberPick(0, maxBid);
         }
     }

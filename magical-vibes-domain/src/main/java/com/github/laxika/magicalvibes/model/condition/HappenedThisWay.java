@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model.condition;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 
 import java.util.Objects;
 
@@ -37,12 +38,18 @@ import java.util.Objects;
  * it's an instant or sorcery card", Oriq Loremage; "if it has mana value less than the sacrificed permanent's",
  * Anchor to Reality, whose X the filter reads).
  *
+ * <p>{@code player} is "if a player is dealt damage this way", "if you win the bidding" ({@link #toAPlayer}): one of the
+ * players the step recorded has that relation to the controller ({@link PlayerRelation#ANY} for any player), whatever
+ * the step's amount.
+ *
  * @param kind       the kind of step read
  * @param minimum    the least amount the step must have recorded; at least 1
  * @param filter     a permanent the step recorded must match it; {@code null} for any outcome
  * @param cardFilter a card the step exiled or discarded must match it; {@code null} for any outcome
+ * @param player     a player the step recorded must have this relation to the controller; {@code null} for any outcome
  */
-public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate filter, CardPredicate cardFilter)
+public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate filter, CardPredicate cardFilter,
+                              PlayerRelation player)
         implements Condition {
 
     public HappenedThisWay {
@@ -52,6 +59,12 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
         }
         if ((filter != null || cardFilter != null) && minimum != 1) {
             throw new IllegalArgumentException("A filtered step result counts no minimum: " + minimum);
+        }
+        if ((filter != null || cardFilter != null) && player != null) {
+            throw new IllegalArgumentException("A step result is filtered as permanents, cards or players, one of them");
+        }
+        if (player != null && minimum != 1) {
+            throw new IllegalArgumentException("A step result filtered by its players counts no minimum: " + minimum);
         }
         if (filter != null && cardFilter != null) {
             throw new IllegalArgumentException("A step result is filtered as permanents or as cards, not both");
@@ -63,6 +76,10 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
                     "Only an exile, discard, mill, choose, reveal, return or search step's cards are judged by a card"
                             + " filter: " + kind);
         }
+    }
+
+    public HappenedThisWay(StepKind kind, int minimum, PermanentPredicate filter, CardPredicate cardFilter) {
+        this(kind, minimum, filter, cardFilter, null);
     }
 
     public HappenedThisWay(StepKind kind, int minimum, PermanentPredicate filter) {
@@ -89,6 +106,14 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
      */
     public static HappenedThisWay toA(StepKind kind, PermanentPredicate filter) {
         return new HappenedThisWay(kind, 1, Objects.requireNonNull(filter, "filter"));
+    }
+
+    /**
+     * "If a player is dealt damage this way" ({@code ANY}), "if you win the bidding" ({@code SELF}): the most recent
+     * {@code kind} step recorded a player who has {@code relation} to the controller.
+     */
+    public static HappenedThisWay toAPlayer(StepKind kind, PlayerRelation relation) {
+        return new HappenedThisWay(kind, 1, null, null, Objects.requireNonNull(relation, "relation"));
     }
 
     /** "If you do": the most recent {@code kind} step did anything. */
@@ -204,6 +229,7 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
             case TAP -> "tapped";
             case GOAD -> "goaded";
             case SEARCH -> "found";
+            case BID -> "bid";
         };
     }
 }

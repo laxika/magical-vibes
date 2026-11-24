@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.BidLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -62,6 +63,10 @@ public final class InstantCategoryClassifier {
     private static InstantCategory classifySingleEffect(CardEffect effect) {
         // Counter spells (highest priority — reactive by nature)
         if (effect instanceof CounterSpellingEffect) {
+            return InstantCategory.COUNTERSPELL;
+        }
+        // "You and target spell's controller bid life ... If you win the bidding, counter that spell" (Mages' Contest).
+        if (effect instanceof BidLifeEffect bid && bid.prize() == BidLifeEffect.Prize.COUNTER_TARGET_SPELL) {
             return InstantCategory.COUNTERSPELL;
         }
         // "Counter target spell. If a permanent spell is countered this way, exile it instead" (Thranduil's Decree):

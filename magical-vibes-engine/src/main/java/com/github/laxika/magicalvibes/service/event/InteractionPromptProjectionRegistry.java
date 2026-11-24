@@ -183,11 +183,9 @@ public class InteractionPromptProjectionRegistry {
                 this::projectVerdantMasteryLandChoice);
         register(PendingInteraction.GuidedPassageChoice.class, this::projectGuidedPassageChoice);
         register(PendingInteraction.PermanentAuctionChoice.class, this::projectPermanentAuctionChoice);
-        register(PendingInteraction.IllicitAuctionBidChoice.class, this::projectIllicitAuctionBidChoice);
+        register(PendingInteraction.LifeBidChoice.class, this::projectLifeBidChoice);
         register(PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice.class,
                 this::projectExileNonlandCardFromTargetHandOrGraveyardChoice);
-        register(PendingInteraction.MagesContestBidChoice.class, this::projectMagesContestBidChoice);
-        register(PendingInteraction.PainsRewardBidChoice.class, this::projectPainsRewardBidChoice);
         register(PendingInteraction.MultiZoneExileChoice.class, this::projectMultiZoneExileChoice);
         register(PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice.class,
                 this::projectPutUpToCardsFromHandOntoBattlefieldChoice);
@@ -1049,55 +1047,41 @@ public class InteractionPromptProjectionRegistry {
                         + "your control.");
     }
 
-    private InteractionPromptMessage projectIllicitAuctionBidChoice(
-            GameData gameData, PendingInteraction.IllicitAuctionBidChoice interaction) {
-        Permanent target = findPermanent(gameData, interaction.targetPermanentId());
-        String targetName = target != null
-                ? FaceDownVisibility.nameShownTo(gameData, target, interaction.decidingPlayerId()) : "the creature";
-        String highBidderName =
-                gameData.playerIdToName.getOrDefault(interaction.highBidderId(), "the high bidder");
-        String prompt = "Bid life for control of " + targetName + " (current high bid: "
-                + interaction.highBid() + " by " + highBidderName + "). Enter more than "
-                + interaction.highBid() + " to bid, or " + interaction.highBid()
-                + " or less to pass.";
-        return InteractionPromptMessage.numberPick(
-                prompt, interaction.maxBid(), interaction.cardName());
-    }
-
-    private InteractionPromptMessage projectMagesContestBidChoice(
-            GameData gameData, PendingInteraction.MagesContestBidChoice interaction) {
-        StackEntry target = gameData.stack.stream()
-                .filter(entry -> entry.getTargetableId().equals(interaction.targetSpellId()))
-                .findFirst()
-                .orElse(null);
-        String targetName = target != null
-                ? FaceDownVisibility.nameShownTo(gameData, target, interaction.decidingPlayerId()) : "the spell";
-        String highBidderName =
-                gameData.playerIdToName.getOrDefault(interaction.highBidderId(), "the high bidder");
-        String prompt = "Bid life to counter " + targetName + " (current high bid: "
-                + interaction.highBid() + " by " + highBidderName + "). Enter more than "
-                + interaction.highBid() + " to bid, or " + interaction.highBid()
-                + " or less to pass.";
-        return InteractionPromptMessage.numberPick(
-                prompt, interaction.maxBid(), interaction.cardName());
-    }
-
-    private InteractionPromptMessage projectPainsRewardBidChoice(
-            GameData gameData, PendingInteraction.PainsRewardBidChoice interaction) {
+    /**
+     * A life bid, naming the prize as the bidder may see it: the creature (a face-down one by its description) or the
+     * spell (a face-down one unnamed) the bidding is for, else the card.
+     */
+    private InteractionPromptMessage projectLifeBidChoice(
+            GameData gameData, PendingInteraction.LifeBidChoice interaction) {
         if (interaction.openingBid()) {
             String prompt = "Choose the opening life bid for " + interaction.cardName()
                     + " (0 through " + interaction.maxBid() + ").";
-            return InteractionPromptMessage.numberPick(
-                    prompt, interaction.maxBid(), interaction.cardName());
+            return InteractionPromptMessage.numberPick(prompt, interaction.maxBid(), interaction.cardName());
         }
+        String prize = switch (interaction.prize()) {
+            case CONTROL_OF_TARGET -> {
+                Permanent target = findPermanent(gameData, interaction.prizeTargetId());
+                yield "for control of " + (target != null
+                        ? FaceDownVisibility.nameShownTo(gameData, target, interaction.decidingPlayerId())
+                        : "the creature");
+            }
+            case COUNTER_TARGET_SPELL -> {
+                StackEntry target = gameData.stack.stream()
+                        .filter(entry -> entry.getTargetableId().equals(interaction.prizeTargetId()))
+                        .findFirst()
+                        .orElse(null);
+                yield "to counter " + (target != null
+                        ? FaceDownVisibility.nameShownTo(gameData, target, interaction.decidingPlayerId())
+                        : "the spell");
+            }
+            case CARDS -> "for " + interaction.cardName();
+        };
         String highBidderName =
                 gameData.playerIdToName.getOrDefault(interaction.highBidderId(), "the high bidder");
-        String prompt = "Bid life for " + interaction.cardName() + " (current high bid: "
-                + interaction.highBid() + " by " + highBidderName + "). Enter more than "
-                + interaction.highBid() + " to bid, or " + interaction.highBid()
-                + " or less to pass.";
-        return InteractionPromptMessage.numberPick(
-                prompt, interaction.maxBid(), interaction.cardName());
+        String prompt = "Bid life " + prize + " (current high bid: " + interaction.highBid() + " by "
+                + highBidderName + "). Enter more than " + interaction.highBid() + " to bid, or "
+                + interaction.highBid() + " or less to pass.";
+        return InteractionPromptMessage.numberPick(prompt, interaction.maxBid(), interaction.cardName());
     }
 
     private InteractionPromptMessage projectMultiZoneExileChoice(
