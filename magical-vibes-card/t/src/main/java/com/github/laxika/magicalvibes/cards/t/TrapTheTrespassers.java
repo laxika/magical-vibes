@@ -2,7 +2,13 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.SecretCouncilEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.VotesReceived;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.VoteEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "LTC", collectorNumber = "25")
 @CardRegistration(set = "LTC", collectorNumber = "108")
@@ -10,6 +16,10 @@ import com.github.laxika.magicalvibes.model.effect.SecretCouncilEffect;
 public class TrapTheTrespassers extends Card {
 
     public TrapTheTrespassers() {
-        addSpellEffect(new SecretCouncilEffect());
+        addSpellEffect(VoteEffect.forPermanents(Subjects.controlledBy(Subjects.eachOpponent(),
+                new PermanentIsCreaturePredicate())).castSecretly());
+        addSpellEffect(new PutCounterOnTargetPermanentEffect(Subjects.votedFor(), CounterType.STUN,
+                VotesReceived.byPermanent()));
+        addSpellEffect(new TapPermanentsEffect(Subjects.votedFor()));
     }
 }

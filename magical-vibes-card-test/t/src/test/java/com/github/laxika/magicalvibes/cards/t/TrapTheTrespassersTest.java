@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -164,5 +165,21 @@ class TrapTheTrespassersTest extends BaseCardTest {
         assertThat(choice).isNotNull();
         assertThat(choice.maxCount()).isEqualTo(1);
         return choice;
+    }
+
+    @Test
+    @DisplayName("Secret votes are logged only after the last vote, revealed together in one line")
+    void secretVotesAreRevealedTogetherAfterTheLastVote() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new HumbleDefector());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new HumbleDefector());
+        castTrap();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId()));
+        assertThat(gameLogContains("votes for")).isFalse();
+        harness.handleMultiplePermanentsChosen(player2, List.of(second.getId()));
+
+        assertThat(gd.gameLog.stream().filter(entry -> entry.plainText().contains("votes for"))).hasSize(1);
+        assertThat(gameLogContains("The votes for Trap the Trespassers are revealed: " + player1.getUsername()
+                + " votes for Humble Defector, " + player2.getUsername() + " votes for Humble Defector.")).isTrue();
     }
 }

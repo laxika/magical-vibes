@@ -261,6 +261,22 @@ public final class Subjects {
     }
 
     /**
+     * "Each permanent with the most votes or tied for most votes": the permanents the resolution's last vote named most
+     * (see {@link PermanentSubject.Voted}). A step result.
+     */
+    public static PermanentSubject mostVoted() {
+        return new PermanentSubject.Voted(VoteEffect.Tally.MOST);
+    }
+
+    /**
+     * "Each creature with one or more votes": the permanents the resolution's last vote named (see
+     * {@link PermanentSubject.Voted}). A step result.
+     */
+    public static PermanentSubject votedFor() {
+        return new PermanentSubject.Voted(VoteEffect.Tally.ANY);
+    }
+
+    /**
      * The permanents {@code permanents} names but those {@code excluded} names ("then exile all other Nightmare tokens
      * you control" after the copy step: {@code except(controlledBy(you(), filter), createdThisResolution())}).
      */
@@ -285,6 +301,14 @@ public final class Subjects {
      */
     public static CardSubject cardsThisWay(StepKind kind, CardPredicate filter) {
         return new CardSubject.CardsThisWay(kind, filter);
+    }
+
+    /**
+     * "Each card with the most votes or tied for most votes": the cards the resolution's last vote named most, still
+     * where they were voted for (see {@link CardSubject.Voted}). A step result.
+     */
+    public static CardSubject mostVotedCards() {
+        return new CardSubject.Voted(VoteEffect.Tally.MOST);
     }
 
     /** "All cards revealed this way": those still where the last reveal step showed them. */
@@ -727,6 +751,14 @@ public final class Subjects {
      */
     public static PlayerSubject playersThisWay(StepKind kind) {
         return new PlayerSubject.PlayersThisWay(kind);
+    }
+
+    /**
+     * "Each player who received no votes": the players in the game the resolution's last vote named none of (see
+     * {@link PlayerSubject.Voted}). A step result.
+     */
+    public static PlayerSubject playersWithNoVotes() {
+        return new PlayerSubject.Voted(VoteEffect.Tally.NONE);
     }
 
     /** The players who won the subgame an earlier step of this resolution played. */

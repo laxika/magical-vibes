@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.VoteEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -172,6 +173,13 @@ public class SubjectResolutionService {
                     gameData.playerDecks);
             case CardSubject.InCommandZone in -> inZone(gameData, entry, effect, in.owners(), in.filter(), Zone.COMMAND,
                     gameData.playerCommandZones);
+            case CardSubject.Voted voted -> voted(entry, StepOutcome.Vote.CARD, voted.tally()).stream()
+                    .map(cardId -> {
+                        LocatedCard inGraveyard = locate(gameData, cardId, Zone.GRAVEYARD);
+                        return inGraveyard != null ? inGraveyard : locate(gameData, cardId, Zone.EXILE);
+                    })
+                    .filter(Objects::nonNull)
+                    .toList();
             case CardSubject.InYourGraveyard yours -> locatedCards(gameData, entry, effect, yours.cards()).stream()
                     .filter(located -> located.zone() == Zone.GRAVEYARD
                             && entry.getControllerId().equals(located.ownerId()))
@@ -989,7 +997,32 @@ public class SubjectResolutionService {
             case PermanentSubject.BandmatesOf bandmates -> bandmateIds(ctx, bandmates.permanent());
             case PermanentSubject.WithCreaturesSharingAColor sharing -> sharingAColorIds(ctx, sharing.permanent());
             case PermanentSubject.OtherPermanentsSharing sharing -> otherPermanentsSharingIds(ctx, sharing);
+            case PermanentSubject.Voted voted -> voted(ctx.entry(), StepOutcome.Vote.PERMANENT, voted.tally());
         };
+    }
+
+    /**
+     * The candidates of one kind the entry's most recent vote ({@code VoteEffect}) named, by the votes each received
+     * ({@link VoteEffect.Tally#MOST}: the most any received, at least one; {@link VoteEffect.Tally#ANY}: one or more), in
+     * the order their first votes were cast.
+     */
+    private static List<UUID> voted(StackEntry entry, String kindPrefix, VoteEffect.Tally tally) {
+        Map<UUID, Integer> received = votesReceived(entry, kindPrefix);
+        int most = received.values().stream().mapToInt(Integer::intValue).max().orElse(0);
+        return received.entrySet().stream()
+                .filter(cast -> tally == VoteEffect.Tally.ANY || cast.getValue() == most)
+                .map(Map.Entry::getKey)
+                .toList();
+    }
+
+    private static Map<UUID, Integer> votesReceived(StackEntry entry, String kindPrefix) {
+        Map<UUID, Integer> received = new LinkedHashMap<>();
+        for (StepOutcome.Vote vote : entry.getResolutionResults().outcome(StepKind.VOTE).votes()) {
+            if (vote.candidateId() != null && vote.choice().startsWith(kindPrefix)) {
+                received.merge(vote.candidateId(), 1, Integer::sum);
+            }
+        }
+        return received;
     }
 
     /**
@@ -1503,6 +1536,14 @@ public class SubjectResolutionService {
                     union.addAll(players(ctx, part));
                 }
                 yield List.copyOf(union);
+            }
+            case PlayerSubject.Voted voted -> {
+                Map<UUID, Integer> received = votesReceived(ctx.entry(), StepOutcome.Vote.PLAYER);
+                yield voted.tally() == VoteEffect.Tally.NONE
+                        ? apnapOrder(gameData).stream().filter(playerId -> !received.containsKey(playerId)).toList()
+                        : voted(ctx.entry(), StepOutcome.Vote.PLAYER, voted.tally()).stream()
+                                .filter(gameData.playerIds::contains)
+                                .toList();
             }
             case PlayerSubject.Matching matching -> players(ctx, matching.players()).stream()
                     .filter(playerId -> targetLegalityService.matchesPlayerPredicate(gameData, ctx.controllerId(),

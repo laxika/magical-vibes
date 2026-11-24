@@ -1315,92 +1315,55 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
-    /** Will of the Council: the current player voted for a nonland permanent. */
-    record WillOfTheCouncilChoice(UUID effectControllerId,
-                                  java.util.List<UUID> remainingPlayerIds,
-                                  java.util.Map<UUID, Integer> votes,
-                                  String sourceName,
-                                  boolean graveyardCards,
-                                  boolean creaturesOnly)
+    /**
+     * One player casts a vote for an object or a player ({@code VoteEffect} over permanents, cards or players, CR
+     * 701.38a, 701.38b). Its queue of voters still to vote lets an answer be replayed with the same voter voting again
+     * first ("you may vote an additional time", CR 701.38d).
+     *
+     * @param effectControllerId the vote's controller, whose "players finish voting" event it is
+     * @param remainingVoterIds  the players still to vote after this answer, in voting order
+     * @param votes              the votes cast so far
+     * @param kindPrefix         the kind of candidate ({@code StepOutcome.Vote.PERMANENT}, {@code CARD} or {@code PLAYER})
+     * @param candidateIds       the candidates found as the vote began, those that can't be chosen left out
+     * @param otherThanVoter     whether a voter may not vote for themselves ("another player")
+     * @param upToOne            whether a voter may cast no vote
+     * @param secret             whether the votes are revealed only after the last one
+     * @param sourceName         the vote's source as every player reads it
+     */
+    record ObjectVoteChoice(UUID effectControllerId, List<UUID> remainingVoterIds,
+                            List<StepOutcome.Vote> votes, String kindPrefix, List<UUID> candidateIds,
+                            boolean otherThanVoter, boolean upToOne, boolean secret, String sourceName)
             implements MultiPermanentChoiceContext, VoteChoiceContext {
-        public WillOfTheCouncilChoice(UUID effectControllerId,
-                                      java.util.List<UUID> remainingPlayerIds,
-                                      java.util.Map<UUID, Integer> votes,
-                                      String sourceName) {
-            this(effectControllerId, remainingPlayerIds, votes, sourceName, false, false);
+
+        public ObjectVoteChoice {
+            remainingVoterIds = List.copyOf(remainingVoterIds);
+            votes = List.copyOf(votes);
+            candidateIds = List.copyOf(candidateIds);
         }
 
-        public WillOfTheCouncilChoice(UUID effectControllerId,
-                                      java.util.List<UUID> remainingPlayerIds,
-                                      java.util.Map<UUID, Integer> votes,
-                                      String sourceName,
-                                      boolean graveyardCards) {
-            this(effectControllerId, remainingPlayerIds, votes, sourceName, graveyardCards, false);
+        /** The candidates {@code voterId} may vote for. */
+        public List<UUID> candidatesOf(UUID voterId) {
+            return otherThanVoter
+                    ? candidateIds.stream().filter(candidateId -> !candidateId.equals(voterId)).toList()
+                    : candidateIds;
         }
 
-        public WillOfTheCouncilChoice {
-            remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
-            votes = java.util.Map.copyOf(votes);
-        }
-
-        @Override
-        public java.util.List<UUID> remainingVoterIds() {
-            return remainingPlayerIds;
+        /** This context with {@code vote} cast. */
+        public ObjectVoteChoice withVote(StepOutcome.Vote vote) {
+            List<StepOutcome.Vote> cast = new java.util.ArrayList<>(votes);
+            cast.add(vote);
+            return new ObjectVoteChoice(effectControllerId, remainingVoterIds, cast, kindPrefix, candidateIds,
+                    otherThanVoter, upToOne, secret, sourceName);
         }
 
         @Override
-        public WillOfTheCouncilChoice withRemainingVoterIds(java.util.List<UUID> remainingVoterIds) {
-            return new WillOfTheCouncilChoice(effectControllerId, remainingVoterIds, votes, sourceName,
-                    graveyardCards, creaturesOnly);
+        public ObjectVoteChoice withRemainingVoterIds(List<UUID> remainingVoterIds) {
+            return new ObjectVoteChoice(effectControllerId, remainingVoterIds, votes, kindPrefix, candidateIds,
+                    otherThanVoter, upToOne, secret, sourceName);
         }
     }
 
-    /** Vault 11: Voter's Dilemma: the current player voted for up to one creature. */
-    record VoteForCreatureThenDestroyMostVotedChoice(
-            UUID effectControllerId,
-            java.util.List<UUID> remainingPlayerIds,
-            java.util.Map<UUID, Integer> votes,
-            String sourceName)
-            implements MultiPermanentChoiceContext, VoteChoiceContext {
-        public VoteForCreatureThenDestroyMostVotedChoice {
-            remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
-            votes = java.util.Map.copyOf(votes);
-        }
-
-        @Override
-        public java.util.List<UUID> remainingVoterIds() {
-            return remainingPlayerIds;
-        }
-
-        @Override
-        public VoteForCreatureThenDestroyMostVotedChoice withRemainingVoterIds(java.util.List<UUID> remainingVoterIds) {
-            return new VoteForCreatureThenDestroyMostVotedChoice(effectControllerId, remainingVoterIds, votes, sourceName);
-        }
-    }
-
-    /** Secret council: the current player secretly voted for a creature. */
-    record SecretCouncilChoice(UUID effectControllerId,
-                               java.util.List<UUID> remainingPlayerIds,
-                               java.util.Map<UUID, Integer> votes,
-                               String sourceName)
-            implements MultiPermanentChoiceContext, VoteChoiceContext {
-        public SecretCouncilChoice {
-            remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
-            votes = java.util.Map.copyOf(votes);
-        }
-
-        @Override
-        public java.util.List<UUID> remainingVoterIds() {
-            return remainingPlayerIds;
-        }
-
-        @Override
-        public SecretCouncilChoice withRemainingVoterIds(java.util.List<UUID> remainingVoterIds) {
-            return new SecretCouncilChoice(effectControllerId, remainingVoterIds, votes, sourceName);
-        }
-    }
-
-    /** Círdan the Shipwright: the current player secretly voted for a player. */
+    /** Elrond of the White Council: a fellowship voter chose a creature they control. */
     record ElrondFellowshipChoice(UUID effectControllerId,
                                   java.util.List<UUID> remainingVoterIds,
                                   java.util.List<UUID> chosenCreatureIds,
@@ -1410,52 +1373,6 @@ public sealed interface MultiPermanentChoiceContext {
         public ElrondFellowshipChoice {
             remainingVoterIds = java.util.List.copyOf(remainingVoterIds);
             chosenCreatureIds = java.util.List.copyOf(chosenCreatureIds);
-        }
-    }
-
-    /** Cirdan the Shipwright: the current player secretly voted for a player. */
-    record CirdanVoteChoice(UUID effectControllerId,
-                            java.util.List<UUID> remainingVoterIds,
-                            java.util.Map<UUID, Integer> votes,
-                            String sourceName)
-            implements MultiPermanentChoiceContext, VoteChoiceContext {
-        public CirdanVoteChoice {
-            remainingVoterIds = java.util.List.copyOf(remainingVoterIds);
-            votes = java.util.Map.copyOf(votes);
-        }
-
-        @Override
-        public CirdanVoteChoice withRemainingVoterIds(java.util.List<UUID> remainingVoterIds) {
-            return new CirdanVoteChoice(effectControllerId, remainingVoterIds, votes, sourceName);
-        }
-    }
-
-    /** Círdan the Shipwright: a player chose a permanent card to put onto the battlefield. */
-    /** Mob Verdict: the current player secretly voted for another player. */
-    record MobVerdictChoice(UUID effectControllerId,
-                            java.util.List<UUID> remainingVoterIds,
-                            java.util.Map<UUID, Integer> votes,
-                            String sourceName)
-            implements MultiPermanentChoiceContext, VoteChoiceContext {
-        public MobVerdictChoice {
-            remainingVoterIds = java.util.List.copyOf(remainingVoterIds);
-            votes = java.util.Map.copyOf(votes);
-        }
-
-        @Override
-        public MobVerdictChoice withRemainingVoterIds(java.util.List<UUID> remainingVoterIds) {
-            return new MobVerdictChoice(effectControllerId, remainingVoterIds, votes, sourceName);
-        }
-    }
-
-    record CirdanHandChoice(UUID playerId,
-                            java.util.List<UUID> remainingPlayerIds,
-                            java.util.List<UUID> chosenCardIds,
-                            String sourceName)
-            implements MultiPermanentChoiceContext {
-        public CirdanHandChoice {
-            remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
-            chosenCardIds = java.util.List.copyOf(chosenCardIds);
         }
     }
 

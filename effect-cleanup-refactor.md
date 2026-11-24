@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12 (each in Findings; the fold queue marks its rows). Fold runs 8 to 12 ran in parallel worktrees from 2026-11-24. Next: fold runs 10b and 11b (running), 12a, then `drafted-step`, 8b. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).       |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b (each in Findings; the fold queue marks its rows). Fold runs 8 to 12a run in parallel worktrees from 2026-11-24. Next: fold runs 10b and 12a (running), 11c (Elrond, Expropriate), `drafted-step`, 8b. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).        |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,850 / 3,111 (after fold run 12) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,845 / 3,106 (after fold run 11b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,257 rows over 4,410 classes (after fold run 12). Latest verdict per class: `step-9` 1,045, unique 1,166, absorbed 606, split 545, blocked-other 474, survivor 276, blocked-step-model 140, blocked-player-loop 97, dead 61. Waiting: 1,045 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,265 rows over 4,412 classes (after fold run 11b). Latest verdict per class: `step-9` 1,041, unique 1,165, absorbed 606, split 551, blocked-other 474, survivor 277, blocked-step-model 140, blocked-player-loop 97, dead 61. Waiting: 1,041 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -569,6 +569,13 @@ Delayed and global triggers:
   never seeded onto a permanent (fold run 12).
 - `PerpetuallySetSourceBasePowerToughnessEffect(p, t, PermanentSubject)` over `createdThisResolution()`;
   `ConjureRandomCardFromSpellbookWithManaValueToBattlefieldEffect(spellbook)` takes any mana value (Blood Age Muster; fold run 12).
+
+- `VoteEffect.forPermanents(subject)` / `.forCards(subject)` / `.forPlayers(subject)` / `.forAnotherPlayer()`, `.castSecretly()`,
+  `.forUpToOne()`: votes for objects or players (CR 701.38b); a lone candidate is voted for unasked (CR 608.2d) (fold run 11b).
+- `Subjects.mostVoted()` / `votedFor()` (permanents), `mostVotedCards()`, `playersWithNoVotes()`: readers of the last vote's tally;
+  `VotesReceived.byPlayer()` / `.byPermanent()`: votes received by the player or permanent an amount is evaluated for (fold run 11b).
+- `EachPlayerMayPutCardFromHandToBattlefieldEffect.by(players, predicate, label)`: Show and Tell's put, limited to the players a
+  subject names (fold run 11b).
 
 ### Blocked causes still open
 
@@ -1631,6 +1638,47 @@ snapshot.
 
 **For the next run.** 12a on `ConjureCardsEffect` (hand destination, recipient player), then `drafted-step` (the draft choice records
 its card).
+
+### Step 9, fold run 11b (2026-11-24, parallel worktree)
+
+Batch `object-vote` (Vault 11, Trap the Trespassers, Círdan, `WillOfTheCouncilEffect` (3 cards, unaudited), Mob Verdict (re-triage
+of `unique`)) plus Fateful Tempest from `vote`. Ratchet in its worktree 3,871 / 3,133 → 3,866 / 3,128. Ledger 8 rows (split 6,
+survivor 2). 8 card files rewritten, Oracle checked for all; rulings for Vault 11, Trap, Círdan, Council's Judgment, Custodi Squire,
+Mob Verdict. CR 101.4, 400.7, 603.3, 603.3b, 608.2d, 701.38a–d checked.
+
+**The shape.** `VoteEffect(Candidates, firstVoter, secret, upToOne)`; candidates `Words` (run 11), `Permanents(subject)`,
+`Cards(subject)` or `Players(subject, otherThanVoter)` (CR 701.38b). Factories `forPermanents`, `forCards`, `forPlayers`,
+`forAnotherPlayer`; withers `castSecretly()` (keeps the first voter) and `forUpToOne()` (Vault 11's abstention). Candidates are found
+as the vote begins, unchoosable ones dropped. Each voter answers a one-of `MultiPermanentChoice` (`ObjectVoteChoice`, a
+`VoteChoiceContext`, so `VotingSupport`'s extra vote works); a voter with no candidate doesn't vote, one with a single candidate and no
+extra vote votes unasked (CR 608.2d). A vote is `StepOutcome.Vote(voter, "permanent:|card:|player:<id>", candidateId)`, the keys
+`VotingFinishedSupport` gave Erestor and Model of Unity. Readers: `Subjects.mostVoted()` / `votedFor()` (`PermanentSubject.Voted`;
+nothing is "most" when no vote was cast), `mostVotedCards()` (`CardSubject.Voted`, while the card is still in its graveyard or exile),
+`playersWithNoVotes()`, `VotesReceived.byPlayer()` / `.byPermanent()`; "if no creature got votes" is `NotCondition(HappenedThisWay(VOTE,
+1))`.
+
+| Member | Result |
+|---|---|
+| `WillOfTheCouncilEffect` (Council's Judgment, Prime Minister's Cabinet Room, Custodi Squire) | split: `forPermanents(controlledBy(eachOpponent(), …))` + `ExileTargetPermanentEffect(mostVoted())`; `forCards(cardsInYourGraveyard(…))` + `PutCardsIntoHandEffect(mostVotedCards())` |
+| `VoteForCreatureThenDestroyMostVotedEffect` (Vault 11) | split: `forPermanents(allCreatures()).castSecretly().forUpToOne()` + the no-votes draw + `DestroyTargetPermanentEffect(mostVoted())` |
+| `SecretCouncilEffect` (Trap) | split: `PutCounterOnTargetPermanentEffect(votedFor(), STUN, VotesReceived.byPermanent())` + `TapPermanentsEffect(votedFor())` |
+| `CirdanTheShipwrightEffect` | split: `EachPlayerDrawsCardEffect(VotesReceived.byPlayer())` + `EachPlayerMayPutCardFromHandToBattlefieldEffect.by(playersWithNoVotes(), permanent card)` |
+| `MobVerdictEffect` | split; the record stays as the per-vote damage payload (one event per vote); the vote and `DrawCardEffect(VotesReceived.byPlayer())` are steps |
+| `FatefulTempestEffect` | split: `startingWithYou(PAST, PRESENT)` + `anyVotes`-gated mill-then-damage and exile-and-play steps (fold run 9's mill split kept) |
+
+`forUpToOne` (Vault 11) and `otherThanVoter` (Mob Verdict) are each set by one card: each is the card's own wording on a candidate
+kind two or more records use.
+
+**Behaviour changes.** Open object votes and Fateful Tempest's votes are logged as cast (Council's Judgment and Custodi Squire
+rulings), a face-down permanent's name redacted. Trap's, Círdan's, Mob Verdict's and Vault 11's secret votes are revealed in one line
+after the last vote, once (the destroy step's death-replacement replay no longer reaches the vote). Vault 11's vote finishes before its
+destroy step, so Model of Unity's trigger goes on the stack then, unordered, and is ordered with the other new triggers before priority
+(`TriggeredAbilityQueueService.beginTriggerOrder`, CR 603.3b); the test's mid-prompt stack assertion, which checked the old replay
+order, was dropped (reviewed by the orchestrator). Trap's counters go through the counter verb. Círdan's hand put uses Show and Tell's
+prompt, which the AI answers.
+
+**For the next run.** The per-vote choose step for Elrond and Expropriate: one choice per vote, made by or about that vote's voter, in
+voting order; a `ChoosePermanentsEffect` form over `StepOutcome.votes()` of one option, then their gain-control and counter steps.
 
 ## Prompt
 

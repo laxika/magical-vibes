@@ -25,7 +25,7 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
         PermanentSubject.AllOf, PermanentSubject.Except, PermanentSubject.OneOf, PermanentSubject.TriggeringAttackers,
         PermanentSubject.TriggeringSpellTargets, PermanentSubject.CreatedThisResolution, PermanentSubject.BandmatesOf,
         PermanentSubject.WithCreaturesSharingAColor, PermanentSubject.OtherPermanentsSharing, PermanentSubject.AttachedAndSharingCreatureType,
-        PermanentSubject.Searched, PermanentSubject.ThisWay {
+        PermanentSubject.Searched, PermanentSubject.ThisWay, PermanentSubject.Voted {
 
     /** Whether this subject is the effect's own target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -627,6 +627,30 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
             Objects.requireNonNull(permanent, "permanent");
             Objects.requireNonNull(quality, "quality");
             Objects.requireNonNull(filter, "filter");
+        }
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * "Each permanent with the most votes or tied for most votes" ({@link VoteEffect.Tally#MOST}), "each creature with one
+     * or more votes" ({@link VoteEffect.Tally#ANY}): the permanents the most recent vote of the same resolution
+     * ({@code VoteEffect}) was cast for, by the votes each received, those still on the battlefield as the same objects
+     * (CR 400.7). A candidate with no votes never has the most votes, so nothing is named when no vote was cast. A step
+     * result.
+     *
+     * @param tally which voted permanents are named
+     */
+    record Voted(VoteEffect.Tally tally) implements PermanentSubject {
+
+        public Voted {
+            Objects.requireNonNull(tally, "tally");
+            if (tally == VoteEffect.Tally.NONE) {
+                throw new IllegalArgumentException("The permanents that received no votes are not recorded");
+            }
         }
 
         @Override

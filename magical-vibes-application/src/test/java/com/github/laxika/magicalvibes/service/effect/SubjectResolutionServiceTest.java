@@ -1643,4 +1643,82 @@ class SubjectResolutionServiceTest extends BaseCardTest {
                     });
         }
     }
+
+    @Nested
+    @DisplayName("mostVoted() / votedFor() / mostVotedCards() / playersWithNoVotes()")
+    class Voted {
+
+        private void recordVotes(StackEntry entry, StepOutcome.Vote... votes) {
+            entry.recordStep(StepKind.VOTE, StepOutcome.ofVotes(List.of(votes)));
+        }
+
+        private StepOutcome.Vote permanentVote(Player voter, Permanent permanent) {
+            return new StepOutcome.Vote(voter.getId(), StepOutcome.Vote.PERMANENT + permanent.getId(),
+                    permanent.getId());
+        }
+
+        @Test
+        @DisplayName("mostVoted() is every permanent tied for the most votes, still on the battlefield")
+        void mostVotedIsEveryPermanentTiedForMost() {
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            Permanent giant = addCreatureReady(player2, new HillGiant());
+            Permanent other = addCreatureReady(player2, new GrizzlyBears());
+            StackEntry entry = entry(player1, null, null);
+            recordVotes(entry, permanentVote(player1, bears), permanentVote(player2, giant));
+
+            assertThat(permanents(entry, Subjects.mostVoted())).containsExactly(bears, giant);
+
+            recordVotes(entry, permanentVote(player1, bears), permanentVote(player2, bears),
+                    permanentVote(player2, giant));
+
+            assertThat(permanents(entry, Subjects.mostVoted())).containsExactly(bears);
+            assertThat(permanents(entry, Subjects.votedFor())).containsExactly(bears, giant).doesNotContain(other);
+
+            leaveBattlefield(bears);
+
+            assertThat(permanents(entry, Subjects.mostVoted())).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Nothing has the most votes when no vote was cast")
+        void noVotesNamesNothing() {
+            addCreatureReady(player1, new GrizzlyBears());
+            StackEntry entry = entry(player1, null, null);
+            recordVotes(entry);
+
+            assertThat(permanents(entry, Subjects.mostVoted())).isEmpty();
+            assertThat(players(entry, Subjects.playersWithNoVotes()))
+                    .containsExactly(player1.getId(), player2.getId());
+        }
+
+        @Test
+        @DisplayName("playersWithNoVotes() is every player in the game no vote named")
+        void playersWithNoVotes() {
+            StackEntry entry = entry(player1, null, null);
+            recordVotes(entry,
+                    new StepOutcome.Vote(player1.getId(), StepOutcome.Vote.PLAYER + player2.getId(), player2.getId()),
+                    new StepOutcome.Vote(player2.getId(), StepOutcome.Vote.PLAYER + player2.getId(), player2.getId()));
+
+            assertThat(players(entry, Subjects.playersWithNoVotes())).containsExactly(player1.getId());
+        }
+
+        @Test
+        @DisplayName("mostVotedCards() names the most-voted cards while they are still in the graveyard")
+        void mostVotedCardsStayInTheGraveyard() {
+            Card bears = new GrizzlyBears();
+            Card giant = new HillGiant();
+            harness.setGraveyard(player1, List.of(bears, giant));
+            StackEntry entry = entry(player1, null, null);
+            recordVotes(entry,
+                    new StepOutcome.Vote(player1.getId(), StepOutcome.Vote.CARD + bears.getId(), bears.getId()),
+                    new StepOutcome.Vote(player2.getId(), StepOutcome.Vote.CARD + bears.getId(), bears.getId()),
+                    new StepOutcome.Vote(player2.getId(), StepOutcome.Vote.CARD + giant.getId(), giant.getId()));
+
+            assertThat(subjects.cards(gd, entry, EFFECT, Subjects.mostVotedCards())).containsExactly(bears);
+
+            gd.playerGraveyards.get(player1.getId()).remove(bears);
+
+            assertThat(subjects.cards(gd, entry, EFFECT, Subjects.mostVotedCards())).isEmpty();
+        }
+    }
 }

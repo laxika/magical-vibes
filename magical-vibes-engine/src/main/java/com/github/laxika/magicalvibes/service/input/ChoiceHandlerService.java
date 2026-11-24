@@ -239,8 +239,6 @@ public class ChoiceHandlerService {
             zndrsplatsJudgmentEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.SeizeTheSpotlightEffectHandler
             seizeTheSpotlightEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.FatefulTempestEffectHandler
-            fatefulTempestEffectHandler;
     private final EachPlayerChoosesTokenEffectHandler eachPlayerChoosesTokenEffectHandler;
     private final EachPlayerChoosesPlanarModeEffectHandler eachPlayerChoosesPlanarModeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.VoteEffectHandler voteEffectHandler;
@@ -1380,17 +1378,6 @@ public class ChoiceHandlerService {
             }
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.FatefulTempestChoice ctx) {
-            if (!ctx.OPTIONS.contains(colorName)) {
-                throw new IllegalArgumentException("Invalid Fateful Tempest vote: " + colorName);
-            }
-            gameData.interaction.clearAwaitingInput();
-            fatefulTempestEffectHandler.completeVote(gameData, colorName, ctx);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
-            return;
-        }
         if (colorChoice.context() instanceof ChoiceContext.EachPlayerChoosesTokenChoice ctx) {
             if (!colorChoice.options().contains(colorName)) {
                 throw new IllegalArgumentException("Invalid token choice: " + colorName);
@@ -1623,9 +1610,6 @@ public class ChoiceHandlerService {
                 && vote.OPTIONS.contains(choice)) {
             votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
         } else if (context instanceof ChoiceContext.ElrondOfTheWhiteCouncilChoice vote
-                && vote.OPTIONS.contains(choice)) {
-            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
-        } else if (context instanceof ChoiceContext.FatefulTempestChoice vote
                 && vote.OPTIONS.contains(choice)) {
             votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
         }

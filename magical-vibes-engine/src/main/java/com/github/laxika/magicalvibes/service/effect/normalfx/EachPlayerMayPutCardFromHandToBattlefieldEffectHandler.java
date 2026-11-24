@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayPutCardFromHandToBattlefieldEffect;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 public class EachPlayerMayPutCardFromHandToBattlefieldEffectHandler implements NormalEffectHandlerBean {
 
     private final EachPlayerMayPutCardFromHandToBattlefieldSupport support;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -25,7 +27,9 @@ public class EachPlayerMayPutCardFromHandToBattlefieldEffectHandler implements N
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         EachPlayerMayPutCardFromHandToBattlefieldEffect typedEffect =
                 (EachPlayerMayPutCardFromHandToBattlefieldEffect) effect;
-        List<UUID> players = typedEffect.startsWithController()
+        List<UUID> players = typedEffect.players() != null
+                ? new ArrayList<>(subjectResolutionService.players(gameData, entry, effect, typedEffect.players()))
+                : typedEffect.startsWithController()
                 ? controllerFirstOrder(gameData, entry.getControllerId())
                 : apnapOrder(gameData);
         if (typedEffect.opponentsOnly()) {

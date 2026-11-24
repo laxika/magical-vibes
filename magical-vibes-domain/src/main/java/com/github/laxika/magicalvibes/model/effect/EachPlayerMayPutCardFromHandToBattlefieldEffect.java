@@ -13,14 +13,31 @@ import java.util.List;
  * chosen cards normally enter simultaneously. A non-repeating controller-first effect puts each
  * chosen card onto the battlefield immediately. The repeating mode also puts each chosen card
  * immediately and starts another round beginning with the effect's controller after any card
- * enters.
+ * enters. With {@code players}, only the players it names choose, in APNAP order ("each player who received no votes may
+ * put a permanent card from their hand onto the battlefield").
  */
 public record EachPlayerMayPutCardFromHandToBattlefieldEffect(CardPredicate predicate, String label,
                                                               boolean opponentsOnly,
                                                               boolean repeatUntilNoOne,
                                                               boolean startsWithController,
-                                                              boolean anyNumber)
+                                                              boolean anyNumber,
+                                                              PlayerSubject players)
         implements CardEffect {
+
+    public EachPlayerMayPutCardFromHandToBattlefieldEffect {
+        if (players != null && (opponentsOnly || repeatUntilNoOne || startsWithController)) {
+            throw new IllegalArgumentException("The players who choose are named once: " + players);
+        }
+        if (players != null && players.declaresTarget()) {
+            throw new IllegalArgumentException("The players who choose are not targeted: " + players);
+        }
+    }
+
+    public EachPlayerMayPutCardFromHandToBattlefieldEffect(CardPredicate predicate, String label,
+                                                            boolean opponentsOnly, boolean repeatUntilNoOne,
+                                                            boolean startsWithController, boolean anyNumber) {
+        this(predicate, label, opponentsOnly, repeatUntilNoOne, startsWithController, anyNumber, null);
+    }
 
     public EachPlayerMayPutCardFromHandToBattlefieldEffect(CardPredicate predicate, String label) {
         this(predicate, label, false, false, false, false);
@@ -59,6 +76,13 @@ public record EachPlayerMayPutCardFromHandToBattlefieldEffect(CardPredicate pred
     public static EachPlayerMayPutCardFromHandToBattlefieldEffect temptingWurm() {
         return new EachPlayerMayPutCardFromHandToBattlefieldEffect(permanentCardPredicate(),
                 "artifact, creature, enchantment, or land", true, false, false, true);
+    }
+
+    /** "Each [player {@code players} names] may put a [card matching {@code predicate}] from their hand onto the battlefield". */
+    public static EachPlayerMayPutCardFromHandToBattlefieldEffect by(PlayerSubject players, CardPredicate predicate,
+                                                                     String label) {
+        return new EachPlayerMayPutCardFromHandToBattlefieldEffect(predicate, label, false, false, false, false,
+                java.util.Objects.requireNonNull(players, "players"));
     }
 
     private static CardPredicate permanentCardPredicate() {

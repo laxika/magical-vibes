@@ -26,7 +26,7 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
         CardSubject.TriggeringCards, CardSubject.SourceCard, CardSubject.InYourGraveyard,
         CardSubject.InGraveyards, CardSubject.InExile, CardSubject.ExiledWithSource, CardSubject.Except,
         CardSubject.TargetExiledCard, CardSubject.TopOfGraveyard, CardSubject.InHand, CardSubject.InLibrary,
-        CardSubject.InCommandZone, CardSubject.ExiledAsCost {
+        CardSubject.InCommandZone, CardSubject.ExiledAsCost, CardSubject.Voted {
 
     /** Whether this subject declares a target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -336,6 +336,24 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
         @Override
         public boolean declaresTarget() {
             return owners.declaresTarget();
+        }
+    }
+
+    /**
+     * "Each card with the most votes or tied for most votes" ({@link VoteEffect.Tally#MOST}), "each card with one or more
+     * votes" ({@link VoteEffect.Tally#ANY}): the cards the most recent vote of the same resolution ({@code VoteEffect})
+     * was cast for, by the votes each received, those still in the graveyard or exile they were voted for in (a card
+     * that moves is a new object, CR 400.7). A step result.
+     *
+     * @param tally which voted cards are named
+     */
+    record Voted(VoteEffect.Tally tally) implements CardSubject {
+
+        public Voted {
+            Objects.requireNonNull(tally, "tally");
+            if (tally == VoteEffect.Tally.NONE) {
+                throw new IllegalArgumentException("The cards that received no votes are not recorded");
+            }
         }
     }
 }

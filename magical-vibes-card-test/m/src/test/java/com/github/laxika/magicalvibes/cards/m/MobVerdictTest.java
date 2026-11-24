@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -81,5 +82,19 @@ class MobVerdictTest extends BaseCardTest {
 
         harness.assertLife(player2, 18);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each player's only other player is voted for unasked, and the secret votes are revealed together")
+    void onlyCandidateIsVotedForUnaskedAndVotesAreRevealedTogether() {
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.castFromHand(player1, new MobVerdict(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gameLogContains("The votes for Mob Verdict are revealed: " + player1.getUsername() + " votes for "
+                + player2.getUsername() + ", " + player2.getUsername() + " votes for " + player1.getUsername()
+                + ".")).isTrue();
     }
 }

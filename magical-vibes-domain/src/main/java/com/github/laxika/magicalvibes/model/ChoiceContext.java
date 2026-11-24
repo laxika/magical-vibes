@@ -2563,30 +2563,6 @@ public sealed interface ChoiceContext {
         }
     }
 
-    /** Fateful Tempest: the current player voted for past or present. */
-    record FatefulTempestChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
-                                Map<String, Integer> votes, String sourceName)
-            implements ChoiceContext, VoteChoiceContext {
-        public static final String PAST = "Past";
-        public static final String PRESENT = "Present";
-        public static final List<String> OPTIONS = List.of(PAST, PRESENT);
-
-        public FatefulTempestChoice {
-            remainingPlayerIds = List.copyOf(remainingPlayerIds);
-            votes = Map.copyOf(votes);
-        }
-
-        @Override
-        public List<UUID> remainingVoterIds() {
-            return remainingPlayerIds;
-        }
-
-        @Override
-        public FatefulTempestChoice withRemainingVoterIds(List<UUID> remainingVoterIds) {
-            return new FatefulTempestChoice(effectControllerId, remainingVoterIds, votes, sourceName);
-        }
-    }
-
     /**
      * Each player chooses one token option from a resolving effect. The choices made so far are kept in
      * APNAP order and their tokens are created only after the last player has chosen.

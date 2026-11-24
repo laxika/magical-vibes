@@ -39,13 +39,28 @@ public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds
 
     /**
      * One vote of a vote step: {@code voterId} chose {@code choice}, one of the options the vote listed (CR 701.38b). A
-     * player who votes an additional time casts several (CR 701.38d).
+     * player who votes an additional time casts several (CR 701.38d). A vote for an object or a player names it by
+     * {@code candidateId} (a permanent's, card's or player's id) and its {@code choice} is a key for that candidate
+     * ({@code "permanent:<id>"}, {@code "card:<id>"}, {@code "player:<id>"}), so two votes for the same candidate have
+     * the same choice; a word vote has no {@code candidateId}.
      */
-    public record Vote(UUID voterId, String choice) {
+    public record Vote(UUID voterId, String choice, UUID candidateId) {
+
+        /** The choice key prefix of a vote for a permanent. */
+        public static final String PERMANENT = "permanent:";
+        /** The choice key prefix of a vote for a card outside the battlefield. */
+        public static final String CARD = "card:";
+        /** The choice key prefix of a vote for a player. */
+        public static final String PLAYER = "player:";
 
         public Vote {
             Objects.requireNonNull(voterId, "voterId");
             Objects.requireNonNull(choice, "choice");
+        }
+
+        /** A vote for a word. */
+        public Vote(UUID voterId, String choice) {
+            this(voterId, choice, null);
         }
     }
 
@@ -139,6 +154,12 @@ public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds
     /** How many of this vote step's votes are for {@code choice} ("for each [option] vote"). */
     public int votesFor(String choice) {
         return (int) votes.stream().filter(vote -> vote.choice().equals(choice)).count();
+    }
+
+    /** How many of this vote step's votes were cast for the object or player {@code candidateId} (CR 701.38d). */
+    public int votesReceived(UUID candidateId) {
+        return candidateId == null ? 0
+                : (int) votes.stream().filter(vote -> candidateId.equals(vote.candidateId())).count();
     }
 
     /** This outcome with {@code cards}, the cards it exiled from a graveyard as each last existed there. */

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.ModelOfUnity;
 import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -27,7 +26,7 @@ class FatefulTempestTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(first, second));
         cast();
 
-        vote(ChoiceContext.FatefulTempestChoice.PAST, ChoiceContext.FatefulTempestChoice.PAST);
+        vote(FatefulTempest.PAST, FatefulTempest.PAST);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second);
         assertThat(gd.getLife(player2.getId())).isEqualTo(16);
@@ -41,7 +40,7 @@ class FatefulTempestTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(first, second));
         cast();
 
-        vote(ChoiceContext.FatefulTempestChoice.PRESENT, ChoiceContext.FatefulTempestChoice.PRESENT);
+        vote(FatefulTempest.PRESENT, FatefulTempest.PRESENT);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second);
         assertThat(gd.exilePlayPermissionHolders())
@@ -57,7 +56,7 @@ class FatefulTempestTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(milled, exiled));
         cast();
 
-        vote(ChoiceContext.FatefulTempestChoice.PAST, ChoiceContext.FatefulTempestChoice.PRESENT);
+        vote(FatefulTempest.PAST, FatefulTempest.PRESENT);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(milled);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(exiled);
@@ -72,7 +71,7 @@ class FatefulTempestTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(first, second));
         cast();
 
-        vote(ChoiceContext.FatefulTempestChoice.PAST, ChoiceContext.FatefulTempestChoice.PAST);
+        vote(FatefulTempest.PAST, FatefulTempest.PAST);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(first, second);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(first, second);
@@ -90,7 +89,7 @@ class FatefulTempestTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(milled, exiled));
         cast();
 
-        vote(ChoiceContext.FatefulTempestChoice.PAST, ChoiceContext.FatefulTempestChoice.PRESENT);
+        vote(FatefulTempest.PAST, FatefulTempest.PRESENT);
 
         assertThat(gd.playerDecks.get(player1.getId())).contains(milled);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(milled);
@@ -104,7 +103,7 @@ class FatefulTempestTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(milled));
         cast();
 
-        vote(ChoiceContext.FatefulTempestChoice.PAST, ChoiceContext.FatefulTempestChoice.PAST);
+        vote(FatefulTempest.PAST, FatefulTempest.PAST);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(milled);
         harness.assertLife(player2, 17);
@@ -117,7 +116,7 @@ class FatefulTempestTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(milled));
         cast();
 
-        vote(ChoiceContext.FatefulTempestChoice.PRESENT, ChoiceContext.FatefulTempestChoice.PAST);
+        vote(FatefulTempest.PRESENT, FatefulTempest.PAST);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(milled);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
@@ -129,7 +128,7 @@ class FatefulTempestTest extends BaseCardTest {
         harness.setLibrary(player1, List.of());
         cast();
 
-        vote(ChoiceContext.FatefulTempestChoice.PAST, ChoiceContext.FatefulTempestChoice.PRESENT);
+        vote(FatefulTempest.PAST, FatefulTempest.PRESENT);
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
@@ -141,7 +140,7 @@ class FatefulTempestTest extends BaseCardTest {
         GrizzlyBears exiled = new GrizzlyBears();
         harness.setLibrary(player1, List.of(exiled));
         cast();
-        vote(ChoiceContext.FatefulTempestChoice.PRESENT, ChoiceContext.FatefulTempestChoice.PRESENT);
+        vote(FatefulTempest.PRESENT, FatefulTempest.PRESENT);
 
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -160,7 +159,7 @@ class FatefulTempestTest extends BaseCardTest {
                 new FatefulTempest(), new FatefulTempest(), new FatefulTempest()));
         harness.setLibrary(player2, List.of(new FatefulTempest(), new FatefulTempest()));
         cast();
-        vote(ChoiceContext.FatefulTempestChoice.PRESENT, ChoiceContext.FatefulTempestChoice.PRESENT);
+        vote(FatefulTempest.PRESENT, FatefulTempest.PRESENT);
 
         harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
@@ -178,7 +177,7 @@ class FatefulTempestTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new ModelOfUnity());
         cast();
 
-        vote(ChoiceContext.FatefulTempestChoice.PRESENT, ChoiceContext.FatefulTempestChoice.PRESENT);
+        vote(FatefulTempest.PRESENT, FatefulTempest.PRESENT);
         resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
@@ -190,6 +189,21 @@ class FatefulTempestTest extends BaseCardTest {
                 .isEqualTo(player2.getId());
         harness.handleMayAbilityChosen(player2, false);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Each vote is logged as it is cast, so the next voter knows it")
+    void votesAreLoggedAsTheyAreCast() {
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        cast();
+
+        harness.handleListChoice(player1, FatefulTempest.PAST);
+
+        assertThat(gameLogContains(player1.getUsername() + " votes for Past (Fateful Tempest).")).isTrue();
+
+        harness.handleListChoice(player2, FatefulTempest.PRESENT);
+
+        assertThat(gameLogContains(player2.getUsername() + " votes for Present (Fateful Tempest).")).isTrue();
     }
 
     private void cast() {

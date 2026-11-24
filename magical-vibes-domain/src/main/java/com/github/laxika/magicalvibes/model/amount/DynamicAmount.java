@@ -37,6 +37,7 @@ public sealed interface DynamicAmount permits
         CardsDrawnThisResolution,
         AmountThisWay,
         VotesFor,
+        VotesReceived,
         CardsDrawnThisTurn,
         CardsLookedAtWhileScrying,
         OpponentsWithAtLeastCardsDrawnThisTurn,

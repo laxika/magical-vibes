@@ -31,13 +31,11 @@ class CirdanTheShipwrightTest extends BaseCardTest {
         voteFor(player1, player1);
         voteFor(player2, player1);
 
-        PendingInteraction.MultiPermanentChoice handChoice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(handChoice).isNotNull();
+        PendingInteraction.EachPlayerMayPutCardFromHandChoice handChoice = handChoice();
         assertThat(handChoice.playerId()).isEqualTo(player2.getId());
         assertThat(handChoice.validCardIds()).containsExactly(freePermanent.getId());
 
-        harness.handleMultiplePermanentsChosen(player2, List.of(freePermanent.getId()));
+        harness.handleMultipleCardsChosen(player2, List.of(freePermanent.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
@@ -78,7 +76,7 @@ class CirdanTheShipwrightTest extends BaseCardTest {
 
         voteFor(player1, player1);
         voteFor(player2, player1);
-        harness.handleMultiplePermanentsChosen(player2, List.of());
+        harness.handleMultipleCardsChosen(player2, List.of());
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(permanent);
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
@@ -98,10 +96,8 @@ class CirdanTheShipwrightTest extends BaseCardTest {
         voteFor(player1, player1);
         voteFor(player2, player1);
 
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(choice.validCardIds()).containsExactly(permanent.getId());
-        harness.handleMultiplePermanentsChosen(player2, List.of(permanent.getId()));
+        assertThat(handChoice().validCardIds()).containsExactly(permanent.getId());
+        harness.handleMultipleCardsChosen(player2, List.of(permanent.getId()));
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(instant);
     }
 
@@ -141,11 +137,15 @@ class CirdanTheShipwrightTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.handleMayAbilityChosen(player1, false);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(handChoice().playerId()).isEqualTo(player2.getId());
+        harness.handleMultipleCardsChosen(player2, List.of());
+    }
+
+    private PendingInteraction.EachPlayerMayPutCardFromHandChoice handChoice() {
+        PendingInteraction.EachPlayerMayPutCardFromHandChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.EachPlayerMayPutCardFromHandChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.playerId()).isEqualTo(player2.getId());
-        harness.handleMultiplePermanentsChosen(player2, List.of());
+        return choice;
     }
 
     private void voteFor(Player voter, Player votedFor) {

@@ -57,7 +57,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnChosenPerman
 import com.github.laxika.magicalvibes.service.effect.normalfx.WormsOfTheEarthEffectHandler;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
-import com.github.laxika.magicalvibes.service.trigger.VotingFinishedSupport;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.ArrayList;
@@ -122,7 +121,6 @@ public class MultiPermanentChoiceHandlerService {
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
     private final TargetTriggers targetTriggers;
-    private final VotingFinishedSupport votingFinishedSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.VotingSupport votingSupport;
     private final PermanentChoiceTriggerHandlerService triggerHandler;
     private final PermanentChoiceBattlefieldHandlerService battlefieldHandler;
@@ -271,17 +269,9 @@ public class MultiPermanentChoiceHandlerService {
             .EachPlayerChoosesDifferentOpponentPermanentThenDestroyRestEffectHandler
             eachPlayerChoosesDifferentOpponentPermanentThenDestroyRestHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
-            .WillOfTheCouncilEffectHandler willOfTheCouncilEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx
-            .VoteForCreatureThenDestroyMostVotedEffectHandler voteForCreatureThenDestroyMostVotedEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx
-            .SecretCouncilEffectHandler secretCouncilEffectHandler;
+            .VoteEffectHandler voteEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ElrondOfTheWhiteCouncilEffectHandler elrondOfTheWhiteCouncilEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx
-            .CirdanTheShipwrightEffectHandler cirdanTheShipwrightEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx
-            .MobVerdictEffectHandler mobVerdictEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ExpropriateEffectHandler expropriateEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
@@ -460,11 +450,8 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesCreatureThenSacrificesRestChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandAndPutCounterChoice
                 || context instanceof MultiPermanentChoiceContext.TurfWarLandChoice
-                || context instanceof MultiPermanentChoiceContext.WillOfTheCouncilChoice
-                || context instanceof MultiPermanentChoiceContext.SecretCouncilChoice
+                || context instanceof MultiPermanentChoiceContext.ObjectVoteChoice vote && !vote.upToOne()
                 || context instanceof MultiPermanentChoiceContext.ElrondFellowshipChoice
-                || context instanceof MultiPermanentChoiceContext.CirdanVoteChoice
-                || context instanceof MultiPermanentChoiceContext.MobVerdictChoice
                 || context instanceof MultiPermanentChoiceContext.ExpropriatePermanentChoice
                 || context instanceof MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesDifferentOpponentPermanentThenDestroyRest)
@@ -846,7 +833,6 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         gameData.interaction.clearAwaitingInput();
-        recordVotingChoiceIfApplicable(gameData, playerId, permanentIds, context);
 
         if (context instanceof MultiPermanentChoiceContext.ActivatedAbilityExileArtifactsCost exileArtifactsContext) {
             abilityActivationService.completeActivatedAbilityExileArtifactsCostChoice(
@@ -1007,18 +993,13 @@ public class MultiPermanentChoiceHandlerService {
             handleEachPlayerReturnsPermanent(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesOpponentPermanentToExile ctx) {
             handleEachPlayerChoosesOpponentPermanentToExile(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.WillOfTheCouncilChoice ctx) {
-            handleWillOfTheCouncilChoice(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.SecretCouncilChoice ctx) {
-            handleSecretCouncilChoice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.ObjectVoteChoice ctx) {
+            voteEffectHandler.completeObjectVote(gameData, playerId, permanentIds, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            }
         } else if (context instanceof MultiPermanentChoiceContext.ElrondFellowshipChoice ctx) {
             handleElrondFellowshipChoice(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.CirdanVoteChoice ctx) {
-            handleCirdanVoteChoice(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.MobVerdictChoice ctx) {
-            handleMobVerdictChoice(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.CirdanHandChoice ctx) {
-            handleCirdanHandChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ExpropriatePermanentChoice ctx) {
             handleExpropriatePermanentChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseUpToThreeNonlandPermanentsThenOpponentChoosesOne ctx) {
@@ -1872,11 +1853,6 @@ public class MultiPermanentChoiceHandlerService {
      * "otherwise" branch is only queued after the sacrifices.
      * {@link MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands} sacrifices both chosen lands as one
      * batch, asking both before either leaves; Worms of the Earth itself is destroyed after, as a step of its own.
-     * {@link MultiPermanentChoiceContext.VoteForCreatureThenDestroyMostVotedChoice} (Voter's Dilemma) keeps
-     * the votes so far in the immutable context and only prompts the next voter before its
-     * {@link DestructionSupport#destroyBatch} batch; the vote is recorded before the completion runs (a
-     * replay doesn't record it again) and finished, firing "finish voting" triggers, only after the
-     * batch's death replacements have been asked.
      * The "choose, then remove the chosen" contexts only read their picks before one batch:
      * {@link MultiPermanentChoiceContext.ForcedDestroy} destroys, and
      * {@link MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount} and
@@ -1921,7 +1897,6 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.DestroyUpToOneNonbasicLandPerPlayerChoice
                 || context instanceof MultiPermanentChoiceContext.SacrificePermanentsOrElse
                 || context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands
-                || context instanceof MultiPermanentChoiceContext.VoteForCreatureThenDestroyMostVotedChoice
                 || context instanceof MultiPermanentChoiceContext.ForcedDestroy
                 || context instanceof MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount
                 || context instanceof MultiPermanentChoiceContext.SacrificeCreaturesWithTotalPowerOrSacrificeSource
@@ -2092,10 +2067,6 @@ public class MultiPermanentChoiceHandlerService {
             }
             case MultiPermanentChoiceContext.SacrificePermanentsOrElse ctx -> {
                 handleSacrificePermanentsOrElse(gameData, playerId, permanentIds, ctx);
-                return;
-            }
-            case MultiPermanentChoiceContext.VoteForCreatureThenDestroyMostVotedChoice ctx -> {
-                handleVoteForCreatureThenDestroyMostVotedChoice(gameData, permanentIds, ctx);
                 return;
             }
             case MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands ctx -> {
@@ -3456,60 +3427,9 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
-    private void handleWillOfTheCouncilChoice(GameData gameData, List<UUID> permanentIds,
-            MultiPermanentChoiceContext.WillOfTheCouncilChoice context) {
-        willOfTheCouncilEffectHandler.completeVote(gameData, permanentIds, context);
 
-        if (gameData.interaction.isAwaitingInput()) {
-            return;
-        }
 
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
 
-    private void handleVoteForCreatureThenDestroyMostVotedChoice(GameData gameData,
-            List<UUID> permanentIds,
-            MultiPermanentChoiceContext.VoteForCreatureThenDestroyMostVotedChoice context) {
-        voteForCreatureThenDestroyMostVotedEffectHandler.completeVote(gameData, permanentIds, context);
-        if (!gameData.interaction.isAwaitingInput()) {
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-        }
-    }
-
-    private void recordVotingChoiceIfApplicable(GameData gameData, UUID voterId,
-                                                List<UUID> selectedIds,
-                                                MultiPermanentChoiceContext context) {
-        if (selectedIds.isEmpty()) {
-            return;
-        }
-        if (context instanceof MultiPermanentChoiceContext.WillOfTheCouncilChoice vote) {
-            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId,
-                    "permanent:" + selectedIds.getFirst());
-        } else if (context instanceof MultiPermanentChoiceContext.VoteForCreatureThenDestroyMostVotedChoice vote) {
-            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId,
-                    "permanent:" + selectedIds.getFirst());
-        } else if (context instanceof MultiPermanentChoiceContext.SecretCouncilChoice vote) {
-            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId,
-                    "permanent:" + selectedIds.getFirst());
-        } else if (context instanceof MultiPermanentChoiceContext.CirdanVoteChoice vote) {
-            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId,
-                    "player:" + selectedIds.getFirst());
-        } else if (context instanceof MultiPermanentChoiceContext.MobVerdictChoice vote) {
-            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId,
-                    "player:" + selectedIds.getFirst());
-        }
-    }
-
-    private void handleSecretCouncilChoice(GameData gameData, List<UUID> permanentIds,
-            MultiPermanentChoiceContext.SecretCouncilChoice context) {
-        secretCouncilEffectHandler.completeVote(gameData, permanentIds, context);
-
-        if (gameData.interaction.isAwaitingInput()) {
-            return;
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
 
     private void handleElrondFellowshipChoice(GameData gameData, List<UUID> permanentIds,
             MultiPermanentChoiceContext.ElrondFellowshipChoice context) {
@@ -3522,38 +3442,8 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
-    private void handleCirdanVoteChoice(GameData gameData, List<UUID> playerIds,
-            MultiPermanentChoiceContext.CirdanVoteChoice context) {
-        cirdanTheShipwrightEffectHandler.completeVote(gameData, playerIds, context);
 
-        if (gameData.interaction.isAwaitingInput()) {
-            return;
-        }
 
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    private void handleMobVerdictChoice(GameData gameData, List<UUID> playerIds,
-            MultiPermanentChoiceContext.MobVerdictChoice context) {
-        mobVerdictEffectHandler.completeVote(gameData, playerIds, context);
-
-        if (gameData.interaction.isAwaitingInput()) {
-            return;
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    private void handleCirdanHandChoice(GameData gameData, List<UUID> cardIds,
-            MultiPermanentChoiceContext.CirdanHandChoice context) {
-        cirdanTheShipwrightEffectHandler.completeHandChoice(gameData, cardIds, context);
-
-        if (gameData.interaction.isAwaitingInput()) {
-            return;
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
 
     private void handleExpropriatePermanentChoice(GameData gameData, List<UUID> permanentIds,
             MultiPermanentChoiceContext.ExpropriatePermanentChoice context) {

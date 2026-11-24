@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MobVerdictEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.VotingFinishedSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -19,18 +18,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/** Resolves Mob Verdict's secret player vote and its vote-counted results. */
+/**
+ * Resolves {@link MobVerdictEffect}: for each vote of the resolution's VOTE step cast for an opponent of the controller,
+ * 2 damage to that player and each creature they control, the opponents in the order their first votes were cast.
+ */
 @Component
 @RequiredArgsConstructor
 public class MobVerdictEffectHandler implements NormalEffectHandlerBean {
 
-    private final PlayerInputService playerInputService;
-    private final VotingSupport votingSupport;
-    private final PlayerInteractionSupport playerInteractionSupport;
+    private static final int DAMAGE_PER_VOTE = 2;
+
     private final GameQueryService gameQueryService;
     private final DamageSupport damageSupport;
     private final GameOutcomeService gameOutcomeService;
-    private final VotingFinishedSupport votingFinishedSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,70 +39,18 @@ public class MobVerdictEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        beginNextVote(gameData, votingSupport.voterOrder(gameData, entry.getControllerId()),
-                entry.getControllerId(), new LinkedHashMap<>(), entry.getCard().getName(), entry);
-    }
-
-    public void completeVote(GameData gameData, List<UUID> selectedIds,
-                             MultiPermanentChoiceContext.MobVerdictChoice context) {
-        Map<UUID, Integer> votes = new LinkedHashMap<>(context.votes());
-        votes.merge(selectedIds.getFirst(), 1, Integer::sum);
-        beginNextVote(gameData, context.remainingVoterIds(), context.effectControllerId(), votes,
-                context.sourceName(), gameData.pendingEffectResolutionEntry);
-    }
-
-    private void beginNextVote(GameData gameData, List<UUID> remainingVoterIds,
-                               UUID effectControllerId, Map<UUID, Integer> votes, String sourceName,
-                               StackEntry resolutionEntry) {
-        List<UUID> remaining = new ArrayList<>(remainingVoterIds);
-        while (!remaining.isEmpty()) {
-            UUID voterId = remaining.removeFirst();
-            List<UUID> validPlayerIds = gameData.orderedPlayerIds.stream()
-                    .filter(playerId -> !playerId.equals(voterId))
-                    .toList();
-
-            if (validPlayerIds.isEmpty()) {
-                continue;
-            }
-            if (validPlayerIds.size() == 1 && !votingSupport.mayVoteAgain(gameData, voterId)) {
-                UUID votedFor = validPlayerIds.getFirst();
-                votingFinishedSupport.recordVote(gameData, effectControllerId, voterId,
-                        "player:" + votedFor);
-                votes.merge(votedFor, 1, Integer::sum);
-                continue;
-            }
-
-            playerInputService.beginMultiPermanentOrPlayerChoice(
-                    gameData, voterId, List.of(), validPlayerIds, 1,
-                    new MultiPermanentChoiceContext.MobVerdictChoice(
-                            effectControllerId, remaining, votes, sourceName),
-                    sourceName + " - secretly vote for another player.");
-            return;
-        }
-
-        votingFinishedSupport.finishVoting(gameData, effectControllerId);
-        resolveVotes(gameData, effectControllerId, votes, resolutionEntry);
-    }
-
-    private void resolveVotes(GameData gameData, UUID effectControllerId, Map<UUID, Integer> votes,
-                              StackEntry entry) {
-        if (entry == null) {
-            throw new IllegalStateException("Mob Verdict resolution is not resumable");
-        }
-
-        for (Map.Entry<UUID, Integer> vote : votes.entrySet()) {
-            if (vote.getKey().equals(effectControllerId)) {
-                continue;
-            }
-            for (int i = 0; i < vote.getValue(); i++) {
-                dealDamageToPlayerAndCreatures(gameData, entry, vote.getKey());
+        Map<UUID, Integer> received = new LinkedHashMap<>();
+        for (StepOutcome.Vote vote : entry.getResolutionResults().outcome(StepKind.VOTE).votes()) {
+            if (vote.candidateId() != null && vote.choice().startsWith(StepOutcome.Vote.PLAYER)
+                    && !vote.candidateId().equals(entry.getControllerId())) {
+                received.merge(vote.candidateId(), 1, Integer::sum);
             }
         }
-
-        int controllerVotes = votes.getOrDefault(effectControllerId, 0);
-        if (controllerVotes > 0) {
-            playerInteractionSupport.applyDrawCards(gameData, effectControllerId, controllerVotes);
-        }
+        received.forEach((playerId, votes) -> {
+            for (int i = 0; i < votes; i++) {
+                dealDamageToPlayerAndCreatures(gameData, entry, playerId);
+            }
+        });
         gameOutcomeService.checkWinCondition(gameData);
     }
 
@@ -110,12 +58,9 @@ public class MobVerdictEffectHandler implements NormalEffectHandlerBean {
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
             return;
         }
-
-        int damage = 2;
-        damageSupport.dealDamageToPlayer(gameData, entry, playerId, damage);
-
+        damageSupport.dealDamageToPlayer(gameData, entry, playerId, DAMAGE_PER_VOTE);
         List<Permanent> battlefield = new ArrayList<>(gameData.playerBattlefields.getOrDefault(playerId, List.of()));
-        damageSupport.damageFilteredCreatures(gameData, entry, damage, battlefield,
+        damageSupport.damageFilteredCreatures(gameData, entry, DAMAGE_PER_VOTE, battlefield,
                 permanent -> gameQueryService.isCreature(gameData, permanent));
     }
 }

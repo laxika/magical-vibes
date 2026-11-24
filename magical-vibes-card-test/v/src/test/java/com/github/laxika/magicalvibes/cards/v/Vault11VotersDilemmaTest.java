@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -150,7 +151,8 @@ class Vault11VotersDilemmaTest extends BaseCardTest {
     }
 
     @Test
-    void lastVoteAsksForTheDeathReplacementBeforeVotingFinishesOrTheZombieIsDestroyed() {
+    @DisplayName("The destroy step asks for the death replacement before the zombie leaves, and voting finishes once")
+    void lastVoteAsksForTheDeathReplacementBeforeTheZombieIsDestroyed() {
         harness.addToBattlefield(player1, new ModelOfUnity());
         harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
         Permanent gravebane = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
@@ -163,9 +165,10 @@ class Vault11VotersDilemmaTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                 .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
         harness.assertOnBattlefield(player2, "Gravebane Zombie");
-        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Model of Unity"));
 
         harness.handleListChoice(player2, "Put it into its owner's library");
+        assertThat(gd.gameLog.stream().filter(entry -> entry.plainText().startsWith(
+                "The votes for Vault 11: Voter's Dilemma are revealed:"))).hasSize(1);
 
         assertThat(gd.playerDecks.get(player2.getId()).getFirst().getId()).isEqualTo(gravebane.getCard().getId());
         harness.assertNotOnBattlefield(player2, "Gravebane Zombie");

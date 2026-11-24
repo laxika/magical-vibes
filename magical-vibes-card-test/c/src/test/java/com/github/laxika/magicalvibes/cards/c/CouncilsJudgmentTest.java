@@ -5,13 +5,16 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.b.Blastoderm;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.cards.t.TheValeyard;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -142,5 +145,39 @@ class CouncilsJudgmentTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(valeyard, artifact);
         assertThat(gd.interaction.activeInteraction()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Each open vote is logged as it is cast, so later voters know the earlier votes")
+    void openVotesAreLoggedAsTheyAreCast() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ring = harness.addToBattlefieldAndReturn(player2, new SolRing());
+
+        harness.castFromHand(player1, new CouncilsJudgment(), "{1}{W}{W}");
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
+
+        assertThat(gameLogContains(player1.getUsername() + " votes for Grizzly Bears (Council's Judgment).")).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId())
+                .isEqualTo(player2.getId());
+
+        harness.handleMultiplePermanentsChosen(player2, List.of(ring.getId()));
+
+        assertThat(gameLogContains(player2.getUsername() + " votes for Sol Ring (Council's Judgment).")).isTrue();
+    }
+
+    @Test
+    @DisplayName("A vote for a face-down creature doesn't name its card in the log")
+    void voteForFaceDownCreatureHidesItsName() {
+        Permanent faceDown = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        faceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        harness.castFromHand(player1, new CouncilsJudgment(), "{1}{W}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(faceDown);
+        assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().startsWith(player1.getUsername() + " votes for "));
+        assertThat(gameLogContains("votes for Grizzly Bears")).isFalse();
     }
 }

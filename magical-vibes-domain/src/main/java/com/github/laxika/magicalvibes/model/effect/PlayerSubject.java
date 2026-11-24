@@ -22,7 +22,7 @@ public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.T
         PlayerSubject.ActivePlayer, PlayerSubject.DefendingPlayer, PlayerSubject.EnchantedPlayer,
         PlayerSubject.ChosenPlayer, PlayerSubject.ChosenPlayers, PlayerSubject.AcceptedPlayers,
         PlayerSubject.PlayersDealtDamage, PlayerSubject.SubgameWinners, PlayerSubject.Except, PlayerSubject.AllOf, PlayerSubject.Matching,
-        PlayerSubject.PlayersThisWay {
+        PlayerSubject.PlayersThisWay, PlayerSubject.Voted {
 
     /** Whether this subject is the effect's own player target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -289,6 +289,26 @@ public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.T
         @Override
         public boolean needsStackEntry() {
             return players.needsStackEntry();
+        }
+    }
+
+    /**
+     * "Each player who received no votes" ({@link VoteEffect.Tally#NONE}), "each player with the most votes"
+     * ({@link VoteEffect.Tally#MOST}), "each player who received a vote" ({@link VoteEffect.Tally#ANY}): the players in
+     * the game, by the votes each received in the most recent vote of the same resolution ({@code VoteEffect}), in APNAP
+     * order. A step result.
+     *
+     * @param tally which players are named
+     */
+    record Voted(VoteEffect.Tally tally) implements PlayerSubject {
+
+        public Voted {
+            Objects.requireNonNull(tally, "tally");
+        }
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
         }
     }
 }
