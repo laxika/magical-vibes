@@ -31,7 +31,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.ManaValueParity;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -55,7 +54,6 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithTokenAttachedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledLandsEnterUntappedEffect;
-import com.github.laxika.magicalvibes.model.effect.CreaturesOfUnchosenParityEnterTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
@@ -68,7 +66,6 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentsEnterUntappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.effect.NextControlledEnchantmentCreatureEntryWithAdditionalCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentsEnterTappedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterMysticReflectionEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersEffect;
@@ -107,7 +104,6 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AscendEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PerpetualCardBattlefieldEffectSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.StoriedEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.EnchantedPlayerCreaturesEnterTappedEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCreationReplacementSupport;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
@@ -180,7 +176,6 @@ public class BattlefieldPlacementService {
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
     private final PermanentRemovalService permanentRemovalService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BecomeDayAsEntersEffectHandler becomeDayAsEntersEffectHandler;
-    private final EnchantedPlayerCreaturesEnterTappedEffectHandler enchantedPlayerCreaturesEnterTappedEffectHandler;
     private com.github.laxika.magicalvibes.service.effect.normalfx.NoteControllerLifeTotalEffectHandler noteControllerLifeTotalEffectHandler;
     private LandEquilibriumSupport landEquilibriumSupport;
     @Autowired
@@ -219,8 +214,7 @@ public class BattlefieldPlacementService {
                                        @Lazy com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport,
                                        com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService,
                                        @Lazy PermanentRemovalService permanentRemovalService,
-                                       com.github.laxika.magicalvibes.service.effect.normalfx.BecomeDayAsEntersEffectHandler becomeDayAsEntersEffectHandler,
-                                       EnchantedPlayerCreaturesEnterTappedEffectHandler enchantedPlayerCreaturesEnterTappedEffectHandler) {
+                                       com.github.laxika.magicalvibes.service.effect.normalfx.BecomeDayAsEntersEffectHandler becomeDayAsEntersEffectHandler) {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
@@ -233,7 +227,6 @@ public class BattlefieldPlacementService {
         this.graveyardService = graveyardService;
         this.permanentRemovalService = permanentRemovalService;
         this.becomeDayAsEntersEffectHandler = becomeDayAsEntersEffectHandler;
-        this.enchantedPlayerCreaturesEnterTappedEffectHandler = enchantedPlayerCreaturesEnterTappedEffectHandler;
     }
 
     public BattlefieldPlacementService(GameQueryService gameQueryService,
@@ -251,8 +244,7 @@ public class BattlefieldPlacementService {
                 amountEvaluationService, conditionEvaluationService,
                 predicateEvaluationService, new EntryReplacementHandlerRegistry(List.of()),
                 permanentCounterSupport, graveyardService, permanentRemovalService,
-                becomeDayAsEntersEffectHandler,
-                new EnchantedPlayerCreaturesEnterTappedEffectHandler(gameQueryService));
+                becomeDayAsEntersEffectHandler);
     }
 
     @Autowired
@@ -366,12 +358,8 @@ public class BattlefieldPlacementService {
             applyEnterTappedEffects(permanent, enterTappedTypes);
             applySelfEnterTapped(gameData, controllerId, permanent);
             applyConditionalEnterTapped(gameData, controllerId, permanent, xValue);
-            applyAllPermanentsEnterTapped(gameData, permanent);
-            applyGlobalFilteredEnterTappedEffects(gameData, permanent);
-            applyOpponentOnlyEnterTappedEffects(gameData, controllerId, permanent);
-            applyTurnScopedFilteredEnterTappedEffects(gameData, controllerId, permanent);
-            enchantedPlayerCreaturesEnterTappedEffectHandler.apply(gameData, controllerId, permanent);
-            applyUnchosenParityEnterTapped(gameData, permanent);
+            applyStaticEnterTappedEffects(gameData, controllerId, permanent);
+            applyFloatedEnterTappedEffects(gameData, controllerId, permanent);
             RevealSubtypeOrEntersTappedEffect unrevealedEntryTappedEffect = conditionalRevealEffect != null
                     ? conditionalRevealEffect : findDirectRevealSubtypeOrEntersTappedEffect(gameData, permanent);
             if (unrevealedEntryTappedEffect != null
@@ -758,12 +746,8 @@ public class BattlefieldPlacementService {
         applyEnterTappedEffects(preview, request.enterTappedTypes());
         applySelfEnterTapped(gameData, controllerId, preview);
         applyConditionalEnterTapped(gameData, controllerId, preview, request.xValue());
-        applyAllPermanentsEnterTapped(gameData, preview);
-        applyGlobalFilteredEnterTappedEffects(gameData, preview);
-        applyOpponentOnlyEnterTappedEffects(gameData, controllerId, preview);
-        applyTurnScopedFilteredEnterTappedEffects(gameData, controllerId, preview);
-        enchantedPlayerCreaturesEnterTappedEffectHandler.apply(gameData, controllerId, preview);
-        applyUnchosenParityEnterTapped(gameData, preview);
+        applyStaticEnterTappedEffects(gameData, controllerId, preview);
+        applyFloatedEnterTappedEffects(gameData, controllerId, preview);
         boolean entersTapped = preview.isTapped();
         if (request.permanent().isTapped()) preview.tap();
         applyControlledPermanentsEnterUntapped(gameData, controllerId, preview);
@@ -1576,7 +1560,7 @@ public class BattlefieldPlacementService {
             } else {
                 continue;
             }
-            if (enterTapped.opponentsOnly() || enterTapped.castOnly()) {
+            if (!enterTapped.everyPlayersByTypeAlone()) {
                 continue;
             }
             enterTappedTypes.addAll(enterTapped.cardTypes());
@@ -1585,7 +1569,7 @@ public class BattlefieldPlacementService {
             gameData.planechase.faceUp.forEach(planar -> planar.getCard().getStaticEffects().stream()
                     .filter(EnterPermanentsOfTypesTappedEffect.class::isInstance)
                     .map(EnterPermanentsOfTypesTappedEffect.class::cast)
-                    .filter(enterTapped -> !enterTapped.opponentsOnly() && !enterTapped.castOnly())
+                    .filter(EnterPermanentsOfTypesTappedEffect::everyPlayersByTypeAlone)
                     .forEach(enterTapped -> enterTappedTypes.addAll(enterTapped.cardTypes())));
         }
         return enterTappedTypes;
@@ -1597,25 +1581,6 @@ public class BattlefieldPlacementService {
         }
         if (matchesAnyType(enteringPermanent.getCard(), enterTappedTypes)) {
             enteringPermanent.tap();
-        }
-    }
-
-    private void applyAllPermanentsEnterTapped(GameData gameData, Permanent enteringPermanent) {
-        if (gameData.floatingEffectsOfTypes(PermanentsEnterTappedThisTurnEffect.class).stream()
-                .anyMatch(floating -> ((PermanentsEnterTappedThisTurnEffect) floating.effect()).filter() == null)) {
-            enteringPermanent.tap();
-        }
-    }
-
-    private void applyTurnScopedFilteredEnterTappedEffects(GameData gameData, UUID enteringControllerId,
-                                                            Permanent enteringPermanent) {
-        for (FloatingContinuousEffect floating : gameData.floatingEffectsOnPlayer(enteringControllerId,
-                PermanentsEnterTappedThisTurnEffect.class)) {
-            PermanentPredicate filter = ((PermanentsEnterTappedThisTurnEffect) floating.effect()).filter();
-            if (filter != null && predicateEvaluationService.matchesPermanentPredicate(gameData, enteringPermanent, filter)) {
-                enteringPermanent.tap();
-                return;
-            }
         }
     }
 
@@ -1654,18 +1619,6 @@ public class BattlefieldPlacementService {
         }
     }
 
-    private void applyOpponentOnlyEnterTappedEffects(GameData gameData, UUID enteringControllerId, Permanent enteringPermanent) {
-        for (GameQueryService.ActiveStaticEffect<EnterPermanentsOfTypesTappedEffect> active
-                : gameQueryService.activeStaticEffects(gameData, EnterPermanentsOfTypesTappedEffect.class)) {
-            if (active.controllerId().equals(enteringControllerId) || !active.effect().opponentsOnly()) {
-                continue;
-            }
-            if (matchesEnterTappedEffect(gameData, enteringPermanent, active.effect())) {
-                enteringPermanent.tap();
-            }
-        }
-    }
-
     private void applyControlledPermanentsEnterUntapped(GameData gameData, UUID enteringControllerId,
                                                         Permanent enteringPermanent) {
         for (GameQueryService.ActiveStaticEffect<PermanentsEnterUntappedEffect> active
@@ -1678,51 +1631,58 @@ public class BattlefieldPlacementService {
         }
     }
 
-    private void applyGlobalFilteredEnterTappedEffects(GameData gameData, Permanent enteringPermanent) {
+    /**
+     * The static "[permanents] enter tapped" replacements that a batch can't take once before it enters (a filter, a
+     * cast-only one, or one for some players only): each applies when its players name the entering permanent's
+     * controller, judged against its source and the source's controller, and the permanent matches, a filter being
+     * judged with that source.
+     */
+    private void applyStaticEnterTappedEffects(GameData gameData, UUID enteringControllerId, Permanent enteringPermanent) {
         for (GameQueryService.ActiveStaticEffect<EnterPermanentsOfTypesTappedEffect> active
                 : gameQueryService.activeStaticEffects(gameData, EnterPermanentsOfTypesTappedEffect.class)) {
             EnterPermanentsOfTypesTappedEffect enterTapped = active.effect();
-            if (!enterTapped.opponentsOnly()
-                    && (enterTapped.filter() != null || enterTapped.castOnly())
-                    && matchesEnterTappedEffect(gameData, enteringPermanent, enterTapped)) {
+            if (!enterTapped.everyPlayersByTypeAlone()
+                    && SubjectResolutionService.namesPlayer(gameData, active.source(), active.controllerId(),
+                    enteringControllerId, enterTapped.players())
+                    && matchesEnterTappedEffect(gameData, enteringPermanent, enterTapped,
+                    FilterContext.of(gameData).withSourcePermanentSnapshot(active.source())
+                            .withSourcePermanentId(active.source().getId())
+                            .withSourceCardId(active.source().getCard().getId())
+                            .withSourceControllerId(active.controllerId()))) {
                 enteringPermanent.tap();
             }
         }
     }
 
+    /**
+     * "[Permanents] enter tapped this turn" floated on the entering permanent's controller (Due Respect, Nahiri's
+     * Lithoforming): a rule change, so it covers permanents that enter after it began (CR 611.2c).
+     */
+    private void applyFloatedEnterTappedEffects(GameData gameData, UUID enteringControllerId, Permanent enteringPermanent) {
+        for (FloatingContinuousEffect floating : gameData.floatingEffectsOnPlayer(enteringControllerId,
+                EnterPermanentsOfTypesTappedEffect.class)) {
+            if (matchesEnterTappedEffect(gameData, enteringPermanent,
+                    (EnterPermanentsOfTypesTappedEffect) floating.effect(), FilterContext.of(gameData))) {
+                enteringPermanent.tap();
+                return;
+            }
+        }
+    }
+
     private boolean matchesEnterTappedEffect(GameData gameData, Permanent enteringPermanent,
-                                             EnterPermanentsOfTypesTappedEffect enterTapped) {
+                                             EnterPermanentsOfTypesTappedEffect enterTapped, FilterContext filterContext) {
         if (enterTapped.castOnly() && enteringPermanent.getCastFromZone() == null) {
             return false;
         }
         if (enterTapped.filter() != null) {
-            return predicateEvaluationService.matchesPermanentPredicate(gameData, enteringPermanent, enterTapped.filter());
+            return predicateEvaluationService.matchesPermanentPredicate(enteringPermanent, enterTapped.filter(),
+                    filterContext);
         }
         if (enteringPermanent.isFaceDown()) {
             // A face-down permanent is a 2/2 creature with no other types (CR 708.2).
             return enterTapped.cardTypes().contains(CardType.CREATURE);
         }
         return matchesAnyType(enteringPermanent.getCard(), enterTapped.cardTypes());
-    }
-
-    /**
-     * "Each creature without mana value of the chosen quality enters tapped" (Ashling's Prerogative).
-     * For each permanent carrying {@link CreaturesOfUnchosenParityEnterTappedEffect} with a chosen
-     * parity, an entering creature whose mana value does not match that parity enters tapped. Applies
-     * across all battlefields; while the source's parity is unchosen (null) it does nothing.
-     */
-    private void applyUnchosenParityEnterTapped(GameData gameData, Permanent enteringPermanent) {
-        if (!gameQueryService.isCreature(gameData, enteringPermanent)) {
-            return;
-        }
-        int manaValue = enteringPermanent.isFaceDown() ? 0 : enteringPermanent.getCard().getManaValue();
-        for (GameQueryService.ActiveStaticEffect<CreaturesOfUnchosenParityEnterTappedEffect> active
-                : gameQueryService.activeStaticEffects(gameData, CreaturesOfUnchosenParityEnterTappedEffect.class)) {
-            ManaValueParity chosen = active.source().getChosenManaValueParity();
-            if (chosen != null && !chosen.matches(manaValue)) {
-                enteringPermanent.tap();
-            }
-        }
     }
 
     private boolean losesNonManaAbilitiesAsLandEnters(GameData gameData, UUID controllerId, Permanent permanent) {

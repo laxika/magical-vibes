@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b (each in Findings; the fold queue marks its rows). Fold run 35b is reported and waits to merge; 29d (fixing its payment window), 38 and 36b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                     |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b (each in Findings; the fold queue marks its rows). Fold run 29d is reported and waits to merge; 38, 36b and 35c are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                      |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,324 / 2,675 (after fold run 32b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,318 / 2,672 (after fold run 35b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,142 rows over 4,490 classes (after fold run 32b). Latest verdict per class: `step-9` 419, unique 1,174, absorbed 1,049, split 652, blocked-other 524, survivor 371, blocked-step-model 140, blocked-player-loop 96, dead 65. Waiting: 419 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,151 rows over 4,493 classes (after fold run 35b). Latest verdict per class: `step-9` 416, unique 1,173, absorbed 1,055, split 652, blocked-other 524, survivor 372, blocked-step-model 140, blocked-player-loop 96, dead 65. Waiting: 416 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -922,6 +922,10 @@ Delayed and global triggers:
 - `AnimateNoncreatureArtifactsEffect(PermanentSubject subject, PermanentPredicate filter, boolean losesAllAbilities)` / `.otherNonAuraEnchantments()`: "each [filter] permanent is a creature in addition to its other types with base P/T equal to its mana value". The filter is judged in layer 4, and layers 6 and 7b apply to that set (CR 613.6) (fold run 32b).
 - `LayerSystemService.LayeredBoardState.staticAnimations` + `animatedBy(effect)` / `recordStaticAnimation(effect, id)`: the permanents each multi-layer static animation instance animated in layer 4, copied into dependency trials (fold run 32b).
 - `GameQueryService.isAnimatedByPrintedStaticAnimation(gameData, permanent, ownCardId, skipSourcesWithoutAbilities)`: the creature check for a permanent with no layered state (fold run 32b).
+
+- `EnterPermanentsOfTypesTappedEffect(types, PlayerSubject players, filter, castOnly)` / `.matching(filter, players)`: static "[permanents] enter tapped" for `eachPlayer()`, `eachOpponent()` or `enchantedPlayer()`, with filters judged against the source; floated on a player for "this turn" (Due Respect, Nahiri's Lithoforming) (fold run 35b).
+- `PermanentHasSourceChosenParityPredicate(chosenQuality)`: "with / without mana value of the chosen quality", the source's as-enters odd or even, in static and dynamic evaluation (fold run 35b).
+- `SkipDrawStepEffect(UNTAP_STEP, players)`: static "players skip their untap steps", planes included, read by `UntapStepService.playersSkipUntapStepApplies` (fold run 35b).
 
 ### Blocked causes still open
 
@@ -3968,6 +3972,29 @@ Okk, Champions of Minas Tirith, Call for Aid, Seeker of Slaanesh, Viashino Bey, 
 - Titania's Song's "continues until end of turn" floating copy is keyed by `losesAllAbilities`, which only Titania sets. A second user of that flag would need its own marker. Sure.
 
 **For the next run.** Starfield of Nyx: make `ControlsPermanentCount` with a pure type filter board-stable, admit `ConditionalEffect(…, AnimateNoncreatureArtifactsEffect)` to layer 7b, and delete `isAnimatedByStarfield`. Then floated-name with The Irencrag.
+
+### Step 9, fold run 35b (2026-11-24, parallel worktree)
+Five members done, plus Ashling's haste grant. Ratchet 3,355 / 2,699 → 3,349 / 2,696. Ledger 9 rows: absorbed 6, survivor 3. 10 card files rewritten; Oracle text checked for 9.
+
+| Batch | Result |
+|---|---|
+| enters-tapped | 3 folded plus `GrantKeywordToCreaturesOfChosenParityEffect`. `EnterPermanentsOfTypesTappedEffect`'s `opponentsOnly` is now a non-target `PlayerSubject players`; the boolean overloads stay and map to eachOpponent / eachPlayer. Radiant Restraints is `enchantedPlayer()`. Ashling's Prerogative uses the new `PermanentHasSourceChosenParityPredicate(chosenQuality)`; a static enters-tapped filter now gets its source in the `FilterContext`. Due Respect and Nahiri's Lithoforming float the survivor through `GrantStaticEffectToPlayerEffect` (CR 611.2c: a rule change covers later entries). The batch snapshot takes only `everyPlayersByTypeAlone()` effects. |
+| joiners | `PlayersSkipUntapStepEffect` is `SkipDrawStepEffect(UNTAP_STEP, eachPlayer())`; the untap reader judges the active player over active statics and face-up planes (CR 614.10). `RevealOpponentHandsEffect` is `PlayWithHandsRevealedEffect(eachOpponent())`. |
+| player-prot leftovers | not started: Runed Halo, Absolute Virtue. |
+
+**Behaviour changes.**
+- A Radiant Restraints that lost its abilities taps nothing (CR 613.1f); a face-down Telepathy, Stasis, Sands of Time or The Eon Fog does nothing (CR 708.2a). Tests: RadiantGrace, Telepathy, Stasis.
+- Telepathy's opponents' hands are revealed to all players (CR 701.20a). Observable only with 3+ players, and only for some seat orders because of the first-opponent view defect.
+- Logs: Due Respect and Nahiri's Lithoforming lose their enters-tapped lines.
+
+**Tests changed.** RunedTerrorTest (the float is per player, read through `floatingPlayerEffects`). New: RadiantGrace, Telepathy, Stasis, Nahiri (an opponent's land enters untapped), PredicateEvaluationServiceTest (2).
+
+**Seen, not changed.**
+- Radiant Restraints' "ignored Aura" half of the P03 defect (Volrath's Curse) was not checked. Its lost-abilities half is fixed.
+- `snapshotEnterTappedTypes` matches the printed card types (`matchesAnyType(card)`), not the permanent as it would exist on the battlefield (CR 614.12). Sure of the code, untested.
+
+**For the next run.**
+- Runed Halo and Absolute Virtue onto one player-protection reader (6 TargetLegalityService sites, damage preventions, Aura attach), with the `playerHasProtectionFromOpponents` owned-but-uncontrolled defect (CR 702.16k).
 
 ## Prompt
 

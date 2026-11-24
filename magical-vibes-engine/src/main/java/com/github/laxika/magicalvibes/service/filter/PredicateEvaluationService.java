@@ -265,6 +265,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasProtectionFromCol
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenParityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenNamePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -3266,6 +3267,8 @@ public class PredicateEvaluationService {
                 yield chosen != null
                         && matchesPermanentPredicate(permanent, new PermanentHasSubtypePredicate(chosen), filterContext);
             }
+            case PermanentHasSourceChosenParityPredicate parity ->
+                    hasSourceChosenParity(permanent, parity, filterContext);
             case PermanentHasChosenParityPredicate chosenParity -> {
                 StackEntry resolving = resolving(gameData);
                 ManaValueParity parity = resolving == null ? null : resolving.getChosenParity();
@@ -3866,6 +3869,7 @@ public class PredicateEvaluationService {
             case PermanentHasTypeChosenThisResolutionPredicate ignored -> false;
             case PermanentControlledByPlayersPredicate ignored -> false;
             case PermanentHasChosenParityPredicate ignored -> false;
+            case PermanentHasSourceChosenParityPredicate parity -> hasSourceChosenParity(permanent, parity, context);
             case PermanentHasChosenSpellColorPredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
                 yield gameData != null && gameData.chosenSpellColor != null
@@ -4672,6 +4676,30 @@ public class PredicateEvaluationService {
         if (context.gameData() == null || context.sourceCardId() == null) return null;
         Permanent source = findPermanentByCurrentCardId(context.gameData(), context.sourceCardId());
         return source == null ? null : source.getChosenSubtype();
+    }
+
+    /**
+     * {@link PermanentHasSourceChosenParityPredicate}: whether the permanent's mana value (0 face down, CR 708.2a) has, or
+     * lacks, the odd or even its source chose as it entered; neither while the source is gone or chose nothing.
+     */
+    private boolean hasSourceChosenParity(Permanent permanent, PermanentHasSourceChosenParityPredicate parity,
+                                          FilterContext context) {
+        Permanent source = sourcePermanent(context);
+        ManaValueParity chosen = source == null ? null : source.getChosenManaValueParity();
+        return chosen != null
+                && chosen.matches(gameQueryService.getPermanentManaValue(permanent)) == parity.chosenQuality();
+    }
+
+    /** The source permanent a context names: its snapshot, else the permanent by id, else by its card. */
+    private Permanent sourcePermanent(FilterContext context) {
+        if (context == null) return null;
+        if (context.sourcePermanentSnapshot() != null) return context.sourcePermanentSnapshot();
+        if (context.gameData() == null) return null;
+        if (context.sourcePermanentId() != null) {
+            return gameQueryService.findPermanentById(context.gameData(), context.sourcePermanentId());
+        }
+        return context.sourceCardId() == null ? null
+                : findPermanentByCurrentCardId(context.gameData(), context.sourceCardId());
     }
 
     private CardColor sourceChosenColor(FilterContext context) {

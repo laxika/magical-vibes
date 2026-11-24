@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayWithHandsRevealedEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -19,7 +20,7 @@ import java.util.List;
 public class SeersVision extends Card {
 
     public SeersVision() {
-        addStaticEffect(new RevealOpponentHandsEffect());
+        addStaticEffect(new PlayWithHandsRevealedEffect(Subjects.eachOpponent()));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,

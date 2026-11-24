@@ -19,7 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntap
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
-import com.github.laxika.magicalvibes.model.effect.PlayersSkipUntapStepEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.effect.StaticOrbEffect;
 import com.github.laxika.magicalvibes.model.effect.StorageMatrixEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
@@ -365,18 +366,32 @@ public class UntapStepService {
     }
 
     /**
-     * Returns {@code true} if any permanent (any controller) or face-up planar card carries a
-     * {@link PlayersSkipUntapStepEffect}. While true, each player's untap step is skipped entirely
-     * (no phasing, no untapping) — see {@link #untapPermanents} with {@code skipUntapStep=true}.
+     * Whether the active player skips their untap step by a static ability: an active static
+     * {@link SkipDrawStepEffect} of {@link SkipStepOrPhaseKind#UNTAP_STEP} names them (none of a face-down or
+     * ability-less permanent's, CR 708.2a, 613.1f), or a face-up plane's does, judged against the planar controller
+     * (The Eon Fog). The whole step is skipped (no phasing, no untapping, CR 614.10) — see {@link #untapPermanents}
+     * with {@code skipUntapStep=true}.
      */
     public boolean playersSkipUntapStepApplies(GameData gameData) {
-        boolean planarEffectApplies = gameData.planechase != null && gameData.planechase.faceUp.stream()
-                .anyMatch(object -> object.getCard().getStaticEffects().stream()
-                        .anyMatch(effect -> effect instanceof PlayersSkipUntapStepEffect));
-        return planarEffectApplies || gameData.anyPermanentMatches(p ->
-                !gameQueryService.hasLostAllAbilities(gameData, p)
-                        && p.getCard().getStaticEffects().stream()
-                        .anyMatch(e -> e instanceof PlayersSkipUntapStepEffect));
+        UUID activePlayerId = gameData.activePlayerId;
+        if (gameData.planechase != null) {
+            for (PlanarObject plane : gameData.planechase.faceUp) {
+                for (CardEffect effect : plane.getCard().getStaticEffects()) {
+                    if (effect instanceof SkipDrawStepEffect skip && skip.kind() == SkipStepOrPhaseKind.UNTAP_STEP
+                            && SubjectResolutionService.namesPlayer(null, gameData.planechase.controllerId,
+                            activePlayerId, skip.players())) {
+                        return true;
+                    }
+                }
+            }
+        }
+        for (var active : gameQueryService.activeStaticEffects(gameData, SkipDrawStepEffect.class)) {
+            if (active.effect().kind() == SkipStepOrPhaseKind.UNTAP_STEP && SubjectResolutionService.namesPlayer(
+                    gameData, active.source(), active.controllerId(), activePlayerId, active.effect().players())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

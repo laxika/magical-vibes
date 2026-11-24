@@ -3,12 +3,14 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -189,6 +191,20 @@ class TelepathyTest extends BaseCardTest {
         List<String> messages = harness.getConn1().getMessagesContaining("\"opponentHand\"");
         assertThat(messages).anyMatch(message -> message.contains("\"opponentHand\":[]"));
         assertThat(messages).noneMatch(message -> message.contains("Air Elemental"));
+    }
+
+    @Test
+    @DisplayName("A face-down Telepathy does not reveal the opponent's hand")
+    void faceDownTelepathyRevealsNothing() {
+        harness.addToBattlefieldAndReturn(player1, new Telepathy()).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setHand(player2, List.of(new AirElemental()));
+        harness.clearMessages();
+
+        harness.publishState();
+
+        assertThat(harness.getConn1().getMessagesContaining("\"opponentHand\""))
+                .isNotEmpty()
+                .noneMatch(message -> message.contains("Air Elemental"));
     }
 
     @Test

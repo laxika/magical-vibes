@@ -74,7 +74,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingMysticReflection;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.NextControlledEnchantmentCreatureEntryWithAdditionalCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentsEnterTappedThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectDrawsEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterMysticReflectionEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterNextDrawCreateBearReplacementEffect;
@@ -680,13 +680,13 @@ class RunedTerrorTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castAndResolveInstant(player2, 0);
-        assertThat(gd.floatingEffectsOfTypes(PermanentsEnterTappedThisTurnEffect.class)).hasSize(1);
+        assertThat(gd.floatingPlayerEffects(player1.getId(), EnterPermanentsOfTypesTappedEffect.class)).hasSize(1);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(gd.floatingEffectsOfTypes(PermanentsEnterTappedThisTurnEffect.class)).hasSize(1);
+        assertThat(gd.floatingPlayerEffects(player1.getId(), EnterPermanentsOfTypesTappedEffect.class)).hasSize(1);
 
         harness.passUntil(player2, TurnStep.CLEANUP);
-        assertThat(gd.floatingEffectsOfTypes(PermanentsEnterTappedThisTurnEffect.class)).isEmpty();
+        assertThat(gd.floatingPlayerEffects(player1.getId(), EnterPermanentsOfTypesTappedEffect.class)).isEmpty();
     }
 
     @Test

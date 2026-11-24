@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
-import com.github.laxika.magicalvibes.model.effect.PlayersSkipUntapStepEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,8 +25,8 @@ import java.util.List;
 public class Stasis extends Card {
 
     public Stasis() {
-        // Players skip their untap steps â€” no permanent, any controller, untaps.
-        addStaticEffect(new PlayersSkipUntapStepEffect());
+        // Players skip their untap steps.
+        addStaticEffect(new SkipDrawStepEffect(SkipStepOrPhaseKind.UNTAP_STEP, Subjects.eachPlayer()));
 
         // At the beginning of your upkeep, sacrifice this enchantment unless you pay {U}.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),

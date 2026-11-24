@@ -110,7 +110,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValue
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasManaAbilityPredicate;
+import com.github.laxika.magicalvibes.model.ManaValueParity;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenParityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControllerCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
@@ -2410,6 +2412,44 @@ class PredicateEvaluationServiceTest {
             source.setChosenColor(CardColor.BLUE);
             assertThat(evaluator.matchesPermanentPredicate(perm,
                     new PermanentHasSourceChosenColorPredicate(), ctx)).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentHasSourceChosenParityPredicate judges the mana value against the source's chosen parity")
+        void sourceChosenParityMatchesEitherWay() {
+            Permanent perm = addPermanent(player1Id, createCreature("Red Creature", 2, 2, CardColor.RED));
+            int manaValue = perm.getCard().getManaValue();
+            Card sourceCard = createCreature("Ashling's Prerogative", 0, 0, CardColor.RED);
+            Permanent source = addPermanent(player1Id, sourceCard);
+            source.setChosenManaValueParity(ManaValueParity.of(manaValue));
+            FilterContext ctx = FilterContext.of(gd).withSourceCardId(sourceCard.getId());
+
+            assertThat(evaluator.matchesPermanentPredicate(perm,
+                    new PermanentHasSourceChosenParityPredicate(true), ctx)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(perm,
+                    new PermanentHasSourceChosenParityPredicate(false), ctx)).isFalse();
+
+            source.setChosenManaValueParity(ManaValueParity.of(manaValue + 1));
+            assertThat(evaluator.matchesPermanentPredicate(perm,
+                    new PermanentHasSourceChosenParityPredicate(true),
+                    FilterContext.empty().withSourcePermanentSnapshot(source))).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(perm,
+                    new PermanentHasSourceChosenParityPredicate(false),
+                    FilterContext.empty().withSourcePermanentSnapshot(source))).isTrue();
+        }
+
+        @Test
+        @DisplayName("PermanentHasSourceChosenParityPredicate matches nothing either way while the source chose nothing")
+        void sourceChosenParityUnchosenMatchesNothing() {
+            Permanent perm = addPermanent(player1Id, createCreature("Red Creature", 2, 2, CardColor.RED));
+            Card sourceCard = createCreature("Ashling's Prerogative", 0, 0, CardColor.RED);
+            addPermanent(player1Id, sourceCard);
+            FilterContext ctx = FilterContext.of(gd).withSourceCardId(sourceCard.getId());
+
+            assertThat(evaluator.matchesPermanentPredicate(perm,
+                    new PermanentHasSourceChosenParityPredicate(true), ctx)).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(perm,
+                    new PermanentHasSourceChosenParityPredicate(false), ctx)).isFalse();
         }
 
         @Test

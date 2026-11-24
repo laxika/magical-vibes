@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PlayersSkipUntapStepEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.effect.SimultaneouslyFlipControlledPermanentsTapStatesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -24,7 +26,7 @@ public class SandsOfTime extends Card {
 
     public SandsOfTime() {
         // Each player skips their untap step (including phasing — CR 502.1).
-        addStaticEffect(new PlayersSkipUntapStepEffect());
+        addStaticEffect(new SkipDrawStepEffect(SkipStepOrPhaseKind.UNTAP_STEP, Subjects.eachPlayer()));
 
         // At the beginning of each player's upkeep, simultaneously flip tap states of that
         // player's artifacts, creatures, and lands.

@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PlayersSkipUntapStepEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -12,7 +13,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class TheEonFog extends Card {
 
     public TheEonFog() {
-        addStaticEffect(new PlayersSkipUntapStepEffect());
+        addStaticEffect(new SkipDrawStepEffect(SkipStepOrPhaseKind.UNTAP_STEP, Subjects.eachPlayer()));
         addTrigger(Triggers.chaosEnsues(), new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you())));
     }
 }

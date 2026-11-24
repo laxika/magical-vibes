@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -92,6 +94,31 @@ class RadiantGraceTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(controllerCreature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Radiant Restraints that has lost its abilities lets the enchanted player's creatures enter untapped")
+    void backFaceWithoutAbilitiesDoesNotTapEnteringCreatures() {
+        Permanent curse = harness.addToBattlefieldAndReturn(player1, new RadiantGrace());
+        curse.setCard(curse.getOriginalCard().getBackFaceCard());
+        curse.setTransformed(true);
+        curse.setAttachedTo(player2.getId());
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, curse);
+
+        harness.setHand(player2, List.of(new DawnhartDisciple()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        Permanent opponentCreature = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof DawnhartDisciple)
+                .findFirst()
+                .orElseThrow();
+        assertThat(opponentCreature.isTapped()).isFalse();
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.b.Breezekeeper;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -68,6 +70,18 @@ class StasisTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(keeper);
         assertThat(gd.phasedOutPermanents.getOrDefault(player1.getId(), List.of()))
                 .doesNotContain(keeper);
+    }
+
+    @Test
+    @DisplayName("A face-down Stasis has no ability, so permanents untap as usual")
+    void faceDownStasisSkipsNothing() {
+        addCreatureReady(player1, new Stasis()).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.tap();
+
+        advanceToNextTurn(player2);
+
+        assertThat(bears.isTapped()).isFalse();
     }
 
     @Test

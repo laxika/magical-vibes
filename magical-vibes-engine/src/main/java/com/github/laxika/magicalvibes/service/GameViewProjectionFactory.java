@@ -36,7 +36,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayWithHandsRevealedEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
 import com.github.laxika.magicalvibes.model.effect.WebSlingingEffect;
 import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
 import com.github.laxika.magicalvibes.networking.message.JoinGame;
@@ -513,21 +512,6 @@ public class GameViewProjectionFactory {
 
         // Sen Triplets: the targeted player plays with their hand revealed this turn.
         boolean fullHandRevealed = gameData.handRevealedToSenTripletsController(playerId);
-        if (!fullHandRevealed) {
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf != null) {
-                for (Permanent perm : bf) {
-                    if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-                    for (CardEffect effect : perm.getCard().getStaticEffects()) {
-                        if (effect instanceof RevealOpponentHandsEffect) {
-                            fullHandRevealed = true;
-                            break;
-                        }
-                    }
-                    if (fullHandRevealed) break;
-                }
-            }
-        }
         for (UUID opponentId : gameData.orderedPlayerIds) {
             if (!opponentId.equals(playerId)) {
                 List<CardSubtype> granted = gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(gameData, opponentId);
@@ -545,8 +529,8 @@ public class GameViewProjectionFactory {
     }
 
     /**
-     * Whether {@code playerId} plays with their hand revealed: an active static {@link PlayWithHandsRevealedEffect}
-     * names them (none of a face-down or ability-less permanent's, CR 708.2a, 613.1f), or one is floated on them
+     * Whether {@code playerId} plays with their hand revealed, to every player (CR 701.20a): an active static
+     * {@link PlayWithHandsRevealedEffect} names them ("your opponents play with their hands revealed", Telepathy) (none of a face-down or ability-less permanent's, CR 708.2a, 613.1f), or one is floated on them
      * (Truth or Dare, Stromgald Spy).
      */
     private boolean playsWithHandRevealed(GameData gameData, UUID playerId) {

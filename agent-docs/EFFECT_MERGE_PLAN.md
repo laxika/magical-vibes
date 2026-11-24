@@ -503,7 +503,7 @@ where a merged handler could read the controller instead), and the sibling-queue
 `FalsePeaceTest.resolvingFlagsTargetPlayer`.
 
 **Do NOT merge**: `SkipDrawStepEffect` (static marker read by `StepTriggerService`, no handler),
-`PlayersSkipUntapStepEffect` (global static, Sands of Time) and `SkipNextUntapEffect` (a
+its `UNTAP_STEP` form (global static, Sands of Time; `PlayersSkipUntapStepEffect` folded into it) and `SkipNextUntapEffect` (a
 floating effect on each permanent; the step still happens). The distinction is documented in
 `SkipKind`'s javadoc and in each of their own. Still true after the merge.
 
@@ -1953,7 +1953,7 @@ Do these individually; each is self-contained. Reassess before starting — seve
 Checked and found to differ semantically. Do not re-propose without new evidence.
 
 - `MustBeBlockedIfAbleEffect` / `MustBeBlockedByAllCreaturesEffect` / `MustAttackEffect` vs the one-shot `SetCombatRequirementThisTurnEffect` constants that share their wording — static ability vs one-shot flag.
-- `SkipDrawStepEffect` / `PlayersSkipUntapStepEffect` / `SkipNextUntapEffect` vs the one-shot `SkipNextEffect` kinds that share their wording — static marker vs one-shot, permanent-level vs step-level.
+- `SkipDrawStepEffect` (its `UNTAP_STEP` form was `PlayersSkipUntapStepEffect`) / `SkipNextUntapEffect` vs the one-shot `SkipNextEffect` kinds that share their wording — static marker vs one-shot, permanent-level vs step-level.
 - `DamageCantBePreventedEffect` / `…ThisTurnEffect`; `DoubleControllerDamageEffect` / `…ThisTurnEffect` — static layer effect vs turn flag.
 - `BecomeCopyOfTargetCreatureEffect` vs `…UntilEndOfTurnEffect` — deferred `PendingMayAbility` vs immediate `applyCloneCopy` + layer-1 revert.
 - `ReturnTargetCardsFromGraveyardToHandEffect` vs `…ToBattlefieldEffect` — 3-line delegation vs the full ETB pipeline. A rewrite, not a merge.

@@ -14,7 +14,7 @@ package com.github.laxika.magicalvibes.model.effect;
  *       {@code TurnProgressionService.advanceTurn} when that player next becomes active. The whole
  *       step is skipped, so the phasing event doesn't happen either (CR 702.26m) and no
  *       untap-restriction choice (Storage Matrix, Static Orb) is offered — the same path Sands of
- *       Time's {@link PlayersSkipUntapStepEffect} uses.</li>
+ *       Time's static {@link SkipDrawStepEffect} ({@link SkipStepOrPhaseKind#UNTAP_STEP}) uses.</li>
  *   <li>{@link #DRAW_STEP} — used up by
  *       {@code StepTriggerService.handleDrawStep}. The whole step goes: no turn-based draw and no
  *       draw-step triggered abilities.</li>
@@ -25,7 +25,7 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * <p>These are the one-shot "next occurrence" forms. Their static counterparts are separate effects
  * with a different lifetime and are deliberately not part of this family: {@link SkipDrawStepEffect}
- * (skipped for as long as its source is on the battlefield) and {@link PlayersSkipUntapStepEffect}.
+ * (skipped for as long as its source is on the battlefield).
  * {@link SkipNextUntapEffect} is different again — it marks individual permanents so they don't
  * untap while the untap step itself still happens.
  */

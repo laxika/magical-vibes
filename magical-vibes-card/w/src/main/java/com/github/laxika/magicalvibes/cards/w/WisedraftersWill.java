@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayWithHandsRevealedEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
@@ -15,7 +16,7 @@ import java.util.List;
 public class WisedraftersWill extends Card {
 
     public WisedraftersWill() {
-        addStaticEffect(new RevealOpponentHandsEffect());
+        addStaticEffect(new PlayWithHandsRevealedEffect(Subjects.eachOpponent()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentsEnterTappedThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayAdditionalLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -20,6 +21,7 @@ public class NahirisLithoforming extends Card {
                 .withRecordedSacrificeCount());
         addSpellEffect(new DrawCardEffect(new EventValue()));
         addSpellEffect(new PlayAdditionalLandsEffect(new XValue()));
-        addSpellEffect(new PermanentsEnterTappedThisTurnEffect(new PermanentIsLandPredicate()));
+        addSpellEffect(GrantStaticEffectToPlayerEffect.untilEndOfTurn(
+                EnterPermanentsOfTypesTappedEffect.matching(new PermanentIsLandPredicate(), Subjects.you())));
     }
 }

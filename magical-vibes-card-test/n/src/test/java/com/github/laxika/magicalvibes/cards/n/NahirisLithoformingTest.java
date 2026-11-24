@@ -113,6 +113,18 @@ class NahirisLithoformingTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only lands its caster controls enter tapped this turn; an opponent's land enters untapped")
+    void onlyCastersLandsEnterTapped() {
+        harness.setHand(player1, List.of(new NahirisLithoforming()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(harness.enterBattlefieldAndReturn(player2, new Forest()).isTapped()).isFalse();
+        assertThat(harness.enterBattlefieldAndReturn(player1, new Forest()).isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Additional land permissions accumulate and both turn effects expire")
     void cumulativePermissionsExpireAfterThisTurn() {
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));

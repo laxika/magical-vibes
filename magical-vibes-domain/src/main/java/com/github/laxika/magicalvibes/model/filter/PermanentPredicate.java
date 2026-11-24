@@ -111,6 +111,7 @@ public sealed interface PermanentPredicate permits
         PermanentHasSourceChosenColorPredicate,
         PermanentHasChosenSpellColorPredicate,
         PermanentHasChosenParityPredicate,
+        PermanentHasSourceChosenParityPredicate,
         PermanentHasSourceChosenSubtypePredicate,
         PermanentHasTypeChosenThisResolutionPredicate,
         PermanentControlledByPlayersPredicate,

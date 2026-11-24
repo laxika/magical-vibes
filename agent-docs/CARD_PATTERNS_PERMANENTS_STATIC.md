@@ -261,7 +261,7 @@ All paths relative to `cards/`.
 | Enters tapped | `r/RootMaze.java` | STATIC EnterPermanentsOfTypesTappedEffect |
 | Controlled lands enter untapped | `s/Spelunking.java` | STATIC ControlledLandsEnterUntappedEffect |
 | State-dependent global entry replacement | `a/ArchelosLagoonMystic.java` | STATIC ConditionalReplacementEffect(SourceIsTapped, EnterPermanentsOfTypesTappedEffect(all permanent types)) + ConditionalReplacementEffect(SourceUntapped, AllPermanentsEnterUntappedEffect(all permanents)) |
-| Opponent creatures enter tapped + haste lord | `u/UrabraskTheHidden.java` | STATIC GrantKeywordEffect(HASTE, Subjects.creaturesYouControl()) + EnterPermanentsOfTypesTappedEffect(CREATURE, opponentsOnly=true) |
+| Opponent creatures enter tapped + haste lord | `u/UrabraskTheHidden.java` | STATIC GrantKeywordEffect(HASTE, Subjects.creaturesYouControl()) + EnterPermanentsOfTypesTappedEffect(CREATURE, opponentsOnly=true) (= `eachOpponent()`) |
 | Opponent creatures + nonbasic lands enter tapped | `t/ThaliaHereticCathar.java` | STATIC `EnterPermanentsOfTypesTappedEffect.matching(creature OR (land AND NOT basic), opponentsOnly=true)` |
 | P/T = lands | `m/MolimoMaroSorcerer.java` | STATIC SetPowerToughnessToAmountEffect(a, a) where a = PermanentCount(PermanentIsLandPredicate, CONTROLLER) |
 | P/T = all snow permanents + ice-counter snow grant | `r/RimefeatherOwl.java` | STATIC `SetPowerToughnessToAmountEffect(PermanentCount(HasSupertype(SNOW), ANY_PLAYER), same)` + a layer-4 static supertype grant for permanents with ice counters; activated ability uses `PutCounterOnTargetPermanentEffect(ICE)` |
