@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetualAnyManaTypeToCastSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardAndConjureOpponentGraveyardDuplicateEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -65,8 +64,9 @@ public class ReturnCardAndConjureOpponentGraveyardDuplicateEffectHandler
 
             Card duplicate = sourceCard.createConjuredCopy();
             duplicate.setOwnerId(controllerId);
-            duplicate.addStaticEffect(new PerpetualAnyManaTypeToCastSelfEffect());
             duplicate.freeze();
+            // "It perpetually gains prismatic": mana spent as though it were mana of any color, not of any type.
+            gameData.perpetualAnyColorManaForCastCardIds.add(duplicate.getId());
             gameData.addCardToHand(controllerId, duplicate);
             conjuredCount++;
             gameLogService.append(gameData, GameLog.textCardText("A duplicate of ", duplicate,

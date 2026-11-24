@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.ChoosePlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -25,6 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -75,5 +77,38 @@ class ChoosePlayerEffectHandlerTest {
 
         assertThat(entry.getResolutionResults().outcome(StepKind.CHOOSE).playerIds()).containsExactly(secondId);
         verify(gameLogService).append(eq(gameData), any());
+    }
+
+    @Test
+    @DisplayName("A named chooser, not the controller, is asked to choose")
+    void asksTheNamedChooser() {
+        gameData.playerIds.add(firstId);
+        ChoosePlayerEffect chosenByOther = new ChoosePlayerEffect(Subjects.eachPlayer(), "a player")
+                .chosenBy(Subjects.triggeringPlayer());
+        when(subjectResolutionService.players(gameData, entry, chosenByOther, chosenByOther.players()))
+                .thenReturn(List.of(controllerId, secondId));
+        when(subjectResolutionService.player(gameData, entry, chosenByOther, chosenByOther.chooser()))
+                .thenReturn(firstId);
+
+        handler.resolve(gameData, entry, chosenByOther);
+
+        verify(playerInputService).beginPlayerChoice(eq(gameData), eq(firstId),
+                eq(List.of(controllerId, secondId)), anyString());
+    }
+
+    @Test
+    @DisplayName("A chooser who is no longer in the game chooses nothing")
+    void aGoneChooserChoosesNothing() {
+        ChoosePlayerEffect chosenByOther = new ChoosePlayerEffect(Subjects.eachPlayer(), "a player")
+                .chosenBy(Subjects.triggeringPlayer());
+        when(subjectResolutionService.players(gameData, entry, chosenByOther, chosenByOther.players()))
+                .thenReturn(List.of(controllerId, secondId));
+        when(subjectResolutionService.player(gameData, entry, chosenByOther, chosenByOther.chooser()))
+                .thenReturn(firstId);
+
+        handler.resolve(gameData, entry, chosenByOther);
+
+        verifyNoInteractions(playerInputService);
+        assertThat(entry.getResolutionResults().outcome(StepKind.CHOOSE).playerIds()).isEmpty();
     }
 }

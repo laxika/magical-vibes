@@ -1263,11 +1263,14 @@ public class GameViewProjectionFactory {
                             .orElse(null))
                     .build();
         }
-        var grantedEvoke = gameQueryService.findGrantedEvokeAlternateCast(gameData, playerId, card);
-        if (grantedEvoke.isPresent()) {
-            var exileHandCost = grantedEvoke.get().getCost(ExileCardsFromHandCastingCost.class);
+        var granted = gameQueryService.findGrantedAlternateCast(gameData, playerId, card);
+        if (granted.isPresent()) {
+            var exileHandCost = granted.get().cast().getCost(ExileCardsFromHandCastingCost.class);
             return view.toBuilder()
                     .hasAlternateCastingCost(true)
+                    .alternateCostManaCost(granted.get().cast().getCost(ManaCastingCost.class)
+                            .map(ManaCastingCost::manaCost)
+                            .orElse(null))
                     .alternateCostExileHandCount(exileHandCost.map(ExileCardsFromHandCastingCost::count).orElse(0))
                     .alternateCostExileHandLabel(exileHandCost.map(ExileCardsFromHandCastingCost::label).orElse(null))
                     .build();

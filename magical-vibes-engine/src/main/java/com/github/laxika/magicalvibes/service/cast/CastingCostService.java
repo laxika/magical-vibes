@@ -2196,9 +2196,9 @@ public class CastingCostService {
         if (gameData.hasGrantedCardAbility(card.getId(), GrantedCardAbilityEffect.Ability.WARP)) {
             return true;
         }
-        var grantedEvokeCast = gameQueryService.findGrantedEvokeAlternateCast(gameData, playerId, card);
-        if (grantedEvokeCast.isPresent()
-                && canPayAlternateHandCast(gameData, playerId, card, grantedEvokeCast.get())) {
+        var grantedCast = gameQueryService.findGrantedAlternateCast(gameData, playerId, card);
+        if (grantedCast.isPresent()
+                && canPayAlternateHandCast(gameData, playerId, card, grantedCast.get().cast())) {
             return true;
         }
         var altCastOpt = card.getCastingOption(AlternateHandCast.class);
@@ -2213,9 +2213,9 @@ public class CastingCostService {
                                 getAlternateHandCastCostModifier(gameData, playerId, card, altCast.blitz())))
                         .orElse(false);
             }
-            var grantedEvoke = gameQueryService.findGrantedEvokeAlternateCast(gameData, playerId, card);
-            if (grantedEvoke.isPresent()) {
-                return canPayAlternateHandCast(gameData, playerId, card, grantedEvoke.get());
+            var granted = gameQueryService.findGrantedAlternateCast(gameData, playerId, card);
+            if (granted.isPresent()) {
+                return canPayAlternateHandCast(gameData, playerId, card, granted.get().cast());
             }
             var grantedProwl = gameQueryService.findGrantedProwlAlternateCast(gameData, playerId, card);
             if (grantedProwl.isPresent()) {

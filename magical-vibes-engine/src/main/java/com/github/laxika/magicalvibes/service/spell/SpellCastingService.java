@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.FlashforwardCast;
 import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GrantedAlternateCast;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
@@ -3954,20 +3955,22 @@ public class SpellCastingService {
                 || printedBlitzUnaffordable)
                 && gameQueryService.findGrantedBlitzAlternateCast(
                 gameData, playerId, handEarly.get(cardIndex), effectiveXValue).isPresent();
-        boolean usingGrantedEvoke = !fromGraveyard && forceAlternateCost
+        boolean usingGrantedAlternateCast = !fromGraveyard && forceAlternateCost
                 && !usingGrantedProwl && !usingGrantedBlitz
                 && (handEarly.get(cardIndex).getCastingOption(AlternateHandCast.class).isEmpty()
                 || handEarly.get(cardIndex).getCastingOption(AlternateHandCast.class)
                 .flatMap(alternate -> alternate.getCost(ManaCastingCost.class))
                 .map(cost -> !new ManaCost(cost.manaCost()).canPay(gameData.playerManaPools.get(playerId)))
                 .orElse(false)
-                || discardHandCardIndex != null && gameQueryService.findGrantedEvokeAlternateCast(
+                || discardHandCardIndex != null && gameQueryService.findGrantedAlternateCast(
                 gameData, playerId, handEarly.get(cardIndex)).flatMap(
-                alternate -> alternate.getCost(ExileCardsFromHandCastingCost.class)).isPresent())
-                && gameQueryService.findGrantedEvokeAlternateCast(
+                granted -> granted.cast().getCost(ExileCardsFromHandCastingCost.class)).isPresent())
+                && gameQueryService.findGrantedAlternateCast(
                 gameData, playerId, handEarly.get(cardIndex)).isPresent();
+        boolean usingGrantedEvoke = usingGrantedAlternateCast && gameQueryService.findGrantedAlternateCast(
+                gameData, playerId, handEarly.get(cardIndex)).map(GrantedAlternateCast::evoke).orElse(false);
         boolean usingGrantedFreerunning = !fromGraveyard && forceAlternateCost
-                && !usingGrantedProwl && !usingGrantedBlitz && !usingGrantedEvoke
+                && !usingGrantedProwl && !usingGrantedBlitz && !usingGrantedAlternateCast
                 && handEarly.get(cardIndex).getCastingOption(AlternateHandCast.class).isEmpty()
                 && gameQueryService.findGrantedFreerunningAlternateCast(
                 gameData, playerId, handEarly.get(cardIndex)).isPresent();
@@ -4000,7 +4003,7 @@ public class SpellCastingService {
         boolean choosingBattlefieldAlternativeCost = forceAlternateCost && !fromGraveyard
                 && !usingMutateHandCast
                 && !usingBestowCost && !usingGrantedProwl && !usingGrantedBlitz
-                && !usingGrantedEvoke && !usingGrantedFreerunning
+                && !usingGrantedAlternateCast && !usingGrantedFreerunning
                 && !usingWebSlingingCost && !usingSharedColorDiscardAlternativeCost
                 && !usingCollectEvidenceAlternativeCost
                 && handEarly.get(cardIndex).getCastingOption(AlternateHandCast.class).isEmpty()
@@ -4012,7 +4015,7 @@ public class SpellCastingService {
                 || forceAlternateCost && !choosingBattlefieldAlternativeCost
                 || usingGrantedProwl
                 || usingGrantedBlitz
-                || usingGrantedEvoke
+                || usingGrantedAlternateCast
                 || usingGrantedFreerunning
                 || hasGraveyardExileAlternateCost
                 || usingCollectEvidenceAlternativeCost
@@ -4186,7 +4189,7 @@ public class SpellCastingService {
                     || cardCheck.getCastingOption(AlternateHandCast.class).isPresent()
                     || usingGrantedProwl
                     || usingGrantedBlitz
-                    || usingGrantedEvoke
+                    || usingGrantedAlternateCast
                     || usingGrantedFreerunning
                     || cardCheck.getCastingOption(BestowCast.class).isPresent()
                     || usingSharedColorDiscardAlternativeCost
@@ -4268,6 +4271,7 @@ public class SpellCastingService {
                 ? prototypeRuntimeCopyForHandCast(effectiveHand, cardIndex)
                 : modalRuntimeCopyForHandCast(effectiveHand, cardIndex);
         if (usingGrantedEvoke) {
+            // Evoke's triggered half (CR 702.74a); a plain "rather than pay this spell's mana cost" has none.
             preparedCard = preparedCard.createRuntimeCopy();
             preparedCard.addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
             effectiveHand.set(cardIndex, preparedCard);
@@ -4299,9 +4303,9 @@ public class SpellCastingService {
         }
         AlternateHandCast alternateHandCast = usingWarpAlternativeCost
                 ? new AlternateHandCast(List.of(new ManaCastingCost("{0}")))
-                : usingGrantedEvoke
-                ? gameQueryService.findGrantedEvokeAlternateCast(gameData, playerId, card).orElseThrow(
-                () -> new IllegalStateException("Card does not have a granted evoke cost"))
+                : usingGrantedAlternateCast
+                ? gameQueryService.findGrantedAlternateCast(gameData, playerId, card).map(GrantedAlternateCast::cast)
+                .orElseThrow(() -> new IllegalStateException("Card does not have a granted alternative cost"))
                 : usingGrantedBlitz
                 ? gameQueryService.findGrantedBlitzAlternateCast(gameData, playerId, card, effectiveXValue).orElseThrow(
                 () -> new IllegalStateException("Card does not have a granted blitz cost"))
@@ -5107,7 +5111,7 @@ public class SpellCastingService {
                             : normalCost.canPayWithAdditionalGenericCost(pool, 0, additionalCost);
                     boolean forcedBattlefieldAlternative = forceAlternateCost && !usingWarpAlternativeCost
                             && !usingBestowCost && !usingGrantedProwl && !usingGrantedBlitz
-                            && !usingGrantedEvoke && !usingGrantedFreerunning
+                            && !usingGrantedAlternateCast && !usingGrantedFreerunning
                             && card.getCastingOption(AlternateHandCast.class).isEmpty();
                     if (!normalCostPayable || forcedBattlefieldAlternative) {
                         CastingCostService.AlternativeCostSelection alternativeCost =

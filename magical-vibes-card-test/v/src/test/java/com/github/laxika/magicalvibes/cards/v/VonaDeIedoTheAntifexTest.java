@@ -1,14 +1,18 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.d.DarksteelMyr;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
+import com.github.laxika.magicalvibes.cards.r.RealitySmasher;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -17,7 +21,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VonaDeIedoTheAntifex.class, Forest.class, GrizzlyBears.class, ThayanEvokers.class})
+@CardUsed({VonaDeIedoTheAntifex.class, Forest.class, GrizzlyBears.class, ThayanEvokers.class, RealitySmasher.class,
+        DarksteelMyr.class})
 class VonaDeIedoTheAntifexTest extends BaseCardTest {
 
     @Test
@@ -40,7 +45,66 @@ class VonaDeIedoTheAntifexTest extends BaseCardTest {
         Card duplicate = gd.playerHands.get(player1.getId()).getFirst();
         assertThat(duplicate.getName()).isEqualTo(target.getCard().getName());
         assertThat(duplicate.getId()).isNotEqualTo(target.getCard().getId());
-        assertThat(gd.perpetualAnyColorManaForCastCardIds).contains(duplicate.getId());
+        // "Mana of any type can be spent to cast this spell": any type, not spent as though of any color.
+        assertThat(harness.getCastingPermissionService().canSpendAnyManaTypeFromCard(duplicate)).isTrue();
+        assertThat(gd.perpetualAnyColorManaForCastCardIds).doesNotContain(duplicate.getId());
+    }
+
+    @Test
+    @DisplayName("The duplicate can be cast with mana of any type, colored mana paying its colorless cost")
+    void duplicatePaysAColorlessCostWithColoredMana() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RealitySmasher());
+        harness.setHand(player1, new ArrayList<>(List.of(new VonaDeIedoTheAntifex(), new Forest())));
+        addMana();
+
+        harness.castCreature(player1, 0, target.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Reality Smasher");
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Reality Smasher");
+    }
+
+    @Test
+    @DisplayName("An indestructible target isn't destroyed, and discarding still conjures a duplicate of that permanent")
+    void indestructibleTargetStillGivesADuplicate() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DarksteelMyr());
+        harness.setHand(player1, new ArrayList<>(List.of(new VonaDeIedoTheAntifex(), new Forest())));
+        addMana();
+
+        harness.castCreature(player1, 0, target.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Darksteel Myr");
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Darksteel Myr");
+    }
+
+    @Test
+    @DisplayName("With no card in hand, no discard is offered and nothing is conjured")
+    void emptyHandOffersNoDiscard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, new ArrayList<>(List.of(new VonaDeIedoTheAntifex())));
+        addMana();
+
+        harness.castCreature(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(target.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
     @Test

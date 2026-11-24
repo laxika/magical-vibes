@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.CacklingCounterpart;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -96,6 +98,21 @@ class WarzoneDuplicatorTest extends BaseCardTest {
                 .noneMatch(card -> card.getName().equals("Grizzly Bears"));
     }
 
+    @Test
+    @DisplayName("A duplicate of a returned face-down creature has only its face-down values")
+    void duplicateOfAFaceDownCreatureIsANamelessTwoTwo() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        target.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.enterBattlefieldAndReturn(player1, new WarzoneDuplicator());
+        chooseTarget(target);
+
+        assertThat(gd.playerHands.get(player1.getId())).filteredOn(Card::isConjured).singleElement().satisfies(duplicate -> {
+            assertThat(duplicate.getName()).isEmpty();
+            assertThat(duplicate.getPower()).isEqualTo(2);
+            assertThat(duplicate.getToughness()).isEqualTo(2);
+        });
+    }
+
     private void chooseTarget(Permanent target) {
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -114,6 +131,6 @@ class WarzoneDuplicatorTest extends BaseCardTest {
 
         assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("your hand"));
         assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals(
-                "A duplicate of Grizzly Bears is conjured into " + player1.getUsername() + "'s hand."));
+                player1.getUsername() + " conjures a duplicate of Grizzly Bears into their hand."));
     }
 }

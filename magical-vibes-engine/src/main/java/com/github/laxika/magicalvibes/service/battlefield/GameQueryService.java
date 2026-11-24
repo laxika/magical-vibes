@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.DamageBonusGrant;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GrantedAlternateCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
@@ -2095,10 +2096,14 @@ public class GameQueryService {
         return Optional.empty();
     }
 
-    /** Returns the Evoke alternate cast granted to a matching card by its perpetual or battlefield grants. */
-    public Optional<AlternateHandCast> findGrantedEvokeAlternateCast(GameData gameData, UUID playerId, Card card) {
-        List<AlternateHandCast> perpetual = card == null
-                ? null : gameData.perpetualEvokeAlternateCasts.get(card.getId());
+    /**
+     * The alternative cost {@code card} has without having it printed: its first perpetual one
+     * ({@code GameData.perpetualAlternateCasts}: evoke or a plain "rather than pay this spell's mana cost"), else the
+     * evoke a permanent of {@code playerId}'s grants it.
+     */
+    public Optional<GrantedAlternateCast> findGrantedAlternateCast(GameData gameData, UUID playerId, Card card) {
+        List<GrantedAlternateCast> perpetual = card == null
+                ? null : gameData.perpetualAlternateCasts.get(card.getId());
         if (perpetual != null && !perpetual.isEmpty()) {
             return Optional.of(perpetual.getFirst());
         }
@@ -2116,8 +2121,8 @@ public class GameQueryService {
                 if (activeEffect instanceof EvokeGrantingEffect grant
                         && predicateEvaluationService.matchesCardPredicate(
                         card, grant.evokeGrantFilter(), null, gameData, playerId)) {
-                    return Optional.of(new AlternateHandCast(
-                            List.of(new ManaCastingCost(grant.evokeCost()))));
+                    return Optional.of(new GrantedAlternateCast(new AlternateHandCast(
+                            List.of(new ManaCastingCost(grant.evokeCost()))), true));
                 }
             }
         }

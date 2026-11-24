@@ -27,6 +27,7 @@ public final class Subjects {
 
     private static final PermanentSubject SOURCE = new PermanentSubject.Source();
     private static final PermanentSubject TARGET = new PermanentSubject.Target(null);
+    private static final PermanentSubject TARGET_DECLARED_ELSEWHERE = new PermanentSubject.TargetDeclaredElsewhere();
     private static final PermanentSubject ALL_TARGETS = new PermanentSubject.AllTargets();
     private static final PermanentSubject ATTACHED = new PermanentSubject.Attached();
     private static final PermanentSubject ATTACHED_CREATURE = new PermanentSubject.Attached(true);
@@ -259,6 +260,23 @@ public final class Subjects {
      */
     public static PermanentSubject thisWay(StepKind kind, PermanentPredicate filter) {
         return new PermanentSubject.ThisWay(kind, filter);
+    }
+
+    /**
+     * "Each nontoken artifact destroyed this way", "a duplicate of it" after a return to a hand: the permanents the most
+     * recent {@code kind} step moved off the battlefield, as they last existed there (see
+     * {@link PermanentSubject.DepartedThisWay}). A step result.
+     */
+    public static PermanentSubject departedThisWay(StepKind kind) {
+        return new PermanentSubject.DepartedThisWay(kind);
+    }
+
+    /**
+     * "That permanent" naming the target another effect of the same ability declares, read without declaring one (see
+     * {@link PermanentSubject.TargetDeclaredElsewhere}).
+     */
+    public static PermanentSubject targetDeclaredElsewhere() {
+        return TARGET_DECLARED_ELSEWHERE;
     }
 
     /**

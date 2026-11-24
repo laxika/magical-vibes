@@ -25,7 +25,8 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
         PermanentSubject.AllOf, PermanentSubject.Except, PermanentSubject.OneOf, PermanentSubject.TriggeringAttackers,
         PermanentSubject.TriggeringSpellTargets, PermanentSubject.CreatedThisResolution, PermanentSubject.BandmatesOf,
         PermanentSubject.WithCreaturesSharingAColor, PermanentSubject.OtherPermanentsSharing, PermanentSubject.AttachedAndSharingCreatureType,
-        PermanentSubject.Searched, PermanentSubject.ThisWay, PermanentSubject.Voted {
+        PermanentSubject.Searched, PermanentSubject.ThisWay, PermanentSubject.DepartedThisWay,
+        PermanentSubject.TargetDeclaredElsewhere, PermanentSubject.Voted {
 
     /** Whether this subject is the effect's own target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -571,6 +572,45 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
                         + "players are Subjects.playersThisWay(" + kind + ")");
             }
         }
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * "Each nontoken artifact destroyed this way", "it" after a return to a hand: the permanents the most recent
+     * {@code kind} step of the same resolution moved off the battlefield ({@link StepKind#DESTROY},
+     * {@link StepKind#SACRIFICE}, {@link StepKind#EXILE}, {@link StepKind#RETURN}), each as it last existed there
+     * (CR 608.2h). None is on the battlefield, so a verb acting on permanents finds nothing (CR 400.7); it is read for
+     * what those permanents were, as {@code SubjectResolutionService.cardsToDuplicate} reads it ("conjure a duplicate
+     * of each"). A step result.
+     */
+    record DepartedThisWay(StepKind kind) implements PermanentSubject {
+
+        public DepartedThisWay {
+            Objects.requireNonNull(kind, "kind");
+            switch (kind) {
+                case DESTROY, SACRIFICE, EXILE, RETURN -> {
+                }
+                default -> throw new IllegalArgumentException("A " + kind + " step moves no permanent off the "
+                        + "battlefield");
+            }
+        }
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * "That permanent", "it" naming the target another effect of the same ability declares, read without this effect
+     * declaring a target: the effect's target as it is on the battlefield, else as the entry last knew it (CR 608.2h)
+     * ("destroy target permanent ... conjure a duplicate of that permanent").
+     */
+    record TargetDeclaredElsewhere() implements PermanentSubject {
 
         @Override
         public boolean needsStackEntry() {

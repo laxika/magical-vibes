@@ -3,13 +3,17 @@ package com.github.laxika.magicalvibes.model.effect;
 import java.util.Objects;
 
 /**
- * "Choose an opponent", "choose a player": as the effect resolves its controller chooses one of the players named,
- * unasked when there is only one. A CHOOSE step: {@code Subjects.playersThisWay(StepKind.CHOOSE)} is that player.
+ * "Choose an opponent", "choose a player": as the effect resolves its controller, or the player {@code chooser} names,
+ * chooses one of the players named, unasked when there is only one. A CHOOSE step:
+ * {@code Subjects.playersThisWay(StepKind.CHOOSE)} is that player.
  *
  * @param players who may be chosen; nobody here is targeted
  * @param label   what is chosen, for the prompt ("an opponent")
+ * @param chooser who chooses: {@code null} for the controller; "target opponent chooses a player" is
+ *                {@code Subjects.targetPlayer()}, the target this effect declares; "they choose another player" after
+ *                a player's event is {@code Subjects.triggeringPlayer()}
  */
-public record ChoosePlayerEffect(PlayerSubject players, String label) implements CardEffect {
+public record ChoosePlayerEffect(PlayerSubject players, String label, PlayerSubject chooser) implements CardEffect {
 
     public ChoosePlayerEffect {
         Objects.requireNonNull(players, "players");
@@ -19,8 +23,24 @@ public record ChoosePlayerEffect(PlayerSubject players, String label) implements
         }
     }
 
+    public ChoosePlayerEffect(PlayerSubject players, String label) {
+        this(players, label, null);
+    }
+
     /** "Choose an opponent". */
     public static ChoosePlayerEffect opponent() {
         return new ChoosePlayerEffect(Subjects.eachOpponent(), "an opponent");
+    }
+
+    /** "[chooser] chooses [one of players]". */
+    public ChoosePlayerEffect chosenBy(PlayerSubject chooser) {
+        return new ChoosePlayerEffect(players, label, Objects.requireNonNull(chooser, "chooser"));
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        // The targeted chooser is made to choose (Choose Your Champion's "target opponent chooses a player").
+        return chooser != null && chooser.declaresTarget()
+                ? TargetSpec.harmful(TargetPredicates.player()) : TargetSpec.NONE;
     }
 }

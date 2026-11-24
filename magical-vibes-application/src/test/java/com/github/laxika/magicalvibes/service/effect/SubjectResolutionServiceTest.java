@@ -81,6 +81,8 @@ import static com.github.laxika.magicalvibes.model.effect.Subjects.named;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.opponentsOf;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.ownerOf;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.exiledThisResolution;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.departedThisWay;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.targetDeclaredElsewhere;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.oneOf;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.returned;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.returnedThisResolution;
@@ -532,6 +534,60 @@ class SubjectResolutionServiceTest extends BaseCardTest {
             assertThat(permanents(entry, exiledThisResolution())).isEmpty();
             assertThat(subjects.permanentIds(gd, entry, EFFECT, exiledThisResolution()))
                     .containsExactly(bears.getId());
+        }
+    }
+
+    @Nested
+    @DisplayName("departedThisWay(kind)")
+    class DepartedThisWay {
+
+        @Test
+        @DisplayName("Names the recorded permanents that left the battlefield, none still there, and duplicates each as it last was")
+        void recordedDepartures() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            Permanent giant = addCreatureReady(player2, new HillGiant());
+            StackEntry entry = entry(player1, null, null);
+            entry.recordStep(StepKind.DESTROY, StepOutcome.ofObjects(List.of(bears.getId(), giant.getId()),
+                    List.of(player2.getId())));
+            leaveBattlefield(bears);
+
+            assertThat(permanents(entry, departedThisWay(StepKind.DESTROY))).isEmpty();
+            assertThat(subjects.permanentIds(gd, entry, EFFECT, departedThisWay(StepKind.DESTROY)))
+                    .containsExactly(bears.getId());
+            assertThat(subjects.cardsToDuplicate(gd, entry, EFFECT, departedThisWay(StepKind.DESTROY)))
+                    .extracting(Card::getName)
+                    .containsExactly("Grizzly Bears");
+        }
+
+        @Test
+        @DisplayName("Is only for a step that moves permanents off the battlefield, and declares no target")
+        void onlyRemovalSteps() {
+            assertThat(departedThisWay(StepKind.RETURN).declaresTarget()).isFalse();
+            assertThatThrownBy(() -> departedThisWay(StepKind.DEAL_DAMAGE))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("targetDeclaredElsewhere()")
+    class TargetDeclaredElsewhere {
+
+        @Test
+        @DisplayName("Is the entry's target without declaring one, and duplicates it as it last was once it left")
+        void readsTheTargetWithoutDeclaring() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            StackEntry entry = entry(player1, bears.getId(), null);
+
+            assertThat(targetDeclaredElsewhere().declaresTarget()).isFalse();
+            assertThat(permanents(entry, targetDeclaredElsewhere())).containsExactly(bears);
+
+            entry.rememberLastKnownPermanentCard(bears.getId(), bears.getCard());
+            leaveBattlefield(bears);
+
+            assertThat(permanents(entry, targetDeclaredElsewhere())).isEmpty();
+            assertThat(subjects.cardsToDuplicate(gd, entry, EFFECT, targetDeclaredElsewhere()))
+                    .extracting(Card::getName)
+                    .containsExactly("Grizzly Bears");
         }
     }
 

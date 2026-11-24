@@ -36,11 +36,17 @@ public class ChoosePlayerEffectHandler implements NormalEffectHandlerBean {
         var choose = (ChoosePlayerEffect) effect;
         List<UUID> players = subjectResolutionService.players(gameData, entry, effect, choose.players());
         entry.recordStep(StepKind.CHOOSE, StepOutcome.NONE);
+        UUID chooserId = choose.chooser() == null ? entry.getControllerId()
+                : subjectResolutionService.player(gameData, entry, effect, choose.chooser());
+        if (choose.chooser() != null && (chooserId == null || !gameData.playerIds.contains(chooserId))) {
+            // The chooser is gone (a player who left the game): nobody chooses, and nothing is chosen.
+            return;
+        }
         if (players.size() == 1) {
             record(gameData, entry, players.getFirst());
         } else if (players.size() > 1) {
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.RecordChosenPlayer(players));
-            playerInputService.beginPlayerChoice(gameData, entry.getControllerId(), players,
+            playerInputService.beginPlayerChoice(gameData, chooserId, players,
                     entry.getCard().getName() + " — choose " + choose.label() + ".");
         }
     }

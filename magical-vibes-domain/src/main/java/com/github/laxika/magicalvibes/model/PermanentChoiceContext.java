@@ -294,9 +294,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     }
 
     record ZndrsplatsJudgmentSelection(UUID playerId, boolean friend, UUID creatureId) {}
-    /** Choose Your Champion: the targeted opponent chooses which player shares the restriction. */
-    record TargetOpponentChoosesPlayerForRestriction(UUID controllerId, UUID targetOpponentId,
-                                                     String sourceCardName) implements PermanentChoiceContext {}
     /** The Toymaker's Trap: choose which opponent makes the guess in a multiplayer game. */
     record ToymakersTrapOpponentChoice(UUID controllerId, UUID sourcePermanentId, Card sourceCard,
                                        int chosenNumber) implements PermanentChoiceContext {}
@@ -1568,11 +1565,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** A resolving effect asks its controller to choose an opponent before returning its source under that opponent's control. */
     record ChooseOpponentForSelfFlicker(UUID sourcePermanentId, UUID controllerId, String sourceCardName)
-            implements PermanentChoiceContext {}
-
-    /** Gutmorn: the player who discarded the triggering card chooses another player to receive its duplicate. */
-    record GutmornDiscardedCardPlayerChoice(Card sourceCard, UUID controllerId, UUID sourcePermanentId,
-                                             UUID discardingPlayerId, Card discardedCard)
             implements PermanentChoiceContext {}
 
     /**

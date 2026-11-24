@@ -321,6 +321,15 @@ public class SubjectResolutionService {
                         card = PermanentCopierService.cardToCopy(snapshot);
                     }
                 }
+                if (card == null && permanent == null) {
+                    // A permanent a batch step removed without the entry noting its card ("each artifact destroyed
+                    // this way"), as the game's departure snapshot of it last showed it.
+                    card = gameData.departedPermanentSnapshots.values().stream()
+                            .filter(departed -> id.equals(departed.getId()))
+                            .findFirst()
+                            .map(PermanentCopierService::cardToCopy)
+                            .orElse(null);
+                }
                 if (card != null) {
                     cards.add(card);
                 }
@@ -337,6 +346,9 @@ public class SubjectResolutionService {
      */
     public List<LocatedCard> cardsToDuplicate(GameData gameData, StackEntry entry, CardEffect effect,
                                               CardSubject subject) {
+        if (subject instanceof CardSubject.TriggeringCards triggering) {
+            return triggeringCardsAsLastKnown(gameData, entry, triggering);
+        }
         if (!(subject instanceof CardSubject.TriggeringCardsInHand)) {
             return locatedCards(gameData, entry, effect, subject).stream()
                     .filter(located -> !located.card().isToken()).toList();
@@ -348,6 +360,41 @@ public class SubjectResolutionService {
             }
             LocatedCard inHand = locate(gameData, card.getId(), Zone.HAND);
             originals.add(inHand != null ? inHand : new LocatedCard(card, Zone.HAND, gameData.ownerOf(card)));
+        }
+        return originals;
+    }
+
+    /**
+     * {@link CardSubject.TriggeringCards} for a duplicate: each card the event put into a graveyard (or exiled) where it
+     * still is in that stay, else as the event recorded it, its last known information once it left (CR 608.2h: a
+     * discarded card exiled from the graveyard, or a madness card the discard exiled instead). The filter is judged on
+     * the card as it is named.
+     */
+    private List<LocatedCard> triggeringCardsAsLastKnown(GameData gameData, StackEntry entry,
+                                                         CardSubject.TriggeringCards triggering) {
+        Map<UUID, LocatedCard> named = new LinkedHashMap<>();
+        triggeringCards(gameData, entry, triggering).forEach(located -> named.put(located.card().getId(), located));
+        List<LocatedCard> originals = new ArrayList<>();
+        Set<UUID> seen = new LinkedHashSet<>();
+        for (Card card : entry.getTriggeringCards()) {
+            if (!seen.add(card.getId()) || card.isToken()) {
+                continue;
+            }
+            LocatedCard current = named.get(card.getId());
+            if (current != null) {
+                originals.add(current);
+                continue;
+            }
+            if (locate(gameData, card.getId(), Zone.GRAVEYARD) != null
+                    || triggering.filter() != null && !predicateEvaluationService.matchesCardPredicate(
+                    card, triggering.filter(), entry.getCard().getId(), gameData, gameData.ownerOf(card))) {
+                // Still in its graveyard but in a later stay is a new object (CR 400.7); or it doesn't match.
+                continue;
+            }
+            originals.add(new LocatedCard(card, Zone.GRAVEYARD, gameData.ownerOf(card)));
+        }
+        if (originals.isEmpty() && entry.getTriggeringCards().isEmpty()) {
+            return List.copyOf(named.values());
         }
         return originals;
     }
@@ -1188,6 +1235,8 @@ public class SubjectResolutionService {
             case PermanentSubject.Searched ignored -> searchedIds(ctx.entry());
             case PermanentSubject.AttachedAndSharingCreatureType ignored -> attachedAndSharingCreatureTypeIds(ctx);
             case PermanentSubject.ThisWay thisWay -> thisWayIds(ctx, thisWay);
+            case PermanentSubject.DepartedThisWay departed -> departedThisWayIds(ctx, departed);
+            case PermanentSubject.TargetDeclaredElsewhere ignored -> targetIds(ctx, null);
             case PermanentSubject.BandmatesOf bandmates -> bandmateIds(ctx, bandmates.permanent());
             case PermanentSubject.WithCreaturesSharingAColor sharing -> sharingAColorIds(ctx, sharing.permanent());
             case PermanentSubject.OtherPermanentsSharing sharing -> otherPermanentsSharingIds(ctx, sharing);
@@ -1267,6 +1316,17 @@ public class SubjectResolutionService {
             }
         }
         return matching;
+    }
+
+    /**
+     * {@link PermanentSubject.DepartedThisWay}: the permanents the step recorded that are no longer on the battlefield,
+     * each once.
+     */
+    private List<UUID> departedThisWayIds(Context ctx, PermanentSubject.DepartedThisWay departed) {
+        return ctx.entry().getResolutionResults().outcome(departed.kind()).objectIds().stream()
+                .distinct()
+                .filter(id -> gameQueryService.findPermanentById(ctx.gameData(), id) == null)
+                .toList();
     }
 
     /**

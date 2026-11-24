@@ -3,7 +3,11 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfReturnedPermanentIntoHandEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAnyColorManaToCastEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -31,8 +35,10 @@ public class WarzoneDuplicator extends Card {
                 )),
                 "Target must be a creature an opponent controls with power less than Warzone Duplicator's power"
         )).bindEffect(returnToHand);
+        // "A duplicate of it": that creature, read as it last existed once it left (CR 608.2h); a token has none.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 returnToHand,
-                new ConjureDuplicateOfReturnedPermanentIntoHandEffect());
+                ConjureCardsEffect.duplicateOf(Subjects.targetDeclaredElsewhere(), ConjureDestination.intoHand()),
+                new PerpetuallyGrantAnyColorManaToCastEffect(Subjects.cardsThisWay(StepKind.CONJURE)));
     }
 }

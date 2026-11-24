@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -81,6 +82,28 @@ class GutmornPactboundServantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A discarded card that left its graveyard before the trigger resolved is duplicated as it last was")
+    void duplicatesADiscardedCardThatLeftTheGraveyard() {
+        harness.addToBattlefield(player1, new GutmornPactboundServant());
+        Card original = new GrizzlyBears();
+        harness.setHand(player1, List.of(new Distress()));
+        harness.setHand(player2, List.of(original));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.stack).isNotEmpty();
+        gd.playerGraveyards.get(player2.getId()).remove(original);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).singleElement().satisfies(duplicate -> {
+            assertThat(duplicate.getName()).isEqualTo("Grizzly Bears");
+            assertThat(duplicate.getId()).isNotEqualTo(original.getId());
+            assertThat(gd.perpetualAnyColorManaForCastCardIds).contains(duplicate.getId());
+        });
     }
 
     @Test

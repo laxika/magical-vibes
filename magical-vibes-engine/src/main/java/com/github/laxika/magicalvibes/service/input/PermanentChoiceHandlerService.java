@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.effect.MayEffectHandlerRegistry;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CelestialJudgmentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachCurseToOpponentAndDrawEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffectHandler;
@@ -35,7 +34,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ExploreEffectHandl
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChangeTargetOfTargetSpellToSourceEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveCounterFromControlledCreatureThenDrawEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TurnOwnCreatureFaceUpEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.TargetOpponentChoosesPlayerForRestrictionEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveCounterFromChosenOwnPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveAllMireCountersFromChosenLandEffectHandler;
@@ -127,7 +125,6 @@ public class PermanentChoiceHandlerService {
     private final RedHerringExchangeEffectHandler redHerringExchangeEffectHandler;
     private final RingTemptsYouEffectHandler ringTemptsYouEffectHandler;
     private final TemptTheRingEffectHandler temptTheRingEffectHandler;
-    private final ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffectHandler gutmornEffectHandler;
     private final SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffectHandler descendantsFuryEffectHandler;
     private final InfernalOfferingEffectHandler infernalOfferingEffectHandler;
     private final MayEffectHandlerRegistry mayEffectHandlerRegistry;
@@ -136,8 +133,6 @@ public class PermanentChoiceHandlerService {
             inventoryManagementEffectHandler;
     private final CreateTokenCopyOfChosenCreatureEffectHandler esixCreatureCopyHandler;
     private final ZndrsplatsJudgmentEffectHandler zndrsplatsJudgmentEffectHandler;
-    private final TargetOpponentChoosesPlayerForRestrictionEffectHandler
-            targetOpponentChoosesPlayerForRestrictionEffectHandler;
     private final CelestialJudgmentEffectHandler celestialJudgmentEffectHandler;
     private final AttachCurseToOpponentAndDrawEffectHandler attachCurseToOpponentAndDrawEffectHandler;
     private final EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffectHandler
@@ -605,8 +600,6 @@ public class PermanentChoiceHandlerService {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof PermanentChoiceContext.LibraryNinjutsu libraryNinjutsu) {
             libraryChoiceHandlerService.completeLibraryNinjutsuChoice(gameData, player, permanentId, libraryNinjutsu);
-        } else if (context instanceof PermanentChoiceContext.GutmornDiscardedCardPlayerChoice gutmornChoice) {
-            gutmornEffectHandler.completeChoice(gameData, permanentId, gutmornChoice);
         } else if (context instanceof PermanentChoiceContext.AuraEntryBatchChoice auraEntry) {
             battlefieldHandler.handleAuraEntryBatchChoice(gameData, permanentId, auraEntry);
         } else if (context instanceof PermanentChoiceContext.CloneCopy) {
@@ -835,9 +828,6 @@ public class PermanentChoiceHandlerService {
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             }
-        } else if (context instanceof PermanentChoiceContext.TargetOpponentChoosesPlayerForRestriction restriction) {
-            targetOpponentChoosesPlayerForRestrictionEffectHandler.completeChoice(gameData, permanentId, restriction);
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof PermanentChoiceContext.BounceCreature bounceCreature) {
             battlefieldHandler.handleBounceCreature(gameData, permanentId, bounceCreature);
         } else if (context instanceof PermanentChoiceContext.MayReturnPermanentToHandAndEnterWithCounters returnChoice) {

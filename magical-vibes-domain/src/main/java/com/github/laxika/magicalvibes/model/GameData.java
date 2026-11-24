@@ -596,8 +596,12 @@ public class GameData {
     public final Map<UUID, Set<CardSubtype>> perpetualCardSubtypes = new ConcurrentHashMap<>();
     /** Cards that perpetually became a creature type, so their printed creature types no longer apply. */
     public final Set<UUID> perpetualCreatureTypeReplacedCardIds = ConcurrentHashMap.newKeySet();
-    /** Perpetual Evoke alternate costs keyed by the affected card's identity. */
-    public final Map<UUID, List<AlternateHandCast>> perpetualEvokeAlternateCasts = new ConcurrentHashMap<>();
+    /**
+     * The one store of perpetually gained alternative costs ("perpetually gain Evoke—...", "perpetually gain 'You may pay
+     * {R} rather than pay this spell's mana cost'"), keyed by the affected card's identity, each an immutable list in
+     * grant order; written through {@link #grantPerpetualAlternateCast}.
+     */
+    public final Map<UUID, List<GrantedAlternateCast>> perpetualAlternateCasts = new ConcurrentHashMap<>();
     /** Perpetually removed keywords attached to individual card identities, keyed by card id. */
     public final Map<UUID, Set<Keyword>> perpetualCardRemovedKeywords = new ConcurrentHashMap<>();
     /**
@@ -10135,8 +10139,7 @@ public class GameData {
         this.perpetualCardSubtypes.forEach((cardId, subtypes) ->
                 copy.perpetualCardSubtypes.put(cardId, Set.copyOf(subtypes)));
         copy.perpetualCreatureTypeReplacedCardIds.addAll(this.perpetualCreatureTypeReplacedCardIds);
-        this.perpetualEvokeAlternateCasts.forEach((cardId, alternateCasts) ->
-                copy.perpetualEvokeAlternateCasts.put(cardId, List.copyOf(alternateCasts)));
+        copy.perpetualAlternateCasts.putAll(this.perpetualAlternateCasts);
         copy.cardsGrantedPerpetualUnearth.addAll(this.cardsGrantedPerpetualUnearth);
         this.perpetualCardRemovedKeywords.forEach((cardId, keywords) -> {
             Set<Keyword> copiedKeywords = ConcurrentHashMap.newKeySet();
@@ -11279,6 +11282,18 @@ public class GameData {
             merged.addAll(existing);
             merged.addAll(added);
             return Set.copyOf(merged);
+        });
+    }
+
+    /** Perpetually gives the card {@code cardId} the alternative cost {@code cast}; an equal one it already has is kept once. */
+    public void grantPerpetualAlternateCast(UUID cardId, GrantedAlternateCast cast) {
+        perpetualAlternateCasts.merge(cardId, List.of(cast), (existing, added) -> {
+            if (existing.contains(cast)) {
+                return existing;
+            }
+            List<GrantedAlternateCast> merged = new ArrayList<>(existing);
+            merged.add(cast);
+            return List.copyOf(merged);
         });
     }
 

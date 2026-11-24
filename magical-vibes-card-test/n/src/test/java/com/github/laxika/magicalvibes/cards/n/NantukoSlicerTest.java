@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
+import com.github.laxika.magicalvibes.cards.m.MatterReshaper;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -16,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NantukoSlicer.class, GrizzlyBears.class, Shock.class, ThayanEvokers.class})
+@CardUsed({NantukoSlicer.class, GrizzlyBears.class, Shock.class, ThayanEvokers.class, MatterReshaper.class})
 class NantukoSlicerTest extends BaseCardTest {
 
     @Test
@@ -71,6 +73,35 @@ class NantukoSlicerTest extends BaseCardTest {
         harness.castCreature(player1, duplicateIndex);
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The kicked duplicate gains prismatic: mana as though of any color, which pays no colorless cost")
+    void prismaticDuplicateCannotPayAColorlessCostWithColoredMana() {
+        Shock ownCard = new Shock();
+        MatterReshaper opponentCard = new MatterReshaper();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opponentCard));
+        harness.setHand(player1, List.of(new NantukoSlicer()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(ownCard.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(opponentCard.getId()));
+        harness.passBothPriorities();
+
+        Card duplicate = gd.playerHands.get(player1.getId()).stream()
+                .filter(card -> card.getName().equals("Matter Reshaper"))
+                .findFirst().orElseThrow();
+        assertThat(gd.perpetualAnyColorManaForCastCardIds).contains(duplicate.getId());
+        int duplicateIndex = gd.playerHands.get(player1.getId()).indexOf(duplicate);
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, duplicateIndex))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

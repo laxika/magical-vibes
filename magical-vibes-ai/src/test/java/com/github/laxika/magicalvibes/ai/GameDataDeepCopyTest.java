@@ -13,7 +13,11 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.AlternativeCostKind;
+import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
+import com.github.laxika.magicalvibes.model.GrantedAlternateCast;
+import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -439,6 +443,24 @@ class GameDataDeepCopyTest {
         assertThat(copy.perpetualGenericCastCostIncreases).doesNotContainKey(dearer.getId());
         assertThat(PerpetualCardCastCostSupport.changeFor(gd, cheaper)).isEqualTo(-1);
         assertThat(PerpetualCardCastCostSupport.changeFor(gd, dearer)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Deep copy keeps perpetual alternative costs in their one store, and the copy's grants stay its own")
+    void deepCopyPreservesPerpetualAlternateCastsIndependently() {
+        Card card = new GrizzlyBears();
+        GrantedAlternateCast evoke = new GrantedAlternateCast(new AlternateHandCast(List.of(
+                new ExileCardsFromHandCastingCost(null, "a card"))), true);
+        GrantedAlternateCast red = new GrantedAlternateCast(new AlternateHandCast(List.of(
+                new ManaCastingCost("{R}"))), false);
+        gd.grantPerpetualAlternateCast(card.getId(), evoke);
+
+        GameData copy = gd.simulationCopy();
+        copy.grantPerpetualAlternateCast(card.getId(), red);
+        copy.grantPerpetualAlternateCast(card.getId(), evoke);
+
+        assertThat(copy.perpetualAlternateCasts.get(card.getId())).containsExactly(evoke, red);
+        assertThat(gd.perpetualAlternateCasts.get(card.getId())).containsExactly(evoke);
     }
 
     @Test

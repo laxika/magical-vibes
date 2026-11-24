@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15 (each in Findings; the fold queue marks its rows). Fold runs 8 to 17 run in parallel worktrees from 2026-11-24. Next: fold runs 12d, 16c and 17 (running), 16b, 15b (`picked-subject`), `drafted-step`, 18. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                    |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d (each in Findings; the fold queue marks its rows). Fold runs 8 to 18 run in parallel worktrees from 2026-11-24. Next: fold runs 16b, 16c and 18 (running), 17 (merging), 15b (`picked-subject`), 17b, 12e (`dup-hand` leftovers), `drafted-step`. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                     |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,736 / 3,000 (after fold run 15) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,731 / 2,995 (after fold run 12d) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,467 rows over 4,420 classes (after fold run 15). Latest verdict per class: `step-9` 905, unique 1,165, absorbed 678, split 593, blocked-other 493, survivor 288, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 905 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,478 rows over 4,421 classes (after fold run 12d). Latest verdict per class: `step-9` 899, unique 1,166, absorbed 679, split 598, blocked-other 491, survivor 289, blocked-step-model 141, blocked-player-loop 96, dead 62. Waiting: 899 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -670,6 +670,14 @@ Delayed and global triggers:
   run 15).
 - `UnattachEquipmentFromTargetPermanentsEffect(PermanentSubject equipment)`; `TransformSelfEffect` over `granter()`, `thisWay(kind)`,
   `createdThisResolution()`; `CloakTopCardOfControllerLibraryEffect` records MANIFEST (fold run 15).
+
+- `PerpetuallyGrantAlternateCastEffect.evoke(cards, costs…)` / `.ratherThanManaCost(cards, costs…)`: perpetual alternative costs in the
+  one store `GameData.perpetualAlternateCasts`, read by `GameQueryService.findGrantedAlternateCast`; evoke's sacrifice trigger added on
+  cast (fold run 12d).
+- `Subjects.departedThisWay(kind)` (DESTROY, SACRIFICE, EXILE, RETURN): "each [permanent] destroyed / returned this way", names none on
+  the battlefield, duplicated as last known; `Subjects.targetDeclaredElsewhere()` (permanent): "that permanent" without declaring a
+  target (fold run 12d).
+- `ChoosePlayerEffect.chosenBy(player)`: "target opponent chooses a player", "they choose another player" (fold run 12d).
 
 ### Blocked causes still open
 
@@ -2164,6 +2172,32 @@ creature. Soul Seizer's target spec is benign. Cloak records MANIFEST; TRANSFORM
 `LookAtTopCardsEffect` follow-ups, `PutCardToBattlefieldThenEffect`) folds Nick Fury, Armored Skyhunter, Palico, Gilgamesh (with its
 reflexive), The Invincible Iron Man and Sunder the Gateway. Then a living-weapon run folding Grip of Phyresis with
 `LivingWeaponEffectHandler`'s source form.
+
+### Step 9, fold run 12d (2026-11-24, parallel worktree)
+
+Rows: what 12c left in `dup-hand` and `perp-hidden-sets` (Flames, Aquatic, Vona, Vesuvan/Warzone, Gutmorn), plus Choose Your Champion
+from `splits`. Ratchet in its worktree 3,764 / 3,027 → 3,759 / 3,022. Ledger 11 rows (split 5, absorbed 1, survivor 2, unique 2,
+blocked-step-model 1). 7 card files rewritten and one handler fixed; Oracle text checked for all 8. CR 608.2h, 707.2, 702.74a, 609.4b,
+400.7 checked.
+
+| Batch | Result |
+|---|---|
+| perpetual alternate cast (Flames, Aquatic) | 2 folded. New step `PerpetuallyGrantAlternateCastEffect` (`.evoke`, `.ratherThanManaCost`) writes the one store `GameData.perpetualAlternateCasts` (`GrantedAlternateCast`); the evoke store is merged into it (deep-copy test). Flames of Moradin: `DestroyEachTargetPermanentEffect(artifact)` + `duplicateOf(departedThisWay(DESTROY))` with the end-step sacrifice as `withAbilities` + `ratherThanManaCost({R})` |
+| Vona / any type | Vona split: destroy + `MayEffect(Sequence(DiscardEffect, ConditionalEffect(discarded(), duplicateOf(targetDeclaredElsewhere()).withAbilities(StaticAbility.of(PerpetualAnyManaTypeToCastSelfEffect)))))`. Nantuko Slicer's handler now gives prismatic. No any-type step: it would have one user |
+| last-known copy (Vesuvan, Warzone) | 1 record split: Vesuvan Mist uses `departedThisWay(RETURN)` (CR 608.2h); Warzone Duplicator `targetDeclaredElsewhere()` |
+| chooser (Gutmorn, Choose Your Champion) | 2 split onto `ChoosePlayerEffect.chosenBy(...)`. Gutmorn: conjure `.conjuredBy(playersThisWay(CHOOSE))` + prismatic. Choose Your Champion: `GrantStaticEffectToPlayerEffect(PlayerCantCastSpellsAndAttackWithCreaturesEffect, except(eachPlayer(), allOf(you(), playersThisWay(CHOOSE))), UNTIL_YOUR_NEXT_TURN)`; both choice contexts gone |
+
+**Behaviour changes.** Vona's duplicate gets "mana of any type" (it had any colour), and its conjure is in the same resolution (it was
+a reflexive ability); failing-first test, and its old any-colour assertion, which contradicted the Oracle text, now checks any type.
+Nantuko Slicer's duplicate gets prismatic (it had any type); failing-first test. Gutmorn duplicates a discarded card that left its
+graveyard as last known. Warzone, Vesuvan and Flames copy last-known copiable values (a face-down original gives a nameless 2/2, CR
+707.2, 708.2a). Flames' {R} is in the store, not the card's printed options; the AI's filter for unpayable alternative costs reads the
+store. `SpellCastingService` adds evoke's sacrifice trigger only for an evoke grant (CR 702.74a). Logs are the survivors' lines; Aquatic
+Subtlety's grant logs one line naming no card. "It" across zone changes (CR 400.7) keeps today's behaviour.
+
+**For the next run.** The `dup-hand` leftovers (Agent of Raffine: a top-of-library subject; Snowborn: a face-down duplicate; Ace,
+Viconia, Grizzled Huntmaster). `ChooseCardFromHandAndApplyPerpetualBlitzEffect` could move its blitz onto
+`PerpetuallyGrantAlternateCastEffect` if a second user appears.
 
 ## Prompt
 

@@ -49,6 +49,23 @@ class AquaticSubtletyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The grant to the cards in hand is one line that names no card")
+    void grantIsLoggedWithoutNamingHandCards() {
+        GrizzlyBears firstBottom = new GrizzlyBears();
+        GrizzlyBears secondBottom = new GrizzlyBears();
+        harness.setHand(player1, List.of(new AquaticSubtlety(), firstBottom, secondBottom));
+        harness.setLibrary(player1, List.of(new ZephyrSprite(), new ZephyrSprite()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(firstBottom.getId(), secondBottom.getId()));
+
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals(
+                "Each affected card in " + player1.getUsername() + "'s hand perpetually gains an ability."));
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("Zephyr Sprite"));
+    }
+
+    @Test
     @DisplayName("A blue creature can be cast for granted Evoke by exiling another blue card")
     void castsBlueCreatureWithGrantedEvoke() {
         GrizzlyBears firstBottom = new GrizzlyBears();

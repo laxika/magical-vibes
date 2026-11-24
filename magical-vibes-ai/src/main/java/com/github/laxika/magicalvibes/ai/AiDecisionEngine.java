@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
+import com.github.laxika.magicalvibes.model.GrantedAlternateCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -2427,7 +2428,13 @@ public abstract class AiDecisionEngine {
      */
     private boolean isUnsupportedAlternateHandOnlyRoute(GameData gameData, Card card,
                                                          ManaPool virtualPool) {
-        AlternateHandCast alternate = card.getCastingOption(AlternateHandCast.class).orElse(null);
+        // A perpetually gained alternative cost ("you may pay {R} rather than pay this spell's mana cost") is a route
+        // of its own, as a printed one is.
+        AlternateHandCast alternate = card.getCastingOption(AlternateHandCast.class)
+                .or(() -> gameQueryService.findGrantedAlternateCast(gameData, aiPlayer.getId(), card)
+                        .filter(granted -> !granted.evoke())
+                        .map(GrantedAlternateCast::cast))
+                .orElse(null);
         if (alternate == null
                 || !castingCostService.canPayAlternateHandCast(gameData, aiPlayer.getId(), card)
                 || castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, aiPlayer.getId(), card)
