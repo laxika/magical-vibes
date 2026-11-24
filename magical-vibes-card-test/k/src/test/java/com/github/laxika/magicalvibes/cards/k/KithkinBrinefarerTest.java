@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.cards.y.ThoughtweftsCall;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PerpetualPowerToughnessModifier;
+import com.github.laxika.magicalvibes.model.CardPowerToughnessModifier;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -50,8 +50,8 @@ class KithkinBrinefarerTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(gd.perpetualPowerToughnessModifiers).containsKey(kithkin.getId());
-        assertThat(gd.perpetualPowerToughnessModifiers).doesNotContainKey(nonKithkin.getId());
+        assertThat(gd.perpetualCardPowerToughnessModifiers).containsKey(kithkin.getId());
+        assertThat(gd.perpetualCardPowerToughnessModifiers).doesNotContainKey(nonKithkin.getId());
     }
 
     @Test
@@ -64,8 +64,8 @@ class KithkinBrinefarerTest extends BaseCardTest {
         declareAttackers(List.of(1));
         resolveAllTriggers();
 
-        assertThat(gd.perpetualPowerToughnessModifiers.get(kithkin.getId()))
-                .isEqualTo(new PerpetualPowerToughnessModifier(1, 1));
+        assertThat(gd.perpetualCardPowerToughnessModifiers.get(kithkin.getId()))
+                .isEqualTo(new CardPowerToughnessModifier(1, 1));
     }
 
     @Test
@@ -80,9 +80,9 @@ class KithkinBrinefarerTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(gd.perpetualPowerToughnessModifiers.get(kithkin.getId()))
-                .isEqualTo(new PerpetualPowerToughnessModifier(1, 1));
-        assertThat(gd.perpetualPowerToughnessModifiers).doesNotContainKey(opposingKithkin.getId());
+        assertThat(gd.perpetualCardPowerToughnessModifiers.get(kithkin.getId()))
+                .isEqualTo(new CardPowerToughnessModifier(1, 1));
+        assertThat(gd.perpetualCardPowerToughnessModifiers).doesNotContainKey(opposingKithkin.getId());
     }
 
     @Test

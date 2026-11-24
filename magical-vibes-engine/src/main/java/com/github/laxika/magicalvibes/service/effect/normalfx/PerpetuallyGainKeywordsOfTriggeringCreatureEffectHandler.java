@@ -59,9 +59,7 @@ public class PerpetuallyGainKeywordsOfTriggeringCreatureEffectHandler implements
             return;
         }
 
-        gameData.perpetualCardKeywords
-                .computeIfAbsent(sourceCard.getId(), ignored -> EnumSet.noneOf(Keyword.class))
-                .addAll(keywords);
+        gameData.grantPerpetualKeywords(sourceCard.getId(), keywords);
         gameLogService.append(gameData, GameLog.cardThen(sourceCard,
                 " perpetually gains " + formatKeywords(keywords) + "."));
     }

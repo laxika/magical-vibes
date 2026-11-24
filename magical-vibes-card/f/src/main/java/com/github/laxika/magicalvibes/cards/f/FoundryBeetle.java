@@ -9,7 +9,10 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyReduceRandomMatchingHandCardCostEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyChangeCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
@@ -33,8 +36,10 @@ public class FoundryBeetle extends Card {
         addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), Subjects.source(),
                 Duration.WHILE_ATTACHED));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new PerpetuallyReduceRandomMatchingHandCardCostEffect(
-                        new CardTypePredicate(CardType.ARTIFACT), 1));
+                SequenceEffect.of(
+                        ChooseCardEffect.atRandom(Subjects.cardsInYourHand(new CardTypePredicate(CardType.ARTIFACT)),
+                                "an artifact card"),
+                        new PerpetuallyChangeCastCostEffect(Subjects.cardsThisWay(StepKind.CHOOSE), -1)));
 
         var reconfigureTarget = TargetPredicates.permanents(new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

@@ -49,9 +49,7 @@ public class PerpetuallyGrantKeywordsToTargetCreatureEffectHandler implements No
             }
 
             UUID cardId = target.getCard().getId();
-            gameData.perpetualCardKeywords
-                    .computeIfAbsent(cardId, ignored -> EnumSet.noneOf(Keyword.class))
-                    .addAll(grantable);
+            gameData.grantPerpetualKeywords(cardId, grantable);
 
             if (grant.grantedAbility() != null) {
                 gameData.grantPerpetualAbility(cardId, grant.grantedAbility());

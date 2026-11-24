@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.DamageBonusGrant;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.PerpetualPowerToughnessModifier;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PerpetualCardPowerToughnessSupport;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -52,13 +52,11 @@ public class PerpetualPowerToughnessChoiceInteractionHandler
         Card chosenCard = hand.get(cardIndex);
         gameData.interaction.clearAwaitingInput();
         if (interaction.power() != 0 || interaction.toughness() != 0) {
-            gameData.perpetualPowerToughnessModifiers.merge(
-                    chosenCard.getId(),
-                    new PerpetualPowerToughnessModifier(interaction.power(), interaction.toughness()),
-                    PerpetualPowerToughnessModifier::add);
+            PerpetualCardPowerToughnessSupport.remember(
+                    gameData, chosenCard, interaction.power(), interaction.toughness());
         }
         if (!interaction.grantedKeywords().isEmpty()) {
-            gameData.perpetualKeywords.merge(chosenCard.getId(), interaction.grantedKeywords(),
+            gameData.perpetualCardKeywords.merge(chosenCard.getId(), interaction.grantedKeywords(),
                     (existing, added) -> {
                         Set<Keyword> merged = EnumSet.noneOf(Keyword.class);
                         merged.addAll(existing);

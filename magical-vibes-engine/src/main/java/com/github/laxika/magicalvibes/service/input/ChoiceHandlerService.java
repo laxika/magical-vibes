@@ -3333,7 +3333,7 @@ public class ChoiceHandlerService {
         if (target != null && !gameQueryService.cantHaveOrGainKeyword(gameData, target, keyword)) {
             Duration duration = ctx.duration();
             if (Duration.PERMANENT.equals(duration)) {
-                gameData.perpetualKeywords.merge(target.getOriginalCard().getId(), Set.of(keyword),
+                gameData.perpetualCardKeywords.merge(target.getOriginalCard().getId(), Set.of(keyword),
                         (existing, added) -> {
                             Set<Keyword> merged = new java.util.HashSet<>(existing);
                             merged.addAll(added);

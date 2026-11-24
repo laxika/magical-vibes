@@ -64,7 +64,7 @@ public record ChooseCardEffect(CardSubject cards, String label, boolean alwaysAs
         if (chooser != null && chooser.declaresTarget()) {
             throw new IllegalArgumentException("Who chooses is no target of this step: " + chooser);
         }
-        if (cards instanceof CardSubject.InLibrary && chooser != null) {
+        if ((cards instanceof CardSubject.InLibrary || cards instanceof CardSubject.TopmostInLibrary) && chooser != null) {
             throw new IllegalArgumentException("Nobody is shown a library to choose from (CR 400.2): " + cards);
         }
         if (chooser == null && !each.isEmpty()) {

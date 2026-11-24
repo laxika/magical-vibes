@@ -566,11 +566,6 @@ public class GameData {
     public final Map<UUID, Integer> perpetualCardCastCostReductions = new ConcurrentHashMap<>();
     /** Perpetual generic spell-cost increases granted to physical cards, keyed by stable card id. */
     public final Map<UUID, Integer> perpetualCardCastCostIncreases = new ConcurrentHashMap<>();
-    /** Perpetual power/toughness changes keyed by the affected card's identity. */
-    public final Map<UUID, com.github.laxika.magicalvibes.model.PerpetualPowerToughnessModifier> perpetualPowerToughnessModifiers =
-            new ConcurrentHashMap<>();
-    /** Perpetual keyword grants keyed by the affected card's identity. */
-    public final Map<UUID, Set<Keyword>> perpetualKeywords = new ConcurrentHashMap<>();
     /** Total toxic value perpetually gained by a card (each grant adds 1), keyed by the card's identity. */
     public final Map<UUID, Integer> perpetualToxicValues = new ConcurrentHashMap<>();
     /** Perpetual generic cast-cost increases keyed by the affected card's identity. */
@@ -604,8 +599,6 @@ public class GameData {
     public final Set<UUID> perpetualCreatureTypeReplacedCardIds = ConcurrentHashMap.newKeySet();
     /** Perpetual Evoke alternate costs keyed by the affected card's identity. */
     public final Map<UUID, List<AlternateHandCast>> perpetualEvokeAlternateCasts = new ConcurrentHashMap<>();
-    /** Perpetual power bonuses attached to individual card identities, keyed by card id. */
-    public final Map<UUID, Integer> perpetualCardPowerModifiers = new ConcurrentHashMap<>();
     /** Perpetually removed keywords attached to individual card identities, keyed by card id. */
     public final Map<UUID, Set<Keyword>> perpetualCardRemovedKeywords = new ConcurrentHashMap<>();
     /**
@@ -3968,7 +3961,11 @@ public class GameData {
      *  what changed since. */
     public final Map<UUID, EndOfTurnStateShare> phaseSequenceAttributedEndOfTurnState = new ConcurrentHashMap<>();
 
-    /** Keywords that remain with a card through zone changes. */
+    /**
+     * Keywords a card has perpetually gained, keyed by the physical card's identity; each value is an unmodifiable set
+     * replaced on change, so add through {@link #grantPerpetualKeywords}. A permanent reads its card's and, when it is
+     * a copy, its physical card's ({@code LayerSystemService}).
+     */
     public final Map<UUID, Set<Keyword>> perpetualCardKeywords = new ConcurrentHashMap<>();
 
     /**
@@ -10167,9 +10164,6 @@ public class GameData {
         this.perpetualCardSpellCastingAbilityGrants.forEach((cardId, grants) ->
                 copy.perpetualCardSpellCastingAbilityGrants.put(cardId,
                         Collections.synchronizedList(new ArrayList<>(grants))));
-        copy.perpetualPowerToughnessModifiers.putAll(this.perpetualPowerToughnessModifiers);
-        this.perpetualKeywords.forEach((cardId, keywords) ->
-                copy.perpetualKeywords.put(cardId, Set.copyOf(keywords)));
         copy.perpetualToxicValues.putAll(this.perpetualToxicValues);
         copy.perpetualGenericCastCostIncreases.putAll(this.perpetualGenericCastCostIncreases);
         copy.perpetualManaCostIncreases.putAll(this.perpetualManaCostIncreases);
@@ -10189,7 +10183,6 @@ public class GameData {
                 copy.perpetualEvokeAlternateCasts.put(cardId, List.copyOf(alternateCasts)));
         copy.perpetualCardCastCostReductions.putAll(this.perpetualCardCastCostReductions);
         copy.perpetualCardCastCostIncreases.putAll(this.perpetualCardCastCostIncreases);
-        copy.perpetualCardPowerModifiers.putAll(this.perpetualCardPowerModifiers);
         copy.cardsGrantedPerpetualUnearth.addAll(this.cardsGrantedPerpetualUnearth);
         this.perpetualCardRemovedKeywords.forEach((cardId, keywords) -> {
             Set<Keyword> copiedKeywords = ConcurrentHashMap.newKeySet();
@@ -11335,6 +11328,19 @@ public class GameData {
     private static void copyDamageBonusGrants(Map<UUID, List<DamageBonusGrant>> from,
                                               Map<UUID, List<DamageBonusGrant>> to) {
         from.forEach((key, grants) -> to.put(key, new CopyOnWriteArrayList<>(grants)));
+    }
+
+    /** Perpetually grants the card {@code cardId} {@code keywords}, beside the keywords it has gained already. */
+    public void grantPerpetualKeywords(UUID cardId, Collection<Keyword> keywords) {
+        if (keywords.isEmpty()) {
+            return;
+        }
+        perpetualCardKeywords.merge(cardId, Set.copyOf(keywords), (existing, added) -> {
+            Set<Keyword> merged = EnumSet.noneOf(Keyword.class);
+            merged.addAll(existing);
+            merged.addAll(added);
+            return Set.copyOf(merged);
+        });
     }
 
     /** Perpetually grants the card {@code cardId} {@code ability}; a repeated grant stacks (CR 113.2c). */

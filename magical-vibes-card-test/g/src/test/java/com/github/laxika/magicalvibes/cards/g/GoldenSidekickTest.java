@@ -2,17 +2,19 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GoldenSidekick.class, AngelOfMercy.class, GrizzlyBears.class, Plains.class})
+@CardUsed({GoldenSidekick.class, AngelOfMercy.class, GrizzlyBears.class, Plains.class, TurnToFrog.class})
 class GoldenSidekickTest extends BaseCardTest {
 
     @Test
@@ -25,9 +27,9 @@ class GoldenSidekickTest extends BaseCardTest {
         resolveAllTriggers();
 
         List<Card> hand = gd.playerHands.get(player1.getId());
-        assertThat(hand.stream().filter(card -> card.getPower() == 5 && card.getToughness() == 5).count())
+        assertThat(hand.stream().filter(card -> power(card) == 5 && toughness(card) == 5).count())
                 .isEqualTo(1);
-        assertThat(hand.stream().filter(card -> card.getPower() == 2 && card.getToughness() == 2).count())
+        assertThat(hand.stream().filter(card -> power(card) == 2 && toughness(card) == 2).count())
                 .isEqualTo(1);
     }
 
@@ -63,10 +65,10 @@ class GoldenSidekickTest extends BaseCardTest {
         resolveAllTriggers();
 
         Card boosted = gd.playerHands.get(player1.getId()).get(1);
-        assertThat(boosted.getPower()).isEqualTo(5);
-        assertThat(boosted.getToughness()).isEqualTo(5);
-        assertThat(gd.playerHands.get(player2.getId()).getFirst().getPower()).isEqualTo(2);
-        assertThat(gd.playerHands.get(player2.getId()).getFirst().getToughness()).isEqualTo(2);
+        assertThat(power(boosted)).isEqualTo(5);
+        assertThat(toughness(boosted)).isEqualTo(5);
+        assertThat(power(gd.playerHands.get(player2.getId()).getFirst())).isEqualTo(2);
+        assertThat(toughness(gd.playerHands.get(player2.getId()).getFirst())).isEqualTo(2);
     }
 
     @Test
@@ -79,8 +81,8 @@ class GoldenSidekickTest extends BaseCardTest {
         resolveAllTriggers();
 
         Card unboosted = gd.playerHands.get(player2.getId()).getFirst();
-        assertThat(unboosted.getPower()).isEqualTo(2);
-        assertThat(unboosted.getToughness()).isEqualTo(2);
+        assertThat(power(unboosted)).isEqualTo(2);
+        assertThat(toughness(unboosted)).isEqualTo(2);
     }
 
     @Test
@@ -112,8 +114,8 @@ class GoldenSidekickTest extends BaseCardTest {
         resolveAllTriggers();
 
         Card boosted = gd.playerHands.get(player1.getId()).getFirst();
-        assertThat(boosted.getPower()).isEqualTo(5);
-        assertThat(boosted.getToughness()).isEqualTo(5);
+        assertThat(power(boosted)).isEqualTo(5);
+        assertThat(toughness(boosted)).isEqualTo(5);
     }
 
     @Test
@@ -129,7 +131,37 @@ class GoldenSidekickTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         Card boosted = gd.playerHands.get(player1.getId()).getFirst();
-        assertThat(boosted.getPower()).isEqualTo(3);
-        assertThat(boosted.getToughness()).isEqualTo(3);
+        assertThat(power(boosted)).isEqualTo(3);
+        assertThat(toughness(boosted)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The perpetual boost is a P/T change of the card, so it still applies after a base P/T change")
+    void perpetualBoostAppliesAfterBasePowerToughnessChange() {
+        harness.addToBattlefield(player1, new GoldenSidekick());
+        harness.setHand(player1, List.of(new GrizzlyBears(), new AngelOfMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castCreature(player1, 1);
+        resolveAllTriggers();
+
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        var bears = findPermanent(player1, "Grizzly Bears");
+
+        harness.setHand(player2, List.of(new TurnToFrog()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+    }
+
+    private int power(Card card) {
+        return gqs.getEffectiveCardPower(gd, card);
+    }
+
+    private int toughness(Card card) {
+        return gqs.getEffectiveCardToughness(gd, card);
     }
 }

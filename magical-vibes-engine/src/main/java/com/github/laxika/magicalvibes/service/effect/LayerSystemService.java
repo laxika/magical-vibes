@@ -1014,14 +1014,12 @@ public class LayerSystemService {
         }
         h = mix(h, gameData.perpetualCardPowerToughnessModifiers.hashCode());
         h = mix(h, gameData.perpetualCardBasePowerToughness.hashCode());
-        h = mix(h, gameData.perpetualPowerToughnessModifiers.hashCode());
         h = mix(h, gameData.perpetualCardPowerToughnessModifiers.size());
         h = mix(h, gameData.perpetualCardKeywords.hashCode());
         h = mix(h, gameData.perpetualCardKeywords.size());
         h = mix(h, gameData.perpetualCardRemovedKeywords.hashCode());
         h = mix(h, gameData.perpetualCardRemovedKeywords.size());
         h = mix(h, gameData.perpetualCardExtraKeywordInstances.hashCode());
-        h = mix(h, gameData.perpetualKeywords.hashCode());
         h = mix(h, gameData.perpetualCardTypes.hashCode());
         h = mix(h, gameData.perpetualCardSubtypes.hashCode());
         h = mix(h, gameData.perpetualCreatureTypeReplacedCardIds.hashCode());
@@ -3103,9 +3101,11 @@ public class LayerSystemService {
         state.snapshotPrintedTriggerKeywords();
         // Perpetual keywords are part of the card; a face-down permanent has none of its card's text (CR 708.2a).
         if (!permanent.isFaceDown()) {
-            if (permanent.getOriginalCard() != null) {
+            if (permanent.getOriginalCard() != null
+                    && !permanent.getOriginalCard().getId().equals(permanent.getCard().getId())) {
+                // A copy keeps what its physical card gained before it became one.
                 state.addKeywords(keepingPerpetualRemovals(gameData, permanent.getCard().getId(),
-                        gameData.perpetualKeywords.getOrDefault(permanent.getOriginalCard().getId(), Set.of())));
+                        gameData.perpetualCardKeywords.getOrDefault(permanent.getOriginalCard().getId(), Set.of())));
             }
             state.addKeywords(keepingPerpetualRemovals(gameData, permanent.getCard().getId(),
                     gameData.perpetualCardKeywords.getOrDefault(permanent.getCard().getId(), Set.of())));

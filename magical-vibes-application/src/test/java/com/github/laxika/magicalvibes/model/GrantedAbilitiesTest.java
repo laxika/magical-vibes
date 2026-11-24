@@ -13,8 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToTargetCardInHandEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -163,12 +161,6 @@ class GrantedAbilitiesTest {
 
         assertThat(grant.grantedAbility()).isEqualTo(new TriggeredAbility(LOSES_CONTROL, DRAW_ONE));
         assertThat(grant.grantedEffect()).isEqualTo(DRAW_ONE);
-
-        var handGrant = new PerpetuallyGrantTriggeredAbilityToTargetCardInHandEffect(Triggers.youCastThisSpell(),
-                List.of(DRAW_ONE, DRAW_TWO), new CardAllOfPredicate(List.of()));
-        assertThat(handGrant.grantedAbilities()).containsExactly(
-                new TriggeredAbility(Triggers.youCastThisSpell(), DRAW_ONE, DRAW_TWO));
-        assertThat(handGrant.grantedEffects()).containsExactly(DRAW_ONE, DRAW_TWO);
     }
 
     @Test

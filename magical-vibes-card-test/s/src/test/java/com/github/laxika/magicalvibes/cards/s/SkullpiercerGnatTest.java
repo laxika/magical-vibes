@@ -2,18 +2,20 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SkullpiercerGnat.class, Forest.class, GrizzlyBears.class})
+@CardUsed({SkullpiercerGnat.class, Forest.class, GrizzlyBears.class, LeylineOfSanctity.class})
 class SkullpiercerGnatTest extends BaseCardTest {
 
     @Test
@@ -111,6 +113,28 @@ class SkullpiercerGnatTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castCreature(player2, 1);
         harness.passBothPriorities();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("\"That player\" is not a target: a damaged player with hexproof still gets the perpetual ability")
+    void damagedPlayerWithHexproofIsStillAffected() {
+        addCreatureReady(player1, new SkullpiercerGnat());
+        harness.addToBattlefield(player2, new LeylineOfSanctity());
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
 
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(2);
     }

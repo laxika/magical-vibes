@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13 (each in Findings; the fold queue marks its rows). Fold runs 8 to 14b run in parallel worktrees from 2026-11-24. Next: fold runs 12b and 14b (running), 13b (`search-attach`, `same-name-search`, `per-object-search`), 12c, 11c, `drafted-step`, 8b, 15. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).            |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b (each in Findings; the fold queue marks its rows). Fold runs 8 to 14b run in parallel worktrees from 2026-11-24. Next: fold runs 13b and 14b (running), 12c (`dup-hand` leftovers, cards-you-own step), 11c, `drafted-step`, 8b, 15. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).             |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,806 / 3,068 (after fold run 13) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,787 / 3,049 (after fold run 12b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,338 rows over 4,414 classes (after fold run 13). Latest verdict per class: `step-9` 991, unique 1,165, absorbed 636, split 561, blocked-other 482, survivor 281, blocked-step-model 140, blocked-player-loop 97, dead 61. Waiting: 991 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,367 rows over 4,414 classes (after fold run 12b). Latest verdict per class: `step-9` 965, unique 1,166, absorbed 645, split 571, blocked-other 488, survivor 281, blocked-step-model 140, blocked-player-loop 97, dead 61. Waiting: 965 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -610,6 +610,11 @@ Delayed and global triggers:
   `ShuffleLibraryEffect(false)` (Nazahn, Ruin in Their Wake, Treasure Chest; fold run 13).
 - `SearchLibraryEffect(filter, EXILE_IMPRINT)`: "search for a card, exile it" on an imprint permanent (Strata Scythe, Hoarding
   Dragon; fold run 13).
+
+- `Subjects.topmostCardInYourLibrary(filter)` (`CardSubject.TopmostInLibrary`): "the topmost [filter] card in your library", hidden,
+  logged by `PerpetualChangeLog` (fold run 12b).
+- `GameData.grantPerpetualKeywords(cardId, keywords)`: the one write into the merged `perpetualCardKeywords`; P/T changes live in
+  `perpetualCardPowerToughnessModifiers` only (fold run 12b).
 
 ### Blocked causes still open
 
@@ -1844,6 +1849,40 @@ card predicate (enchant restriction, protection) and Curse of Misfortunes' "not 
 `same-name-search`: one per-permanent same-name search over a `PermanentSubject` and a library-owner `PlayerSubject`, recorded as
 SEARCH. `per-object-search`: one may-search per land on `EachPlayerSearchesLibraryEffect` (Wave of Vitriol, Winds of Abandon's
 defect). Delete `EXILE_AND_CREATE_TOKENS` with its test.
+
+### Step 9, fold run 12b (2026-11-24, parallel worktree)
+
+Rows: `perp-hidden-sets` (12), `perp-chosen` (11), `perp-owned` (3), `perp-topmost` (3), plus Reckless Ringleader. Ratchet in its
+worktree 3,827 / 3,088 → 3,808 / 3,069. Ledger 29 rows (absorbed 9, split 10, blocked-other 6, unique 1, `step-9` left 3). 20 card
+files rewritten and 1 card added; Oracle text checked for all 31 cards. CR 608.2d, 400.2, 400.7, 613.4b, 613.4c, 113.2c, 708.2a,
+608.2h, 402.3 checked.
+
+**Store merges (St).** `perpetualPowerToughnessModifiers` went into `perpetualCardPowerToughnessModifiers`, `perpetualKeywords` into
+`perpetualCardKeywords`; keywords are written only through `GameData.grantPerpetualKeywords` (immutable values replaced on each
+change). A permanent reads its card's entry and, when it is a copy, its physical card's entry. `PerpetuallyBoostCardEffect`'s write to
+both cards for a Clone's self-boost is one write. Naktamun's `perpetualCardPowerModifiers` and its read on entry are gone. The evoke
+store and the third cost store (`perpetualGenericCastCostIncreases`) stay.
+
+| Batch | Result |
+|---|---|
+| `perp-hidden-sets` | 9 folded: Bramblearmor (`toCards(cardsInYourLibrary)`), Rotboar, Topsoil Turner (`PerpetuallyGrantAbilitiesEffect` over `cardsInHands(defendingPlayer())` / `cardsInYourHand`), Kami of Transmutation (`PerpetuallyGrantCardCharacteristicsEffect.to(...)`), Fountainport and Charged Conjuration (`PerpetuallyChangeCastCostEffect(..., -1)`); Lae'zel and Coalition Construct split into a permanent boost plus a hand boost. Left: Aquatic Subtlety (an evoke ability record), Seething Skitter-Priest (a stacking set grant, CR 113.2c), Wildgrove Summoner (base P/T over cards), Absorb Energy (target-spell types, CR 608.2h) |
+| `perp-chosen` | 8 folded: `ChooseCardEffect.atRandom` / `.oneOf` or `RevealMatchingCardsFromTargetHandAndKeepEffect`, then the verb over `cardsThisWay(CHOOSE)`; Ravenous Pursuit uses the excess-damage bite. Left: Fuel Tank Feaster (a greatest-MV card predicate), Boareskyr Tollkeeper (an enter-tapped ability), Hydroponics Architect (a supertype store), Thought Partition (unique: colour and mana cost) |
+| `perp-owned` | Naktamun onto `PerpetuallyBoostOwnedCardsEffect`. Tend to the Kiln and Scalar Scholar left: a cards-you-own subject would have to name battlefield and stack cards |
+| `perp-topmost` | 3 folded onto `Subjects.topmostCardInYourLibrary(filter)` (new `CardSubject.TopmostInLibrary`) |
+
+**Reckless Ringleader (J21 21).** `ChooseCardEffect.oneOf(cardsInYourHand(creature))` +
+`PerpetuallyGrantKeywordsToTriggeringCardEffect.toCards(cardsThisWay(CHOOSE), HASTE)`; new `CardSet.SET_J21`. Goblin Influx Array's
+spellbook holds it again.
+
+**Behaviour changes.** Golden Sidekick, Dalkovan Outrider and Thorna boost in layer 7c (CR 613.4b, 613.4c), not printed values (Turn
+to Frog tests). Skullpiercer Gnat and Wagon Wrecker no longer target "that player" (hexproof test). Ravenous Pursuit chooses a lone
+card unasked. Copies read their physical card's perpetual P/T and keywords. The keyword subject path restores perpetually lost
+keywords and counts extra instances. The card-subject paths of the boost, characteristics and keyword survivors log through
+`PerpetualChangeLog`. Wingbright Thief offers only the revealed cards (its old prompt showed the whole target hand). "It" across zone
+changes (CR 400.7) keeps today's behaviour.
+
+**For the next run.** The cards-you-own step (Tend, Scalar, `PerpetuallyBoostOwnedCardsEffect`), a static evoke ability (Aquatic
+Subtlety), and merging the three cast-cost stores.
 
 ## Prompt
 

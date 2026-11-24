@@ -836,9 +836,6 @@ public class PredicateEvaluationService {
                 boolean granted = gameData != null
                         && (gameData.perpetualCardKeywords
                         .getOrDefault(card.getId(), java.util.Set.of())
-                        .contains(p.keyword())
-                        || gameData.perpetualKeywords
-                        .getOrDefault(card.getId(), java.util.Set.of())
                         .contains(p.keyword()));
                 if (p.keyword() == Keyword.CONVOKE && gameData != null
                         && gameData.spellWasCastWithConvokeGrant(card.getId())) {

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.PerpetualPowerToughnessModifier;
+import com.github.laxika.magicalvibes.model.CardPowerToughnessModifier;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -33,9 +33,9 @@ class ElvishElegyTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .contains(existingCreature, elf, forest);
-        assertThat(gd.perpetualPowerToughnessModifiers)
-                .containsEntry(existingCreature.getId(), new PerpetualPowerToughnessModifier(1, 1))
-                .containsEntry(elf.getId(), new PerpetualPowerToughnessModifier(1, 1));
+        assertThat(gd.perpetualCardPowerToughnessModifiers)
+                .containsEntry(existingCreature.getId(), new CardPowerToughnessModifier(1, 1))
+                .containsEntry(elf.getId(), new CardPowerToughnessModifier(1, 1));
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
         chooseOfferedCards(player1, 0);
@@ -108,8 +108,8 @@ class ElvishElegyTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(elf);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.perpetualPowerToughnessModifiers)
-                .containsEntry(elf.getId(), new PerpetualPowerToughnessModifier(1, 1))
+        assertThat(gd.perpetualCardPowerToughnessModifiers)
+                .containsEntry(elf.getId(), new CardPowerToughnessModifier(1, 1))
                 .doesNotContainKey(opposingElf.getId());
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
@@ -127,8 +127,8 @@ class ElvishElegyTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(bear, shock);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.perpetualPowerToughnessModifiers)
-                .containsEntry(bear.getId(), new PerpetualPowerToughnessModifier(1, 1))
+        assertThat(gd.perpetualCardPowerToughnessModifiers)
+                .containsEntry(bear.getId(), new CardPowerToughnessModifier(1, 1))
                 .doesNotContainKey(shock.getId());
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }

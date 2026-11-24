@@ -284,31 +284,6 @@ public class CardChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
-    /** Adds a perpetual triggered ability to a chosen card in a target player's hand. */
-    public void handlePerpetualTargetCardChosen(GameData gameData, Player player, int cardIndex) {
-        PendingInteraction.PerpetualTargetCardChoice choice =
-                gameData.interaction.activeInteraction(PendingInteraction.PerpetualTargetCardChoice.class);
-        if (choice == null || !player.getId().equals(choice.choosingPlayerId())) {
-            throw new IllegalStateException("Not your turn to choose");
-        }
-        if (!choice.validIndices().contains(cardIndex)) {
-            throw new IllegalStateException("Invalid card index: " + cardIndex);
-        }
-
-        List<Card> hand = gameData.playerHands.get(choice.targetPlayerId());
-        if (hand == null || cardIndex < 0 || cardIndex >= hand.size()) {
-            throw new IllegalStateException("Invalid card index: " + cardIndex);
-        }
-
-        gameData.interaction.clearAwaitingInput();
-        Card copy = hand.get(cardIndex).createRuntimeCopy();
-        choice.grantedAbilities().forEach(copy::addAbility);
-        copy.freeze();
-        hand.set(cardIndex, copy);
-
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
     /** Gives the chosen hand card a persistent static effect, or resolves the decline fallback. */
     public void handlePerpetualStaticEffectCardChosen(GameData gameData, Player player, int cardIndex) {
         PendingInteraction.PerpetualStaticEffectCardChoice choice =

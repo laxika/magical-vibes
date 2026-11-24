@@ -101,7 +101,7 @@ public class LookAtTopSevenAndPerpetuallyGainKeywordsEffectHandler implements No
         Card perpetualCard = source.getOriginalCard();
         if (!grantableKeywords.isEmpty()) {
             if (perpetualCard != null) {
-                gameData.perpetualKeywords.merge(perpetualCard.getId(), Set.copyOf(grantableKeywords),
+                gameData.perpetualCardKeywords.merge(perpetualCard.getId(), Set.copyOf(grantableKeywords),
                         (existing, added) -> {
                             Set<Keyword> merged = EnumSet.noneOf(Keyword.class);
                             merged.addAll(existing);

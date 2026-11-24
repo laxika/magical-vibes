@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardPowerToughnessModifier;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -387,6 +388,27 @@ class GameDataDeepCopyTest {
                 .containsExactly(new DrawCardEffect(1), new DrawCardEffect(2));
         assertThat(gd.perpetualTriggerEffects(card.getId(), Triggers.youLoseControlOfThis(), Zone.BATTLEFIELD))
                 .containsExactly(new DrawCardEffect(1));
+    }
+
+    @Test
+    @DisplayName("Deep copy keeps perpetual keywords and P/T changes, and the copy's changes stay its own")
+    void deepCopyPreservesPerpetualKeywordsAndPowerToughnessIndependently() {
+        Card card = new GrizzlyBears();
+        gd.grantPerpetualKeywords(card.getId(), Set.of(Keyword.HASTE));
+        gd.perpetualCardPowerToughnessModifiers.put(card.getId(), new CardPowerToughnessModifier(1, 1));
+
+        GameData copy = gd.simulationCopy();
+        copy.grantPerpetualKeywords(card.getId(), Set.of(Keyword.FLYING));
+        copy.perpetualCardPowerToughnessModifiers.merge(card.getId(), new CardPowerToughnessModifier(2, 2),
+                (current, added) -> current.add(added.power(), added.toughness()));
+
+        assertThat(copy.perpetualCardKeywords.get(card.getId()))
+                .containsExactlyInAnyOrder(Keyword.HASTE, Keyword.FLYING);
+        assertThat(gd.perpetualCardKeywords.get(card.getId())).containsExactly(Keyword.HASTE);
+        assertThat(copy.perpetualCardPowerToughnessModifiers.get(card.getId()))
+                .isEqualTo(new CardPowerToughnessModifier(3, 3));
+        assertThat(gd.perpetualCardPowerToughnessModifiers.get(card.getId()))
+                .isEqualTo(new CardPowerToughnessModifier(1, 1));
     }
 
     @Test

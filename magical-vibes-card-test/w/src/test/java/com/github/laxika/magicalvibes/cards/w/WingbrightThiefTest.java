@@ -28,14 +28,14 @@ class WingbrightThiefTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
         resolveThief();
 
-        PendingInteraction.PerpetualTargetCardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PerpetualTargetCardChoice.class);
+        PendingInteraction.RevealedMatchingHandCardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.RevealedMatchingHandCardChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.choosingPlayerId()).isEqualTo(player1.getId());
         assertThat(choice.targetPlayerId()).isEqualTo(player2.getId());
-        assertThat(choice.validIndices()).containsExactly(1);
+        assertThat(choice.validCardIds()).containsExactly(nonland.getId());
 
-        harness.handleCardChosen(player1, 1);
+        harness.handleMultipleCardsChosen(player1, List.of(nonland.getId()));
 
         harness.forceActivePlayer(player2);
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
@@ -111,17 +111,19 @@ class WingbrightThiefTest extends BaseCardTest {
 
     @Test
     void choiceIsMandatoryAndCannotSelectALandOrBeMadeByOpponent() {
-        harness.setHand(player2, List.of(new Forest(), new ChildOfNight()));
+        Card land = new Forest();
+        Card nonland = new ChildOfNight();
+        harness.setHand(player2, List.of(land, nonland));
         resolveThief();
 
-        assertThatThrownBy(() -> harness.handleCardChosen(player2, 1))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2, List.of(nonland.getId())))
                 .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(land.getId())))
                 .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class);
 
-        harness.handleCardChosen(player1, 1);
+        harness.handleMultipleCardsChosen(player1, List.of(nonland.getId()));
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
     }

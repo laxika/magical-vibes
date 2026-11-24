@@ -447,6 +447,11 @@ public final class Subjects {
         return new CardSubject.InLibrary(owners, filter);
     }
 
+    /** "The topmost creature card in your library": the matching card nearest the top of your library. */
+    public static CardSubject topmostCardInYourLibrary(CardPredicate filter) {
+        return new CardSubject.TopmostInLibrary(you(), filter);
+    }
+
     /** "From the command zone": the cards matching {@code filter} in the controller's command zone. */
     public static CardSubject cardsInYourCommandZone(CardPredicate filter) {
         return new CardSubject.InCommandZone(you(), filter);

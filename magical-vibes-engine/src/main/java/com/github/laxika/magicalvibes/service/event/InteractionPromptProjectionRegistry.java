@@ -245,8 +245,6 @@ public class InteractionPromptProjectionRegistry {
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.PerpetualStaticEffectCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, true));
-        register(PendingInteraction.PerpetualTargetCardChoice.class,
-                this::projectPerpetualTargetCardChoice);
         register(PendingInteraction.PerpetualHandOrGraveyardCardChoice.class,
                 this::projectPerpetualHandOrGraveyardCardChoice);
         register(PendingInteraction.WordOfCommandCardChoice.class,
@@ -1512,13 +1510,6 @@ public class InteractionPromptProjectionRegistry {
             PendingInteraction.HandChoice interaction, boolean declinable) {
         return InteractionPromptMessage.cardIndexPick(
                 interaction.validIndices(), interaction.prompt(), declinable);
-    }
-
-    private InteractionPromptMessage projectPerpetualTargetCardChoice(
-            GameData gameData, PendingInteraction.PerpetualTargetCardChoice interaction) {
-        return InteractionPromptMessage.cardIndexPick(
-                cardViews(gameData.playerHands.getOrDefault(interaction.targetPlayerId(), List.of())),
-                interaction.validIndices(), interaction.prompt(), false);
     }
 
     private InteractionPromptMessage projectPerpetualHandOrGraveyardCardChoice(

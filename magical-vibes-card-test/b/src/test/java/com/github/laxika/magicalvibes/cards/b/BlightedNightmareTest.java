@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PerpetualPowerToughnessModifier;
+import com.github.laxika.magicalvibes.model.CardPowerToughnessModifier;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -33,8 +33,8 @@ class BlightedNightmareTest extends BaseCardTest {
         harness.passBothPriorities();
         resolveAllTriggers();
 
-        assertThat(gd.perpetualPowerToughnessModifiers)
-                .containsEntry(bears.getId(), new PerpetualPowerToughnessModifier(1, 1));
+        assertThat(gd.perpetualCardPowerToughnessModifiers)
+                .containsEntry(bears.getId(), new CardPowerToughnessModifier(1, 1));
 
         Permanent nightmare = findPermanent(player1, "Blighted Nightmare");
         int nightmareIndex = gd.playerBattlefields.get(player1.getId()).indexOf(nightmare);
@@ -82,9 +82,9 @@ class BlightedNightmareTest extends BaseCardTest {
         harness.castEnchantment(player1, 0);
         resolveAllTriggers();
 
-        assertThat(gd.perpetualPowerToughnessModifiers)
-                .containsEntry(bears.getId(), new PerpetualPowerToughnessModifier(2, 2))
-                .containsEntry(giant.getId(), new PerpetualPowerToughnessModifier(2, 2))
+        assertThat(gd.perpetualCardPowerToughnessModifiers)
+                .containsEntry(bears.getId(), new CardPowerToughnessModifier(2, 2))
+                .containsEntry(giant.getId(), new CardPowerToughnessModifier(2, 2))
                 .doesNotContainKeys(opposingBears.getId(), graveyardEnchantment.getId());
 
         addCreatureReady(player1, new HillGiant());
@@ -198,8 +198,8 @@ class BlightedNightmareTest extends BaseCardTest {
         resolveAllTriggers();
         harness.setGraveyard(player1, List.of(bears, laterGiant));
 
-        assertThat(gd.perpetualPowerToughnessModifiers)
-                .containsEntry(bears.getId(), new PerpetualPowerToughnessModifier(1, 1))
+        assertThat(gd.perpetualCardPowerToughnessModifiers)
+                .containsEntry(bears.getId(), new CardPowerToughnessModifier(1, 1))
                 .doesNotContainKey(laterGiant.getId());
     }
 }

@@ -1560,6 +1560,26 @@ class SubjectResolutionServiceTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("The topmost matching card of a library is the first match from the top, in that library only")
+        void topmostCardInYourLibrary() {
+            Card forest = new Forest();
+            Card bears = new GrizzlyBears();
+            Card giant = new HillGiant();
+            harness.setLibrary(player1, List.of(forest, bears, giant));
+            harness.setLibrary(player2, List.of(new GrizzlyBears()));
+            StackEntry entry = entry(player1, null, null);
+            CardPredicate creature = new CardTypePredicate(CardType.CREATURE);
+
+            assertThat(subjects.locatedCards(gd, entry, EFFECT, Subjects.topmostCardInYourLibrary(creature)))
+                    .containsExactly(new SubjectResolutionService.LocatedCard(bears, Zone.LIBRARY, player1.getId()));
+            assertThat(subjects.cards(gd, entry, EFFECT, Subjects.topmostCardInYourLibrary(null)))
+                    .containsExactly(forest);
+
+            harness.setLibrary(player1, List.of(forest));
+            assertThat(subjects.cards(gd, entry, EFFECT, Subjects.topmostCardInYourLibrary(creature))).isEmpty();
+        }
+
+        @Test
         @DisplayName("A target card is named while it is in a graveyard of its scope and matches its filter")
         void targetCard() {
             Card bears = new GrizzlyBears();

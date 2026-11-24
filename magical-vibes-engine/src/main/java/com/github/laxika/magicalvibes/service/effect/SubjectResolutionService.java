@@ -171,6 +171,7 @@ public class SubjectResolutionService {
                     gameData.playerHands);
             case CardSubject.InLibrary in -> inZone(gameData, entry, effect, in.owners(), in.filter(), Zone.LIBRARY,
                     gameData.playerDecks);
+            case CardSubject.TopmostInLibrary top -> topmostInLibrary(gameData, entry, effect, top);
             case CardSubject.InCommandZone in -> inZone(gameData, entry, effect, in.owners(), in.filter(), Zone.COMMAND,
                     gameData.playerCommandZones);
             case CardSubject.Voted voted -> voted(entry, StepOutcome.Vote.CARD, voted.tally()).stream()
@@ -435,6 +436,21 @@ public class SubjectResolutionService {
             for (Card card : List.copyOf(zones.getOrDefault(ownerId, List.of()))) {
                 if (!card.isToken() && cardMatches(gameData, entry, card, ownerId, filter)) {
                     named.add(new LocatedCard(card, zone, ownerId));
+                }
+            }
+        }
+        return named;
+    }
+
+    /** {@link CardSubject.TopmostInLibrary}: in each library, the first card from the top that matches. */
+    private List<LocatedCard> topmostInLibrary(GameData gameData, StackEntry entry, CardEffect effect,
+                                               CardSubject.TopmostInLibrary top) {
+        List<LocatedCard> named = new ArrayList<>();
+        for (UUID ownerId : players(gameData, entry, effect, top.owners())) {
+            for (Card card : List.copyOf(gameData.playerDecks.getOrDefault(ownerId, List.of()))) {
+                if (!card.isToken() && cardMatches(gameData, entry, card, ownerId, top.filter())) {
+                    named.add(new LocatedCard(card, Zone.LIBRARY, ownerId));
+                    break;
                 }
             }
         }

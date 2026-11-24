@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTopCreatureCardInLibraryEffect;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -26,6 +28,7 @@ public class ThornaAndTwigtooth extends Card {
                         RemoveAllCountersFromTargetPermanentEffect.fromTargetCreature(),
                         new LoseLifeEffect(new EventValue(), Subjects.eachOpponent()),
                         new GainLifeEffect(new EventValue()),
-                        new PerpetuallyBoostTopCreatureCardInLibraryEffect(new EventValue())));
+                        new PerpetuallyBoostCardEffect(null, new EventValue(), new EventValue(),
+                                Subjects.topmostCardInYourLibrary(new CardTypePredicate(CardType.CREATURE)))));
     }
 }

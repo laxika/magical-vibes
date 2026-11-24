@@ -7,12 +7,17 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/**
+ * Resolves {@link PerpetuallyBoostCardEffect}; a change to the cards a subject names is logged as
+ * {@link PerpetualChangeLog} says.
+ */
 @Component
 @RequiredArgsConstructor
 public class PerpetuallyBoostCardEffectHandler implements NormalEffectHandlerBean {
@@ -20,6 +25,7 @@ public class PerpetuallyBoostCardEffectHandler implements NormalEffectHandlerBea
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final SubjectResolutionService subjectResolutionService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,9 +41,12 @@ public class PerpetuallyBoostCardEffectHandler implements NormalEffectHandlerBea
         int powerBoost = amountEvaluationService.evaluate(gameData, boost.powerBoost(), context);
         int toughnessBoost = amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), context);
         if (boost.cards() != null) {
-            for (Card card : subjectResolutionService.cards(gameData, entry, boost, boost.cards())) {
-                PerpetualCardPowerToughnessSupport.remember(gameData, card, powerBoost, toughnessBoost);
+            var located = subjectResolutionService.locatedCards(gameData, entry, boost, boost.cards());
+            for (var card : located) {
+                PerpetualCardPowerToughnessSupport.remember(gameData, card.card(), powerBoost, toughnessBoost);
             }
+            PerpetualChangeLog.log(gameLogService, subjectResolutionService, gameData, entry, boost, boost.cards(),
+                    located, String.format(" perpetually gets %+d/%+d.", powerBoost, toughnessBoost));
             return;
         }
         if (boost.card() == null) {
@@ -50,14 +59,8 @@ public class PerpetuallyBoostCardEffectHandler implements NormalEffectHandlerBea
             }
             return;
         }
-        Card boosted = boostedCard(boost, source);
-        PerpetualCardPowerToughnessSupport.remember(gameData, boosted, powerBoost, toughnessBoost);
-        if (boosted != boost.card() && source.getCard() != null
-                && !source.getCard().getId().equals(boosted.getId())) {
-            // The copying permanent reads its modifier under the card it currently shows.
-            PerpetualCardPowerToughnessSupport.remember(gameData, source.getCard(), powerBoost, toughnessBoost);
-        }
-
+        // The copying permanent reads its physical card's modifier too (GameQueryService), so one record does.
+        PerpetualCardPowerToughnessSupport.remember(gameData, boostedCard(boost, source), powerBoost, toughnessBoost);
     }
 
     /**

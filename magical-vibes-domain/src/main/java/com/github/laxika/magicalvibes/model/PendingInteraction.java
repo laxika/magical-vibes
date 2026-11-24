@@ -130,7 +130,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.PerpetualOffspringCardChoice,
         PendingInteraction.PerpetualCreatureCardChoice,
         PendingInteraction.PerpetualStaticEffectCardChoice,
-        PendingInteraction.PerpetualTargetCardChoice,
         PendingInteraction.WordOfCommandCardChoice,
         PendingInteraction.StrongholdGambitCardChoice,
         PendingInteraction.TargetedHandCardChoice,
@@ -3935,28 +3934,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.CardIndexPick(validIndices, true);
-        }
-    }
-
-    /** Chooses a card in a revealed target hand to receive a perpetual triggered ability. */
-    record PerpetualTargetCardChoice(UUID choosingPlayerId, UUID targetPlayerId,
-                                     java.util.List<Integer> validIndices, String prompt,
-                                     java.util.List<Ability> grantedAbilities)
-            implements PendingInteraction {
-
-        public PerpetualTargetCardChoice {
-            validIndices = java.util.List.copyOf(validIndices);
-            grantedAbilities = java.util.List.copyOf(grantedAbilities);
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return choosingPlayerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.CardIndexPick(validIndices, false);
         }
     }
 

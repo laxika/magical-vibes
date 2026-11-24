@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardPowerToughnessModifier;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -65,11 +64,11 @@ public class PerpetuallyBoostOwnedCardsEffectHandler implements NormalEffectHand
             applyToCard(gameData, entry, e, ownerId, null, stackEntry.getCard(), modifiedCardIds);
         }
 
-        if (!modifiedCardIds.isEmpty()) {
-            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
-                    " perpetually gives matching cards you own "
-                            + formatModifier(e.powerBoost(), e.toughnessBoost()) + "."));
-        }
+        // Most of those cards are in a hand or library (CR 400.2): the line names and counts none of them, and is
+        // logged also when none matches.
+        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " perpetually gives "
+                + formatModifier(e.powerBoost(), e.toughnessBoost()) + " to each matching card "
+                + gameData.playerIdToName.get(ownerId) + " owns."));
     }
 
     private void applyToZone(GameData gameData, StackEntry entry, PerpetuallyBoostOwnedCardsEffect effect,
@@ -90,10 +89,7 @@ public class PerpetuallyBoostOwnedCardsEffectHandler implements NormalEffectHand
         }
 
         modifiedCardIds.add(card.getId());
-        gameData.perpetualCardPowerToughnessModifiers.merge(
-                card.getId(),
-                new CardPowerToughnessModifier(effect.powerBoost(), effect.toughnessBoost()),
-                (oldValue, newValue) -> oldValue.add(newValue.power(), newValue.toughness()));
+        PerpetualCardPowerToughnessSupport.remember(gameData, card, effect.powerBoost(), effect.toughnessBoost());
     }
 
     private boolean isOwnedBy(Card card, UUID ownerId, UUID zoneOwnerId) {

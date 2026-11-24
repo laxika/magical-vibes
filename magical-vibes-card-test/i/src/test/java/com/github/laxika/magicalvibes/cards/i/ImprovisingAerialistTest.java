@@ -37,8 +37,8 @@ class ImprovisingAerialistTest extends BaseCardTest {
         assertThat(library.get(0)).isSameAs(nonCreature);
         assertThat(library.get(1)).isSameAs(flyingCreature);
         assertThat(library.get(2).getId()).isEqualTo(nonFlyingCreature.getId());
-        assertThat(library.get(2).hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(nonFlyingCreature.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(perpetuallyFlies(library.get(2))).isTrue();
+        assertThat(perpetuallyFlies(flyingCreature)).isFalse();
     }
 
     @Test
@@ -88,7 +88,7 @@ class ImprovisingAerialistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, aerialist, Keyword.FLYING)).isFalse();
-        assertThat(gd.playerDecks.get(player1.getId()).getFirst().hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(perpetuallyFlies(gd.playerDecks.get(player1.getId()).getFirst())).isFalse();
     }
 
     @Test
@@ -115,9 +115,9 @@ class ImprovisingAerialistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         List<Card> library = gd.playerDecks.get(player1.getId());
-        assertThat(library.get(0).hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(perpetuallyFlies(library.get(0))).isTrue();
         assertThat(library.get(1)).isSameAs(second);
-        assertThat(library.get(1).hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(perpetuallyFlies(library.get(1))).isFalse();
     }
 
     @Test
@@ -133,6 +133,11 @@ class ImprovisingAerialistTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerDecks.get(player1.getId()).get(1).hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(perpetuallyFlies(gd.playerDecks.get(player1.getId()).get(1))).isFalse();
+    }
+
+    /** Whether the card perpetually gained flying, as the engine reads a card's keywords outside the battlefield. */
+    private boolean perpetuallyFlies(Card card) {
+        return gd.perpetualCardKeywords.getOrDefault(card.getId(), java.util.Set.of()).contains(Keyword.FLYING);
     }
 }

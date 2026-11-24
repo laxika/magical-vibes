@@ -491,11 +491,6 @@ public class BattlefieldPlacementService {
         }
         // CR 613.7d: an object receives its timestamp as it enters a zone.
         permanent.setTimestamp(gameData.nextTimestamp());
-        int perpetualPowerModifier = gameData.perpetualCardPowerModifiers
-                .getOrDefault(permanent.getCard().getId(), 0);
-        if (perpetualPowerModifier != 0) {
-            permanent.setPersistentPowerModifier(perpetualPowerModifier);
-        }
         // CR 400.7: the entering permanent is a new object, so it forgets mana noted by its previous object.
         gameData.notedMana.remove(permanent.getCard().getId());
         gameData.playerBattlefields.get(controllerId).add(permanent);

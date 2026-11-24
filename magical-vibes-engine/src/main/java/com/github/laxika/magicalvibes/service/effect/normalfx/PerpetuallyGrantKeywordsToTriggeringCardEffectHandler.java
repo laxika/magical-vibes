@@ -1,26 +1,33 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordsToTriggeringCardEffect;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.EnumSet;
+import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
-import lombok.RequiredArgsConstructor;
-
-/** Records perpetual keyword grants on the card that caused the surrounding trigger. */
+/**
+ * Records perpetual keyword grants on the card that caused the surrounding trigger, or on the cards a subject names,
+ * kept by the physical card's id (which a permanent that becomes a copy still has). A grant to the cards a subject
+ * names is logged as {@link PerpetualChangeLog} says.
+ */
 @Component
 @RequiredArgsConstructor
 public class PerpetuallyGrantKeywordsToTriggeringCardEffectHandler
         implements NormalEffectHandlerBean {
 
     private final SubjectResolutionService subjectResolutionService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -31,33 +38,34 @@ public class PerpetuallyGrantKeywordsToTriggeringCardEffectHandler
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var grant = (PerpetuallyGrantKeywordsToTriggeringCardEffect) effect;
         if (grant.cards() != null) {
-            // Kept by the physical card's id, which a permanent that becomes a copy still has.
-            for (Card card : subjectResolutionService.cards(gameData, entry, grant, grant.cards())) {
-                java.util.Set<Keyword> granted = EnumSet.noneOf(Keyword.class);
-                granted.addAll(gameData.perpetualKeywords.getOrDefault(card.getId(), java.util.Set.of()));
-                granted.addAll(grant.keywords());
-                gameData.perpetualKeywords.put(card.getId(), java.util.Set.copyOf(granted));
-            }
+            var located = subjectResolutionService.locatedCards(gameData, entry, grant, grant.cards());
+            located.forEach(card -> grant(gameData, card.card().getId(), grant.keywords()));
+            PerpetualChangeLog.log(gameLogService, subjectResolutionService, gameData, entry, grant, grant.cards(),
+                    located, " perpetually gains " + grant.keywords().stream()
+                            .map(keyword -> keyword.name().toLowerCase(Locale.ROOT).replace('_', ' '))
+                            .sorted().collect(Collectors.joining(" and ")) + ".");
             return;
         }
         UUID cardId = entry.getTriggeringCardId();
-        if (cardId == null) {
-            return;
+        if (cardId != null) {
+            grant(gameData, cardId, grant.keywords());
         }
+    }
 
-        // A grant newer than an earlier perpetual loss of the keyword restores it; a keyword the card
-        // already has gains another instance, which matters for keywords that trigger separately.
-        java.util.Set<Keyword> removed = gameData.perpetualCardRemovedKeywords.get(cardId);
-        for (Keyword keyword : grant.keywords()) {
+    /**
+     * A grant newer than an earlier perpetual loss of the keyword restores it; a keyword the card already has gains
+     * another instance, which matters for keywords that trigger separately.
+     */
+    private static void grant(GameData gameData, UUID cardId, Set<Keyword> keywords) {
+        Set<Keyword> removed = gameData.perpetualCardRemovedKeywords.get(cardId);
+        for (Keyword keyword : keywords) {
             boolean lost = removed != null && removed.remove(keyword);
-            if (!lost && gameData.perpetualCardKeywords.getOrDefault(cardId, java.util.Set.of()).contains(keyword)) {
+            if (!lost && gameData.perpetualCardKeywords.getOrDefault(cardId, Set.of()).contains(keyword)) {
                 gameData.perpetualCardExtraKeywordInstances
-                        .computeIfAbsent(cardId, ignored -> new java.util.concurrent.ConcurrentHashMap<>())
+                        .computeIfAbsent(cardId, ignored -> new ConcurrentHashMap<>())
                         .merge(keyword, 1, Integer::sum);
             }
         }
-        gameData.perpetualCardKeywords
-                .computeIfAbsent(cardId, ignored -> EnumSet.noneOf(Keyword.class))
-                .addAll(grant.keywords());
+        gameData.grantPerpetualKeywords(cardId, keywords);
     }
 }

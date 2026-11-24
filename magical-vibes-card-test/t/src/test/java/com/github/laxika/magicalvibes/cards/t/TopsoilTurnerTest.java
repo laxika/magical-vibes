@@ -153,7 +153,7 @@ class TopsoilTurnerTest extends BaseCardTest {
         resolveAllTriggers();
         harness.setHand(player1, List.of());
         Permanent treefolkPermanent = harness.enterBattlefieldAndReturn(player1, treefolk);
-        gd.perpetualKeywords.put(treefolk.getId(), Set.of(Keyword.FLYING));
+        gd.perpetualCardKeywords.put(treefolk.getId(), Set.of(Keyword.FLYING));
 
         treefolkPermanent.setFaceDown(2, 2, Set.of(CardType.CREATURE));
 

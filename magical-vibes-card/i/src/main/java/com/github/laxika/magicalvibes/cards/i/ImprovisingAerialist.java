@@ -5,7 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordToSourceAndTopLibraryCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordsToTriggeringCardEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -22,10 +25,12 @@ public class ImprovisingAerialist extends Card {
     public ImprovisingAerialist() {
         addTrigger(Triggers.secondMainPhase(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()),
-                new PerpetuallyGrantKeywordToSourceAndTopLibraryCardEffect(
-                        Keyword.FLYING,
-                        new CardAllOfPredicate(List.of(
-                                new CardTypePredicate(CardType.CREATURE),
-                                new CardNotPredicate(new CardKeywordPredicate(Keyword.FLYING))))));
+                SequenceEffect.of(
+                        new PerpetuallyGrantKeywordToSourceEffect(Keyword.FLYING),
+                        PerpetuallyGrantKeywordsToTriggeringCardEffect.toCards(
+                                Subjects.topmostCardInYourLibrary(new CardAllOfPredicate(List.of(
+                                        new CardTypePredicate(CardType.CREATURE),
+                                        new CardNotPredicate(new CardKeywordPredicate(Keyword.FLYING))))),
+                                Keyword.FLYING)));
     }
 }

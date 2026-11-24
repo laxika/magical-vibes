@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.PerpetualPowerToughnessModifier;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCreatureCardsInGraveyardEffect;
@@ -40,10 +39,8 @@ public class PerpetuallyBoostCreatureCardsInGraveyardEffectHandler implements No
                     PerpetualCardPowerToughnessSupport.remember(
                             gameData, card, permanentCount, permanentCount);
                 } else {
-                    gameData.perpetualPowerToughnessModifiers.merge(
-                            card.getId(),
-                            new PerpetualPowerToughnessModifier(boost.powerBoost(), boost.toughnessBoost()),
-                            PerpetualPowerToughnessModifier::add);
+                    PerpetualCardPowerToughnessSupport.remember(
+                            gameData, card, boost.powerBoost(), boost.toughnessBoost());
                 }
             }
         }

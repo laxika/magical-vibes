@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.PerpetualPowerToughnessModifier;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostMatchingHandCardsEffect;
@@ -32,10 +31,7 @@ public class PerpetuallyBoostMatchingHandCardsEffectHandler implements NormalEff
         for (Card card : hand) {
             if (predicateEvaluationService.matchesCardPredicate(
                     card, boost.filter(), null, gameData, controllerId)) {
-                gameData.perpetualPowerToughnessModifiers.merge(
-                        card.getId(),
-                        new PerpetualPowerToughnessModifier(boost.power(), boost.toughness()),
-                        PerpetualPowerToughnessModifier::add);
+                PerpetualCardPowerToughnessSupport.remember(gameData, card, boost.power(), boost.toughness());
             }
         }
     }

@@ -47,9 +47,7 @@ public class PerpetuallyGrantKeywordsToStationingCreatureEffectHandler implement
             return;
         }
 
-        gameData.perpetualCardKeywords
-                .computeIfAbsent(card.getId(), ignored -> EnumSet.noneOf(Keyword.class))
-                .addAll(grantable);
+        gameData.grantPerpetualKeywords(card.getId(), grantable);
         gameLogService.append(gameData, GameLog.cardThen(card,
                 " perpetually gains " + formatKeywords(grantable) + "."));
     }

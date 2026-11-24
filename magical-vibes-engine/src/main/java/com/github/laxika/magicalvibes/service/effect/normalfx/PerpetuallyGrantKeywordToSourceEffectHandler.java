@@ -34,9 +34,7 @@ public class PerpetuallyGrantKeywordToSourceEffectHandler implements NormalEffec
             Card sourceCard = entry.getCard();
             if (sourceCard != null) {
                 recordExtraInstanceIfAlreadyGranted(gameData, sourceCard, grant.keyword());
-                gameData.perpetualCardKeywords
-                        .computeIfAbsent(sourceCard.getId(), ignored -> EnumSet.noneOf(Keyword.class))
-                        .add(grant.keyword());
+                gameData.grantPerpetualKeywords(sourceCard.getId(), Set.of(grant.keyword()));
             }
             return;
         }

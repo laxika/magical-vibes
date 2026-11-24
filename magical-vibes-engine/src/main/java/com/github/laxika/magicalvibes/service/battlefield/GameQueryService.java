@@ -4642,10 +4642,6 @@ public class GameQueryService {
         if (cardModifier != null) {
             value += power ? cardModifier.power() : cardModifier.toughness();
         }
-        var handModifier = gameData.perpetualPowerToughnessModifiers.get(card.getId());
-        if (handModifier != null) {
-            value += power ? handModifier.power() : handModifier.toughness();
-        }
         // Counters retained across a zone change (Me, the Immortal) stay on the card, so they still
         // modify its power and toughness outside the battlefield.
         Map<CounterType, Integer> retainedCounters = gameData.countersPreservedAcrossZoneChanges.get(card.getId());
@@ -7534,11 +7530,14 @@ public class GameQueryService {
             accumulator.addPower(perpetualModifier.power());
             accumulator.addToughness(perpetualModifier.toughness());
         }
-        var handPerpetualModifier = target.isFaceDown() ? null
-                : gameData.perpetualPowerToughnessModifiers.get(target.getOriginalCard().getId());
-        if (handPerpetualModifier != null) {
-            accumulator.addPower(handPerpetualModifier.power());
-            accumulator.addToughness(handPerpetualModifier.toughness());
+        // A change made to the physical card while it was elsewhere (in a hand, a library) stays with it when it
+        // enters as a copy of something else; a copy's own card is read above.
+        CardPowerToughnessModifier physicalCardModifier = target.isFaceDown() || target.getOriginalCard() == null
+                || target.getOriginalCard().getId().equals(target.getCard().getId()) ? null
+                : gameData.perpetualCardPowerToughnessModifiers.get(target.getOriginalCard().getId());
+        if (physicalCardModifier != null) {
+            accumulator.addPower(physicalCardModifier.power());
+            accumulator.addToughness(physicalCardModifier.toughness());
         }
         if (beforeIndefinite != null) {
             ModifierLine line = beforeIndefinite.diff("Indefinite buff", accumulator, false);
@@ -9204,7 +9203,7 @@ public class GameQueryService {
         boolean entryHasKeyword = entry.getSourcePermanentId() == null
                 && entry.getCard() != null
                 && (entry.getCard().getKeywords().contains(keyword)
-                || gameData.perpetualKeywords.getOrDefault(entry.getCard().getId(), Set.of()).contains(keyword)
+                || gameData.perpetualCardKeywords.getOrDefault(entry.getCard().getId(), Set.of()).contains(keyword)
                 || entry.getGrantedKeywordsOnEntry().contains(keyword)
                 || entry.getGrantedKeywordsWhileOnStack().contains(keyword));
         if (entryHasKeyword) {

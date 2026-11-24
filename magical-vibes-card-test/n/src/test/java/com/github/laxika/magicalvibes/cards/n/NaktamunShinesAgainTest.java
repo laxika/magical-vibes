@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.model.CardPowerToughnessModifier;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,7 +27,8 @@ class NaktamunShinesAgainTest extends BaseCardTest {
         triggerChapter();
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
-        assertThat(gd.perpetualCardPowerModifiers).containsEntry(bears.getCard().getId(), 1);
+        assertThat(gd.perpetualCardPowerToughnessModifiers)
+                .containsEntry(bears.getCard().getId(), new CardPowerToughnessModifier(1, 0));
 
         bears.resetModifiers();
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
@@ -74,7 +76,7 @@ class NaktamunShinesAgainTest extends BaseCardTest {
         triggerChapter();
 
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
-        assertThat(gd.perpetualCardPowerModifiers).doesNotContainKey(tokenCopy.getId());
+        assertThat(gd.perpetualCardPowerToughnessModifiers).doesNotContainKey(tokenCopy.getId());
     }
 
     @Test
@@ -99,9 +101,10 @@ class NaktamunShinesAgainTest extends BaseCardTest {
         triggerChapter();
 
         for (GrizzlyBears card : List.of(hand, library, graveyard, exile, owned)) {
-            assertThat(gd.perpetualCardPowerModifiers).containsEntry(card.getId(), 1);
+            assertThat(gd.perpetualCardPowerToughnessModifiers)
+                    .containsEntry(card.getId(), new CardPowerToughnessModifier(1, 0));
         }
-        assertThat(gd.perpetualCardPowerModifiers).doesNotContainKeys(giant.getId(), opposing.getId());
+        assertThat(gd.perpetualCardPowerToughnessModifiers).doesNotContainKeys(giant.getId(), opposing.getId());
         assertThat(gqs.getEffectivePower(gd, stolen)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, borrowed)).isEqualTo(2);
     }
@@ -170,7 +173,7 @@ class NaktamunShinesAgainTest extends BaseCardTest {
         triggerChapter();
 
         assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals("Naktamun Shines Again perpetually gives"
-                + " +1/+0 to each creature card its controller owns with mana value 2 or less."));
+                + " +1/+0 to each matching card " + gd.playerIdToName.get(player1.getId()) + " owns."));
         assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("card(s)"));
     }
 }

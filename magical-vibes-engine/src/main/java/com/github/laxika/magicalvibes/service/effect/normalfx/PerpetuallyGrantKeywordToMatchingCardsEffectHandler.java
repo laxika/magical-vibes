@@ -95,7 +95,7 @@ public class PerpetuallyGrantKeywordToMatchingCardsEffectHandler implements Norm
         Set<Keyword> removed = gameData.perpetualCardRemovedKeywords.get(cardId);
         for (Keyword keyword : keywords) {
             boolean lost = removed != null && removed.remove(keyword);
-            if (!lost && gameData.perpetualKeywords.getOrDefault(permanent.getOriginalCard().getId(), Set.of())
+            if (!lost && gameData.perpetualCardKeywords.getOrDefault(permanent.getOriginalCard().getId(), Set.of())
                     .contains(keyword)) {
                 gameData.perpetualCardExtraKeywordInstances
                         .computeIfAbsent(cardId, ignored -> new java.util.concurrent.ConcurrentHashMap<>())
@@ -114,7 +114,7 @@ public class PerpetuallyGrantKeywordToMatchingCardsEffectHandler implements Norm
         if (keywords.contains(Keyword.TOXIC)) {
             gameData.perpetualToxicValues.merge(cardId, 1, Integer::sum);
         }
-        gameData.perpetualKeywords.merge(cardId, Set.copyOf(keywords), (existing, added) -> {
+        gameData.perpetualCardKeywords.merge(cardId, Set.copyOf(keywords), (existing, added) -> {
             Set<Keyword> merged = EnumSet.noneOf(Keyword.class);
             merged.addAll(existing);
             merged.addAll(added);

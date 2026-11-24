@@ -110,6 +110,7 @@ its zone and the player whose zone it is). No variant is static.
 | `topOfGraveyard(players, filter)` | "the top card of your graveyard"; "if the top card of target player's graveyard is a creature card, put that card ...": named only if it matches | if the players are a target |
 | `cardsInYourHand(filter)`, `cardsInHands(players, filter)` | "a creature card from your hand", "the cards in their hand": hidden (CR 400.2). `ChooseCardEffect` offers a chooser only their own hand (`by(player)`) and logs no name; the library step logs a number | if the players are a target |
 | `cardsInYourLibrary(filter)` | "a random instant card from your library": hidden, so only for `ChooseCardEffect.atRandom` | no |
+| `topmostCardInYourLibrary(filter)` | "the topmost creature card in your library", "the top creature card in your library without flying" (Dalkovan Outrider, Vigorous Farming, Improvising Aerialist): the matching card nearest the top; hidden, logged by `PerpetualChangeLog` without a name | no |
 | `cardsInLibraries(players, filter)` | "a random card from their library", "a random creature card from your opponent's library" (Undercity Plunder, Clone Crafter): hidden, so only for `ChooseCardEffect.atRandom` | no |
 | `cardsInYourCommandZone(filter)` | "your commander from the command zone" (`CardIsCommanderPredicate`), "this card from the command zone" (`CardIsSelfPredicate`) | no |
 | `except(cards, excluded)` | "the rest", "each other card exiled with it" | no |

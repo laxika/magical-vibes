@@ -11,7 +11,7 @@ public final class PerpetualCardPowerToughnessSupport {
     }
 
     public static void remember(GameData gameData, Card card, int powerBoost, int toughnessBoost) {
-        if (card == null) {
+        if (card == null || powerBoost == 0 && toughnessBoost == 0) {
             return;
         }
         gameData.perpetualCardPowerToughnessModifiers.merge(

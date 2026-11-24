@@ -5,7 +5,11 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardFromSpellbookToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyReduceInstantAndSorceryCastCostInHandEffect;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyChangeCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,7 +21,8 @@ public class ChargedConjuration extends Card {
 
     public ChargedConjuration() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new PerpetuallyReduceInstantAndSorceryCastCostInHandEffect());
+                new PerpetuallyChangeCastCostEffect(Subjects.cardsInYourHand(new CardAnyOfPredicate(List.of(
+                        new CardTypePredicate(CardType.INSTANT), new CardTypePredicate(CardType.SORCERY)))), -1));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,

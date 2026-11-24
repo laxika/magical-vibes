@@ -1094,7 +1094,6 @@ public class CastingPermissionService {
 
     private boolean cardHasFlash(GameData gameData, Card card) {
         return (card.getKeywords().contains(Keyword.FLASH)
-                || gameData.perpetualKeywords.getOrDefault(card.getId(), Set.of()).contains(Keyword.FLASH)
                 || gameData.perpetualCardKeywords.getOrDefault(card.getId(), Set.of()).contains(Keyword.FLASH))
                 && !gameData.perpetualCardRemovedKeywords.getOrDefault(card.getId(), Set.of()).contains(Keyword.FLASH);
     }

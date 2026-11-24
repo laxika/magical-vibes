@@ -13,8 +13,9 @@ import java.util.Objects;
  * {@link PlayerSubject}: "the exiled card", "each card put into a graveyard this way", "target creature card in your
  * graveyard". Built through {@link Subjects}; resolved only by the engine's {@code SubjectResolutionService}, which
  * names each card as it is now, in the zone it is expected to be in, and nothing for a card that has left that
- * zone (a card that moves is a new object, CR 400.7). Two variants name cards in a hidden zone, {@link InHand} and
- * {@link InLibrary} ({@link #inHiddenZone()}): they say nothing about who may see those cards.
+ * zone (a card that moves is a new object, CR 400.7). Three variants name cards in a hidden zone, {@link InHand},
+ * {@link InLibrary} and {@link TopmostInLibrary} ({@link #inHiddenZone()}): they say nothing about who may see
+ * those cards.
  *
  * <p>{@link TargetCard} and {@link TargetExiledCard} declare a card target, and a variant of a target player's cards
  * that player ({@link #declaresTarget()}, {@link #targetSpec()}). Every variant reads a stack entry, so a
@@ -26,7 +27,7 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
         CardSubject.TriggeringCards, CardSubject.SourceCard, CardSubject.InYourGraveyard,
         CardSubject.InGraveyards, CardSubject.InExile, CardSubject.ExiledWithSource, CardSubject.Except,
         CardSubject.TargetExiledCard, CardSubject.TopOfGraveyard, CardSubject.InHand, CardSubject.InLibrary,
-        CardSubject.InCommandZone, CardSubject.ExiledAsCost, CardSubject.Voted {
+        CardSubject.TopmostInLibrary, CardSubject.InCommandZone, CardSubject.ExiledAsCost, CardSubject.Voted {
 
     /** Whether this subject declares a target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -310,6 +311,31 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
     record InLibrary(PlayerSubject owners, CardPredicate filter) implements CardSubject {
 
         public InLibrary {
+            Objects.requireNonNull(owners, "owners");
+        }
+
+        @Override
+        public boolean declaresTarget() {
+            return owners.declaresTarget();
+        }
+
+        @Override
+        public boolean inHiddenZone() {
+            return true;
+        }
+    }
+
+    /**
+     * "The topmost creature card in your library", "the top land card in your library": in the library of each player
+     * {@code owners} names, the card nearest the top that matches {@code filter} as it is now, if one does. A library
+     * is hidden (CR 400.2): nobody is shown which card it is.
+     *
+     * @param owners whose libraries
+     * @param filter what that card has to be; {@code null} for the top card
+     */
+    record TopmostInLibrary(PlayerSubject owners, CardPredicate filter) implements CardSubject {
+
+        public TopmostInLibrary {
             Objects.requireNonNull(owners, "owners");
         }
 

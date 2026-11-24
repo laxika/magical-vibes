@@ -72,6 +72,7 @@ public enum CardSet {
     SET_THB("THB"),
     SET_BNG("BNG"),
     SET_JOU("JOU"),
+    SET_J21("J21"),
     SET_BLB("BLB"),
     SET_BLC("BLC"),
     SET_YBLB("YBLB"),

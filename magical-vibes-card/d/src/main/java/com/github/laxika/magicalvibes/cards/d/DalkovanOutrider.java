@@ -5,7 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTopCreatureCardInLibraryEffect;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,6 +23,7 @@ public class DalkovanOutrider extends Card {
                 new CreateTokenEffect(2, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true),
                 new SacrificeCreatedPermanentsAtEndStepEffect());
         addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                new PerpetuallyBoostTopCreatureCardInLibraryEffect(1));
+                PerpetuallyBoostCardEffect.toCards(
+                        Subjects.topmostCardInYourLibrary(new CardTypePredicate(CardType.CREATURE)), 1, 1));
     }
 }

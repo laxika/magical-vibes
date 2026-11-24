@@ -24,7 +24,8 @@ import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityToCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostOtherControlledCreaturesAndHandCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
@@ -98,7 +99,10 @@ public class LaezelGithyankiWarrior extends Card {
             case BLACK -> new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                     new CardTypePredicate(CardType.CREATURE), 2, 3);
             case RED -> CreateTokenEffect.whiteSoldier(2);
-            case GREEN -> new PerpetuallyBoostOtherControlledCreaturesAndHandCardsEffect(1, 1);
+            case GREEN -> SequenceEffect.of(
+                    new PerpetuallyBoostTargetCreatureEffect(Subjects.otherCreaturesYouControl(), 1, 1),
+                    PerpetuallyBoostCardEffect.toCards(
+                            Subjects.cardsInYourHand(new CardTypePredicate(CardType.CREATURE)), 1, 1));
         };
     }
 }

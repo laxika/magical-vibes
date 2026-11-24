@@ -63,6 +63,9 @@ final class PerpetualChangeLog {
                     .forEach(owner -> zones.add(new HiddenZone(owner, Zone.HAND)));
             case CardSubject.InLibrary in -> subjectResolutionService.players(gameData, entry, effect, in.owners())
                     .forEach(owner -> zones.add(new HiddenZone(owner, Zone.LIBRARY)));
+            case CardSubject.TopmostInLibrary top ->
+                    subjectResolutionService.players(gameData, entry, effect, top.owners())
+                            .forEach(owner -> zones.add(new HiddenZone(owner, Zone.LIBRARY)));
             case CardSubject.Except except ->
                     addHiddenZones(subjectResolutionService, gameData, entry, effect, except.cards(), zones);
             default -> {

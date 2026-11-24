@@ -54,7 +54,7 @@ KEPT = {
                      "oneShotExileCastPermissionsUsed", "exileSpellTypePermissionHistory",
                      "exilePlayPermissionGroupUsesRemaining"], "turn history or a use count"),
     **dict.fromkeys(["perpetualCardBattlefieldEffectGrants", "perpetualCardKeywords", "perpetualCardRemovedKeywords",
-                     "perpetualCardSpellCastingAbilityGrants", "perpetualKeywords", "perpetualNoncombatDamageBonuses",
+                     "perpetualCardSpellCastingAbilityGrants", "perpetualNoncombatDamageBonuses",
                      "perpetualTriggeredAbilityGrants", "cardsGrantedPerpetualUnearth"],
                     "perpetual: a change to the card, not an effect with a duration"),
     **dict.fromkeys(["spellsGrantedHasteOnEntry", "spellsGrantedPermanentHasteOnEntry", "spellsGrantedRiotOnEntry",

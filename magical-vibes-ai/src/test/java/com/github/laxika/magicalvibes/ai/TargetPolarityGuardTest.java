@@ -261,7 +261,7 @@ class TargetPolarityGuardTest {
                 .isEqualTo(TargetPolarity.HARMFUL);
         assertThat(classifier.classifyCard(gd,
                 new com.github.laxika.magicalvibes.cards.r.RavenousPursuit(), aiPlayerId))
-                .isEqualTo(TargetPolarity.HARMFUL_DAMAGE);
+                .isEqualTo(TargetPolarity.HARMFUL);
         assertThat(classifier.classifyCard(gd,
                 new com.github.laxika.magicalvibes.cards.s.SinisterReflections(), aiPlayerId))
                 .isEqualTo(TargetPolarity.BENEFICIAL);
