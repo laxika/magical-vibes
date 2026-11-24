@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.GameData;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -27,5 +28,30 @@ public interface LibrarySelectionFollowUp {
     /** Whether the follow-up is offered as a separate reflexive may ability. */
     default boolean optional() {
         return true;
+    }
+
+    /**
+     * "If it's an Equipment, you may attach it", "if it's a double-faced card, you may transform it": {@code effect} is
+     * the next step of the resolution that put the permanents onto the battlefield (CR 608.2c), reading them as
+     * {@code Subjects.picked(...)}; a "you may" in it is the effect's own {@code MayEffect}.
+     */
+    static LibrarySelectionFollowUp inResolution(CardEffect effect) {
+        Objects.requireNonNull(effect, "effect");
+        return new LibrarySelectionFollowUp() {
+            @Override
+            public CardEffect effect() {
+                return effect;
+            }
+
+            @Override
+            public String prompt() {
+                return effect instanceof MayEffect may ? may.prompt() : "";
+            }
+
+            @Override
+            public boolean optional() {
+                return false;
+            }
+        };
     }
 }

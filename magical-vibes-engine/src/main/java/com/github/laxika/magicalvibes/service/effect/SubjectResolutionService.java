@@ -1343,6 +1343,7 @@ public class SubjectResolutionService {
             case PermanentSubject.TriggeringSpellTargets ignored -> triggeringSpellTargetIds(ctx);
             case PermanentSubject.CreatedThisResolution ignored -> List.copyOf(ctx.entry().getCreatedPermanentIds());
             case PermanentSubject.Searched ignored -> searchedIds(ctx.entry());
+            case PermanentSubject.Picked picked -> pickedIds(ctx, picked);
             case PermanentSubject.AttachedAndSharingCreatureType ignored -> attachedAndSharingCreatureTypeIds(ctx);
             case PermanentSubject.ThisWay thisWay -> thisWayIds(ctx, thisWay);
             case PermanentSubject.DepartedThisWay departed -> departedThisWayIds(ctx, departed);
@@ -1422,6 +1423,28 @@ public class SubjectResolutionService {
             Permanent permanent = gameQueryService.findPermanentById(ctx.gameData(), id);
             if (permanent != null
                     && predicateEvaluationService.matchesPermanentPredicate(permanent, thisWay.filter(), filterContext)) {
+                matching.add(id);
+            }
+        }
+        return matching;
+    }
+
+    /**
+     * {@link PermanentSubject.Picked}: the permanents the entry last recorded as its picks, each once, those on the
+     * battlefield matching the filter now (with no filter, every recorded id; a gone one names nothing when the
+     * permanents are looked up).
+     */
+    private List<UUID> pickedIds(Context ctx, PermanentSubject.Picked picked) {
+        List<UUID> recorded = ctx.entry().getResolutionResults().pickedIds().stream().distinct().toList();
+        if (picked.filter() == null) {
+            return recorded;
+        }
+        FilterContext filterContext = filterContext(ctx);
+        List<UUID> matching = new ArrayList<>();
+        for (UUID id : recorded) {
+            Permanent permanent = gameQueryService.findPermanentById(ctx.gameData(), id);
+            if (permanent != null
+                    && predicateEvaluationService.matchesPermanentPredicate(permanent, picked.filter(), filterContext)) {
                 matching.add(id);
             }
         }

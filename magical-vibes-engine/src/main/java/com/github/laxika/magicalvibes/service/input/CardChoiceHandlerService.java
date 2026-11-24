@@ -658,6 +658,8 @@ public class CardChoiceHandlerService {
                                     card, thenCondition, sourceCardId, gameData, playerId);
                         }
                         if (thenConditionMet) {
+                            // "If it's an Equipment, attach it": the put permanent is the step's pick.
+                            pendingEntry.recordPicks(List.of(enteredPermanent.getId()));
                             if (thenEffect.usesChosenPermanentReference()) {
                                 pendingEntry.setChosenPermanentId(enteredPermanent.getId());
                             }

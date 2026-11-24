@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CipherEncodeEffect;
@@ -23,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -165,6 +168,12 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 insertElseEffect(entry, e);
                 return;
             }
+        }
+        if (picksNameNothing(gameData, entry, leadingEffect)) {
+            // "If it's a double-faced card, you may transform it", "if an Equipment is put onto the battlefield this
+            // way, you may attach it": the resolution's picks include no such permanent, so there is no choice.
+            insertElseEffect(entry, e);
+            return;
         }
         CardEffect firstEffect = e.wrapped() instanceof SequenceEffect sequence && !sequence.steps().isEmpty()
                 ? sequence.steps().getFirst() : e.wrapped();
@@ -448,6 +457,19 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             return entry.getDefendingPlayerId();
         }
         return attacked;
+    }
+
+    /**
+     * Whether the leading step reads the resolution's picks ({@link PermanentSubject.Picked}: what it transforms, the
+     * attachment it attaches, or the attachment a choice of its host must fit) and they name no permanent.
+     */
+    private boolean picksNameNothing(GameData gameData, StackEntry entry, CardEffect leading) {
+        PermanentSubject picks = leading instanceof TransformSelfEffect transform ? transform.subject()
+                : leading instanceof AttachSourceEquipmentToTargetCreatureEffect attach ? attach.equipment()
+                : leading instanceof ChoosePermanentsEffect choose ? choose.hostFor()
+                : null;
+        return picks instanceof PermanentSubject.Picked
+                && subjectResolutionService.permanents(gameData, entry, leading, picks).isEmpty();
     }
 
     private void insertElseEffect(StackEntry entry, MayEffect may) {

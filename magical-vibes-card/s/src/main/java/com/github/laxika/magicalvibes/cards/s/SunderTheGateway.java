@@ -5,10 +5,12 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformChosenPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -41,10 +43,13 @@ public class SunderTheGateway extends Card {
                                 "Target must be a nontoken artifact or enchantment an opponent controls.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Incubate 2, then transform an Incubator token you control",
-                        List.of(incubate(2), new TransformChosenPermanentEffect(new PermanentAllOfPredicate(List.of(
-                                new PermanentIsTokenPredicate(),
-                                new PermanentHasSubtypePredicate(CardSubtype.INCUBATOR),
-                                new PermanentControlledBySourceControllerPredicate())))))
+                        List.of(incubate(2),
+                                ChoosePermanentsEffect.exactly(1, Subjects.controlledBy(Subjects.you(),
+                                        new PermanentAllOfPredicate(List.of(
+                                                new PermanentIsTokenPredicate(),
+                                                new PermanentHasSubtypePredicate(CardSubtype.INCUBATOR)))),
+                                        "an Incubator token you control"),
+                                new TransformSelfEffect(Subjects.thisWay(StepKind.CHOOSE))))
         )));
     }
 

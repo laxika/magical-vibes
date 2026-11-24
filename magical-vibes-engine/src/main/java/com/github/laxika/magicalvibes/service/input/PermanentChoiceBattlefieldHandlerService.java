@@ -36,7 +36,6 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.TargetSpellDamagePreventionShield;
-import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
@@ -54,12 +53,10 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.rules.ActionEvent;
 import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
@@ -120,7 +117,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrif
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesPermanentThenDealsManaValueDamageEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TeachSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.TransformChosenPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -293,7 +289,6 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final PreventCombatDamageByTargetCreatureIfSharesColorWithChosenPermanentEffectHandler guardDogsHandler;
 
-    private final TransformChosenPermanentEffectHandler transformChosenPermanentEffectHandler;
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TariffSupport tariffSupport;
 
@@ -506,29 +501,6 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    public void handleAttachControlledEquipmentToTargetCreature(
-            GameData gameData, UUID equipmentId,
-            PermanentChoiceContext.AttachControlledEquipmentToTargetCreature context) {
-        Permanent equipment = gameQueryService.findPermanentById(gameData, equipmentId);
-        Permanent creature = gameQueryService.findPermanentById(gameData, context.targetCreatureId());
-        boolean controlled = gameData.playerBattlefields
-                .getOrDefault(context.controllerId(), List.of()).stream()
-                .anyMatch(permanent -> permanent.getId().equals(equipmentId));
-        if (equipment != null && creature != null && controlled
-                && context.equipmentPermanentIds().contains(equipmentId)
-                && gameQueryService.isCreature(gameData, creature)
-                && equipSupport.attachEquipment(gameData, equipment, creature)) {
-            if (context.unattachAtNextEndStep()) {
-                gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
-                        Triggers.endStep(ActivePlayer.ANY), context.controllerId(), context.sourceCard(), null, null,
-                        new UnattachEquipmentEffect(equipmentId)));
-            }
-            gameLogService.append(gameData,
-                    GameLog.cardTextCard(equipment.getCard(), " is now attached to ", creature.getCard(), "."));
-        }
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
     public void handleAttachEquipmentToSamurai(GameData gameData, UUID controllerId,
                                                UUID samuraiId,
                                                PermanentChoiceContext.AttachEquipmentToSamurai context) {
@@ -575,35 +547,6 @@ public class PermanentChoiceBattlefieldHandlerService {
             attachOneOfEquipmentToSamuraiSupport.attach(gameData, equipmentId, samurai.getId());
         }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleAttachOneOfEquipmentToCreature(
-            GameData gameData, UUID controllerId, UUID creatureId,
-            PermanentChoiceContext.AttachOneOfEquipmentToCreature context) {
-        Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
-        if (creature == null
-                || !attachOneOfEquipmentToCreatureSupport.legalCreatureIds(
-                gameData, controllerId, context.equipmentPermanentIds()).contains(creatureId)) {
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        List<UUID> legalEquipmentIds = attachOneOfEquipmentToCreatureSupport.legalEquipmentIds(
-                gameData, controllerId, creature, context.equipmentPermanentIds());
-        if (legalEquipmentIds.isEmpty()) {
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-        } else if (legalEquipmentIds.size() == 1) {
-            attachOneOfEquipmentToCreatureSupport.attach(
-                    gameData, legalEquipmentIds.getFirst(), creatureId);
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-        } else {
-            gameData.interaction.setPermanentChoiceContext(
-                    new PermanentChoiceContext.AttachControlledEquipmentToTargetCreature(
-                            creatureId, controllerId, gameData.pendingEffectResolutionEntry.getCard(),
-                            legalEquipmentIds, false));
-            playerInputService.beginPermanentChoice(gameData, controllerId, legalEquipmentIds,
-                    "Choose an Equipment to attach.");
-        }
     }
 
     public void handleCreateTokensAndAttachEquipment(GameData gameData, UUID chosenId,
@@ -710,11 +653,6 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handlePutCounterOnEitherTarget(GameData gameData, UUID permanentId,
                                                 PermanentChoiceContext.PutCounterOnEitherTarget context) {
         putCounterOnEitherTargetEffectHandler.continueCounterPlacement(gameData, permanentId, context);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleTransformChosenPermanent(GameData gameData, UUID permanentId) {
-        transformChosenPermanentEffectHandler.transform(gameData, permanentId);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

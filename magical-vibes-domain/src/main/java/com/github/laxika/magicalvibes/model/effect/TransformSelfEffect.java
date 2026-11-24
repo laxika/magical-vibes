@@ -7,8 +7,10 @@ package com.github.laxika.magicalvibes.model.effect;
  * trigger event was about ({@link Subjects#triggering()}: "you may transform it", Vildin-Pack Alpha), the permanent that
  * granted the ability ({@link Subjects#granter()}: "convert Optimus Prime"), the permanents an earlier step of the
  * resolution named ({@link Subjects#thisWay}: "transform any number of Human Werewolves you control" after a
- * {@code ChoosePermanentsEffect}, Tovolar) or created ({@link Subjects#createdThisResolution()}: "conjure ... and you
- * may transform it", High Marshal Arguel). A permanent without another face isn't changed; transform prevention is
+ * {@code ChoosePermanentsEffect}, Tovolar; "transform an Incubator token you control", Sunder the Gateway), created
+ * ({@link Subjects#createdThisResolution()}: "conjure ... and you may transform it", High Marshal Arguel) or picked
+ * ({@link Subjects#picked(com.github.laxika.magicalvibes.model.filter.PermanentPredicate)}: "put a Hero card from among
+ * them onto the battlefield. If it's a double-faced card, you may transform it", Nick Fury, Agent of S.H.I.E.L.D.). A permanent without another face isn't changed; transform prevention is
  * respected. Records {@code StepKind.TRANSFORM}: the permanents that transformed.
  *
  * @param subject what transforms; only {@link Subjects#target()} targets
@@ -18,7 +20,7 @@ public record TransformSelfEffect(PermanentSubject subject) implements CardEffec
     public TransformSelfEffect {
         if (!(subject instanceof PermanentSubject.Source || subject instanceof PermanentSubject.Target
                 || subject instanceof PermanentSubject.Triggering || subject instanceof PermanentSubject.Granter
-                || subject instanceof PermanentSubject.ThisWay
+                || subject instanceof PermanentSubject.ThisWay || subject instanceof PermanentSubject.Picked
                 || subject instanceof PermanentSubject.CreatedThisResolution)) {
             throw new IllegalArgumentException("Transforms the source, the target, the triggering or granting permanent, "
                     + "or what an earlier step named: " + subject);

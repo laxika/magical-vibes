@@ -25,7 +25,7 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
         PermanentSubject.AllOf, PermanentSubject.Except, PermanentSubject.OneOf, PermanentSubject.TriggeringAttackers,
         PermanentSubject.TriggeringSpellTargets, PermanentSubject.CreatedThisResolution, PermanentSubject.BandmatesOf,
         PermanentSubject.WithCreaturesSharingAColor, PermanentSubject.OtherPermanentsSharing, PermanentSubject.AttachedAndSharingCreatureType,
-        PermanentSubject.Searched, PermanentSubject.ThisWay, PermanentSubject.DepartedThisWay,
+        PermanentSubject.Searched, PermanentSubject.Picked, PermanentSubject.ThisWay, PermanentSubject.DepartedThisWay,
         PermanentSubject.TargetDeclaredElsewhere, PermanentSubject.Voted {
 
     /** Whether this subject is the effect's own target, chosen as the spell or ability is put on the stack. */
@@ -534,6 +534,28 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
 
         @Override
         public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * "It", "those Equipment" after "put [a card] from among them onto the battlefield": the permanents the resolution
+     * last recorded as its picks ({@code StackEntry.recordPicks}: the permanents a look at the top of a library put onto
+     * the battlefield for its follow-up, the card "put an artifact card from your hand onto the battlefield" put), those
+     * still on the battlefield as the same objects (CR 400.7), narrowed to those matching {@code filter} as the reading
+     * effect is applied ("if it's an Equipment", "if it's a double-faced card"); {@code null} names every one. Inside a
+     * {@code MayEffect}, a picked subject that names nothing offers no choice: the "if it's a [filter]" isn't met. A step
+     * result.
+     */
+    record Picked(PermanentPredicate filter) implements PermanentSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+
+        @Override
+        public boolean isSet() {
             return true;
         }
     }

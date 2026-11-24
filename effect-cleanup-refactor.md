@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b (each in Findings; the fold queue marks its rows). Fold runs 8 to 20 run in parallel worktrees from 2026-11-24. Next: fold runs 17b, 19 and 20 (running), 15b (merging), 18b, 12e, `drafted-step`. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                         |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b (each in Findings; the fold queue marks its rows). Fold runs 8 to 20 run in parallel worktrees from 2026-11-24. Next: fold runs 17b, 19 and 20 (running), 18b, 12e, 15c (Gilgamesh, Lynde; living weapon), `drafted-step`. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                          |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,700 / 2,963 (after fold run 16b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,695 / 2,959 (after fold run 15b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,531 rows over 4,426 classes (after fold run 16b). Latest verdict per class: `step-9` 857, unique 1,167, absorbed 706, split 604, blocked-other 499, survivor 294, blocked-step-model 141, blocked-player-loop 96, dead 62. Waiting: 857 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,539 rows over 4,426 classes (after fold run 15b). Latest verdict per class: `step-9` 851, unique 1,167, absorbed 710, split 605, blocked-other 500, survivor 294, blocked-step-model 141, blocked-player-loop 96, dead 62. Waiting: 851 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -705,6 +705,11 @@ Delayed and global triggers:
   `CounterChangeEvent.Kind.COUNTER_REMOVED_IN_EXILE` (fold run 16b).
 - `Subjects.sourceCard()` in exile, checked against the card's exile stay (`StackEntry.sourceExileEntryVersion`);
   `SourceCardInExileWithCounter(CounterType)` (fold run 16b).
+
+- `Subjects.picked()` / `picked(filter)` (`PermanentSubject.Picked`): "it" / "those Equipment" after a put that recorded picks; a
+  `MayEffect` over picks that name nothing asks nothing (fold run 15b).
+- `LibrarySelectionFollowUp.inResolution(effect)`: a library follow-up that is the next step of the same resolution ("if it's …, you
+  may …"); `AttachSourceEquipmentToTargetCreatureEffect.pickedEquipmentToCreatureYouControl()` (fold run 15b).
 
 ### Blocked causes still open
 
@@ -2348,6 +2353,33 @@ marked non-suspend (CR 702.62b; Fury Charm's test moved from Ancestral Vision to
 
 **For the next run.** Darigaaz's conjure waits for a face-down exile conjure destination. `SourceCardInExile`'s Javadoc says "face-up"
 but the code doesn't check it; the refine and suspend upkeep abilities are still built from the counters rather than granted.
+
+### Step 9, fold run 15b (2026-11-24, parallel worktree)
+
+`picked-subject` (6 rows): 5 folded (4 absorbed, 1 split), 1 blocked-other (Gilgamesh), plus 2 survivor rows. Ratchet in its worktree
+3,731 / 2,995 → 3,726 / 2,991. 5 card files rewritten plus Vault 101's engine follow-up; Oracle text checked for all 5. CR 603.12,
+608.2c, 608.2d, 701.27a, 701.27d, 701.27e, 702.92a checked.
+
+**Shape.** `PermanentSubject.Picked(PermanentPredicate filter)` (`Subjects.picked()` / `picked(filter)`): the permanents the entry last
+recorded as its picks (`StackEntry.recordPicks`), each once, still on the battlefield as the same objects, narrowed by `filter`; no
+target, a set. Writers: the library follow-ups, Vault 101's search follow-up, and `PutCardToBattlefieldThenEffect`'s then-effect path.
+Readers: `TransformSelfEffect`, the attach verb's attachment, `ChoosePermanentsEffect.thatCanHost`. A `MayEffect` whose leading step reads
+picks that name nothing asks nothing (`MayEffectHandler.picksNameNothing`). Helpers: `LibrarySelectionFollowUp.inResolution(effect)`
+(the next step of the same resolution) and `AttachSourceEquipmentToTargetCreatureEffect.pickedEquipmentToCreatureYouControl()`.
+
+| Batch | Result |
+|---|---|
+| `picked-subject` | The Invincible Iron Man: `AttachSourceEquipmentToTargetCreatureEffect(picked(), source())`. Armored Skyhunter, Palico: `inResolution(MayEffect(pickedEquipmentToCreatureYouControl()))` (Vault 101's follow-up builds the same). Nick Fury: `inResolution(MayEffect(TransformSelfEffect(picked(PermanentIsDoubleFacedPredicate))))`. Sunder the Gateway: `ChoosePermanentsEffect.exactly(1, controlledBy(you(), Incubator token))` + `TransformSelfEffect(thisWay(CHOOSE))`. Left: Gilgamesh `blocked-other` (two choices in one resolution, a Samurai then an Equipment; one CHOOSE outcome is kept per kind, and `thatCanHost` needs every attachment to fit; Lynde waits on the same gap). Living weapon / Grip of Phyresis not taken |
+
+**Behaviour changes.** Armored Skyhunter's and Palico's "If an Equipment is put onto the battlefield this way, you may attach it" is
+asked inside the attack trigger's resolution, not as a reflexive ability on the stack: the text says "if", not "when" (CR 603.12, 608.2c;
+failing-first tests). Logs are the survivors' lines ("X chooses Y.", "is now attached to"). Nick Fury's gate is the Oracle's
+"double-faced card" (CR 701.27a); the old "back face is a permanent" check is the verb's own no-op (CR 701.27e).
+
+**For the next run.** A two-choice run for Gilgamesh and Lynde (a second CHOOSE result, or an any-of `thatCanHost` plus a one-of
+attach). A living-weapon run folding Grip of Phyresis with `LivingWeaponEffectHandler`'s source form (58 cards; decide first whether
+every living weapon logs a CHOOSE line and sets a chosen permanent on the Equipment). `MakeChosenPermanentAttackingEffect.pickedPermanent()`
+and `GrantKeywordToChosenCreatureUntilEndOfTurnEffect` could read `picked()`.
 
 ## Prompt
 

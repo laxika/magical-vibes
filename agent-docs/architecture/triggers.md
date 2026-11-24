@@ -737,7 +737,7 @@ Matchers record the event whatever the effects are; effects read it as they reso
   (`setAcceptedPlayerIds`, `Subjects.acceptedPlayers()`), produced mana (`setProducedManaColors`), picks
   (`StackEntry.recordPicks`, `ResolutionResults.pickedIds`, recorded by `LibraryChoiceHandlerService` and read by
   `LibrarySelectionFollowUp.effect()`: `MakeChosenPermanentAttackingEffect.pickedPermanent()`,
-  `TransformChosenPermanentEffect.pickedPermanent()`, the `...Selected...` effects), a question's card
+  `Subjects.picked(filter)`), a question's card
   (`PendingMayAbility.targetCardId`, `BecomeCopyOfCardUntilEndOfTurnEffect.ofQuestionCard()`), votes
   (`triggeringVotingResult`). A handler may rebuild its own effect with its progress but never puts an effect with a
   chosen object bound in on the stack.

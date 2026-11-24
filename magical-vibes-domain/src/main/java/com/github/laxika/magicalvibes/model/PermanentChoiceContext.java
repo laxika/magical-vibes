@@ -163,20 +163,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    record AttachControlledEquipmentToTargetCreature(UUID targetCreatureId, UUID controllerId,
-                                                     Card sourceCard, List<UUID> equipmentPermanentIds,
-                                                     boolean unattachAtNextEndStep)
-            implements PermanentChoiceContext {
-        public AttachControlledEquipmentToTargetCreature(UUID targetCreatureId, UUID controllerId,
-                                                         Card sourceCard, List<UUID> equipmentPermanentIds) {
-            this(targetCreatureId, controllerId, sourceCard, equipmentPermanentIds, true);
-        }
-
-        public AttachControlledEquipmentToTargetCreature {
-            equipmentPermanentIds = List.copyOf(equipmentPermanentIds);
-        }
-    }
-
     record AttachEquipmentToSamurai(List<UUID> equipmentPermanentIds)
             implements PermanentChoiceContext {
         public AttachEquipmentToSamurai {
@@ -187,13 +173,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record AttachEquipmentToSamuraiTarget(UUID samuraiPermanentId, List<UUID> equipmentPermanentIds)
             implements PermanentChoiceContext {
         public AttachEquipmentToSamuraiTarget {
-            equipmentPermanentIds = List.copyOf(equipmentPermanentIds);
-        }
-    }
-
-    record AttachOneOfEquipmentToCreature(List<UUID> equipmentPermanentIds)
-            implements PermanentChoiceContext {
-        public AttachOneOfEquipmentToCreature {
             equipmentPermanentIds = List.copyOf(equipmentPermanentIds);
         }
     }
@@ -248,9 +227,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      * is the permanent it enters attached to (it does not target).
      */
     record PermanentAuctionAuraHost(UUID controllerId, UUID auraCardId) implements PermanentChoiceContext {}
-
-    /** A resolving effect asks its controller to choose one permanent to transform. */
-    record TransformChosenPermanent() implements PermanentChoiceContext {}
 
     /** Enchantment Alteration: move the targeted Aura to another permanent of the same type. */
     record AttachTargetAuraToAnotherPermanentOfSameType(UUID auraPermanentId, boolean creaturesOnly)

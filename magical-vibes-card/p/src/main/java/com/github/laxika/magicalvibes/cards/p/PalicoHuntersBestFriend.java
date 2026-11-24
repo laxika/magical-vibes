@@ -7,8 +7,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.OracleData;
-import com.github.laxika.magicalvibes.model.effect.AttachSelectedEquipmentToCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -57,7 +59,9 @@ public class PalicoHuntersBestFriend extends Card {
                         new CardAnyOfPredicate(List.of(
                                 new CardSubtypePredicate(CardSubtype.AURA),
                                 new CardSubtypePredicate(CardSubtype.EQUIPMENT))),
-                        new AttachSelectedEquipmentToCreatureEffect());
+                        LibrarySelectionFollowUp.inResolution(new MayEffect(
+                                AttachSourceEquipmentToTargetCreatureEffect.pickedEquipmentToCreatureYouControl(),
+                                "Attach that Equipment to a creature you control?")));
         addTrigger(Triggers.attacks(), search);
     }
 }

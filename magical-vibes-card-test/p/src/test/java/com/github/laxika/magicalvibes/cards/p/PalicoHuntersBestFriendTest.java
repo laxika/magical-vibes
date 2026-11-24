@@ -42,6 +42,22 @@ class PalicoHuntersBestFriendTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The \"you may attach\" is asked in the same resolution, with nothing put on the stack")
+    void attachChoiceIsPartOfTheResolution() {
+        addCreatureReady(player1, new PalicoHuntersBestFriend());
+        Card equipment = new LeoninScimitar();
+        harness.setLibrary(player1, List.of(equipment, new Shock()));
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(equipment.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.pendingEffectResolutionEntry).isNotNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("When an Equipment is found, it may attach to a creature you control")
     void attacksAndAttachesEquipment() {
         Permanent palico = addCreatureReady(player1, new PalicoHuntersBestFriend());

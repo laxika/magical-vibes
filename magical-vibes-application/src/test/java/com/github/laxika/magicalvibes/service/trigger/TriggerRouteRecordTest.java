@@ -108,12 +108,12 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ClassLevelUpEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EvolveEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveTimeCounterFromExiledCardEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TrainEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.TransformChosenPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
 import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -1709,20 +1709,18 @@ class TriggerRouteRecordTest extends BaseCardTest {
                             Card front = card("Shifter", CardType.CREATURE);
                             front.setBackFaceCard(card("Shifter", CardType.CREATURE));
                             Permanent permanent = test.addCreatureReady(test.player1, front);
-                            TransformChosenPermanentEffectHandler transformer =
-                                    bean(TransformChosenPermanentEffectHandler.class);
-                            test.harness.inMutationScope(() -> transformer.transform(test.gd, permanent.getId()));
+                            AnimationSupport animation = bean(AnimationSupport.class);
+                            test.harness.inMutationScope(() -> animation.transformToBackFace(test.gd, permanent));
                         }),
                 watch("transforms into its front face", "transformsToFrontFace",
                         () -> Triggers.transformsToFrontFace(ObjectRelation.THIS), CardType.CREATURE,
                         (test, cards) -> {
-                            TransformChosenPermanentEffectHandler transformer =
-                                    bean(TransformChosenPermanentEffectHandler.class);
+                            AnimationSupport animation = bean(AnimationSupport.class);
                             for (Card front : cards) {
                                 front.setBackFaceCard(card(front.getName(), CardType.CREATURE));
                                 Permanent permanent = test.addCreatureReady(test.player1, front);
-                                test.harness.inMutationScope(() -> transformer.transform(test.gd, permanent.getId()));
-                                test.harness.inMutationScope(() -> transformer.transform(test.gd, permanent.getId()));
+                                test.harness.inMutationScope(() -> animation.transformToBackFace(test.gd, permanent));
+                                test.harness.inMutationScope(() -> animation.transformToFrontFace(test.gd, permanent));
                                 test.answerAll();
                             }
                         }),
@@ -3137,12 +3135,12 @@ class TriggerRouteRecordTest extends BaseCardTest {
 
     /** Each fixture card is the back face of a front face of the same name, which transforms. */
     private void fixturesTransform(List<Card> cards) {
-        TransformChosenPermanentEffectHandler transformer = bean(TransformChosenPermanentEffectHandler.class);
+        AnimationSupport animation = bean(AnimationSupport.class);
         for (Card back : cards) {
             Card front = card(back.getName(), CardType.CREATURE);
             front.setBackFaceCard(back);
             Permanent permanent = addCreatureReady(player1, front);
-            harness.inMutationScope(() -> transformer.transform(gd, permanent.getId()));
+            harness.inMutationScope(() -> animation.transformToBackFace(gd, permanent));
             answerAll();
         }
     }

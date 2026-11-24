@@ -57,6 +57,38 @@ class ArmoredSkyhunterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The \"you may attach\" is asked in the same resolution, with nothing put on the stack")
+    void attachChoiceIsPartOfTheResolution() {
+        addCreatureReady(player1, new ArmoredSkyhunter());
+        Card equipment = new LeoninScimitar();
+        harness.setLibrary(player1, List.of(equipment, new Shock()));
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(equipment.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.pendingEffectResolutionEntry).isNotNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("With one creature it could equip, the Equipment is attached to it unasked")
+    void loneCreatureIsChosenUnasked() {
+        Permanent skyhunter = addCreatureReady(player1, new ArmoredSkyhunter());
+        Card equipment = new LeoninScimitar();
+        harness.setLibrary(player1, List.of(equipment));
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(equipment.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findPermanent(player1, "Leonin Scimitar").getAttachedTo()).isEqualTo(skyhunter.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
     @DisplayName("An Aura enters attached to a chosen creature, including an opponent's creature")
     void auraEntersAttachedToChosenCreature() {
         addCreatureReady(player1, new ArmoredSkyhunter());

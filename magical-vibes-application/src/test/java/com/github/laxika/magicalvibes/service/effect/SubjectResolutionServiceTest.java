@@ -570,6 +570,29 @@ class SubjectResolutionServiceTest extends BaseCardTest {
     }
 
     @Nested
+    @DisplayName("picked(), picked(filter)")
+    class Picked {
+
+        @Test
+        @DisplayName("Names the entry's picks still on the battlefield, narrowed by the filter, and declares no target")
+        void namesThePicks() {
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            Permanent giant = addCreatureReady(player1, new HillGiant());
+            Permanent other = addCreatureReady(player1, new HillGiant());
+            StackEntry entry = entry(player1, null, null);
+            entry.recordPicks(List.of(bears.getId(), giant.getId()));
+
+            assertThat(permanents(entry, Subjects.picked())).containsExactly(bears, giant);
+            assertThat(permanents(entry, Subjects.picked(new PermanentHasSubtypePredicate(CardSubtype.GIANT))))
+                    .containsExactly(giant)
+                    .doesNotContain(other);
+            leaveBattlefield(giant);
+            assertThat(permanents(entry, Subjects.picked())).containsExactly(bears);
+            assertThat(Subjects.picked().declaresTarget()).isFalse();
+        }
+    }
+
+    @Nested
     @DisplayName("targetDeclaredElsewhere()")
     class TargetDeclaredElsewhere {
 

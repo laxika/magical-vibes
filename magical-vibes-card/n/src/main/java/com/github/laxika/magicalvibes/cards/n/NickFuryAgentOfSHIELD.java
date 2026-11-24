@@ -5,11 +5,15 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelectedPermanentFollowUp;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsDoubleFacedPredicate;
 
 import java.util.List;
 
@@ -27,7 +31,9 @@ public class NickFuryAgentOfSHIELD extends Card {
                 List.of(
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
                         LookAtTopCardsEffect.mayPutMatchingOntoBattlefieldRestOnBottomRandom(
-                                7, heroEquipmentOrVehicle, new TransformSelectedPermanentFollowUp())
+                                7, heroEquipmentOrVehicle, LibrarySelectionFollowUp.inResolution(new MayEffect(
+                                        new TransformSelfEffect(Subjects.picked(new PermanentIsDoubleFacedPredicate())),
+                                        "Transform that permanent?")))
                 ),
                 "Power-up — {W}{U}{B}{R}{G}: Put two +1/+1 counters on Nick Fury, then look at the top "
                         + "seven cards of your library. You may put a Hero, Equipment, or Vehicle card "

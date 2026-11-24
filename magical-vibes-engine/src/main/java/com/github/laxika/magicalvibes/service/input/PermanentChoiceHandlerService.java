@@ -616,17 +616,12 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleAttachEquipmentToCreature(gameData, permanentId, attachEquip);
         } else if (context instanceof PermanentChoiceContext.AttachSacrificedEquipmentToTarget attachEquip) {
             battlefieldHandler.handleAttachSacrificedEquipmentToTarget(gameData, permanentId, attachEquip);
-        } else if (context instanceof PermanentChoiceContext.AttachControlledEquipmentToTargetCreature attachEquip) {
-            battlefieldHandler.handleAttachControlledEquipmentToTargetCreature(gameData, permanentId, attachEquip);
         } else if (context instanceof PermanentChoiceContext.AttachEquipmentToSamurai attachEquip) {
             battlefieldHandler.handleAttachEquipmentToSamurai(gameData, playerId, permanentId, attachEquip);
         } else if (context instanceof PermanentChoiceContext.AttachMatchingEquipmentToCreatedPermanent attachEquip) {
             battlefieldHandler.handleAttachMatchingEquipmentToCreatedPermanent(gameData, permanentId, attachEquip);
         } else if (context instanceof PermanentChoiceContext.AttachEquipmentToSamuraiTarget attachEquip) {
             battlefieldHandler.handleAttachEquipmentToSamuraiTarget(gameData, playerId, permanentId, attachEquip);
-        } else if (context instanceof PermanentChoiceContext.AttachOneOfEquipmentToCreature attachEquip) {
-            battlefieldHandler.handleAttachOneOfEquipmentToCreature(
-                    gameData, playerId, permanentId, attachEquip);
         } else if (context instanceof PermanentChoiceContext.AuraGraft auraGraft) {
             battlefieldHandler.handleAuraGraft(gameData, permanentId, auraGraft);
         } else if (context instanceof PermanentChoiceContext.AttachAllAurasToAnotherPermanent attachAll) {
@@ -646,8 +641,6 @@ public class PermanentChoiceHandlerService {
         } else if (context instanceof PermanentChoiceContext.AttachReturnedAuraToCreature attachAura) {
             returnAurasFromGraveyardAttachedToCreaturesEffectHandler.completeCreatureChoice(
                     gameData, permanentId, attachAura);
-        } else if (context instanceof PermanentChoiceContext.TransformChosenPermanent) {
-            battlefieldHandler.handleTransformChosenPermanent(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.AttachTargetAuraToAnotherPermanentOfSameType attachAura) {
             battlefieldHandler.handleAttachTargetAuraToAnotherPermanentOfSameType(gameData, permanentId, attachAura);
         } else if (context instanceof PermanentChoiceContext.AttachTargetAuraToAnotherPermanentWithSameController attachAura) {

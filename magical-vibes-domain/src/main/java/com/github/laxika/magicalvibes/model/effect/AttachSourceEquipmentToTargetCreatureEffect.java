@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -132,6 +133,20 @@ public record AttachSourceEquipmentToTargetCreatureEffect(CardEffect thenEffect,
     public static AttachSourceEquipmentToTargetCreatureEffect targetEquipmentToTriggeringOrSource() {
         return new AttachSourceEquipmentToTargetCreatureEffect(Subjects.target(), Subjects.triggeringOrSource(),
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT));
+    }
+
+    /**
+     * "If an Equipment is put onto the battlefield this way, you may attach it to a creature you control" (Armored
+     * Skyhunter, Vault 101: Birthday Party; the "you may" is the caller's {@code MayEffect}): a creature you control that
+     * the picked Equipment ({@link Subjects#picked(PermanentPredicate)}) could equip is chosen, unasked when only one
+     * could (CR 608.2d), and the Equipment is attached to it.
+     */
+    public static SequenceEffect pickedEquipmentToCreatureYouControl() {
+        PermanentSubject equipment = Subjects.picked(new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT));
+        return SequenceEffect.of(
+                ChoosePermanentsEffect.exactly(1, Subjects.creaturesYouControl(), "a creature you control")
+                        .thatCanHost(equipment),
+                new AttachSourceEquipmentToTargetCreatureEffect(equipment, Subjects.thisWay(StepKind.CHOOSE)));
     }
 
     /** A host is one permanent: named by the entry, or the one an earlier step of the resolution named. */

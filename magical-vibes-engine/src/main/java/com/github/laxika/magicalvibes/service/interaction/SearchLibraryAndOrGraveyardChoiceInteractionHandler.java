@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.AttachSelectedEquipmentToCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -314,6 +314,7 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
         }
         sourceEntry.recordPicks(List.of(equipmentId));
         sourceEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(new MayEffect(
-                new AttachSelectedEquipmentToCreatureEffect(), "Attach that Equipment to a creature you control?")));
+                AttachSourceEquipmentToTargetCreatureEffect.pickedEquipmentToCreatureYouControl(),
+                "Attach that Equipment to a creature you control?")));
     }
 }

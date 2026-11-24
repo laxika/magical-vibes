@@ -240,6 +240,19 @@ public final class Subjects {
         return SEARCHED;
     }
 
+    /**
+     * "It", "those Equipment" after a step that put the cards a player picked onto the battlefield (a look at the top of
+     * a library, a put from a hand): the permanents the resolution recorded as its picks, still on the battlefield.
+     */
+    public static PermanentSubject picked() {
+        return new PermanentSubject.Picked(null);
+    }
+
+    /** "If it's an Equipment, attach it": the permanents {@link #picked()} names that match {@code filter}. */
+    public static PermanentSubject picked(PermanentPredicate filter) {
+        return new PermanentSubject.Picked(Objects.requireNonNull(filter, "filter"));
+    }
+
     /** "Enchanted creature and other creatures that share a creature type with it" (the Crowns). */
     public static PermanentSubject attachedAndSharingCreatureType() {
         return ATTACHED_AND_SHARING_CREATURE_TYPE;
