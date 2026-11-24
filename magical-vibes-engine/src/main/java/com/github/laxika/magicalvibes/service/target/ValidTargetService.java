@@ -20,7 +20,6 @@ import com.github.laxika.magicalvibes.model.effect.CastTimeXValueModifierEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureCardInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
@@ -2287,8 +2286,6 @@ public class ValidTargetService {
                     .getOrDefault(graveyardOwnerId, Set.of()).contains(c.getId())));
         } else if (effect instanceof ReturnTargetCardFromGraveyardOrExileToHandEffect e) {
             return predicateEvaluationService.matchesCardPredicate(c, e.graveyardFilter(), sourceCardId);
-        } else if (effect instanceof BecomeCopyOfTargetCreatureCardInGraveyardEffect) {
-            return c.hasType(CardType.CREATURE) && c.getManaValue() == effectiveXValue;
         } else if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect e) {
             return e.filter() == null || predicateEvaluationService.matchesCardPredicate(c, e.filter(),
                     sourceCardId, gameData, controllerId, null, null, xValue);

@@ -16,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -72,6 +73,24 @@ class TaskmasterMercenaryMimicTest extends BaseCardTest {
         assertThat(taskmaster.getCard().getPower()).isEqualTo(2);
         assertThat(taskmaster.getCard().getToughness()).isEqualTo(2);
         assertThat(taskmaster.getCard().hasType(CardType.CREATURE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Copies a face-down creature as a nameless 2/2 and doesn't name its hidden card in the log")
+    void copiesFaceDownCreatureByItsFaceDownValues() {
+        Permanent taskmaster = addCreatureReady(player1, new TaskmasterMercenaryMimic());
+        Permanent faceDown = addCreatureReady(player2, new HydraulicHelper());
+        faceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        beginFirstMainPhase(player1);
+        harness.handlePermanentChosen(player1, faceDown.getId());
+        resolveAllTriggers();
+
+        assertThat(taskmaster.getCard().getName()).isEqualTo("Taskmaster, Mercenary Mimic");
+        assertThat(taskmaster.getCard().getPower()).isEqualTo(2);
+        assertThat(taskmaster.getCard().getToughness()).isEqualTo(2);
+        assertThat(taskmaster.getCard().getKeywords()).doesNotContain(Keyword.DEFENDER);
+        assertThat(gd.gameLog).noneMatch(entry -> entry.plainText().contains("Hydraulic Helper"));
     }
 
     @Test

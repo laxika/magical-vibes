@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSubjectEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyExceptions;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -21,6 +23,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService.LocatedCard;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -85,16 +88,14 @@ public class BecomeCopyOfSubjectEffectHandler implements NormalEffectHandlerBean
                         .anyMatch(part -> contains(part, become)))
                 .toList();
         String originalName = FaceDownVisibility.publicName(gameData, copier);
-        permanentCopierService.applyCloneCopy(copier, copied, null, null, become.exceptions().addedCardTypes(),
-                keptActivated);
+        CopyExceptions exceptions = become.exceptions();
+        permanentCopierService.applyCloneCopy(copier, copied, exceptions.power(), exceptions.toughness(),
+                exceptions.addedCardTypes(), keptActivated);
         keptTriggered.forEach(copier.getCard()::addTriggeredAbility);
-        Set<Keyword> addedKeywords = become.exceptions().addedKeywords();
-        if (!addedKeywords.isEmpty()) {
-            Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
-            keywords.addAll(copier.getCard().getKeywords());
-            keywords.addAll(addedKeywords);
-            copier.getCard().setKeywords(keywords);
-        }
+        applyExceptions(copier, exceptions);
+        // The copy's activated abilities are new instances: "activate only once each turn" counts again (Lazav, the
+        // Multifarious's ruling).
+        gameData.activatedAbilityUsesThisTurn.remove(copier.getId());
         if (lasting) {
             // The copy has a new set of abilities, so a once-each-turn ability it now has has not triggered yet.
             gameData.keyedOncePerTurnTriggersFiredThisTurn.remove(copier.getId());
@@ -103,6 +104,33 @@ public class BecomeCopyOfSubjectEffectHandler implements NormalEffectHandlerBean
         }
         gameLogService.append(gameData, GameLog.text(originalName + " becomes a copy of " + copiedName
                 + durationText(become.duration()) + "."));
+    }
+
+    /**
+     * The exceptions beside the copied values, part of the copy's copiable values (CR 707.9b): a set name, card types
+     * and creature types replace the copied ones (CR 205.1a), supertypes and keywords are added.
+     */
+    private void applyExceptions(Permanent copier, CopyExceptions exceptions) {
+        Card copy = copier.getCard();
+        if (exceptions.name() != null) {
+            copy.setName(exceptions.name());
+        }
+        if (!exceptions.cardTypes().isEmpty()) {
+            permanentCopierService.applyCardTypesOverride(copier, exceptions.cardTypes());
+            copy.setSubtypes(exceptions.creatureTypes());
+        }
+        if (!exceptions.addedSupertypes().isEmpty()) {
+            Set<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
+            supertypes.addAll(copy.getSupertypes());
+            supertypes.addAll(exceptions.addedSupertypes());
+            copy.setSupertypes(supertypes);
+        }
+        if (!exceptions.addedKeywords().isEmpty()) {
+            Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
+            keywords.addAll(copy.getKeywords());
+            keywords.addAll(exceptions.addedKeywords());
+            copy.setKeywords(keywords);
+        }
     }
 
     /**
@@ -130,8 +158,12 @@ public class BecomeCopyOfSubjectEffectHandler implements NormalEffectHandlerBean
 
     private Card copied(GameData gameData, StackEntry entry, BecomeCopyOfSubjectEffect become) {
         if (become.card() != null) {
-            List<Card> cards = subjectResolutionService.cards(gameData, entry, become, become.card());
-            return cards.isEmpty() ? null : cards.getFirst();
+            // The copy needs only information about the card: one a trigger's event put into a zone and that has
+            // left it since is copied as it last existed there (CR 608.2h).
+            List<LocatedCard> cards = subjectResolutionService.cardsToDuplicate(gameData, entry, become, become.card());
+            if (!cards.isEmpty() || become.permanent() == null) {
+                return cards.isEmpty() ? null : cards.getFirst().card();
+            }
         }
         for (UUID id : subjectResolutionService.permanentIds(gameData, entry, become, become.permanent())) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, id);

@@ -213,6 +213,29 @@ class KayaSpiritsJusticeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The exile trigger can't target a token an opponent controls")
+    void exileTriggerTargetsOnlyATokenYouControl() {
+        Permanent kaya = addReadyKaya(3);
+        activate(kaya, 1);
+        harness.passBothPriorities();
+        Permanent token = findPermanent(player1, "Spirit");
+        com.github.laxika.magicalvibes.model.Card opponentsTokenCard = new BubbleSmuggler();
+        opponentsTokenCard.setToken(true);
+        Permanent opponentsToken = addCreatureReady(player2, opponentsTokenCard);
+        Permanent creature = addCreatureReady(player1, new BubbleSmuggler());
+        kaya.setLoyaltyActivationsThisTurn(0);
+
+        activateWithTargets(kaya, List.of(creature.getId()));
+        harness.passBothPriorities();
+
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice choice) {
+            assertThat(choice.validIds()).contains(token.getId()).doesNotContain(opponentsToken.getId());
+        } else {
+            assertThat(gd.stack).anySatisfy(entry -> assertThat(entry.getTargetId()).isEqualTo(token.getId()));
+        }
+    }
+
+    @Test
     void flyingIsCopiedByAnotherCopyEffect() {
         Permanent kaya = addReadyKaya(3);
         activate(kaya, 1);

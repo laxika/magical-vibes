@@ -365,18 +365,29 @@ public class SubjectResolutionService {
     }
 
     /**
-     * {@link CardSubject.TriggeringCards} for a duplicate: each card the event put into a graveyard (or exiled) where it
-     * still is in that stay, else as the event recorded it, its last known information once it left (CR 608.2h: a
-     * discarded card exiled from the graveyard, or a madness card the discard exiled instead). The filter is judged on
-     * the card as it is named.
+     * {@link CardSubject.TriggeringCards} for a duplicate or a copy: each card the event put into a graveyard (or exiled)
+     * where it still is in that stay, else as the event recorded it, its last known information once it left
+     * (CR 608.2h: a discarded card exiled from the graveyard, a madness card the discard exiled instead, a milled card
+     * exiled in response, a card that left the graveyard). The filter is judged on the card as it is named.
      */
     private List<LocatedCard> triggeringCardsAsLastKnown(GameData gameData, StackEntry entry,
                                                          CardSubject.TriggeringCards triggering) {
         Map<UUID, LocatedCard> named = new LinkedHashMap<>();
         triggeringCards(gameData, entry, triggering).forEach(located -> named.put(located.card().getId(), located));
+        List<Card> eventCards = entry.getTriggeringCards();
+        if (eventCards.isEmpty() && entry.getTriggeringCardId() != null
+                && entry.getTriggeringCardGraveyardEntryVersion() >= 0) {
+            // The one card of an event that recorded its graveyard stay ("whenever a creature card is put into an
+            // opponent's graveyard"): as the event recorded it, else the card where it went from there (exile).
+            Card snapshot = entry.getTriggeringCardSnapshot();
+            ExiledCardEntry exiled = gameData.findExiledCard(entry.getTriggeringCardId());
+            Card known = snapshot != null && snapshot.getId().equals(entry.getTriggeringCardId()) ? snapshot
+                    : exiled != null && !exiled.faceDown() ? exiled.card() : null;
+            eventCards = known == null ? List.of() : List.of(known);
+        }
         List<LocatedCard> originals = new ArrayList<>();
         Set<UUID> seen = new LinkedHashSet<>();
-        for (Card card : entry.getTriggeringCards()) {
+        for (Card card : eventCards) {
             if (!seen.add(card.getId()) || card.isToken()) {
                 continue;
             }
@@ -393,7 +404,7 @@ public class SubjectResolutionService {
             }
             originals.add(new LocatedCard(card, Zone.GRAVEYARD, gameData.ownerOf(card)));
         }
-        if (originals.isEmpty() && entry.getTriggeringCards().isEmpty()) {
+        if (originals.isEmpty() && eventCards.isEmpty()) {
             return List.copyOf(named.values());
         }
         return originals;

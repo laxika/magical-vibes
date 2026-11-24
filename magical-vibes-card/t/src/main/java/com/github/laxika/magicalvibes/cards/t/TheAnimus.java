@@ -7,9 +7,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.BecomeTargetLegendaryCreatureCopyOfMemoryCounterExiledCreatureUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSubjectEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnExiledCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardHasCounterInExilePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -27,6 +31,8 @@ import java.util.List;
 public class TheAnimus extends Card {
 
     public TheAnimus() {
+        CardPredicate creatureCardWithMemoryCounter = new CardAllOfPredicate(List.of(
+                new CardTypePredicate(CardType.CREATURE), new CardHasCounterInExilePredicate(CounterType.MEMORY)));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 ExileGraveyardCardsEffect.upToOneTargetFromAnyGraveyard(new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
@@ -35,7 +41,9 @@ public class TheAnimus extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new BecomeTargetLegendaryCreatureCopyOfMemoryCounterExiledCreatureUntilNextTurnEffect()),
+                List.of(BecomeCopyOfSubjectEffect.of(Subjects.targetExiledCard(creatureCardWithMemoryCounter))
+                        .by(Subjects.target(0))
+                        .lasting(Duration.UNTIL_YOUR_NEXT_TURN)),
                 "{T}: Until your next turn, target legendary creature you control becomes a copy of target creature card in exile with a memory counter on it. Activate only as a sorcery.",
                 null,
                 null,
@@ -48,7 +56,7 @@ public class TheAnimus extends Card {
                                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))),
                                 "Target must be a legendary creature you control."),
                         new ExiledCardPredicateTargetFilter(
-                                new CardTypePredicate(CardType.CREATURE),
+                                creatureCardWithMemoryCounter,
                                 "Target must be a creature card in exile with a memory counter on it.")
                 ),
                 2,

@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b (each in Findings; the fold queue marks its rows). Fold runs 8 to 20 run in parallel worktrees from 2026-11-24. Next: fold runs 17b, 19 and 20 (running), 18b, 12e, 15c (Gilgamesh, Lynde; living weapon), `drafted-step`. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                          |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b (each in Findings; the fold queue marks its rows). Fold runs 8 to 20 run in parallel worktrees from 2026-11-24. Next: fold runs 18b, 19b and 20 (running), 19 (merging), 17c, 12e, 15c, `drafted-step`. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                           |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,695 / 2,959 (after fold run 15b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,690 / 2,954 (after fold run 17b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,539 rows over 4,426 classes (after fold run 15b). Latest verdict per class: `step-9` 851, unique 1,167, absorbed 710, split 605, blocked-other 500, survivor 294, blocked-step-model 141, blocked-player-loop 96, dead 62. Waiting: 851 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,548 rows over 4,426 classes (after fold run 17b). Latest verdict per class: `step-9` 844, unique 1,167, absorbed 715, split 605, blocked-other 502, survivor 294, blocked-step-model 141, blocked-player-loop 96, dead 62. Waiting: 844 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -710,6 +710,12 @@ Delayed and global triggers:
   `MayEffect` over picks that name nothing asks nothing (fold run 15b).
 - `LibrarySelectionFollowUp.inResolution(effect)`: a library follow-up that is the next step of the same resolution ("if it's …, you
   may …"); `AttachSourceEquipmentToTargetCreatureEffect.pickedEquipmentToCreatureYouControl()` (fold run 15b).
+
+- `BecomeCopyOfSubjectEffect.of(targetCard(...) | targetExiledCard(...) | targetCardExiledWithSource(...))` and `.ofCreatureOrCard(card)`:
+  copies of a target card, or "target creature on the battlefield or creature card in a graveyard" as one target (fold run 17b).
+- `CopyExceptions.named(n)`, `.alsoLegendary()`, `withBasePowerToughness(p, t)` / `.alsoWithBasePowerToughness`, `.alsoWithKeywords`,
+  `.alsoACreatureOfTypes(...)`: name, added supertype, base P/T (CR 707.9d) and replaced types (CR 205.1a) as copiable values (fold run
+  17b).
 
 ### Blocked causes still open
 
@@ -2380,6 +2386,36 @@ failing-first tests). Logs are the survivors' lines ("X chooses Y.", "is now att
 attach). A living-weapon run folding Grip of Phyresis with `LivingWeaponEffectHandler`'s source form (58 cards; decide first whether
 every living weapon logs a CHOOSE line and sets a chosen permanent on the Equipment). `MakeChosenPermanentAttackingEffect.pickedPermanent()`
 and `GrantKeywordToChosenCreatureUntilEndOfTurnEffect` could read `picked()`.
+
+### Step 9, fold run 17b (2026-11-24, parallel worktree)
+
+Fold run 17's leftovers in `copy-exc` and `copier`. Ratchet in its worktree 3,719 / 2,982 → 3,714 / 2,977. Ledger 9 rows (absorbed 5,
+survivor 1, blocked-other 3). 6 card files rewritten, Oracle text checked for all; rulings for Lazav ×2, Taskmaster, Kaya, Spirit of
+Resilience, 'Dane, Curie. CR 205.1a, 406.3a, 608.2b, 608.2d, 608.2h, 707.2, 707.3, 707.9a–d checked.
+
+**The shape.** `BecomeCopyOfSubjectEffect` accepts a target card subject (`targetCard`, `targetExiledCard`, `targetCardExiledWithSource`),
+its `targetSpec` from the subject alone or joined with the permanent target; `ofCreatureOrCard(card)` is one target, a creature or that
+card, copied whichever it is. The copied card is read through `SubjectResolutionService.cardsToDuplicate`, so an event card that left
+its zone is copied as it last existed (CR 608.2h). `CopyExceptions` gains `named`, `alsoLegendary`, `withBasePowerToughness` (a set P/T
+drops a P/T-defining ability, CR 707.9d) and `alsoACreatureOfTypes` (card and creature types replaced, CR 205.1a); all exceptions are
+copiable values (CR 707.9b). Every copy resets the copier's per-turn activation counts (new ability instances; Lazav's ruling).
+
+| Batch | Result |
+|---|---|
+| copy-exc | 5 folded: Lazav, the Multifarious; Likeness Looter; Mimeoplasm, Revered One; Taskmaster; Lazav, Dimir Mastermind (over `triggeringCards()`). Left: Spirit of Resilience's pair `blocked-other` (a choice among event cards that left the graveyard). `BecomeCopyOfCardUntilEndOfTurnEffect` stays (still built by the unaudited exiled-with-source handler and Spirit's) |
+| copier | The Animus folded (`targetExiledCard(allOf(creature, CardHasCounterInExilePredicate(MEMORY)))` + `.by(target(0))`). Kaya `blocked-other` (no per-card exile stay for a one-or-more exile batch); its target defect fixed. Aegis/Headdress not reached |
+| cost-paid-copy | not reached: a paid-as-cost `PermanentSubject` (read by `lastKnownCopiableCard` too), Curie's added-ability exception (one user), and 'Dane's rule of not adding its kept ability twice |
+| copy-on-enter | not reached (`CloneService` / `MayCopyHandlerService` path) |
+
+**Behaviour changes.** Taskmaster copies a face-down target by its face-down values and doesn't log its name (CR 707.2, 708.2a; new
+test). Kaya's exile trigger targets only a token you control, as its text says (new test). Every survivor copy resets per-turn
+activation counts. `cardsToDuplicate(TriggeringCards)` reads a single-card graveyard event's card as it last existed. The survivor's log
+line wins.
+
+**For the next run.** Kaya: a per-card exile-stay map on `StackEntry` (simulation-copied, deep-copy test), then `ChooseCardEffect.upTo(1,
+triggeringCards(creature))` + the survivor over `cardsThisWay(CHOOSE)`. Spirit: a CHOOSE over last-known event cards. Then
+`cost-paid-copy` and `copy-on-enter`. `BecomeCopyOfTargetPermanentUntilYourNextTurnEffect` (Absorbing Man, Crystalline Resonance,
+Volrath; unaudited) can fold onto `CopyExceptions`.
 
 ## Prompt
 
