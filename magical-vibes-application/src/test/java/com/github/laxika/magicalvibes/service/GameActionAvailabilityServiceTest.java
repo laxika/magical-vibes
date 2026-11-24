@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -503,7 +503,7 @@ class GameActionAvailabilityServiceTest {
         @DisplayName("A permission to play lands from the top of the library shows the card even with no permanents")
         void landPlayPermissionWithoutPermanentsShowsTopCard() {
             gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1Id,
-                new AllowPlayFromTopOfLibraryUntilEndOfTurnEffect(), player1Id, Duration.UNTIL_END_OF_TURN));
+                new PlayLandsFromTopOfLibraryEffect(), player1Id, Duration.UNTIL_END_OF_TURN));
             topCard();
 
             assertThat(projectionFactory.getRevealedLibraryTopCards(gd, player1Id).getFirst()).hasSize(1);

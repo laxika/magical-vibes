@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BitterTriumph;
+import com.github.laxika.magicalvibes.cards.e.ExaltedAngel;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
@@ -19,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TheBelligerent.class, AirElemental.class, BitterTriumph.class, Forest.class, Shock.class})
+@CardUsed({TheBelligerent.class, AirElemental.class, BitterTriumph.class, ExaltedAngel.class, Forest.class,
+        Shock.class})
 class TheBelligerentTest extends BaseCardTest {
 
     @Test
@@ -29,7 +31,7 @@ class TheBelligerentTest extends BaseCardTest {
         attackWithBelligerent(shock);
 
         assertThat(findPermanent(player1, "Treasure")).isNotNull();
-        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), AllowPlayFromTopOfLibraryUntilEndOfTurnEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), AllowCastFromTopOfLibraryEffect.class)).isTrue();
 
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveFromLibraryTop(player1, player2.getId());
@@ -68,7 +70,7 @@ class TheBelligerentTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), AllowPlayFromTopOfLibraryUntilEndOfTurnEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), AllowCastFromTopOfLibraryEffect.class)).isFalse();
         assertThatThrownBy(() -> harness.castFromLibraryTop(player1, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -128,6 +130,23 @@ class TheBelligerentTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.castAndResolveFromLibraryTop(player1);
         assertThat(countPermanents(player1, "Air Elemental")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A morph card on top may be cast face down for {3}, as from any zone it could be cast from")
+    void castsMorphCardFaceDownFromTop() {
+        ExaltedAngel angel = new ExaltedAngel();
+        attackWithBelligerent(angel);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        gs.playCardFromLibraryTop(gd, player1, null, null, List.of(), List.of(), true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == angel && permanent.isFaceDown());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     @Test

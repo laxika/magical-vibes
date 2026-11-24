@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -23,7 +23,7 @@ public class BolassCitadel extends Card {
     public BolassCitadel() {
         addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
         addStaticEffect(new PlayLandsFromTopOfLibraryEffect());
-        addStaticEffect(new AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect());
+        addStaticEffect(AllowCastFromTopOfLibraryEffect.anySpell().payingLifeEqualToManaValue());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

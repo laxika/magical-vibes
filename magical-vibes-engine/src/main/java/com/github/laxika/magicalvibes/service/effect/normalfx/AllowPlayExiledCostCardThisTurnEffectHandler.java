@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayExiledCostCardThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.Duration;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
@@ -28,14 +27,10 @@ public class AllowPlayExiledCostCardThisTurnEffectHandler implements NormalEffec
         if (exiledCardId == null || gameData.findExiledCard(exiledCardId) == null) {
             return;
         }
-        if (((AllowPlayExiledCostCardThisTurnEffect) effect).duringResolution()) {
-            var exiled = gameData.findExiledCard(exiledCardId);
-            gameData.pendingMayAbilities.add(new com.github.laxika.magicalvibes.model.PendingMayAbility(
-                    exiled.card(), entry.getControllerId(),
-                    java.util.List.of(new com.github.laxika.magicalvibes.model.effect.MayCastExiledCardWithNormalCostEffect(
-                            UUID.randomUUID(), false)), "Play " + exiled.card().getName() + "?", exiledCardId));
-            return;
-        }
-        gameData.grantExilePlayPermission(exiledCardId, entry.getControllerId(), Duration.UNTIL_END_OF_TURN);
+        var exiled = gameData.findExiledCard(exiledCardId);
+        gameData.pendingMayAbilities.add(new com.github.laxika.magicalvibes.model.PendingMayAbility(
+                exiled.card(), entry.getControllerId(),
+                java.util.List.of(new com.github.laxika.magicalvibes.model.effect.MayCastExiledCardWithNormalCostEffect(
+                        UUID.randomUUID(), false)), "Play " + exiled.card().getName() + "?", exiledCardId));
     }
 }

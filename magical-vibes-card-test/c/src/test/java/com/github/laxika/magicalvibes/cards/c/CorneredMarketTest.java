@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.h.HickoryWoodlot;
@@ -153,7 +153,7 @@ class CorneredMarketTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CloudSprite());
         harness.setLibrary(player2, List.of(new CloudSprite()));
         gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2.getId(),
-                new AllowPlayFromTopOfLibraryUntilEndOfTurnEffect(), player2.getId(), Duration.UNTIL_END_OF_TURN));
+                AllowCastFromTopOfLibraryEffect.anySpell(), player2.getId(), Duration.UNTIL_END_OF_TURN));
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

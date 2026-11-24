@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitControllerToOneMoreSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
 import com.github.laxika.magicalvibes.model.effect.PlayerRestrictionEffect;
@@ -27,7 +26,6 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
@@ -432,7 +430,9 @@ class CastingPermissionServiceTest {
         @DisplayName("turn-scoped top-library permission allows spells and lands")
         void allowsSpellsAndLandsFromTopOfLibrary() {
             gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1Id,
-                new AllowPlayFromTopOfLibraryUntilEndOfTurnEffect(), player1Id, Duration.UNTIL_END_OF_TURN));
+                AllowCastFromTopOfLibraryEffect.anySpell(), player1Id, Duration.UNTIL_END_OF_TURN));
+            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1Id,
+                new PlayLandsFromTopOfLibraryEffect(), player1Id, Duration.UNTIL_END_OF_TURN));
 
             Card instant = new Card();
             instant.setType(CardType.INSTANT);
@@ -468,7 +468,7 @@ class CastingPermissionServiceTest {
         @DisplayName("allows nonland spells through the mana-value life alternative")
         void allowsManaValueLifeAlternative() {
             Card citadel = new Card();
-            citadel.addStaticEffect(new AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect());
+            citadel.addStaticEffect(AllowCastFromTopOfLibraryEffect.anySpell().payingLifeEqualToManaValue());
             gd.playerBattlefields.get(player1Id).add(new Permanent(citadel));
 
             Card spell = new Card();

@@ -40,7 +40,7 @@ public class AllowCastTargetCardFromGraveyardThisTurnEffectHandler implements No
         UUID controllerId = entry.getControllerId();
         if (permission.cards() != null) {
             for (var located : subjectResolutionService.locatedCards(gameData, entry, effect, permission.cards())) {
-                if (located.zone() == Zone.GRAVEYARD) {
+                if (located.zone() == Zone.GRAVEYARD && controllerId.equals(located.ownerId())) {
                     grant(gameData, entry, permission, located.card());
                 }
             }
@@ -80,9 +80,14 @@ public class AllowCastTargetCardFromGraveyardThisTurnEffectHandler implements No
                        Card card) {
         UUID controllerId = entry.getControllerId();
         // The card stays in the graveyard; the permission and the exile replacement both hold
-        // until turn cleanup drops them, so the controller may cast it whenever timing allows.
-        gameData.addCardEffect(entry, new GameData.GraveyardCardPlayGrant(controllerId, permission.entersTapped()),
-                card.getId(), Zone.GRAVEYARD, Duration.UNTIL_END_OF_TURN);
+        // until the permission's duration ends, so the controller may cast it whenever timing allows.
+        if (permission.adventureOnly()) {
+            gameData.addCardEffect(entry, new GameData.GraveyardAdventureCastPermission(controllerId),
+                    card.getId(), Zone.GRAVEYARD, permission.duration());
+        } else {
+            gameData.addCardEffect(entry, new GameData.GraveyardCardPlayGrant(controllerId, permission.entersTapped()),
+                    card.getId(), Zone.GRAVEYARD, permission.duration());
+        }
         if (permission.exileInsteadOfGraveyard()) {
             gameData.exileInsteadOfGraveyard(entry, card.getId());
         }
@@ -90,7 +95,9 @@ public class AllowCastTargetCardFromGraveyardThisTurnEffectHandler implements No
         gameLogService.append(gameData, GameLog.builder()
                 .text(gameData.playerIdToName.get(controllerId) + " may cast ")
                 .card(card)
-                .text(" from their graveyard this turn.")
+                .text(" from their graveyard" + (permission.adventureOnly() ? " as an Adventure" : "")
+                        + (Duration.UNTIL_END_OF_TURN.equals(permission.duration())
+                        ? " this turn." : " until the end of their next turn."))
                 .build());
         log.info("Game {} - {} may cast {} from their graveyard this turn",
                 gameData.id, gameData.playerIdToName.get(controllerId), card.getName());

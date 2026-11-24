@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.AllowCastMatchingCardsFromAnyGraveyardThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowCastMatchingCardsFromGraveyardThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -39,7 +39,9 @@ public class TheGreatWork extends Card {
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
         addTrigger(Triggers.chapter(3), SequenceEffect.of(
-                new AllowCastMatchingCardsFromAnyGraveyardThisTurnEffect(instantOrSorcery),
+                new AllowCastMatchingCardsFromGraveyardThisTurnEffect(instantOrSorcery)
+                        .fromGraveyardsOf(Subjects.eachPlayer())
+                        .exilingInsteadOfGraveyard(),
                 new ExileSelfAndReturnFrontEffect()));
     }
 }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import java.util.Objects;
+
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
@@ -18,20 +20,47 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *
  * <p>{@code cards} names graveyard cards that are no target instead: "choose an instant or sorcery card in your
  * graveyard. You may cast it this turn" is {@link #of} over {@code cardsThisWay(StepKind.CHOOSE)} (Mission
- * Briefing); {@code filter} and {@code scope} are then unused.</p>
+ * Briefing); {@code filter} and {@code scope} are then unused. Only a card in your graveyard is covered ("you may
+ * cast it from your graveyard").</p>
+ *
+ * <p>{@code duration} is how long the permission lasts ({@link Duration#UNTIL_END_OF_TURN} unless {@link #lasting}
+ * says otherwise); it also ends as the card leaves the graveyard (CR 400.7). {@code adventureOnly} permits casting the
+ * card only as its Adventure ("you may cast it from your graveyard as an Adventure until the end of your next turn",
+ * CR 716.3).</p>
  */
 public record AllowCastTargetCardFromGraveyardThisTurnEffect(
         CardPredicate filter,
         GraveyardSearchScope scope,
         boolean exileInsteadOfGraveyard,
         boolean entersTapped,
-        CardSubject cards
+        CardSubject cards,
+        Duration duration,
+        boolean adventureOnly
 ) implements CardEffect {
 
     public AllowCastTargetCardFromGraveyardThisTurnEffect {
         if (cards != null && cards.declaresTarget()) {
             throw new IllegalArgumentException("The permission's own spec declares its target: " + cards);
         }
+        Objects.requireNonNull(duration, "duration");
+    }
+
+    public AllowCastTargetCardFromGraveyardThisTurnEffect(CardPredicate filter, GraveyardSearchScope scope,
+                                                          boolean exileInsteadOfGraveyard, boolean entersTapped,
+                                                          CardSubject cards) {
+        this(filter, scope, exileInsteadOfGraveyard, entersTapped, cards, Duration.UNTIL_END_OF_TURN, false);
+    }
+
+    /** The permission lasting {@code duration} instead of this turn ("until the end of your next turn"). */
+    public AllowCastTargetCardFromGraveyardThisTurnEffect lasting(Duration duration) {
+        return new AllowCastTargetCardFromGraveyardThisTurnEffect(filter, scope, exileInsteadOfGraveyard,
+                entersTapped, cards, duration, adventureOnly);
+    }
+
+    /** "… cast it from your graveyard as an Adventure": only the card's Adventure may be cast this way. */
+    public AllowCastTargetCardFromGraveyardThisTurnEffect asAdventure() {
+        return new AllowCastTargetCardFromGraveyardThisTurnEffect(filter, scope, exileInsteadOfGraveyard,
+                entersTapped, cards, duration, true);
     }
 
     public AllowCastTargetCardFromGraveyardThisTurnEffect(CardPredicate filter, GraveyardSearchScope scope,

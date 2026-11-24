@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.d.DreadWhispers;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AllowCastSourceAsAdventureFromGraveyardUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowCastTargetCardFromGraveyardThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,7 +19,8 @@ public class MosswoodDreadknight extends Card {
         setBackFaceCard(new DreadWhispers());
         addCastingOption(new AdventureCast("{1}{B}"));
         addTrigger(Triggers.dies(ObjectRelation.THIS),
-                new MayEffect(new AllowCastSourceAsAdventureFromGraveyardUntilNextTurnEffect(),
+                new MayEffect(AllowCastTargetCardFromGraveyardThisTurnEffect.of(Subjects.sourceCard(), false)
+                        .lasting(Duration.UNTIL_END_OF_YOUR_NEXT_TURN).asAdventure(),
                         "Cast it from your graveyard as an Adventure until the end of your next turn?"));
     }
 

@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31 (each in Findings; the fold queue marks its rows). Fold runs 26, 30 and 23b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                              |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30 (each in Findings; the fold queue marks its rows). Fold runs 23b, 28b and 25b are running in worktrees; 26 waits to merge. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                               |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,518 / 2,810 (after fold run 31) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,511 / 2,805 (after fold run 30) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,811 rows over 4,448 classes (after fold run 31). Latest verdict per class: `step-9` 659, unique 1,170, absorbed 864, split 631, blocked-other 503, survivor 323, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 659 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,827 rows over 4,450 classes (after fold run 30). Latest verdict per class: `step-9` 647, unique 1,171, absorbed 871, split 631, blocked-other 507, survivor 325, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 647 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -802,6 +802,11 @@ Delayed and global triggers:
 - `GrantColorEffect.chosenColor(subject[, filter])`: static "[permanents] are the chosen color" from the source's stored choice; over `source()` it is not a CDA and takes the choice's timestamp (fold run 31).
 - `BecomeNightEffect.day()` / `.toggle()`: "it becomes day", "if it's night, it becomes day; otherwise night" (fold run 31).
 - `SetCardTypesEffect` one-shot over any subject (Hydro-Man's `source()`, `UNTIL_YOUR_NEXT_TURN`) and `SetTargetPermanentSupertypeEffect(supertype, gained, subject)` (fold run 31).
+
+- `AllowCastFromTopOfLibraryEffect.anySpell()` / `.payingLifeEqualToManaValue()` (`alternativeCost`, CR 118.9): "cast spells from the top", and Bolas's Citadel's life alternative (fold run 30).
+- Library-top permissions given by a resolution are `GrantStaticEffectToPlayerEffect.untilEndOfTurn` over `LookAtTopCardOfOwnLibraryEffect`, `PlayLandsFromTopOfLibraryEffect` and `AllowCastFromTopOfLibraryEffect`. `CastingPermissionService.libraryTopGrants` reads the floating copies first, then the permanents' statics (fold run 30).
+- `AllowCastMatchingCardsFromGraveyardThisTurnEffect.fromGraveyardsOf(players)` / `.exilingInsteadOfGraveyard()` / `.spendingManaOfAnyType()`: "from that player's graveyard" or "from any graveyard" (fold run 30).
+- `AllowCastTargetCardFromGraveyardThisTurnEffect.lasting(Duration)` / `.asAdventure()` (CR 716.3) over `sourceCard()`: "cast it from your graveyard as an Adventure until the end of your next turn" (fold run 30).
 
 ### Blocked causes still open
 
@@ -3129,6 +3134,39 @@ Batches `res-colour`, `static-colour`, `day-night` and `self-grants` are done: 1
 - `SetCardTypesUntilEndOfTurnEffect`'s layer case has the same subtype gap Hydro-Man had (CR 205.1a). Sure.
 
 **For the next run.** Take `pt-amount` with the four pieces above first, then `base-pt-new`. Put `floated-name` in a run of its own with The Irencrag.
+
+### Step 9, fold run 30 (2026-11-24, parallel worktree)
+
+Five batches touched, two left. Ratchet 3,572 / 2,853 → 3,565 / 2,848. Ledger 16 rows: absorbed 7, survivor 3, blocked-other 4, unique 1, step-9 1. 10 card files rewritten, Oracle text checked for 9. Rulings read for Bolas's Citadel, Gwenom and Ichor Aberration. CR 118.6, 118.9, 118.9a, 305.2, 400.7, 406.3, 514.2, 601.2f, 601.3, 607.2a, 608.2g, 609.4b, 611.2a, 611.2c, 702.37c, 708.4 and 716.3 checked.
+
+| Batch | Result |
+|---|---|
+| lib-top | 3 folded, 2 left. `AllowCastFromTopOfLibraryEffect` gains `alternativeCost` (`payingLifeEqualToManaValue()`, PayLife only) and `anySpell()` / `SPELL_TYPES`. The Belligerent and Gwenom float three `GrantStaticEffectToPlayerEffect.untilEndOfTurn` grants (look, `PlayLandsFromTopOfLibraryEffect`, the cast permission). `CastingPermissionService.libraryTopGrants` gives every reader the player's floating copies first, then the permanents' statics. Left: Windriddle Palaces and Xanathar (see For the next run). |
+| gy-grants | 2 folded, 1 unique. The survivor gains `graveyards` (`fromGraveyardsOf`: you, one player, or every player), `exilingInsteadOfGraveyard()` and `spendingManaOfAnyType()`. Shaman's Trance stays `unique`: it treats other graveyards as yours for every permission, which a cast filter grant can't say. |
+| src-gy-perm | 1 folded, 1 blocked. The survivor gains `lasting(Duration)` and `asAdventure()` (CR 716.3), over `sourceCard()` (Hildibrand, Mosswood). Ichor Aberration waits on the owner's "it" question. |
+| exiled-as-cost | Primordial Mist moved to `AllowPlayCardsFromExileEffect.thisTurn(exiledAsCost())`; the record's this-turn mode is gone. The record stays for Chitinous Crawler's play-now offer. |
+| gy-statics | 1 of 6 folded: Sarcophagus → `CastSpellsFromGraveyardEffect(new CardHasCyclingPredicate())`. Raul is not folded (below); the other four were not started. |
+| exiled-with-src, spend-mana | not started |
+
+**Behaviour changes.**
+- The Belligerent may cast a morph card face down from the top (CR 702.37c); the float is now a normal permission (new test).
+- Gwenom's top spell is offered when life pays for it with no mana (new test).
+- Bolas's Citadel offers and casts a no-mana-cost top card for 0 life (CR 118.9; new test).
+- The library-top flash grant skips face-down and ability-less permanents (Elsha; new test).
+- The library-top counter-cost label is shown when the life alternative can't be paid.
+- Adventure graveyard grants log the survivor's line.
+- A card-subject graveyard grant covers only cards in your graveyard; no card changes.
+- Floating library-top grants have no source permanent id (`GrantStaticEffectToPlayerEffect`).
+
+**Seen, not changed.**
+- Whispersteel Dagger and Xanathar say "as though it were mana of any color", but both use any-type spending, so coloured mana pays {C} (CR 609.4b). Same as the open spend-mana defect. Fairly sure.
+- Graveyard permission filters are matched with `matchesCardPredicate(card, filter, null)`, with no GameData and no owner. Game-state card predicates (milled this turn, put there from a library this turn) can't be used in them, which blocks Raul's predicate fold. Sure of the code.
+
+**For the next run.**
+1. Windriddle and Xanathar need a library-owner `PlayerSubject` on `AllowCastFromTopOfLibraryEffect` / `PlayLandsFromTopOfLibraryEffect`, read from face-up planes. Xanathar's floating copy also needs a player bound at resolution (CR 611.2c) and its any-colour option.
+2. exiled-with-src should fold together with the unaudited `AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect` (4 cards). The open-set option (CR 611.2c) would then have 6 users; Urianger's {2} reduction is its own.
+3. gy-statics: for Raul, first pass GameData and the owner into the static graveyard filter matching. Eye of Duskmantle needs `CastSpellsFromGraveyardEffect` to carry the interface's `alternateCost`. Ninja Teen, Coram and Jaya's emblem are not started.
+4. spend-mana: all 8 rows.
 
 ## Prompt
 

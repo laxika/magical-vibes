@@ -4,9 +4,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 
-import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPlayCardsFromTopOfLibraryForLifeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardGrantFreePlayUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -31,7 +29,6 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastSourceCardFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
@@ -630,10 +627,6 @@ public class GameViewProjectionFactory {
                     .anyMatch(AllowCastSourceCardFromTopOfLibraryEffect.class::isInstance)) {
                 revealedPlayerIds.add(pid);
             }
-            if (pid.equals(viewerId)
-                    && data.hasFloatingEffectOnPlayer(pid, AllowPlayFromTopOfLibraryUntilEndOfTurnEffect.class)) {
-                revealedPlayerIds.add(pid);
-            }
             if (pid.equals(viewerId) && isChoosingWhetherToExileLookedAtTopCard(data, pid)) {
                 revealedPlayerIds.add(pid);
             }
@@ -643,8 +636,7 @@ public class GameViewProjectionFactory {
                             ((RevealTopCardGrantFreePlayUntilEndOfTurnEffect) fe.effect()).cardId()))) {
                 revealedPlayerIds.add(pid);
             }
-            if ((castingPermissionService.hasLibraryTopPermission(data, viewerId, pid)
-                    || (pid.equals(viewerId) && data.hasFloatingEffectOnPlayer(pid, MayPlayCardsFromTopOfLibraryForLifeUntilEndOfTurnEffect.class)))
+            if (castingPermissionService.hasLibraryTopPermission(data, viewerId, pid)
                     && deck != null && !deck.isEmpty()) {
                 revealedPlayerIds.add(pid);
             }
@@ -672,8 +664,7 @@ public class GameViewProjectionFactory {
                     continue;
                 } else if (pid.equals(viewerId) &&
                         (effect instanceof LookAtTopCardOfOwnLibraryEffect
-                                || effect instanceof AllowCastFromTopOfLibraryEffect
-                                || effect instanceof AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect)) {
+                                || effect instanceof AllowCastFromTopOfLibraryEffect)) {
                     // Private: only visible to the controller
                     revealedPlayerIds.add(pid);
                 }
@@ -1098,13 +1089,12 @@ public class GameViewProjectionFactory {
             }
         }
         boolean freeTopPlay = castingPermissionService.hasLibraryTopCardFreePlayPermission(gameData, playerId, topCard);
-        boolean lifeTopPlay = castingPermissionService.hasLibraryTopCardLifePlayPermission(gameData, playerId, topCard);
 
         if (topCard.hasType(CardType.LAND)) {
             boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
             boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                     || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
-            if ((freeTopPlay || lifeTopPlay || castingPermissionService.canPlayLandFromTopOfLibrary(
+            if ((freeTopPlay || castingPermissionService.canPlayLandFromTopOfLibrary(
                     gameData, playerId, topCard))
                     && isActivePlayer
                     && isMainPhase
@@ -1139,7 +1129,8 @@ public class GameViewProjectionFactory {
     private CardView playableLibraryTopSpellView(GameData gameData, UUID playerId, Card topCard,
                                                  CardView view, boolean castFaceDown) {
         boolean freeTopPlay = castingPermissionService.hasLibraryTopCardFreePlayPermission(gameData, playerId, topCard);
-        boolean lifeTopPlay = castingPermissionService.hasLibraryTopCardLifePlayPermission(gameData, playerId, topCard);
+        boolean lifeTopPlay = castingPermissionService
+                .canCastFromTopOfLibraryByPayingLifeEqualToManaValue(gameData, playerId, topCard);
         if (!castingPermissionService.canCastFromTopOfLibrary(gameData, playerId, topCard)
                 || (!castFaceDown && !freeTopPlay && !lifeTopPlay && topCard.getManaCost() == null)) {
             return null;
@@ -1189,7 +1180,7 @@ public class GameViewProjectionFactory {
         boolean alternativeZeroCost = !castFaceDown && castingCostService.hasAlternativeZeroCostFromBattlefield(
                 gameData, playerId, topCard, Zone.LIBRARY);
         CardView topCardView = view;
-        if (!freeTopPlay && !lifeTopPlay && !canPayLifeAlternative && !alternativeZeroCost) {
+        if (!freeTopPlay && !canPayLifeAlternative && !alternativeZeroCost) {
             int counterCost = castingPermissionService.findAdditionalCounterCostFromTopOfLibrary(
                     gameData, playerId, topCard).orElse(0);
             if (counterCost > 0) {

@@ -3,7 +3,10 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
@@ -18,7 +21,9 @@ public class TheBelligerent extends Card {
     public TheBelligerent() {
         addTrigger(Triggers.attacks(),
                 CreateTokenEffect.ofTreasureToken(1),
-                new AllowPlayFromTopOfLibraryUntilEndOfTurnEffect());
+                GrantStaticEffectToPlayerEffect.untilEndOfTurn(new LookAtTopCardOfOwnLibraryEffect()),
+                GrantStaticEffectToPlayerEffect.untilEndOfTurn(new PlayLandsFromTopOfLibraryEffect()),
+                GrantStaticEffectToPlayerEffect.untilEndOfTurn(AllowCastFromTopOfLibraryEffect.anySpell()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

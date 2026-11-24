@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.rules.TurnEvent;
-import com.github.laxika.magicalvibes.model.effect.MayPlayCardsFromTopOfLibraryForLifeUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.ThaliaGuardianOfThraben;
@@ -42,6 +42,22 @@ class GwenomRemorselessTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The top spell is offered as playable when life pays for it and no mana is available")
+    void topSpellIsOfferedWithoutMana() {
+        harness.setLibrary(player1, List.of(new Shock()));
+        addCreatureReady(player1, new GwenomRemorseless());
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.clearMessages();
+
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains("\"playableLibraryTopCards\":[{")
+                        && message.contains("Shock"));
+    }
+
+    @Test
     @DisplayName("Attacking permits a land from the top with normal land timing")
     void attackingPermitsTopLibraryLandPlay() {
         Forest forest = new Forest();
@@ -67,11 +83,11 @@ class GwenomRemorselessTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), MayPlayCardsFromTopOfLibraryForLifeUntilEndOfTurnEffect.class)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), AllowCastFromTopOfLibraryEffect.class)).isTrue();
         GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
         gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
-        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), MayPlayCardsFromTopOfLibraryForLifeUntilEndOfTurnEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), AllowCastFromTopOfLibraryEffect.class)).isFalse();
         assertThatThrownBy(() -> harness.castFromLibraryTop(player1, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }

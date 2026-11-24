@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
+import java.util.Objects;
+
 /**
  * "You may cast [filtered] spells from your graveyard this turn" (Liliana, Untouched by Death's
  * −3). Unlike {@link AllowCastTargetCardFromGraveyardThisTurnEffect}, which permits one chosen
@@ -11,6 +13,11 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * that reach the graveyard later in the turn. Unlike a
  * {@link CastSpellsFromGraveyardPermission}, which is a static ability of a permanent on the
  * battlefield, this is a one-shot grant recorded on {@code GameData} and dropped at turn cleanup.
+ *
+ * <p>{@code graveyards} names whose graveyard the spells may be cast from: {@link Subjects#you()} by default, one
+ * player ("from that player's graveyard", {@link Subjects#triggeringPlayer()}), or every player ("from any graveyard",
+ * {@link Subjects#eachPlayer()}). {@code exileInsteadOfGraveyard} is "if a spell cast this way would be put into a
+ * graveyard, exile it instead"; {@code anyManaType} lets mana of any type be spent to cast those spells.
  */
 public record AllowCastMatchingCardsFromGraveyardThisTurnEffect(
         CardPredicate filter,
@@ -19,7 +26,47 @@ public record AllowCastMatchingCardsFromGraveyardThisTurnEffect(
         CardSubtype grantedSubtype,
         ForageOrPayManaCost additionalCost,
         CounterType enterWithCounter,
-        int enterWithCounterCount) implements CardEffect {
+        int enterWithCounterCount,
+        PlayerSubject graveyards,
+        boolean exileInsteadOfGraveyard,
+        boolean anyManaType) implements CardEffect {
+
+    public AllowCastMatchingCardsFromGraveyardThisTurnEffect {
+        Objects.requireNonNull(graveyards, "graveyards");
+    }
+
+    public AllowCastMatchingCardsFromGraveyardThisTurnEffect(
+            CardPredicate filter, boolean singleUse, CounterType entryCounterType, CardSubtype grantedSubtype,
+            ForageOrPayManaCost additionalCost, CounterType enterWithCounter, int enterWithCounterCount) {
+        this(filter, singleUse, entryCounterType, grantedSubtype, additionalCost, enterWithCounter,
+                enterWithCounterCount, Subjects.you(), false, false);
+    }
+
+    /** The permission over the graveyards of {@code players} instead of yours. */
+    public AllowCastMatchingCardsFromGraveyardThisTurnEffect fromGraveyardsOf(PlayerSubject players) {
+        return new AllowCastMatchingCardsFromGraveyardThisTurnEffect(filter, singleUse, entryCounterType,
+                grantedSubtype, additionalCost, enterWithCounter, enterWithCounterCount, players,
+                exileInsteadOfGraveyard, anyManaType);
+    }
+
+    /** "If a spell cast this way would be put into a graveyard, exile it instead." */
+    public AllowCastMatchingCardsFromGraveyardThisTurnEffect exilingInsteadOfGraveyard() {
+        return new AllowCastMatchingCardsFromGraveyardThisTurnEffect(filter, singleUse, entryCounterType,
+                grantedSubtype, additionalCost, enterWithCounter, enterWithCounterCount, graveyards, true,
+                anyManaType);
+    }
+
+    /** "… and you may spend mana as though it were mana of any type to cast that spell." */
+    public AllowCastMatchingCardsFromGraveyardThisTurnEffect spendingManaOfAnyType() {
+        return new AllowCastMatchingCardsFromGraveyardThisTurnEffect(filter, singleUse, entryCounterType,
+                grantedSubtype, additionalCost, enterWithCounter, enterWithCounterCount, graveyards,
+                exileInsteadOfGraveyard, true);
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return graveyards.declaresTarget() ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
+    }
 
     public AllowCastMatchingCardsFromGraveyardThisTurnEffect(CardPredicate filter) {
         this(filter, false, null, null, null, null, 0);

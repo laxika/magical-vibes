@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.g.GentlemansRise;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AllowCastSourceAsAdventureFromGraveyardUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowCastTargetCardFromGraveyardThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -21,7 +22,8 @@ public class HildibrandManderville extends Card {
         addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(),
                 new PermanentIsTokenPredicate()));
         // The "may" is the later cast; the permission itself is granted when the trigger resolves.
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new AllowCastSourceAsAdventureFromGraveyardUntilNextTurnEffect());
+        addTrigger(Triggers.dies(ObjectRelation.THIS), AllowCastTargetCardFromGraveyardThisTurnEffect.of(Subjects.sourceCard(), false)
+                        .lasting(Duration.UNTIL_END_OF_YOUR_NEXT_TURN).asAdventure());
     }
 
     @Override

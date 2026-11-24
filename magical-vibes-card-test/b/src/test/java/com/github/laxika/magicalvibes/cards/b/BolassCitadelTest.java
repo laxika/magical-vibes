@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.a.AncestralVision;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GodPharaohsStatue;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BolassCitadel.class, Forest.class, GrizzlyBears.class, GodPharaohsStatue.class,
+@CardUsed({AncestralVision.class, BolassCitadel.class, Forest.class, GrizzlyBears.class, GodPharaohsStatue.class,
         SparkHarvest.class, SparkReaper.class})
 class BolassCitadelTest extends BaseCardTest {
 
@@ -34,6 +35,27 @@ class BolassCitadelTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertLife(player1, 18);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("a top card with no mana cost is offered and cast for 0 life, the life being its alternative cost")
+    void castsCardWithNoManaCostForZeroLife() {
+        harness.addToBattlefield(player1, new BolassCitadel());
+        harness.setLibrary(player1, List.of(new AncestralVision(), new Forest(), new Forest(), new Forest()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.clearMessages();
+
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains("\"playableLibraryTopCards\":[{")
+                        && message.contains("Ancestral Vision"));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.castAndResolveFromLibraryTop(player1, player1.getId());
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 3);
     }
 
     @Test

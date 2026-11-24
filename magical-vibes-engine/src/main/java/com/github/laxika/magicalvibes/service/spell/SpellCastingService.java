@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.spell;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardGrantFreePlayUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
@@ -13828,8 +13827,6 @@ public class SpellCastingService {
         }
 
         boolean canUseManaValueLifeAlternative = castingPermissionService
-                .hasLibraryTopCardLifePlayPermission(gameData, playerId, card)
-                || castingPermissionService
                 .canCastFromTopOfLibraryByPayingLifeEqualToManaValue(gameData, playerId, card);
         boolean canCastNormallyFromLibraryTop = castingPermissionService
                 .canCastFromTopOfLibraryNormally(gameData, playerId, card);
@@ -13851,7 +13848,6 @@ public class SpellCastingService {
         }
         boolean usesNormalTopLibraryPermission = !freeTopPlay
                 && !useManaValueLifeAlternative
-                && !gameData.hasFloatingEffectOnPlayer(playerId, AllowPlayFromTopOfLibraryUntilEndOfTurnEffect.class)
                 && canCastNormallyFromLibraryTop;
 
         effectiveXValue = freeTopPlay || useManaValueLifeAlternative
