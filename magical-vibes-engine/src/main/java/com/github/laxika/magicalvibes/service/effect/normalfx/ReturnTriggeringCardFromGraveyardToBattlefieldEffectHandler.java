@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGrave
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -33,6 +35,7 @@ public class ReturnTriggeringCardFromGraveyardToBattlefieldEffectHandler impleme
     private final PermanentRemovalService permanentRemovalService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final GameLogService gameLogService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -80,8 +83,10 @@ public class ReturnTriggeringCardFromGraveyardToBattlefieldEffectHandler impleme
             return;
         }
         UUID battlefieldControllerId = returnEffect.returnUnderController() ? entry.getControllerId() : ownerId;
+        int counterAmount = returnEffect.counterType() == null ? 0 : Math.max(0, amountEvaluationService.evaluate(
+                gameData, returnEffect.counterAmount(), AmountContext.forStackEntry(entry, null)));
         graveyardReturnSupport.putCardOntoBattlefield(
                 gameData, battlefieldControllerId, card, null, returnEffect.grantSubtype(), returnEffect.enterTapped(), false,
-                returnEffect.counterType(), false, false, returnEffect.counterAmount());
+                returnEffect.counterType(), false, false, counterAmount);
     }
 }

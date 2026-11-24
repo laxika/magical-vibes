@@ -3,7 +3,10 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MIR", collectorNumber = "25")
@@ -16,6 +19,8 @@ public class MangarasBlessing extends Card {
         // 2 life, and you return this card from your graveyard to your hand at the beginning of
         // the next end step." The delayed return takes the discarded card, the stack entry's triggering card.
         addTrigger(Triggers.opponentCausesYouToDiscardThisCard(), new GainLifeEffect(2),
-                new RegisterDelayedReturnCardFromGraveyardToHandEffect());
+                RegisterDelayedStepTriggerEffect.aboutCardAtNext(
+                        Triggers.endStep(ActivePlayer.ANY), Subjects.sourceCard(),
+                        new PutCardsIntoHandEffect(Subjects.sourceCard())));
     }
 }

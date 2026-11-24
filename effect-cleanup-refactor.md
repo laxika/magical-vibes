@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24 (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 30b, 7b, 6c, 47b; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                             |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 30b, 6c, 47b, 46c; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                              |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,086 / 2,497 (after fold run 24) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,084 / 2,495 (after fold run 7b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,570 rows over 4,553 classes (after fold run 24). Latest verdict per class: `step-9` 102, unique 1,190, absorbed 1,294, split 670, blocked-other 548, survivor 440, blocked-step-model 139, blocked-player-loop 96, dead 74. Waiting: 102 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,574 rows over 4,555 classes (after fold run 7b). Latest verdict per class: `step-9` 102, unique 1,190, absorbed 1,296, split 670, blocked-other 548, survivor 440, blocked-step-model 139, blocked-player-loop 96, dead 74. Waiting: 102 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1059,6 +1059,10 @@ Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671
 - `DoubleCountersOnTargetPermanentEffect(type, controlledBy(...) | creaturesYouControl())`: "double the counters on each [permanent] you control", each placement through the shared pipeline (fold run 24).
 - `ControlledPermanentsEnterUntappedEffect(filter, PlayerSubject players)`, `.lands()`, `.forEveryPlayer(filter)`: every "[permanents] enter untapped", printed or as the upgrade of a `ConditionalReplacementEffect` (fold run 24).
 - `PutCounterOnTargetPermanentEffect(createdThisResolution() | returnedThisResolution(), …)`: "put counters on it / each of them" after a token or return step; a source-relative amount is noted first (`NoteAmountEffect` + `AmountThisWay.noted()`) (fold run 24).
+
+- `RegisterDelayedStepTriggerEffect.aboutCardAtNext(...).ofThatPlayer(player)`: "at the beginning of their next upkeep" with `Triggers.upkeep(CHOSEN_PLAYER)`, that player's next step in any turn (Phytotitan: `Subjects.ownersOf(Subjects.sourceCard())`) (fold run 7b).
+- `ReturnTriggeringCardFromGraveyardToBattlefieldEffect(tapped, underController, counterType, DynamicAmount)`: a counter amount evaluated as it resolves; "with one fewer revival counter" is `NoteAmountEffect` then `AmountThisWay.noted()` in the delayed return (Nine-Lives Familiar, fold run 7b).
+- "Return that card / it to its owner's hand at the beginning of the next end step": `aboutCardAtNext(endStep(ANY), triggeringCards() | sourceCard(), PutCardsIntoHandEffect(same subject))`, wrapped in `MayEffect` for "you may" (fold run 7b).
 
 ### Blocked causes still open
 
@@ -4783,6 +4787,34 @@ For the next run: 49b takes `modal-cost` (EscalateCost plus the ExtractedCosts r
 - `resolveReplacementOrder` resumes later named permanents with the first permanent's count.
 - **Ratchet**: 3,127 / 2,537 → 3,119 / 2,533.
 - **For the next run**: 24b. Record MANIFEST in the manifest-dread completion, then fold the chosen-counter pair, then enter-counters with an entering-permanent amount context.
+
+### Step 9, fold run 7b (2026-11-24, parallel worktree)
+Batch `delayed-leads`: 2 records, 16 cards, both folded. Ratchet 3,117 / 2,525 → 3,115 / 2,525 handlers 2,527 → 2,525. Ledger 4 rows (absorbed 2, survivor 1, blocked-other 1 re-noted). 16 card files rewritten, Oracle text checked for all 16; rulings for the Locust God, Tiana, Prized Amalgam, Ivory Gargoyle, Agyrem, Phytotitan (Breathkeeper Seraph, Nine-Lives Familiar: none). CR 110.2a, 400.7, 500.8, 503.1a, 603.3a, 603.4, 603.7, 603.7a–e, 608.2h checked.
+
+| Batch | Result |
+|---|---|
+| `delayed-leads` | `RegisterDelayedSelfReturnFromGraveyardEffect` (7 cards):<br>• next end step: Ivory Gargoyle and Molten Firebird (before `SkipNextEffect`), Prized Amalgam tapped, Sand Golem with a +1/+1 counter<br>• `upkeep(YOU)`: Breathkeeper Seraph<br>• `upkeep(CHOSEN_PLAYER).ofThatPlayer(ownersOf(sourceCard()))`: Phytotitan<br>• Nine-Lives Familiar: `NoteAmountEffect(Sum(CountersOnTriggeringPermanent(REVIVAL), -1))` then the return with `AmountThisWay.noted()`<br>`RegisterDelayedReturnCardFromGraveyardToHandEffect` (9 cards):<br>• "that card" via `triggeringCards()`: Liesa, Rienne, Agyrem, Tiana (`MayEffect` inside the delayed ability, as before)<br>• "it / this card" via `sourceCard()`: three HOU Gods, Mangara's Blessing, Pure Intentions |
+
+**Where the triage note needed more.**
+- "Their next upkeep" (Phytotitan) is the owner's next upkeep, whichever turn it falls in. `ofThatPlayersNextTurn` would skip an additional upkeep step this turn (`AdditionalUpkeepStepEffect` exists), so the survivor got `ofThatPlayer`: the existing `player` component without `afterThisTurn`. Its future users are the other `CHOSEN_PLAYER` registrars.
+- "Your next upkeep" (Breathkeeper) needs no player: it is `upkeep(YOU)`, the delayed ability's controller.
+- The counter amount needed `ReturnTriggeringCardFromGraveyardToBattlefieldEffect.counterAmount` widened to a `DynamicAmount`. This is not a new component; the `int` overloads are kept.
+
+**Behaviour changes.**
+- Nine-Lives Familiar returns under the delayed ability's controller (CR 110.2a, 603.7e). Its text has no "under its owner's control"; the old code used the owner. New test `stolenFamiliarReturnsUnderItsLastControllersControl` (fails on the old code by reading).
+- A source card that left its graveyard and came back is no longer returned by the Gods, Mangara's Blessing or Pure Intentions (CR 400.7, 603.7c). The old hand handler searched every graveyard with no stay check when the entry had no triggering card.
+- Registration and fizzle log lines are gone (the survivor logs nothing). Hand returns log `PutCardsIntoHandEffect`'s line. Tiana's prompt is "Return that card to its owner's hand?". No test asserted these.
+- Self-returns now carry their maker's source permanent (CR 603.7e). Nothing observable.
+- Phytotitan returns at an additional upkeep in the same turn (no test).
+
+**Tests changed.** None. New: the Nine-Lives case.
+
+**Tests run.** 55 classes: every test naming a rewritten card, a `aboutCardAtNext` / `ReturnTriggeringCardFromGraveyardToBattlefieldEffect` / `ReturnTargetCardOnDeathThisTurnEffect` card, `DelayedStepAbilityTest`, `StepTriggerServiceTest`, `CardEffectTargetingConsistencyTest`, `TargetPolarityGuardTest` and `EffectCountRatchetTest`. Result: 61 XML files, 658 cases, 0 failures. The deleted handlers asked no death replacements first, and no `src/test` tree named the deleted records.
+
+**Seen, not changed.**
+- Breathkeeper Seraph asks its "you may" as the dies trigger resolves. The text "you may return it … at the beginning of your next upkeep" has the template Tiana's ruling reads as a choice made when the delayed ability resolves. Breathkeeper has no ruling of its own. 9 test flows answer the may at death. Fairly sure.
+
+**For the next run.** `ofThatPlayer` is ready for the `CHOSEN_PLAYER` registrars (`RegisterPoisonAtNextUpkeepUnlessPaysEffect`, `RegisterLoseLifeAtNextDrawStepUnlessPaysEffect`, `ExileTargetSpellWithDelayCountersEffect`).
 
 ## Prompt
 

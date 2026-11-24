@@ -54,7 +54,7 @@ public class RegisterDelayedStepTriggerEffectHandler implements NormalEffectHand
             return;
         }
         if (register.card() != null) {
-            registerAboutCard(gameData, entry, register);
+            registerAboutCard(gameData, entry, register, playerId);
             return;
         }
         if (register.permanent() != null) {
@@ -138,9 +138,11 @@ public class RegisterDelayedStepTriggerEffectHandler implements NormalEffectHand
     /**
      * The ability about the card its subject names in a graveyard, bound to that stay (CR 603.7c, 400.7): the delayed
      * entry records it as its triggering card in that stay. With no such card it is made only when it does more, and
-     * then about this card in the stay its entry expected, so it still returns no card that left and came back.
+     * then about this card in the stay its entry expected, so it still returns no card that left and came back. It
+     * waits for the step of the player {@code playerId} ("their next upkeep"), or of no player in particular.
      */
-    private void registerAboutCard(GameData gameData, StackEntry entry, RegisterDelayedStepTriggerEffect register) {
+    private void registerAboutCard(GameData gameData, StackEntry entry, RegisterDelayedStepTriggerEffect register,
+                                   UUID playerId) {
         UUID cardId = subjectResolutionService.locatedCards(gameData, entry, register, register.card()).stream()
                 .filter(located -> located.zone() == Zone.GRAVEYARD)
                 .map(located -> located.card().getId())
@@ -160,7 +162,7 @@ public class RegisterDelayedStepTriggerEffectHandler implements NormalEffectHand
                 entry.getControllerId(), entry.getCard(),
                 new TriggeredAbility(register.step(), TriggerOptions.DEFAULT,
                         register.effects().toArray(CardEffect[]::new)),
-                entry.getSourcePermanentId(), null, null, referents));
+                entry.getSourcePermanentId(), null, playerId, referents));
     }
 
     /** Creates {@code delayed}, keeping the number this resolution noted, if any ("where X is the noted number"). */

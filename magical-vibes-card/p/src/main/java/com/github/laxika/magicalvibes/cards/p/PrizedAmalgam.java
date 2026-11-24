@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSelfReturnFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCastFromZonePredicate;
@@ -12,10 +13,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredOrCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentWasCastPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.Zone;
 
 import java.util.List;
 
@@ -41,6 +44,8 @@ public class PrizedAmalgam extends Card {
                                         new PermanentControlledBySourceControllerPredicate())))))),
                         ObjectRelation.YOU_OWN),
                 AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                new RegisterDelayedSelfReturnFromGraveyardEffect(null, 0, false, true));
+                RegisterDelayedStepTriggerEffect.aboutCardAtNext(
+                        Triggers.endStep(ActivePlayer.ANY), Subjects.sourceCard(),
+                        new ReturnTriggeringCardFromGraveyardToBattlefieldEffect(true)));
     }
 }

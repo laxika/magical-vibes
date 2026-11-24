@@ -6,17 +6,20 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
-import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
 @CardRegistration(set = "OHOP", collectorNumber = "3")
 @CardRegistration(set = "OPCA", collectorNumber = "11")
@@ -29,7 +32,9 @@ public class Agyrem extends Card {
                         false, null, 0, null, null, false, true));
         addTrigger(new TriggerCondition(Triggers.creatureDies(new PermanentNotPredicate(white), ObjectRelation.ANY),
                         AbilityZones.COMMAND),
-                TriggerOptions.DEFAULT, new RegisterDelayedReturnCardFromGraveyardToHandEffect());
+                TriggerOptions.DEFAULT, RegisterDelayedStepTriggerEffect.aboutCardAtNext(
+                        Triggers.endStep(ActivePlayer.ANY), Subjects.triggeringCards(),
+                        new PutCardsIntoHandEffect(Subjects.triggeringCards())));
         addTrigger(Triggers.chaosEnsues(), GrantStaticEffectToPlayerEffect.untilPlaneswalk(
                 new CreaturesCantAttackControllerUnlessPredicateEffect(
                         new PermanentNotPredicate(new PermanentTruePredicate()))));

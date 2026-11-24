@@ -2,12 +2,15 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 
 @CardRegistration(set = "SOK", collectorNumber = "25")
 public class PureIntentions extends Card {
@@ -21,6 +24,8 @@ public class PureIntentions extends Card {
                         .discardedByOpponentThisTurn(true)
                         .build())));
         addTrigger(Triggers.opponentCausesYouToDiscardThisCard(),
-                new RegisterDelayedReturnCardFromGraveyardToHandEffect());
+                RegisterDelayedStepTriggerEffect.aboutCardAtNext(
+                        Triggers.endStep(ActivePlayer.ANY), Subjects.sourceCard(),
+                        new PutCardsIntoHandEffect(Subjects.sourceCard())));
     }
 }

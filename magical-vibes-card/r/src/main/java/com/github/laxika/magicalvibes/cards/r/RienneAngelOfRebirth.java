@@ -2,10 +2,12 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,6 +20,8 @@ public class RienneAngelOfRebirth extends Card {
                 new PermanentIsMulticoloredPredicate()));
 
         addTrigger(Triggers.creatureDies(new PermanentIsMulticoloredPredicate(), ObjectRelation.ANOTHER_YOU_CONTROL),
-                new RegisterDelayedReturnCardFromGraveyardToHandEffect());
+                RegisterDelayedStepTriggerEffect.aboutCardAtNext(
+                        Triggers.endStep(ActivePlayer.ANY), Subjects.triggeringCards(),
+                        new PutCardsIntoHandEffect(Subjects.triggeringCards())));
     }
 }

@@ -26,8 +26,9 @@ import java.util.Objects;
  *                         none, an ability that is always created and names no object it is about
  * @param step             the step it waits for
  * @param effects          what it does
- * @param player           the player it is about ("that player's next turn", {@code ActivePlayer.CHOSEN_PLAYER}), its
- *                         entry's non-targeting player; {@code null} for none
+ * @param player           the player it is about ("that player's next turn", "their next upkeep",
+ *                         {@code ActivePlayer.CHOSEN_PLAYER}), its entry's non-targeting player; not created when the
+ *                         subject names none; {@code null} for none
  * @param afterThisTurn    whether it waits past this turn ("of that player's next turn")
  * @param ifAnyStillExiled whether it has the intervening "if any of those cards remain exiled", "if that player hasn't
  *                         played the card" (CR 603.4)
@@ -63,10 +64,11 @@ public record RegisterDelayedStepTriggerEffect(StepKind about, StepTrigger step,
         if (about == null && ifAnyStillExiled || about == null && card == null && !alsoIfNothingHappened) {
             throw new IllegalArgumentException("An ability about no step is always created and has no cards to check");
         }
-        if (card != null && (about != null || permanent != null || player != null || afterThisTurn
+        if (card != null && (about != null || permanent != null || afterThisTurn
                 || !(card instanceof CardSubject.SourceCard || card instanceof CardSubject.TriggeringCards))) {
-            throw new IllegalArgumentException("An ability about a card is about no step and no permanent, and about "
-                    + "the source card or the triggering card in its graveyard: " + card);
+            throw new IllegalArgumentException("An ability about a card is about no step and no permanent, waits for "
+                    + "the next such step, and is about the source card or the triggering card in its graveyard: "
+                    + card);
         }
         if (about != null && about != StepKind.EXILE && about != StepKind.CREATE_TOKEN && about != StepKind.SEEK
                 && about != StepKind.RETURN) {
@@ -191,6 +193,17 @@ public record RegisterDelayedStepTriggerEffect(StepKind about, StepTrigger step,
     public RegisterDelayedStepTriggerEffect ofThatPlayersNextTurn(PlayerSubject thatPlayer) {
         return new RegisterDelayedStepTriggerEffect(about, step, effects, Objects.requireNonNull(thatPlayer, "player"),
                 true, ifAnyStillExiled, alsoIfNothingHappened, permanent, orStep, thisTurn, card);
+    }
+
+    /**
+     * This ability, waiting for {@code thatPlayer}'s next step, whichever turn it is in ("return it to the battlefield
+     * tapped under its owner's control at the beginning of their next upkeep": {@code Triggers.upkeep(
+     * ActivePlayer.CHOSEN_PLAYER)} and {@code Subjects.ownersOf(Subjects.sourceCard())}). {@code thatPlayer} is found as
+     * this resolves; it is not created when that names no player.
+     */
+    public RegisterDelayedStepTriggerEffect ofThatPlayer(PlayerSubject thatPlayer) {
+        return new RegisterDelayedStepTriggerEffect(about, step, effects, Objects.requireNonNull(thatPlayer, "player"),
+                afterThisTurn, ifAnyStillExiled, alsoIfNothingHappened, permanent, orStep, thisTurn, card);
     }
 
     /** This ability with "if any of those cards remain exiled". */

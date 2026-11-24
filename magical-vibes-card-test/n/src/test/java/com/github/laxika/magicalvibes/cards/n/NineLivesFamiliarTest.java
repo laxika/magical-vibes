@@ -60,6 +60,24 @@ class NineLivesFamiliarTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Nine-Lives Familiar");
     }
 
+    @Test
+    @DisplayName("Returns under the control of the player who controlled it when it died")
+    void stolenFamiliarReturnsUnderItsLastControllersControl() {
+        Permanent familiar = harness.addToBattlefieldAndReturn(player2, new NineLivesFamiliar());
+        gd.stolenCreatures.put(familiar.getId(), player1.getId());
+        familiar.setCounterCount(CounterType.REVIVAL, 3);
+        kill(familiar);
+        harness.assertInGraveyard(player1, "Nine-Lives Familiar");
+
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Nine-Lives Familiar");
+        assertThat(findPermanent(player2, "Nine-Lives Familiar").getCounterCount(CounterType.REVIVAL)).isEqualTo(2);
+    }
+
     private void kill(Permanent familiar) {
         familiar.setMarkedDamage(gqs.getEffectiveToughness(gd, familiar));
         harness.runStateBasedActions();

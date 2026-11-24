@@ -5,17 +5,19 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "HOU", collectorNumber = "139")
 @CardRegistration(set = "AKR", collectorNumber = "243")
@@ -43,6 +45,8 @@ public class TheLocustGod extends Card {
                 "{2}{U}{R}: Draw a card, then discard a card."));
 
         // When The Locust God dies, return it to its owner's hand at the beginning of the next end step.
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new RegisterDelayedReturnCardFromGraveyardToHandEffect());
+        addTrigger(Triggers.dies(ObjectRelation.THIS), RegisterDelayedStepTriggerEffect.aboutCardAtNext(
+                Triggers.endStep(ActivePlayer.ANY), Subjects.sourceCard(),
+                new PutCardsIntoHandEffect(Subjects.sourceCard())));
     }
 }

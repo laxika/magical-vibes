@@ -2,7 +2,11 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -15,6 +19,9 @@ public class TianaShipsCaretaker extends Card {
         // Whenever an Aura or Equipment you control is put into a graveyard from the battlefield,
         // you may return that card to its owner's hand at the beginning of the next end step.
         addTrigger(Triggers.dies(Triggers.AURA_OR_EQUIPMENT, ObjectRelation.YOU_CONTROL),
-                new RegisterDelayedReturnCardFromGraveyardToHandEffect(true));
+                RegisterDelayedStepTriggerEffect.aboutCardAtNext(
+                        Triggers.endStep(ActivePlayer.ANY), Subjects.triggeringCards(),
+                        new MayEffect(new PutCardsIntoHandEffect(Subjects.triggeringCards()),
+                                "Return that card to its owner's hand?")));
     }
 }
