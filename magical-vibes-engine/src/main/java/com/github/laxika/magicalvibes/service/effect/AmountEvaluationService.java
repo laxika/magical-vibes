@@ -156,6 +156,7 @@ import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongCardsIn
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongAttachedEquipment;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongOwnedCommanders;
+import com.github.laxika.magicalvibes.model.amount.ColorsInCommandersColorIdentity;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongOwnedCommandersInPlay;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongSpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueNotedForSourceThisTurn;
@@ -417,6 +418,28 @@ public class AmountEvaluationService {
                 sibling.getAmountsDeterminedOnce().putIfAbsent(amount, value);
             }
         }
+    }
+
+    /**
+     * The amount a cost asks of its payer ("pay 1 life for each card in your hand", "pay X {E}"), read as the total
+     * cost is determined (CR 601.2f, 602.2b): against the payer, the source permanent (null for a card outside the
+     * battlefield) and the X announced with the spell or ability (CR 107.3a).
+     */
+    public int evaluateCost(GameData gameData, DynamicAmount amount, UUID payerId, Permanent source, int xValue) {
+        return evaluate(gameData, amount, new AmountContext(payerId, source, null, xValue, 0));
+    }
+
+    /**
+     * Whether a cost of this amount can't be paid at all: one that counts the colors in a commander's color identity,
+     * for a payer who has no commander (CR 903.4f).
+     */
+    public boolean isUnpayableCost(GameData gameData, DynamicAmount amount, UUID payerId) {
+        return switch (amount) {
+            case ColorsInCommandersColorIdentity ignored ->
+                    gameData.playerCommanders.getOrDefault(payerId, List.of()).isEmpty();
+            case Scaled scaled -> isUnpayableCost(gameData, scaled.amount(), payerId);
+            default -> false;
+        };
     }
 
     /**
@@ -850,6 +873,9 @@ public class AmountEvaluationService {
                     greatestManaValueAmongAttachedEquipment(gameData, ctx);
             case GreatestManaValueAmongOwnedCommanders ignored ->
                     greatestManaValueAmongOwnedCommanders(gameData, ctx, true);
+            case ColorsInCommandersColorIdentity ignored ->
+                    ctx.controllerId() == null ? 0
+                            : ManaProductionSupport.commanderColorIdentity(gameData, ctx.controllerId()).size();
             case GreatestManaValueAmongOwnedCommandersInPlay ignored ->
                     greatestManaValueAmongOwnedCommanders(gameData, ctx, false);
             case GreatestManaValueAmongSpellsCastThisTurn a ->

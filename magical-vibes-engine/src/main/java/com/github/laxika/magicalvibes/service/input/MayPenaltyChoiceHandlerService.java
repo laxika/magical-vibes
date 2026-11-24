@@ -1584,10 +1584,10 @@ public class MayPenaltyChoiceHandlerService {
 
         if (accepted && effect.forcedCost() instanceof PayEnergyCost energyCost) {
             int energy = gameData.playerEnergyCounters.getOrDefault(decidingPlayerId, 0);
-            if (energy >= energyCost.amount()) {
-                gameData.setPlayerEnergyCounters(decidingPlayerId, energy - energyCost.amount());
+            if (energy >= energyCost.fixedAmount()) {
+                gameData.setPlayerEnergyCounters(decidingPlayerId, energy - energyCost.fixedAmount());
                 gameLogService.append(gameData, GameLog.textCardText(
-                        player.getUsername() + " pays " + energyCost.amount()
+                        player.getUsername() + " pays " + energyCost.fixedAmount()
                                 + " energy counter(s). (", ability.sourceCard(), ")"));
                 forcedCostOrElseEffectHandler.resolvePaidEffects(gameData, ability, effect, 0);
                 clearAnyPlayerPayState(gameData);
@@ -2101,11 +2101,7 @@ public class MayPenaltyChoiceHandlerService {
 
     private int effectiveLifeAmount(GameData gameData, UUID payerId, PendingMayAbility ability,
             PayLifeCost cost) {
-        Permanent source = gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
-        int sourceCounterCount = cost.perSourceCounter() == null || source == null
-                ? 0
-                : source.getCounterCount(cost.perSourceCounter());
-        return cost.effectiveAmount(gameData.getLife(payerId), sourceCounterCount);
+        return forcedCostOrElseEffectHandler.forcedLifeCostAmount(gameData, payerId, ability.sourcePermanentId(), cost);
     }
 
     private List<Integer> matchingHandIndices(GameData gameData, UUID playerId,

@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.TokenCreatingEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
@@ -231,11 +232,22 @@ public class SpellEvaluator {
                         .sum();
             } else {
                 // Scalar resources: life paid and/or charge counters removed from the source.
-                cost += costEffect.lifePaid(gameData.getLife(aiPlayerId)) * 1.5;
+                cost += lifePaidForCost(gameData, costEffect, aiPlayerId, permanent) * 1.5;
                 cost += costEffect.sourceCountersRemoved();
             }
         }
         return cost;
+    }
+
+    /**
+     * The life a cost makes its payer pay: a {@link PayLifeCost}'s amount evaluated against the payer and the source,
+     * else the cost's fixed {@link CostEffect#lifePaid} facet.
+     */
+    public int lifePaidForCost(GameData gameData, CostEffect cost, UUID payerId, Permanent source) {
+        if (cost instanceof PayLifeCost payLifeCost) {
+            return amountEvaluationService.evaluateCost(gameData, payLifeCost.amount(), payerId, source, 0);
+        }
+        return cost.lifePaid(gameData.getLife(payerId));
     }
 
     /**

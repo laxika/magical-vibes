@@ -37,7 +37,7 @@ on what the mana may pay for.
 | Counter each opponent spell and ability unless its controller pays | `w/WhirlwindDenial.java` | SPELL CounterOpponentsSpellsAndAbilitiesUnlessPaysEffect(4) — snapshots opponent-controlled spells and activated/triggered abilities, offers payment choices in active-player order, and counters unpaid objects after all choices |
 | Controller-scoped land animation with first strike | `n/NaturalEmergence.java` | ETB `ReturnPermanentControlledByPlayerToHandEffect` filtered to red or green enchantments + STATIC `AllLandsAreCreaturesEffect(2, 2, null, null, Subjects.landsYouControl())` + `GrantKeywordEffect(FIRST_STRIKE, Subjects.landsYouControl())` |
 | Basic land | `f/Forest.java` | nothing: a land's basic land type gives it its "{T}: Add …" ability (CR 305.6), and the engine adds it |
-| Commander-color-scaled life-payment draw land | `w/WarRoom.java` | `{T}` colorless mana ability plus a `{3}, {T}` ability using `PayLifeForEachCommanderColorCost` before `DrawCardEffect` |
+| Commander-color-scaled life-payment draw land | `w/WarRoom.java` | `{T}` colorless mana ability plus a `{3}, {T}` ability using `new PayLifeCost(new ColorsInCommandersColorIdentity())` before `DrawCardEffect` |
 | Condition-dependent mana land | `r/RiverOfTears.java` | One `{T}` ability with `ConditionalManaEffect(condition, ifMetColor, ifNotMetColor)` when the printed ability replaces one mana color with another based on game state |
 | Pain land | `s/SulfurousSprings.java` | 3 activated abilities: colorless + 2x colored with DealDamageToController |
 | Creature land (manland) | `t/TreetopVillage.java` | STATIC `EntersTappedEffect` + `ManaAbilities.tapFor` mana ability + AnimatePermanentsEffect (5-arg Subjects.source()/UEOT) ability |

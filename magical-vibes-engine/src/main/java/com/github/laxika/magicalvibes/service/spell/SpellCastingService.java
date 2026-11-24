@@ -8563,7 +8563,7 @@ public class SpellCastingService {
      */
     private void payLifeCost(GameData gameData, Player player, Card card, PayLifeCost cost) {
         UUID playerId = player.getId();
-        int amount = cost.effectiveAmount(gameData.getLife(playerId));
+        int amount = cost.fixedAmount();
         if (amount <= 0) {
             return;
         }
@@ -9218,7 +9218,7 @@ public class SpellCastingService {
         if (costs.payXLife() && xLife > 0) {
             payments++;
         }
-        if (costs.payLifeCost() != null && costs.payLifeCost().effectiveAmount(life) > 0) {
+        if (costs.payLifeCost() != null && costs.payLifeCost().fixedAmount() > 0) {
             payments++;
         }
         if (costs.payLifeOrPayManaCost() != null && Boolean.TRUE.equals(selection.payLifeForAdditionalCost())) {
@@ -9237,11 +9237,11 @@ public class SpellCastingService {
                 && costs.sacrificeCreatureOrDiscardCardOrPayLifeCost().lifeAmount() > 0) {
             payments++;
         }
-        if (kicker != null && kicker.hasLifeCost() && kicker.lifeCost().effectiveAmount(life) > 0) {
+        if (kicker != null && kicker.hasLifeCost() && kicker.lifeCost().fixedAmount() > 0) {
             payments++;
         }
         if (buybackEffect != null && buybackEffect.hasLifeCost()
-                && buybackEffect.lifeCost().effectiveAmount(life) > 0) {
+                && buybackEffect.lifeCost().fixedAmount() > 0) {
             payments++;
         }
         if (paysManaCost && card.getManaCost() != null && phyrexianLifePayment(gameData, player.getId(),
@@ -15526,12 +15526,12 @@ public class SpellCastingService {
                         new ManaCost("{0}").payWithAdditionalGenericCost(pool, 0, additionalCost);
                     }
                     int currentEnergy = gameData.playerEnergyCounters.getOrDefault(playerId, 0);
-                    if (currentEnergy < nonManaCost.amount()) {
+                    if (currentEnergy < nonManaCost.fixedAmount()) {
                         throw new IllegalStateException("Not enough energy to pay alternative spell cost");
                     }
-                    gameData.setPlayerEnergyCounters(playerId, currentEnergy - nonManaCost.amount());
+                    gameData.setPlayerEnergyCounters(playerId, currentEnergy - nonManaCost.fixedAmount());
                     gameLogService.append(gameData, GameLog.text(gameData.playerIdToName
-                            .getOrDefault(playerId, "Player") + " pays " + nonManaCost.amount()
+                            .getOrDefault(playerId, "Player") + " pays " + nonManaCost.fixedAmount()
                             + " energy counter(s) to cast " + card.getName() + "."));
                     castingCostService.consumeAlternativeCost(alternativeCost, gameData);
                     return new SpellManaPayment(before - pool.getTotalAllMana(), 0);
@@ -16096,7 +16096,7 @@ public class SpellCastingService {
     private void payBuybackLifeCost(GameData gameData, Player player, Card card, PayLifeCost cost) {
         UUID playerId = player.getId();
         int currentLife = gameData.getLife(playerId);
-        int amount = cost.effectiveAmount(currentLife);
+        int amount = cost.fixedAmount();
         if (currentLife < amount) {
             throw new IllegalStateException("Not enough life to pay buyback cost");
         }

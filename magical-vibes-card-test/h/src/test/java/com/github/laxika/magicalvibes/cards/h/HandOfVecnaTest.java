@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.e.EyeOfVecna;
+import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
 import com.github.laxika.magicalvibes.cards.t.TheBookOfVileDarkness;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -17,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HandOfVecna.class, HillGiantHerdgorger.class, EyeOfVecna.class, TheBookOfVileDarkness.class})
+@CardUsed({HandOfVecna.class, HillGiantHerdgorger.class, EyeOfVecna.class, TheBookOfVileDarkness.class,
+        PlatinumEmperion.class})
 class HandOfVecnaTest extends BaseCardTest {
 
     @Test
@@ -97,6 +99,43 @@ class HandOfVecnaTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough life");
         assertThat(hand.getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("The life equip ability can't be activated while its controller's life total can't change")
+    void lifeEquipCantBePaidWhileLifeTotalCantChange() {
+        Permanent hand = harness.addToBattlefieldAndReturn(player1, new HandOfVecna());
+        harness.addToBattlefield(player1, new PlatinumEmperion());
+        Permanent bears = addCreatureReady(new HillGiantHerdgorger());
+        harness.setHand(player1, List.of(new HillGiantHerdgorger(), new HillGiantHerdgorger()));
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't pay life");
+        harness.assertLife(player1, 20);
+        assertThat(hand.getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("With an empty hand the life equip ability costs no life")
+    void lifeEquipWithEmptyHandCostsNoLife() {
+        Permanent hand = harness.addToBattlefieldAndReturn(player1, new HandOfVecna());
+        Permanent bears = addCreatureReady(new HillGiantHerdgorger());
+        harness.setHand(player1, List.of());
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(hand.getAttachedTo()).isEqualTo(bears.getId());
     }
 
     @Test

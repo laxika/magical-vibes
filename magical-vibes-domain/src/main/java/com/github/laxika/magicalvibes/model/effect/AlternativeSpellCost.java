@@ -14,7 +14,7 @@ public interface AlternativeSpellCost extends CostEffect {
 
     Kind kind();
 
-    default int amount() {
+    default int fixedAmount() {
         throw new UnsupportedOperationException("This alternative spell cost has no fixed amount");
     }
 }

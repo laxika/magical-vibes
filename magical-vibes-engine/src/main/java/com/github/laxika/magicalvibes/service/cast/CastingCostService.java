@@ -2120,7 +2120,7 @@ public class CastingCostService {
                 if (altCost.nonManaCost() instanceof AlternativeSpellCost alternativeSpellCost
                         && alternativeSpellCost.kind() == AlternativeSpellCost.Kind.PAY_ENERGY
                         && gameData.playerEnergyCounters.getOrDefault(playerId, 0)
-                        >= alternativeSpellCost.amount()
+                        >= alternativeSpellCost.fixedAmount()
                         && canPayAdditionalManaCost(pool, additionalCost)) {
                     return new AlternativeCostSelection(null, altCost.castsWithWarp(),
                             altCost.nonManaCost(), perm.getId(), altCost.oncePerTurn());

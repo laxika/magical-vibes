@@ -877,7 +877,7 @@ public class GameActionAvailabilityService {
         }
         if (kicker.hasLifeCost()
                 && (!gameQueryService.canPayLifeForCosts(gameData)
-                || gameData.getLife(playerId) < kicker.lifeCost().effectiveAmount(gameData.getLife(playerId)))) {
+                || gameData.getLife(playerId) < kicker.lifeCost().fixedAmount())) {
             return false;
         }
         if (kicker.hasSacrificeCost()

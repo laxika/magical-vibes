@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -30,7 +30,7 @@ public class HandOfVecna extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new PayLifeForEachCardInHandCost(), new EquipEffect()),
+                List.of(new PayLifeCost(hand), new EquipEffect()),
                 "Equip—Pay 1 life for each card in your hand.",
                 TargetFilters.creatureYouControl(),
                 null,

@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 47c, 48, 24c, 8c; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                     |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 48, 24c, 8c; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                      |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,058 / 2,479 (after fold run 49b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,055 / 2,479 (after fold run 47c) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,640 rows over 4,564 classes (after fold run 49b). Latest verdict per class: `step-9` 64, unique 1,193, absorbed 1,323, split 670, blocked-other 552, survivor 451, blocked-step-model 140, blocked-player-loop 96, dead 75. Waiting: 64 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,645 rows over 4,566 classes (after fold run 47c). Latest verdict per class: `step-9` 61, unique 1,193, absorbed 1,326, split 670, blocked-other 552, survivor 453, blocked-step-model 140, blocked-player-loop 96, dead 75. Waiting: 61 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1102,6 +1102,12 @@ Ledger rows are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cd
 
 - `EscalateCost(perModeCost, Kind ESCALATE | ENTWINE)` with `escalate("{M}")` / `escalate(cost)` / `entwine("{M}")` / `entwine(cost)`: "Escalate [cost]" and two-mode "Entwine [cost]" (CR 702.120a, 702.42a). Payments are counted by `AdditionalSpellCostService.escalatePayments` (fold run 49b).
 - `SacrificeAllMatchingPermanentsCost(filter, trackSacrificedPower)`: "sacrifice all [permanents] you control" as an activated-ability cost or a spell's additional cost, with total power as X (Soulblast) (fold run 49b).
+
+- `PayLifeCost(DynamicAmount amount)` / `PayEnergyCost(DynamicAmount amount)`, `PayEnergyCost.x()`, `fixedAmount()`: costs with an amount the engine reads as the total cost is determined (CR 601.2f, 602.2b); `fixedAmount()` for the spell, forced-energy and alternative-spell readers (fold run 47c).
+- `AmountEvaluationService.evaluateCost(gameData, amount, payer, source, x)` and `isUnpayableCost(gameData, amount, payer)` (CR 903.4f) (fold run 47c).
+- `ColorsInCommandersColorIdentity` (`DynamicAmount`): the colours in the controller's commanders' colour identity (CR 903.4), 0 without a commander, unpayable as a cost then (fold run 47c).
+
+Ledger rows are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671-d50e7ccdb4f0/scratchpad/fold-47c/ledger-rows.csv (3 absorbed, 2 survivor).
 
 ### Blocked causes still open
 
@@ -5032,6 +5038,29 @@ Seen, not changed:
 - `EntwineManaCost` (Kaya's Guile) is refused in exile free casts, because it counts as a non-escalate cost. Sure of the code.
 
 For the next run: fold `EntwineManaCost` (5 cards) onto `EscalateCost.entwine` once the free-cast mode picker can express "the required number or all modes".
+
+### Step 9, fold run 47c (2026-11-24, parallel worktree)
+1 batch, 3 folded, 0 left. Ratchet 3,070 / 2,483 → 3,067 / 2,483. 4 card files rewritten; Oracle text and rulings checked for all 4. CR checked: 107.3a, 107.14, 118.3, 119.4, 119.8, 601.2f, 602.2b, 903.4, 903.4a, 903.4f.
+
+| Batch | Result |
+|---|---|
+| dyn-cost | 3 folded. `PayLifeCost(DynamicAmount amount)`: the int constructor stays, `halfLife()` is `HalfControllerLifeRoundedUp`, `perSourceCounter(n, t)` is `Scaled(CountersOnSource(t), n)`. Hand of Vecna uses `CardsInHand(CONTROLLER)`, War Room the new `ColorsInCommandersColorIdentity`. `PayEnergyCost(DynamicAmount amount)` with `x()` for HELIOS One and Sphinx. `CardViewFactory`'s X-from-energy flag reads `PayEnergyCost` with an `XValue` amount. |
+
+**How it is evaluated.** The domain `effectiveAmount` and the `lifePaid` override are gone. The activation paths (battlefield, mana-ability additional costs, graveyard, hand), the forced-cost paths and the AI evaluate the amount with `AmountEvaluationService.evaluateCost(gameData, amount, payer, source, x)`, which is fixed as the total cost is determined (CR 601.2f, 602.2b). The spell paths (additional cast cost, kicker, buyback) and the energy forced and alternative-spell paths take `fixedAmount()`, which throws when the amount is not fixed. No card puts a non-fixed amount there; fold run 49 did the same. `AlternativeSpellCost.amount()` is now `fixedAmount()`.
+
+**Behaviour changes.**
+- War Room can't be activated without a commander (CR 903.4f, ruling). `isUnpayableCost` reports it; the old test asserted the opposite and is rewritten.
+- Hand of Vecna and War Room are refused while the life total can't change (CR 119.8): the survivor's guard now covers them.
+- AI life-cost reads now count Tornado's counters, the hand size and the colour count (before: 0).
+
+**Tests.** WarRoom: 1 rewritten, 2 added, `@DisplayName` added to 5. HandOfVecna: 2 added. CardViewFactory: 1 added. The AAS / AAE unit tests moved onto `PayLifeCost(CardsInHand)`. Ran 293 classes (3,581 cases); 1 stub failure was fixed and its class rerun (95 cases, 0 failures).
+
+**Cost-shape.** Every payment stays where it was. Step 10's cost-combinator merge would join the `PayLifeCost` payers (battlefield, mana-ability additional, graveyard, hand, spell, kicker, buyback, forced) into one payer on `evaluateCost` and drop `fixedAmount()` from the spell paths.
+
+**Seen, not changed.**
+- Battlefield and hand `PayLifeCost` validation checks `canPlayerLifeChange` but not `canPlayerLoseLife` (`PlayersCantLoseLifeThisTurnEffect`); the graveyard path checks both (CR 119.8). Fairly sure from the code; not tested.
+
+**For the next run.** `PayXLifeCost` (8 cards, unaudited) folds onto `PayLifeCost(new XValue())`; its spell path must then call `evaluateCost` with the announced X instead of `fixedAmount()`.
 
 ## Prompt
 

@@ -181,16 +181,12 @@ public interface CostEffect extends CardEffect {
     }
 
     /**
-     * The life paid to satisfy this cost given the payer's current life total (a fixed amount,
-     * or "half your life rounded up"), or {@code 0} when this cost costs no life.
+     * The fixed life paid alongside this cost given the payer's current life total, or {@code 0}
+     * when this cost costs no life. {@link PayLifeCost} does not use this facet: its amount is a
+     * {@code DynamicAmount} the engine evaluates ({@code AmountEvaluationService.evaluateCost}).
      */
     default int lifePaid(int currentLife) {
         return 0;
-    }
-
-    /** True when this cost pays one life for each color in the payer's commander color identity. */
-    default boolean paysLifeForEachCommanderColorIdentity() {
-        return false;
     }
 
     /**

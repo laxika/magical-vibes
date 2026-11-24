@@ -946,7 +946,7 @@ public class AdditionalSpellCostService {
                 case PayLifeCost cost -> {
                     if (!lifePaymentAllowed) return false;
                     int life = gameData.getLife(playerId);
-                    if (life < cost.effectiveAmount(life)) return false;
+                    if (life < cost.fixedAmount()) return false;
                 }
                 case PayLifeOrSacrificePermanentCost cost -> {
                     int life = gameData.getLife(playerId);
@@ -1670,7 +1670,7 @@ public class AdditionalSpellCostService {
     public void validatePayLifeCost(GameData gameData, Player player, Card card, PayLifeCost cost) {
         validateCanPayLifeForCost(gameData, card);
         int life = gameData.getLife(player.getId());
-        int amount = cost.effectiveAmount(life);
+        int amount = cost.fixedAmount();
         if (life < amount) {
             throw new IllegalStateException("Not enough life to pay " + amount + " life for " + card.getName());
         }

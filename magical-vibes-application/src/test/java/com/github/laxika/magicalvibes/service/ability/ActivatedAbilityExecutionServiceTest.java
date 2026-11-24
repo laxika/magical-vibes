@@ -46,7 +46,9 @@ import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithM
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
@@ -406,9 +408,11 @@ class ActivatedAbilityExecutionServiceTest {
             Card card = createCard("Hand Cost Equipment", CardType.ARTIFACT);
             Permanent perm = addReadyPermanent(player1Id, card);
             gameData.playerHands.get(player1Id).addAll(List.of(new Card(), new Card(), new Card()));
-            List<CardEffect> effects = List.of(new PayLifeForEachCardInHandCost());
+            List<CardEffect> effects = List.of(new PayLifeCost(new CardsInHand(CountScope.CONTROLLER)));
             ActivatedAbility ability = new ActivatedAbility(false, null, effects,
                     "Equip—Pay one life for each card in hand.");
+            when(amountEvaluationService.evaluateCost(eq(gameData), eq(new CardsInHand(CountScope.CONTROLLER)),
+                    eq(player1Id), eq(perm), anyInt())).thenReturn(3);
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects,
                     0, null, null, false);

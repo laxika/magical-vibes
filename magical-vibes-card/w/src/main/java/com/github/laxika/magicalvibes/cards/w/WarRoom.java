@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.amount.ColorsInCommandersColorIdentity;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCommanderColorCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 
 import java.util.List;
 
@@ -28,7 +29,7 @@ public class WarRoom extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}",
-                List.of(new PayLifeForEachCommanderColorCost(), new DrawCardEffect()),
+                List.of(new PayLifeCost(new ColorsInCommandersColorIdentity()), new DrawCardEffect()),
                 "{3}, {T}, Pay life equal to the number of colors in your commanders' color identity: Draw a card."
         ));
     }

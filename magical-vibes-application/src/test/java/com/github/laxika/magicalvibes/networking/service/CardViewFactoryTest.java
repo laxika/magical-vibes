@@ -1,17 +1,21 @@
 package com.github.laxika.magicalvibes.networking.service;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.OracleData;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.networking.model.ActivatedAbilityView;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.ModalOptionView;
 import org.junit.jupiter.api.DisplayName;
@@ -44,6 +48,21 @@ class CardViewFactoryTest {
         front.setKeywords(Set.of(Keyword.FLYING, Keyword.PREPARED));
         front.setBackFaceCard(spell);
         return front;
+    }
+
+    @Test
+    @DisplayName("Only an ability that pays X energy marks its X as bounded by energy")
+    void payXEnergyAbilityMarksItsXAsEnergy() {
+        Card card = card("Energy Sphinx", CardType.CREATURE);
+        card.addActivatedAbility(new ActivatedAbility(true, "{W}{U}{U}",
+                List.of(PayEnergyCost.x(), new DrawCardEffect(new XValue())), "Pay X {E}: Draw X cards.").withXValue());
+        card.addActivatedAbility(new ActivatedAbility(false, null,
+                List.of(new PayEnergyCost(2), new DrawCardEffect(1)), "Pay {E}{E}: Draw a card."));
+
+        CardView view = factory.create(card);
+
+        assertThat(view.activatedAbilities()).extracting(ActivatedAbilityView::xValueFromEnergyCounters)
+                .containsExactly(true, false);
     }
 
     @Test

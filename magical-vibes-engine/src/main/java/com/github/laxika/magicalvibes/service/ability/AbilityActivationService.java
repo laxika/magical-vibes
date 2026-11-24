@@ -98,9 +98,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
 import com.github.laxika.magicalvibes.model.effect.PayMulticoloredSourceManaCost;
-import com.github.laxika.magicalvibes.model.effect.PayXEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PowerBasedTapCost;
 import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
@@ -415,8 +413,7 @@ public class AbilityActivationService {
                 gameData, playerId, permanent, null, true);
         int lifePayments = (int) castingCostService.getActivatedAbilityAdditionalCosts(gameData, permanent).stream()
                 .filter(cost -> cost instanceof PayLifeCost lifeCost
-                        && lifeCost.effectiveAmount(gameData.getLife(playerId),
-                                sourceCounterCount(permanent, lifeCost)) > 0)
+                        && lifePaymentAmount(gameData, playerId, permanent, lifeCost, 0) > 0)
                 .count();
         if (askManaAbilityLifeCostFirst(gameData, playerId, lifePayments,
                 new GameData.ManaAbilityLifeCostReplay(player, permanent.getId()))) {
@@ -622,7 +619,7 @@ public class AbilityActivationService {
         int life = gameData.getLife(playerId);
         List<Integer> amounts = new ArrayList<>(lifeCosts.size());
         for (PayLifeCost lifeCost : lifeCosts) {
-            int amount = lifeCost.effectiveAmount(life, sourceCounterCount(permanent, lifeCost));
+            int amount = lifePaymentAmount(gameData, playerId, permanent, lifeCost, 0);
             if (life < amount) {
                 throw new IllegalStateException("Not enough life to pay (need " + amount + ", have " + life + ")");
             }
@@ -1574,8 +1571,9 @@ public class AbilityActivationService {
 
         for (CardEffect effect : ability.getEffects()) {
             if (effect instanceof PayLifeCost lifeCost) {
-                int needed = lifeCost.effectiveAmount(gameData.getLife(playerId));
-                if (!gameQueryService.canPayLifeForCosts(gameData)
+                int needed = lifePaymentAmount(gameData, playerId, null, lifeCost, xValue);
+                if (amountEvaluationService.isUnpayableCost(gameData, lifeCost.amount(), playerId)
+                        || !gameQueryService.canPayLifeForCosts(gameData)
                         || !gameQueryService.canPlayerLoseLife(gameData, playerId)
                         || !gameQueryService.canPlayerLifeChange(gameData, playerId)
                         || gameData.getLife(playerId) < needed) {
@@ -1639,32 +1637,17 @@ public class AbilityActivationService {
                 .findFirst()
                 .orElse(null);
         if (payEnergyCost != null) {
+            int needed = energyPaymentAmount(gameData, playerId, null, payEnergyCost, xValue);
             int currentEnergy = gameData.playerEnergyCounters.getOrDefault(playerId, 0);
-            if (currentEnergy < payEnergyCost.amount()) {
+            if (needed < 0 || currentEnergy < needed) {
                 throw new IllegalStateException("Not enough energy to pay (need "
-                        + payEnergyCost.amount() + ", have " + currentEnergy + ")");
+                        + needed + ", have " + currentEnergy + ")");
             }
-            gameData.setPlayerEnergyCounters(playerId, currentEnergy - payEnergyCost.amount());
-            gameLogService.append(gameData,
-                    GameLog.text(player.getUsername() + " pays " + payEnergyCost.amount()
-                            + " energy counter(s)."));
-        }
-
-        PayXEnergyCost payXEnergyCost = abilityEffects.stream()
-                .filter(PayXEnergyCost.class::isInstance)
-                .map(PayXEnergyCost.class::cast)
-                .findFirst()
-                .orElse(null);
-        if (payXEnergyCost != null) {
-            int currentEnergy = gameData.playerEnergyCounters.getOrDefault(playerId, 0);
-            if (xValue < 0 || currentEnergy < xValue) {
-                throw new IllegalStateException("Not enough energy to pay (need " + xValue
-                        + ", have " + currentEnergy + ")");
+            if (needed > 0) {
+                gameData.setPlayerEnergyCounters(playerId, currentEnergy - needed);
+                gameLogService.append(gameData,
+                        GameLog.text(player.getUsername() + " pays " + needed + " energy counter(s)."));
             }
-            gameData.setPlayerEnergyCounters(playerId, currentEnergy - xValue);
-            gameLogService.append(gameData,
-                    GameLog.text(player.getUsername() + " pays " + xValue
-                            + " energy counter(s)."));
         }
 
         // Pay the mill-controller cost. Milled cards land on top of the graveyard, leaving the
@@ -2056,7 +2039,7 @@ public class AbilityActivationService {
         int stackSizeBeforeSacrifices = gameData.stack.size();
         int lifePayment = ability.getEffects().stream()
                 .filter(PayLifeCost.class::isInstance)
-                .mapToInt(effect -> ((PayLifeCost) effect).effectiveAmount(gameData.getLife(playerId)))
+                .mapToInt(effect -> lifePaymentAmount(gameData, playerId, null, (PayLifeCost) effect, xValue))
                 .sum();
         if (sacrificeChosenCostPermanents(gameData, player, new GameData.GraveyardAbilityCostReplay(player, card,
                 ability, xValue, targetId, graveyardTargetIds == null ? null : List.copyOf(graveyardTargetIds)),
@@ -2070,7 +2053,7 @@ public class AbilityActivationService {
         for (CardEffect effect : ability.getEffects()) {
             if (effect instanceof PayLifeCost lifeCost) {
                 lifeSupport.applyLifePayment(gameData, playerId,
-                        lifeCost.effectiveAmount(gameData.getLife(playerId)), card.getName());
+                        lifePaymentAmount(gameData, playerId, null, lifeCost, xValue), card.getName());
             }
         }
 
@@ -2420,11 +2403,12 @@ public class AbilityActivationService {
                 .orElse(null);
         if (payLifeCost != null) {
             if (!gameQueryService.canPayLifeForCosts(gameData, isManaAbility(ability, abilityEffects))
-                    || !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+                    || !gameQueryService.canPlayerLifeChange(gameData, playerId)
+                    || amountEvaluationService.isUnpayableCost(gameData, payLifeCost.amount(), playerId)) {
                 throw new IllegalStateException("Players can't pay life to activate abilities");
             }
             int life = gameData.getLife(playerId);
-            int needed = payLifeCost.effectiveAmount(life);
+            int needed = lifePaymentAmount(gameData, playerId, null, payLifeCost, effectiveXValue);
             if (life < needed) {
                 throw new IllegalStateException("Not enough life to pay (need " + needed + ", have " + life + ")");
             }
@@ -2456,7 +2440,7 @@ public class AbilityActivationService {
         int activationCostModifier = getHandAbilityActivationCostModifier(
                 gameData, playerId, card, ability, effectiveXValue, -cyclingReduction);
         if (payLifeCost != null && askHandAbilityLifeCostFirst(gameData, playerId,
-                payLifeCost.effectiveAmount(gameData.getLife(playerId)),
+                lifePaymentAmount(gameData, playerId, null, payLifeCost, effectiveXValue),
                 new GameData.HandAbilityActivationReplay(player, card.getId(), abilityIndex, targetId, xValue,
                         targetIds == null ? null : List.copyOf(targetIds)))) {
             return;
@@ -2475,7 +2459,7 @@ public class AbilityActivationService {
                 handTreasureManaBefore > handManaPool.getTreasureManaTotal());
 
         if (payLifeCost != null) {
-            int amount = payLifeCost.effectiveAmount(gameData.getLife(playerId));
+            int amount = lifePaymentAmount(gameData, playerId, null, payLifeCost, effectiveXValue);
             if (amount > 0) {
                 lifeSupport.applyLifePayment(gameData, playerId, amount, card.getName());
             }
@@ -6989,8 +6973,11 @@ public class AbilityActivationService {
                 if (handler != null) {
                     handler.validateCanPay(gameData, playerId);
                 }
-                if (effect instanceof PayLifeCost) {
-                    int needed = lifePaymentAmount(gameData, playerId, permanent, effect);
+                if (effect instanceof PayLifeCost lifeCost) {
+                    if (amountEvaluationService.isUnpayableCost(gameData, lifeCost.amount(), playerId)) {
+                        throw new IllegalStateException("This life payment can't be paid");
+                    }
+                    int needed = lifePaymentAmount(gameData, playerId, permanent, lifeCost, xValue);
                     int life = gameData.getLife(playerId);
                     if (needed > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
                         throw new IllegalStateException("Players can't pay life to activate abilities");
@@ -7114,13 +7101,9 @@ public class AbilityActivationService {
         if (!gameQueryService.canPayLifeForCosts(gameData, manaAbility)
                 || !gameQueryService.canSacrificeCreaturesForCosts(gameData)) {
             for (CardEffect effect : abilityEffects) {
-                boolean paysPositiveLife = (effect instanceof PayLifeCost
-                        ? lifePaymentAmount(gameData, playerId, permanent, effect) > 0
-                        : effect instanceof PayLifeForEachCardInHandCost
-                        ? !gameData.playerHands.getOrDefault(playerId, List.of()).isEmpty()
-                        : effect instanceof PayXLifeCost && xValue > 0)
-                        || (effect instanceof CostEffect cost && cost.paysLifeForEachCommanderColorIdentity()
-                        && !ManaProductionSupport.commanderColorIdentity(gameData, playerId).isEmpty());
+                boolean paysPositiveLife = effect instanceof PayLifeCost lifeCost
+                        ? lifePaymentAmount(gameData, playerId, permanent, lifeCost, xValue) > 0
+                        : effect instanceof PayXLifeCost && xValue > 0;
                 if (paysPositiveLife
                         && !gameQueryService.canPayLifeForCosts(gameData, manaAbility)) {
                     throw new IllegalStateException("Players can't pay life to activate abilities");
@@ -7265,34 +7248,23 @@ public class AbilityActivationService {
             validateCraftMaterialCost(gameData, playerId, permanent, craftMaterialCost);
         }
 
-        // Pay-life cost
-        Optional<CardEffect> payLifeCost = abilityEffects.stream()
+        // Pay-life cost: its amount is fixed as the total cost is determined (CR 601.2f, 602.2b). A payer with less
+        // life can't pay it (CR 118.3, 119.4), nor one whose life total can't change (CR 119.8); a cost counting the
+        // colors of a commander's color identity can't be paid by a player with no commander (CR 903.4f).
+        Optional<PayLifeCost> payLifeCost = abilityEffects.stream()
                 .filter(PayLifeCost.class::isInstance)
+                .map(PayLifeCost.class::cast)
                 .findFirst();
         if (payLifeCost.isPresent()) {
+            if (amountEvaluationService.isUnpayableCost(gameData, payLifeCost.get().amount(), playerId)) {
+                throw new IllegalStateException("This life payment can't be paid");
+            }
             int life = gameData.playerLifeTotals.getOrDefault(playerId, 0);
-            int needed = lifePaymentAmount(gameData, playerId, permanent, payLifeCost.get());
+            int needed = lifePaymentAmount(gameData, playerId, permanent, payLifeCost.get(), xValue);
             if (needed > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
                 throw new IllegalStateException("Players can't pay life to activate abilities");
             }
             if (needed > 0 && life < needed) {
-                throw new IllegalStateException("Not enough life to pay (need " + needed + ", have " + life + ")");
-            }
-        }
-
-        if (abilityEffects.stream().anyMatch(PayLifeForEachCardInHandCost.class::isInstance)) {
-            int life = gameData.playerLifeTotals.getOrDefault(playerId, 0);
-            int needed = gameData.playerHands.getOrDefault(playerId, List.of()).size();
-            if (life < needed) {
-                throw new IllegalStateException("Not enough life to pay (need " + needed + ", have " + life + ")");
-            }
-        }
-
-        if (abilityEffects.stream().anyMatch(effect -> effect instanceof CostEffect cost
-                && cost.paysLifeForEachCommanderColorIdentity())) {
-            int life = gameData.playerLifeTotals.getOrDefault(playerId, 0);
-            int needed = ManaProductionSupport.commanderColorIdentity(gameData, playerId).size();
-            if (life < needed) {
                 throw new IllegalStateException("Not enough life to pay (need " + needed + ", have " + life + ")");
             }
         }
@@ -7304,30 +7276,17 @@ public class AbilityActivationService {
             }
         }
 
-        if (abilityEffects.stream().anyMatch(PayXEnergyCost.class::isInstance)) {
-            int energy = gameData.playerEnergyCounters.getOrDefault(playerId, 0);
-            if (energy < xValue) {
-                throw new IllegalStateException("Not enough energy to pay (need " + xValue + ", have " + energy + ")");
-            }
-        }
-
+        // Pay-energy cost ("Pay X {E}" reads the announced X, CR 107.3a): a player can't pay more energy than they
+        // have (CR 107.14, 118.3).
         Optional<PayEnergyCost> payEnergyCost = abilityEffects.stream()
                 .filter(PayEnergyCost.class::isInstance)
                 .map(PayEnergyCost.class::cast)
                 .findFirst();
         if (payEnergyCost.isPresent()) {
             int energy = gameData.playerEnergyCounters.getOrDefault(playerId, 0);
-            int needed = payEnergyCost.get().amount();
-            if (energy < needed) {
+            int needed = energyPaymentAmount(gameData, playerId, permanent, payEnergyCost.get(), xValue);
+            if (needed < 0 || energy < needed) {
                 throw new IllegalStateException("Not enough energy to pay (need " + needed + ", have " + energy + ")");
-            }
-        }
-
-        if (abilityEffects.stream().anyMatch(PayXEnergyCost.class::isInstance)) {
-            int energy = gameData.playerEnergyCounters.getOrDefault(playerId, 0);
-            if (xValue < 0 || energy < xValue) {
-                throw new IllegalStateException("Not enough energy to pay (need " + xValue
-                        + ", have " + energy + ")");
             }
         }
 
@@ -9058,19 +9017,18 @@ public class AbilityActivationService {
     }
 
     /**
-     * Counters on the source permanent that scale a {@link PayLifeCost} ("pay 3 life for each
-     * velocity counter on this enchantment"). Zero for the fixed and half-life forms.
+     * The life a {@link PayLifeCost} asks of the activating player: read against that player, the source permanent
+     * ("pay 3 life for each velocity counter on this enchantment"; null for a card in a graveyard or hand) and the
+     * announced X.
      */
-    private int sourceCounterCount(Permanent permanent, PayLifeCost cost) {
-        return cost.perSourceCounter() == null ? 0 : permanent.getCounterCount(cost.perSourceCounter());
+    private int lifePaymentAmount(GameData gameData, UUID playerId, Permanent permanent, PayLifeCost cost, int xValue) {
+        return amountEvaluationService.evaluateCost(gameData, cost.amount(), playerId, permanent, xValue);
     }
 
-    private int lifePaymentAmount(GameData gameData, UUID playerId, Permanent permanent, CardEffect cost) {
-        if (cost instanceof PayLifeCost payLifeCost) {
-            return payLifeCost.effectiveAmount(
-                    gameData.getLife(playerId), sourceCounterCount(permanent, payLifeCost));
-        }
-        throw new IllegalArgumentException("Unsupported life-payment cost: " + cost.getClass().getSimpleName());
+    /** The energy a {@link PayEnergyCost} asks of the activating player ("Pay X {E}" reads the announced X). */
+    private int energyPaymentAmount(GameData gameData, UUID playerId, Permanent permanent, PayEnergyCost cost,
+                                    int xValue) {
+        return amountEvaluationService.evaluateCost(gameData, cost.amount(), playerId, permanent, xValue);
     }
 
     private void payLoyaltyCost(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability, int effectiveXValue) {

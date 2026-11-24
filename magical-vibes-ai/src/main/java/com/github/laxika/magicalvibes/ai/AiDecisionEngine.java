@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.effect.EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.model.RemoveCountersFromControlledCreaturesCastingCost;
 import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
 import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
@@ -139,6 +140,7 @@ public abstract class AiDecisionEngine {
     protected final GameQueryService gameQueryService;
     protected final BlockLegalityService blockLegalityService;
     protected final PredicateEvaluationService predicateEvaluationService;
+    private final AmountEvaluationService costAmountEvaluator;
     protected final CombatAttackService combatAttackService;
     protected final GameActionAvailabilityService actionAvailabilityService;
     protected final CastingCostService castingCostService;
@@ -184,6 +186,7 @@ public abstract class AiDecisionEngine {
         this.gameQueryService = gameQueryService;
         this.blockLegalityService = blockLegalityService;
         this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
+        this.costAmountEvaluator = new AmountEvaluationService(predicateEvaluationService, gameQueryService);
         this.combatAttackService = combatAttackService;
         this.actionAvailabilityService = actionAvailabilityService;
         this.castingCostService = castingCostService;
@@ -3886,10 +3889,8 @@ public abstract class AiDecisionEngine {
         int life = gameData.getLife(aiPlayer.getId());
         for (CardEffect effect : ability.getEffects()) {
             if (effect instanceof PayLifeCost lifeCost) {
-                int counters = lifeCost.perSourceCounter() == null
-                        ? 0
-                        : permanent.getCounterCount(lifeCost.perSourceCounter());
-                int amount = lifeCost.effectiveAmount(life, counters);
+                int amount = costAmountEvaluator.evaluateCost(
+                        gameData, lifeCost.amount(), aiPlayer.getId(), permanent, 0);
                 if (amount > 0 && life <= amount) {
                     return false;
                 }

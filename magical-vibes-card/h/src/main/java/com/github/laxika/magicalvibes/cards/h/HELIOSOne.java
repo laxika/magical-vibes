@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PayXEnergyCost;
+import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -41,7 +41,7 @@ public class HELIOSOne extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}",
-                List.of(new PayXEnergyCost(), new SacrificeSelfCost(),
+                List.of(PayEnergyCost.x(), new SacrificeSelfCost(),
                         new DestroyTargetPermanentEffect(nonlandPermanentWithManaValueX)),
                 "{3}, {T}, Pay X {E}, Sacrifice this land: Destroy target nonland permanent with mana value X.",
                 new PermanentPredicateTargetFilter(nonlandPermanentWithManaValueX,

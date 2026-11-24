@@ -147,6 +147,7 @@ public sealed interface DynamicAmount permits
         GreatestManaValueAmongControlled,
         GreatestManaValueAmongAttachedEquipment,
         GreatestManaValueAmongOwnedCommanders,
+        ColorsInCommandersColorIdentity,
         GreatestManaValueAmongOwnedCommandersInPlay,
         GreatestManaValueAmongSpellsCastThisTurn,
         GreatestManaValueNotedForSourceThisTurn,

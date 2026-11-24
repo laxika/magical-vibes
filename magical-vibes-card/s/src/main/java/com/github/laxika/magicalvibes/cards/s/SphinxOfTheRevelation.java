@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PayXEnergyCost;
+import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class SphinxOfTheRevelation extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{W}{U}{U}",
-                List.of(new PayXEnergyCost(), new DrawCardEffect(new XValue())),
+                List.of(PayEnergyCost.x(), new DrawCardEffect(new XValue())),
                 "{W}{U}{U}, {T}, Pay X {E}: Draw X cards."
         ).withXValue());
     }

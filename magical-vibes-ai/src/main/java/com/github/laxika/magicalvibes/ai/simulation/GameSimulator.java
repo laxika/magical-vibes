@@ -642,7 +642,7 @@ public class GameSimulator {
                 boolean suicidalLifeCost = ability.getEffects().stream()
                         .filter(CostEffect.class::isInstance)
                         .map(CostEffect.class::cast)
-                        .anyMatch(cost -> cost.lifePaid(life) >= life);
+                        .anyMatch(cost -> spellEvaluator.lifePaidForCost(gd, cost, playerId, source) >= life);
                 if (suicidalLifeCost
                         || spellEvaluator.sacrificeCostConsumesOnlyBeneficiary(gd, ability, source, playerId)) {
                     continue;

@@ -458,12 +458,12 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
         if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.PayEnergyCost energyCost) {
             UUID payer = resolvePayer(gameData, entry, e);
             int energy = payer == null ? 0 : gameData.playerEnergyCounters.getOrDefault(payer, 0);
-            if (payer == null || energy < energyCost.amount()) {
+            if (payer == null || energy < energyCost.fixedAmount()) {
                 resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                 return;
             }
             if (e.optional()) {
-                String prompt = entry.getCard().getName() + " - Pay " + energyCost.amount()
+                String prompt = entry.getCard().getName() + " - Pay " + energyCost.fixedAmount()
                         + " energy counter(s)?";
                 gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
                         entry.getCard(), payer, List.of(e), prompt,
@@ -472,7 +472,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
                         entry.getControllerId(), null));
                 return;
             }
-            gameData.setPlayerEnergyCounters(payer, energy - energyCost.amount());
+            gameData.setPlayerEnergyCounters(payer, energy - energyCost.fixedAmount());
             return;
         }
 
@@ -1100,11 +1100,16 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
 
     private int effectiveLifeAmount(GameData gameData, UUID payer, StackEntry entry,
                                     PayLifeCost cost) {
-        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        int sourceCounterCount = cost.perSourceCounter() == null || source == null
-                ? 0
-                : source.getCounterCount(cost.perSourceCounter());
-        return cost.effectiveAmount(gameData.getLife(payer), sourceCounterCount);
+        return forcedLifeCostAmount(gameData, payer, entry.getSourcePermanentId(), cost);
+    }
+
+    /**
+     * The life a forced {@link PayLifeCost} asks of its payer, read against the payer and the source permanent still
+     * on the battlefield (none once it left).
+     */
+    public int forcedLifeCostAmount(GameData gameData, UUID payer, UUID sourcePermanentId, PayLifeCost cost) {
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        return amountEvaluationService.evaluateCost(gameData, cost.amount(), payer, source, 0);
     }
 
     /** Begins an exact counter payment for an optional forced cost, or completes it immediately. */
