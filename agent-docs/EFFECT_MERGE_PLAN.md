@@ -1110,13 +1110,10 @@ unrestricted, which is exactly the mirror), `RuleOfLawTest`/`ArcaneLaboratoryTes
 players", and `AjanisResponseTest`'s "Reduced cost applies when targeting opponent's tapped creature"
 (`controlledByCaster=false` must not behave like `true`).
 
-**Keep separate**: `IncreaseSpellCostExceptOnControllersTurnEffect` (Defense Grid — its waiver is
-keyed on the active player, not on who controls the source),
-`IncreaseOwnCastCostUnlessRevealSubtypeEffect` and `IncreaseCostOfSpellsTargetingThisSpellEffect`
+**Keep separate**: `IncreaseOwnCastCostUnlessRevealSubtypeEffect` and `IncreaseCostOfSpellsTargetingThisSpellEffect`
 (both spell-self, not battlefield-source), `IncreaseOpponentCostForTargetingControlledPermanentEffect`
 (target-gated), `IncreaseActivatedAbilityCostEffect` (taxes abilities, not spells),
-`ReduceOwnCastCostForSharedCardTypeWithImprintEffect` (compares against the imprinted card, not a
-predicate), and `ReduceOwnCastCostIfTargetingStackEntryEffect` (a `StackEntryPredicate`, not a
+and `ReduceOwnCastCostIfTargetingStackEntryEffect` (a `StackEntryPredicate`, not a
 `PermanentPredicate`).
 
 ---

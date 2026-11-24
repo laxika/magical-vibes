@@ -33,43 +33,36 @@ import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.IncreaseCastCostForChosenNameSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostEffect;
-import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
-import com.github.laxika.magicalvibes.model.effect.ModifyFlashbackCostEffect;
-import com.github.laxika.magicalvibes.model.effect.ModifyMorphCostEffect;
+import com.github.laxika.magicalvibes.model.effect.KeywordCost;
+import com.github.laxika.magicalvibes.model.effect.ModifyCastCostPerTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.ModifyKeywordCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MinimumSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceNonHandSpellCastCostEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForChosenSubtypeSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceBuybackCostEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceDashCostEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceCyclingCostEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceNinjutsuCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceEquipCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostForTargetingSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceEquipCostForTargetingAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceAuraCastCostForTargetingAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceTargetedCostEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostPerTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForEachTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostPerTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.ReduceRoomUnlockCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrDiscardCardOrPayLifeCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenNamePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -221,7 +214,7 @@ class CastingCostServiceTest {
         @Test
         void appliesRoomUnlockReductionToGenericManaOnly() {
             Card reducer = new Card();
-            reducer.addStaticEffect(new ReduceRoomUnlockCostEffect(1));
+            reducer.addStaticEffect(ModifyKeywordCostEffect.reduceYours(KeywordCost.UNLOCK, 1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
 
             Card room = new Card();
@@ -237,7 +230,7 @@ class CastingCostServiceTest {
         @DisplayName("Applies dash cost reduction only to the controller's dash casts")
         void appliesDashCostReductionOnlyToControllerDashCasts() {
             Card reducer = new Card();
-            reducer.addStaticEffect(new ReduceDashCostEffect(2));
+            reducer.addStaticEffect(ModifyKeywordCostEffect.reduceYours(KeywordCost.DASH, 2));
             gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
 
             Card dashSpell = new Card();
@@ -285,7 +278,7 @@ class CastingCostServiceTest {
             Card crystal = new Card();
             crystal.setName("Memory Crystal");
             crystal.setType(CardType.ARTIFACT);
-            crystal.addStaticEffect(new ReduceBuybackCostEffect(2));
+            crystal.addStaticEffect(new ModifyKeywordCostEffect(KeywordCost.BUYBACK, -2, CostModificationScope.ALL));
             gd.playerBattlefields.get(player1Id).add(new Permanent(crystal));
 
             Card spell = new Card();
@@ -416,11 +409,11 @@ class CastingCostServiceTest {
         @DisplayName("Applies morph cost modifiers with the correct player scope")
         void appliesMorphCostModifiersWithScope() {
             Card globalTax = new Card();
-            globalTax.addStaticEffect(new ModifyMorphCostEffect(2, CostModificationScope.ALL));
+            globalTax.addStaticEffect(new ModifyKeywordCostEffect(KeywordCost.MORPH, 2, CostModificationScope.ALL));
             gd.playerBattlefields.get(player1Id).add(new Permanent(globalTax));
 
             Card ownReduction = new Card();
-            ownReduction.addStaticEffect(new ModifyMorphCostEffect(-1, CostModificationScope.SELF));
+            ownReduction.addStaticEffect(new ModifyKeywordCostEffect(KeywordCost.MORPH, -1, CostModificationScope.SELF));
             gd.playerBattlefields.get(player1Id).add(new Permanent(ownReduction));
 
             var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
@@ -525,7 +518,7 @@ class CastingCostServiceTest {
         @DisplayName("Flashback cost modification applies only to flashback costs")
         void flashbackCostModificationAppliesOnlyToFlashbackCosts() {
             Card stone = new Card();
-            stone.addStaticEffect(new ModifyFlashbackCostEffect(-2, CostModificationScope.SELF));
+            stone.addStaticEffect(new ModifyKeywordCostEffect(KeywordCost.FLASHBACK, -2, CostModificationScope.SELF));
             gd.playerBattlefields.get(player1Id).add(new Permanent(stone));
 
             Card spell = new Card();
@@ -540,7 +533,7 @@ class CastingCostServiceTest {
         @DisplayName("Opponent-scoped flashback cost modification applies to the opponent")
         void opponentFlashbackCostModificationAppliesToOpponent() {
             Card stone = new Card();
-            stone.addStaticEffect(new ModifyFlashbackCostEffect(2, CostModificationScope.OPPONENT));
+            stone.addStaticEffect(new ModifyKeywordCostEffect(KeywordCost.FLASHBACK, 2, CostModificationScope.OPPONENT));
             gd.playerBattlefields.get(player1Id).add(new Permanent(stone));
 
             Card spell = new Card();
@@ -576,7 +569,8 @@ class CastingCostServiceTest {
             Card incubator = new Card();
             incubator.setName("Urza's Incubator");
             incubator.setType(CardType.ARTIFACT);
-            incubator.addStaticEffect(new ReduceCastCostForChosenSubtypeSpellsEffect(2));
+            incubator.addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
+                    new CardHasSourceChosenSubtypePredicate(), 2, CostModificationScope.SELF));
             Permanent incubatorPermanent = new Permanent(incubator);
             incubatorPermanent.setChosenSubtype(CardSubtype.GIANT);
             gd.playerBattlefields.get(player1Id).add(incubatorPermanent);
@@ -585,7 +579,9 @@ class CastingCostServiceTest {
             giant.setName("Hill Giant");
             giant.setType(CardType.CREATURE);
             giant.setSubtypes(List.of(CardSubtype.GIANT));
-            when(gameQueryService.cardHasSubtype(giant, CardSubtype.GIANT, gd, giant.getOwnerId())).thenReturn(true);
+            lenient().when(predicateEvaluationService.matchesCardPredicate(eq(giant),
+                    any(CardHasSourceChosenSubtypePredicate.class), eq(incubator.getId()), eq(gd), eq(player1Id),
+                    eq(incubatorPermanent.getId()), any(), any())).thenReturn(true);
 
             Card bear = new Card();
             bear.setName("Grizzly Bears");
@@ -601,7 +597,8 @@ class CastingCostServiceTest {
         @DisplayName("Chosen-name cost increase applies only to the enchanted player")
         void chosenNameCostIncreaseScopesToEnchantedPlayer() {
             Card curse = new Card();
-            curse.addStaticEffect(new IncreaseCastCostForChosenNameSpellsEffect(2));
+            curse.addStaticEffect(new IncreaseSpellCostEffect(
+                    new CardHasSourceChosenNamePredicate(), 2, Subjects.enchantedPlayer()));
             Permanent cursePermanent = new Permanent(curse);
             cursePermanent.setAttachedTo(player2Id);
             cursePermanent.setChosenName("Grizzly Bears");
@@ -610,6 +607,9 @@ class CastingCostServiceTest {
             Card matchingSpell = new Card();
             matchingSpell.setName("Grizzly Bears");
             matchingSpell.setManaCost("{1}{G}");
+            lenient().when(predicateEvaluationService.matchesCardPredicate(eq(matchingSpell),
+                    any(CardHasSourceChosenNamePredicate.class), eq(curse.getId()), eq(gd), any(),
+                    eq(cursePermanent.getId()), any(), any())).thenReturn(true);
 
             Card differentSpell = new Card();
             differentSpell.setName("Hill Giant");
@@ -948,7 +948,7 @@ class CastingCostServiceTest {
             spell.setName("Hurkyl's Final Meditation");
             spell.setType(CardType.INSTANT);
             spell.addStaticEffect(new ConditionalEffect(
-                    new NotControllerTurn(), new IncreaseOwnCastCostEffect(3)));
+                    new NotControllerTurn(), ReduceOwnCastCostEffect.increase(new Fixed(3))));
 
             assertThat(svc.getCastCostModifier(gd, player1Id, spell)).isZero();
 
@@ -1190,11 +1190,11 @@ class CastingCostServiceTest {
         @DisplayName("Uses only cycling reducers controlled by the activating player")
         void usesOnlyControllerCyclingReducers() {
             Card playerReducer = new Card();
-            playerReducer.addStaticEffect(new ReduceCyclingCostEffect(2));
+            playerReducer.addStaticEffect(ModifyKeywordCostEffect.reduceYours(KeywordCost.CYCLING, 2));
             gd.playerBattlefields.get(player1Id).add(new Permanent(playerReducer));
 
             Card opponentReducer = new Card();
-            opponentReducer.addStaticEffect(new ReduceCyclingCostEffect(3));
+            opponentReducer.addStaticEffect(ModifyKeywordCostEffect.reduceYours(KeywordCost.CYCLING, 3));
             gd.playerBattlefields.get(player2Id).add(new Permanent(opponentReducer));
 
             assertThat(svc.getCyclingAbilityCostReduction(gd, player1Id)).isEqualTo(2);
@@ -1209,11 +1209,11 @@ class CastingCostServiceTest {
         @DisplayName("Uses only ninjutsu reducers controlled by the activating player")
         void usesOnlyControllerNinjutsuReducers() {
             Card playerReducer = new Card();
-            playerReducer.addStaticEffect(new ReduceNinjutsuCostEffect(2));
+            playerReducer.addStaticEffect(ModifyKeywordCostEffect.reduceYours(KeywordCost.NINJUTSU, 2));
             gd.playerBattlefields.get(player1Id).add(new Permanent(playerReducer));
 
             Card opponentReducer = new Card();
-            opponentReducer.addStaticEffect(new ReduceNinjutsuCostEffect(3));
+            opponentReducer.addStaticEffect(ModifyKeywordCostEffect.reduceYours(KeywordCost.NINJUTSU, 3));
             gd.playerBattlefields.get(player2Id).add(new Permanent(opponentReducer));
 
             assertThat(svc.getNinjutsuAbilityCostReduction(gd, player1Id)).isEqualTo(2);
@@ -1254,7 +1254,7 @@ class CastingCostServiceTest {
         void targetBasedIncreaseApplies() {
             var predicate = new PermanentIsCreaturePredicate();
             Card spell = new Card();
-            spell.addStaticEffect(new IncreaseOwnCastCostIfTargetingPermanentEffect(predicate, 3));
+            spell.addStaticEffect(ReduceOwnCastCostIfTargetingPermanentEffect.increaseIfTargeting(predicate, 3));
 
             Card creatureCard = new Card();
             creatureCard.setType(CardType.CREATURE);
@@ -1476,8 +1476,8 @@ class CastingCostServiceTest {
             Card thaumaturge = new Card();
             thaumaturge.setName("Battlefield Thaumaturge");
             thaumaturge.setType(CardType.CREATURE);
-            thaumaturge.addStaticEffect(new ReduceOwnCastCostPerTargetEffect(
-                    new PermanentIsCreaturePredicate(), 1));
+            thaumaturge.addStaticEffect(new ModifyCastCostPerTargetEffect(
+                    -1, CostModificationScope.SELF, new PermanentIsCreaturePredicate(), null));
             gd.playerBattlefields.get(player1Id).add(new Permanent(thaumaturge));
 
             Card spell = new Card();
@@ -1509,7 +1509,7 @@ class CastingCostServiceTest {
         @DisplayName("Target-count reduction counts each targeted object once, not each use of the word target")
         void targetCountReductionCountsEachTargetedObjectOnce() {
             Card hinata = new Card();
-            hinata.addStaticEffect(new ReduceOwnCastCostForEachTargetEffect(1));
+            hinata.addStaticEffect(new ModifyCastCostPerTargetEffect(-1, CostModificationScope.SELF, null, null));
             gd.playerBattlefields.get(player1Id).add(new Permanent(hinata));
 
             Card spell = new Card();
@@ -1666,7 +1666,7 @@ class CastingCostServiceTest {
     @DisplayName("Opponent target-count tax applies once per target and not to the controller")
     void targetingSpellCostModifierIncludesOpponentTargetCountTax() {
         Card hinata = new Card();
-        hinata.addStaticEffect(new IncreaseOpponentCastCostPerTargetEffect(1));
+        hinata.addStaticEffect(new ModifyCastCostPerTargetEffect(1, CostModificationScope.OPPONENT, null, null));
         gd.playerBattlefields.get(player1Id).add(new Permanent(hinata));
         List<UUID> targetIds = List.of(UUID.randomUUID(), UUID.randomUUID());
 
@@ -1711,7 +1711,7 @@ class CastingCostServiceTest {
     void targetingSpellCostModifierIncludesSpellSelfIncrease() {
         var predicate = new PermanentHasSubtypePredicate(CardSubtype.DRAGON);
         Card spell = new Card();
-        spell.addStaticEffect(new IncreaseOwnCastCostIfTargetingPermanentEffect(predicate, 2));
+        spell.addStaticEffect(ReduceOwnCastCostIfTargetingPermanentEffect.increaseIfTargeting(predicate, 2));
         Permanent dragon = new Permanent(new Card());
 
         when(gameQueryService.findPermanentById(gd, dragon.getId())).thenReturn(dragon);

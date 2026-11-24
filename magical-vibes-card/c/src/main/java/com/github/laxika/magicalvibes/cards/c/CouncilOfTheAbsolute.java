@@ -4,8 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForChosenNameSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
+import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
+import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenNamePredicate;
 
 import java.util.List;
 
@@ -18,6 +20,7 @@ public class CouncilOfTheAbsolute extends Card {
         // Your opponents can't cast spells with the chosen name.
         addStaticEffect(new SpellsWithChosenNameCantBeCastEffect(true));
         // Spells with the chosen name you cast cost {2} less to cast.
-        addStaticEffect(new ReduceCastCostForChosenNameSpellsEffect(2));
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
+                new CardHasSourceChosenNamePredicate(), 2, CostModificationScope.SELF));
     }
 }

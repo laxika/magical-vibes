@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37 (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 41b, 44, 45; merge queue 42. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                               |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42 (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 41b, 44, 45; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,225 / 2,620 (after fold run 37) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,204 / 2,619 (after fold run 42) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,312 rows over 4,520 classes (after fold run 37). Latest verdict per class: `step-9` 293, unique 1,174, absorbed 1,155, split 658, blocked-other 530, survivor 405, blocked-step-model 140, blocked-player-loop 96, dead 69. Waiting: 293 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,360 rows over 4,529 classes (after fold run 42). Latest verdict per class: `step-9` 254, unique 1,182, absorbed 1,184, split 658, blocked-other 538, survivor 408, blocked-step-model 140, blocked-player-loop 96, dead 69. Waiting: 254 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -979,6 +979,14 @@ Delayed and global triggers:
 - `MatchingPermanentsCantActivateTapAbilitiesEffect(PermanentSubject)`: "[set / enchanted creature]'s {T} abilities can't be activated" (CR 602.5) (fold run 37).
 - `AttachedPermanentRestrictionEffect` also carries `PreventTransformEffect()`, `CanOnlyAttackAloneEffect`, `CantAttackOrBlockAloneEffect`, `TargetingRestrictionEffect.opponentSpellsAndAbilities()` (opponents of the attachment's controller) and `CanAttackAsThoughHasteUnlessEnteredThisTurnEffect(false)`. It is read through `GameQueryService.hasAttachedPermanentRestriction` / `attachedPermanentRestrictions(gd, permanent, type)` (fold run 37).
 - `ProtectionFromManaValueEffect` Quality (`atMost`, `chosenParity`, `parity`, `otherThanChosenNumber`, `otherThan`) and `ProtectionFromMulticoloredEffect` ColorCount (`monocolored`, `enemyColoredMulticolored`, `colorless`) (fold run 37).
+
+- `ModifyKeywordCostEffect(KeywordCost, signed amount, scope)` / `reduceYours`: buyback, dash, flashback, cycling, ninjutsu, morph and unlock costs.
+- `ModifyCastCostPerTargetEffect(amount, scope, targetFilter, spellFilter)`: "for each target" / "for each [permanent] it targets".
+- `ReduceActivatedAbilityCostEffect(..., ActivatedAbilityKind)`: BOAST, EXHAUST, NON_MANA, POWER_UP.
+- `IncreaseSpellCostEffect(predicate, n, PlayerSubject players)` and `SubjectResolutionService.namesPlayer` judging `activePlayer()` and `except(...)`.
+- `ReduceOwnColoredCastCostEffect("{2}{U}")`: a mana unit times its amount.
+- `ReduceOwnCastCostEffect.increase` and `ReduceOwnCastCostIfTargetingPermanentEffect.increaseIfTargeting`.
+- `CostModificationScope.names(controller, player)`.
 
 ### Blocked causes still open
 
@@ -4330,6 +4338,29 @@ All 11 batches done. Ratchet 3,324 / 2,675 → 3,311 / 2,670. Ledger 24 rows: ab
 - `hasProtectionFromMulticoloredEffects` / Mono / Enemy ignore `protectionSubject()`, so Guildscorn Ward itself has protection from multicolored. Fairly sure.
 
 **For the next run.** `prot-dyn` as its own run, with `ProtectionFromChosenColorEffect` (8 cards): a dynamic colour set on `ProtectionFromColorsEffect`, with its readers moved onto a context-taking facet or the layered pass.
+
+### Step 9, fold run 42 (2026-11-24, parallel worktree)
+The 8 cost batches (39 rows). Ratchet 3,300 / 2,659 → 3,279 / 2,658. 28 card files rewritten; Oracle text checked for those and the cards left; Hinata's rulings checked. CR 113.6d, 118.7, 118.7a, 118.7c, 118.7d, 118.8, 118.9d, 601.2f, 702.27a, 702.29a, 702.34a, 702.37a, 702.37b, 702.37e, 702.49a, 702.109a, 702.143a, 702.151a, 708.2a, 708.4, 709.5e, 709.5f and 903.3 checked.
+
+| Batch | Result |
+|---|---|
+| match-spell | 4 folded into `ReduceCastCostForMatchingSpellsEffect` (chosen subtype, graveyard zone, chosen name, imprint predicates). 5 `unique`: Seal, Locket and Prowler each need a count against the spell being cast that only they would use; Myth Unbound's "your commander"; Eberhart's drawn-by predicate. |
+| targets-x | 6 `blocked-other`: target-dependent costs are read by separate ad-hoc readers (first-category-wins `computeTargetBasedCostReduction`, one availability preview per kind, the AI). A reader redesign comes first. |
+| mana-unit | 1 folded (`ReduceOwnColoredCastCostEffect` takes a ManaCost unit). Eluge and Flying Drone `unique` (one-card options). |
+| kw-costs | 7 folded into new `ModifyKeywordCostEffect`. Cosmos Charger `unique` (any-turn foretell timing). |
+| ability-kind | 3 folded into `ReduceActivatedAbilityCostEffect`'s new `ActivatedAbilityKind`. |
+| per-target | 3 folded into new `ModifyCastCostPerTargetEffect`. |
+| cost-scope | 3 folded: `IncreaseSpellCostEffect` gains a static `players` subject; Elspeth and Tax Collector are a floated `untilYourNextTurn` grant. Loremaster and Realmwarden `blocked-other`. |
+| own-sign | 2 folded: `ReduceOwnCastCostEffect.increase`, `ReduceOwnCastCostIfTargetingPermanentEffect.increaseIfTargeting`. |
+
+Behaviour changes: alternative costs reduced or taxed (CR 118.9d; 3 tests); the face-down judging (CR 708.4); stack zone for own surcharges (CR 113.6d).
+
+Seen, not changed:
+- `computeTargetBasedCostReduction` returns the first non-zero category, so a per-target reduction hides a spell-self "if it targets" reduction (CR 601.2f). Sure of the code.
+- Infectious Curse's preview runs only for instants and sorceries, so a Curse cast at the cursed player isn't shown as playable at the reduced cost. Sure of the code.
+- The per-target readers still have no lost-abilities or face-down check. Sure.
+
+For the next run: a targets-x run (one target-aware reader that sums every category, one preview), then fold the 6 rows and `ReduceOwnCastCostIfTargetingStackEntryEffect`.
 
 ## Prompt
 

@@ -4,8 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -21,7 +23,8 @@ public class TaxCollector extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Tax — Until your next turn, spells your opponents cast cost {1} more to cast",
-                        new IncreaseSpellCostUntilNextTurnEffect(new CardTruePredicate(), 1)),
+                        GrantStaticEffectToPlayerEffect.untilYourNextTurn(
+                                new IncreaseSpellCostEffect(new CardTruePredicate(), 1, CostModificationScope.OPPONENT))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Arrest — Detain target creature an opponent controls",
                         new LockTargetPermanentEffect(true, true, true,

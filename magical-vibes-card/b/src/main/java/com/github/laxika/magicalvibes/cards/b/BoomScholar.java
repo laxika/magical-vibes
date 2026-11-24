@@ -6,13 +6,19 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityKind;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceExhaustAbilityCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
 
@@ -20,7 +26,10 @@ import java.util.List;
 public class BoomScholar extends Card {
 
     public BoomScholar() {
-        addStaticEffect(new ReduceExhaustAbilityCostEffect(2));
+        addStaticEffect(new ReduceActivatedAbilityCostEffect(new PermanentAllOfPredicate(List.of(
+                new PermanentControlledBySourceControllerPredicate(),
+                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))),
+                new Fixed(2), ActivatedAbilityKind.EXHAUST));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

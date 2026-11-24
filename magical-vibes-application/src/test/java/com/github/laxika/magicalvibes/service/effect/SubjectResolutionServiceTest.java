@@ -355,6 +355,34 @@ class SubjectResolutionServiceTest extends BaseCardTest {
     }
 
     @Nested
+    @DisplayName("namesPlayer(gameData, source, controller, player, activePlayer() / except(...))")
+    class StaticActivePlayerAndExcept {
+
+        @Test
+        @DisplayName("activePlayer() names only the player whose turn it is")
+        void activePlayer() {
+            harness.forceActivePlayer(player2);
+
+            assertThat(SubjectResolutionService.namesPlayer(gd, null, player1.getId(), player2.getId(),
+                    Subjects.activePlayer())).isTrue();
+            assertThat(SubjectResolutionService.namesPlayer(gd, null, player1.getId(), player1.getId(),
+                    Subjects.activePlayer())).isFalse();
+        }
+
+        @Test
+        @DisplayName("except(eachPlayer(), activePlayer()) names every player but the one whose turn it is")
+        void everyPlayerButTheActiveOne() {
+            harness.forceActivePlayer(player1);
+            PlayerSubject offTurn = Subjects.except(Subjects.eachPlayer(), Subjects.activePlayer());
+
+            assertThat(SubjectResolutionService.namesPlayer(gd, null, player1.getId(), player2.getId(), offTurn))
+                    .isTrue();
+            assertThat(SubjectResolutionService.namesPlayer(gd, null, player1.getId(), player1.getId(), offTurn))
+                    .isFalse();
+        }
+    }
+
+    @Nested
     @DisplayName("attached()")
     class Attached {
 

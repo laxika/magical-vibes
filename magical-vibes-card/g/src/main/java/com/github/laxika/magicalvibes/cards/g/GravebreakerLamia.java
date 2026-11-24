@@ -3,8 +3,11 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.effect.ReduceGraveyardSpellCastCostEffect;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
+import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,6 +21,7 @@ public class GravebreakerLamia extends Card {
     public GravebreakerLamia() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new SearchLibraryEffect(null, LibrarySearchDestination.GRAVEYARD));
-        addStaticEffect(new ReduceGraveyardSpellCastCostEffect(1));
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
+                new CardTruePredicate(), 1, CostModificationScope.SELF, Zone.GRAVEYARD));
     }
 }

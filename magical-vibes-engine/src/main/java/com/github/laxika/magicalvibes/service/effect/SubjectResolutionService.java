@@ -1194,13 +1194,22 @@ public class SubjectResolutionService {
      * {@code source} may be {@code null} for an ability with no source permanent (an emblem's, a plane's), which then
      * enchants and chose nobody. With the board it also judges {@code controllerOf(attached())}, "enchanted
      * creature's controller" (Brand of Ill Omen): the player whose battlefield holds the permanent the source is
-     * attached to, nobody while it is attached to nothing or to a player; and {@code ownerOf(source())}, "its owner"
-     * (Xantcha): the owner of the source's card, an in-game ownership change included.
+     * attached to, nobody while it is attached to nothing or to a player; {@code ownerOf(source())}, "its owner"
+     * (Xantcha): the owner of the source's card, an in-game ownership change included; {@code activePlayer()}, the
+     * player whose turn it is; and {@code except(players, excluded)} over any of these forms ("except during its
+     * controller's turn", Defense Grid).
      *
      * @throws UnsupportedOperationException for any other subject
      */
     public static boolean namesPlayer(GameData gameData, Permanent source, UUID controllerId, UUID playerId,
                                       PlayerSubject players) {
+        if (players instanceof PlayerSubject.ActivePlayer) {
+            return playerId != null && playerId.equals(gameData.activePlayerId);
+        }
+        if (players instanceof PlayerSubject.Except(PlayerSubject included, PlayerSubject excluded)) {
+            return namesPlayer(gameData, source, controllerId, playerId, included)
+                    && !namesPlayer(gameData, source, controllerId, playerId, excluded);
+        }
         if (players instanceof PlayerSubject.ControllerOf(PermanentSubject.Attached(boolean creature, boolean last))
                 && !creature && !last) {
             if (playerId == null || source == null || source.getAttachedTo() == null) {

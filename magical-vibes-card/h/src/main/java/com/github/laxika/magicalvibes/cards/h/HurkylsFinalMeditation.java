@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EndTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -15,7 +16,7 @@ public class HurkylsFinalMeditation extends Card {
 
     public HurkylsFinalMeditation() {
         addStaticEffect(new ConditionalEffect(
-                new NotControllerTurn(), new IncreaseOwnCastCostEffect(3)));
+                new NotControllerTurn(), ReduceOwnCastCostEffect.increase(new Fixed(3))));
         addSpellEffect(ReturnToHandEffect.allPermanentsMatching(
                 new PermanentNotPredicate(new PermanentIsLandPredicate())));
         addSpellEffect(new EndTurnEffect());

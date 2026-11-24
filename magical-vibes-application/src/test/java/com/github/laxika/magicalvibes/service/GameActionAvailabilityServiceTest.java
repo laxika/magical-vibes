@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.model.condition.CardDiscardedThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostIfTargetingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ForetellCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
@@ -230,7 +230,7 @@ class GameActionAvailabilityServiceTest {
             spell.setType(CardType.INSTANT);
             spell.setManaCost("{2}{W}");
             var creaturePredicate = new PermanentIsCreaturePredicate();
-            spell.addStaticEffect(new IncreaseOwnCastCostIfTargetingPermanentEffect(creaturePredicate, 3));
+            spell.addStaticEffect(ReduceOwnCastCostIfTargetingPermanentEffect.increaseIfTargeting(creaturePredicate, 3));
             spell.target(TargetFilters.nonlandPermanent())
                     .addSpellEffect(new ExileTargetPermanentEffect());
 

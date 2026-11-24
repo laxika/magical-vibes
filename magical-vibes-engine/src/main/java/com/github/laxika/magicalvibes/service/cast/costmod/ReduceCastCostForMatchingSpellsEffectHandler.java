@@ -61,10 +61,14 @@ public class ReduceCastCostForMatchingSpellsEffectHandler implements CostModific
             faceDown.setToughness(2);
             spellCharacteristics = context.spell().createRuntimeCopyWithFace(faceDown);
         }
+        // The source permanent itself, not a lookup by card id, answers the source-relative predicates
+        // (its chosen subtype or name, the cards exiled with it).
         if (!predicateEvaluationService.matchesCardPredicate(
                 spellCharacteristics, reduce.predicate(),
                 source.sourcePermanent() == null ? null : source.sourcePermanent().getCard().getId(),
-                context.gameData(), context.castingPlayerId(), null, null, context.xValue())) {
+                context.gameData(), context.castingPlayerId(),
+                source.sourcePermanent() == null ? null : source.sourcePermanent().getId(),
+                null, context.xValue())) {
             return 0;
         }
         // Evaluated against the source permanent so source-relative amounts (counters on this

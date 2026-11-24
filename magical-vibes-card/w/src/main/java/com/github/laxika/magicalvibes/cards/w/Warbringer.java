@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
-import com.github.laxika.magicalvibes.model.effect.ReduceDashCostEffect;
+import com.github.laxika.magicalvibes.model.effect.KeywordCost;
+import com.github.laxika.magicalvibes.model.effect.ModifyKeywordCostEffect;
 
 import java.util.List;
 
@@ -13,6 +14,6 @@ public class Warbringer extends Card {
 
     public Warbringer() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{2}{R}"))));
-        addStaticEffect(new ReduceDashCostEffect(2));
+        addStaticEffect(ModifyKeywordCostEffect.reduceYours(KeywordCost.DASH, 2));
     }
 }

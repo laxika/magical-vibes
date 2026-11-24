@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostByManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnColoredCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -24,7 +24,7 @@ public class StormwingEntity extends Card {
                 new ControllerCastSpellThisTurn(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY)))),
-                new ReduceOwnCastCostByManaCostEffect("{2}{U}")));
+                new ReduceOwnColoredCastCostEffect("{2}{U}")));
 
 
         // When this creature enters, scry 2.

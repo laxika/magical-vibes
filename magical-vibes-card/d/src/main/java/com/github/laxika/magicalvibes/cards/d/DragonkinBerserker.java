@@ -10,9 +10,11 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityKind;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceBoastActivationCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -23,8 +25,9 @@ import java.util.Set;
 public class DragonkinBerserker extends Card {
 
     public DragonkinBerserker() {
-        addStaticEffect(new ReduceBoastActivationCostEffect(
-                new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.DRAGON), CountScope.CONTROLLER)));
+        addStaticEffect(new ReduceActivatedAbilityCostEffect(new PermanentTruePredicate(),
+                new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.DRAGON), CountScope.CONTROLLER),
+                ActivatedAbilityKind.BOAST));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.b.BalefulMastery;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -9,10 +11,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DefenseGrid.class, HolyDay.class, IcyManipulator.class})
+@CardUsed({DefenseGrid.class, HolyDay.class, IcyManipulator.class, BalefulMastery.class, GrizzlyBears.class})
 class DefenseGridTest extends BaseCardTest {
 
     @Test
@@ -147,5 +151,25 @@ class DefenseGridTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromHand(player2, new HolyDay(), "{3}{W}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("The tax applies to a spell cast for an alternative cost (CR 118.9d)")
+    void taxesAlternativeCost() {
+        harness.addToBattlefield(player1, new DefenseGrid());
+        harness.forceActivePlayer(player2);
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BalefulMastery()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(player1, 0, bear.getId(), List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castInstantWithAlternateCost(player1, 0, bear.getId(), List.of());
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Baleful Mastery"));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }

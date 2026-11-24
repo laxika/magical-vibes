@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.b.BalefulMastery;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.f.FireIce;
@@ -18,7 +19,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CurseOfSilence.class, GrizzlyBears.class, Shock.class, FireIce.class})
+@CardUsed({CurseOfSilence.class, GrizzlyBears.class, Shock.class, FireIce.class, BalefulMastery.class})
 class CurseOfSilenceTest extends BaseCardTest {
 
     @Test
@@ -208,6 +209,29 @@ class CurseOfSilenceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castEnchantment(player1, 0, player2.getId());
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("The tax applies to a spell with the chosen name cast for an alternative cost (CR 118.9d)")
+    void taxesAlternativeCostOfChosenNameSpell() {
+        Permanent curse = harness.addToBattlefieldAndReturn(player1, new CurseOfSilence());
+        curse.setAttachedTo(player2.getId());
+        curse.setChosenName("Baleful Mastery");
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        preparePlayer2MainPhase();
+        harness.setHand(player2, List.of(new BalefulMastery()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(player2, 0, bear.getId(), List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castInstantWithAlternateCost(player2, 0, bear.getId(), List.of());
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Baleful Mastery"));
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 
     private void preparePlayer2MainPhase() {

@@ -3,11 +3,12 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSharedCardTypeWithImprintEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,6 +22,7 @@ public class SemblanceAnvil extends Card {
                 new MayEffect(new ExileFromHandToImprintEffect(
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)), "a nonland card"),
                         "You may exile a nonland card from your hand."));
-        addStaticEffect(new ReduceOwnCastCostForSharedCardTypeWithImprintEffect(new Fixed(2)));
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
+                new CardSharesCardTypeWithImprintedCardPredicate(true), 2, CostModificationScope.SELF));
     }
 }

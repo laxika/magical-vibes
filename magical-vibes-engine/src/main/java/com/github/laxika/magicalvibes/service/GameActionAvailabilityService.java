@@ -1383,7 +1383,7 @@ public class GameActionAvailabilityService {
         GraveyardCardTargetCostReductionEffect graveyardTargetReduce = null;
         ReduceOwnCastCostIfTargetingStackEntryEffect stackTargetReduce = null;
         for (CardEffect e : card.getStaticEffects()) {
-            if (e instanceof ReduceOwnCastCostIfTargetingPermanentEffect r) {
+            if (e instanceof ReduceOwnCastCostIfTargetingPermanentEffect r && !r.increase()) {
                 targetReduce = r;
             } else if (e instanceof GraveyardCardTargetCostReductionEffect r) {
                 graveyardTargetReduce = r;

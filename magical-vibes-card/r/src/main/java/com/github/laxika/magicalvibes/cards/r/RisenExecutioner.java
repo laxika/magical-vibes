@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -26,7 +26,7 @@ public class RisenExecutioner extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)));
         addStaticEffect(new ConditionalEffect(
                 new CastFromZone(Zone.GRAVEYARD),
-                new IncreaseOwnCastCostEffect(new CardsInGraveyard(
+                ReduceOwnCastCostEffect.increase(new CardsInGraveyard(
                         new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER, true))));
         addCastingOption(new GraveyardCast());
     }

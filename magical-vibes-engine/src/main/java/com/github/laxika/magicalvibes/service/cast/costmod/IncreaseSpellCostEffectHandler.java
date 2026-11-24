@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.service.cast.CostModificationHandlerBean;
 import com.github.laxika.magicalvibes.service.cast.CostModificationSource;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -55,11 +56,14 @@ public class IncreaseSpellCostEffectHandler implements CostModificationHandlerBe
 
     private boolean applies(CostModificationContext context, IncreaseSpellCostEffect increase,
                             CostModificationSource source) {
-        boolean inScope = switch (increase.scope()) {
-            case SELF -> source.controlledBy(context.castingPlayerId());
-            case OPPONENT -> !source.controlledBy(context.castingPlayerId());
-            case ALL -> true;
-        };
+        boolean inScope = increase.players() != null
+                ? SubjectResolutionService.namesPlayer(context.gameData(), source.sourcePermanent(),
+                        source.controllerId(), context.castingPlayerId(), increase.players())
+                : switch (increase.scope()) {
+                    case SELF -> source.controlledBy(context.castingPlayerId());
+                    case OPPONENT -> !source.controlledBy(context.castingPlayerId());
+                    case ALL -> true;
+                };
         if (!inScope) {
             return false;
         }
@@ -71,7 +75,9 @@ public class IncreaseSpellCostEffectHandler implements CostModificationHandlerBe
         return predicateEvaluationService.matchesCardPredicate(
                 context.spell(), increase.predicate(),
                 source.sourcePermanent() == null ? null : source.sourcePermanent().getCard().getId(),
-                context.gameData(), context.castingPlayerId(), null, null, context.xValue());
+                context.gameData(), context.castingPlayerId(),
+                source.sourcePermanent() == null ? null : source.sourcePermanent().getId(),
+                null, context.xValue());
     }
 
     private boolean spellWasCastFromZone(CostModificationContext context, Zone zone) {

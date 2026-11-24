@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.cast.costmod;
 
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnColoredCastCostEffect;
@@ -11,6 +12,11 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/**
+ * Spell-self handler for {@link ReduceOwnColoredCastCostEffect}: the unit, times the evaluated amount, is a coloured
+ * reduction of the printed cost. For a one-colour unit, the part no printed symbol could absorb also offsets generic
+ * cost increases ({@link #modifyCostAfterOtherModifiers}); a mixed unit reduces only the printed cost.
+ */
 @Component
 @RequiredArgsConstructor
 public class ReduceOwnColoredCastCostEffectHandler implements CostModificationHandlerBean {
@@ -41,16 +47,17 @@ public class ReduceOwnColoredCastCostEffectHandler implements CostModificationHa
     public int modifyCostAfterOtherModifiers(CostModificationContext context, CardEffect effect,
                                              CostModificationSource source, int accumulatedModifier) {
         var reduce = (ReduceOwnColoredCastCostEffect) effect;
-        int amount = evaluateAmount(context, reduce);
+        ManaColor color = singleColor(reduce.unit());
         ManaCost printedCost = context.spell().getParsedManaCost();
-        if (printedCost == null) {
+        if (color == null || printedCost == null) {
             return 0;
         }
+        int amount = evaluateAmount(context, reduce) * reduce.unit().getManaValue();
         int genericReductionRemainder = amount
-                - printedCost.countColorSymbols(reduce.color())
+                - printedCost.countColorSymbols(color)
                 - printedCost.getGenericCost();
         int coveredPrintedMana = Math.min(amount,
-                printedCost.countColorSymbols(reduce.color()) + printedCost.getGenericCost());
+                printedCost.countColorSymbols(color) + printedCost.getGenericCost());
         return -Math.min(Math.max(0, genericReductionRemainder),
                 Math.max(0, accumulatedModifier + coveredPrintedMana));
     }
@@ -63,7 +70,7 @@ public class ReduceOwnColoredCastCostEffectHandler implements CostModificationHa
         if (amount <= 0) {
             return null;
         }
-        return new ManaCost(("{" + reduce.color().getCode() + "}").repeat(amount));
+        return new ManaCost(reduce.unit().toManaCostString().repeat(amount));
     }
 
     @Override
@@ -74,5 +81,18 @@ public class ReduceOwnColoredCastCostEffectHandler implements CostModificationHa
     private int evaluateAmount(CostModificationContext context, ReduceOwnColoredCastCostEffect effect) {
         return amountEvaluationService.evaluate(context.gameData(), effect.amount(),
                 AmountContext.forCasting(context.castingPlayerId()));
+    }
+
+    /** The unit's one colour when it is only symbols of that colour ({U}, {G}{G}), else {@code null}. */
+    private static ManaColor singleColor(ManaCost unit) {
+        if (unit.getGenericCost() != 0) {
+            return null;
+        }
+        for (ManaColor color : ManaColor.values()) {
+            if (unit.getManaValue() > 0 && unit.countColorSymbols(color) == unit.getManaValue()) {
+                return color;
+            }
+        }
+        return null;
     }
 }

@@ -12,7 +12,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * The single spell-self cost-reduction handler: evaluates the effect's {@link ReduceOwnCastCostEffect#amount()}
- * against a cast-time {@link AmountContext} and returns it as a negative generic-mana delta.
+ * against a cast-time {@link AmountContext} and returns it as a negative generic-mana delta (positive for an
+ * {@link ReduceOwnCastCostEffect#increase()} surcharge).
  * Handles both fixed reductions ({@code Fixed}) and "for each …" reductions (counting amounts),
  * so it also serves as the delegate target for {@code ConditionalCostModificationHandler}.
  */
@@ -37,6 +38,6 @@ public class ReduceOwnCastCostEffectHandler implements CostModificationHandlerBe
         var reduce = (ReduceOwnCastCostEffect) effect;
         int amount = amountEvaluationService.evaluate(context.gameData(), reduce.amount(),
                 AmountContext.forCasting(context.castingPlayerId(), 0, context.spell()));
-        return -Math.max(0, amount);
+        return reduce.increase() ? Math.max(0, amount) : -Math.max(0, amount);
     }
 }

@@ -1261,7 +1261,15 @@ public class PredicateEvaluationService {
                     UUID linkedSourceId = sourcePermanentId != null ? sourcePermanentId
                             : source == null ? null : source.getId();
                     if (linkedSourceId != null) {
-                        yield gameData.getCardsExiledByPermanent(linkedSourceId).stream()
+                        // Every card still exiled with the permanent, and the recorded imprint while it is still
+                        // exiled (the pointer is cleared as a permanent enters, so it never names an older object's).
+                        List<Card> exiledWith = gameData.getCardsExiledByPermanent(linkedSourceId);
+                        Card recorded = gameData.imprintedCards.get(sourceCardId);
+                        if (recorded != null && gameData.findExiledCard(recorded.getId()) != null
+                                && exiledWith.stream().noneMatch(exiled -> exiled.getId().equals(recorded.getId()))) {
+                            exiledWith.add(recorded);
+                        }
+                        yield exiledWith.stream()
                                 .anyMatch(exiled -> java.util.Arrays.stream(CardType.values())
                                         .anyMatch(type -> gameQueryService.cardHasType(card, type, gameData, cardOwnerId)
                                                 && gameQueryService.cardHasType(exiled, type, gameData,

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.a.AvenLiberator;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Mulldrifter;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HeraldsHorn.class, GrizzlyBears.class, WalkingCorpse.class, AvenLiberator.class})
+@CardUsed({HeraldsHorn.class, GrizzlyBears.class, WalkingCorpse.class, AvenLiberator.class, Mulldrifter.class})
 class HeraldsHornTest extends BaseCardTest {
 
     @Test
@@ -55,6 +56,20 @@ class HeraldsHornTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The reduction applies to an alternative cost such as evoke")
+    void reducesEvokeCostOfChosenTypeSpell() {
+        addHorn(CardSubtype.ELEMENTAL);
+        harness.setHand(player1, List.of(new Mulldrifter()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreatureWithEvoke(player1, 0, null);
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Mulldrifter"));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test

@@ -3,9 +3,12 @@ package com.github.laxika.magicalvibes.cards.z;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityKind;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceNonManaActivatedAbilityCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -17,7 +20,8 @@ import java.util.List;
 public class ZirdaTheDawnwaker extends Card {
 
     public ZirdaTheDawnwaker() {
-        addStaticEffect(new ReduceNonManaActivatedAbilityCostEffect(2));
+        addStaticEffect(new ReduceActivatedAbilityCostEffect(new PermanentTruePredicate(), new Fixed(2), false, true,
+                ActivatedAbilityKind.NON_MANA));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

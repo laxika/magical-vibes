@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForChosenSubtypeSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
+import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 
 @CardRegistration(set = "UDS", collectorNumber = "142")
 @CardRegistration(set = "DMR", collectorNumber = "239")
@@ -14,6 +15,7 @@ public class UrzasIncubator extends Card {
 
     public UrzasIncubator() {
         addStaticEffect(new ChooseSubtypeOnEnterEffect());
-        addStaticEffect(new ReduceCastCostForChosenSubtypeSpellsEffect(2, CostModificationScope.ALL));
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
+                new CardHasSourceChosenSubtypePredicate(), 2, CostModificationScope.ALL));
     }
 }

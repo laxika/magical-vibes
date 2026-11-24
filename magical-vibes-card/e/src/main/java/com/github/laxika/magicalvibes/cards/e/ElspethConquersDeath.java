@@ -1,17 +1,19 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -40,9 +42,9 @@ public class ElspethConquersDeath extends Card {
                         chapterOneFilter,
                         "Target must be a permanent an opponent controls with mana value 3 or greater")));
 
-        addTrigger(Triggers.chapter(2), new IncreaseSpellCostUntilNextTurnEffect(
+        addTrigger(Triggers.chapter(2), GrantStaticEffectToPlayerEffect.untilYourNextTurn(new IncreaseSpellCostEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                2));
+                2, CostModificationScope.OPPONENT)));
 
         addTrigger(Triggers.chapter(3), SequenceEffect.of(
                 ReturnCardFromGraveyardEffect.builder()
