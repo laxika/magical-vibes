@@ -27,12 +27,13 @@ public class EmpowerNextCreatureSpellThisTurnEffectHandler implements NormalEffe
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         EmpowerNextCreatureSpellThisTurnEffect empower = (EmpowerNextCreatureSpellThisTurnEffect) effect;
         gameData.addPlayerEffect(entry, empower, entry.getControllerId(), Duration.UNTIL_MATCHING_SPELL_CAST);
+        String spell = GrantFlashToNextMatchingSpellEffectHandler.spellDescription(empower.spellFilter());
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
-                .text(" empowers its controller's next creature spell this turn.")
+                .text(" empowers its controller's next " + spell + " this turn.")
                 .build());
-        log.info("Game {} - {} empowers the next creature spell of player {} (uncounterable={}, +1/+1 counters={})",
-                gameData.id, entry.getCard().getName(), entry.getControllerId(),
+        log.info("Game {} - {} empowers the next {} of player {} (uncounterable={}, +1/+1 counters={})",
+                gameData.id, entry.getCard().getName(), spell, entry.getControllerId(),
                 empower.uncounterable(), empower.additionalPlusOneCounters());
     }
 }

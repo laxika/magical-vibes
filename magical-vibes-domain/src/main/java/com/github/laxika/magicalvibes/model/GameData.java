@@ -19,9 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.CardCantBePlayedFromHandEffec
 import com.github.laxika.magicalvibes.model.effect.CardRevealedInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnNextInstantOrSorceryCastFromHandToHandThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.EmpowerNextCreatureSpellThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.MakeNextInstantSorceryUncounterableThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.MakeNextSpellUncounterableThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendAnyManaTypeForNextSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantPayLifeEqualToSpellManaValueForNextSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantConvokeToNextSpellThisTurnEffect;
@@ -6823,7 +6820,6 @@ public class GameData {
         if (hasNextSpellConvokeGrant(playerId)) {
             spellsCastWithConvokeGrantThisTurn.add(card.getId());
         }
-        applyNextSpellRiders(playerId, card);
     }
 
     /** Records a card cycled by the given player during this game. */
@@ -7212,34 +7208,6 @@ public class GameData {
     /** Whether the player holds a permission to spend mana of any type on the next spell they cast. */
     public boolean hasPendingAnyManaTypeForNextSpellThisTurn(UUID playerId) {
         return hasFloatingEffectOnPlayer(playerId, SpendAnyManaTypeForNextSpellThisTurnEffect.class);
-    }
-
-    /**
-     * Applies the riders "the next spell you cast this turn can't be countered" and "the next creature spell you cast
-     * this turn can't be countered / enters with additional +1/+1 counters" to {@code card}, the spell {@code playerId}
-     * has just cast. The duration clock ends the effects with the same cast.
-     */
-    private void applyNextSpellRiders(UUID playerId, Card card) {
-        if (hasFloatingEffectOnPlayer(playerId, MakeNextSpellUncounterableThisTurnEffect.class)) {
-            spellsMadeUncounterable.add(card.getId());
-        }
-        if ((card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
-                && hasFloatingEffectOnPlayer(playerId, MakeNextInstantSorceryUncounterableThisTurnEffect.class)) {
-            spellsMadeUncounterable.add(card.getId());
-        }
-        if (!card.hasType(CardType.CREATURE)) {
-            return;
-        }
-        for (FloatingContinuousEffect empowerment
-                : floatingEffectsOnPlayer(playerId, EmpowerNextCreatureSpellThisTurnEffect.class)) {
-            var grant = (EmpowerNextCreatureSpellThisTurnEffect) empowerment.effect();
-            if (grant.uncounterable()) {
-                spellsMadeUncounterable.add(card.getId());
-            }
-            if (grant.additionalPlusOneCounters() > 0) {
-                spellAdditionalEnterCounters.merge(card.getId(), grant.additionalPlusOneCounters(), Integer::sum);
-            }
-        }
     }
 
     /**

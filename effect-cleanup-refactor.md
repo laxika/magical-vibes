@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 44b, 45b, 46b; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                       |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 45b, 46b, 47; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                        |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,131 / 2,541 (after fold run 40b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,127 / 2,537 (after fold run 44b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,490 rows over 4,541 classes (after fold run 40b). Latest verdict per class: `step-9` 156, unique 1,187, absorbed 1,249, split 667, blocked-other 547, survivor 430, blocked-step-model 139, blocked-player-loop 96, dead 70. Waiting: 156 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,495 rows over 4,541 classes (after fold run 44b). Latest verdict per class: `step-9` 152, unique 1,187, absorbed 1,251, split 669, blocked-other 546, survivor 431, blocked-step-model 139, blocked-player-loop 96, dead 70. Waiting: 152 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1031,6 +1031,11 @@ Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671
 - `DiceRollService.rollDice(gameData, player, sides, count)`: one roll of `count` dice; each `RollWithAdvantageEffect` adds one die to the roll and the lowest are ignored (CR 706.6) (fold run 40b).
 - `RedirectPlayerDamageToSelfEffect.combatOnly` / `.combatDamageFromUnblockedCreatures(requiresUntapped)`: floated on a player by `GrantStaticEffectToPlayerEffect`, "this creature" is the float's source (fold run 40b).
 - `SetNameEffect(name, subject, Duration)` one-shot path: a resolved name change floats a layer-3 `target()` copy on each permanent, in timestamp order with static name setters and kept after a loss of all abilities; `Permanent.persistentName` is gone (fold run 40b).
+
+- `EmpowerNextCreatureSpellThisTurnEffect(CardPredicate spellFilter, uncounterable, counters)` / `.cantBeCountered(filter)`: every "the next [matching] spell you cast this turn can't be countered / enters with N additional +1/+1 counters", applied by `SpellEvents.cast` to the spell that ends it (fold run 44b).
+- `DurationClock.waitsForSpell(gd, floatingEffect, spellCard, castingPlayer, castFaceDown)`: the one judge of whether a cast is the "next matching spell" a `NextMatchingSpellEffect` waits for (fold run 44b).
+- `GrantFlashToNextMatchingSpellEffectHandler.spellDescription(CardPredicate)`: log noun for a next-spell filter ("spell", "creature spell", "instant or sorcery spell") (fold run 44b).
+- "You may destroy target X. If you do, …" is `MayEffect(SequenceEffect.of(destroy, ConditionalEffect(TargetPermanentMatches(not indestructible), …)))`; "you may pay {c}. If you do, destroy … and …" is `MayPayManaEffect(c, SequenceEffect.of(destroy, …))` with no gate (CR 118.12) (fold run 44b).
 
 ### Blocked causes still open
 
@@ -4598,6 +4603,19 @@ All of these have tests that would fail on the old code by reasoning. Prompts an
 - Overblaze's AI polarity entry is HARMFUL_DAMAGE, though one's own creature is the usual target. AI only, unsure.
 
 **For the next run.** The rest of the advantage defect can move onto `DiceRollService.rollDice` (the d6, d8 and d10 rolls, Clown Car, Hydra, Sword of Hours). Grave Endeavor folds once a second card needs a dynamic "return with N counters". The three doublers need the owner's leave to add one-card options, or a second user.
+
+### Step 9, fold run 44b (2026-11-24, parallel worktree)
+2 batches done: absorbed 2, split 2, survivor 1. Ratchet 3,147 / 2,563 → 3,143 / 2,559. 6 card files rewritten; Oracle text checked for 8 cards, rulings for 7. CR checked: 118.3, 118.12, 506.2, 508.5, 601.2i, 608.2b, 608.2c, 613.1f, 701.8a, 701.19a, 702.12b, 708.2.
+
+| Batch | Result |
+|---|---|
+| next-spell-rider | 2 absorbed, survivor widened. `EmpowerNextCreatureSpellThisTurnEffect(CardPredicate spellFilter, uncounterable, counters)`, `cantBeCountered(filter)`. `SpellEvents.cast` applies the riders first, before the entry takes `spellAdditionalEnterCounters`, through `DurationClock.waitsForSpell`, the judge that also ends the effect. Every `recordSpellCast` path reaches it. `GameData.applyNextSpellRiders` is gone. |
+| no-combat-dmg | 2 split. Goblin Vandal: `MayPayManaEffect("{R}", SequenceEffect.of(DestroyTargetPermanentEffect(allOf(artifact, PermanentControlledByDefendingPlayerPredicate)), AssignNoCombatDamageEffect()))`, with no gate: "if you do" is the payment (CR 118.12). Floral Spuzzem: `MayEffect` of the same destroy + `ConditionalEffect(TargetPermanentMatches(not indestructible), AssignNoCombatDamageEffect)`. The destruction is the cost: a regenerated artifact was paid for even though it wasn't destroyed (CR 701.19a, so `destroyed()` would be the wrong reader), and an indestructible one can't be paid for (CR 702.12b, 118.3). Kukemssa Pirates / Orcish Squatters: `GainControlOfTargetEffect.withTargetPredicate(duration, allOf(filter, defending))` + `ConditionalEffect(HappenedThisWay(GAIN_CONTROL), …)`. The source-control check for Squatters stays in the survivor's while-source path. The `TriggerTargetCollector` special case and two unused `MultiPermanentChoiceContext` records went. |
+
+**Behaviour changes.** A perpetually or grant-typed creature card gets Insist's rider (it used to use the rider up without getting it). Vandal's paid {R} stops damage when the artifact survives. Log lines are the survivors'.
+**Tests changed.** RunedTerrorTest (class rename). Added: InsistTest perpetual creature, GoblinVandalTest indestructible.
+**Seen, not changed.** None new.
+**For the next run.** Nothing is left in these batches; the Laccolith Rig Disarm half stays with `unattach`.
 
 ## Prompt
 

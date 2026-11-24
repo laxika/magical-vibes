@@ -11,8 +11,6 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -408,7 +406,6 @@ public class TriggerTargetCollector {
             PermanentPredicate effectPredicate = null;
             FilterContext effectFilterCtx = null;
             boolean excludesSource = false;
-            boolean defendingPlayerPermanentsOnly = false;
             if (options.useEffectTargetPredicate()) {
                 List<CardEffect> targetingEffects = effects.stream()
                         .map(e -> unwrap(e, options))
@@ -418,9 +415,6 @@ public class TriggerTargetCollector {
                         .filter(BecomeCopyOfTargetCreatureEffect.class::isInstance)
                         .map(BecomeCopyOfTargetCreatureEffect.class::cast)
                         .anyMatch(copyEffect -> !copyEffect.canTargetSelf());
-                defendingPlayerPermanentsOnly = targetingEffects.stream().anyMatch(effect ->
-                        effect instanceof GainControlOfPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffect
-                                || effect instanceof DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffect);
                 effectPredicate = EffectResolution.declaredPermanentRestriction(targetingEffects)
                         .orElse(null);
                 if (effectPredicate != null) {
@@ -483,7 +477,6 @@ public class TriggerTargetCollector {
                     : null;
 
             for (UUID pid : gameData.orderedPlayerIds) {
-                if (defendingPlayerPermanentsOnly && !pid.equals(defendingPlayerId)) continue;
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {

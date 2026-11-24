@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
 import com.github.laxika.magicalvibes.cards.j.JabarisBanner;
 import com.github.laxika.magicalvibes.cards.w.WeldingJar;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -177,6 +179,27 @@ class GoblinVandalTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
         assertThat(gd.regenerationShieldCount(artifact.getId())).isZero();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(defenderLifeBefore);
+    }
+
+    @Test
+    @DisplayName("Paying {R} stops the Vandal's combat damage even when the artifact is indestructible")
+    void paymentStopsCombatDamageWhenArtifactIsIndestructible() {
+        Permanent artifact = addDefenderArtifact();
+        PermanentGrants.keywordUntilEndOfTurn(gd, artifact, Keyword.INDESTRUCTIBLE);
+        Permanent attacker = addAttacker();
+        int defenderLifeBefore = gd.playerLifeTotals.get(player2.getId());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        advanceToMayPayPrompt(artifact);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
+
+        resolveCombat();
+
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(defenderLifeBefore);
     }
 

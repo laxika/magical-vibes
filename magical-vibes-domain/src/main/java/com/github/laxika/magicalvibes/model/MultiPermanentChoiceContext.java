@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.WormsOfTheEarthEffect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -164,27 +163,6 @@ public sealed interface MultiPermanentChoiceContext {
         public SacrificeSelfToDestroy(UUID sourcePermanentId, boolean cannotBeRegenerated) {
             this(sourcePermanentId, cannotBeRegenerated, false);
         }
-    }
-
-    /**
-     * "Gain control of the chosen permanent the defending player controls[ for as long as you
-     * control [source]]. If you do, [source] assigns no combat damage this turn." (Orcish Squatters
-     * — lands; Kukemssa Pirates — artifacts.) {@code sourcePermanentId} is the attacking source
-     * creature, {@code duration} how long control is kept and {@code choiceNoun} the noun used in
-     * the game log.
-     */
-    record GainControlOfPermanentAndAssignNoCombatDamage(UUID sourcePermanentId, Duration duration,
-                                                         String choiceNoun) implements MultiPermanentChoiceContext {
-    }
-
-    /**
-     * "Destroy the chosen permanent the defending player controls and [source] assigns no combat
-     * damage this turn." (Goblin Vandal — artifacts.) {@code sourcePermanentId} is the attacking
-     * source creature and {@code choiceNoun} the noun used in the game log.
-     */
-    record DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamage(UUID sourcePermanentId,
-                                                                          String choiceNoun)
-            implements MultiPermanentChoiceContext {
     }
 
     /** The controller selected Equipment they control to attach to the targeted creature. */

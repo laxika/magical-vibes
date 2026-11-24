@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.ability;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RegisterDrawCardsAtNextUpkeepEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.GrantFlashToNextMatchingSpellEffectHandler;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
@@ -1658,18 +1659,18 @@ public class ActivatedAbilityExecutionService {
                             gameData.id, player.getUsername(), anyColor.restriction(), picks);
                 }
             } else if (effect instanceof EmpowerNextCreatureSpellThisTurnEffect empower) {
-                // Mana abilities resolve inline rather than through the normal effect-handler path.
-                // Grand Summon's mana ability uses this rider to register its one-shot creature
-                // spell empowerment alongside the mana it produces.
+                // Mana abilities resolve inline rather than through the normal effect-handler path, so a mana
+                // ability that also registers a next-spell rider registers it here.
                 gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(FaceDownVisibility.publicName(gameData, permanent),
                         permanent.getId(), playerId, empower, playerId, Duration.UNTIL_MATCHING_SPELL_CAST));
+                String spell = GrantFlashToNextMatchingSpellEffectHandler.spellDescription(empower.spellFilter());
                 gameLogService.append(gameData, GameLog.builder()
                         .card(permanent.getCard())
-                        .text(" empowers its controller's next creature spell this turn.")
+                        .text(" empowers its controller's next " + spell + " this turn.")
                         .build());
-                log.info("Game {} - {} empowers the next creature spell of player {} "
+                log.info("Game {} - {} empowers the next {} of player {} "
                                 + "(uncounterable={}, +1/+1 counters={})",
-                        gameData.id, permanent.getCard().getName(), playerId,
+                        gameData.id, permanent.getCard().getName(), spell, playerId,
                         empower.uncounterable(), empower.additionalPlusOneCounters());
             } else if (effect instanceof AwardRestrictedManaOfColorsEffect restrictedOfColors) {
                 int picks = amountEvaluationService.evaluate(gameData, restrictedOfColors.amount(),

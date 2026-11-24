@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.input;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChoosePermanentsEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PreventionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TapPermanentsEffectHandler;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
@@ -25,7 +24,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -33,7 +31,6 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
-import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
@@ -133,7 +130,6 @@ public class MultiPermanentChoiceHandlerService {
     private final DamageSupport damageSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.SeparateIntoPilesEffectHandler separateIntoPilesEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RagingRiverEffectHandler ragingRiverEffectHandler;
-    private final CreatureControlService creatureControlService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final AnimationSupport animationSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.FlickerEffectHandler flickerEffectHandler;
@@ -786,10 +782,6 @@ public class MultiPermanentChoiceHandlerService {
             handleTapAnyNumberPermanents(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeSelfToDestroy) {
             completeAskingDeathReplacementsFirst(gameData, multiPermanentChoice, permanentIds);
-        } else if (context instanceof MultiPermanentChoiceContext.GainControlOfPermanentAndAssignNoCombatDamage ctx) {
-            handleGainControlOfPermanentAndAssignNoCombatDamage(gameData, playerId, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamage) {
-            completeAskingDeathReplacementsFirst(gameData, multiPermanentChoice, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.AttachAnyNumberOfControlledEquipmentToTargetCreature ctx) {
             attachAnyNumberOfControlledEquipmentHandler.completeChoice(gameData, playerId, permanentIds, ctx);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -1202,74 +1194,6 @@ public class MultiPermanentChoiceHandlerService {
         }
         destructionSupport.tryDestroyAndLog(gameData, target, "sacrifice trigger", context.cannotBeRegenerated(),
                 false);
-    }
-
-    private void handleGainControlOfPermanentAndAssignNoCombatDamage(GameData gameData, UUID playerId, List<UUID> permanentIds,
-                                                                     MultiPermanentChoiceContext.GainControlOfPermanentAndAssignNoCombatDamage context) {
-        UUID sourcePermId = context.sourcePermanentId();
-        Duration duration = context.duration();
-
-        if (permanentIds.isEmpty()) {
-            gameLogService.append(gameData,
-                    GameLog.text(gameData.playerIdToName.get(playerId) + " chooses not to gain control of a " + context.choiceNoun() + "."));
-        } else {
-            Permanent source = gameQueryService.findPermanentById(gameData, sourcePermId);
-            UUID sourceController = source != null ? gameQueryService.findPermanentController(gameData, sourcePermId) : null;
-            Permanent stolen = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
-
-            // Per ruling: a source-linked duration only takes control if you still control the
-            // source; the "assigns no combat damage" rider applies only when one is actually taken.
-            boolean sourceOk = !duration.isSourceLinked() || (source != null && playerId.equals(sourceController));
-            if (stolen != null && sourceOk) {
-                creatureControlService.applyControlEffect(gameData, playerId, stolen,
-                        new GainControlOfTargetEffect(duration), duration,
-                        duration.isSourceLinked() ? sourcePermId : null,
-                        source != null ? FaceDownVisibility.publicName(gameData, source) : FaceDownVisibility.publicName(gameData, stolen));
-                if (source != null) {
-                    PreventionSupport.preventCombatDamageDealtBy(gameData, FaceDownVisibility.publicName(gameData, source), sourcePermId,
-                            playerId, sourcePermId, Duration.UNTIL_END_OF_TURN);
-                    gameLogService.append(gameData,
-                            GameLog.cardThen(source.getCard(), " assigns no combat damage this turn."));
-                }
-                log.info("Game {} - {} gains control of {} and assigns no combat damage",
-                        gameData.id, gameData.playerIdToName.get(playerId), stolen.getCard().getName());
-            } else {
-                gameLogService.append(gameData,
-                        GameLog.text("The ability has no effect (source no longer controlled)."));
-            }
-        }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    private void handleDestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamage(
-            GameData gameData, UUID playerId, List<UUID> permanentIds,
-            MultiPermanentChoiceContext.DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamage context) {
-        if (permanentIds.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(
-                    gameData.playerIdToName.get(playerId) + " chooses no " + context.choiceNoun() + " to destroy."));
-        } else {
-            Permanent target = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
-            if (target != null) {
-                destructionSupport.tryDestroyAndLog(gameData, target, "unblocked-attack trigger");
-            } else {
-                gameData.deathReplacementsCanRerunEffect = false;
-            }
-            permanentRemovalService.removeOrphanedAuras(gameData);
-
-            // The rider applies whether or not the permanent survived — the source still assigns no
-            // combat damage this turn once a permanent was chosen.
-            Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
-            if (source != null) {
-                PreventionSupport.preventCombatDamageDealtBy(gameData, FaceDownVisibility.publicName(gameData, source),
-                        context.sourcePermanentId(), playerId, context.sourcePermanentId(),
-                        Duration.UNTIL_END_OF_TURN);
-                gameLogService.append(gameData,
-                        GameLog.cardThen(source.getCard(), " assigns no combat damage this turn."));
-            }
-        }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleDealDamageToDamagedPlayerControls(GameData gameData, List<UUID> permanentIds,
@@ -1744,11 +1668,6 @@ public class MultiPermanentChoiceHandlerService {
         switch (context) {
             case MultiPermanentChoiceContext.SacrificeSelfToDestroy ctx -> {
                 handleSacrificeSelfToDestroy(gameData, playerId, permanentIds, ctx);
-                return;
-            }
-            case MultiPermanentChoiceContext.DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamage ctx -> {
-                handleDestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamage(
-                        gameData, playerId, permanentIds, ctx);
                 return;
             }
             case MultiPermanentChoiceContext.SacrificeAttackCost ignored -> {

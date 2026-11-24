@@ -11,11 +11,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.EmpowerNextCreatureSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.VisualCueType;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -43,17 +46,20 @@ public class SpellEvents {
     private final PlayerInputService playerInputService;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final ObjectProvider<VisualCueService> visualCueService;
+    private final DurationClock durationClock;
 
     public SpellEvents(@Lazy GameQueryService gameQueryService,
                        @Lazy PredicateEvaluationService predicateEvaluationService,
                        @Lazy PlayerInputService playerInputService,
                        @Lazy TriggeredAbilityQueueService triggeredAbilityQueueService,
-                       ObjectProvider<VisualCueService> visualCueService) {
+                       ObjectProvider<VisualCueService> visualCueService,
+                       @Lazy DurationClock durationClock) {
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.playerInputService = playerInputService;
         this.triggeredAbilityQueueService = triggeredAbilityQueueService;
         this.visualCueService = visualCueService;
+        this.durationClock = durationClock;
     }
 
     /** {@code spellCard} became cast by {@code castingPlayerId} from their hand. */
@@ -86,6 +92,7 @@ public class SpellEvents {
      */
     public void cast(GameData gameData, Card spellCard, UUID castingPlayerId, Zone castZone,
                      UUID exiledSourcePermanentId, boolean castFaceDown) {
+        applyNextSpellRiders(gameData, spellCard, castingPlayerId, castFaceDown);
         emitSpellCastCue(gameData, spellCard);
         gameData.initializeCardIntensity(spellCard);
         StackEntry spellEntry = null;
@@ -143,6 +150,29 @@ public class SpellEvents {
         gameData.clearSpellCastCreatureManaSpent(spellCard.getId());
 
         playerInputService.processNextMayAbility(gameData);
+    }
+
+    /**
+     * Applies the "next [matching] spell you cast this turn" riders ({@link EmpowerNextCreatureSpellThisTurnEffect}: it
+     * can't be countered, its permanent enters with additional +1/+1 counters) to {@code spellCard} as it becomes cast
+     * (CR 601.2i), before its entry takes its entering counters. A rider applies when the duration clock's judge says
+     * this cast is the one that ends it, so the spell that uses a rider up is the spell it applies to.
+     */
+    private void applyNextSpellRiders(GameData gameData, Card spellCard, UUID castingPlayerId, boolean castFaceDown) {
+        for (FloatingContinuousEffect rider
+                : gameData.floatingEffectsOnPlayer(castingPlayerId, EmpowerNextCreatureSpellThisTurnEffect.class)) {
+            if (!durationClock.waitsForSpell(gameData, rider, spellCard, castingPlayerId, castFaceDown)) {
+                continue;
+            }
+            var grant = (EmpowerNextCreatureSpellThisTurnEffect) rider.effect();
+            if (grant.uncounterable()) {
+                gameData.spellsMadeUncounterable.add(spellCard.getId());
+            }
+            if (grant.additionalPlusOneCounters() > 0) {
+                gameData.spellAdditionalEnterCounters.merge(spellCard.getId(), grant.additionalPlusOneCounters(),
+                        Integer::sum);
+            }
+        }
     }
 
     /**

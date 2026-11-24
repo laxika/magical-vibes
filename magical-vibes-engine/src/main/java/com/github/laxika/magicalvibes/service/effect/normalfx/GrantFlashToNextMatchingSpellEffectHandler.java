@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToNextMatchingSpellEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
@@ -17,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 /**
  * Floats {@link GrantFlashToNextMatchingSpellEffect} on the controller until a matching spell is cast or the turn ends,
@@ -51,11 +53,16 @@ public class GrantFlashToNextMatchingSpellEffectHandler implements NormalEffectH
                 gameData.id, entry.getCard().getName(), spell, entry.getControllerId());
     }
 
-    private static String spellDescription(CardPredicate predicate) {
+    /** "spell", "creature spell", "instant or sorcery spell": the next spell a "next matching spell" effect names. */
+    public static String spellDescription(CardPredicate predicate) {
         return switch (predicate) {
             case CardTruePredicate ignored -> "spell";
             case CardTypePredicate type -> type.cardType().name().toLowerCase(Locale.ROOT) + " spell";
             case CardSubtypePredicate subtype -> subtype.subtype().getDisplayName() + " spell";
+            case CardAnyOfPredicate any when any.predicates().stream().allMatch(CardTypePredicate.class::isInstance) ->
+                    any.predicates().stream()
+                            .map(type -> ((CardTypePredicate) type).cardType().name().toLowerCase(Locale.ROOT))
+                            .collect(Collectors.joining(" or ")) + " spell";
             default -> "matching spell";
         };
     }

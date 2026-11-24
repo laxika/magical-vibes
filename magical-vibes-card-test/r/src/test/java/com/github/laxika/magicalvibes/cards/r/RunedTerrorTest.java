@@ -117,7 +117,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToNextMatchingSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantConvokeToNextSpellThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.MakeNextInstantSorceryUncounterableThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.EmpowerNextCreatureSpellThisTurnEffect;
 
 @CardUsed({RunedTerror.class, TitanicGrowth.class, TurnToFrog.class, AerialManeuver.class, AbandonThePost.class,
         SamiteHealer.class, Fog.class, SafePassage.class, EerieInterference.class, Skullcrack.class, Silence.class,
@@ -960,13 +960,13 @@ class RunedTerrorTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new GrizzlyBears()));
         harness.castFromHand(player2, new Overmaster(), "{R}");
         harness.passBothPriorities();
-        assertThat(gd.floatingEffectsOnPlayer(player2.getId(), MakeNextInstantSorceryUncounterableThisTurnEffect.class)).hasSize(1);
+        assertThat(gd.floatingEffectsOnPlayer(player2.getId(), EmpowerNextCreatureSpellThisTurnEffect.class)).hasSize(1);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(gd.floatingEffectsOnPlayer(player2.getId(), MakeNextInstantSorceryUncounterableThisTurnEffect.class)).hasSize(1);
+        assertThat(gd.floatingEffectsOnPlayer(player2.getId(), EmpowerNextCreatureSpellThisTurnEffect.class)).hasSize(1);
 
         harness.passUntil(player2, TurnStep.CLEANUP);
-        assertThat(gd.floatingEffectsOfTypes(MakeNextInstantSorceryUncounterableThisTurnEffect.class)).isEmpty();
+        assertThat(gd.floatingEffectsOfTypes(EmpowerNextCreatureSpellThisTurnEffect.class)).isEmpty();
     }
 
     @Test
@@ -977,11 +977,11 @@ class RunedTerrorTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.castFromHand(player1, new Overmaster(), "{R}");
         harness.passBothPriorities();
-        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), MakeNextInstantSorceryUncounterableThisTurnEffect.class)).hasSize(1);
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), EmpowerNextCreatureSpellThisTurnEffect.class)).hasSize(1);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(gd.floatingEffectsOfTypes(MakeNextInstantSorceryUncounterableThisTurnEffect.class)).isEmpty();
+        assertThat(gd.floatingEffectsOfTypes(EmpowerNextCreatureSpellThisTurnEffect.class)).isEmpty();
     }
 
     @Test

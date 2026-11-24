@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.duration;
 
 import com.github.laxika.magicalvibes.model.rules.PermanentChange;
 import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -354,13 +355,23 @@ public class DurationClock {
         }
         if (ends(effect, Duration.End.MATCHING_SPELL_CAST)
                 || ends(effect, Duration.End.TARGET_PLAYER_MATCHING_SPELL_CAST)) {
-            return effect.effect() instanceof NextMatchingSpellEffect next
-                    && next.appliesToPlayer(cast.castingPlayerId(), effect.controllerId())
-                    && next.appliesToFaceDownCast(cast.castFaceDown())
-                    && predicateEvaluationService.matchesCardPredicate(
-                    cast.spellCard(), next.predicate(), null, gameData, cast.castingPlayerId());
+            return waitsForSpell(gameData, effect, cast.spellCard(), cast.castingPlayerId(), cast.castFaceDown());
         }
         return ends(effect, Duration.End.CREATURE_SPELL_CAST) && cast.spellCard().hasType(CardType.CREATURE);
+    }
+
+    /**
+     * Whether {@code effect} is a "next matching spell" effect ({@link NextMatchingSpellEffect}) that waits for
+     * {@code spellCard}, cast by {@code castingPlayerId} (face down when {@code castFaceDown}): the same judge that
+     * ends it as that spell becomes cast, so a rider that applies to "that spell" applies to the spell that uses it up.
+     */
+    public boolean waitsForSpell(GameData gameData, FloatingContinuousEffect effect, Card spellCard,
+                                 UUID castingPlayerId, boolean castFaceDown) {
+        return effect.effect() instanceof NextMatchingSpellEffect next
+                && next.appliesToPlayer(castingPlayerId, effect.controllerId())
+                && next.appliesToFaceDownCast(castFaceDown)
+                && predicateEvaluationService.matchesCardPredicate(
+                spellCard, next.predicate(), null, gameData, castingPlayerId);
     }
 
     private static boolean ends(FloatingContinuousEffect effect, Duration.End end) {

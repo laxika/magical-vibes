@@ -8,8 +8,9 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.EmpowerNextCreatureSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.MakeNextSpellUncounterableThisTurnEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.List;
@@ -29,7 +30,7 @@ public class MistriseVillage extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{U}",
-                List.of(new MakeNextSpellUncounterableThisTurnEffect()),
+                List.of(EmpowerNextCreatureSpellThisTurnEffect.cantBeCountered(new CardTruePredicate())),
                 "{U}, {T}: The next spell you cast this turn can't be countered."));
     }
 }

@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.b.BaskingRootwalla;
+import com.github.laxika.magicalvibes.cards.j.JabarisBanner;
 import com.github.laxika.magicalvibes.cards.l.Liquify;
 import com.github.laxika.magicalvibes.cards.o.ObsessiveSearch;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,10 +14,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Insist.class, Liquify.class, BaskingRootwalla.class, ObsessiveSearch.class})
+@CardUsed({Insist.class, Liquify.class, BaskingRootwalla.class, ObsessiveSearch.class, JabarisBanner.class})
 class InsistTest extends BaseCardTest {
 
     @Test
@@ -187,6 +190,26 @@ class InsistTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getId()).containsExactly(first.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(second);
+    }
+
+    @Test
+    @DisplayName("A card that is perpetually a creature is a creature spell the grant protects")
+    void perpetualCreatureSpellCantBeCountered() {
+        resolveInsist();
+
+        JabarisBanner banner = new JabarisBanner();
+        gd.perpetualCardTypes.put(banner.getId(), Set.of(CardType.CREATURE));
+        harness.setHand(player1, List.of(banner));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new Liquify()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castArtifact(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, banner.getId());
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(banner);
+        harness.assertInGraveyard(player2, "Liquify");
     }
 
     private void resolveInsist() {
