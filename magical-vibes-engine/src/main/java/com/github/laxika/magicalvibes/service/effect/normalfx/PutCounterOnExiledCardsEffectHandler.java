@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -42,14 +43,10 @@ public class PutCounterOnExiledCardsEffectHandler implements NormalEffectHandler
                 continue;
             }
             Card card = located.card();
-            switch (put.counter()) {
-                case MEMORY -> gameData.exiledCardsWithMemoryCounters.add(card.getId());
-                case BRAIN -> gameData.exiledCardsWithBrainCounters.add(card.getId());
-                case CROAK -> gameData.exiledCardsWithCroakCounters.add(card.getId());
-                case FETCH -> gameData.markExiledCardWithFetchCounter(card.getId(), entry.getControllerId());
-                case TAKEOVER -> gameData.exiledCardsWithTakeoverCounters.add(card.getId());
-                case REFINE -> gameData.exiledCardRefineCounters.merge(card.getId(), put.count(), Integer::sum);
+            if (put.counter() == CounterType.FETCH) {
+                gameData.recordExiler(card.getId(), entry.getControllerId());
             }
+            gameData.addExiledCardCounters(card.getId(), put.counter(), put.count());
             gameLogService.append(gameData, GameLog.cardThenUnlessHidden(gameData, card, put.count() == 1
                     ? " gets a " + counterName + " counter."
                     : " gets " + put.count() + " " + counterName + " counters."));

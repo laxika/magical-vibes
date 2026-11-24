@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -35,7 +36,7 @@ class DauthiVoidwalkerTestMarRegression extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .noneMatch(card -> card.getId().equals(shock.getId()));
         assertThat(gd.findExiledCard(shock.getId())).isNotNull();
-        assertThat(gd.exiledCardsWithVoidCounters).contains(shock.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.VOID).keySet()).contains(shock.getId());
     }
 
     @Test

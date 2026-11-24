@@ -902,8 +902,6 @@ public class GameData {
     public int pileGroupingOrGuessCountThisTurn;
     /** Exiled haunting card UUID -> the permanent UUID it haunts. */
     public final Map<UUID, UUID> hauntingCardToPermanentId = new ConcurrentHashMap<>();
-    /** Exiled Cosima card UUID → voyage counters accumulated while it remains exiled. */
-    public final Map<UUID, Integer> exiledVoyageCounters = new ConcurrentHashMap<>();
     /** Exiled Cosima card UUID → controller of the ability that exiled it. */
     public final Map<UUID, UUID> exiledVoyageControllerIds = new ConcurrentHashMap<>();
     /** Cards exiled by the foretell special action and therefore castable for their foretell cost. */
@@ -921,57 +919,25 @@ public class GameData {
     public final Set<UUID> timeVaultsDeclinedThisTurnStart = ConcurrentHashMap.newKeySet();
     /** Players who accepted Rebirth's ante choice; their ante and life change wait until every player has decided (CR 608.2e). */
     public final Set<UUID> rebirthAnteAcceptedPlayerIds = ConcurrentHashMap.newKeySet();
-    /** Maps exiled card UUID → egg counter count (for Darigaaz Reincarnated-style effects). */
-    public final Map<UUID, Integer> exiledCardEggCounters = new ConcurrentHashMap<>();
-    /** Maps exiled card UUID → scream counter count (for All Hallow's Eve-style effects). */
-    public final Map<UUID, Integer> exiledCardScreamCounters = new ConcurrentHashMap<>();
+    /**
+     * The counters on cards in exile (CR 122.1), by card id and kind: "exile it with an ice counter on it", "with three
+     * egg counters on it", "a card you own in exile with a silver counter on it". One store for every kind but suspend's
+     * time counters ({@link #exiledCardTimeCounters}); read and written only through {@link #exiledCardCounterCount},
+     * {@link #exiledCardHasCounter}, {@link #addExiledCardCounters}, {@link #setExiledCardCounters} and
+     * {@link #exiledCardsWithCounter}. A card that leaves exile is a new object with none of them (CR 400.7), so leaving
+     * exile forgets its entry. Each value is an immutable map replaced on every change, so a copy of the entries is a
+     * deep copy.
+     */
+    public final Map<UUID, Map<CounterType, Integer>> exiledCardCounters = new ConcurrentHashMap<>();
     /** Maps suspended exiled card UUID → remaining time counter count. */
     public final Map<UUID, Integer> exiledCardTimeCounters = new ConcurrentHashMap<>();
     /** Exiled card UUIDs with time counters that do not have suspend's automatic upkeep trigger. */
     public final Set<UUID> exiledCardsWithNonSuspendTimeCounters = ConcurrentHashMap.newKeySet();
     /** Alaundo's last-time-counter casting ability, retained for as long as the card stays exiled. */
     public final Set<UUID> exiledCardsWithAlaundoCastAbility = ConcurrentHashMap.newKeySet();
-    /** Maps exiled card UUID → dream counter count (Goliath Daydreamer). */
-    public final Map<UUID, Integer> exiledCardDreamCounters = new ConcurrentHashMap<>();
-    /** Maps exiled card UUID → hit counter count (Etrata, the Silencer). */
-    public final Map<UUID, Integer> exiledCardHitCounters = new ConcurrentHashMap<>();
-    /** Maps exiled card UUID → delay counter count (Ertai's Meddling). */
-    public final Map<UUID, Integer> exiledCardDelayCounters = new ConcurrentHashMap<>();
-    public final Map<UUID, Integer> exiledCardRefineCounters = new ConcurrentHashMap<>();
     /** Spells whose successful resolution is replaced by exile with a dream counter. */
     public final Set<UUID> spellsWithDreamCounterOnResolution = ConcurrentHashMap.newKeySet();
     public final Set<UUID> spellsWithPlotOnResolution = ConcurrentHashMap.newKeySet();
-    /** Tracks exiled card UUIDs that have silver counters (Karn, Scion of Urza). */
-    public final Set<UUID> exiledCardsWithSilverCounters = ConcurrentHashMap.newKeySet();
-    /** Tracks exiled card UUIDs that have ice counters (Draugr Necromancer). */
-    public final Set<UUID> exiledCardsWithIceCounters = ConcurrentHashMap.newKeySet();
-    /** Tracks exiled card UUIDs that have blood counters (Rayami, First of the Fallen). */
-    public final Set<UUID> exiledCardsWithBloodCounters = ConcurrentHashMap.newKeySet();
-    /** Tracks exiled card UUIDs that have croak counters (Grolnok, the Omnivore). */
-    public final Set<UUID> exiledCardsWithCroakCounters = ConcurrentHashMap.newKeySet();
-    /** Tracks exiled card UUIDs that have void counters (Dauthi Voidwalker). */
-    public final Set<UUID> exiledCardsWithVoidCounters = ConcurrentHashMap.newKeySet();
-    /** Exiled cards marked with discovery counters. */
-    public final Set<UUID> exiledCardsWithDiscoveryCounters = ConcurrentHashMap.newKeySet();
-    /** Tracks exiled card UUIDs that have collection counters (Evelyn, the Covetous). */
-    public final Set<UUID> exiledCardsWithCollectionCounters = ConcurrentHashMap.newKeySet();
-    /** Tracks exiled card UUIDs that have fetch counters (Pako, Arcane Retriever). */
-    public final Set<UUID> exiledCardsWithFetchCounters = ConcurrentHashMap.newKeySet();
-    /** Tracks exiled card UUIDs that have hatching counters (The Dragon-Kami Reborn). */
-    public final Set<UUID> exiledCardsWithHatchingCounters = ConcurrentHashMap.newKeySet();
-    public final Set<UUID> exiledCardsWithStudyCounters = ConcurrentHashMap.newKeySet();
-    /** Tracks exiled card UUIDs that have intel counters (Flamewar, Streetwise Operative). */
-    public final Set<UUID> exiledCardsWithIntelCounters = ConcurrentHashMap.newKeySet();
-    /** Tracks exiled card UUIDs that have kick counters (Zethi, Arcane Blademaster). */
-    public final Set<UUID> exiledCardsWithKickCounters = ConcurrentHashMap.newKeySet();
-    /** Tracks exiled creature card UUIDs that have memory counters (Altaïr Ibn-La'Ahad). */
-    public final Set<UUID> exiledCardsWithMemoryCounters = ConcurrentHashMap.newKeySet();
-    /** Tracks exiled creature card UUIDs that have takeover counters (The Master, Formed Anew). */
-    public final Set<UUID> exiledCardsWithTakeoverCounters = ConcurrentHashMap.newKeySet();
-    /** Tracks exiled card UUIDs that have brain counters (Rex, Cyber-Hound). */
-    public final Set<UUID> exiledCardsWithBrainCounters = ConcurrentHashMap.newKeySet();
-    /** Tracks exiled card UUIDs that have cage counters (Mairsil, the Pretender). */
-    public final Set<UUID> exiledCardsWithCageCounters = ConcurrentHashMap.newKeySet();
     /**
      * Spells exiled with suspend counters and waiting for their owners' upkeeps. Effects that add
      * or remove time counters on suspended cards apply to these as well as to cards suspended from
@@ -2130,8 +2096,6 @@ public class GameData {
     public final Set<UUID> plottedCardIds = ConcurrentHashMap.newKeySet();
     /** Maps a Discord-created exiled copy to the Discord permanent whose ability created it. */
     public final Map<UUID, UUID> discordCopySourcePermanents = new ConcurrentHashMap<>();
-    /** Exiled card UUIDs that have stash counters. */
-    public final Set<UUID> stashCounterCardIds = ConcurrentHashMap.newKeySet();
     /** Depth counter for batching "cards leave graveyard" triggers (one trigger per batch). */
     public int graveyardLeaveNotificationDepth = 0;
     /** Depth counter for tap events that are paid or performed as one batch. */
@@ -8706,8 +8670,8 @@ public class GameData {
         return false;
     }
 
-    /** Marks an existing exile entry with a fetch counter and records the player who exiled it. */
-    public boolean markExiledCardWithFetchCounter(UUID cardId, UUID exilerId) {
+    /** Records {@code exilerId} as the player who exiled the card {@code cardId} (a fetch counter's "exiled by you"). */
+    public boolean recordExiler(UUID cardId, UUID exilerId) {
         synchronized (exiledCards) {
             for (int i = 0; i < exiledCards.size(); i++) {
                 ExiledCardEntry exiled = exiledCards.get(i);
@@ -8715,12 +8679,59 @@ public class GameData {
                     exiledCards.set(i, new ExiledCardEntry(exiled.card(), exiled.ownerId(),
                             exiled.sourcePermanentId(), exiled.faceDown(), exilerId,
                             exiled.exiledTurnNumber(), exiled.controllerTurnsTakenAtExile(), exiled.abilityLink()));
-                    exiledCardsWithFetchCounters.add(cardId);
                     return true;
                 }
             }
         }
         return false;
+    }
+
+    /** How many {@code kind} counters the card {@code cardId} has in exile; 0 for a card not in the store. */
+    public int exiledCardCounterCount(UUID cardId, CounterType kind) {
+        Map<CounterType, Integer> counters = cardId == null ? null : exiledCardCounters.get(cardId);
+        return counters == null ? 0 : counters.getOrDefault(kind, 0);
+    }
+
+    /** Whether the card {@code cardId} has at least one {@code kind} counter in exile. */
+    public boolean exiledCardHasCounter(UUID cardId, CounterType kind) {
+        return exiledCardCounterCount(cardId, kind) > 0;
+    }
+
+    /** Puts {@code count} more {@code kind} counters on the card {@code cardId} in exile. */
+    public void addExiledCardCounters(UUID cardId, CounterType kind, int count) {
+        if (count <= 0) {
+            return;
+        }
+        setExiledCardCounters(cardId, kind,
+                SaturatingMath.add(exiledCardCounterCount(cardId, kind), count));
+    }
+
+    /** Sets how many {@code kind} counters the card {@code cardId} has in exile; 0 or less removes them all. */
+    public void setExiledCardCounters(UUID cardId, CounterType kind, int count) {
+        exiledCardCounters.compute(cardId, (id, current) -> {
+            EnumMap<CounterType, Integer> next = new EnumMap<>(CounterType.class);
+            if (current != null) {
+                next.putAll(current);
+            }
+            if (count > 0) {
+                next.put(kind, count);
+            } else {
+                next.remove(kind);
+            }
+            return next.isEmpty() ? null : Collections.unmodifiableMap(next);
+        });
+    }
+
+    /** The cards in exile with at least one {@code kind} counter, each with its count: a snapshot. */
+    public Map<UUID, Integer> exiledCardsWithCounter(CounterType kind) {
+        Map<UUID, Integer> withKind = new LinkedHashMap<>();
+        exiledCardCounters.forEach((cardId, counters) -> {
+            Integer count = counters.get(kind);
+            if (count != null && count > 0) {
+                withKind.put(cardId, count);
+            }
+        });
+        return Collections.unmodifiableMap(withKind);
     }
 
     /** Adds a card to exile with a stash counter. Stash counters are independent of any source permanent. */
@@ -8729,7 +8740,7 @@ public class GameData {
         spellsWithPlotOnResolution.remove(card.getId());
         if (putOnBottomOfLibraryInsteadOfExile(ownerId, card)) return;
         addToExile(ownerId, card);
-        stashCounterCardIds.add(card.getId());
+        addExiledCardCounters(card.getId(), CounterType.STASH, 1);
     }
 
     /** Adds a card to exile and marks it with an ice counter. */
@@ -8738,23 +8749,23 @@ public class GameData {
         spellsWithPlotOnResolution.remove(card.getId());
         if (putOnBottomOfLibraryInsteadOfExile(ownerId, card)) return;
         addToExile(ownerId, card);
-        exiledCardsWithIceCounters.add(card.getId());
+        addExiledCardCounters(card.getId(), CounterType.ICE, 1);
     }
 
     /** Adds a card to exile and marks it with a void counter. */
     public void addToExileWithVoidCounter(UUID ownerId, Card card) {
         addToExile(ownerId, card);
-        exiledCardsWithVoidCounters.add(card.getId());
+        addExiledCardCounters(card.getId(), CounterType.VOID, 1);
     }
 
     public void addToExileWithVoidCounter(UUID ownerId, Card card, UUID sourcePermanentId) {
         addToExile(ownerId, card, sourcePermanentId, false);
-        exiledCardsWithVoidCounters.add(card.getId());
+        addExiledCardCounters(card.getId(), CounterType.VOID, 1);
     }
 
     public void addToExileWithDiscoveryCounter(UUID ownerId, Card card) {
         addToExile(ownerId, card);
-        exiledCardsWithDiscoveryCounters.add(card.getId());
+        addExiledCardCounters(card.getId(), CounterType.DISCOVERY, 1);
     }
 
     /** Adds a card to exile with a fetch counter and records the player whose ability exiled it. */
@@ -8769,7 +8780,7 @@ public class GameData {
         spellsWithPlotOnResolution.remove(card.getId());
         if (putOnBottomOfLibraryInsteadOfExile(ownerId, card)) return;
         addToExile(ownerId, card, sourcePermanentId, false, exilerId);
-        exiledCardsWithFetchCounters.add(card.getId());
+        addExiledCardCounters(card.getId(), CounterType.FETCH, 1);
     }
 
     /** Adds a card to exile with a collection counter and records the exiling ability's controller. */
@@ -8779,7 +8790,7 @@ public class GameData {
         if (putOnBottomOfLibraryInsteadOfExile(ownerId, card)) return;
         commanderEnteredReturnZone(card);
         exiledCards.add(new ExiledCardEntry(card, ownerId, null, false, exilerId, turnNumber));
-        exiledCardsWithCollectionCounters.add(card.getId());
+        addExiledCardCounters(card.getId(), CounterType.COLLECTION, 1);
         notifyCardsExiled(card, false);
     }
 
@@ -8900,40 +8911,19 @@ public class GameData {
         boolean removed = exiledCards.removeIf(e -> e.card().getId().equals(cardId));
         if (removed) {
             // A card that leaves exile is a new object (CR 400.7) with no counters from its earlier exile.
-            exiledCardDelayCounters.remove(cardId);
-            exiledVoyageCounters.remove(cardId);
+            exiledCardCounters.remove(cardId);
             exiledVoyageControllerIds.remove(cardId);
             hauntingCardToPermanentId.remove(cardId);
             foretoldCardIds.remove(cardId);
             foretoldCardCosts.remove(cardId);
             foretoldCardTurnsTaken.remove(cardId);
             antedCardIds.remove(cardId);
-            stashCounterCardIds.remove(cardId);
-            exiledCardScreamCounters.remove(cardId);
-            exiledCardsWithSilverCounters.remove(cardId);
-            exiledCardsWithIceCounters.remove(cardId);
-            exiledCardsWithBloodCounters.remove(cardId);
-            exiledCardsWithCroakCounters.remove(cardId);
-            exiledCardsWithVoidCounters.remove(cardId);
-            exiledCardsWithDiscoveryCounters.remove(cardId);
-            exiledCardsWithCollectionCounters.remove(cardId);
-            exiledCardsWithFetchCounters.remove(cardId);
-            exiledCardsWithHatchingCounters.remove(cardId);
-            exiledCardsWithStudyCounters.remove(cardId);
-            exiledCardsWithIntelCounters.remove(cardId);
-            exiledCardsWithKickCounters.remove(cardId);
-            exiledCardsWithMemoryCounters.remove(cardId);
-            exiledCardsWithTakeoverCounters.remove(cardId);
-            exiledCardsWithBrainCounters.remove(cardId);
-            exiledCardsWithCageCounters.remove(cardId);
-            exiledCardRefineCounters.remove(cardId);
             plottedCardIds.remove(cardId);
             endExileInsteadOfGraveyard(cardId);
             cardsExiledFromGraveyardThisTurn.remove(cardId);
             exiledCardTimeCounters.remove(cardId);
             exiledCardsWithNonSuspendTimeCounters.remove(cardId);
             exiledCardsWithAlaundoCastAbility.remove(cardId);
-            exiledCardHitCounters.remove(cardId);
             suspendedSpellExiles.removeIf(pending -> cardId.equals(pending.cardId()));
             // Whatever it was granted while exiled ends as it leaves: it becomes a new object (CR 400.7).
             endFloatingEffectsOnCard(cardId, Zone.EXILE);
@@ -9518,19 +9508,7 @@ public class GameData {
                     .toList();
             exiledCards.removeIf(e -> sourcePermanentId.equals(e.sourcePermanentId()));
         }
-        removedIds.forEach(exiledCardDreamCounters::remove);
-        removedIds.forEach(exiledCardHitCounters::remove);
-        removedIds.forEach(exiledCardDelayCounters::remove);
-        removedIds.forEach(exiledCardScreamCounters::remove);
-        removedIds.forEach(exiledCardRefineCounters::remove);
-        removedIds.forEach(exiledCardsWithStudyCounters::remove);
-        removedIds.forEach(exiledCardsWithIntelCounters::remove);
-        removedIds.forEach(exiledCardsWithKickCounters::remove);
-        removedIds.forEach(exiledCardsWithMemoryCounters::remove);
-        removedIds.forEach(exiledCardsWithTakeoverCounters::remove);
-        removedIds.forEach(exiledCardsWithFetchCounters::remove);
-        removedIds.forEach(exiledCardsWithBrainCounters::remove);
-        removedIds.forEach(exiledCardsWithCageCounters::remove);
+        removedIds.forEach(exiledCardCounters::remove);
         removedIds.forEach(antedCardIds::remove);
         removedIds.forEach(cardId -> {
             endExilePlayPermission(cardId);
@@ -10126,19 +10104,6 @@ public class GameData {
         copy.openDamageEvent = this.openDamageEvent;
         copy.stateTriggerOnStack.addAll(this.stateTriggerOnStack);
         copy.foretoldCardIds.addAll(this.foretoldCardIds);
-        copy.exiledCardsWithIceCounters.addAll(this.exiledCardsWithIceCounters);
-        copy.exiledCardsWithBloodCounters.addAll(this.exiledCardsWithBloodCounters);
-        copy.exiledCardsWithCroakCounters.addAll(this.exiledCardsWithCroakCounters);
-        copy.exiledCardsWithVoidCounters.addAll(this.exiledCardsWithVoidCounters);
-        copy.exiledCardsWithDiscoveryCounters.addAll(this.exiledCardsWithDiscoveryCounters);
-        copy.exiledCardsWithCollectionCounters.addAll(this.exiledCardsWithCollectionCounters);
-        copy.exiledCardsWithFetchCounters.addAll(this.exiledCardsWithFetchCounters);
-        copy.exiledCardsWithHatchingCounters.addAll(this.exiledCardsWithHatchingCounters);
-        copy.exiledCardsWithIntelCounters.addAll(this.exiledCardsWithIntelCounters);
-        copy.exiledCardsWithMemoryCounters.addAll(this.exiledCardsWithMemoryCounters);
-        copy.exiledCardsWithTakeoverCounters.addAll(this.exiledCardsWithTakeoverCounters);
-        copy.exiledCardsWithBrainCounters.addAll(this.exiledCardsWithBrainCounters);
-        copy.exiledCardsWithCageCounters.addAll(this.exiledCardsWithCageCounters);
 
         // --- List<UUID> (synchronized) ---
         copy.orderedPlayerIds.addAll(this.orderedPlayerIds);
@@ -10182,7 +10147,6 @@ public class GameData {
                 copy.perpetualCardExtraKeywordInstances.put(cardId, new ConcurrentHashMap<>(instances)));
         copy.legacyChosenWordsByCardId.putAll(this.legacyChosenWordsByCardId);
         copy.secretMissionChoices.putAll(this.secretMissionChoices);
-        copy.exiledVoyageCounters.putAll(this.exiledVoyageCounters);
         copy.exiledVoyageControllerIds.putAll(this.exiledVoyageControllerIds);
         copy.foretoldCardCosts.putAll(this.foretoldCardCosts);
         copy.foretoldCardTurnsTaken.putAll(this.foretoldCardTurnsTaken);
@@ -10535,25 +10499,12 @@ public class GameData {
         copy.hauntingCardToPermanentId.putAll(this.hauntingCardToPermanentId);
         copy.antedCardIds.addAll(this.antedCardIds);
         copy.rebirthAnteAcceptedPlayerIds.addAll(this.rebirthAnteAcceptedPlayerIds);
-        copy.exiledCardEggCounters.putAll(this.exiledCardEggCounters);
-        copy.exiledCardScreamCounters.putAll(this.exiledCardScreamCounters);
+        copy.exiledCardCounters.putAll(this.exiledCardCounters);
         copy.exiledCardTimeCounters.putAll(this.exiledCardTimeCounters);
         copy.exiledCardsWithNonSuspendTimeCounters.addAll(this.exiledCardsWithNonSuspendTimeCounters);
         copy.exiledCardsWithAlaundoCastAbility.addAll(this.exiledCardsWithAlaundoCastAbility);
         copy.cardsExiledFromGraveyardThisTurn.addAll(this.cardsExiledFromGraveyardThisTurn);
-        copy.exiledCardDreamCounters.putAll(this.exiledCardDreamCounters);
-        copy.exiledCardHitCounters.putAll(this.exiledCardHitCounters);
-        copy.exiledCardDelayCounters.putAll(this.exiledCardDelayCounters);
-        copy.exiledCardRefineCounters.putAll(this.exiledCardRefineCounters);
         copy.spellsWithDreamCounterOnResolution.addAll(this.spellsWithDreamCounterOnResolution);
-        copy.exiledCardsWithSilverCounters.addAll(this.exiledCardsWithSilverCounters);
-        copy.exiledCardsWithStudyCounters.addAll(this.exiledCardsWithStudyCounters);
-        copy.exiledCardsWithFetchCounters.addAll(this.exiledCardsWithFetchCounters);
-        copy.exiledCardsWithKickCounters.addAll(this.exiledCardsWithKickCounters);
-        copy.exiledCardsWithMemoryCounters.addAll(this.exiledCardsWithMemoryCounters);
-        copy.exiledCardsWithTakeoverCounters.addAll(this.exiledCardsWithTakeoverCounters);
-        copy.exiledCardsWithBrainCounters.addAll(this.exiledCardsWithBrainCounters);
-        copy.exiledCardsWithCageCounters.addAll(this.exiledCardsWithCageCounters);
         copy.suspendedSpellExiles.addAll(this.suspendedSpellExiles);
 
         // --- Map<UUID, List<Permanent>> (deep copy each Permanent) ---
@@ -11052,7 +11003,6 @@ public class GameData {
                         .map(types -> Set.copyOf(types)).collect(java.util.stream.Collectors.toCollection(ArrayList::new))));
         copy.exilePlayPermissionGroupUsesRemaining.putAll(this.exilePlayPermissionGroupUsesRemaining);
         copy.discordCopySourcePermanents.putAll(this.discordCopySourcePermanents);
-        copy.stashCounterCardIds.addAll(this.stashCounterCardIds);
         copy.playersWhoForetoldThisTurn.addAll(this.playersWhoForetoldThisTurn);
         copy.graveyardLeaveNotificationDepth = this.graveyardLeaveNotificationDepth;
         copy.discardCostBatchOpen = this.discardCostBatchOpen;

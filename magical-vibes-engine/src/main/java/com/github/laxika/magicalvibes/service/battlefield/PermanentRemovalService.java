@@ -3046,7 +3046,7 @@ public class PermanentRemovalService {
                 if (isBloodCounterExile) {
                     exileService.exileCard(gameData, leavingOwnerId, leaving,
                             bloodCounterReplacement.sourcePermanentId());
-                    gameData.exiledCardsWithBloodCounters.add(leaving.getId());
+                    gameData.addExiledCardCounters(leaving.getId(), CounterType.BLOOD, 1);
                 } else if (chosenReplacement != null
                         && chosenReplacement.kind() == DeathExileReplacement.Kind.EXILED_WITH_PERMANENT
                         && leaving.getId().equals(target.getCard().getId())) {
@@ -3056,7 +3056,7 @@ public class PermanentRemovalService {
                         && chosenReplacement.kind() == DeathExileReplacement.Kind.VOID_COUNTER
                         && leaving.getId().equals(target.getCard().getId())) {
                     exileService.exileCard(gameData, leavingOwnerId, leaving);
-                    gameData.exiledCardsWithVoidCounters.add(leaving.getId());
+                    gameData.addExiledCardCounters(leaving.getId(), CounterType.VOID, 1);
                 } else if (opponentExileReplacement != null
                         && opponentExileReplacement.effect().trackWithSource()) {
                     exileService.exileCard(gameData, leavingOwnerId, leaving,
@@ -3065,7 +3065,7 @@ public class PermanentRemovalService {
                     exileService.exileCard(gameData, leavingOwnerId, leaving);
                 }
                 if (opponentExileReplacement != null && opponentExileReplacement.effect().addIceCounter()) {
-                    gameData.exiledCardsWithIceCounters.add(leaving.getId());
+                    gameData.addExiledCardCounters(leaving.getId(), CounterType.ICE, 1);
                 }
                 exiledFromBattlefield++;
                 gameLogService.append(gameData,

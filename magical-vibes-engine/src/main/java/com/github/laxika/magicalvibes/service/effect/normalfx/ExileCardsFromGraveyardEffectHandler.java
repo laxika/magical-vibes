@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -92,7 +93,7 @@ public class ExileCardsFromGraveyardEffectHandler implements NormalEffectHandler
                     if (graveyardReturnSupport.exileCardFromAnyGraveyard(
                             gameData, cardId, card, sourcePermanentId)
                             && e.putKickCountersOnExiledCards()) {
-                        gameData.exiledCardsWithKickCounters.add(card.getId());
+                        gameData.addExiledCardCounters(card.getId(), CounterType.KICK, 1);
                     }
                     if (ownerId != null && !exiledOwnerIds.contains(ownerId)) {
                         exiledOwnerIds.add(ownerId);

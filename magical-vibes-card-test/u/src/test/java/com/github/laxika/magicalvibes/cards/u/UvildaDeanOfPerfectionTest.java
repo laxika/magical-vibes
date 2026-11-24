@@ -41,7 +41,7 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
         harness.handleCardChosen(player1, 1);
 
         assertThat(gd.findExiledCard(ritual.getId())).isNotNull();
-        assertThat(gd.exiledCardRefineCounters).containsEntry(ritual.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.REFINE)).containsEntry(ritual.getId(), 3);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId()).getFirst()).isInstanceOf(GrizzlyBears.class);
     }
@@ -51,12 +51,12 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
         addReadyUvilda();
         DarkRitual ritual = new DarkRitual();
         harness.setExile(player1, List.of(ritual));
-        gd.exiledCardRefineCounters.put(ritual.getId(), 1);
+        gd.setExiledCardCounters(ritual.getId(), CounterType.REFINE, 1);
 
         offerLastCounterCast();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        assertThat(gd.exiledCardRefineCounters).doesNotContainKey(ritual.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.REFINE)).doesNotContainKey(ritual.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
@@ -129,7 +129,7 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
 
         harness.handleCardChosen(player1, 1);
         assertThat(gd.findExiledCard(curve.getId())).isNotNull();
-        assertThat(gd.exiledCardRefineCounters).containsEntry(curve.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.REFINE)).containsEntry(curve.getId(), 3);
     }
 
     @Test
@@ -144,10 +144,10 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).clear();
 
         triggerUpkeep(player2);
-        assertThat(gd.exiledCardRefineCounters).containsEntry(curve.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.REFINE)).containsEntry(curve.getId(), 3);
 
         triggerUpkeep(player1);
-        assertThat(gd.exiledCardRefineCounters).containsEntry(curve.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.REFINE)).containsEntry(curve.getId(), 2);
         assertThat(gd.findExiledCard(curve.getId())).isNotNull();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
@@ -156,7 +156,7 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
     void lastCounterRemovalCreatesASeparateRespondableCastTrigger() {
         SerpentineCurve curve = new SerpentineCurve();
         harness.setExile(player1, List.of(curve));
-        gd.exiledCardRefineCounters.put(curve.getId(), 1);
+        gd.setExiledCardCounters(curve.getId(), CounterType.REFINE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.withAutoStop(TurnStep.UPKEEP, () -> {
@@ -167,7 +167,7 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
             assertThat(gd.stack).hasSize(1);
             harness.passBothPriorities();
 
-            assertThat(gd.exiledCardRefineCounters).doesNotContainKey(curve.getId());
+            assertThat(gd.exiledCardsWithCounter(CounterType.REFINE)).doesNotContainKey(curve.getId());
             assertThat(gd.interaction.isAwaitingInput()).isFalse();
             assertThat(gd.stack).singleElement().satisfies(entry -> {
                 assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -337,7 +337,7 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
 
     private void prepareLastCounterCast(Card card) {
         harness.setExile(player1, List.of(card));
-        gd.exiledCardRefineCounters.put(card.getId(), 1);
+        gd.setExiledCardCounters(card.getId(), CounterType.REFINE, 1);
     }
 
     private void offerLastCounterCast() {

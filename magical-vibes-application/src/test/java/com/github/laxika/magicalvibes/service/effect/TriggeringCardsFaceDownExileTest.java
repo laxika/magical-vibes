@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
-import com.github.laxika.magicalvibes.model.ExiledCardCounter;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBecomeOnlyCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyChangeCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.PlotExiledCardsEffect;
@@ -133,7 +133,7 @@ class TriggeringCardsFaceDownExileTest extends BaseCardTest {
     void counterUnnamed() {
         Card card = new GrizzlyBears();
 
-        resolveAbout(card, new PutCounterOnExiledCardsEffect(Subjects.triggeringCards(), ExiledCardCounter.MEMORY));
+        resolveAbout(card, new PutCounterOnExiledCardsEffect(Subjects.triggeringCards(), CounterType.MEMORY));
 
         assertThat(gameLogContains("gets a memory counter")).isTrue();
         assertOpponentNeverSeesName(card);

@@ -7,7 +7,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>Checked in {@code GraveyardService.addCardToGraveyard()} when the card would
  * be put into the graveyard from the battlefield (i.e. "die"). When matched, the
  * card is exiled and its egg counters are tracked in
- * {@code GameData.exiledCardEggCounters}.</p>
+ * {@code GameData.exiledCardCounters} (kind {@code EGG}).</p>
  *
  * <p>Pair with upkeep-trigger handling in {@code StepTriggerService} which removes
  * one egg counter per upkeep and returns the card to the battlefield when the last

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -231,7 +232,7 @@ public class MayCopyHandlerService {
         List<ExiledCardEntry> eligible = gameData.exiledCards.stream()
                 .filter(entry -> !entry.faceDown())
                 .filter(entry -> entry.card().hasType(CardType.CREATURE))
-                .filter(entry -> gameData.exiledCardsWithTakeoverCounters.contains(entry.card().getId()))
+                .filter(entry -> gameData.exiledCardHasCounter(entry.card().getId(), CounterType.TAKEOVER))
                 .toList();
         if (eligible.isEmpty()) {
             finishCloneEntryWithoutFurtherChoice(gameData);

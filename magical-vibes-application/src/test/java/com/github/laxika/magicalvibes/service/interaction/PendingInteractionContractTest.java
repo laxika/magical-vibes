@@ -11,8 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingKarnRestart;
 import com.github.laxika.magicalvibes.model.PendingMakeAnExample;
 import com.github.laxika.magicalvibes.model.PendingMemoriesReturningChoice;
-import com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn;
-import com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice;
 import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
 import com.github.laxika.magicalvibes.model.PendingHostileNegotiations;
 import com.github.laxika.magicalvibes.model.PendingEachPlayerLibraryExile;
@@ -87,10 +85,8 @@ class PendingInteractionContractTest {
             PermanentChoiceContext.class,
             PendingAllureOfTheUnknownChoice.class,
             PendingSphinxAmbassadorChoice.class,
-            PendingKarnScionRevealChoice.class,
             PendingMemoriesReturningChoice.class,
             PendingMakeAnExample.class,
-            PendingKarnScionExileReturn.class,
             PendingReturnExiledWithSourceCard.class,
             PendingDubiousChallengeChoice.class,
             PendingPortalPileSearch.class,

@@ -239,7 +239,22 @@ public enum CounterType {
     HEXPROOF_FROM_BLUE,
     HEXPROOF_FROM_BLACK,
     HEXPROOF_FROM_RED,
-    HEXPROOF_FROM_GREEN;
+    HEXPROOF_FROM_GREEN,
+    /** Counters only cards in exile get (GameData.exiledCardCounters). */
+    HIT,
+    REFINE,
+    CROAK,
+    DISCOVERY,
+    COLLECTION,
+    FETCH,
+    HATCHING,
+    INTEL,
+    KICK,
+    MEMORY,
+    TAKEOVER,
+    BRAIN,
+    CAGE,
+    VOYAGE;
 
     public Keyword grantedKeyword() {
         return switch (this) {

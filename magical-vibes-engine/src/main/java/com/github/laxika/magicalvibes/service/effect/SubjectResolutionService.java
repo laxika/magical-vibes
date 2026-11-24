@@ -917,6 +917,36 @@ public class SubjectResolutionService {
     }
 
     /**
+     * Whether {@code cards}, for a static ability of {@code source} controlled by {@code controllerId}, names the
+     * exiled card {@code exiled}: the one-card form of the static entry point, asked about one card ("you may cast
+     * spells from among cards in exile your opponents own with ice counters on them"). Only
+     * {@code exiledCards(players, filter)} has one: its players are judged by
+     * {@link #namesPlayer(Permanent, UUID, UUID, PlayerSubject)}, its filter by {@code reads}, given the card as the
+     * filter may see it (a card exiled face down has no characteristics, CR 406.3a) and its owner. A token in exile
+     * is never named.
+     *
+     * @throws UnsupportedOperationException for any other subject
+     */
+    public static boolean namesExiledCard(Permanent source, UUID controllerId, ExiledCardEntry exiled,
+                                          CardSubject cards, ExiledCardReads reads) {
+        if (!(cards instanceof CardSubject.InExile in)) {
+            throw new UnsupportedOperationException("No one-card static form for " + cards + " yet");
+        }
+        if (exiled.card().isToken()
+                || in.owners() != null && !namesPlayer(source, controllerId, exiled.ownerId(), in.owners())) {
+            return false;
+        }
+        Card judged = exiled.faceDown() ? Card.namedRuntimePlaceholder("") : exiled.card();
+        return in.filter() == null || reads.matches(judged, exiled.ownerId(), in.filter());
+    }
+
+    /** How {@link #namesExiledCard} judges an exiled card against a subject's filter. */
+    @FunctionalInterface
+    public interface ExiledCardReads {
+        boolean matches(Card card, UUID ownerId, CardPredicate filter);
+    }
+
+    /**
      * The characteristics the static membership form reads about the permanent it judges, answered by the static
      * effect handlers' recursion-safe reads of the layered pass in progress.
      */

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -45,7 +46,7 @@ public class PutAllCardsExiledWithSourceIntoOwnersHandsEffectHandler implements 
                         && (!returnEffect.onlyControllerOwned()
                         || entry.getControllerId().equals(exiled.ownerId()))
                         && (!returnEffect.onlyIntelCounters()
-                        || gameData.exiledCardsWithIntelCounters.contains(exiled.card().getId())))
+                        || gameData.exiledCardHasCounter(exiled.card().getId(), CounterType.INTEL)))
                 .toList();
 
         int returnedCount = 0;

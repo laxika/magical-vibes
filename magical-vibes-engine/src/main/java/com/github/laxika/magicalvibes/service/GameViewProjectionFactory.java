@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 
@@ -348,7 +349,7 @@ public class GameViewProjectionFactory {
                                     && may.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect imprint
                                     && imprint.faceDown());
                     boolean grantsImplicitLookPermission = !exiledFaceDownFromHandOnEnter
-                            && !data.exiledCardsWithIntelCounters.contains(entry.card().getId())
+                            && !data.exiledCardHasCounter(entry.card().getId(), CounterType.INTEL)
                             && java.util.stream.Stream.concat(
                                     java.util.stream.Stream.concat(
                                             java.util.stream.Stream.concat(p.getCard().getCastingCostsAndSpellEffects().stream(),

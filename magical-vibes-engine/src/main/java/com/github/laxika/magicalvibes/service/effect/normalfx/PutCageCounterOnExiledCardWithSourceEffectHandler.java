@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -36,7 +37,7 @@ public class PutCageCounterOnExiledCardWithSourceEffectHandler implements Normal
             }
         }
         if (cardId != null) {
-            gameData.exiledCardsWithCageCounters.add(cardId);
+            gameData.addExiledCardCounters(cardId, CounterType.CAGE, 1);
             gameData.associateExiledCardWithSource(cardId, null);
         }
     }

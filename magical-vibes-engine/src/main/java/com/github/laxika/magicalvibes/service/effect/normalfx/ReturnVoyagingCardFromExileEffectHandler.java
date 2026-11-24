@@ -31,14 +31,14 @@ public class ReturnVoyagingCardFromExileEffectHandler implements NormalEffectHan
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var cardId = entry.getCard().getId();
-        Integer voyageCounters = gameData.exiledVoyageCounters.get(cardId);
+        int voyageCounters = gameData.exiledCardCounterCount(cardId, CounterType.VOYAGE);
         var voyageControllerId = gameData.exiledVoyageControllerIds.get(cardId);
         ExiledCardEntry exiled = gameData.findExiledCard(cardId);
-        if (voyageCounters == null || voyageControllerId == null || exiled == null
+        if (voyageControllerId == null || exiled == null
                 || !gameData.removeFromExile(cardId)) {
             return;
         }
-        gameData.exiledVoyageCounters.remove(cardId);
+        gameData.setExiledCardCounters(cardId, CounterType.VOYAGE, 0);
         gameData.exiledVoyageControllerIds.remove(cardId);
 
         Permanent permanent = new Permanent(exiled.card());

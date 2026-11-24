@@ -33,7 +33,7 @@ class AltaRIbnLaAhadTest extends BaseCardTest {
         Card exiledAssassin = new AssassinInitiate();
         harness.setGraveyard(player1, List.of(graveyardAssassin));
         harness.setExile(player1, List.of(exiledAssassin));
-        gd.exiledCardsWithMemoryCounters.add(exiledAssassin.getId());
+        gd.addExiledCardCounters(exiledAssassin.getId(), CounterType.MEMORY, 1);
         addCreatureReady(player1, new AltaRIbnLaAhad());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
@@ -62,7 +62,7 @@ class AltaRIbnLaAhadTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactlyInAnyOrder(graveyardAssassin.getId(), exiledAssassin.getId());
-        assertThat(gd.exiledCardsWithMemoryCounters)
+        assertThat(gd.exiledCardsWithCounter(CounterType.MEMORY).keySet())
                 .containsExactlyInAnyOrder(graveyardAssassin.getId(), exiledAssassin.getId());
         assertThat(DelayedPermanentMoves.waiting(gd))
                 .allMatch(action -> action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT)
@@ -90,7 +90,8 @@ class AltaRIbnLaAhadTest extends BaseCardTest {
         Card opponentMarked = new AssassinInitiate();
         harness.setExile(player1, List.of(ownMarked, ownUnmarked));
         harness.setExile(player2, List.of(opponentMarked));
-        gd.exiledCardsWithMemoryCounters.addAll(List.of(ownMarked.getId(), opponentMarked.getId()));
+        gd.addExiledCardCounters(ownMarked.getId(), CounterType.MEMORY, 1);
+        gd.addExiledCardCounters(opponentMarked.getId(), CounterType.MEMORY, 1);
         addCreatureReady(player1, new AltaRIbnLaAhad());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
@@ -108,7 +109,7 @@ class AltaRIbnLaAhadTest extends BaseCardTest {
         Card exiledAssassin = new AssassinInitiate();
         harness.setGraveyard(player1, List.of(graveyardAssassin));
         harness.setExile(player1, List.of(exiledAssassin));
-        gd.exiledCardsWithMemoryCounters.add(exiledAssassin.getId());
+        gd.addExiledCardCounters(exiledAssassin.getId(), CounterType.MEMORY, 1);
         addCreatureReady(player1, new AltaRIbnLaAhad());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
@@ -130,7 +131,7 @@ class AltaRIbnLaAhadTest extends BaseCardTest {
         Card previouslyMarked = new AssassinInitiate();
         harness.setGraveyard(player1, List.of(target));
         harness.setExile(player1, List.of(previouslyMarked));
-        gd.exiledCardsWithMemoryCounters.add(previouslyMarked.getId());
+        gd.addExiledCardCounters(previouslyMarked.getId(), CounterType.MEMORY, 1);
         addCreatureReady(player1, new AltaRIbnLaAhad());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
@@ -143,7 +144,7 @@ class AltaRIbnLaAhadTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
 
         assertThat(findPermanents(player1, "Assassin Initiate")).isEmpty();
-        assertThat(gd.exiledCardsWithMemoryCounters).containsExactly(previouslyMarked.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.MEMORY).keySet()).containsExactly(previouslyMarked.getId());
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -151,7 +152,7 @@ class AltaRIbnLaAhadTest extends BaseCardTest {
     void tokensMayAttackABattleProtectedByTheOpponent() {
         Card exiled = new AssassinInitiate();
         harness.setExile(player1, List.of(exiled));
-        gd.exiledCardsWithMemoryCounters.add(exiled.getId());
+        gd.addExiledCardCounters(exiled.getId(), CounterType.MEMORY, 1);
         addCreatureReady(player1, new AltaRIbnLaAhad());
         Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfZendikar());
         battle.setCounterCount(CounterType.DEFENSE, 5);
@@ -244,7 +245,7 @@ class AltaRIbnLaAhadTest extends BaseCardTest {
     void endOfCombatExileUsesTheStackBeforeRemovingTokens() {
         Card exiled = new AssassinInitiate();
         harness.setExile(player1, List.of(exiled));
-        gd.exiledCardsWithMemoryCounters.add(exiled.getId());
+        gd.addExiledCardCounters(exiled.getId(), CounterType.MEMORY, 1);
         addCreatureReady(player1, new AltaRIbnLaAhad());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
@@ -264,7 +265,7 @@ class AltaRIbnLaAhadTest extends BaseCardTest {
     private Permanent attackWithAltairUnderQueenAndParallelLives(boolean withOpposingPlaneswalker) {
         Card exiled = new AssassinInitiate();
         harness.setExile(player1, List.of(exiled));
-        gd.exiledCardsWithMemoryCounters.add(exiled.getId());
+        gd.addExiledCardCounters(exiled.getId(), CounterType.MEMORY, 1);
         addCreatureReady(player1, new AltaRIbnLaAhad());
         harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
         harness.addToBattlefield(player1, new ParallelLives());

@@ -296,26 +296,10 @@ public class StateBasedActionService {
         }
 
         for (UUID cardId : removedTokenIds) {
-            gameData.exiledCardEggCounters.remove(cardId);
-            gameData.exiledCardScreamCounters.remove(cardId);
-            gameData.exiledCardDreamCounters.remove(cardId);
-            gameData.exiledCardHitCounters.remove(cardId);
-            gameData.exiledCardDelayCounters.remove(cardId);
+            gameData.exiledCardCounters.remove(cardId);
             gameData.spellsWithDreamCounterOnResolution.remove(cardId);
             gameData.spellsWithPlotOnResolution.remove(cardId);
-            gameData.exiledCardsWithSilverCounters.remove(cardId);
-            gameData.exiledCardsWithIceCounters.remove(cardId);
-            gameData.exiledCardsWithBloodCounters.remove(cardId);
-
-            gameData.exiledCardsWithCroakCounters.remove(cardId);
-            gameData.exiledCardsWithVoidCounters.remove(cardId);
-            gameData.exiledCardsWithCollectionCounters.remove(cardId);
-            gameData.exiledCardsWithIntelCounters.remove(cardId);
-            gameData.exiledCardsWithKickCounters.remove(cardId);
-            gameData.exiledCardsWithBrainCounters.remove(cardId);
-            gameData.exiledCardsWithCageCounters.remove(cardId);
             gameData.endFloatingEffectsOnCard(cardId);
-            gameData.stashCounterCardIds.remove(cardId);
             gameData.endExileInsteadOfGraveyard(cardId);
             gameData.foretoldCardIds.remove(cardId);
             gameData.endFloatingEffectsOnCard(cardId);

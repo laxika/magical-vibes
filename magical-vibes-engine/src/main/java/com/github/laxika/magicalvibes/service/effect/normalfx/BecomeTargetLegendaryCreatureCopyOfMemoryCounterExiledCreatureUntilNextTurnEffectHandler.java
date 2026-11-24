@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -46,7 +47,7 @@ public class BecomeTargetLegendaryCreatureCopyOfMemoryCounterExiledCreatureUntil
         Permanent target = gameQueryService.findPermanentById(gameData, targets.get(0));
         ExiledCardEntry exiled = gameData.findExiledCard(targets.get(1));
         if (target == null || exiled == null || exiled.faceDown()
-                || !gameData.exiledCardsWithMemoryCounters.contains(exiled.card().getId())
+                || !gameData.exiledCardHasCounter(exiled.card().getId(), CounterType.MEMORY)
                 || !exiled.card().hasType(com.github.laxika.magicalvibes.model.CardType.CREATURE)) {
             log.info("Game {} - The Animus copy ability has no legal targets", gameData.id);
             return;

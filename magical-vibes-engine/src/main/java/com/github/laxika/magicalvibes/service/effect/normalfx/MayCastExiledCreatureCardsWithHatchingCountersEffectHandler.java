@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -39,7 +40,7 @@ public class MayCastExiledCreatureCardsWithHatchingCountersEffectHandler impleme
             for (ExiledCardEntry exiled : gameData.exiledCards) {
                 Card card = exiled.card();
                 if (controllerId.equals(exiled.ownerId())
-                        && gameData.exiledCardsWithHatchingCounters.contains(card.getId())
+                        && gameData.exiledCardHasCounter(card.getId(), CounterType.HATCHING)
                         && card.hasType(CardType.CREATURE)) {
                     eligible.add(exiled);
                 }

@@ -194,8 +194,6 @@ class SpecializedInteractionProjectionTest {
         Card second = card("Second");
         List<UUID> ids = List.of(first.getId(), second.getId());
 
-        InteractionPromptMessage spellbook = prompt(
-                new PendingInteraction.HitCounterExiledCardChoice(controllerId, opponentId, ids, null));
         InteractionPromptMessage optionalPlay = prompt(new PendingInteraction.ExiledCardMayPlayChoice(
                 controllerId, ids, true, false, true, true));
         InteractionPromptMessage mayCopy = prompt(
@@ -206,7 +204,6 @@ class SpecializedInteractionProjectionTest {
         InteractionPromptMessage mustFindInGraveyard = prompt(new PendingInteraction.SearchLibraryAndOrGraveyardChoice(
                 controllerId, List.of(first, second), Set.of(first.getId()), true, "land card"));
 
-        assertThat(spellbook.minCount()).isEqualTo(1);
         assertThat(optionalPlay.maxCount()).isEqualTo(1);
         assertThat(optionalPlay.minCount()).isIn(null, 0);
         assertThat(mayCopy.minCount()).isIn(null, 0);
@@ -228,7 +225,6 @@ class SpecializedInteractionProjectionTest {
                 new PendingInteraction.ExiledCardMayPlayChoice(controllerId, ids),
                 new PendingInteraction.PutCardExiledWithSourceIntoGraveyardCostChoice(
                         controllerId, UUID.randomUUID(), 0, 0, null, null, List.of(), java.util.Map.of(), ids),
-                new PendingInteraction.HitCounterExiledCardChoice(controllerId, opponentId, ids, null),
                 new PendingInteraction.SuspendedCardTimeCounterChoice(controllerId, ids, 1, "Source"),
                 new PendingInteraction.BrilliantUltimatumPlayChoice(controllerId, ids, 1),
                 new PendingInteraction.BrilliantUltimatumPileSeparationChoice(controllerId, ids));

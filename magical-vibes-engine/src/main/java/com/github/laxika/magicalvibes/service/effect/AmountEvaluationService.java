@@ -609,7 +609,7 @@ public class AmountEvaluationService {
                             .filter(entry -> ctx.controllerId() != null
                                     && ctx.controllerId().equals(entry.ownerId()))
                             .map(entry -> entry.card())
-                            .filter(card -> gameData.exiledCardsWithStudyCounters.contains(card.getId()))
+                            .filter(card -> gameData.exiledCardHasCounter(card.getId(), CounterType.STUDY))
                             .filter(card -> !card.hasType(CardType.LAND))
                             .map(Card::getManaValue)
                             .distinct()

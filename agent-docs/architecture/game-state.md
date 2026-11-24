@@ -65,6 +65,11 @@ For a source such as Bane Alley Broker, each player who gains control of it beco
 Owner: one floating `ExileLookPermissionEffect` per viewer on the card, added by `CreatureControlService`.
 Why: a player who has looked at a face-down card keeps that knowledge.
 
+### Counters on exiled cards live in one store (CR 122.1, 400.7)
+Every kind but suspend's time counters is `GameData.exiledCardCounters` (card id → kind → count), read and written only through its accessors; a card that leaves exile is a new object and its entry is forgotten.
+Owner: `GameData.exiledCardCounters` and its accessors; `PutCounterOnExiledCardsEffect`, `RemoveCountersFromExiledCardsEffect`, `CardHasCounterInExilePredicate`.
+Why: one store per kind forgot some kinds as cards left exile and missed some in simulation copies.
+
 ### Suspended spells that exiled themselves keep their countdown (CR 702.62a)
 Effects that adjust time counters on suspended cards reach these spells as well as hand-suspended cards, and removing the last counter queues the optional free cast.
 Owner: `GameData.suspendedSpellExiles`; `RemoveSuspendCounterFromExiledSpellEffectHandler`.

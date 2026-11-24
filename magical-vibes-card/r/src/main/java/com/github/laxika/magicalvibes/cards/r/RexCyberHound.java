@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ExiledCardCounter;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -39,7 +39,7 @@ public class RexCyberHound extends Card {
                 List.of(new PayEnergyCost(2),
                         ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(
                                 1, new CardTypePredicate(CardType.CREATURE), false),
-                        PutCounterOnExiledCardsEffect.onCardsExiledThisWay(ExiledCardCounter.BRAIN)),
+                        PutCounterOnExiledCardsEffect.onCardsExiledThisWay(CounterType.BRAIN)),
                 "Pay {E}{E}: Choose target creature card in a graveyard. Exile it with a brain counter on it. Activate only as a sorcery.",
                 new GraveyardCardPredicateTargetFilter(
                         new CardTypePredicate(CardType.CREATURE), GraveyardSearchScope.ALL_GRAVEYARDS),

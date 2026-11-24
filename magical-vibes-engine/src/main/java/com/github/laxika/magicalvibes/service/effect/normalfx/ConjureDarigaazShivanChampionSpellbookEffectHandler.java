@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.b.BlackDragon;
 import com.github.laxika.magicalvibes.cards.b.BoneDragon;
 import com.github.laxika.magicalvibes.cards.d.DemandingDragon;
@@ -64,7 +65,7 @@ public class ConjureDarigaazShivanChampionSpellbookEffectHandler implements Norm
         Card card = createSpellbookCard(cardName, ownerId);
 
         gameData.addToExile(ownerId, card, null, true);
-        gameData.exiledCardEggCounters.put(card.getId(), 3);
+        gameData.setExiledCardCounters(card.getId(), CounterType.EGG, 3);
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " conjures a random card from its spellbook into exile face down with three egg counters."));
         ActionEvents.conjured(gameData, ownerId, 1);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.Frogify;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -31,7 +32,7 @@ class DraugrNecromancerTest extends BaseCardTest {
         UUID bearId = destroyOpponentCreature(new GrizzlyBears());
 
         assertThat(gd.findExiledCard(bearId)).isNotNull();
-        assertThat(gd.exiledCardsWithIceCounters).contains(bearId);
+        assertThat(gd.exiledCardsWithCounter(CounterType.ICE).keySet()).contains(bearId);
         assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(
                 gd.findExiledCard(bearId).card());
     }
@@ -49,7 +50,7 @@ class DraugrNecromancerTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, tokenPermanent.getId());
 
         assertThat(gd.findExiledCard(tokenId)).isNull();
-        assertThat(gd.exiledCardsWithIceCounters).doesNotContain(tokenId);
+        assertThat(gd.exiledCardsWithCounter(CounterType.ICE).keySet()).doesNotContain(tokenId);
         assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(token);
     }
 
@@ -102,7 +103,7 @@ class DraugrNecromancerTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.findExiledCard(bear.getId())).isNull();
-        assertThat(gd.exiledCardsWithIceCounters).doesNotContain(bear.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.ICE).keySet()).doesNotContain(bear.getId());
     }
 
     @Test
@@ -121,6 +122,26 @@ class DraugrNecromancerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player1, bearId))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.findExiledCard(bearId)).isNotNull();
+    }
+
+    @Test
+    @DisplayName("A face-down Necromancer grants no permission to cast ice-counter cards (CR 708.2)")
+    void faceDownNecromancerGrantsNoCastingPermission() {
+        harness.addToBattlefield(player1, new DraugrNecromancer());
+        Permanent necromancer = gqs.findPermanentById(gd,
+                harness.getPermanentId(player1, "Draugr Necromancer"));
+        GrizzlyBears bear = new GrizzlyBears();
+        gd.addToExileWithIceCounter(player2.getId(), bear);
+        necromancer.setFaceDown(2, 2, java.util.Set.of(CardType.CREATURE));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, bear.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.findExiledCard(bear.getId())).isNotNull();
     }
 
     @Test
@@ -201,7 +222,7 @@ class DraugrNecromancerTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Draugr Necromancer");
         assertThat(gd.findExiledCard(bear.getId())).isNotNull();
-        assertThat(gd.exiledCardsWithIceCounters).contains(bear.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.ICE).keySet()).contains(bear.getId());
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
@@ -218,7 +239,7 @@ class DraugrNecromancerTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, permanent.getId());
 
         assertThat(gd.findExiledCard(bear.getId())).isNotNull();
-        assertThat(gd.exiledCardsWithIceCounters).contains(bear.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.ICE).keySet()).contains(bear.getId());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

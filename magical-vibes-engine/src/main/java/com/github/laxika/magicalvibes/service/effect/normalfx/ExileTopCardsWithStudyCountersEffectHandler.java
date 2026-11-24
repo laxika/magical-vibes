@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -44,7 +45,7 @@ public class ExileTopCardsWithStudyCountersEffectHandler implements NormalEffect
         for (int i = 0; i < exiledCount; i++) {
             Card card = library.removeFirst();
             exileService.exileCard(gameData, controllerId, card);
-            gameData.exiledCardsWithStudyCounters.add(card.getId());
+            gameData.addExiledCardCounters(card.getId(), CounterType.STUDY, 1);
         }
 
         if (exiledCount > 0) {

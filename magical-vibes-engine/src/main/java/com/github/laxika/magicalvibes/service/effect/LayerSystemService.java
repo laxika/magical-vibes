@@ -1031,14 +1031,8 @@ public class LayerSystemService {
                 h = mix(h, entry.sourcePermanentId() == null ? 0 : entry.sourcePermanentId().hashCode());
             }
         }
-        h = mix(h, gameData.exiledCardsWithBrainCounters.hashCode());
-        h = mix(h, gameData.exiledCardsWithBrainCounters.size());
-        h = mix(h, gameData.exiledCardsWithCageCounters.hashCode());
-        h = mix(h, gameData.exiledCardsWithCageCounters.size());
-        h = mix(h, gameData.exiledCardsWithBloodCounters.hashCode());
-        h = mix(h, gameData.exiledCardsWithBloodCounters.size());
-        h = mix(h, gameData.exiledCardsWithIceCounters.hashCode());
-        h = mix(h, gameData.exiledCardsWithIceCounters.size());
+        h = mix(h, gameData.exiledCardCounters.hashCode());
+        h = mix(h, gameData.exiledCardCounters.size());
         long imprintedSum = 0;
         for (Map.Entry<UUID, Card> entry : gameData.imprintedCards.entrySet()) {
             imprintedSum += mix64(entry.getKey().hashCode());

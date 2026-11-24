@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -48,7 +49,7 @@ public class CopyCardsExiledWithSourceAndMayCastCopiesEffectHandler
             trackedCards = gameData.exiledCards.stream()
                     .filter(exiledCard -> entry.getControllerId().equals(exiledCard.ownerId()))
                     .map(ExiledCardEntry::card)
-                    .filter(card -> gameData.exiledCardsWithKickCounters.contains(card.getId()))
+                    .filter(card -> gameData.exiledCardHasCounter(card.getId(), CounterType.KICK))
                     .toList();
         } else {
             trackedCards = sourcePermanentId == null

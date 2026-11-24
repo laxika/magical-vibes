@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -630,16 +631,14 @@ public class TriggerIndex {
         List<Card> exiled = List.copyOf(gameData.getPlayerExiledCards(activePlayerId));
         StepTrigger yourUpkeep = Triggers.upkeep(ActivePlayer.YOU);
         for (Card card : exiled) {
-            Integer eggs = gameData.exiledCardEggCounters.get(card.getId());
-            if (eggs != null && eggs > 0 && card.getTriggerEffects(yourUpkeep, Zone.EXILE).stream()
+            if (gameData.exiledCardHasCounter(card.getId(), CounterType.EGG) && card.getTriggerEffects(yourUpkeep, Zone.EXILE).stream()
                     .noneMatch(RemoveEggCounterFromExileAndReturnEffect.class::isInstance)) {
                 into.add(exileCounterCandidate(card, activePlayerId, StepCandidate.ExileCounterAbility.EGG,
                         new RemoveEggCounterFromExileAndReturnEffect(card.getId())));
             }
         }
         for (Card card : exiled) {
-            Integer refines = gameData.exiledCardRefineCounters.get(card.getId());
-            if (refines != null && refines > 0) {
+            if (gameData.exiledCardHasCounter(card.getId(), CounterType.REFINE)) {
                 into.add(exileCounterCandidate(card, activePlayerId, StepCandidate.ExileCounterAbility.REFINE,
                         new RemoveRefineCounterFromExiledCardEffect(card.getId())));
             }

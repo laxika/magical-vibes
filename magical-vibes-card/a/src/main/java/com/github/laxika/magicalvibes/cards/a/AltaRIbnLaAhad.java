@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ExiledCardCounter;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnExiledCardsEffect
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardHasMemoryCounterPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasCounterInExilePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,10 +27,10 @@ public class AltaRIbnLaAhad extends Card {
                 ExileGraveyardCardsEffect.upToOneTargetFromControllerGraveyard(new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardSubtypePredicate(CardSubtype.ASSASSIN)))),
-                PutCounterOnExiledCardsEffect.onCardsExiledThisWay(ExiledCardCounter.MEMORY),
+                PutCounterOnExiledCardsEffect.onCardsExiledThisWay(CounterType.MEMORY),
                 CreateTokenCopyOfCardEffect.of(
                         Subjects.exiledCards(Subjects.you(), new CardAllOfPredicate(List.of(
-                                new CardTypePredicate(CardType.CREATURE), new CardHasMemoryCounterPredicate()))),
+                                new CardTypePredicate(CardType.CREATURE), new CardHasCounterInExilePredicate(CounterType.MEMORY)))),
                         CreateTokenCopyOfTargetPermanentEffect.tappedAndAttackingWithTargetChoiceExiledAtEndOfCombat())));
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -9,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCardsInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.filter.CardHasVoidCounterPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasCounterInExilePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1760")
@@ -26,7 +27,7 @@ public class DauthiVoidwalker extends Card {
                 null,
                 List.of(new SacrificeSelfCost(),
                         ChooseCardEffect.announced(
-                                Subjects.exiledCards(Subjects.eachOpponent(), new CardHasVoidCounterPredicate()),
+                                Subjects.exiledCards(Subjects.eachOpponent(), new CardHasCounterInExilePredicate(CounterType.VOID)),
                                 "an exiled card an opponent owns with a void counter on it"),
                         AllowPlayCardsFromExileEffect.thisTurn(Subjects.cardsThisWay(StepKind.CHOOSE))
                                 .withoutPayingManaCost()),

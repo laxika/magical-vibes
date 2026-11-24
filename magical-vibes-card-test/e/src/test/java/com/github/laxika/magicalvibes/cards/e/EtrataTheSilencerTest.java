@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.b.BartizanBats;
 import com.github.laxika.magicalvibes.cards.d.DeadWeight;
 import com.github.laxika.magicalvibes.cards.h.HuntedWitness;
@@ -36,7 +37,7 @@ class EtrataTheSilencerTest extends BaseCardTest {
         resolveEtrataTrigger(opposingCreature);
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(opposingCreature.getCard());
-        assertThat(gd.exiledCardHitCounters).containsEntry(opposingCreature.getCard().getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.HIT)).containsEntry(opposingCreature.getCard().getId(), 1);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(etrata);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature);
         assertThat(gd.playerDecks.get(player1.getId())).contains(etrata.getCard());
@@ -62,8 +63,8 @@ class EtrataTheSilencerTest extends BaseCardTest {
         Card second = new BartizanBats();
         gd.addToExile(player2.getId(), first);
         gd.addToExile(player2.getId(), second);
-        gd.exiledCardHitCounters.put(first.getId(), 1);
-        gd.exiledCardHitCounters.put(second.getId(), 1);
+        gd.setExiledCardCounters(first.getId(), CounterType.HIT, 1);
+        gd.setExiledCardCounters(second.getId(), CounterType.HIT, 1);
 
         Permanent etrata = addAttackingEtrata();
         Permanent opposingCreature = addCreatureReady(player2, new BartizanBats());
@@ -71,7 +72,7 @@ class EtrataTheSilencerTest extends BaseCardTest {
         resolveEtrataTrigger(opposingCreature);
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
-        assertThat(gd.exiledCardHitCounters).containsEntry(opposingCreature.getCard().getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.HIT)).containsEntry(opposingCreature.getCard().getId(), 1);
         assertThat(gd.playerDecks.get(player1.getId())).contains(etrata.getCard());
     }
 
@@ -140,7 +141,7 @@ class EtrataTheSilencerTest extends BaseCardTest {
     void countsCardsRatherThanNumberOfHitCounters() {
         Card first = new BartizanBats();
         gd.addToExile(player2.getId(), first);
-        gd.exiledCardHitCounters.put(first.getId(), 3);
+        gd.setExiledCardCounters(first.getId(), CounterType.HIT, 3);
         addAttackingEtrata();
         Permanent target = addCreatureReady(player2, new BartizanBats());
 
@@ -154,7 +155,7 @@ class EtrataTheSilencerTest extends BaseCardTest {
         for (int i = 0; i < 2; i++) {
             Card hitCard = new BartizanBats();
             gd.addToExile(player2.getId(), hitCard);
-            gd.exiledCardHitCounters.put(hitCard.getId(), 1);
+            gd.setExiledCardCounters(hitCard.getId(), CounterType.HIT, 1);
         }
         addAttackingEtrata();
         Card borrowed = new BartizanBats();
@@ -165,7 +166,7 @@ class EtrataTheSilencerTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(borrowed);
         assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(borrowed);
-        assertThat(gd.exiledCardHitCounters).containsEntry(borrowed.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.HIT)).containsEntry(borrowed.getId(), 1);
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }
 
@@ -182,7 +183,7 @@ class EtrataTheSilencerTest extends BaseCardTest {
         for (int i = 0; i < existingHitCards; i++) {
             Card hitCard = new BartizanBats();
             gd.addToExile(player2.getId(), hitCard);
-            gd.exiledCardHitCounters.put(hitCard.getId(), 1);
+            gd.setExiledCardCounters(hitCard.getId(), CounterType.HIT, 1);
         }
         Permanent etrata = addAttackingEtrata();
 

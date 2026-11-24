@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -34,7 +35,7 @@ public class GainActivatedAbilitiesOfCardsExiledWithCageCountersSelfEffectHandle
         synchronized (context.gameData().exiledCards) {
             for (ExiledCardEntry entry : context.gameData().exiledCards) {
                 if (context.sourceControllerId().equals(entry.ownerId())
-                        && context.gameData().exiledCardsWithCageCounters.contains(entry.card().getId())) {
+                        && context.gameData().exiledCardHasCounter(entry.card().getId(), CounterType.CAGE)) {
                     cards.add(entry.card());
                 }
             }

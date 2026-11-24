@@ -47,7 +47,7 @@ class TheDragonKamiRebornTest extends BaseCardTest {
                 new InteractionAnswer.CardOrder(List.of(1, 0)));
 
         assertThat(gd.findExiledCard(chosen.getId()).faceDown()).isTrue();
-        assertThat(gd.exiledCardsWithHatchingCounters).containsExactly(chosen.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.HATCHING).keySet()).containsExactly(chosen.getId());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third, first);
         assertThat(saga.isTransformed()).isFalse();
     }
@@ -74,9 +74,9 @@ class TheDragonKamiRebornTest extends BaseCardTest {
         Card opponentCreature = new GrizzlyBears();
         harness.setExile(player1, List.of(creature, noncreature));
         harness.setExile(player2, List.of(opponentCreature));
-        gd.exiledCardsWithHatchingCounters.add(creature.getId());
-        gd.exiledCardsWithHatchingCounters.add(noncreature.getId());
-        gd.exiledCardsWithHatchingCounters.add(opponentCreature.getId());
+        gd.addExiledCardCounters(creature.getId(), CounterType.HATCHING, 1);
+        gd.addExiledCardCounters(noncreature.getId(), CounterType.HATCHING, 1);
+        gd.addExiledCardCounters(opponentCreature.getId(), CounterType.HATCHING, 1);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, egg));
@@ -100,7 +100,7 @@ class TheDragonKamiRebornTest extends BaseCardTest {
         Permanent dragon = addCreatureReady(player1, new DragonWhelp());
         Card creature = new GrizzlyBears();
         harness.setExile(player1, List.of(creature));
-        gd.exiledCardsWithHatchingCounters.add(creature.getId());
+        gd.addExiledCardCounters(creature.getId(), CounterType.HATCHING, 1);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, dragon));
@@ -120,7 +120,7 @@ class TheDragonKamiRebornTest extends BaseCardTest {
 
         harness.assertLife(player1, 22);
         assertThat(gd.findExiledCard(card.getId()).faceDown()).isTrue();
-        assertThat(gd.exiledCardsWithHatchingCounters).contains(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.HATCHING).keySet()).contains(card.getId());
     }
 
     @Test
@@ -134,7 +134,7 @@ class TheDragonKamiRebornTest extends BaseCardTest {
         harness.assertLife(player1, 22);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.findExiledCard(card.getId()).faceDown()).isTrue();
-        assertThat(gd.exiledCardsWithHatchingCounters).containsExactly(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.HATCHING).keySet()).containsExactly(card.getId());
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -146,7 +146,7 @@ class TheDragonKamiRebornTest extends BaseCardTest {
         triggerChapter();
 
         harness.assertLife(player1, 22);
-        assertThat(gd.exiledCardsWithHatchingCounters).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.HATCHING).keySet()).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -162,7 +162,7 @@ class TheDragonKamiRebornTest extends BaseCardTest {
 
         harness.assertLife(player1, 22);
         assertThat(gd.findExiledCard(chosen.getId()).faceDown()).isTrue();
-        assertThat(gd.exiledCardsWithHatchingCounters).containsExactly(chosen.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.HATCHING).keySet()).containsExactly(chosen.getId());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -196,8 +196,8 @@ class TheDragonKamiRebornTest extends BaseCardTest {
             gd.addToExile(player1.getId(), first, null, true);
             gd.addToExile(player1.getId(), second, null, true);
         });
-        gd.exiledCardsWithHatchingCounters.add(first.getId());
-        gd.exiledCardsWithHatchingCounters.add(second.getId());
+        gd.addExiledCardCounters(first.getId(), CounterType.HATCHING, 1);
+        gd.addExiledCardCounters(second.getId(), CounterType.HATCHING, 1);
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, egg));
         harness.passBothPriorities();
@@ -207,7 +207,7 @@ class TheDragonKamiRebornTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(first.getId());
         assertThat(gd.findExiledCard(first.getId())).isNull();
-        assertThat(gd.exiledCardsWithHatchingCounters).doesNotContain(first.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.HATCHING).keySet()).doesNotContain(first.getId());
         assertThat(gd.findExiledCard(second.getId()).faceDown()).isTrue();
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.passBothPriorities();
@@ -222,8 +222,8 @@ class TheDragonKamiRebornTest extends BaseCardTest {
         Card first = new GrizzlyBears();
         Card second = new GrizzlyBears();
         harness.setExile(player1, List.of(first, second));
-        gd.exiledCardsWithHatchingCounters.add(first.getId());
-        gd.exiledCardsWithHatchingCounters.add(second.getId());
+        gd.addExiledCardCounters(first.getId(), CounterType.HATCHING, 1);
+        gd.addExiledCardCounters(second.getId(), CounterType.HATCHING, 1);
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, egg));
         harness.passBothPriorities();
@@ -243,7 +243,7 @@ class TheDragonKamiRebornTest extends BaseCardTest {
         Permanent egg = addTransformedEgg();
         Card creature = new GrizzlyBears();
         harness.setExile(player1, List.of(creature));
-        gd.exiledCardsWithHatchingCounters.add(creature.getId());
+        gd.addExiledCardCounters(creature.getId(), CounterType.HATCHING, 1);
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, egg));
         harness.passBothPriorities();
@@ -251,7 +251,7 @@ class TheDragonKamiRebornTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.findExiledCard(creature.getId())).isNotNull();
-        assertThat(gd.exiledCardsWithHatchingCounters).contains(creature.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.HATCHING).keySet()).contains(creature.getId());
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -262,7 +262,7 @@ class TheDragonKamiRebornTest extends BaseCardTest {
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
         Card creature = new GrizzlyBears();
         harness.setExile(player1, List.of(creature));
-        gd.exiledCardsWithHatchingCounters.add(creature.getId());
+        gd.addExiledCardCounters(creature.getId(), CounterType.HATCHING, 1);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, bear));
@@ -278,7 +278,7 @@ class TheDragonKamiRebornTest extends BaseCardTest {
         Permanent dragon = addCreatureReady(player2, new DragonWhelp());
         Card creature = new GrizzlyBears();
         harness.setExile(player1, List.of(creature));
-        gd.exiledCardsWithHatchingCounters.add(creature.getId());
+        gd.addExiledCardCounters(creature.getId(), CounterType.HATCHING, 1);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, dragon));
@@ -310,8 +310,8 @@ class TheDragonKamiRebornTest extends BaseCardTest {
         Card first = new GrizzlyBears();
         Card second = new GrizzlyBears();
         harness.setExile(player1, List.of(first, second));
-        gd.exiledCardsWithHatchingCounters.add(first.getId());
-        gd.exiledCardsWithHatchingCounters.add(second.getId());
+        gd.addExiledCardCounters(first.getId(), CounterType.HATCHING, 1);
+        gd.addExiledCardCounters(second.getId(), CounterType.HATCHING, 1);
         egg.setMarkedDamage(1);
         dragon.setMarkedDamage(3);
 
@@ -335,7 +335,7 @@ class TheDragonKamiRebornTest extends BaseCardTest {
         Permanent egg = addTransformedEgg();
         Card creature = new GrizzlyBears();
         harness.setExile(player1, List.of(creature));
-        gd.exiledCardsWithHatchingCounters.add(creature.getId());
+        gd.addExiledCardCounters(creature.getId(), CounterType.HATCHING, 1);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToExile(gd, egg));

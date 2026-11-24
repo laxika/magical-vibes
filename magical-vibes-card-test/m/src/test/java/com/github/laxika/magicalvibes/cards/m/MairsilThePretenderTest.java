@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.Card;
@@ -34,7 +35,7 @@ class MairsilThePretenderTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(rodOfRuin.getId()));
 
-        assertThat(gd.exiledCardsWithCageCounters).contains(rodOfRuin.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.CAGE).keySet()).contains(rodOfRuin.getId());
         assertThat(gd.findExiledCard(rodOfRuin.getId()).sourcePermanentId()).isNull();
 
         Permanent mairsilPermanent = findMairsil(mairsil);
@@ -68,7 +69,7 @@ class MairsilThePretenderTest extends BaseCardTest {
         resolveAllTriggers();
         harness.handleMultipleCardsChosen(player1, List.of(rodOfRuin.getId()));
 
-        assertThat(gd.exiledCardsWithCageCounters).contains(rodOfRuin.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.CAGE).keySet()).contains(rodOfRuin.getId());
         assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
                 .containsExactlyElementsOf(library.stream().map(Card::getId).toList());
     }
@@ -86,7 +87,7 @@ class MairsilThePretenderTest extends BaseCardTest {
         resolveAllTriggers();
         harness.handleMultipleCardsChosen(player1, List.of(rodOfRuin.getId()));
 
-        assertThat(gd.exiledCardsWithCageCounters).contains(rodOfRuin.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.CAGE).keySet()).contains(rodOfRuin.getId());
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 

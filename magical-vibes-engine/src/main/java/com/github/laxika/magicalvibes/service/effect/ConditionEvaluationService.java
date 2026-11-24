@@ -2277,7 +2277,7 @@ public class ConditionEvaluationService {
             case ActivePlayerIsMonarch ignored ->
                     gameData.activePlayerId != null && gameData.activePlayerId.equals(gameData.monarchPlayerId);
             case SourceCardInExileWithScreamCounter ignored -> ctx.sourceCard() != null
-                    && gameData.exiledCardScreamCounters.getOrDefault(ctx.sourceCard().getId(), 0) > 0
+                    && gameData.exiledCardCounterCount(ctx.sourceCard().getId(), CounterType.SCREAM) > 0
                     && gameData.findExiledCard(ctx.sourceCard().getId()) != null;
             case OpponentControlsMoreLands ignored ->
                     gameQueryService.anyOpponentControlsMoreLands(gameData, ctx.controllerId());
@@ -3064,7 +3064,7 @@ public class ConditionEvaluationService {
     /** True when the source card is currently exiled with a fetch counter. */
     private boolean isSourceCardInExileWithFetchCounter(GameData gameData, ConditionContext ctx) {
         return ctx.sourceCard() != null
-                && gameData.exiledCardsWithFetchCounters.contains(ctx.sourceCard().getId())
+                && gameData.exiledCardHasCounter(ctx.sourceCard().getId(), CounterType.FETCH)
                 && gameData.findExiledCard(ctx.sourceCard().getId()) != null;
     }
 

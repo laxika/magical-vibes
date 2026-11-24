@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.Frogify;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -35,7 +36,7 @@ class GrolnokTheOmnivoreTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.exiledCardsWithCroakCounters).contains(forest.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.CROAK).keySet()).contains(forest.getId());
     }
 
     @Test
@@ -64,7 +65,7 @@ class GrolnokTheOmnivoreTest extends BaseCardTest {
     void croakCountersRequireGrolnok() {
         Card bear = new GrizzlyBears();
         harness.setExile(player1, List.of(bear));
-        gd.exiledCardsWithCroakCounters.add(bear.getId());
+        gd.addExiledCardCounters(bear.getId(), CounterType.CROAK, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -89,7 +90,7 @@ class GrolnokTheOmnivoreTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(shock);
         assertThat(gd.findExiledCard(bear.getId())).isNotNull();
         assertThat(gd.findExiledCard(forest.getId())).isNotNull();
-        assertThat(gd.exiledCardsWithCroakCounters)
+        assertThat(gd.exiledCardsWithCounter(CounterType.CROAK).keySet())
                 .containsExactlyInAnyOrder(bear.getId(), forest.getId());
     }
 
@@ -106,7 +107,7 @@ class GrolnokTheOmnivoreTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(library);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.exiledCardsWithCroakCounters).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.CROAK).keySet()).isEmpty();
     }
 
     @Test
@@ -116,8 +117,8 @@ class GrolnokTheOmnivoreTest extends BaseCardTest {
         Card bear = new GrizzlyBears();
         Card forest = new Forest();
         harness.setExile(player1, List.of(bear, forest));
-        gd.exiledCardsWithCroakCounters.add(bear.getId());
-        gd.exiledCardsWithCroakCounters.add(forest.getId());
+        gd.addExiledCardCounters(bear.getId(), CounterType.CROAK, 1);
+        gd.addExiledCardCounters(forest.getId(), CounterType.CROAK, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -133,7 +134,7 @@ class GrolnokTheOmnivoreTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getCard().getId().equals(forest.getId()));
         assertThat(gd.findExiledCard(bear.getId())).isNull();
         assertThat(gd.findExiledCard(forest.getId())).isNull();
-        assertThat(gd.exiledCardsWithCroakCounters).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.CROAK).keySet()).isEmpty();
     }
 
     @Test
@@ -142,7 +143,7 @@ class GrolnokTheOmnivoreTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrolnokTheOmnivore());
         Card bear = new GrizzlyBears();
         harness.setExile(player1, List.of(bear));
-        gd.exiledCardsWithCroakCounters.add(bear.getId());
+        gd.addExiledCardCounters(bear.getId(), CounterType.CROAK, 1);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.service.filter;
 
 import com.github.laxika.magicalvibes.model.filter.CardHasChosenSpellColorPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardHasMemoryCounterPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasCounterInExilePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasNameChosenThisResolutionPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardHasVoidCounterPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AdventureCast;
@@ -48,7 +47,6 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareColorWithSourceControlledCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardHasStudyCounterPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasTypeChosenThisResolutionPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasCardTypeChosenThisResolutionPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesColorWithControlledPermanentPredicate;
@@ -704,12 +702,8 @@ public class PredicateEvaluationService {
                     gameQueryService.cardHasType(card, p.cardType(), gameData, cardOwnerId);
             case CardSubtypePredicate p ->
                     gameQueryService.cardHasSubtype(card, p.subtype(), gameData, cardOwnerId);
-            case CardHasStudyCounterPredicate ignored ->
-                    gameData != null && gameData.exiledCardsWithStudyCounters.contains(card.getId());
-            case CardHasMemoryCounterPredicate ignored ->
-                    gameData != null && gameData.exiledCardsWithMemoryCounters.contains(card.getId());
-            case CardHasVoidCounterPredicate ignored ->
-                    gameData != null && gameData.exiledCardsWithVoidCounters.contains(card.getId());
+            case CardHasCounterInExilePredicate p ->
+                    gameData != null && gameData.exiledCardHasCounter(card.getId(), p.kind());
             case CardHasChosenSpellColorPredicate ignored ->
                     gameData != null && gameData.chosenSpellColor != null
                             && gameQueryService.getEffectiveCardColors(gameData, card).contains(gameData.chosenSpellColor);

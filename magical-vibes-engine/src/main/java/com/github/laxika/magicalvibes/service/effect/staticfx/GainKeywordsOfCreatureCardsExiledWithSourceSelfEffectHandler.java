@@ -39,7 +39,7 @@ public class GainKeywordsOfCreatureCardsExiledWithSourceSelfEffectHandler implem
             }
             if (keywordEffect.requiredExiledCardCounter() != null
                     && (keywordEffect.requiredExiledCardCounter() != CounterType.BLOOD
-                    || !context.gameData().exiledCardsWithBloodCounters.contains(card.getId()))) {
+                    || !context.gameData().exiledCardHasCounter(card.getId(), CounterType.BLOOD))) {
                 continue;
             }
 

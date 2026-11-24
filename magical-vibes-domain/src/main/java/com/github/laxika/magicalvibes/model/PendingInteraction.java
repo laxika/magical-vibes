@@ -28,7 +28,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.LandManaDrainContinuation,
         PendingMemoriesReturningChoice,
         PendingSphinxAmbassadorChoice,
-        PendingKarnScionRevealChoice, PendingKarnScionExileReturn,
         PendingManifoldInsightsChoice,
         PendingValkiCopyChoice, PendingValkiHandExileChoice,
         PendingAllureOfTheUnknownChoice,
@@ -105,7 +104,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.PermanentAuctionChoice,
         PendingInteraction.LifeBidChoice,
         PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice,
-        PendingInteraction.HitCounterExiledCardChoice,
         PendingInteraction.RemoveTimeCounterCostChoice,
         PendingInteraction.MultiZoneExileChoice,
         PendingInteraction.ExilePermanentsOrHandCardsChoice,
@@ -2694,26 +2692,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds(), minCount, maxCount);
-        }
-    }
-
-    /** Chooses one of a damaged player's exiled cards with a hit counter to remove. */
-    record HitCounterExiledCardChoice(UUID playerId, UUID ownerId,
-                                      java.util.List<UUID> validCardIds,
-                                      CardEffect followUpEffect) implements PendingInteraction {
-
-        public HitCounterExiledCardChoice {
-            validCardIds = java.util.List.copyOf(validCardIds);
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
         }
     }
 

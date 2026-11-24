@@ -31,7 +31,7 @@ class GoliathDaydreamerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.findExiledCard(ritual.getId())).isNotNull();
-        assertThat(gd.exiledCardDreamCounters).containsEntry(ritual.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.DREAM)).containsEntry(ritual.getId(), 1);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(card -> card.getId().equals(ritual.getId()));
     }
@@ -42,7 +42,7 @@ class GoliathDaydreamerTest extends BaseCardTest {
         addCreatureReady(player1, new GoliathDaydreamer());
         DarkRitual ritual = new DarkRitual();
         harness.setExile(player1, List.of(ritual));
-        gd.exiledCardDreamCounters.put(ritual.getId(), 1);
+        gd.setExiledCardCounters(ritual.getId(), CounterType.DREAM, 1);
 
         declareAttackers(player1, List.of(0));
         resolveCombat();
@@ -69,27 +69,29 @@ class GoliathDaydreamerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the free cast leaves the dream-counter card in exile")
     void decliningLeavesTheDreamCardInExile() {
         addCreatureReady(player1, new GoliathDaydreamer());
         DarkRitual ritual = new DarkRitual();
         harness.setExile(player1, List.of(ritual));
-        gd.exiledCardDreamCounters.put(ritual.getId(), 1);
+        gd.setExiledCardCounters(ritual.getId(), CounterType.DREAM, 1);
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.findExiledCard(ritual.getId())).isNotNull();
-        assertThat(gd.exiledCardDreamCounters).containsEntry(ritual.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.DREAM)).containsEntry(ritual.getId(), 1);
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(ritual.getId()));
     }
 
     @Test
+    @DisplayName("Attacking can't cast a dream-counter card an opponent owns")
     void attackingCannotCastAnOpponentsDreamCard() {
         addCreatureReady(player1, new GoliathDaydreamer());
         DarkRitual ritual = new DarkRitual();
         harness.setExile(player2, List.of(ritual));
-        gd.exiledCardDreamCounters.put(ritual.getId(), 1);
+        gd.setExiledCardCounters(ritual.getId(), CounterType.DREAM, 1);
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
@@ -99,16 +101,21 @@ class GoliathDaydreamerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("One attack chooses and casts only one of several dream-counter spells, which isn't exiled again")
     void oneAttackCastsOnlyOneDreamSpellAndDoesNotExileItAgain() {
         addCreatureReady(player1, new GoliathDaydreamer());
         DarkRitual first = new DarkRitual();
         DarkRitual second = new DarkRitual();
         harness.setExile(player1, List.of(first, second));
-        gd.exiledCardDreamCounters.put(first.getId(), 1);
-        gd.exiledCardDreamCounters.put(second.getId(), 1);
+        gd.setExiledCardCounters(first.getId(), CounterType.DREAM, 1);
+        gd.setExiledCardCounters(second.getId(), CounterType.DREAM, 1);
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.cards()).containsExactlyInAnyOrder(first, second);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.stack).filteredOn(entry -> entry.getCard() instanceof DarkRitual).hasSize(1);
@@ -121,6 +128,7 @@ class GoliathDaydreamerTest extends BaseCardTest {
 
     @Test
     @CardUsed({VirulentSwipe.class})
+    @DisplayName("A resolving rebound spell lets its controller choose which replacement applies")
     void resolvingReboundSpellLetsControllerChooseItsReplacement() {
         Permanent daydreamer = harness.addToBattlefieldAndReturn(player1, new GoliathDaydreamer());
         VirulentSwipe swipe = new VirulentSwipe();
@@ -136,12 +144,13 @@ class GoliathDaydreamerTest extends BaseCardTest {
 
     @Test
     @CardUsed({BogslithersEmbrace.class})
+    @DisplayName("A free cast still requires the spell's additional blight or mana cost")
     void freeCastStillRequiresTheAdditionalBlightOrManaCost() {
         Permanent daydreamer = addCreatureReady(player1, new GoliathDaydreamer());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GoliathDaydreamer());
         BogslithersEmbrace spell = new BogslithersEmbrace();
         harness.setExile(player1, List.of(spell));
-        gd.exiledCardDreamCounters.put(spell.getId(), 1);
+        gd.setExiledCardCounters(spell.getId(), CounterType.DREAM, 1);
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
@@ -166,7 +175,7 @@ class GoliathDaydreamerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.findExiledCard(ritual.getId())).isNull();
-        assertThat(gd.exiledCardDreamCounters).doesNotContainKey(ritual.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.DREAM)).doesNotContainKey(ritual.getId());
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(card -> card.getId().equals(ritual.getId()));
     }

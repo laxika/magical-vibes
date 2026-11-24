@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.ExiledCardCounter;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
@@ -43,7 +43,7 @@ public class HexKellansCompanion extends Card {
                         new EffectRegistration(new ConditionalEffect(new SourceIsOnBattlefield(),
                                 SequenceEffect.of(
                                 new ExileTargetPermanentEffect(Subjects.source()),
-                                PutCounterOnExiledCardsEffect.onCardsExiledThisWay(ExiledCardCounter.FETCH)))))));
+                                PutCounterOnExiledCardsEffect.onCardsExiledThisWay(CounterType.FETCH)))))));
 
         addTrigger(new TriggerCondition(Triggers.youCastSpell()
                         .withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.EXILE)), AbilityZones.EXILE),

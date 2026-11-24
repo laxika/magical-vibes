@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.h.HeadlessHorseman;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,7 +28,7 @@ class AllHallowsEveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exiledCardScreamCounters).containsEntry(card.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.SCREAM)).containsEntry(card.getId(), 2);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
     }
 
@@ -38,11 +39,11 @@ class AllHallowsEveTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
-        assertThat(gd.exiledCardScreamCounters).containsEntry(card.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.SCREAM)).containsEntry(card.getId(), 2);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        assertThat(gd.exiledCardScreamCounters).containsEntry(card.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.SCREAM)).containsEntry(card.getId(), 1);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
     }
 
@@ -55,7 +56,7 @@ class AllHallowsEveTest extends BaseCardTest {
         gd.removeFromExile(card.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardScreamCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.SCREAM)).doesNotContainKey(card.getId());
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
     }
 
@@ -72,7 +73,7 @@ class AllHallowsEveTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardScreamCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.SCREAM)).doesNotContainKey(card.getId());
         assertThat(gd.findExiledCard(card.getId())).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(player1Creature.getId()));
@@ -101,7 +102,7 @@ class AllHallowsEveTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardScreamCounters).containsEntry(card.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.SCREAM)).containsEntry(card.getId(), 1);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstCreature, secondCreature);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(opposingCreature);
         harness.assertNotOnBattlefield(player1, "Headless Horseman");
@@ -129,7 +130,7 @@ class AllHallowsEveTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(creature));
 
         advanceToUpkeep(player1);
-        gd.exiledCardScreamCounters.remove(card.getId());
+        gd.setExiledCardCounters(card.getId(), CounterType.SCREAM, 0);
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
@@ -148,7 +149,7 @@ class AllHallowsEveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exiledCardScreamCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.SCREAM)).doesNotContainKey(card.getId());
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
@@ -174,7 +175,7 @@ class AllHallowsEveTest extends BaseCardTest {
     private AllHallowsEve exileWithScreamCounters(int counters) {
         AllHallowsEve card = new AllHallowsEve();
         gd.addToExile(player1.getId(), card);
-        gd.exiledCardScreamCounters.put(card.getId(), counters);
+        gd.setExiledCardCounters(card.getId(), CounterType.SCREAM, counters);
         return card;
     }
 

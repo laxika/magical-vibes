@@ -35,14 +35,14 @@ class TheAnimusTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .extracting(Card::getId)
                 .containsExactly(legendaryCreature.getId());
-        assertThat(gd.exiledCardsWithMemoryCounters).contains(legendaryCreature.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.MEMORY).keySet()).contains(legendaryCreature.getId());
     }
 
     @Test
     void makesTargetLegendaryCreatureCopyMemoryMarkedExiledCreatureUntilNextTurn() {
         Card exiledCreature = new RoyalAssassin();
         harness.setExile(player1, List.of(exiledCreature));
-        gd.exiledCardsWithMemoryCounters.add(exiledCreature.getId());
+        gd.addExiledCardCounters(exiledCreature.getId(), CounterType.MEMORY, 1);
         addCreatureReady(player1, new TheAnimus());
         Permanent legendaryCreature = addCreatureReady(player1, new EzioBrashNovice());
 
@@ -68,7 +68,7 @@ class TheAnimusTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(legendaryCreature);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exiledCardsWithMemoryCounters).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.MEMORY).keySet()).isEmpty();
     }
 
     @Test
@@ -117,14 +117,14 @@ class TheAnimusTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(gd.exiledCardsWithMemoryCounters).doesNotContain(eligible.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.MEMORY).keySet()).doesNotContain(eligible.getId());
     }
 
     @Test
     void canCopyAnOpponentsExiledNonlegendaryCreatureAndUseItsAbility() {
         Card exiled = new RoyalAssassin();
         harness.setExile(player2, List.of(exiled));
-        gd.exiledCardsWithMemoryCounters.add(exiled.getId());
+        gd.addExiledCardCounters(exiled.getId(), CounterType.MEMORY, 1);
         harness.addToBattlefield(player1, new TheAnimus());
         Permanent copier = addCreatureReady(player1, new EzioBrashNovice());
         Permanent victim = addCreatureReady(player2, new RoyalAssassin());
@@ -138,7 +138,7 @@ class TheAnimusTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(victim);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(victim.getOriginalCard());
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(exiled);
-        assertThat(gd.exiledCardsWithMemoryCounters).contains(exiled.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.MEMORY).keySet()).contains(exiled.getId());
     }
 
     @Test
@@ -157,7 +157,7 @@ class TheAnimusTest extends BaseCardTest {
     void rejectsAMemoryMarkedNoncreatureInExile() {
         Card exiled = new TheAnimus();
         harness.setExile(player1, List.of(exiled));
-        gd.exiledCardsWithMemoryCounters.add(exiled.getId());
+        gd.addExiledCardCounters(exiled.getId(), CounterType.MEMORY, 1);
         Permanent animus = harness.addToBattlefieldAndReturn(player1, new TheAnimus());
         Permanent copier = addCreatureReady(player1, new EzioBrashNovice());
 
@@ -170,7 +170,7 @@ class TheAnimusTest extends BaseCardTest {
     void rejectsActivationWhileAnotherAbilityIsOnTheStack() {
         Card exiled = new RoyalAssassin();
         harness.setExile(player1, List.of(exiled));
-        gd.exiledCardsWithMemoryCounters.add(exiled.getId());
+        gd.addExiledCardCounters(exiled.getId(), CounterType.MEMORY, 1);
         Permanent animus = harness.addToBattlefieldAndReturn(player1, new TheAnimus());
         Permanent copier = addCreatureReady(player1, new EzioBrashNovice());
         addCreatureReady(player1, new RoyalAssassin());
@@ -188,7 +188,7 @@ class TheAnimusTest extends BaseCardTest {
     void preservesCountersAndTappedStateWhenCopying() {
         Card exiled = new RoyalAssassin();
         harness.setExile(player1, List.of(exiled));
-        gd.exiledCardsWithMemoryCounters.add(exiled.getId());
+        gd.addExiledCardCounters(exiled.getId(), CounterType.MEMORY, 1);
         harness.addToBattlefield(player1, new TheAnimus());
         Permanent copier = addCreatureReady(player1, new EzioBrashNovice());
         copier.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
@@ -208,11 +208,11 @@ class TheAnimusTest extends BaseCardTest {
     void copyDoesNothingIfTheMemoryCounterIsRemovedBeforeResolution() {
         Card exiled = new RoyalAssassin();
         harness.setExile(player1, List.of(exiled));
-        gd.exiledCardsWithMemoryCounters.add(exiled.getId());
+        gd.addExiledCardCounters(exiled.getId(), CounterType.MEMORY, 1);
         harness.addToBattlefield(player1, new TheAnimus());
         Permanent copier = addCreatureReady(player1, new EzioBrashNovice());
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(copier.getId(), exiled.getId()));
-        gd.exiledCardsWithMemoryCounters.remove(exiled.getId());
+        gd.setExiledCardCounters(exiled.getId(), CounterType.MEMORY, 0);
 
         harness.passBothPriorities();
 
@@ -224,7 +224,7 @@ class TheAnimusTest extends BaseCardTest {
     void rejectsNonlegendaryOrOpponentsBattlefieldTargets() {
         Card exiled = new RoyalAssassin();
         harness.setExile(player1, List.of(exiled));
-        gd.exiledCardsWithMemoryCounters.add(exiled.getId());
+        gd.addExiledCardCounters(exiled.getId(), CounterType.MEMORY, 1);
         Permanent animus = harness.addToBattlefieldAndReturn(player1, new TheAnimus());
         Permanent nonlegendary = addCreatureReady(player1, new RoyalAssassin());
         Permanent opposingLegendary = addCreatureReady(player2, new EzioBrashNovice());
@@ -240,7 +240,7 @@ class TheAnimusTest extends BaseCardTest {
     void rejectsActivationOutsideYourMainPhase() {
         Card exiled = new RoyalAssassin();
         harness.setExile(player1, List.of(exiled));
-        gd.exiledCardsWithMemoryCounters.add(exiled.getId());
+        gd.addExiledCardCounters(exiled.getId(), CounterType.MEMORY, 1);
         Permanent animus = harness.addToBattlefieldAndReturn(player1, new TheAnimus());
         Permanent copier = addCreatureReady(player1, new EzioBrashNovice());
         harness.forceStep(TurnStep.UPKEEP);
@@ -258,7 +258,7 @@ class TheAnimusTest extends BaseCardTest {
     void copyDoesNothingIfTheExiledTargetLeavesBeforeResolution() {
         Card exiled = new RoyalAssassin();
         harness.setExile(player1, List.of(exiled));
-        gd.exiledCardsWithMemoryCounters.add(exiled.getId());
+        gd.addExiledCardCounters(exiled.getId(), CounterType.MEMORY, 1);
         harness.addToBattlefield(player1, new TheAnimus());
         Permanent copier = addCreatureReady(player1, new EzioBrashNovice());
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(copier.getId(), exiled.getId()));
@@ -273,7 +273,7 @@ class TheAnimusTest extends BaseCardTest {
     void copyDoesNothingIfTheCreatureChangesControllerBeforeResolution() {
         Card exiled = new RoyalAssassin();
         harness.setExile(player1, List.of(exiled));
-        gd.exiledCardsWithMemoryCounters.add(exiled.getId());
+        gd.addExiledCardCounters(exiled.getId(), CounterType.MEMORY, 1);
         harness.addToBattlefield(player1, new TheAnimus());
         Permanent copier = addCreatureReady(player1, new EzioBrashNovice());
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(copier.getId(), exiled.getId()));
@@ -290,7 +290,7 @@ class TheAnimusTest extends BaseCardTest {
     void copySurvivesOpponentsTurnAndEndsAtTheBeginningOfYourNextTurn() {
         Card exiled = new RoyalAssassin();
         harness.setExile(player1, List.of(exiled));
-        gd.exiledCardsWithMemoryCounters.add(exiled.getId());
+        gd.addExiledCardCounters(exiled.getId(), CounterType.MEMORY, 1);
         harness.addToBattlefield(player1, new TheAnimus());
         Permanent copier = addCreatureReady(player1, new EzioBrashNovice());
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(copier.getId(), exiled.getId()));

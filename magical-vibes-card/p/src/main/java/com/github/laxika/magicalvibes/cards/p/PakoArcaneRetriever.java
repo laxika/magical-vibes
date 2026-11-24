@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ExiledCardCounter;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
@@ -31,7 +30,7 @@ public class PakoArcaneRetriever extends Card {
                 MayChoicePlayer.TARGET_PLAYER));
         addTrigger(Triggers.attacks(),
                 ExileTopCardOfOwnLibraryEffect.linkedToSource(Subjects.eachPlayer()),
-                PutCounterOnExiledCardsEffect.onCardsExiledThisWay(ExiledCardCounter.FETCH),
+                PutCounterOnExiledCardsEffect.onCardsExiledThisWay(CounterType.FETCH),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE,
                         AmountThisWay.exiledCards(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)))));
     }

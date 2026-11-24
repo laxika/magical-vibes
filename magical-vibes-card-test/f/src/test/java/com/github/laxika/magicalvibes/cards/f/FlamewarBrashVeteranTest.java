@@ -67,7 +67,7 @@ class FlamewarBrashVeteranTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
         assertThat(flamewar.isTransformed()).isFalse();
-        assertThat(gd.exiledCardsWithIntelCounters)
+        assertThat(gd.exiledCardsWithCounter(CounterType.INTEL).keySet())
                 .containsExactlyInAnyOrder(first.getId(), second.getId());
         for (Card card : List.of(first, second)) {
             ExiledCardEntry entry = gd.findExiledCard(card.getId());
@@ -86,8 +86,8 @@ class FlamewarBrashVeteranTest extends BaseCardTest {
         gd.addToExile(player1.getId(), marked, flamewar.getId(), true);
         gd.addToExile(player1.getId(), unmarked, flamewar.getId(), true);
         gd.addToExile(player2.getId(), opponentOwned, flamewar.getId(), true);
-        gd.exiledCardsWithIntelCounters.add(marked.getId());
-        gd.exiledCardsWithIntelCounters.add(opponentOwned.getId());
+        gd.addExiledCardCounters(marked.getId(), CounterType.INTEL, 1);
+        gd.addExiledCardCounters(opponentOwned.getId(), CounterType.INTEL, 1);
         harness.setHand(player1, List.of(new Mountain()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -105,7 +105,7 @@ class FlamewarBrashVeteranTest extends BaseCardTest {
         Permanent earlierFlamewar = addCreatureReady(player1, new FlamewarBrashVeteran());
         Card marked = new Mountain();
         gd.addToExile(player1.getId(), marked, earlierFlamewar.getId(), true);
-        gd.exiledCardsWithIntelCounters.add(marked.getId());
+        gd.addExiledCardCounters(marked.getId(), CounterType.INTEL, 1);
         gd.playerBattlefields.get(player1.getId()).remove(earlierFlamewar);
         addCreatureReady(player1, new FlamewarBrashVeteran());
         Card discarded = new Mountain();
@@ -127,7 +127,7 @@ class FlamewarBrashVeteranTest extends BaseCardTest {
         Permanent flamewar = addCreatureReady(player1, new FlamewarBrashVeteran());
         Card marked = new Mountain();
         gd.addToExile(player1.getId(), marked, flamewar.getId(), true);
-        gd.exiledCardsWithIntelCounters.add(marked.getId());
+        gd.addExiledCardCounters(marked.getId(), CounterType.INTEL, 1);
         harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -181,7 +181,7 @@ class FlamewarBrashVeteranTest extends BaseCardTest {
         Permanent flamewar = addCreatureReady(player1, new FlamewarBrashVeteran());
         Card marked = new Mountain();
         gd.addToExile(player1.getId(), marked, flamewar.getId(), true);
-        gd.exiledCardsWithIntelCounters.add(marked.getId());
+        gd.addExiledCardCounters(marked.getId(), CounterType.INTEL, 1);
 
         harness.publishState();
 

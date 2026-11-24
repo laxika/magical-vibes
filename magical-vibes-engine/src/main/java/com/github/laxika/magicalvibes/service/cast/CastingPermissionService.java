@@ -40,11 +40,10 @@ import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.condition.CardDiscardedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Condition;
-import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithIceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.AllowPlayAndCastCardsExiledWithCroakCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayFromAmongExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsExiledWithPlanarSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayFromAnyLibraryTopEffect;
 import com.github.laxika.magicalvibes.model.effect.AnyManaTypeCastEffect;
@@ -2954,17 +2953,12 @@ public class CastingPermissionService {
             }
         }
         for (ExiledCardEntry entry : gameData.exiledCards) {
-            if (hasIceCounterPermission(gameData, playerId, entry.card().getId(), false)) {
+            if (hasPlayFromAmongExiledCardsPermission(gameData, playerId, entry.card().getId(), false)) {
                 castableIds.add(entry.card().getId());
             }
         }
         for (ExiledCardEntry entry : gameData.exiledCards) {
-            if (hasCroakCounterPermission(gameData, playerId, entry.card().getId())) {
-                castableIds.add(entry.card().getId());
-            }
-        }
-        for (ExiledCardEntry entry : gameData.exiledCards) {
-            if (gameData.stashCounterCardIds.contains(entry.card().getId())
+            if (gameData.exiledCardHasCounter(entry.card().getId(), CounterType.STASH)
                     && hasStashCounterPermission(gameData, playerId, entry.card().getId(), false)) {
                 castableIds.add(entry.card().getId());
             }
@@ -3011,7 +3005,7 @@ public class CastingPermissionService {
     public Set<UUID> getAnyManaTypeExiledCardIds(GameData gameData, UUID playerId) {
         Set<UUID> anyManaIds = new HashSet<>();
         for (ExiledCardEntry entry : gameData.exiledCards) {
-            if (gameData.stashCounterCardIds.contains(entry.card().getId())
+            if (gameData.exiledCardHasCounter(entry.card().getId(), CounterType.STASH)
                     && hasStashCounterPermission(gameData, playerId, entry.card().getId(), true)) {
                 anyManaIds.add(entry.card().getId());
             }
@@ -3102,8 +3096,7 @@ public class CastingPermissionService {
         if (hasLukkaExilePermission(gameData, playerId, entry)) return true;
         if (findTemporaryExileCastPermission(gameData, playerId, entry, false) != null) return true;
         if (hasStashCounterPermission(gameData, playerId, cardId, false)) return true;
-        if (hasIceCounterPermission(gameData, playerId, cardId, false)) return true;
-        if (hasCroakCounterPermission(gameData, playerId, cardId)) return true;
+        if (hasPlayFromAmongExiledCardsPermission(gameData, playerId, cardId, false)) return true;
         if (hasCollectionCounterPermission(gameData, playerId, cardId, false)) return true;
         if (hasFetchCounterPermission(gameData, playerId, cardId, false)) return true;
         for (UUID sourceControllerId : gameData.orderedPlayerIds) {
@@ -3309,7 +3302,7 @@ public class CastingPermissionService {
     /** Marks an Evelyn-style collection-counter permission as used after a successful cast/play. */
     public boolean consumeCollectionCounterPermission(GameData gameData, UUID playerId, UUID cardId) {
         ExiledCardEntry entry = gameData.findExiledCard(cardId);
-        if (entry == null || !gameData.exiledCardsWithCollectionCounters.contains(cardId)
+        if (entry == null || !gameData.exiledCardHasCounter(cardId, CounterType.COLLECTION)
                 || !playerId.equals(entry.exilerId())) {
             return false;
         }
@@ -3403,7 +3396,7 @@ public class CastingPermissionService {
         if (hasStashCounterPermission(gameData, playerId, cardId, false)) {
             return OptionalInt.of(0);
         }
-        if (hasIceCounterPermission(gameData, playerId, cardId, false)) {
+        if (hasPlayFromAmongExiledCardsPermission(gameData, playerId, cardId, false)) {
             return OptionalInt.of(0);
         }
         if (hasCollectionCounterPermission(gameData, playerId, cardId, false)) {
@@ -3594,7 +3587,7 @@ public class CastingPermissionService {
     private boolean hasCollectionCounterPermission(GameData gameData, UUID playerId, UUID cardId,
                                                     boolean anyManaTypeRequired) {
         ExiledCardEntry entry = gameData.findExiledCard(cardId);
-        if (entry == null || !gameData.exiledCardsWithCollectionCounters.contains(cardId)
+        if (entry == null || !gameData.exiledCardHasCounter(cardId, CounterType.COLLECTION)
                 || !playerId.equals(entry.exilerId())) {
             return false;
         }
@@ -3616,7 +3609,7 @@ public class CastingPermissionService {
 
     private boolean hasFetchCounterPermission(GameData gameData, UUID playerId, UUID cardId,
                                                boolean anyManaTypeRequired) {
-        if (!gameData.exiledCardsWithFetchCounters.contains(cardId)) return false;
+        if (!gameData.exiledCardHasCounter(cardId, CounterType.FETCH)) return false;
         ExiledCardEntry entry = gameData.findExiledCard(cardId);
         if (entry == null || !playerId.equals(entry.exilerId())) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -3630,14 +3623,14 @@ public class CastingPermissionService {
                                 entry.card(), effect.filter(), null))));
     }
 
-    /** Returns whether the player may spend snow mana as any color for an ice-counter card. */
+    /** Returns whether the player may spend snow mana as any color for an exiled card (Draugr Necromancer). */
     public boolean hasSnowManaAsAnyColorPermission(GameData gameData, UUID playerId, UUID cardId) {
-        return hasIceCounterPermission(gameData, playerId, cardId, true);
+        return hasPlayFromAmongExiledCardsPermission(gameData, playerId, cardId, true);
     }
 
     private boolean hasStashCounterPermission(GameData gameData, UUID playerId, UUID cardId,
                                               boolean anyManaTypeRequired) {
-        if (!gameData.stashCounterCardIds.contains(cardId)) return false;
+        if (!gameData.exiledCardHasCounter(cardId, CounterType.STASH)) return false;
         ExiledCardEntry entry = gameData.findExiledCard(cardId);
         if (entry == null) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -3649,28 +3642,26 @@ public class CastingPermissionService {
                                 && applies(permission, gameData, playerId, source, entry)));
     }
 
-    private boolean hasIceCounterPermission(GameData gameData, UUID playerId, UUID cardId,
-                                            boolean anyManaTypeRequired) {
-        if (!gameData.exiledCardsWithIceCounters.contains(cardId)) return false;
+    /**
+     * Whether a {@link PlayFromAmongExiledCardsEffect} of a permanent {@code playerId} controls names the exiled card
+     * {@code cardId} (with {@code snowManaRequired}, one that also lets snow mana be spent as any color). The
+     * permissions are read as active static abilities, so a face-down source or one that lost its abilities grants
+     * none (CR 613.1f, 708.2).
+     */
+    private boolean hasPlayFromAmongExiledCardsPermission(GameData gameData, UUID playerId, UUID cardId,
+                                                          boolean snowManaRequired) {
         ExiledCardEntry entry = gameData.findExiledCard(cardId);
-        if (entry == null || entry.card().hasType(CardType.LAND) || playerId.equals(entry.ownerId())) {
-            return false;
+        if (entry == null) return false;
+        for (GameQueryService.ActiveStaticEffect<PlayFromAmongExiledCardsEffect> permission
+                : gameQueryService.activeStaticEffects(gameData, playerId, PlayFromAmongExiledCardsEffect.class)) {
+            if ((!snowManaRequired || permission.effect().snowManaAsAnyColor())
+                    && SubjectResolutionService.namesExiledCard(permission.source(), playerId, entry,
+                    permission.effect().cards(), (card, ownerId, filter) -> predicateEvaluationService
+                            .matchesCardPredicate(card, filter, permission.source().getCard().getId(), gameData, ownerId))) {
+                return true;
+            }
         }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return false;
-        return battlefield.stream()
-                .filter(source -> !gameQueryService.hasLostAllAbilities(gameData, source))
-                .anyMatch(source -> source.getCard().getStaticEffects().stream()
-                        .filter(AllowCastFromCardsExiledWithIceCountersEffect.class::isInstance)
-                        .map(AllowCastFromCardsExiledWithIceCountersEffect.class::cast)
-                        .anyMatch(permission -> !anyManaTypeRequired || permission.anyManaType()));
-    }
-
-    private boolean hasCroakCounterPermission(GameData gameData, UUID playerId, UUID cardId) {
-        if (!gameData.exiledCardsWithCroakCounters.contains(cardId)) return false;
-        ExiledCardEntry entry = gameData.findExiledCard(cardId);
-        if (entry == null || !playerId.equals(entry.ownerId())) return false;
-        return controlsStatic(gameData, playerId, AllowPlayAndCastCardsExiledWithCroakCountersEffect.class);
+        return false;
     }
 
     private boolean canAccessExiledEntry(GameData gameData, Permanent source, UUID sourceControllerId,

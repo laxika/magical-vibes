@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ExiledCardsControlLossWatch;
@@ -188,7 +189,7 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
             }
             grantUntilEndOfTurnPlayPermission(gameData, card, sourcePermanentId);
             if (e.markWithIntelCounters()) {
-                gameData.exiledCardsWithIntelCounters.add(card.getId());
+                gameData.addExiledCardCounters(card.getId(), CounterType.INTEL, 1);
             }
             for (PersistentPermission persistent : persistentPermissions) {
                 AllowCastFromCardsExiledWithSourceEffect permission = persistent.effect();

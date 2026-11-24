@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.cast;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -509,7 +510,7 @@ class CastingPermissionServiceTest {
 
         Card stashed = new Card();
         gd.addToExile(player2Id, stashed);
-        gd.stashCounterCardIds.add(stashed.getId());
+        gd.addExiledCardCounters(stashed.getId(), CounterType.STASH, 1);
 
         assertThat(svc.hasCastFromExiledWithSourcePermission(gd, player1Id, stashed.getId())).isTrue();
         assertThat(svc.hasAnyManaTypePermission(gd, player1Id, stashed.getId())).isTrue();

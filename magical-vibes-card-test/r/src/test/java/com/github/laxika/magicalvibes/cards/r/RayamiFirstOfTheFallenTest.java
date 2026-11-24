@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BlessedLight;
@@ -35,7 +36,7 @@ class RayamiFirstOfTheFallenTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, angel));
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(angel.getCard());
-        assertThat(gd.exiledCardsWithBloodCounters).contains(angel.getCard().getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.BLOOD).keySet()).contains(angel.getCard().getId());
         assertThat(gd.getCardsExiledByPermanent(rayami.getId())).contains(angel.getCard());
         assertThat(gqs.hasKeyword(gd, rayami, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, rayami, Keyword.VIGILANCE)).isTrue();
@@ -60,7 +61,7 @@ class RayamiFirstOfTheFallenTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, token));
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(tokenCard);
-        assertThat(gd.exiledCardsWithBloodCounters).doesNotContain(tokenCard.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.BLOOD).keySet()).doesNotContain(tokenCard.getId());
         assertThat(gd.getCardsExiledByPermanent(rayami.getId())).doesNotContain(tokenCard);
         assertThat(gqs.hasKeyword(gd, rayami, Keyword.FLYING)).isFalse();
     }
@@ -104,7 +105,7 @@ class RayamiFirstOfTheFallenTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Serra Angel");
         assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(angel.getCard());
-        assertThat(gd.exiledCardsWithBloodCounters).doesNotContain(angel.getCard().getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.BLOOD).keySet()).doesNotContain(angel.getCard().getId());
     }
 
     @Test
@@ -130,7 +131,7 @@ class RayamiFirstOfTheFallenTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(rayami.getCard());
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(angel.getCard());
-        assertThat(gd.exiledCardsWithBloodCounters).contains(rayami.getCard().getId(), angel.getCard().getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.BLOOD).keySet()).contains(rayami.getCard().getId(), angel.getCard().getId());
         harness.assertNotInGraveyard(player1, "Rayami, First of the Fallen");
         harness.assertNotInGraveyard(player2, "Serra Angel");
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggerCause;
@@ -490,11 +491,11 @@ public class EtbTriggerService {
         for (var exiled : new ArrayList<>(gameData.exiledCards)) {
             UUID cardId = exiled.card().getId();
             UUID controllerId = gameData.exiledVoyageControllerIds.get(cardId);
-            if (!gameData.exiledVoyageCounters.containsKey(cardId)) {
+            if (!gameData.exiledVoyageControllerIds.containsKey(cardId)) {
                 continue;
             }
             if (gameData.findExiledCard(cardId) == null || controllerId == null) {
-                gameData.exiledVoyageCounters.remove(cardId);
+                gameData.setExiledCardCounters(cardId, CounterType.VOYAGE, 0);
                 gameData.exiledVoyageControllerIds.remove(cardId);
                 continue;
             }

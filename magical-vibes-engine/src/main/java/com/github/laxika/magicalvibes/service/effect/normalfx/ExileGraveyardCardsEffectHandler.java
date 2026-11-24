@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExileAccessScope;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -348,7 +349,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         }
 
         if (e.putKickCounters()) {
-            exiledCards.forEach(card -> gameData.exiledCardsWithKickCounters.add(card.getId()));
+            exiledCards.forEach(card -> gameData.addExiledCardCounters(card.getId(), CounterType.KICK, 1));
         }
 
         if (controllerGraveyard) {

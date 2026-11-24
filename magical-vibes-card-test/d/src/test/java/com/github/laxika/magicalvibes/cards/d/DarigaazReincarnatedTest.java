@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
@@ -62,7 +63,7 @@ class DarigaazReincarnatedTest extends BaseCardTest {
         Card exiledCard = gd.getPlayerExiledCards(player1.getId()).stream()
                 .filter(c -> c.getName().equals("Darigaaz Reincarnated"))
                 .findFirst().orElseThrow();
-        assertThat(gd.exiledCardEggCounters.get(exiledCard.getId())).isEqualTo(3);
+        assertThat(gd.exiledCardCounterCount(exiledCard.getId(), CounterType.EGG)).isEqualTo(3);
         // Log confirms replacement
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("Darigaaz Reincarnated") && log.contains("exiled with 3 egg counters"));
@@ -81,7 +82,7 @@ class DarigaazReincarnatedTest extends BaseCardTest {
         triggerUpkeep(player1);
 
         // Counter decremented to 2
-        assertThat(gd.exiledCardEggCounters.get(card.getId())).isEqualTo(2);
+        assertThat(gd.exiledCardCounterCount(card.getId(), CounterType.EGG)).isEqualTo(2);
         // Still in exile
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Darigaaz Reincarnated"));
@@ -104,7 +105,7 @@ class DarigaazReincarnatedTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Darigaaz Reincarnated"));
         // Counter tracking removed
-        assertThat(gd.exiledCardEggCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.EGG)).doesNotContainKey(card.getId());
         // Log confirms return
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("Darigaaz Reincarnated") && log.contains("returns to the battlefield"));
@@ -129,22 +130,22 @@ class DarigaazReincarnatedTest extends BaseCardTest {
         Card exiledCard = gd.getPlayerExiledCards(player1.getId()).stream()
                 .filter(c -> c.getName().equals("Darigaaz Reincarnated"))
                 .findFirst().orElseThrow();
-        assertThat(gd.exiledCardEggCounters.get(exiledCard.getId())).isEqualTo(3);
+        assertThat(gd.exiledCardCounterCount(exiledCard.getId(), CounterType.EGG)).isEqualTo(3);
 
         // Upkeep 1: 3 → 2
         triggerUpkeep(player1);
-        assertThat(gd.exiledCardEggCounters.get(exiledCard.getId())).isEqualTo(2);
+        assertThat(gd.exiledCardCounterCount(exiledCard.getId(), CounterType.EGG)).isEqualTo(2);
         harness.assertNotOnBattlefield(player1, "Darigaaz Reincarnated");
 
         // Upkeep 2: 2 → 1
         triggerUpkeep(player1);
-        assertThat(gd.exiledCardEggCounters.get(exiledCard.getId())).isEqualTo(1);
+        assertThat(gd.exiledCardCounterCount(exiledCard.getId(), CounterType.EGG)).isEqualTo(1);
         harness.assertNotOnBattlefield(player1, "Darigaaz Reincarnated");
 
         // Upkeep 3: 1 → 0, return to battlefield
         triggerUpkeep(player1);
         harness.assertOnBattlefield(player1, "Darigaaz Reincarnated");
-        assertThat(gd.exiledCardEggCounters).doesNotContainKey(exiledCard.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.EGG)).doesNotContainKey(exiledCard.getId());
     }
 
     // ===== Edge case: only triggers during controller's upkeep =====
@@ -159,7 +160,7 @@ class DarigaazReincarnatedTest extends BaseCardTest {
         triggerUpkeep(player2);
 
         // Counter unchanged
-        assertThat(gd.exiledCardEggCounters.get(card.getId())).isEqualTo(3);
+        assertThat(gd.exiledCardCounterCount(card.getId(), CounterType.EGG)).isEqualTo(3);
         harness.assertNotOnBattlefield(player1, "Darigaaz Reincarnated");
     }
 
@@ -190,7 +191,7 @@ class DarigaazReincarnatedTest extends BaseCardTest {
         Card reExiledCard = gd.getPlayerExiledCards(player1.getId()).stream()
                 .filter(c -> c.getName().equals("Darigaaz Reincarnated"))
                 .findFirst().orElseThrow();
-        assertThat(gd.exiledCardEggCounters.get(reExiledCard.getId())).isEqualTo(3);
+        assertThat(gd.exiledCardCounterCount(reExiledCard.getId(), CounterType.EGG)).isEqualTo(3);
     }
 
     // ===== Helpers =====
@@ -215,7 +216,7 @@ class DarigaazReincarnatedTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Darigaaz Reincarnated");
         harness.assertInGraveyard(player1, "Darigaaz Reincarnated");
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(darigaaz.getCard());
-        assertThat(gd.exiledCardEggCounters).doesNotContainKey(darigaaz.getCard().getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.EGG)).doesNotContainKey(darigaaz.getCard().getId());
     }
 
     @Test
@@ -238,7 +239,7 @@ class DarigaazReincarnatedTest extends BaseCardTest {
         exileWithEggCounters(player1.getId(), card, 1);
         advanceToUpkeep(player1);
         assertThat(gd.stack).hasSize(1);
-        gd.exiledCardEggCounters.remove(card.getId());
+        gd.setExiledCardCounters(card.getId(), CounterType.EGG, 0);
 
         harness.passBothPriorities();
 
@@ -260,12 +261,12 @@ class DarigaazReincarnatedTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(card);
         harness.assertNotOnBattlefield(player1, "Darigaaz Reincarnated");
-        assertThat(gd.exiledCardEggCounters).doesNotContainKey(card.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.EGG)).doesNotContainKey(card.getId());
     }
 
     private void exileWithEggCounters(UUID playerId, Card card, int counters) {
         gd.addToExile(playerId, card);
-        gd.exiledCardEggCounters.put(card.getId(), counters);
+        gd.setExiledCardCounters(card.getId(), CounterType.EGG, counters);
     }
 
     private void triggerUpkeep(com.github.laxika.magicalvibes.model.Player player) {

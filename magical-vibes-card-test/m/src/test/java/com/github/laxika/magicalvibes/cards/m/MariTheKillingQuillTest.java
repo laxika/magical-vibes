@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.a.AssassinInitiate;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -30,7 +31,7 @@ class MariTheKillingQuillTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(victim.getCard());
-        assertThat(gd.exiledCardHitCounters).containsEntry(victim.getCard().getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.HIT)).containsEntry(victim.getCard().getId(), 1);
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
@@ -52,18 +53,18 @@ class MariTheKillingQuillTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(victim.getCard());
-        assertThat(gd.exiledCardHitCounters).doesNotContainKey(victim.getCard().getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.HIT)).doesNotContainKey(victim.getCard().getId());
     }
 
     @Test
-    @DisplayName("An outlaw's combat damage may remove a hit counter, draw, and create Treasures")
+    @DisplayName("An outlaw's combat damage may remove a hit counter, draw, and create Treasures; a lone card is chosen unasked")
     void combatDamageUsesHitCounter() {
         addCreatureReady(player1, new MariTheKillingQuill());
         Permanent attacker = addCreatureReady(player1, new AssassinInitiate());
         attacker.setAttacking(true);
         Card exiled = new GrizzlyBears();
         gd.addToExile(player2.getId(), exiled);
-        gd.exiledCardHitCounters.put(exiled.getId(), 1);
+        gd.setExiledCardCounters(exiled.getId(), CounterType.HIT, 1);
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -72,19 +73,16 @@ class MariTheKillingQuillTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.HitCounterExiledCardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.HitCounterExiledCardChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.validCardIds()).containsExactly(exiled.getId());
-        harness.handleMultipleCardsChosen(player1, List.of(exiled.getId()));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
 
-        assertThat(gd.exiledCardHitCounters).doesNotContainKey(exiled.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.HIT)).doesNotContainKey(exiled.getId());
         assertThat(gd.findExiledCard(exiled.getId())).isNotNull();
         assertThat(findPermanents(player1, "Treasure")).hasSize(2);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
     }
 
     @Test
+    @DisplayName("Mari gives deathtouch to herself and the other outlaws you control only")
     void mariGrantsDeathtouchToHerselfAndOtherAssassinsOnly() {
         Permanent mari = addCreatureReady(player1, new MariTheKillingQuill());
         Permanent assassin = addCreatureReady(player1, new AssassinInitiate());
@@ -98,12 +96,13 @@ class MariTheKillingQuillTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Mari's own combat damage can use a hit counter")
     void marisOwnCombatDamageCanUseHitCounter() {
         Permanent mari = addCreatureReady(player1, new MariTheKillingQuill());
         mari.setAttacking(true);
         Card exiled = new GrizzlyBears();
         gd.addToExile(player2.getId(), exiled);
-        gd.exiledCardHitCounters.put(exiled.getId(), 1);
+        gd.setExiledCardCounters(exiled.getId(), CounterType.HIT, 1);
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -111,20 +110,20 @@ class MariTheKillingQuillTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleMultipleCardsChosen(player1, List.of(exiled.getId()));
 
-        assertThat(gd.exiledCardHitCounters).doesNotContainKey(exiled.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.HIT)).doesNotContainKey(exiled.getId());
         assertThat(findPermanents(player1, "Treasure")).hasSize(2);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
     }
 
     @Test
+    @DisplayName("Declining to remove a hit counter gives no reward")
     void decliningHitCounterRemovalGivesNoReward() {
         addCreatureReady(player1, new MariTheKillingQuill());
         addCreatureReady(player1, new AssassinInitiate()).setAttacking(true);
         Card exiled = new GrizzlyBears();
         gd.addToExile(player2.getId(), exiled);
-        gd.exiledCardHitCounters.put(exiled.getId(), 1);
+        gd.setExiledCardCounters(exiled.getId(), CounterType.HIT, 1);
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -132,18 +131,19 @@ class MariTheKillingQuillTest extends BaseCardTest {
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.exiledCardHitCounters).containsEntry(exiled.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.HIT)).containsEntry(exiled.getId(), 1);
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
     }
 
     @Test
+    @DisplayName("A hit counter on a card the damaged player doesn't own can't be used")
     void cannotUseHitCounterOnCardOwnedByAnotherPlayer() {
         addCreatureReady(player1, new MariTheKillingQuill());
         addCreatureReady(player1, new AssassinInitiate()).setAttacking(true);
         Card exiled = new GrizzlyBears();
         gd.addToExile(player1.getId(), exiled);
-        gd.exiledCardHitCounters.put(exiled.getId(), 1);
+        gd.setExiledCardCounters(exiled.getId(), CounterType.HIT, 1);
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -154,12 +154,13 @@ class MariTheKillingQuillTest extends BaseCardTest {
         }
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.exiledCardHitCounters).containsEntry(exiled.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.HIT)).containsEntry(exiled.getId(), 1);
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
     }
 
     @Test
+    @DisplayName("Your own creature dying isn't exiled")
     void ownCreatureDeathDoesNotExileIt() {
         addCreatureReady(player1, new MariTheKillingQuill());
         Permanent victim = addCreatureReady(player1, new GrizzlyBears());
@@ -171,10 +172,11 @@ class MariTheKillingQuillTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(victim.getCard());
         assertThat(gd.findExiledCard(victim.getCard().getId())).isNull();
-        assertThat(gd.exiledCardHitCounters).doesNotContainKey(victim.getCard().getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.HIT)).doesNotContainKey(victim.getCard().getId());
     }
 
     @Test
+    @DisplayName("An exiled card without a hit counter gives no reward")
     void exiledCardWithoutHitCounterGivesNoReward() {
         addCreatureReady(player1, new MariTheKillingQuill());
         addCreatureReady(player1, new AssassinInitiate()).setAttacking(true);
@@ -196,6 +198,7 @@ class MariTheKillingQuillTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Removes one hit counter, only from the chosen card, offering only the damaged player's cards")
     void removesOnlyOneHitCounterAndOnlyFromChosenCard() {
         addCreatureReady(player1, new MariTheKillingQuill());
         addCreatureReady(player1, new AssassinInitiate()).setAttacking(true);
@@ -205,21 +208,21 @@ class MariTheKillingQuillTest extends BaseCardTest {
         gd.addToExile(player2.getId(), chosen);
         gd.addToExile(player2.getId(), unchosen);
         gd.addToExile(player1.getId(), wrongOwner);
-        gd.exiledCardHitCounters.put(chosen.getId(), 2);
-        gd.exiledCardHitCounters.put(unchosen.getId(), 1);
-        gd.exiledCardHitCounters.put(wrongOwner.getId(), 1);
+        gd.setExiledCardCounters(chosen.getId(), CounterType.HIT, 2);
+        gd.setExiledCardCounters(unchosen.getId(), CounterType.HIT, 1);
+        gd.setExiledCardCounters(wrongOwner.getId(), CounterType.HIT, 1);
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         resolveCombat();
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        PendingInteraction.HitCounterExiledCardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.HitCounterExiledCardChoice.class);
-        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(chosen.getId(), unchosen.getId());
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.cards()).extracting(Card::getId).containsExactlyInAnyOrder(chosen.getId(), unchosen.getId());
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
 
-        assertThat(gd.exiledCardHitCounters).containsEntry(chosen.getId(), 1)
+        assertThat(gd.exiledCardsWithCounter(CounterType.HIT)).containsEntry(chosen.getId(), 1)
                 .containsEntry(unchosen.getId(), 1).containsEntry(wrongOwner.getId(), 1);
         assertThat(findPermanents(player1, "Treasure")).hasSize(2);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);

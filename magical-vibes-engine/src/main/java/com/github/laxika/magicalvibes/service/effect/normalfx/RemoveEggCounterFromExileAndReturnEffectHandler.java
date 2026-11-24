@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -36,29 +37,29 @@ public class RemoveEggCounterFromExileAndReturnEffectHandler implements NormalEf
         UUID controllerId = entry.getControllerId();
 
         // Intervening-if re-check at resolution: card must still be exiled with an egg counter
-        Integer counters = gameData.exiledCardEggCounters.get(cardId);
-        if (e.requiresEggCounter() && (counters == null || counters <= 0)) {
+        int counters = gameData.exiledCardCounterCount(cardId, CounterType.EGG);
+        if (e.requiresEggCounter() && counters <= 0) {
             log.info("Game {} - Egg counter ability fizzles (card no longer exiled with egg counters)", gameData.id);
             return;
         }
 
         Card exiledCard = gameQueryService.findCardInExileById(gameData, cardId);
         if (exiledCard == null) {
-            gameData.exiledCardEggCounters.remove(cardId);
+            gameData.setExiledCardCounters(cardId, CounterType.EGG, 0);
             log.info("Game {} - Egg counter ability fizzles (card no longer in exile)", gameData.id);
             return;
         }
 
         // Remove one egg counter
-        int remaining = Math.max(0, (counters == null ? 0 : counters) - 1);
+        int remaining = Math.max(0, counters - 1);
         if (remaining > 0) {
-            gameData.exiledCardEggCounters.put(cardId, remaining);
+            gameData.setExiledCardCounters(cardId, CounterType.EGG, remaining);
             
             gameLogService.append(gameData, GameLog.builder().card(exiledCard).text(" has an egg counter removed (" + remaining + " remaining).").build());
             log.info("Game {} - {} egg counter removed, {} remaining", gameData.id, exiledCard.getName(), remaining);
         } else {
             // Last counter removed — return to the battlefield
-            gameData.exiledCardEggCounters.remove(cardId);
+            gameData.setExiledCardCounters(cardId, CounterType.EGG, 0);
 
             // Remove card from exile zone
             UUID ownerId = gameQueryService.findExileOwnerById(gameData, cardId);

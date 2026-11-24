@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -50,7 +51,7 @@ public class ExileTriggeringCreatureWithHitCounterEffectHandler implements Norma
 
         permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, dyingCardId);
         exileService.exileCard(gameData, ownerId, dyingCard);
-        gameData.exiledCardHitCounters.merge(dyingCardId, 1, Integer::sum);
+        gameData.addExiledCardCounters(dyingCardId, CounterType.HIT, 1);
         gameLogService.append(gameData, GameLog.cardThen(dyingCard,
                 " is exiled with a hit counter on it."));
         log.info("Game {} - {} exiled with a hit counter", gameData.id, dyingCard.getName());

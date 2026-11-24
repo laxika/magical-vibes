@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -39,7 +40,7 @@ class DarigaazShivanChampionTest extends BaseCardTest {
                 .satisfies(entry -> {
                     assertThat(entry.card().isConjured()).isTrue();
                     assertThat(entry.faceDown()).isTrue();
-                    assertThat(gd.exiledCardEggCounters).containsEntry(entry.card().getId(), 3);
+                    assertThat(gd.exiledCardsWithCounter(CounterType.EGG)).containsEntry(entry.card().getId(), 3);
                 });
     }
 
@@ -60,13 +61,13 @@ class DarigaazShivanChampionTest extends BaseCardTest {
                 .orElseThrow();
 
         triggerUpkeep(player1);
-        assertThat(gd.exiledCardEggCounters).containsEntry(conjuredCard.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.EGG)).containsEntry(conjuredCard.getId(), 2);
         triggerUpkeep(player1);
-        assertThat(gd.exiledCardEggCounters).containsEntry(conjuredCard.getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.EGG)).containsEntry(conjuredCard.getId(), 1);
         triggerUpkeep(player1);
         answerEntryChoice();
 
-        assertThat(gd.exiledCardEggCounters).doesNotContainKey(conjuredCard.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.EGG)).doesNotContainKey(conjuredCard.getId());
         assertThat(gd.exiledCards).noneMatch(entry -> entry.card().getId().equals(conjuredCard.getId()));
         harness.assertOnBattlefield(player1, conjuredCard.getName());
         assertThat(gd.tokensCreatedThisTurn).doesNotContainKey(player1.getId());
@@ -94,14 +95,14 @@ class DarigaazShivanChampionTest extends BaseCardTest {
         harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.exiledCardEggCounters).containsEntry(card.getId(), 3);
+        assertThat(gd.exiledCardsWithCounter(CounterType.EGG)).containsEntry(card.getId(), 3);
     }
 
     @Test
     @DisplayName("The gained upkeep ability still triggers with zero egg counters")
     void upkeepTriggersWithZeroEggCounters() {
         Card card = conjureCard();
-        gd.exiledCardEggCounters.put(card.getId(), 0);
+        gd.setExiledCardCounters(card.getId(), CounterType.EGG, 0);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UNTAP);
@@ -122,7 +123,7 @@ class DarigaazShivanChampionTest extends BaseCardTest {
 
         triggerUpkeep(player1);
 
-        assertThat(gd.exiledCardEggCounters).containsEntry(card.getId(), 2);
+        assertThat(gd.exiledCardsWithCounter(CounterType.EGG)).containsEntry(card.getId(), 2);
     }
 
     private Card conjureCard() {

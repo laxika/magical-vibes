@@ -1796,7 +1796,7 @@ public class StackResolutionService {
                     .ifPresent(counters -> gameData.suspendedSpellExiles.add(
                             new GameData.SuspendedSpellExile(physicalCard.getId(), ownerId, counters)));
             if (exileSpellEffect.screamCounterCount() > 0) {
-                gameData.exiledCardScreamCounters.put(physicalCard.getId(), exileSpellEffect.screamCounterCount());
+                gameData.setExiledCardCounters(physicalCard.getId(), CounterType.SCREAM, exileSpellEffect.screamCounterCount());
             }
             gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
         } else if (entry.getEffectsToResolve().stream()
@@ -1841,7 +1841,7 @@ public class StackResolutionService {
             plotResolvedSpell(gameData, ownerId, physicalCard);
         } else if (gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId())) {
             gameData.addToExile(ownerId, physicalCard);
-            gameData.exiledCardDreamCounters.put(physicalCard.getId(), 1);
+            gameData.setExiledCardCounters(physicalCard.getId(), CounterType.DREAM, 1);
             gameLogService.append(gameData,
                     GameLog.cardThen(entry.getCard(), " is exiled with a dream counter."));
         } else {
@@ -1923,7 +1923,7 @@ public class StackResolutionService {
         } else {
             gameData.spellsWithDreamCounterOnResolution.remove(choice.physicalCard().getId());
             gameData.addToExile(choice.ownerId(), choice.physicalCard());
-            gameData.exiledCardDreamCounters.put(choice.physicalCard().getId(), 1);
+            gameData.setExiledCardCounters(choice.physicalCard().getId(), CounterType.DREAM, 1);
             gameLogService.append(gameData,
                     GameLog.cardThen(choice.card(), " is exiled with a dream counter."));
         }

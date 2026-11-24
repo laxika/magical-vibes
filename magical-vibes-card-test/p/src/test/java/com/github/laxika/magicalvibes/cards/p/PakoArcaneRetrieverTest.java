@@ -57,7 +57,7 @@ class PakoArcaneRetrieverTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(ownTopCard);
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(opposingTopCard);
-        assertThat(gd.exiledCardsWithFetchCounters)
+        assertThat(gd.exiledCardsWithCounter(CounterType.FETCH).keySet())
                 .contains(ownTopCard.getId(), opposingTopCard.getId());
         assertThat(pako.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, pako)).isEqualTo(4);
@@ -92,7 +92,7 @@ class PakoArcaneRetrieverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(land);
-        assertThat(gd.exiledCardsWithFetchCounters).contains(land.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.FETCH).keySet()).contains(land.getId());
         assertThat(pako.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -111,7 +111,7 @@ class PakoArcaneRetrieverTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(lower);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
-        assertThat(gd.exiledCardsWithFetchCounters).contains(first.getId(), second.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.FETCH).keySet()).contains(first.getId(), second.getId());
         assertThat(pako.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
@@ -127,7 +127,7 @@ class PakoArcaneRetrieverTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardsWithFetchCounters).contains(first.getId(), second.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.FETCH).keySet()).contains(first.getId(), second.getId());
         assertThat(pako.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -146,7 +146,7 @@ class PakoArcaneRetrieverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(land);
-        assertThat(gd.exiledCardsWithFetchCounters).contains(land.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.FETCH).keySet()).contains(land.getId());
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(pako.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }

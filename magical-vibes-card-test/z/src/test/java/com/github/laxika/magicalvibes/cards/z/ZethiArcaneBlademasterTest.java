@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.f.Fog;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -40,7 +41,7 @@ class ZethiArcaneBlademasterTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(nonInstant);
         assertThat(gd.findExiledCard(instant.getId())).isNotNull();
-        assertThat(gd.exiledCardsWithKickCounters).contains(instant.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.KICK).keySet()).contains(instant.getId());
     }
 
     @Test
@@ -48,7 +49,7 @@ class ZethiArcaneBlademasterTest extends BaseCardTest {
         addCreatureReady(player1, new ZethiArcaneBlademaster());
         DarkRitual ritual = new DarkRitual();
         gd.addToExile(player1.getId(), ritual, gd.playerBattlefields.get(player1.getId()).getFirst().getId());
-        gd.exiledCardsWithKickCounters.add(ritual.getId());
+        gd.addExiledCardCounters(ritual.getId(), CounterType.KICK, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
         assertThat(gd.getCardsExiledByPermanent(gd.playerBattlefields.get(player1.getId()).getFirst().getId()))
                 .containsExactly(ritual);
@@ -71,7 +72,7 @@ class ZethiArcaneBlademasterTest extends BaseCardTest {
         addCreatureReady(player1, new ZethiArcaneBlademaster());
         DarkRitual ritual = new DarkRitual();
         gd.addToExile(player1.getId(), ritual, java.util.UUID.randomUUID());
-        gd.exiledCardsWithKickCounters.add(ritual.getId());
+        gd.addExiledCardCounters(ritual.getId(), CounterType.KICK, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         declareAttackers(player1, List.of(0));
@@ -126,7 +127,7 @@ class ZethiArcaneBlademasterTest extends BaseCardTest {
         addCreatureReady(player1, new ZethiArcaneBlademaster());
         DarkRitual ritual = new DarkRitual();
         gd.addToExile(player1.getId(), ritual, gd.playerBattlefields.get(player1.getId()).getFirst().getId());
-        gd.exiledCardsWithKickCounters.add(ritual.getId());
+        gd.addExiledCardCounters(ritual.getId(), CounterType.KICK, 1);
 
         declareAttackers(player1, List.of(0));
         resolveCombat();
@@ -135,7 +136,7 @@ class ZethiArcaneBlademasterTest extends BaseCardTest {
 
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Dark Ritual"));
         assertThat(gd.findExiledCard(ritual.getId())).isNotNull();
-        assertThat(gd.exiledCardsWithKickCounters).contains(ritual.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.KICK).keySet()).contains(ritual.getId());
     }
 
     @Test
@@ -161,7 +162,7 @@ class ZethiArcaneBlademasterTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponents);
         assertThat(gd.findExiledCard(first.getId())).isNotNull();
         assertThat(gd.findExiledCard(second.getId())).isNotNull();
-        assertThat(gd.exiledCardsWithKickCounters).contains(first.getId(), second.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.KICK).keySet()).contains(first.getId(), second.getId());
     }
 
     @Test
@@ -172,7 +173,7 @@ class ZethiArcaneBlademasterTest extends BaseCardTest {
         DarkRitual opponents = new DarkRitual();
         gd.addToExile(player1.getId(), unmarked, sourceId);
         gd.addToExile(player2.getId(), opponents, sourceId);
-        gd.exiledCardsWithKickCounters.add(opponents.getId());
+        gd.addExiledCardCounters(opponents.getId(), CounterType.KICK, 1);
 
         declareAttackers(player1, List.of(0));
         resolveCombat();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -34,7 +35,7 @@ class DauthiVoidwalkerTest extends BaseCardTest {
 
         Card exiled = opponentCreature.getCard();
         assertThat(gd.findExiledCard(exiled.getId())).isNotNull();
-        assertThat(gd.exiledCardsWithVoidCounters).containsExactly(exiled.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.VOID).keySet()).containsExactly(exiled.getId());
         assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(exiled);
     }
 
@@ -81,7 +82,7 @@ class DauthiVoidwalkerTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(shock);
         assertThat(gd.findExiledCard(shock.getId())).isNull();
-        assertThat(gd.exiledCardsWithVoidCounters).doesNotContain(shock.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.VOID).keySet()).doesNotContain(shock.getId());
     }
 
     @Test
@@ -96,7 +97,7 @@ class DauthiVoidwalkerTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, squirrel.getId());
 
         assertThat(gd.creatureDeathCountThisTurn.getOrDefault(player2.getId(), 0)).isEqualTo(1);
-        assertThat(gd.exiledCardsWithVoidCounters).doesNotContain(squirrel.getCard().getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.VOID).keySet()).doesNotContain(squirrel.getCard().getId());
     }
 
     @Test
@@ -110,7 +111,7 @@ class DauthiVoidwalkerTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(shock);
         assertThat(gd.findExiledCard(shock.getId())).isNull();
-        assertThat(gd.exiledCardsWithVoidCounters).doesNotContain(shock.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.VOID).keySet()).doesNotContain(shock.getId());
     }
 
     @Test
@@ -148,7 +149,7 @@ class DauthiVoidwalkerTest extends BaseCardTest {
         assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(exiled.getId());
         assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(exiled.getId());
         assertThat(gd.findExiledCard(exiled.getId())).isNotNull();
-        assertThat(gd.exiledCardsWithVoidCounters).contains(exiled.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.VOID).keySet()).contains(exiled.getId());
     }
 
     @Test
@@ -216,7 +217,7 @@ class DauthiVoidwalkerTest extends BaseCardTest {
         harness.handleListChoice(player2, "Exile it with a void counter (Dauthi Voidwalker)");
 
         assertThat(gd.findExiledCard(bears.getCard().getId())).isNotNull();
-        assertThat(gd.exiledCardsWithVoidCounters).containsExactly(bears.getCard().getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.VOID).keySet()).containsExactly(bears.getCard().getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(permanent -> permanent.getCard().isToken());
     }
 }

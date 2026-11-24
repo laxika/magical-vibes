@@ -5,7 +5,7 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * <p>X comes from the stack entry's X value. The spell leaves the stack without being countered —
  * "can't be countered" does not stop this — and the card is exiled with X delay counters
- * ({@code GameData.exiledCardDelayCounters}). The resolution creates the delayed triggered ability "at the beginning
+ * ({@code GameData.exiledCardCounters}, kind {@code DELAY}). The resolution creates the delayed triggered ability "at the beginning
  * of each of that player's upkeeps, if that card is exiled, ..." ({@link RemoveDelayCounterFromExiledSpellEffect},
  * CR 603.7a), which keeps the original stack entry to put back onto the stack once the last counter is removed.</p>
  */

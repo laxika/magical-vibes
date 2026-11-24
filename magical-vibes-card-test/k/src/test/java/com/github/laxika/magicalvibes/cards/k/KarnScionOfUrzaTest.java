@@ -68,7 +68,11 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(karn.getCounterCount(CounterType.LOYALTY)).isEqualTo(6); // 5 + 1
-            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
+            PendingInteraction.MultiGraveyardChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+            assertThat(choice).isNotNull();
+            assertThat(choice.playerId()).isEqualTo(player2.getId());
+            assertThat(choice.cards()).hasSize(2);
         }
 
         @Test
@@ -91,7 +95,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             // Forest should be exiled with a silver counter
             assertThat(gd.getPlayerExiledCards(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Forest"));
-            assertThat(gd.exiledCardsWithSilverCounters).contains(forest.getId());
+            assertThat(gd.exiledCardsWithCounter(CounterType.SILVER).keySet()).contains(forest.getId());
         }
 
         @Test
@@ -114,7 +118,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             // Grizzly Bears exiled with silver counter
             assertThat(gd.getPlayerExiledCards(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-            assertThat(gd.exiledCardsWithSilverCounters).contains(bears.getId());
+            assertThat(gd.exiledCardsWithCounter(CounterType.SILVER).keySet()).contains(bears.getId());
         }
 
         @Test
@@ -159,7 +163,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
 
             // Set up exiled card with silver counter
             gd.addToExile(player1.getId(), exiledCard);
-            gd.exiledCardsWithSilverCounters.add(exiledCard.getId());
+            gd.addExiledCardCounters(exiledCard.getId(), CounterType.SILVER, 1);
 
             harness.activateAbility(player1, 0, 1, null, null);
             harness.passBothPriorities();
@@ -171,7 +175,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             assertThat(gd.getPlayerExiledCards(player1.getId()))
                     .noneMatch(c -> c.getName().equals("Grizzly Bears"));
             // Silver counter tracking should be removed
-            assertThat(gd.exiledCardsWithSilverCounters).doesNotContain(exiledCard.getId());
+            assertThat(gd.exiledCardsWithCounter(CounterType.SILVER).keySet()).doesNotContain(exiledCard.getId());
         }
 
         @Test
@@ -183,14 +187,17 @@ class KarnScionOfUrzaTest extends BaseCardTest {
 
             gd.addToExile(player1.getId(), card1);
             gd.addToExile(player1.getId(), card2);
-            gd.exiledCardsWithSilverCounters.add(card1.getId());
-            gd.exiledCardsWithSilverCounters.add(card2.getId());
+            gd.addExiledCardCounters(card1.getId(), CounterType.SILVER, 1);
+            gd.addExiledCardCounters(card2.getId(), CounterType.SILVER, 1);
 
             harness.activateAbility(player1, 0, 1, null, null);
             harness.passBothPriorities();
 
             // Should present a choice to the controller
-            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
+            PendingInteraction.MultiGraveyardChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+            assertThat(choice).isNotNull();
+            assertThat(choice.playerId()).isEqualTo(player1.getId());
 
             // Controller chooses Grizzly Bears
             harness.handleMultipleCardsChosen(player1, List.of(card1.getId()));
@@ -200,8 +207,8 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             // Forest still in exile with silver counter
             assertThat(gd.getPlayerExiledCards(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Forest"));
-            assertThat(gd.exiledCardsWithSilverCounters).contains(card2.getId());
-            assertThat(gd.exiledCardsWithSilverCounters).doesNotContain(card1.getId());
+            assertThat(gd.exiledCardsWithCounter(CounterType.SILVER).keySet()).contains(card2.getId());
+            assertThat(gd.exiledCardsWithCounter(CounterType.SILVER).keySet()).doesNotContain(card1.getId());
         }
 
         @Test
@@ -226,7 +233,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             // noSilver is exiled but has no silver counter
             gd.addToExile(player1.getId(), noSilver);
             gd.addToExile(player1.getId(), withSilver);
-            gd.exiledCardsWithSilverCounters.add(withSilver.getId());
+            gd.addExiledCardCounters(withSilver.getId(), CounterType.SILVER, 1);
 
             harness.activateAbility(player1, 0, 1, null, null);
             harness.passBothPriorities();
@@ -319,7 +326,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player2, List.of(bears.getId()));
 
         // Forest should be exiled with silver counter
-        assertThat(gd.exiledCardsWithSilverCounters).contains(forest.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.SILVER).keySet()).contains(forest.getId());
 
         // Next turn: −1 to get Forest back
         karn.setLoyaltyActivationsThisTurn(0);
@@ -328,7 +335,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
 
         // Forest should be in hand now
         harness.assertInHand(player1, "Forest");
-        assertThat(gd.exiledCardsWithSilverCounters).doesNotContain(forest.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.SILVER).keySet()).doesNotContain(forest.getId());
     }
 
     @Test
@@ -336,7 +343,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
         addReadyKarn(player1);
         Card forest = new Forest();
         gd.addToExile(player2.getId(), forest);
-        gd.exiledCardsWithSilverCounters.add(forest.getId());
+        gd.addExiledCardCounters(forest.getId(), CounterType.SILVER, 1);
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();

@@ -207,8 +207,6 @@ public class InteractionPromptProjectionRegistry {
                 this::projectReturnAurasFromGraveyardChoice);
         register(PendingInteraction.MultiPermanentChoice.class, this::projectMultiPermanentChoice);
         register(PendingInteraction.MultiGraveyardChoice.class, this::projectMultiGraveyardChoice);
-        register(PendingInteraction.HitCounterExiledCardChoice.class,
-                this::projectHitCounterExiledCardChoice);
         register(PendingInteraction.CommanderReplacementChoice.class, (game, choice) -> InteractionPromptMessage.acceptDecline(
                 "Put " + choice.move().card().getName() + " into the command zone instead of your " + choice.move().destination().name().toLowerCase() + "?", true, null));
         register(PendingInteraction.CommanderReturnChoice.class, (game, choice) -> InteractionPromptMessage.acceptDecline(
@@ -1318,15 +1316,6 @@ public class InteractionPromptProjectionRegistry {
                         .map(card -> exiledCardView(gameData, interaction.decidingPlayerId(), card)).toList(),
                 interaction.maxCount(),
                 interaction.prompt());
-    }
-
-    private InteractionPromptMessage projectHitCounterExiledCardChoice(
-            GameData gameData, PendingInteraction.HitCounterExiledCardChoice interaction) {
-        return InteractionPromptMessage.multiCardPick(
-                new ArrayList<>(interaction.validCardIds()),
-                exiledCardViews(gameData, interaction.decidingPlayerId(), interaction.validCardIds()),
-                1,
-                "Choose a card with a hit counter to remove a hit counter from.");
     }
 
     private InteractionPromptMessage projectCommandZoneCardChoice(

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.validate;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BecomeTargetLegendaryCreatureCopyOfMemoryCounterExiledCreatureUntilNextTurnEffect;
@@ -17,7 +18,7 @@ public class BecomeTargetLegendaryCreatureCopyOfMemoryCounterExiledCreatureUntil
             return;
         }
         ExiledCardEntry exiled = ctx.gameData().findExiledCard(ctx.targetId());
-        if (exiled == null || !ctx.gameData().exiledCardsWithMemoryCounters.contains(ctx.targetId())) {
+        if (exiled == null || !ctx.gameData().exiledCardHasCounter(ctx.targetId(), CounterType.MEMORY)) {
             throw new IllegalStateException("Target card must have a memory counter on it");
         }
     }

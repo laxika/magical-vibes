@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -58,7 +59,7 @@ public class ExileTargetCreatureWithHitCounterEffectHandler implements NormalEff
             ExiledCardEntry exiled = gameData.findExiledCard(target.getCard().getId());
             if (exiled != null) {
                 UUID cardId = exiled.card().getId();
-                gameData.exiledCardHitCounters.merge(cardId, 1, Integer::sum);
+                gameData.addExiledCardCounters(cardId, CounterType.HIT, 1);
                 gameLogService.append(gameData,
                         GameLog.cardThen(target.getCard(), " is exiled with a hit counter."));
             }
@@ -72,7 +73,7 @@ public class ExileTargetCreatureWithHitCounterEffectHandler implements NormalEff
         // even when the exiled creature was a token that adds no counter (Etrata ruling, 2018-10-05).
         long hitCounterCards = gameData.exiledCards.stream()
                 .filter(card -> damagedPlayerId.equals(card.ownerId()))
-                .filter(card -> gameData.exiledCardHitCounters.getOrDefault(card.card().getId(), 0) > 0)
+                .filter(card -> gameData.exiledCardCounterCount(card.card().getId(), CounterType.HIT) > 0)
                 .count();
         // Etrata is shuffled away before the loss is declared, since a lost game stops further processing.
         shuffleSourceIntoOwnerLibrary(gameData, entry);

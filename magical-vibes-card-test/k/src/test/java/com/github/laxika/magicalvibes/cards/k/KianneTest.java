@@ -30,7 +30,7 @@ class KianneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Archway Commons");
-        assertThat(gd.exiledCardsWithStudyCounters).doesNotContain(forest.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.STUDY).keySet()).doesNotContain(forest.getId());
     }
 
     @Test
@@ -43,7 +43,7 @@ class KianneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(bears);
-        assertThat(gd.exiledCardsWithStudyCounters).contains(bears.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.STUDY).keySet()).contains(bears.getId());
     }
 
     @Test
@@ -54,8 +54,10 @@ class KianneTest extends BaseCardTest {
         com.github.laxika.magicalvibes.model.Card duplicateValue = new ScurridColony();
         com.github.laxika.magicalvibes.model.Card land = new ArchwayCommons();
         harness.setExile(player1, List.of(first, second, duplicateValue, land));
-        gd.exiledCardsWithStudyCounters.addAll(List.of(
-                first.getId(), second.getId(), duplicateValue.getId(), land.getId()));
+        gd.addExiledCardCounters(first.getId(), CounterType.STUDY, 1);
+        gd.addExiledCardCounters(second.getId(), CounterType.STUDY, 1);
+        gd.addExiledCardCounters(duplicateValue.getId(), CounterType.STUDY, 1);
+        gd.addExiledCardCounters(land.getId(), CounterType.STUDY, 1);
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -87,7 +89,7 @@ class KianneTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(chosen);
-        assertThat(gd.exiledCardsWithStudyCounters).contains(
+        assertThat(gd.exiledCardsWithCounter(CounterType.STUDY).keySet()).contains(
                 gd.getPlayerExiledCards(player1.getId()).stream()
                         .filter(card -> card instanceof ScurridColony)
                         .findFirst().orElseThrow().getId());
@@ -100,7 +102,8 @@ class KianneTest extends BaseCardTest {
         ChargeThrough remaining = new ChargeThrough();
         ScurridColony unmarked = new ScurridColony();
         harness.setExile(player1, List.of(chosen, remaining, unmarked));
-        gd.exiledCardsWithStudyCounters.addAll(List.of(chosen.getId(), remaining.getId()));
+        gd.addExiledCardCounters(chosen.getId(), CounterType.STUDY, 1);
+        gd.addExiledCardCounters(remaining.getId(), CounterType.STUDY, 1);
         harness.setLibrary(player1, List.of());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -110,7 +113,7 @@ class KianneTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(chosen);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(remaining, unmarked);
-        assertThat(gd.exiledCardsWithStudyCounters).contains(remaining.getId()).doesNotContain(chosen.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.STUDY).keySet()).contains(remaining.getId()).doesNotContain(chosen.getId());
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
@@ -128,7 +131,7 @@ class KianneTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(land, spell);
-        assertThat(gd.exiledCardsWithStudyCounters).contains(land.getId(), spell.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.STUDY).keySet()).contains(land.getId(), spell.getId());
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
@@ -141,7 +144,8 @@ class KianneTest extends BaseCardTest {
         Kianne opponentsCard = new Kianne();
         harness.setExile(player1, List.of(marked, unmarked));
         harness.setExile(player2, List.of(opponentsCard));
-        gd.exiledCardsWithStudyCounters.addAll(List.of(marked.getId(), opponentsCard.getId()));
+        gd.addExiledCardCounters(marked.getId(), CounterType.STUDY, 1);
+        gd.addExiledCardCounters(opponentsCard.getId(), CounterType.STUDY, 1);
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         harness.activateAbility(player1, 0, 1, null, null);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.g.GaeasCradle;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MoxAmber;
@@ -41,7 +42,7 @@ class LaraCroftTombRaiderTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(validLand);
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(validLand);
-        assertThat(gd.exiledCardsWithDiscoveryCounters).contains(validLand.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.DISCOVERY).keySet()).contains(validLand.getId());
         assertThat(gd.exilePlayPermissionHolders()).containsEntry(validLand.getId(), player1.getId());
         assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(validLand.getId());
     }

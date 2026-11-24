@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -82,7 +83,7 @@ public class ExileTargetCardFromGraveyardWithDiscoveryCounterMayPlayThisTurnEffe
     private void grantPlayPermissions(GameData gameData, StackEntry entry) {
         List<UUID> playable = gameData.exiledCards.stream()
                 .map(exiled -> exiled.card().getId())
-                .filter(gameData.exiledCardsWithDiscoveryCounters::contains)
+                .filter(cardId -> gameData.exiledCardHasCounter(cardId, CounterType.DISCOVERY))
                 .toList();
         if (playable.isEmpty()) {
             return;

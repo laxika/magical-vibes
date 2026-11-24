@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.DelayedReferents;
@@ -74,7 +75,7 @@ public class ExileTargetSpellWithDelayCountersEffectHandler implements NormalEff
         }
 
         exileService.exileCard(gameData, target.getOwnerId(), target.getPhysicalCard());
-        gameData.exiledCardDelayCounters.put(targetCardId, counters);
+        gameData.setExiledCardCounters(targetCardId, CounterType.DELAY, counters);
         // "At the beginning of each of that player's upkeeps, if that card is exiled, ...": a delayed triggered ability
         // of this spell, controlled by its controller (CR 603.7a, 603.7d), with an intervening "if" (CR 603.4). It has
         // no stated end, but it can do nothing once that card has left exile (CR 400.7), so it ends then.

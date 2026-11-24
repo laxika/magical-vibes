@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.d.DalekDrone;
 import com.github.laxika.magicalvibes.cards.j.JudoonEnforcers;
 import com.github.laxika.magicalvibes.model.Card;
@@ -26,14 +27,14 @@ class TheMasterFormedAnewTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
                 .contains(creature.getId());
-        assertThat(gd.exiledCardsWithTakeoverCounters).contains(creature.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TAKEOVER).keySet()).contains(creature.getId());
     }
 
     @Test
     void entersAsACopyOfATakeoverMarkedCreatureInExile() {
         Card exiledCreature = new JudoonEnforcers();
         harness.setExile(player1, List.of(exiledCreature));
-        gd.exiledCardsWithTakeoverCounters.add(exiledCreature.getId());
+        gd.addExiledCardCounters(exiledCreature.getId(), CounterType.TAKEOVER, 1);
         harness.castFromHand(player1, new TheMasterFormedAnew(), "{U}{B}");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -57,7 +58,7 @@ class TheMasterFormedAnewTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, creature.getName());
         harness.assertOnBattlefield(player1, "The Master, Formed Anew");
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exiledCardsWithTakeoverCounters).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TAKEOVER).keySet()).isEmpty();
     }
 
     @Test
@@ -75,7 +76,7 @@ class TheMasterFormedAnewTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(otherPermanent).doesNotContain(chosenPermanent);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingPermanent);
-        assertThat(gd.exiledCardsWithTakeoverCounters).contains(chosen.getId()).doesNotContain(other.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TAKEOVER).keySet()).contains(chosen.getId()).doesNotContain(other.getId());
 
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
@@ -89,7 +90,7 @@ class TheMasterFormedAnewTest extends BaseCardTest {
     void canDeclineCopyingAMarkedCreature() {
         Card marked = new JudoonEnforcers();
         harness.setExile(player1, List.of(marked));
-        gd.exiledCardsWithTakeoverCounters.add(marked.getId());
+        gd.addExiledCardCounters(marked.getId(), CounterType.TAKEOVER, 1);
         harness.castFromHand(player1, new TheMasterFormedAnew(), "{U}{B}");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -108,8 +109,8 @@ class TheMasterFormedAnewTest extends BaseCardTest {
         Card unmarked = new JudoonEnforcers();
         harness.setExile(player1, List.of(ownMarked, unmarked));
         harness.setExile(player2, List.of(opponentMarked));
-        gd.exiledCardsWithTakeoverCounters.add(ownMarked.getId());
-        gd.exiledCardsWithTakeoverCounters.add(opponentMarked.getId());
+        gd.addExiledCardCounters(ownMarked.getId(), CounterType.TAKEOVER, 1);
+        gd.addExiledCardCounters(opponentMarked.getId(), CounterType.TAKEOVER, 1);
         harness.castFromHand(player1, new TheMasterFormedAnew(), "{U}{B}");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -130,7 +131,7 @@ class TheMasterFormedAnewTest extends BaseCardTest {
         Card marked = new JudoonEnforcers();
         Card firstMaster = new TheMasterFormedAnew();
         harness.setExile(player1, List.of(marked));
-        gd.exiledCardsWithTakeoverCounters.add(marked.getId());
+        gd.addExiledCardCounters(marked.getId(), CounterType.TAKEOVER, 1);
         harness.castFromHand(player1, firstMaster, "{U}{B}");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -144,7 +145,7 @@ class TheMasterFormedAnewTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(firstMaster);
-        assertThat(gd.exiledCardsWithTakeoverCounters).contains(firstMaster.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.TAKEOVER).keySet()).contains(firstMaster.getId());
     }
 
     @Test
@@ -156,14 +157,14 @@ class TheMasterFormedAnewTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "The Master, Formed Anew");
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exiledCardsWithTakeoverCounters).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.TAKEOVER).keySet()).isEmpty();
     }
 
     @Test
     void copiedCreaturesEnterAbilityTriggers() {
         Card marked = new DalekDrone();
         harness.setExile(player1, List.of(marked));
-        gd.exiledCardsWithTakeoverCounters.add(marked.getId());
+        gd.addExiledCardCounters(marked.getId(), CounterType.TAKEOVER, 1);
         var target = addCreatureReady(player2, new JudoonEnforcers());
         harness.setLife(player2, 20);
 

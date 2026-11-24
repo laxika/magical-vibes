@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ExiledCardCounter;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.BecomeTargetLegendaryCreatureCopyOfMemoryCounterExiledCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnExiledCardsEffect;
@@ -31,7 +31,7 @@ public class TheAnimus extends Card {
                 ExileGraveyardCardsEffect.upToOneTargetFromAnyGraveyard(new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardSupertypePredicate(CardSupertype.LEGENDARY)))),
-                PutCounterOnExiledCardsEffect.onCardsExiledThisWay(ExiledCardCounter.MEMORY));
+                PutCounterOnExiledCardsEffect.onCardsExiledThisWay(CounterType.MEMORY));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

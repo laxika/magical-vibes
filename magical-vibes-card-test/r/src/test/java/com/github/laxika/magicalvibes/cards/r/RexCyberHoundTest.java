@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.b.BirdsOfParadise;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -45,7 +46,7 @@ class RexCyberHoundTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(skeletons);
-        assertThat(gd.exiledCardsWithBrainCounters).containsExactly(skeletons.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.BRAIN).keySet()).containsExactly(skeletons.getId());
     }
 
     @Test
@@ -53,7 +54,7 @@ class RexCyberHoundTest extends BaseCardTest {
         addCreatureReady(player1, new RexCyberHound());
         Card skeletons = new DrudgeSkeletons();
         harness.setExile(player2, List.of(skeletons));
-        gd.exiledCardsWithBrainCounters.add(skeletons.getId());
+        gd.addExiledCardCounters(skeletons.getId(), CounterType.BRAIN, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -188,7 +189,7 @@ class RexCyberHoundTest extends BaseCardTest {
         Permanent rex = addCreatureReady(player1, new RexCyberHound());
         Card skeletons = new DrudgeSkeletons();
         harness.setExile(player2, List.of(skeletons));
-        gd.exiledCardsWithBrainCounters.add(skeletons.getId());
+        gd.addExiledCardCounters(skeletons.getId(), CounterType.BRAIN, 1);
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
@@ -216,7 +217,7 @@ class RexCyberHoundTest extends BaseCardTest {
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(skeletons);
-        assertThat(gd.exiledCardsWithBrainCounters).doesNotContain(skeletons.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.BRAIN).keySet()).doesNotContain(skeletons.getId());
     }
 
     @Test
@@ -224,7 +225,7 @@ class RexCyberHoundTest extends BaseCardTest {
         Permanent rex = addCreatureReady(player1, new RexCyberHound());
         Card birds = new BirdsOfParadise();
         harness.setExile(player2, List.of(birds));
-        gd.exiledCardsWithBrainCounters.add(birds.getId());
+        gd.addExiledCardCounters(birds.getId(), CounterType.BRAIN, 1);
         int manaBefore = gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE);
 
         harness.activateAbility(player1, 0, 1, null, null);

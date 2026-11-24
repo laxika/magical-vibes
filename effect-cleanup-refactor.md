@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b (each in Findings; the fold queue marks its rows). Fold runs 8 to 16 run in parallel worktrees from 2026-11-24. Next: fold runs 15 and 16 (running), 12d, `drafted-step`, 17. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                  |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16 (each in Findings; the fold queue marks its rows). Fold runs 8 to 17 run in parallel worktrees from 2026-11-24. Next: fold runs 12d and 17 (running), 16b, 16c, `drafted-step`, 18. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                   |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,759 / 3,022 (after fold run 8b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,754 / 3,018 (after fold run 16) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,415 rows over 4,418 classes (after fold run 8b). Latest verdict per class: `step-9` 939, unique 1,165, absorbed 664, split 582, blocked-other 485, survivor 285, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 939 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,432 rows over 4,420 classes (after fold run 16). Latest verdict per class: `step-9` 931, unique 1,165, absorbed 668, split 585, blocked-other 486, survivor 287, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 931 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -654,6 +654,14 @@ Delayed and global triggers:
   ThisTurnPredicate` (fold run 8b).
 - `ChoosePermanentsEffect.forEachVote(option, candidates, CONTROLS | OWNS, byVoter, label)`: one choice per vote of the last
   `VoteEffect`, in voting order, then the verb over `thisWay(CHOOSE)` (Elrond of the White Council, Expropriate; fold run 8b).
+
+- `GameData.exiledCardCounters` + `exiledCardCounterCount` / `exiledCardHasCounter` / `addExiledCardCounters` /
+  `setExiledCardCounters` / `exiledCardsWithCounter(kind)`: the one store for counters on exiled cards (every kind but time), forgotten
+  as a card leaves exile; `CardHasCounterInExilePredicate(CounterType)` for "with a [kind] counter on it" (fold run 16).
+- `RemoveCountersFromExiledCardsEffect(cards, counter[, count])`: the REMOVE_COUNTERS step over cards in exile, read by
+  `HappenedThisWay.removedCounters()` (fold run 16).
+- `PlayFromAmongExiledCardsEffect(exiledCards(players, filter)[, snowManaAsAnyColor])`: static "you may [play lands and] cast spells
+  from among …", judged by `SubjectResolutionService.namesExiledCard` (fold run 16).
 
 ### Blocked causes still open
 
@@ -2078,6 +2086,40 @@ revealed after the last vote. The fellowship and money choices are single-perman
 
 **For the next run.** `splits` has 22 rows left, each with its own missing piece (ledger notes). Erestor stays `blocked-other` (it reads
 the triggering vote).
+
+### Step 9, fold run 16 (2026-11-24, parallel worktree)
+
+Batch `exiled-store` taken; `card-borrowers` and `kw-borrowers` not taken (16c). Ratchet in its worktree 3,782 / 3,045 → 3,777 / 3,041.
+Ledger 17 rows (survivor 3, absorbed 4, split 3, blocked-other 1, `step-9` left 6). 15 card files rewritten (9 only by the store and
+enum change); Oracle text checked for 13. CR 607.2a, 613.1f, 708.2, 406.3a, 608.2d, 400.7, 122.1, 702.62a checked.
+
+**Store merge (St).** `GameData.exiledCardCounters` (card id → `CounterType` → count, immutable values) replaces 23 stores (egg, scream,
+dream, hit, delay, refine, voyage, silver, ice, blood, croak, void, discovery, collection, fetch, hatching, study, intel, kick, memory,
+takeover, brain, cage, stash), accessed through `exiledCardCounterCount`, `exiledCardHasCounter`, `addExiledCardCounters`,
+`setExiledCardCounters` and `exiledCardsWithCounter(kind)`. `removeFromExile`, `clearExiledByPermanent` and the token cleanup forget
+the whole entry; one copy line replaces 27; `GameDataDeepCopyTest` covers it. `ExiledCardCounter` is gone (any `CounterType`; 14
+constants added at the end, no `CONVERSION_VERSION` bump needed). `CardHasCounterInExilePredicate(kind)` replaces the study, memory and
+void predicates. Voyage keeps `exiledVoyageControllerIds` as its "is voyaging" marker. Time counters stay apart
+(`exiledCardTimeCounters`, `suspendedSpellExiles`, the non-suspend and Alaundo sets).
+
+| Batch | Result |
+|---|---|
+| `exiled-store` | 7 folded: Mari (`ChooseCardEffect.oneOf(exiledCards(triggeringPlayer(), has HIT))` + `RemoveCountersFromExiledCardsEffect(cardsThisWay(CHOOSE), HIT)` + `ConditionalEffect(removedCounters(), …)`), All Hallow's Eve (remove from itself + `PutExiledCardsIntoOwnersGraveyardEffect(self, no SCREAM)` + `ConditionalEffect(PUT_INTO_GRAVEYARD)`, one `SequenceEffect` under the intervening if), Draugr Necromancer and Grolnok onto `PlayFromAmongExiledCardsEffect`, Karn, Scion of Urza ±1 split, Goliath Daydreamer split. Left: hatching (`blocked-other`, face-down cards the owner may look at, CR 406.3a), egg and Darigaaz (`sourceCard()` in exile), refine and delay (last-counter events), suspend and time adjust (time store) |
+| `card-borrowers`, `kw-borrowers` | not taken; `SubjectResolutionService.namesExiledCard` is ready for them |
+
+**Behaviour changes.** A face-down Draugr Necromancer or Grolnok grants no permission (CR 708.2; read through `activeStaticEffects`;
+test). Karn's +1 has its controller choose the opponent (it was the first other seat). Leaving exile clears every counter kind (CR
+400.7): egg and dream counters had survived `removeFromExile`, about 10 kinds `clearExiledByPermanent`. A lone Mari card is chosen
+unasked. Croak cards answer `OptionalInt.of(0)` from `findAdditionalCounterCostFromSource`. Prompts and logs are the survivors'.
+`HitCounterExiledCardChoice`, `PendingKarnScionRevealChoice`, `PendingKarnScionExileReturn`, their handlers, projection and AI strategy
+are deleted.
+
+**Lesson.** An intervening "if" is checked again before each effect of a triggered ability, so a remove-then-act sequence whose own
+removal falsifies the condition must be one `SequenceEffect`.
+
+**For the next run.** 16b: merge time counters into the store, add a generic counters-removed-in-exile event and `sourceCard()` in
+exile with its stay, then fold refine, delay, egg, Darigaaz, suspend and time adjust. 16c: card-borrowers and kw-borrowers over
+`namesExiledCard`, with the CR 607.2a link (`CardSubject.ExiledWithSource` still ignores `abilityLink`).
 
 ## Prompt
 

@@ -627,7 +627,7 @@ public class GraveyardService {
                     && (battlefieldSnapshot == null || !gameData.losesAllAbilitiesByEffect(battlefieldSnapshot))) {
                 ExileWithEggCountersInsteadOfDyingEffect eggEffect = getExileWithEggCountersReplacementEffect(card);
                 exileService.exileCard(gameData, ownerId, card);
-                gameData.exiledCardEggCounters.put(card.getId(), eggEffect.count());
+                gameData.setExiledCardCounters(card.getId(), CounterType.EGG, eggEffect.count());
                 gameLogService.append(gameData, GameLog.cardThen(card,
                         " is exiled with " + eggEffect.count() + " egg counters instead of dying."));
                 log.info("Game {} - {} replacement effect: exiled with {} egg counters instead of dying",
@@ -801,7 +801,7 @@ public class GraveyardService {
                     exileService.exileCard(gameData, ownerId, card);
                 }
                 if (opponentExileReplacement.effect().addVoidCounter()) {
-                    gameData.exiledCardsWithVoidCounters.add(card.getId());
+                    gameData.addExiledCardCounters(card.getId(), CounterType.VOID, 1);
                 }
             
                 gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));

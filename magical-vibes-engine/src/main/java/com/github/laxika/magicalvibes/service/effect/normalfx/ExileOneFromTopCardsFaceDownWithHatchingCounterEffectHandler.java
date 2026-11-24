@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -51,7 +52,7 @@ public class ExileOneFromTopCardsFaceDownWithHatchingCounterEffectHandler implem
             Card card = topCards.getFirst();
             exileService.exileCardFaceDown(gameData, controllerId, card, null, controllerId);
             gameData.grantExileLookPermission(card.getId(), controllerId);
-            gameData.exiledCardsWithHatchingCounters.add(card.getId());
+            gameData.addExiledCardCounters(card.getId(), CounterType.HATCHING, 1);
             gameLogService.append(gameData, GameLog.text(
                     result.playerName() + " exiles a card face down with a hatching counter."));
             return;

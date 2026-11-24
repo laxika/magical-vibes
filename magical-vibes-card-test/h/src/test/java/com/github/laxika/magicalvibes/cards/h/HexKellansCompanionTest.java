@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.y.YoungBlueDragon;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -34,7 +35,7 @@ class HexKellansCompanionTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.findExiledCard(hex.getId())).isNotNull();
-        assertThat(gd.exiledCardsWithFetchCounters).contains(hex.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.FETCH).keySet()).contains(hex.getId());
 
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -44,7 +45,7 @@ class HexKellansCompanionTest extends BaseCardTest {
         Permanent returnedHex = findPermanent(player1, "Hex, Kellan's Companion");
         assertThat(gqs.getEffectivePower(gd, returnedHex)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, returnedHex)).isEqualTo(2);
-        assertThat(gd.exiledCardsWithFetchCounters).doesNotContain(hex.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.FETCH).keySet()).doesNotContain(hex.getId());
         assertThat(gd.findExiledCard(hex.getId())).isNull();
     }
 
@@ -63,7 +64,7 @@ class HexKellansCompanionTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .anyMatch(permanent -> permanent.getCard() == hex)).isTrue();
         assertThat(gd.findExiledCard(hex.getId())).isNull();
-        assertThat(gd.exiledCardsWithFetchCounters).doesNotContain(hex.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.FETCH).keySet()).doesNotContain(hex.getId());
     }
 
     @Test
@@ -74,7 +75,7 @@ class HexKellansCompanionTest extends BaseCardTest {
         YoungBlueDragon secondDragon = castAndResolveAdventure(player1);
 
         assertThat(gd.findExiledCard(hex.getId())).isNotNull();
-        assertThat(gd.exiledCardsWithFetchCounters).contains(hex.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.FETCH).keySet()).contains(hex.getId());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castFromExile(player1, secondDragon.getId());
@@ -84,7 +85,7 @@ class HexKellansCompanionTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, returnedHex)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, returnedHex)).isEqualTo(3);
         assertThat(returnedHex.isTapped()).isFalse();
-        assertThat(gd.exiledCardsWithFetchCounters).doesNotContain(hex.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.FETCH).keySet()).doesNotContain(hex.getId());
     }
 
     @Test
@@ -98,7 +99,7 @@ class HexKellansCompanionTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.findExiledCard(hex.getId())).isNotNull();
-        assertThat(gd.exiledCardsWithFetchCounters).doesNotContain(hex.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.FETCH).keySet()).doesNotContain(hex.getId());
         harness.assertNotOnBattlefield(player1, "Hex, Kellan's Companion");
 
         gd.removeFromExile(hex.getId());
@@ -119,7 +120,7 @@ class HexKellansCompanionTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.findExiledCard(hex.getId())).isNotNull();
-        assertThat(gd.exiledCardsWithFetchCounters).contains(hex.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.FETCH).keySet()).contains(hex.getId());
         harness.assertNotOnBattlefield(player1, "Hex, Kellan's Companion");
     }
 

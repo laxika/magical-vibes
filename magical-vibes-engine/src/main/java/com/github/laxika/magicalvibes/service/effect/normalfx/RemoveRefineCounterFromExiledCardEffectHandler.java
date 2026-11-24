@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -45,21 +46,21 @@ public class RemoveRefineCounterFromExiledCardEffectHandler implements NormalEff
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID cardId = ((RemoveRefineCounterFromExiledCardEffect) effect).cardId();
-        Integer counters = gameData.exiledCardRefineCounters.get(cardId);
+        Integer counters = gameData.exiledCardCounterCount(cardId, CounterType.REFINE);
         Card card = gameQueryService.findCardInExileById(gameData, cardId);
         if (counters == null || counters <= 0 || card == null) {
-            gameData.exiledCardRefineCounters.remove(cardId);
+            gameData.setExiledCardCounters(cardId, CounterType.REFINE, 0);
             return;
         }
 
         if (counters > 1) {
-            gameData.exiledCardRefineCounters.put(cardId, counters - 1);
+            gameData.setExiledCardCounters(cardId, CounterType.REFINE, counters - 1);
             gameLogService.append(gameData, GameLog.builder().card(card)
                     .text(" has a refine counter removed (" + (counters - 1) + " remaining).").build());
             return;
         }
 
-        gameData.exiledCardRefineCounters.remove(cardId);
+        gameData.setExiledCardCounters(cardId, CounterType.REFINE, 0);
         UUID ownerId = gameQueryService.findExileOwnerById(gameData, cardId);
         if (ownerId == null) {
             return;

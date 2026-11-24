@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.v.VampireOfTheDireMoon;
@@ -33,7 +34,7 @@ class EvelynTheCovetousTest extends BaseCardTest {
 
         castVampireAndResolveTrigger();
 
-        assertThat(gd.exiledCardsWithCollectionCounters)
+        assertThat(gd.exiledCardsWithCounter(CounterType.COLLECTION).keySet())
                 .containsExactlyInAnyOrder(playerTop.getId(), opponentTop.getId());
         assertThat(gd.findExiledCard(playerTop.getId()).exilerId()).isEqualTo(player1.getId());
         assertThat(gd.findExiledCard(opponentTop.getId()).exilerId()).isEqualTo(player1.getId());
@@ -96,7 +97,7 @@ class EvelynTheCovetousTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new EvelynTheCovetous());
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCardsWithCollectionCounters).containsExactly(top.getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.COLLECTION).keySet()).containsExactly(top.getId());
         assertThat(gd.findExiledCard(top.getId()).exilerId()).isEqualTo(player1.getId());
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
@@ -111,7 +112,7 @@ class EvelynTheCovetousTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player2, new VampireOfTheDireMoon());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.exiledCardsWithCollectionCounters).isEmpty();
+        assertThat(gd.exiledCardsWithCounter(CounterType.COLLECTION).keySet()).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
     }
 

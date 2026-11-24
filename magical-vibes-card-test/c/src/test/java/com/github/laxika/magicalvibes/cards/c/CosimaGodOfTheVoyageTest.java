@@ -57,7 +57,7 @@ class CosimaGodOfTheVoyageTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.exiledVoyageCounters).containsEntry(cosima.getOriginalCard().getId(), 1);
+        assertThat(gd.exiledCardsWithCounter(CounterType.VOYAGE)).containsEntry(cosima.getOriginalCard().getId(), 1);
 
         Card drawCard = new GrizzlyBears();
         gd.landsPlayedThisTurn.put(player1.getId(), 0);
@@ -74,7 +74,7 @@ class CosimaGodOfTheVoyageTest extends BaseCardTest {
                 .orElseThrow();
         assertThat(returnedCosima.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).contains(drawCard);
-        assertThat(gd.exiledVoyageCounters).doesNotContainKey(cosima.getOriginalCard().getId());
+        assertThat(gd.exiledCardsWithCounter(CounterType.VOYAGE)).doesNotContainKey(cosima.getOriginalCard().getId());
     }
 
     @Test

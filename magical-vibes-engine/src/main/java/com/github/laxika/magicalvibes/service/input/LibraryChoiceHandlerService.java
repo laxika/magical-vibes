@@ -32,8 +32,6 @@ import com.github.laxika.magicalvibes.model.PendingDubiousChallengeChoice;
 import com.github.laxika.magicalvibes.model.PendingEachPlayerLibraryExile;
 import com.github.laxika.magicalvibes.model.PendingGuildFeud;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn;
-import com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice;
 import com.github.laxika.magicalvibes.model.PendingLibraryRevealRemainder;
 import com.github.laxika.magicalvibes.model.PendingManifoldInsightsChoice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -597,7 +595,7 @@ public class LibraryChoiceHandlerService {
                     exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard,
                             librarySearch.sourcePermanentId(), playerId);
                     if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_WITH_HATCHING_COUNTER_REST_TO_BOTTOM) {
-                        gameData.exiledCardsWithHatchingCounters.add(chosenCard.getId());
+                        gameData.addExiledCardCounters(chosenCard.getId(), CounterType.HATCHING, 1);
                         gameData.grantExileLookPermission(chosenCard.getId(), playerId);
                     }
                     if (followUp != null && followUp.imprintSourcePermanentId() != null) {
@@ -3510,12 +3508,6 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
-        // Karn, Scion of Urza +1: opponent chose which card goes to controller's hand
-        if (gameData.hasPendingInteraction(PendingKarnScionRevealChoice.class)) {
-            handleKarnScionRevealChoice(gameData, allRevealedCards, cardIds);
-            return;
-        }
-
         if (gameData.hasPendingInteraction(PendingManifoldInsightsChoice.class)) {
             boolean finished = manifoldInsightsEffectHandler.completeCardChoice(
                     gameData, cardIds);
@@ -3531,12 +3523,6 @@ public class LibraryChoiceHandlerService {
             return;
         } else if (gameData.hasPendingInteraction(PendingMemoriesReturningChoice.class)) {
             handleMemoriesReturningChoice(gameData, allRevealedCards, cardIds);
-            return;
-        }
-
-        // Karn, Scion of Urza -1: controller chose which silver-counter card to return
-        if (gameData.hasPendingInteraction(PendingKarnScionExileReturn.class)) {
-            handleKarnScionReturnFromExile(gameData, allRevealedCards, cardIds, controllerId);
             return;
         }
 
@@ -4456,45 +4442,6 @@ public class LibraryChoiceHandlerService {
         }
     }
 
-    private void handleKarnScionRevealChoice(GameData gameData, List<Card> allRevealedCards, List<UUID> selectedCardIds) {
-        UUID controllerId = gameData.pollPendingInteraction(PendingKarnScionRevealChoice.class).controllerId();
-
-        String controllerName = gameData.playerIdToName.get(controllerId);
-
-        // The opponent selected one card — that card goes to the controller's hand,
-        // the other is exiled with a silver counter. Only use the first selection.
-        UUID chosenId = selectedCardIds.isEmpty() ? null : selectedCardIds.getFirst();
-        Card toHand = null;
-        Card toExile = null;
-        for (Card card : allRevealedCards) {
-            if (toHand == null && card.getId().equals(chosenId)) {
-                toHand = card;
-            } else {
-                toExile = card;
-            }
-        }
-
-        if (toHand != null) {
-            gameData.addCardToHand(controllerId, toHand);
-            gameLogService.append(gameData, GameLog.textCardText(
-                    controllerName + " puts ", toHand, " into their hand."));
-        }
-
-        if (toExile != null) {
-            exileService.exileCard(gameData, controllerId, toExile);
-            gameData.exiledCardsWithSilverCounters.add(toExile.getId());
-            gameLogService.append(gameData,
-                    GameLog.cardThen(toExile, " is exiled with a silver counter."));
-        }
-
-        log.info("Game {} - Karn Scion +1 resolved: {} to hand, {} exiled with silver counter",
-                gameData.id,
-                toHand != null ? toHand.getName() : "none",
-                toExile != null ? toExile.getName() : "none");
-
-        finishSearchAndResume(gameData);
-    }
-
     private void handleAllureOfTheUnknownRevealChoice(GameData gameData, List<Card> allRevealedCards,
                                                        List<UUID> selectedCardIds) {
         allureOfTheUnknownEffectHandler.completeCardChoice(gameData, allRevealedCards, selectedCardIds);
@@ -4503,32 +4450,6 @@ public class LibraryChoiceHandlerService {
     private void handleMemoriesReturningChoice(GameData gameData, List<Card> allRevealedCards,
                                                 List<UUID> selectedCardIds) {
         memoriesReturningEffectHandler.completeCardChoice(gameData, allRevealedCards, selectedCardIds);
-        finishSearchAndResume(gameData);
-    }
-
-    private void handleKarnScionReturnFromExile(GameData gameData, List<Card> allRevealedCards,
-                                                 List<UUID> selectedCardIds, UUID controllerId) {
-        gameData.clearPendingInteractions(PendingKarnScionExileReturn.class);
-
-        String controllerName = gameData.playerIdToName.get(controllerId);
-
-        // Find the selected card and return it to hand
-        Set<UUID> selectedIds = new HashSet<>(selectedCardIds);
-        for (Card card : allRevealedCards) {
-            if (selectedIds.contains(card.getId())) {
-                // Remove from exile zone
-                gameData.removeFromExile(card.getId());
-                gameData.exiledCardsWithSilverCounters.remove(card.getId());
-                gameData.addCardToHand(controllerId, card);
-
-                gameLogService.append(gameData, GameLog.textCardText(
-                        controllerName + " returns ", card, " from exile to their hand."));
-                log.info("Game {} - {} returns {} from exile (silver counter) to hand",
-                        gameData.id, controllerName, card.getName());
-                break;
-            }
-        }
-
         finishSearchAndResume(gameData);
     }
 

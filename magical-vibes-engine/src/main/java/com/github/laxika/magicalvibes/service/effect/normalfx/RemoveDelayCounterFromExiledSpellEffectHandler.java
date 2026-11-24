@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -35,12 +36,12 @@ public class RemoveDelayCounterFromExiledSpellEffectHandler implements NormalEff
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         RemoveDelayCounterFromExiledSpellEffect delay = (RemoveDelayCounterFromExiledSpellEffect) effect;
         UUID cardId = delay.cardId();
-        Integer counters = gameData.exiledCardDelayCounters.get(cardId);
-        if (counters == null || gameData.findExiledCard(cardId) == null) return;
+        int counters = gameData.exiledCardCounterCount(cardId, CounterType.DELAY);
+        if (counters <= 0 || gameData.findExiledCard(cardId) == null) return;
 
         int remaining = Math.max(0, counters - 1);
         if (remaining > 0) {
-            gameData.exiledCardDelayCounters.put(cardId, remaining);
+            gameData.setExiledCardCounters(cardId, CounterType.DELAY, remaining);
             gameLogService.append(gameData, GameLog.cardThen(delay.originalEntry().getCard(),
                     " loses a delay counter (" + remaining + " left)."));
             return;
