@@ -4,8 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForOneCardOfEachSubtypeEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,6 +19,7 @@ public class YasharnImplacableEarth extends Card {
     public YasharnImplacableEarth() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new SearchLibraryForOneCardOfEachSubtypeEffect(
                 List.of(CardSubtype.FOREST, CardSubtype.PLAINS), null, LibrarySearchDestination.HAND, true));
-        addStaticEffect(new PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect());
+        addStaticEffect(new PlayersCantPayLifeEffect(true,
+                new PermanentNotPredicate(new PermanentIsLandPredicate())));
     }
 }

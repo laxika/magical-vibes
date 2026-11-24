@@ -186,7 +186,8 @@ permanent's type passes `StaticReads.knownCreature()` or `knownLand()` (that par
 
 A static restriction on players asks about one player: `SubjectResolutionService.namesPlayer(source,
 controllerId, playerId, players)` judges `you()`, `eachPlayer()`, `eachOpponent()`, `enchantedPlayer()` and
-`chosenPlayer()` without a lookup (a `null` source enchants and chose nobody).
+`chosenPlayer()` without a lookup (a `null` source enchants and chose nobody); its `GameData` form also judges
+`controllerOf(attached())`, "enchanted creature's controller" (Brand of Ill Omen's spell restriction).
 
 A static ability that reads cards outside the battlefield lists them with `SubjectResolutionService.namedCards(gameData,
 source, controllerId, cards, reads)`: `exiledCards`, `exiledWithSource*` (through `namesExiledCard`), `cardsInGraveyards`,

@@ -3,9 +3,11 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControllerCantPlayLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
@@ -15,7 +17,7 @@ import java.util.List;
 public class AggressiveMining extends Card {
 
     public AggressiveMining() {
-        addStaticEffect(new ControllerCantPlayLandsEffect());
+        addStaticEffect(new PlayersCantCastSpellsFromZonesEffect(Subjects.you(), PlayerRestriction.playingLands()));
         addActivatedAbility(new ActivatedAbility(false, null,
                 List.of(new SacrificePermanentCost(new PermanentIsLandPredicate(), "Sacrifice a land"),
                         new DrawCardEffect(2)),

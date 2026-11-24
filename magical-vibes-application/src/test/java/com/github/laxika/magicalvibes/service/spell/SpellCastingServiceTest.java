@@ -379,16 +379,10 @@ class SpellCastingServiceTest {
                 .thenAnswer(invocation -> ((Card) invocation.getArgument(0))
                         .hasType(invocation.getArgument(1)));
         lenient().when(gameQueryService.canCastSpellFromZone(
-                        any(GameData.class), any(Card.class), any(Zone.class)))
-                .thenReturn(true);
-        lenient().when(gameQueryService.canCastSpellFromZone(
                         any(GameData.class), any(Card.class), any(Zone.class), any(UUID.class)))
                 .thenReturn(true);
         lenient().when(gameQueryService.canPlayerCastSpellsFromZone(
                         any(GameData.class), any(UUID.class), any(Zone.class)))
-                .thenReturn(true);
-        lenient().when(gameQueryService.canPlayersCastSpellsFromZone(
-                        any(GameData.class), any(Zone.class)))
                 .thenReturn(true);
         lenient().when(castingCostService.getImposedSacrificeRequirementForSpell(
                         any(GameData.class), any(Card.class)))
@@ -403,7 +397,7 @@ class SpellCastingServiceTest {
                 anyBoolean(), anyBoolean(), anyBoolean(), anyInt())).thenReturn(true);
         lenient().when(castingPermissionService.flashTimingRequiresAlternateCast(
                 any(GameData.class), any(UUID.class), any(Card.class))).thenReturn(false);
-        lenient().when(castingPermissionService.isOpponentsManaValueSpellCastRestricted(
+        lenient().when(castingPermissionService.isSpellRestrictedByResolvedFilter(
                 any(GameData.class), any(UUID.class), any(Card.class), any())).thenReturn(false);
     }
 

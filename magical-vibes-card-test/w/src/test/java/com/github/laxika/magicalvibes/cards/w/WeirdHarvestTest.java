@@ -1,8 +1,5 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.PlayersCantSearchLibrariesThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.a.AvenMindcensor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -14,6 +11,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -140,7 +141,7 @@ class WeirdHarvestTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.GREEN, 4);
         gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
-                new PlayersCantSearchLibrariesThisTurnEffect(), null, Duration.UNTIL_END_OF_TURN));
+                new CantSearchLibrariesEffect(Subjects.eachPlayer(), false), null, Duration.UNTIL_END_OF_TURN));
 
         harness.castAndResolveSorcery(player1, 0, 2);
 
@@ -299,7 +300,7 @@ class WeirdHarvestTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WeirdHarvest()));
         harness.addMana(player1, ManaColor.GREEN, 3);
         gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
-                new PlayersCantSearchLibrariesThisTurnEffect(), null, Duration.UNTIL_END_OF_TURN));
+                new CantSearchLibrariesEffect(Subjects.eachPlayer(), false), null, Duration.UNTIL_END_OF_TURN));
 
         harness.castAndResolveSorcery(player1, 0, 1);
         resolveAllTriggers();

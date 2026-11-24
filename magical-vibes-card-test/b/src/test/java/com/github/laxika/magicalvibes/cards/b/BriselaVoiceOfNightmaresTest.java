@@ -210,4 +210,20 @@ class BriselaVoiceOfNightmaresTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
     }
+
+    @Test
+    @DisplayName("Opponent X spell is offered before X is chosen, a low-value spell is not")
+    void offersOpponentXSpellBeforeXIsChosen() {
+        harness.addToBattlefield(player1, new BriselaVoiceOfNightmares());
+        harness.setHand(player2, List.of(new Hurricane(), new Shock()));
+        harness.addMana(player2, ManaColor.GREEN, 4);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThat(harness.getGameActionAvailabilityService()
+                .getPlayableCardIndices(gd, player2.getId())).containsExactly(0);
+    }
 }

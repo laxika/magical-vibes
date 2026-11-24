@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.TurnsTakenByController;
 import com.github.laxika.magicalvibes.model.effect.BecomeNightEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBecomeNightEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithManaValueGreaterThanEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsMatchingPredicateEffect;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostAmountPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -15,7 +17,7 @@ public class AngelOfEternalDawn extends Card {
     public AngelOfEternalDawn() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), BecomeNightEffect.day());
         addStaticEffect(new CantBecomeNightEffect());
-        addStaticEffect(new OpponentsCantCastSpellsWithManaValueGreaterThanEffect(
-                new TurnsTakenByController()));
+        addStaticEffect(new OpponentsCantCastSpellsMatchingPredicateEffect(
+                new CardNotPredicate(new CardManaValueAtMostAmountPredicate(new TurnsTakenByController()))));
     }
 }

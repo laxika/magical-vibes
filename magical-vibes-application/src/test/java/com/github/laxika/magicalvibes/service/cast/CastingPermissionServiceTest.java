@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.LimitControllerToOneMoreSpell
 import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
 import com.github.laxika.magicalvibes.model.effect.PlayerRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PlayersCantPlayCardsFromHandUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -34,7 +33,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantEscapeToGraveyardCardsEf
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
@@ -47,6 +45,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
+import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -771,7 +770,7 @@ class CastingPermissionServiceTest {
             Card iona = new Card();
             iona.setName("Iona, Shield of Emeria");
             iona.setType(CardType.CREATURE);
-            iona.addStaticEffect(new OpponentsCantCastSpellsOfChosenColorEffect());
+            iona.addStaticEffect(new OpponentsCantCastSpellsMatchingPredicateEffect(new CardHasSourceChosenColorPredicate()));
             Permanent ionaPerm = new Permanent(iona);
             ionaPerm.setChosenColor(CardColor.RED);
             gd.playerBattlefields.get(player1Id).add(ionaPerm);
@@ -781,6 +780,11 @@ class CastingPermissionServiceTest {
             bolt.setType(CardType.INSTANT);
             bolt.setColors(List.of(CardColor.RED));
             bolt.setManaCost("{R}");
+            when(predicateEvaluationService.matchesCardPredicate(
+                    eq(bolt), any(CardHasSourceChosenColorPredicate.class), any(UUID.class), eq(gd), eq(player2Id),
+                    org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                    org.mockito.ArgumentMatchers.isNull()))
+                    .thenReturn(true);
 
             assertThat(svc.isSpellCastingAllowed(gd, player2Id, bolt)).isFalse();
         }
@@ -791,7 +795,7 @@ class CastingPermissionServiceTest {
             Card iona = new Card();
             iona.setName("Iona, Shield of Emeria");
             iona.setType(CardType.CREATURE);
-            iona.addStaticEffect(new OpponentsCantCastSpellsOfChosenColorEffect());
+            iona.addStaticEffect(new OpponentsCantCastSpellsMatchingPredicateEffect(new CardHasSourceChosenColorPredicate()));
             Permanent ionaPerm = new Permanent(iona);
             ionaPerm.setChosenColor(CardColor.RED);
             gd.playerBattlefields.get(player1Id).add(ionaPerm);
@@ -811,7 +815,7 @@ class CastingPermissionServiceTest {
             Card iona = new Card();
             iona.setName("Iona, Shield of Emeria");
             iona.setType(CardType.CREATURE);
-            iona.addStaticEffect(new OpponentsCantCastSpellsOfChosenColorEffect());
+            iona.addStaticEffect(new OpponentsCantCastSpellsMatchingPredicateEffect(new CardHasSourceChosenColorPredicate()));
             Permanent ionaPerm = new Permanent(iona);
             ionaPerm.setChosenColor(CardColor.RED);
             gd.playerBattlefields.get(player1Id).add(ionaPerm);
@@ -1141,7 +1145,11 @@ class CastingPermissionServiceTest {
     @DisplayName("A hand-wide restriction covers both land plays and spell casts")
     void handWideRestrictionCoversLandsAndSpells() {
         gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1Id,
-                new PlayersCantPlayCardsFromHandUntilNextTurnEffect(), null, Duration.UNTIL_YOUR_NEXT_TURN));
+                new PlayerRestrictionEffect(Subjects.eachPlayer(), PlayerRestriction.playingCardsFrom(Zone.HAND),
+                        Duration.UNTIL_YOUR_NEXT_TURN), null, Duration.UNTIL_YOUR_NEXT_TURN));
+        when(gameQueryService.isPlayerRestricted(eq(gd), any(UUID.class), any())).thenAnswer(invocation ->
+                gd.restrictionsOnPlayer(invocation.getArgument(1)).stream()
+                        .anyMatch(invocation.<java.util.function.Predicate<PlayerRestriction>>getArgument(2)));
 
         assertThat(svc.isLandPlayFromHandRestricted(gd, player1Id)).isTrue();
         assertThat(svc.isSpellCastingFromHandRestricted(gd, player2Id)).isTrue();

@@ -4,16 +4,17 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerCantCastSpellsFromHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerCantPlayLandsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromZonesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 import java.util.Set;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "GRN", collectorNumber = "99")
 public class ExperimentalFrenzy extends Card {
@@ -30,8 +31,8 @@ public class ExperimentalFrenzy extends Card {
                 CardType.PLANESWALKER,
                 CardType.BATTLE,
                 CardType.KINDRED)));
-        addStaticEffect(new ControllerCantPlayLandsFromHandEffect());
-        addStaticEffect(new ControllerCantCastSpellsFromHandEffect());
+        addStaticEffect(new PlayersCantCastSpellsFromZonesEffect(Subjects.you(),
+                PlayerRestriction.playingCardsFrom(Zone.HAND)));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{R}",

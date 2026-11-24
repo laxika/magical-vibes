@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
 import com.github.laxika.magicalvibes.model.effect.PlayerRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -20,7 +22,9 @@ import java.util.UUID;
 /**
  * Puts a {@link PlayerRestrictionEffect} on the players its subject names as it resolves: a floating effect on each of
  * them (CR 611.2a), or one on every player for "players can't …". A subject that names nobody (a target spell's
- * controller that can't be found) restricts nobody.
+ * controller that can't be found) restricts nobody. A spell filter is fixed as it resolves ("the same mana value as
+ * that spell", the triggering spell's as it last existed, CR 608.2h), and the floating effect keeps the fixed filter
+ * (CR 611.2c).
  */
 @Component
 @RequiredArgsConstructor
@@ -36,7 +40,7 @@ public class PlayerRestrictionEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var restriction = (PlayerRestrictionEffect) effect;
+        var restriction = fixedAsItResolves(gameData, entry, (PlayerRestrictionEffect) effect);
         String cantText = " can't " + restriction.restriction().description() + " "
                 + durationText(gameData, entry, restriction.duration()) + ".";
         if (restriction.players().equals(Subjects.eachPlayer())) {
@@ -58,6 +62,17 @@ public class PlayerRestrictionEffectHandler implements NormalEffectHandlerBean {
         for (UUID playerId : players) {
             gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId) + cantText));
         }
+    }
+
+    private static PlayerRestrictionEffect fixedAsItResolves(GameData gameData, StackEntry entry,
+                                                             PlayerRestrictionEffect restriction) {
+        if (restriction.restriction().spellFilter() == null) {
+            return restriction;
+        }
+        return new PlayerRestrictionEffect(restriction.players(), PlayerRestriction.castingSpellsMatching(
+                AmountEvaluationService.bindTriggeringSpellManaValue(gameData,
+                        restriction.restriction().spellFilter(), entry, true)),
+                restriction.duration());
     }
 
     private static void restrict(GameData gameData, StackEntry entry, PlayerRestrictionEffect restriction,

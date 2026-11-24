@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentExtraTurnSkipReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantSearchLibrariesAtAllEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SLD", collectorNumber = "1804")
 @CardRegistration(set = "CMD", collectorNumber = "136")
@@ -11,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantSearchLibrariesA
 public class Stranglehold extends Card {
 
     public Stranglehold() {
-        addStaticEffect(new OpponentsCantSearchLibrariesAtAllEffect());
+        addStaticEffect(new CantSearchLibrariesEffect(Subjects.eachOpponent(), false));
         addStaticEffect(new OpponentExtraTurnSkipReplacementEffect());
     }
 }

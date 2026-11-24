@@ -906,7 +906,7 @@ public class GameViewProjectionFactory {
             if (fromOutsideGame && !castingPermissionService.isSpellCastingAllowed(gameData, playerId, card)) continue;
             if (castingPermissionService.isSpellRestricted(gameData, playerId, card, restrictedSpellTypes, forbiddenCardNames)) continue;
             if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, playerId, card)) continue;
-            if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) continue;
+            if (castingPermissionService.isSpellRestrictedByResolvedFilter(gameData, playerId, card)) continue;
             if (castingPermissionService.isAdditionalNonartifactSpellRestricted(gameData, playerId, card)) continue;
 
             boolean canAffordManaValueLifeAlternative =
@@ -1161,7 +1161,7 @@ public class GameViewProjectionFactory {
                 || cantCastDueToAttack) return null;
         if (castingPermissionService.isSpellRestricted(gameData, playerId, topCard, restrictedSpellTypes, forbiddenCardNames)) return null;
         if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, playerId, topCard)) return null;
-        if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, topCard)) return null;
+        if (castingPermissionService.isSpellRestrictedByResolvedFilter(gameData, playerId, topCard)) return null;
         if (castingPermissionService.isAdditionalNonartifactSpellRestricted(gameData, playerId, topCard)) return null;
 
         if (!castingPermissionService.canCastWithTimingFromLibraryTop(

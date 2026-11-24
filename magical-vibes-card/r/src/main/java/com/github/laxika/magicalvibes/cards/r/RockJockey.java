@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.condition.DidntPlayLandThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerCantPlayLandsEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromZonesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -18,6 +20,6 @@ public class RockJockey extends Card {
         setCastCondition(new DidntPlayLandThisTurn());
         addStaticEffect(new ConditionalEffect(
                 new AllConditions(List.of(new WasCast(), new SourceEnteredThisTurn())),
-                new ControllerCantPlayLandsEffect()));
+                new PlayersCantCastSpellsFromZonesEffect(Subjects.you(), PlayerRestriction.playingLands())));
     }
 }

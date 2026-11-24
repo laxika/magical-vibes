@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.model.effect.PlayersCantPlayCardsFromHandUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestrictionEffect;
 import com.github.laxika.magicalvibes.cards.e.EonHub;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -46,7 +46,7 @@ class MemoryVesselTest extends BaseCardTest {
         assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(player1Spell.getId(), player1.getId())
                 .containsEntry(player2Spell.getId(), player2.getId());
-        assertThat(playersAffectedBy(PlayersCantPlayCardsFromHandUntilNextTurnEffect.class))
+        assertThat(playersAffectedBy(PlayerRestrictionEffect.class))
                 .containsExactlyInAnyOrder(player1.getId(), player2.getId());
 
         harness.setHand(player1, List.of(new Forest(), new GrizzlyBears()));
@@ -96,7 +96,7 @@ class MemoryVesselTest extends BaseCardTest {
         assertThat(gd.exilePlayPermissionHolders())
                 .doesNotContainKey(player1Top.getId())
                 .doesNotContainKey(player2Top.getId());
-        assertThat(playersAffectedBy(PlayersCantPlayCardsFromHandUntilNextTurnEffect.class)).isEmpty();
+        assertThat(playersAffectedBy(PlayerRestrictionEffect.class)).isEmpty();
 
         harness.setHand(player1, List.of(new Forest()));
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

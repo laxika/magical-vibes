@@ -67,7 +67,8 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditional
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastFromZonesEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaReflectionEffect;
@@ -4336,17 +4337,18 @@ class GameQueryServiceTest {
         @DisplayName("blocks noncreature spells only in the listed zones")
         void blocksNoncreatureSpellsOnlyInListedZones() {
             addPermanent(player1Id, createEnchantmentWithStaticEffect("Soulless Jailer",
-                    new NoncreatureSpellsCantBeCastFromZonesEffect(Set.of(Zone.GRAVEYARD, Zone.EXILE))));
+                    new PlayersCantCastSpellsFromZonesEffect(Subjects.eachPlayer(),
+                            PlayerRestriction.castingNoncreatureSpells().from(Zone.GRAVEYARD, Zone.EXILE))));
 
             Card instant = new Card();
             instant.setName("Test Instant");
             instant.setType(CardType.INSTANT);
             Card creature = createCreature("Test Creature", 2, 2, CardColor.GREEN);
 
-            assertThat(gqs.canCastSpellFromZone(gd, instant, Zone.GRAVEYARD)).isFalse();
-            assertThat(gqs.canCastSpellFromZone(gd, instant, Zone.EXILE)).isFalse();
-            assertThat(gqs.canCastSpellFromZone(gd, instant, Zone.HAND)).isTrue();
-            assertThat(gqs.canCastSpellFromZone(gd, creature, Zone.GRAVEYARD)).isTrue();
+            assertThat(gqs.canCastSpellFromZone(gd, instant, Zone.GRAVEYARD, player2Id)).isFalse();
+            assertThat(gqs.canCastSpellFromZone(gd, instant, Zone.EXILE, player2Id)).isFalse();
+            assertThat(gqs.canCastSpellFromZone(gd, instant, Zone.HAND, player2Id)).isTrue();
+            assertThat(gqs.canCastSpellFromZone(gd, creature, Zone.GRAVEYARD, player2Id)).isTrue();
         }
     }
 }

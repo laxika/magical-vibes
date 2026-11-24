@@ -1125,7 +1125,34 @@ public class SubjectResolutionService {
      * point, for a query that already knows the ability's controller. It judges {@code you()}, {@code eachPlayer()},
      * {@code eachOpponent()}, {@code enchantedPlayer()} and {@code chosenPlayer()} without looking anything up;
      * {@code source} may be {@code null} for an ability with no source permanent (an emblem's, a plane's), which then
-     * enchants and chose nobody.
+     * enchants and chose nobody. With the board it also judges {@code controllerOf(attached())}, "enchanted
+     * creature's controller" (Brand of Ill Omen): the player whose battlefield holds the permanent the source is
+     * attached to, nobody while it is attached to nothing or to a player.
+     *
+     * @throws UnsupportedOperationException for any other subject
+     */
+    public static boolean namesPlayer(GameData gameData, Permanent source, UUID controllerId, UUID playerId,
+                                      PlayerSubject players) {
+        if (players instanceof PlayerSubject.ControllerOf(PermanentSubject.Attached(boolean creature))
+                && !creature) {
+            if (playerId == null || source == null || source.getAttachedTo() == null) {
+                return false;
+            }
+            for (UUID battlefieldOwner : gameData.orderedPlayerIds) {
+                for (Permanent permanent : gameData.playerBattlefields.getOrDefault(battlefieldOwner, List.of())) {
+                    if (permanent.getId().equals(source.getAttachedTo())) {
+                        return playerId.equals(battlefieldOwner);
+                    }
+                }
+            }
+            return false;
+        }
+        return namesPlayer(source, controllerId, playerId, players);
+    }
+
+    /**
+     * As {@link #namesPlayer(GameData, Permanent, UUID, UUID, PlayerSubject)} without the one form that looks the
+     * board up, {@code controllerOf(attached())}.
      *
      * @throws UnsupportedOperationException for any other subject
      */

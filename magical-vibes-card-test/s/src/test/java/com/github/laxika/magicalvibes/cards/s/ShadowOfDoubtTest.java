@@ -1,15 +1,16 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.rules.TurnEvent;
-import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.PlayersCantSearchLibrariesThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.f.Farseek;
 import com.github.laxika.magicalvibes.cards.w.WateryGrave;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -33,7 +34,8 @@ class ShadowOfDoubtTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.hasFloatingEffectOnPlayer(null, PlayersCantSearchLibrariesThisTurnEffect.class)).isTrue();
+        assertThat(playersAffectedBy(CantSearchLibrariesEffect.class))
+                .containsExactlyInAnyOrder(player1.getId(), player2.getId());
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
 
         Card searchable = new WateryGrave();
@@ -76,11 +78,11 @@ class ShadowOfDoubtTest extends BaseCardTest {
     @DisplayName("The restriction expires during end-of-turn cleanup")
     void restrictionExpiresAtEndOfTurn() {
         gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
-                new PlayersCantSearchLibrariesThisTurnEffect(), null, Duration.UNTIL_END_OF_TURN));
+                new CantSearchLibrariesEffect(Subjects.eachPlayer(), false), null, Duration.UNTIL_END_OF_TURN));
 
         gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
-        assertThat(gd.hasFloatingEffectOnPlayer(null, PlayersCantSearchLibrariesThisTurnEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPlayer(null, CantSearchLibrariesEffect.class)).isFalse();
     }
 
     @Test

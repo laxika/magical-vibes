@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantSearchLibrariesAtAllEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantSearchLibrariesEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayersCantSearchLibrariesThisTurnEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 
 import java.util.Set;
 import java.util.UUID;
@@ -31,23 +31,26 @@ public final class LibrarySearchRestrictions {
      */
     public static Restriction find(GameData gameData, GameQueryService gameQueryService, UUID searcherId,
                                    UUID libraryOwnerId, UUID causingControllerId) {
-        if (gameData.hasFloatingEffectOnPlayer(searcherId, PlayersCantSearchLibrariesThisTurnEffect.class)) {
-            return new Restriction(null);
+        // A floated copy (Shadow of Doubt) reads "you" as the player it is on.
+        for (FloatingContinuousEffect floating
+                : gameData.floatingEffectsOnPlayer(searcherId, CantSearchLibrariesEffect.class)) {
+            UUID you = floating.affectedPlayerId() != null ? floating.affectedPlayerId() : floating.controllerId();
+            if (SubjectResolutionService.namesPlayer(null, you, searcherId,
+                    ((CantSearchLibrariesEffect) floating.effect()).players())) {
+                return new Restriction(null);
+            }
         }
         for (GameQueryService.ActiveStaticEffect<CardEffect> active
                 : gameQueryService.activeStaticEffects(gameData, CardEffect.class)) {
             UUID restrictionControllerId = active.controllerId();
             CardEffect effect = active.effect();
-            if (effect instanceof OpponentsCantSearchLibrariesAtAllEffect) {
-                if (!restrictionControllerId.equals(searcherId)) {
-                    return new Restriction(active.source());
-                }
-            } else if (effect instanceof OpponentsCantSearchLibrariesEffect) {
+            if (effect instanceof OpponentsCantSearchLibrariesEffect) {
                 if (causingControllerId != null && libraryOwnerId.equals(causingControllerId)
                         && !restrictionControllerId.equals(causingControllerId)) {
                     return new Restriction(active.source());
                 }
-            } else if (effect instanceof CantSearchLibrariesEffect restriction) {
+            } else if (effect instanceof CantSearchLibrariesEffect restriction && SubjectResolutionService.namesPlayer(
+                    active.source(), restrictionControllerId, searcherId, restriction.players())) {
                 Set<UUID> paid = gameData.paidSearchTaxPermanentIds.get(searcherId);
                 if (!restriction.payableToIgnore() || paid == null || !paid.contains(active.source().getId())) {
                     return new Restriction(active.source());

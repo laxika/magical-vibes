@@ -10,12 +10,11 @@ import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilE
 import com.github.laxika.magicalvibes.model.effect.GrantControllerLibraryTopPermissionForTargetPlayerUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToSpellsThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithManaValueUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayersCantPlayCardsFromHandUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureToHandAndOwnerCantCastSameNameUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardGrantFreePlayUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -53,13 +52,9 @@ import com.github.laxika.magicalvibes.model.effect.CastPermanentSpellsFromGravey
 import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardPermission;
 import com.github.laxika.magicalvibes.model.effect.PerpetualAnyManaTypeToCastSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerCantCastSpellsFromHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerCantPlayLandsEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerCantPlayLandsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DampingEngineEffect;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerCantCastSpellsWhileAttackingEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemGrantsCastingOptionEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentControllerCantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstMatchingSpellFlashGrant;
 import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalLandPlayRestrictionEffect;
@@ -72,10 +67,6 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffe
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAttackedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsMatchingPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChosenColorEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithManaValueAtMostEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithManaValueGreaterThanEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantPlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardPermission;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandOrCastSpellFromTopOfLibraryOncePerTurnEffect;
@@ -188,9 +179,8 @@ public class CastingPermissionService {
         if (isCastForbiddenByName(card, forbidden)) return false;
         if (isNoncreatureSpellCastRestricted(gameData, playerId, card)) return false;
         if (isNoncreatureSpellRestrictedByResolvedEffect(gameData, playerId, card)) return false;
-        if (isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)) return false;
         if (isOpponentsSpellMatchingPredicateRestricted(gameData, playerId, card)) return false;
-        if (isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) return false;
+        if (isSpellRestrictedByResolvedFilter(gameData, playerId, card)) return false;
         if (isAdditionalNonartifactSpellRestricted(gameData, playerId, card)) return false;
         if (isSpellCastingRestrictedByMostRecentSpell(gameData, card)) return false;
         if (isSpellCastingRestrictedByTopLibraryCard(gameData, card)) return false;
@@ -417,13 +407,6 @@ public class CastingPermissionService {
                             && (cantCast.appliesToAllPlayers() || pid.equals(playerId))) {
                         restricted.addAll(cantCast.restrictedTypes());
                     }
-                    // Brand of Ill Omen etc.: the enchanted permanent's controller is restricted,
-                    // which may be a different player than the Aura's controller.
-                    if (effect instanceof EnchantedPermanentControllerCantCastSpellTypeEffect enchantedCantCast
-                            && perm.isAttached()
-                            && playerId.equals(gameQueryService.findPermanentController(gameData, perm.getAttachedTo()))) {
-                        restricted.addAll(enchantedCantCast.restrictedTypes());
-                    }
                 }
             }
         }
@@ -473,13 +456,16 @@ public class CastingPermissionService {
     }
 
     /**
-     * Returns true if a static effect stops this player from playing lands: their own
-     * {@link ControllerCantPlayLandsEffect} permanent (Aggressive Mining), a global permanent-count
-     * restriction (Limited Resources), or an opponent's Ward of Bones (EVE) while this player
+     * Returns true if a static effect stops this player from playing lands: a static "can't play lands" naming them
+     * (Aggressive Mining's {@code PlayersCantCastSpellsFromZonesEffect(you(), playingLands())}), a global
+     * permanent-count restriction (Limited Resources), or an opponent's Ward of Bones (EVE) while this player
      * controls more lands than that opponent.
      */
     public boolean isLandPlayRestricted(GameData gameData, UUID playerId) {
-        if (controlsStatic(gameData, playerId, ControllerCantPlayLandsEffect.class)) return true;
+        if (gameQueryService.isPlayerRestricted(gameData, playerId, restriction ->
+                restriction.kind() == PlayerRestriction.Kind.PLAY_LANDS && !restriction.isZoneBound())) {
+            return true;
+        }
         if (hasActiveGlobalLandPlayRestriction(gameData)) return true;
         for (UUID controllerId : gameData.orderedPlayerIds) {
             if (controllerId.equals(playerId) || !controlsWardOfBones(gameData, controllerId)) continue;
@@ -494,18 +480,26 @@ public class CastingPermissionService {
         return false;
     }
 
+    /** Whether a zone-bound restriction stops {@code playerId} playing a land from their hand (Experimental Frenzy). */
     public boolean isLandPlayFromHandRestricted(GameData gameData, UUID playerId) {
-        return isPlayingCardsFromHandRestricted(gameData, playerId)
-                || controlsStatic(gameData, playerId, ControllerCantPlayLandsFromHandEffect.class);
+        return isLandPlayFromZoneRestricted(gameData, playerId, Zone.HAND);
     }
 
+    /** Whether a zone-bound restriction stops {@code playerId} casting spells from their hand (Experimental Frenzy). */
     public boolean isSpellCastingFromHandRestricted(GameData gameData, UUID playerId) {
-        return isPlayingCardsFromHandRestricted(gameData, playerId)
-                || controlsStatic(gameData, playerId, ControllerCantCastSpellsFromHandEffect.class);
+        return gameQueryService.isPlayerRestricted(gameData, playerId,
+                restriction -> restriction.stopsSpellsFrom(Zone.HAND));
     }
 
-    private boolean isPlayingCardsFromHandRestricted(GameData gameData, UUID playerId) {
-        return gameData.hasFloatingEffectOnPlayer(playerId, PlayersCantPlayCardsFromHandUntilNextTurnEffect.class);
+    /**
+     * Whether a resolved or static restriction bound to some zones stops {@code playerId} playing a land from
+     * {@code zone} ("they can't play cards from their hand", Memory Vessel; "other players can't play lands … from
+     * their graveyards", Shaman's Trance; "your opponents can't play land cards from graveyards", Tomik). A "can't play
+     * lands" restriction from every zone is asked apart.
+     */
+    private boolean isLandPlayFromZoneRestricted(GameData gameData, UUID playerId, Zone zone) {
+        return gameQueryService.isPlayerRestricted(gameData, playerId,
+                restriction -> restriction.isZoneBound() && restriction.stopsLandsFrom(zone));
     }
 
     private boolean hasActiveDampingEngine(GameData gameData, UUID playerId) {
@@ -621,91 +615,29 @@ public class CastingPermissionService {
     }
 
     /**
-     * Brisela, Voice of Nightmares: opponents of a source controller can't cast spells with mana
-     * value ≤ the effect's {@code maxManaValue}. Playability overload (no chosen X): X-cost spells
-     * are never blocked because a high enough X is always legal. Cast-time overload includes the
-     * chosen X in mana value.
+     * Whether a resolved restriction with a spell filter stops {@code card} for {@code playerId} (Living
+     * Breakthrough's "your opponents can't cast spells with the same mana value as that spell until your next turn").
+     * Playability overload (no chosen X): an {X} spell is stopped only if every X would be. The cast-time overload
+     * counts the chosen X (CR 202.3e).
      */
-    public boolean isOpponentsManaValueSpellCastRestricted(GameData gameData, UUID castingPlayerId, Card card) {
-        return isOpponentsManaValueSpellCastRestricted(gameData, castingPlayerId, card, null);
+    public boolean isSpellRestrictedByResolvedFilter(GameData gameData, UUID castingPlayerId, Card card) {
+        return isSpellRestrictedByResolvedFilter(gameData, castingPlayerId, card, null);
     }
 
-    public boolean isOpponentsManaValueSpellCastRestricted(GameData gameData, UUID castingPlayerId, Card card,
-                                                           Integer chosenX) {
-        ManaCost cost = card.getParsedManaCost();
-        boolean hasX = cost != null && cost.hasX();
-        int manaValue = card.getManaValue();
-        if (chosenX != null && hasX) {
-            manaValue += chosenX * Math.max(1, cost.getXSymbolCount());
-        }
-
-        Set<Integer> exactRestrictedValues = gameData.floatingEffectsOnPlayer(castingPlayerId,
-                        OpponentsCantCastSpellsWithManaValueUntilNextTurnEffect.class).stream()
-                .map(fe -> ((OpponentsCantCastSpellsWithManaValueUntilNextTurnEffect) fe.effect()).manaValue())
-                .collect(java.util.stream.Collectors.toSet());
-        boolean exactRestricted = chosenX != null
-                ? exactRestrictedValues.contains(manaValue)
-                : !hasX && exactRestrictedValues.contains(manaValue);
-
-        int tightestMax = Integer.MAX_VALUE;
-        boolean restricted = false;
-        for (GameQueryService.ActiveStaticEffect<CardEffect> active
-                : gameQueryService.activeStaticEffects(gameData, CardEffect.class)) {
-            if (active.controllerId().equals(castingPlayerId)) continue;
-            CardEffect effect = active.effect();
-            if (effect instanceof OpponentsCantCastSpellsWithManaValueGreaterThanEffect restriction
-                    && (restriction.spellFilter() == null
-                    || predicateEvaluationService.matchesCardPredicate(card,
-                    restriction.spellFilter(), null, gameData, castingPlayerId))) {
-                int limit = amountEvaluationService.evaluate(gameData,
-                        restriction.manaValueLimit(),
-                        new AmountContext(castingPlayerId, active.source(), castingPlayerId, 0, 0));
-                if (manaValue > limit) return true;
-            }
-            if (effect instanceof OpponentsCantCastSpellsWithManaValueAtMostEffect restriction) {
-                restricted = true;
-                tightestMax = Math.min(tightestMax, restriction.maxManaValue());
-            }
-        }
-        if (!restricted) return exactRestricted;
-
-        if (exactRestricted) return true;
-
-        if (chosenX == null) {
-            // Playability: any {X} spell can pick X high enough to exceed the cap.
-            if (hasX) return false;
-            return card.getManaValue() <= tightestMax;
-        }
-        return manaValue <= tightestMax;
-    }
-
-    /**
-     * Iona, Shield of Emeria: opponents of a source permanent's controller can't cast spells of
-     * that permanent's chosen color. Colorless spells and permanents without a chosen color are
-     * unaffected.
-     */
-    public boolean isOpponentsChosenColorSpellCastRestricted(GameData gameData, UUID castingPlayerId, Card card) {
-        if (card.getColors() == null || card.getColors().isEmpty()) return false;
-        for (UUID pid : gameData.orderedPlayerIds) {
-            if (pid.equals(castingPlayerId)) continue;
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf == null) continue;
-            for (Permanent perm : bf) {
-                if (perm.getChosenColor() != null
-                        && !perm.isFaceDown() && !gameQueryService.hasLostAllAbilities(gameData, perm)
-                        && card.getColors().contains(perm.getChosenColor())
-                        && perm.getCard().getStaticEffects().stream()
-                                .anyMatch(OpponentsCantCastSpellsOfChosenColorEffect.class::isInstance)) {
-                    return true;
-                }
+    public boolean isSpellRestrictedByResolvedFilter(GameData gameData, UUID castingPlayerId, Card card,
+                                                     Integer chosenX) {
+        for (PlayerRestriction restriction : gameData.restrictionsOnPlayer(castingPlayerId)) {
+            if (restriction.spellFilter() != null && restrictionMatchesSpell(gameData, restriction.spellFilter(),
+                    null, null, castingPlayerId, card, chosenX)) {
+                return true;
             }
         }
         return false;
     }
 
     /**
-     * Static restrictions such as Llawan's apply to spells matching a card predicate, either only
-     * to opponents of the permanent's controller or symmetrically to every player.
+     * Static restrictions such as Llawan's apply to spells matching a card predicate, for the players the restriction
+     * names: the opponents of the permanent's controller, every player, or the enchanted permanent's controller.
      */
     public boolean isOpponentsSpellMatchingPredicateRestricted(GameData gameData, UUID castingPlayerId,
                                                                  Card card) {
@@ -727,10 +659,10 @@ public class CastingPermissionService {
                 for (CardEffect effect : perm.getCard().getStaticEffects()) {
                     if (effect instanceof OpponentsCantCastSpellsMatchingPredicateEffect restriction
                             && !gameQueryService.hasLostAllAbilities(gameData, perm)
-                            && SubjectResolutionService.namesPlayer(perm, pid, castingPlayerId, restriction.players())
-                            && predicateEvaluationService.matchesCardPredicate(
-                            card, restriction.predicate(), perm.getCard().getId(), gameData, castingPlayerId,
-                            null, null, chosenX)) {
+                            && SubjectResolutionService.namesPlayer(
+                                    gameData, perm, pid, castingPlayerId, restriction.players())
+                            && restrictionMatchesSpell(gameData, restriction.predicate(), perm,
+                            perm.getCard().getId(), castingPlayerId, card, chosenX)) {
                         return true;
                     }
                 }
@@ -740,15 +672,38 @@ public class CastingPermissionService {
             for (CardEffect effect : emblem.staticEffects()) {
                 if (effect instanceof OpponentsCantCastSpellsMatchingPredicateEffect restriction
                         && SubjectResolutionService.namesPlayer(
-                                null, emblem.controllerId(), castingPlayerId, restriction.players())
-                        && predicateEvaluationService.matchesCardPredicate(
-                        card, restriction.predicate(), emblem.sourceCard().getId(), gameData, castingPlayerId,
-                        null, null, chosenX)) {
+                                gameData, null, emblem.controllerId(), castingPlayerId, restriction.players())
+                        && restrictionMatchesSpell(gameData, restriction.predicate(), null,
+                        emblem.sourceCard().getId(), castingPlayerId, card, chosenX)) {
                     return true;
                 }
             }
         }
         return false;
+    }
+
+    /**
+     * Whether a spell restriction's {@code predicate} stops {@code card}, its amounts evaluated for the casting player.
+     * With X chosen the spell is judged with it (CR 202.3e); before X is chosen a spell with {X} is stopped only if
+     * every X would stop it. The X values judged, 0, 1 and a large one, decide each mana-value bound and parity a
+     * restriction names.
+     */
+    private boolean restrictionMatchesSpell(GameData gameData, CardPredicate predicate, Permanent source,
+                                            UUID sourceCardId, UUID castingPlayerId, Card card, Integer chosenX) {
+        CardPredicate bound = amountEvaluationService.bindAmounts(gameData, predicate,
+                new AmountContext(castingPlayerId, source, castingPlayerId, 0, 0), true);
+        ManaCost cost = card.getParsedManaCost();
+        if (chosenX != null || cost == null || !cost.hasX()) {
+            return predicateEvaluationService.matchesCardPredicate(
+                    card, bound, sourceCardId, gameData, castingPlayerId, null, null, chosenX);
+        }
+        for (int x : new int[]{0, 1, UNCHOSEN_X_FOR_PERMISSION_CHECK}) {
+            if (!predicateEvaluationService.matchesCardPredicate(
+                    card, bound, sourceCardId, gameData, castingPlayerId, null, null, x)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -993,7 +948,6 @@ public class CastingPermissionService {
         if (isSpellCastingRestrictedByMostRecentSpell(gameData, card)) return true;
         if (isSpellCastingRestrictedByTopLibraryCard(gameData, card)) return true;
         if (isNoncreatureSpellRestrictedByResolvedEffect(gameData, playerId, card)) return true;
-        if (isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)) return true;
         if (isOpponentsSpellMatchingPredicateRestricted(gameData, playerId, card)) return true;
         return isSpellRestricted(card, restrictedSpellTypes, forbiddenCardNames);
     }
@@ -1649,26 +1603,7 @@ public class CastingPermissionService {
     }
 
     public boolean isLandPlayFromGraveyardRestricted(GameData gameData, UUID playerId) {
-        for (UUID controllerId : gameData.orderedPlayerIds) {
-            if (controllerId.equals(playerId)) {
-                continue;
-            }
-            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-            if (battlefield == null) {
-                continue;
-            }
-            for (Permanent permanent : battlefield) {
-                if (permanent.isFaceDown() || gameData.losesAllAbilitiesByEffect(permanent)
-                        || gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities()) {
-                    continue;
-                }
-                if (permanent.getCard().getStaticEffects().stream()
-                        .anyMatch(OpponentsCantPlayLandsFromGraveyardEffect.class::isInstance)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return isLandPlayFromZoneRestricted(gameData, playerId, Zone.GRAVEYARD);
     }
 
     public boolean canPlayLandsFromTopOfLibrary(GameData gameData, UUID playerId) {

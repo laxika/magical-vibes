@@ -4464,9 +4464,13 @@ public class GameData {
                 .toList();
     }
 
-    /** Whether a resolved restriction of {@code kind} applies to {@code playerId} now (see {@link #restrictionsOnPlayer}). */
+    /**
+     * Whether a resolved restriction of {@code kind} from every zone applies to {@code playerId} now (see
+     * {@link #restrictionsOnPlayer}); a zone-bound one is judged by the reader of its zone.
+     */
     public final boolean isRestricted(UUID playerId, PlayerRestriction.Kind kind) {
-        return restrictionsOnPlayer(playerId).stream().anyMatch(restriction -> restriction.kind() == kind);
+        return restrictionsOnPlayer(playerId).stream()
+                .anyMatch(restriction -> restriction.kind() == kind && !restriction.isZoneBound());
     }
 
     /**

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.model.effect.OtherPlayersCantPlayFromGraveyardsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 
@@ -1096,7 +1095,7 @@ public class GameActionAvailabilityService {
         if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, playerId, card)) {
             return false;
         }
-        if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) {
+        if (castingPermissionService.isSpellRestrictedByResolvedFilter(gameData, playerId, card)) {
             return false;
         }
         if (castingPermissionService.isAdditionalNonartifactSpellRestricted(gameData, playerId, card)) {
@@ -1621,7 +1620,6 @@ public class GameActionAvailabilityService {
 
         if (!isActivePlayer || !isMainPhase || landsPlayed >= gameQueryService.getMaxLandsThisTurn(gameData, playerId) || !stackEmpty
                 || gameData.isRestricted(playerId, PlayerRestriction.Kind.PLAY_LANDS)
-                || gameData.hasFloatingEffectOnPlayer(playerId, OtherPlayersCantPlayFromGraveyardsThisTurnEffect.class)
                 || castingPermissionService.isLandPlayRestricted(gameData, playerId)
                 || castingPermissionService.isLandPlayFromGraveyardRestricted(gameData, playerId)) {
             return playable;
@@ -1671,7 +1669,6 @@ public class GameActionAvailabilityService {
         if (!isActivePlayer || !isMainPhase || landsPlayed >= gameQueryService.getMaxLandsThisTurn(gameData, playerId)
                 || !gameData.stack.isEmpty()
                 || gameData.isRestricted(playerId, PlayerRestriction.Kind.PLAY_LANDS)
-                || gameData.hasFloatingEffectOnPlayer(playerId, OtherPlayersCantPlayFromGraveyardsThisTurnEffect.class)
                 || castingPermissionService.isLandPlayRestricted(gameData, playerId)
                 || castingPermissionService.isLandPlayFromGraveyardRestricted(gameData, playerId)
                 || !card.hasType(CardType.LAND)
@@ -1706,9 +1703,6 @@ public class GameActionAvailabilityService {
 
         // Ashes of the Abhorrent etc.: players can't cast spells from graveyards
         if (!gameQueryService.canPlayerCastSpellsFromZone(gameData, playerId, Zone.GRAVEYARD)) {
-            return playable;
-        }
-        if (gameData.hasFloatingEffectOnPlayer(playerId, OtherPlayersCantPlayFromGraveyardsThisTurnEffect.class)) {
             return playable;
         }
 

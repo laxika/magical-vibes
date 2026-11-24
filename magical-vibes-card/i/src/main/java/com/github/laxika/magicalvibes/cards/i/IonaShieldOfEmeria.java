@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChosenColorEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsMatchingPredicateEffect;
+import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
 
 @CardRegistration(set = "ZEN", collectorNumber = "13")
 @CardRegistration(set = "MM2", collectorNumber = "20")
@@ -14,6 +15,6 @@ public class IonaShieldOfEmeria extends Card {
 
     public IonaShieldOfEmeria() {
         addStaticEffect(new ChooseColorOnEnterEffect());
-        addStaticEffect(new OpponentsCantCastSpellsOfChosenColorEffect());
+        addStaticEffect(new OpponentsCantCastSpellsMatchingPredicateEffect(new CardHasSourceChosenColorPredicate()));
     }
 }

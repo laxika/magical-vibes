@@ -293,6 +293,33 @@ class SubjectResolutionServiceTest extends BaseCardTest {
     }
 
     @Nested
+    @DisplayName("namesPlayer(gameData, source, controller, player, controllerOf(attached()))")
+    class StaticEnchantedPermanentController {
+
+        @Test
+        @DisplayName("Names the enchanted permanent's controller, not the Aura's")
+        void enchantedPermanentController() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            Permanent pacifism = attach(player1, new Pacifism(), bears);
+            PlayerSubject subject = Subjects.controllerOf(attached());
+
+            assertThat(SubjectResolutionService.namesPlayer(gd, pacifism, player1.getId(), player2.getId(), subject))
+                    .isTrue();
+            assertThat(SubjectResolutionService.namesPlayer(gd, pacifism, player1.getId(), player1.getId(), subject))
+                    .isFalse();
+        }
+
+        @Test
+        @DisplayName("Names nobody while the source is attached to nothing")
+        void unattached() {
+            Permanent pacifism = addCreatureReady(player1, new Pacifism());
+
+            assertThat(SubjectResolutionService.namesPlayer(gd, pacifism, player1.getId(), player1.getId(),
+                    Subjects.controllerOf(attached()))).isFalse();
+        }
+    }
+
+    @Nested
     @DisplayName("attached()")
     class Attached {
 

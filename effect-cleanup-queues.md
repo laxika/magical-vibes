@@ -212,13 +212,13 @@ run below.
 | 33 | `cost-paid-land` | `AwardManaOfTypeLandsCouldProduceEffect` with a cost-paid land scope | C | 2 (2) | AwardManaOfTypeSacrificedLandCouldProduceEffect, AwardManaOfTypeUntappedLandCouldProduceEffect |
 | 33 | `player-mana` | `AwardManaToActivePlayerEffect` with a recipient `PlayerSubject` | S | 3 (7) | AwardManaToCastingPlayerEffect, AwardTargetedRestrictedManaEffect, AwardManaToActivePlayerEffect* |
 | 33 | `mana-rider` | `ManaCopyRiderEffect` / `AwardHasteGrantingManaEffect` with a rider kind | C | 2 (3) | AwardUncounterableGrantingManaEffect, ManaCopyRiderEffect |
-| 34 | `static-cast-restr` | `OpponentsCantCastSpellsMatchingPredicateEffect` + player subjects, predicates | S, C | 5 (6) | EnchantedPermanentControllerCantCastSpellTypeEffect, OpponentsCantCastSpellsOfChosenColorEffect, OpponentsCantCastSpellsWithManaValueAtMostEffect, OpponentsCantCastSpellsWithManaValueGreaterThanEffect, DefendingPlayerCantCastSpellsWhileAttackingEffect |
-| 34 | `restr-filter` | `PlayerRestrictionEffect`: spell kinds take a `CardPredicate` and source zones | C | 4 (5) | OpponentsCantCastSpellsFromOutsideHandUntilNextTurnEffect, OpponentsCantCastSpellsWithManaValueUntilNextTurnEffect, PlayersCantPlayCardsFromHandUntilNextTurnEffect, OtherPlayersCantPlayFromGraveyardsThisTurnEffect |
-| 34 | `zone-play` | `PlayersCantCastSpellsFromZonesEffect` or `ControllerCantPlayLandsEffect` + `PlayerRestriction` (check) | S, C | 5 (6) | ControllerCantCastSpellsFromHandEffect, ControllerCantPlayLandsEffect, ControllerCantPlayLandsFromHandEffect, OpponentsCantPlayLandsFromGraveyardEffect, NoncreatureSpellsCantBeCastFromZonesEffect |
-| 34 | `search-prohib` | `CantSearchLibrariesEffect` with a static `PlayerSubject`, floated | S | 3 (4) | OpponentsCantSearchLibrariesAtAllEffect, PlayersCantSearchLibrariesThisTurnEffect, CantSearchLibrariesEffect* |
-| 34 | `cast-lock` | `OpponentsCantCastOrActivateDuringYourTurnEffect` + subject, filters, `Condition` | S, C | 4 (5) | OpponentsCanCastSpellsOnlyAtSorcerySpeedEffect, PlayersCanCastAndActivateOnlyDuringOwnTurnEffect, PlayersCantCastInstantsOrActivateNonManaAbilitiesDuringCombatEffect, PlayersCantCastInstantsUnlessSpellOrAbilityOnStackEffect; 5m survivors join: OpponentsCantCastSpellsDuringCombatEffect, PlayersCanCastSpellsOnlyDuringOwnTurnEffect |
-| 34 | `faceup-prohib` | `CantBeTurnedFaceUpEffect` with a static subject and a your-turn `Condition` | S | 2 (2) | OpponentsPermanentsCantBeTurnedFaceUpEffect, CantBeTurnedFaceUpEffect* |
-| 34 | `cost-prohib` | one static "can't pay life [or sacrifice]" record | R | 3 (3) | PlayersCantPayLifeEffect, PlayersCantPayLifeOrSacrificeCreaturesEffect, PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect |
+| 34 | `static-cast-restr` | `OpponentsCantCastSpellsMatchingPredicateEffect` + player subjects, predicates Done 2026-11-24 (fold run 34): 4 folded onto `OpponentsCantCastSpellsMatchingPredicateEffect`; 1 left (Wardscale Dragon `unique`: a static defending-player subject with one user). | S, C | 5 (6) | EnchantedPermanentControllerCantCastSpellTypeEffect, OpponentsCantCastSpellsOfChosenColorEffect, OpponentsCantCastSpellsWithManaValueAtMostEffect, OpponentsCantCastSpellsWithManaValueGreaterThanEffect, DefendingPlayerCantCastSpellsWhileAttackingEffect |
+| 34 | `restr-filter` | `PlayerRestrictionEffect`: spell kinds take a `CardPredicate` and source zones Done 2026-11-24 (fold run 34): 4 folded (`PlayerRestriction.castingSpellsMatching`, `playingCardsFrom`, `.from` / `.fromAnywhereBut`). | C | 4 (5) | OpponentsCantCastSpellsFromOutsideHandUntilNextTurnEffect, OpponentsCantCastSpellsWithManaValueUntilNextTurnEffect, PlayersCantPlayCardsFromHandUntilNextTurnEffect, OtherPlayersCantPlayFromGraveyardsThisTurnEffect |
+| 34 | `zone-play` | `PlayersCantCastSpellsFromZonesEffect` or `ControllerCantPlayLandsEffect` + `PlayerRestriction` (check) Done 2026-11-24 (fold run 34): 5 folded onto `PlayersCantCastSpellsFromZonesEffect(players, restriction)`; one reader `GameQueryService.isPlayerRestricted`. | S, C | 5 (6) | ControllerCantCastSpellsFromHandEffect, ControllerCantPlayLandsEffect, ControllerCantPlayLandsFromHandEffect, OpponentsCantPlayLandsFromGraveyardEffect, NoncreatureSpellsCantBeCastFromZonesEffect |
+| 34 | `search-prohib` | `CantSearchLibrariesEffect` with a static `PlayerSubject`, floated Done 2026-11-24 (fold run 34): 2 folded onto `CantSearchLibrariesEffect(players, payable)`, floated by `GrantStaticEffectToPlayerEffect`. | S | 3 (4) | OpponentsCantSearchLibrariesAtAllEffect, PlayersCantSearchLibrariesThisTurnEffect, CantSearchLibrariesEffect* |
+| 34 | `cast-lock` | `OpponentsCantCastOrActivateDuringYourTurnEffect` + subject, filters, `Condition` Fold run 34: not started, 34b (plan in 34 Findings; Teferi stays a timing rule, CR 307.5). | S, C | 4 (5) | OpponentsCanCastSpellsOnlyAtSorcerySpeedEffect, PlayersCanCastAndActivateOnlyDuringOwnTurnEffect, PlayersCantCastInstantsOrActivateNonManaAbilitiesDuringCombatEffect, PlayersCantCastInstantsUnlessSpellOrAbilityOnStackEffect; 5m survivors join: OpponentsCantCastSpellsDuringCombatEffect, PlayersCanCastSpellsOnlyDuringOwnTurnEffect |
+| 34 | `faceup-prohib` | `CantBeTurnedFaceUpEffect` with a static subject and a your-turn `Condition` Done 2026-11-24 (fold run 34): 1 folded (Karlov, `ConditionalEffect(ControllerTurn, CantBeTurnedFaceUpEffect(...))`). | S | 2 (2) | OpponentsPermanentsCantBeTurnedFaceUpEffect, CantBeTurnedFaceUpEffect* |
+| 34 | `cost-prohib` | one static "can't pay life [or sacrifice]" record Done 2026-11-24 (fold run 34): 2 folded onto `PlayersCantPayLifeEffect(includingManaAbilities, sacrificeFilter)`; no new record. | R | 3 (3) | PlayersCantPayLifeEffect, PlayersCantPayLifeOrSacrificeCreaturesEffect, PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect |
 | 35 | `player-kw` | `GrantControllerKeywordUntilEndOfTurnEffect` with a `PlayerSubject` | S | 1 (1) | PlayersGainKeywordUntilEndOfTurnEffect |
 | 35 | `skip-step` | `SkipDrawStepEffect` with a step kind, a `PlayerSubject`, a `Condition` | C, S | 4 (5) | PlayersSkipUpkeepStepEffect, SkipChosenStepOrPhaseEffect, LivingConundrumDrawReplacementEffect, PossessedPortalDrawReplacementEffect |
 | 35 | `hand-size` | one hand-size record + `PlayerSubject` and `DynamicAmount` | R | 6 (14) | SetControllerMaximumHandSizeToSourceCountersEffect, SetOpponentMaximumHandSizeToSevenMinusCardTypesInGraveyardEffect, IncreaseControllerMaxHandSizeEffect, SetControllerMaximumHandSizeEffect*, SetOpponentMaximumHandSizeEffect*, ReduceOpponentMaxHandSizeEffect* |
@@ -407,7 +407,7 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - Token copies of face-down permanents, other consumers of a face-down object's real characteristics, opaque card ids: not looked at. Runs 16, 17. Unverified.
 - Spark Rupture judges `getCard().hasType(PLANESWALKER)`. P14. Low. Fold: mv-animation.
 - Soulless Jailer: `canCastSpellFromZone` reads `card.hasType(CREATURE)`, not the spell (an Adventure, a modal back face). P10. Unsure, low.
-- `CastingPermissionService.controlsStatic`'s remaining callers (three can't-play/cast effects, Ward of Bones) still don't skip a face-down source (CR 708.2). Fold run 16. Sure of the code.
+- `CastingPermissionService.controlsStatic`'s remaining caller (Ward of Bones) still doesn't skip a face-down source (CR 708.2). Fold run 16; the three can't-play/cast effects were fixed in fold run 34 (no test of their own). Sure of the code.
 - `ChoosePlayerEffectHandler`'s prompt names the source by `getCard().getName()`, not `FaceDownVisibility`. Fold run 12d. Low.
 - Counter-placement replacements judge an entering permanent by its printed types, not as it would exist on the battlefield (CR 614.12; Winding Constrictor's Mycosynth Lattice ruling). Fold run 22. Sure.
 
@@ -575,6 +575,7 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - A modal double-faced card offered by a matching back face can then be cast as either face (`legalModalOptions` ignores the cast filter; Velomachus with Jadzi). Fold run 18c. Fairly sure.
 - `RemoveCounterFromControlledPermanentCost` removes the first allowed counter kind instead of letting the payer choose. Fold run 23. Sure.
 - Whispersteel Dagger and Xanathar's "as though it were mana of any color" is applied as any type, so coloured mana pays {C} (CR 609.4b). Fold run 30. Fairly sure.
+- `GameQueryService.canPayLifeForCosts` takes no player, so a per-player "can't lose life" or "life total can't change" (Platinum Emperion) isn't asked on the cost paths (CR 119.8). Seen in fold run 34. Fairly sure of the code; whether another path checks it is unverified.
 
 **7. Layers and copy values.**
 
@@ -628,6 +629,7 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - `ChooseCardEffectHandler` logs a chosen card unnamed whenever it is in a hand (fold run 12e's zone check), even a revealed one; keep hidden-ness on the subject (fold run 20's note: a zone-based prompt check broke Addle and Intuition). Fold run 12e merge. Sure, low (log only).
 - A free cast refused by Teferi or Rule of Law logs "has no legal targets". Fold run 18c. Low.
 - `SetBasePowerToughnessEffectHandler`'s set and player-target log lines print "null" for a null side. No current card. Seen in fold run 31b. Sure.
+- Shadow of Doubt logs nothing since fold run 34: `GrantStaticEffectToPlayerEffect` has no log line. Seen in fold run 34. Sure, low.
 
 **9. Other.**
 
@@ -699,6 +701,7 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - Goblin Test Pilot: `ActivatedAbility.isNeedsTarget` makes the client ask for a target that is chosen at random and ignored by the server. Seen in fold run 26b. Sure of the view, unsure what the UI shows.
 - No seeded game random source: about 180 `ThreadLocalRandom` sites, random-target picks included, so tests can't fix a random pick. Cross-cutting; for the owner. Seen in fold run 26b. Sure.
 - AI: a counter-removal slot of `MoveCountersAmountChoice` always removes everything it is offered, so with Eventide's Shadow it may strip its own permanents' useful counters. AI quality, not rules. Seen in fold run 23c's report. Fairly sure.
+- Shaman's Trance, Tomik: "from their graveyards" is judged by zone, not by owner, so it also stops a cast from another player's graveyard. Seen in fold run 34. Sure of the code, low.
 
 Not a defect after all: `SuspectedEffect` (P08 "nothing reads it") is read by `LayerSystemService`, `UnsuspectEffectHandler` and
 `GameQueryService` (checked 2026-11-23; P14 is right). Betrayal of Flesh and Solar Tide on `EscalateSacrificeCost` pay the same as

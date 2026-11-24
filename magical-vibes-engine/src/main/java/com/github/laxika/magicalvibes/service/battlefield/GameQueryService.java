@@ -4,14 +4,13 @@ import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyCombatDamageFromTargetCreatureToOpponentsUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetCreatureFromTargetingSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.CraftyCutpurseEffect;
 import com.github.laxika.magicalvibes.model.effect.GatherSpecimensEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerCreatureSpellsCantBeCounteredThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerSpellsCantBeCounteredByColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerSpellsCantBeCounteredThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsFromOutsideHandUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.OtherPlayersCantPlayFromGraveyardsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromNamedPlanesToControlledPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -152,12 +151,10 @@ import com.github.laxika.magicalvibes.model.effect.SpendBlueManaAsAnyColorForAct
 import com.github.laxika.magicalvibes.model.effect.PlayersCantActivateAbilitiesOfGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCycleCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromZonesEffect;
-import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastFromZonesEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CardsCantEnterBattlefieldFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeOrSacrificeCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.JohanCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentLockEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeGainReplacementEffect;
@@ -258,7 +255,6 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDu
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsDuringCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantTargetLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantVentureIntoDungeonMoreThanOnceEachTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsPermanentsCantBeTurnedFaceUpEffect;
 import com.github.laxika.magicalvibes.model.effect.OwnCardTypeGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.OwnCreatureSubtypeGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.OwnLandSubtypeGrantingEffect;
@@ -859,32 +855,13 @@ public class GameQueryService {
     }
 
     /**
-     * Returns whether a permanent controlled by an opponent of the active player can't be turned
-     * face up because the active player controls a matching static restriction.
+     * Returns whether a face-down permanent can't be turned face up: a static {@code CantBeTurnedFaceUpEffect} names it
+     * (Unable to Scream's enchanted creature; Karlov Watchdog's opponents' permanents during its controller's turn),
+     * judged by the layered pass.
      */
     public boolean isTurnFaceUpPrevented(GameData gameData, Permanent permanent) {
-        if (permanent == null || !permanent.isFaceDown()) {
-            return false;
-        }
-        if (computeStaticBonus(gameData, permanent).turnFaceUpPrevented()) {
-            return true;
-        }
-        UUID permanentControllerId = findPermanentController(gameData, permanent.getId());
-        UUID activePlayerId = gameData.activePlayerId;
-        if (permanentControllerId == null || activePlayerId == null
-                || activePlayerId.equals(permanentControllerId)) {
-            return false;
-        }
-        List<Permanent> activeBattlefield = gameData.playerBattlefields.get(activePlayerId);
-        if (activeBattlefield == null) {
-            return false;
-        }
-        return activeBattlefield.stream()
-                .filter(source -> !source.isFaceDown())
-                .filter(source -> !gameData.losesAllAbilitiesByEffect(source)
-                        && !computeStaticBonus(gameData, source).losesAllAbilities())
-                .flatMap(source -> source.getCard().getStaticEffects().stream())
-                .anyMatch(OpponentsPermanentsCantBeTurnedFaceUpEffect.class::isInstance);
+        return permanent != null && permanent.isFaceDown()
+                && computeStaticBonus(gameData, permanent).turnFaceUpPrevented();
     }
 
     /**
@@ -2234,18 +2211,31 @@ public class GameQueryService {
 
     public boolean canPayLifeForCosts(GameData gameData, boolean manaAbility) {
         return !gameData.hasFloatingEffectOnPlayer(null, PlayersCantLoseLifeThisTurnEffect.class)
-                && (manaAbility || !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeEffect.class))
-                && !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeCreaturesEffect.class)
-                && !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect.class);
+                && costProhibitions(gameData).stream()
+                .noneMatch(prohibition -> !manaAbility || prohibition.includingManaAbilities());
     }
 
     /**
-     * Returns whether a creature sacrifice is allowed by the creature-only cost restriction.
-     * This deliberately does not include Yasharn's nonland-permanent restriction, because a land
-     * creature remains a legal sacrifice under Yasharn.
+     * The active "players can't pay life [or sacrifice …] to cast spells or activate abilities" statics (Karn's Sylex,
+     * Angel of Jubilation, Yasharn); a face-down permanent and one that lost its abilities have none.
+     */
+    private List<PlayersCantPayLifeEffect> costProhibitions(GameData gameData) {
+        if (!anyBattlefieldPrintsStaticEffect(gameData, PlayersCantPayLifeEffect.class)) {
+            return List.of();
+        }
+        return activeStaticEffects(gameData, PlayersCantPayLifeEffect.class).stream()
+                .map(ActiveStaticEffect::effect)
+                .toList();
+    }
+
+    /**
+     * Returns whether a creature sacrifice is allowed as a cost: no prohibition names creatures as such (Angel of
+     * Jubilation). Yasharn's nonland-permanent prohibition is not one, because a land creature remains a legal
+     * sacrifice under it; {@link #canSacrificePermanentForCosts} judges each permanent.
      */
     public boolean canSacrificeCreaturesForCosts(GameData gameData) {
-        return !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeCreaturesEffect.class);
+        return costProhibitions(gameData).stream()
+                .noneMatch(prohibition -> prohibition.sacrificeFilter() instanceof PermanentIsCreaturePredicate);
     }
 
     /**
@@ -2263,12 +2253,9 @@ public class GameQueryService {
         if (cantBeSacrificed(gameData, permanent)) {
             return false;
         }
-        if (anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect.class)
-                && !isLand(gameData, permanent)) {
-            return false;
-        }
-        return !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeCreaturesEffect.class)
-                || !isCreature(gameData, permanent);
+        return costProhibitions(gameData).stream().noneMatch(prohibition -> prohibition.sacrificeFilter() != null
+                && predicateEvaluationService.matchesPermanentPredicate(gameData, permanent,
+                prohibition.sacrificeFilter()));
     }
 
     /**
@@ -2708,84 +2695,48 @@ public class GameQueryService {
     }
 
     /**
-     * Returns {@code true} if no global restriction prevents players from casting spells from the
-     * given zone. Use {@link #canPlayerCastSpellsFromZone(GameData, UUID, Zone)} for
-     * player-scoped restrictions.
-     * Returns {@code false} when a {@link PlayersCantCastSpellsFromZonesEffect} whose
-     * {@code zones} contains {@code zone} is on any battlefield (e.g. Ashes of the Abhorrent
-     * for graveyards, Grafdigger's Cage for graveyards and libraries).
+     * Whether a restriction on {@code playerId} matching {@code stops} applies now: a resolved one
+     * ({@code GameData.restrictionsOnPlayer}, a {@link PlayerRestrictionEffect}'s) or an active static one
+     * ({@link PlayersCantCastSpellsFromZonesEffect}) whose players name them. A face-down permanent and one that lost its
+     * abilities restrict nobody (CR 708.2a, 613.1f); a conditional static restricts while its condition holds.
      */
-    public boolean canPlayersCastSpellsFromZone(GameData gameData, Zone zone) {
-        return !gameData.anyPermanentMatches(p ->
-                p.getCard().getStaticEffects().stream()
-                        .filter(PlayersCantCastSpellsFromZonesEffect.class::isInstance)
-                        .map(PlayersCantCastSpellsFromZonesEffect.class::cast)
-                        .anyMatch(e -> e.appliesToAllPlayers() && e.zones().contains(zone)));
-    }
-
-    /** Returns whether the given player may cast spells from the given zone. */
-    public boolean canPlayerCastSpellsFromZone(GameData gameData, UUID playerId, Zone zone) {
-        boolean restrictedByStaticEffect = false;
-        for (UUID controllerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-            if (battlefield == null) continue;
-            for (Permanent permanent : battlefield) {
-                if (hasLostAllAbilities(gameData, permanent)) continue;
-                boolean opponent = !controllerId.equals(playerId);
-                if (permanent.getCard().getStaticEffects().stream()
-                        .filter(PlayersCantCastSpellsFromZonesEffect.class::isInstance)
-                        .map(PlayersCantCastSpellsFromZonesEffect.class::cast)
-                        .anyMatch(e -> e.zones().contains(zone)
-                                && (e.appliesToAllPlayers() || opponent))) {
-                    restrictedByStaticEffect = true;
-                    break;
-                }
-            }
-            if (restrictedByStaticEffect) break;
+    public boolean isPlayerRestricted(GameData gameData, UUID playerId, Predicate<PlayerRestriction> stops) {
+        if (gameData.restrictionsOnPlayer(playerId).stream().anyMatch(stops)) {
+            return true;
         }
-        return !restrictedByStaticEffect
-                && (zone != Zone.GRAVEYARD
-                || !gameData.hasFloatingEffectOnPlayer(playerId, OtherPlayersCantPlayFromGraveyardsThisTurnEffect.class));
+        for (ActiveStaticEffect<PlayersCantCastSpellsFromZonesEffect> active
+                : activeStaticEffects(gameData, PlayersCantCastSpellsFromZonesEffect.class)) {
+            if (stops.test(active.effect().restriction()) && SubjectResolutionService.namesPlayer(
+                    active.source(), active.controllerId(), playerId, active.effect().players())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
-     * Returns {@code true} if the given spell can be cast from {@code zone}. This includes global
-     * zone locks and static effects that restrict only noncreature spells.
+     * Whether {@code playerId} may cast spells from {@code zone} at all: no zone-bound "can't cast spells" or "can't
+     * play cards" restriction covers it (Ashes of the Abhorrent, Grafdigger's Cage, Drannith Magistrate, Avatar's
+     * Wrath, Shaman's Trance). A restriction that depends on the spell is judged by
+     * {@link #canCastSpellFromZone(GameData, Card, Zone, UUID)}.
      */
-    public boolean canCastSpellFromZone(GameData gameData, Card card, Zone zone) {
-        if (!canPlayersCastSpellsFromZone(gameData, zone)) {
-            return false;
-        }
-        if (card.hasType(CardType.CREATURE)) {
-            return true;
-        }
-        return !gameData.anyPermanentMatches(p ->
-                !hasLostPrintedAbilities(gameData, p)
-                        && p.getCard().getStaticEffects().stream()
-                        .filter(NoncreatureSpellsCantBeCastFromZonesEffect.class::isInstance)
-                        .map(NoncreatureSpellsCantBeCastFromZonesEffect.class::cast)
-                        .anyMatch(e -> e.zones().contains(zone)));
+    public boolean canPlayerCastSpellsFromZone(GameData gameData, UUID playerId, Zone zone) {
+        return !isPlayerRestricted(gameData, playerId, restriction -> restriction.stopsSpellsFrom(zone));
     }
 
-    /** Returns whether the given player may cast the given spell from the given zone. */
+    /**
+     * Whether {@code playerId} may cast {@code card} from {@code zone}: no zone-bound restriction stops that spell there
+     * (a noncreature one for Soulless Jailer). A land card is played, not cast (CR 305.1): only a land or card-play
+     * restriction covering the zone stops it.
+     */
     public boolean canCastSpellFromZone(GameData gameData, Card card, Zone zone, UUID playerId) {
-        if (!canPlayerCastSpellsFromZone(gameData, playerId, zone)) {
-            return false;
+        if (card.hasType(CardType.LAND)) {
+            return !isPlayerRestricted(gameData, playerId,
+                    restriction -> restriction.isZoneBound() && restriction.stopsLandsFrom(zone));
         }
-        if (zone != Zone.HAND && !card.hasType(CardType.LAND)
-                && gameData.hasFloatingEffectOnPlayer(playerId,
-                OpponentsCantCastSpellsFromOutsideHandUntilNextTurnEffect.class)) {
-            return false;
-        }
-        if (card.hasType(CardType.CREATURE)) {
-            return true;
-        }
-        return !gameData.anyPermanentMatches(p ->
-                !hasLostPrintedAbilities(gameData, p)
-                        && p.getCard().getStaticEffects().stream()
-                        .filter(NoncreatureSpellsCantBeCastFromZonesEffect.class::isInstance)
-                        .map(NoncreatureSpellsCantBeCastFromZonesEffect.class::cast)
-                        .anyMatch(e -> e.zones().contains(zone)));
+        boolean creatureSpell = card.hasType(CardType.CREATURE);
+        return !isPlayerRestricted(gameData, playerId,
+                restriction -> restriction.stopsSpellFrom(zone, creatureSpell));
     }
 
     /**

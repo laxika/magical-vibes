@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentControllerCantCastSpellTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsMatchingPredicateEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.Set;
 
 @CardRegistration(set = "ICE", collectorNumber = "177")
 public class BrandOfIllOmen extends Card {
@@ -24,6 +24,7 @@ public class BrandOfIllOmen extends Card {
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CumulativeUpkeepEffect("{R}"))
 
                 // Enchanted creature's controller can't cast creature spells.
-                .addStaticEffect(new EnchantedPermanentControllerCantCastSpellTypeEffect(Set.of(CardType.CREATURE)));
+                .addStaticEffect(new OpponentsCantCastSpellsMatchingPredicateEffect(
+                        new CardTypePredicate(CardType.CREATURE), Subjects.controllerOf(Subjects.attached())));
     }
 }

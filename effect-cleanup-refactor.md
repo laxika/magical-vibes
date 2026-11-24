@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b (each in Findings; the fold queue marks its rows). Fold runs 34 and 23c are reported and wait to merge; 33, 27 and 32 are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                      |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34 (each in Findings; the fold queue marks its rows). Fold runs 23c and 33 are reported and wait to merge; 27, 32 and 29b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                       |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,448 / 2,753 (after fold run 26b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,430 / 2,748 (after fold run 34) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,910 rows over 4,457 classes (after fold run 26b). Latest verdict per class: `step-9` 579, unique 1,170, absorbed 925, split 641, blocked-other 509, survivor 335, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 579 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,935 rows over 4,458 classes (after fold run 34). Latest verdict per class: `step-9` 557, unique 1,171, absorbed 943, split 641, blocked-other 509, survivor 339, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 557 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -837,6 +837,13 @@ Delayed and global triggers:
 - `TargetSpec.chosenAtRandom` / `atRandom()`: "target … chosen at random", read by `CardEffect.targetChosenAtRandom()` at the stack door and the activation path; it fires "becomes the target" abilities and the crime event (CR 601.2c, 603.3d, 700.13) (fold run 26b).
 - `Subjects.targetPlayerChosenAtRandom()` (`PlayerSubject.TargetPlayer.chosenAtRandom`): "target opponent chosen at random", "select target player at random", for `DealDamageToPlayersEffect`, `DiscardEffect` and `GainControlOfTargetEffect.gainedBy`; opponent-only through the card's target filter (fold run 26b).
 - `DealDamageToAnyTargetEffect.toAnyTargetChosenAtRandom(amount)` and `SourceFightsTargetCreatureEffect.atRandom()`; the survivor's fight form goes through `FightSupport.fight` (fold run 26b).
+
+- `SubjectResolutionService.namesPlayer(gameData, source, controller, player, subject)`: also judges `controllerOf(attached())`, "enchanted creature's controller" (fold run 34).
+- `OpponentsCantCastSpellsMatchingPredicateEffect`: amounts bound for the casting player; {X} spells are offered unless every X is stopped; `AmountEvaluationService.bindAmounts(…, asSpell)` and `bindTriggeringSpellManaValue(…, asSpell)` count X (fold run 34).
+- `PlayerRestriction.castingSpellsMatching(filter)`, `.playingCardsFrom(zones)` (PLAY_CARDS), `.from(zones)` / `.fromAnywhereBut(zones)`; `stopsSpellsFrom`, `stopsSpellFrom(zone, creature)`, `stopsLandsFrom` (fold run 34).
+- `PlayersCantCastSpellsFromZonesEffect(PlayerSubject, PlayerRestriction)`: the static restriction; `GameQueryService.isPlayerRestricted(gd, player, predicate)` reads it with the resolved restrictions (fold run 34).
+- `CantSearchLibrariesEffect(players, payableToIgnore)`, floated by `GrantStaticEffectToPlayerEffect`, a floated "you" being its player (fold run 34).
+- `PlayersCantPayLifeEffect(includingManaAbilities, sacrificeFilter)`: every "can't pay life [or sacrifice X] to cast or activate" (fold run 34).
 
 ### Blocked causes still open
 
@@ -3416,6 +3423,34 @@ The not-a-fight departed-source form (`false`) keeps its own path.
 - Power Pack's random graveyard target goes on the stack as `nonTargeting(true)`: no targets-chosen event (CR 601.2c).
 
 **For the next run.** The seeded-random question is for the owner. Power Pack's non-targeting random graveyard target could join a defect run.
+
+### Step 9, fold run 34 (2026-11-24, parallel worktree)
+Six of seven batches done. Ratchet 3,511 / 2,805 → 3,493 / 2,800. Ledger 25 rows: absorbed 18, survivor 6, unique 1. 20 card files rewritten; Oracle text checked for 22 cards.
+
+| Batch | Result |
+|---|---|
+| static-cast-restr | 4 folded, 1 unique. The survivor's players also take `controllerOf(attached())`, judged by the new `SubjectResolutionService.namesPlayer(GameData, …)`. Predicate amounts are bound for the casting player (`bindAmounts(…, asSpell)` counts X, CR 202.3e). Before X is chosen, an {X} spell is stopped only if X = 0, 1 and a large X all stop it. Wardscale stays `unique` (its static defending-player subject would have one user). |
+| restr-filter | 4 folded. `PlayerRestriction` gains `castingSpellsMatching(filter)` (bound as it resolves through `bindTriggeringSpellManaValue(…, asSpell)`, CR 611.2c), `playingCardsFrom(zones)` (PLAY_CARDS, CR 701.18b) and `.from` / `.fromAnywhereBut`. `isOpponentsManaValueSpellCastRestricted` is renamed `isSpellRestrictedByResolvedFilter`. |
+| zone-play | 5 folded into `PlayersCantCastSpellsFromZonesEffect(PlayerSubject, PlayerRestriction)`, the static form of the restriction; the old constructors stay. One reader, `GameQueryService.isPlayerRestricted`, covers resolved and static restrictions over `activeStaticEffects`, so Rock Jockey's condition still works. The land-free and noncreature forms are allowed with zones. `GameData.isRestricted` counts only zone-free restrictions. |
+| search-prohib | 2 folded. `CantSearchLibrariesEffect(players, payable)`; Shadow of Doubt floats `(you(), false)` on each player, and "you" is read as the player the copy is on. |
+| cast-lock | not started (6 records with spell, ability and condition readers: needs its own run) |
+| faceup-prohib | 1 folded: Karlov is a `ConditionalEffect(ControllerTurn, …)`; `isTurnFaceUpPrevented` reads the layered pass only. |
+| cost-prohib | 2 folded, no new record: `PlayersCantPayLifeEffect(includingManaAbilities, sacrificeFilter)`, read over `activeStaticEffects` behind a printed-static prefilter. |
+
+**Behaviour changes.**
+- Iona reads a spell's colours after effects.
+- The static zone and land prohibitions skip face-down and ability-less sources (CR 708.2a, 613.1f). This fixes the three can't-play/cast callers in defect line "`controlsStatic`'s remaining callers"; Ward of Bones remains.
+- In `canCastSpellFromZone` a land card is stopped only by land or card-play restrictions (CR 305.1).
+- Logs: Avatar's Wrath, Memory Vessel, Shaman's Trance and Living Breakthrough log the survivor's line; Shadow of Doubt's line is gone.
+
+**Tests changed.** Fixtures that named deleted records were moved (`CastingPermissionServiceTest`, `GameQueryServiceTest`, `SpellCastingServiceTest`, MemoryVessel, NewFrontiers, NobleBenefactor, ShadowOfDoubt, WeirdHarvest). Added: Brisela X playability, two `namesPlayer` tests.
+
+**Seen, not changed.**
+- `canPayLifeForCosts` takes no player, so a per-player "can't lose life" or "life total can't change" (Platinum Emperion) is not asked on the cost paths (CR 119.8). It is unverified whether those paths check it elsewhere. Fairly sure of the code.
+- Shaman's Trance and Tomik are judged by zone, not by whose graveyard: "from their graveyards" also stops a cast from another player's graveyard. Sure of the code, low impact.
+- The face-down and lost-ability fix and the land exemption above have no test of their own.
+
+**For the next run.** Take `cast-lock` onto `OpponentsCantCastOrActivateDuringYourTurnEffect`. It needs a static `PlayerSubject`, a spell filter (or `PlayerRestriction`), an ability filter and a `Condition` judged for the restricted player. Teferi's sorcery timing must stay a timing rule (CR 307.5).
 
 ## Prompt
 

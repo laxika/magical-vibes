@@ -2812,15 +2812,24 @@ public class AmountEvaluationService {
      * amount of life you gained this turn" (Bre of Clan Stoutarm). A filter without the predicate is returned as it is.
      */
     public CardPredicate bindAmounts(GameData gameData, CardPredicate filter, AmountContext ctx) {
+        return bindAmounts(gameData, filter, ctx, false);
+    }
+
+    /**
+     * As {@link #bindAmounts(GameData, CardPredicate, AmountContext)}; with {@code asSpell} the bound mana value counts
+     * the X chosen for the card as a spell (CR 202.3e), for a restriction judging a spell being cast ("can't cast
+     * spells with mana value greater than the number of lands that player controls", Lavinia).
+     */
+    public CardPredicate bindAmounts(GameData gameData, CardPredicate filter, AmountContext ctx, boolean asSpell) {
         return switch (filter) {
             case null -> null;
             case CardManaValueAtMostAmountPredicate atMost ->
-                    new CardMaxManaValuePredicate(evaluate(gameData, atMost.amount(), ctx), false);
+                    new CardMaxManaValuePredicate(evaluate(gameData, atMost.amount(), ctx), asSpell);
             case CardAllOfPredicate all -> new CardAllOfPredicate(all.predicates().stream()
-                    .map(part -> bindAmounts(gameData, part, ctx)).toList());
+                    .map(part -> bindAmounts(gameData, part, ctx, asSpell)).toList());
             case CardAnyOfPredicate any -> new CardAnyOfPredicate(any.predicates().stream()
-                    .map(part -> bindAmounts(gameData, part, ctx)).toList());
-            case CardNotPredicate not -> new CardNotPredicate(bindAmounts(gameData, not.predicate(), ctx));
+                    .map(part -> bindAmounts(gameData, part, ctx, asSpell)).toList());
+            case CardNotPredicate not -> new CardNotPredicate(bindAmounts(gameData, not.predicate(), ctx, asSpell));
             default -> filter;
         };
     }
@@ -2833,20 +2842,30 @@ public class AmountEvaluationService {
      */
     public static CardPredicate bindTriggeringSpellManaValue(GameData gameData, CardPredicate filter,
                                                              StackEntry entry) {
+        return bindTriggeringSpellManaValue(gameData, filter, entry, false);
+    }
+
+    /**
+     * As {@link #bindTriggeringSpellManaValue(GameData, CardPredicate, StackEntry)}; with {@code asSpell} the bound
+     * mana value counts the X chosen for a card judged as a spell (CR 202.3e): "your opponents can't cast spells with
+     * the same mana value as that spell" (Living Breakthrough).
+     */
+    public static CardPredicate bindTriggeringSpellManaValue(GameData gameData, CardPredicate filter,
+                                                             StackEntry entry, boolean asSpell) {
         return switch (filter) {
             case null -> null;
             case CardManaValueEqualsTriggeringSpellPredicate ignored -> {
                 Integer manaValue = triggeringSpellManaValue(gameData, entry);
                 yield manaValue == null ? new CardNotPredicate(new CardTruePredicate())
-                        : new CardAllOfPredicate(List.of(new CardMinManaValuePredicate(manaValue, false),
-                                new CardMaxManaValuePredicate(manaValue, false)));
+                        : new CardAllOfPredicate(List.of(new CardMinManaValuePredicate(manaValue, asSpell),
+                                new CardMaxManaValuePredicate(manaValue, asSpell)));
             }
             case CardAllOfPredicate all -> new CardAllOfPredicate(all.predicates().stream()
-                    .map(part -> bindTriggeringSpellManaValue(gameData, part, entry)).toList());
+                    .map(part -> bindTriggeringSpellManaValue(gameData, part, entry, asSpell)).toList());
             case CardAnyOfPredicate any -> new CardAnyOfPredicate(any.predicates().stream()
-                    .map(part -> bindTriggeringSpellManaValue(gameData, part, entry)).toList());
+                    .map(part -> bindTriggeringSpellManaValue(gameData, part, entry, asSpell)).toList());
             case CardNotPredicate not -> new CardNotPredicate(bindTriggeringSpellManaValue(gameData, not.predicate(),
-                    entry));
+                    entry, asSpell));
             default -> filter;
         };
     }
