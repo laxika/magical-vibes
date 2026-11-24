@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -31,7 +32,7 @@ class GarrukRelentlessTest extends BaseCardTest {
 
     // Front face — 0: Deal 3 damage to target creature; it deals power back
 
-    @CardUsed({GarrukRelentless.class, DarkthicketWolf.class, KessigCagebreakers.class, MarkovPatrician.class, WalkingCorpse.class, UnburialRites.class})
+    @CardUsed({GarrukRelentless.class, DarkthicketWolf.class, KessigCagebreakers.class, MarkovPatrician.class, WalkingCorpse.class, UnburialRites.class, FurnaceOfRath.class, GrizzlyBears.class})
     @Nested
     @DisplayName("Front face 0: fight ability")
     class FightAbility {
@@ -70,6 +71,21 @@ class GarrukRelentlessTest extends BaseCardTest {
             // Garruk should have transformed after state trigger resolved
             assertThat(garruk.isTransformed()).isTrue();
             assertThat(garruk.getCard().getName()).isEqualTo("Garruk, the Veil-Cursed");
+        }
+
+        @Test
+        @DisplayName("The creature's damage to Garruk is damage, so a damage doubler doubles it")
+        void creatureDamageToGarrukIsDoubledByFurnaceOfRath() {
+            harness.addToBattlefield(player1, new FurnaceOfRath());
+            Permanent garruk = addFrontFace(player1, 5);
+            Permanent target = addCreature(player2, new GrizzlyBears());
+
+            int garrukIdx = gd.playerBattlefields.get(player1.getId()).indexOf(garruk);
+            harness.activateAbility(player1, garrukIdx, 0, target.getId(), null);
+            harness.passBothPriorities();
+
+            // The 2-power Bears deals 4 damage to Garruk under Furnace of Rath (CR 120.3c): 5 - 4 = 1
+            assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
         }
 
         @Test

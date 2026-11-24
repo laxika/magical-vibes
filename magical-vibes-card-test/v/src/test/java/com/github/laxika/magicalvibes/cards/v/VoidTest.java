@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.n.NomadicElf;
 import com.github.laxika.magicalvibes.cards.r.RielleTheEverwise;
 import com.github.laxika.magicalvibes.cards.s.SterlingGrove;
+import com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales;
 import com.github.laxika.magicalvibes.cards.t.TsabosWeb;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Void.class, AncientKavu.class, Forest.class, NomadicElf.class, RielleTheEverwise.class, SterlingGrove.class, TsabosWeb.class})
+@CardUsed({Void.class, AncientKavu.class, Forest.class, NomadicElf.class, RielleTheEverwise.class, SterlingGrove.class, TamiyoCollectorOfTales.class, TsabosWeb.class})
 class VoidTest extends BaseCardTest {
 
     @Test
@@ -37,8 +39,8 @@ class VoidTest extends BaseCardTest {
 
         castVoid(player2.getId());
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        harness.handleListChoice(player1, "2");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.XValueChoice.class);
+        harness.handleXValueChosen(player1, 2);
 
         harness.assertNotOnBattlefield(player1, "Nomadic Elf");
         harness.assertNotOnBattlefield(player2, "Nomadic Elf");
@@ -61,7 +63,7 @@ class VoidTest extends BaseCardTest {
 
         castVoid(player2.getId());
 
-        harness.handleListChoice(player1, "0");
+        harness.handleXValueChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player2.getId()))
                 .extracting(Card::getName)
@@ -80,7 +82,7 @@ class VoidTest extends BaseCardTest {
 
         castVoid(player2.getId());
 
-        harness.handleListChoice(player1, "2");
+        harness.handleXValueChosen(player1, 2);
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player2.getId()))
@@ -96,7 +98,7 @@ class VoidTest extends BaseCardTest {
         addVoidMana();
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
-        harness.handleListChoice(player1, "2");
+        harness.handleXValueChosen(player1, 2);
 
         harness.assertInHand(player1, "Nomadic Elf");
         harness.assertNotInHand(player2, "Nomadic Elf");
@@ -121,7 +123,7 @@ class VoidTest extends BaseCardTest {
         harness.setHand(player2, List.of(new AncientKavu(), new Forest()));
 
         castVoid(player2.getId());
-        harness.handleListChoice(player1, "100");
+        harness.handleXValueChosen(player1, 100);
 
         harness.assertOnBattlefield(player2, "Nomadic Elf");
         assertThat(gd.playerHands.get(player2.getId()))
@@ -135,16 +137,17 @@ class VoidTest extends BaseCardTest {
     void numberChoicesDoNotDependOnHiddenHand() {
         harness.setHand(player2, List.of(new NomadicElf()));
         castVoid(player2.getId());
-        List<String> firstChoices = gd.interaction
-                .activeInteraction(PendingInteraction.ColorChoice.class).options();
-        harness.handleListChoice(player1, "0");
+        PendingInteraction.XValueChoice firstChoice = gd.interaction
+                .activeInteraction(PendingInteraction.XValueChoice.class);
+        harness.handleXValueChosen(player1, 0);
 
         harness.setHand(player2, List.of(new AncientKavu()));
         castVoid(player2.getId());
-        List<String> secondChoices = gd.interaction
-                .activeInteraction(PendingInteraction.ColorChoice.class).options();
+        PendingInteraction.XValueChoice secondChoice = gd.interaction
+                .activeInteraction(PendingInteraction.XValueChoice.class);
 
-        assertThat(secondChoices).containsExactlyElementsOf(firstChoices);
+        assertThat(secondChoice.minValue()).isEqualTo(firstChoice.minValue()).isZero();
+        assertThat(secondChoice.maxValue()).isEqualTo(firstChoice.maxValue());
     }
 
     @Test
@@ -156,7 +159,7 @@ class VoidTest extends BaseCardTest {
         addVoidMana();
 
         harness.castAndResolveSorcery(player1, 0, player1.getId());
-        harness.handleListChoice(player1, "2");
+        harness.handleXValueChosen(player1, 2);
 
         harness.assertNotOnBattlefield(player2, "Nomadic Elf");
         harness.assertNotInHand(player1, "Nomadic Elf");
@@ -171,7 +174,7 @@ class VoidTest extends BaseCardTest {
         castVoid(player2.getId());
 
         assertThat(gameLogContains("reveals their hand")).isFalse();
-        harness.handleListChoice(player1, "2");
+        harness.handleXValueChosen(player1, 2);
 
         assertThat(gd.gameLog.stream().map(entry -> entry.plainText())
                 .filter(text -> text.contains("reveals their hand")))
@@ -179,6 +182,20 @@ class VoidTest extends BaseCardTest {
                         .contains("Nomadic Elf", "Ancient Kavu", "Forest"));
         harness.assertNotInHand(player2, "Nomadic Elf");
         harness.assertInHand(player2, "Ancient Kavu");
+        harness.assertInHand(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("A player whose opponents can't cause them to discard keeps their matching cards")
+    void opponentCantCauseDiscardUnderTamiyo() {
+        harness.addToBattlefieldAndReturn(player2, new TamiyoCollectorOfTales())
+                .setCounterCount(CounterType.LOYALTY, 5);
+        harness.setHand(player2, List.of(new NomadicElf(), new Forest()));
+
+        castVoid(player2.getId());
+        harness.handleXValueChosen(player1, 2);
+
+        harness.assertInHand(player2, "Nomadic Elf");
         harness.assertInHand(player2, "Forest");
     }
 

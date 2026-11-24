@@ -26,10 +26,12 @@ class CemeteryDesecratorTest extends BaseCardTest {
             "Target creature an opponent controls gets -X/-X until end of turn";
 
     @Test
-    @DisplayName("Its ETB exiles another graveyard card before choosing the mode")
+    @DisplayName("Its ETB exiles another graveyard card, chosen among every graveyard, before choosing the mode")
     void etbExilesAnotherCardBeforeModeChoice() {
         Card exiled = new GrizzlyBears();
+        Card kept = new Forest();
         harness.setGraveyard(player2, List.of(exiled));
+        harness.setGraveyard(player1, List.of(kept));
 
         harness.enterBattlefieldAndReturn(player1, new CemeteryDesecrator());
         harness.passBothPriorities();
@@ -37,12 +39,12 @@ class CemeteryDesecratorTest extends BaseCardTest {
         PendingInteraction.MultiGraveyardChoice graveyardChoice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(graveyardChoice).isNotNull();
-        assertThat(graveyardChoice.validCardIds()).containsExactly(exiled.getId());
+        assertThat(graveyardChoice.validCardIds()).containsExactlyInAnyOrder(exiled.getId(), kept.getId());
 
         harness.handleMultipleCardsChosen(player1, List.of(exiled.getId()));
-        harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(exiled);
+        harness.assertInGraveyard(player1, "Forest");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
     }
 
@@ -92,7 +94,7 @@ class CemeteryDesecratorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The death trigger excludes Cemetery Desecrator itself from the graveyard choice")
+    @DisplayName("The death trigger excludes Cemetery Desecrator itself, so the only other card is exiled unasked")
     void deathTriggerExcludesSourceCard() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new CemeteryDesecrator());
         Permanent target = addCreatureReady(player2, new HillGiant());
@@ -104,13 +106,8 @@ class CemeteryDesecratorTest extends BaseCardTest {
         harness.runStateBasedActions();
         harness.passBothPriorities();
 
-        PendingInteraction.MultiGraveyardChoice graveyardChoice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
-        assertThat(graveyardChoice).isNotNull();
-        assertThat(graveyardChoice.validCardIds()).containsExactly(exiled.getId());
-
-        harness.handleMultipleCardsChosen(player1, List.of(exiled.getId()));
-        harness.passBothPriorities();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(exiled);
+        harness.assertInGraveyard(player1, "Cemetery Desecrator");
         harness.handleListChoice(player1, DEBUFF_MODE);
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, source.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -171,8 +168,6 @@ class CemeteryDesecratorTest extends BaseCardTest {
         Card exiled = new Forest();
         harness.setGraveyard(player1, List.of(exiled));
         harness.enterBattlefieldAndReturn(player1, new CemeteryDesecrator());
-        harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player1, List.of(exiled.getId()));
         harness.passBothPriorities();
         harness.handleListChoice(player1, REMOVE_COUNTERS_MODE);
         harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Cemetery Desecrator"));
@@ -236,8 +231,6 @@ class CemeteryDesecratorTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new CemeteryDesecrator());
         harness.passBothPriorities();
 
-        harness.handleMultipleCardsChosen(player1, List.of(exiled.getId()));
-        harness.passBothPriorities();
         harness.handleListChoice(player1, mode);
     }
 }

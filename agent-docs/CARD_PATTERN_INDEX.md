@@ -101,7 +101,7 @@
 | target opponent creature perpetually gets -2/-2 and gains an upkeep trigger that perpetually gives it -1/-1 | `s/SewerPlague.java` + `PerpetuallyBoostTargetCreatureEffect` + `PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect` |
 | ETB choose-up-to-one modal with a two-creature perpetual base-power exchange or a perpetual self base-P/T set | `h/HighFaePrankster.java` + `ChooseOneAtTriggerTimeEffect` + `PerpetuallyExchangeTargetCreatureBasePowerEffect` / `PerpetuallySetSourceBasePowerToughnessEffect` |
 | attack trigger alternates between a tapped Powerstone and an exact-Powerstone-count nonland Seek | `y/YotianCourier.java` + `ChooseOneAtTriggerTimeEffect(ChooseOneEffect.notChosenDuringLastCombat(...))` + `Permanent.chosenMode` |
-| filtered public hand reveal, mandatory discard or fallback draw, and life loss | `m/MindSpike.java` + `MindSpikeEffect` |
+| filtered public hand reveal, mandatory discard or fallback draw, and life loss | `m/MindSpike.java` (reveal, choose, discard, `NotCondition(HappenedThisWay(REVEAL))` draw) |
 | ETB reveals matching creature and land cards from a target opponent's hand, then perpetually makes the chosen card enter tapped | `b/BoareskyrTollkeeper.java` + `RevealMatchingCardsFromTargetHandAndKeepEffect` + `PerpetuallyEnterTappedChosenCardEffect` |
 | graveyard-count beginning-of-combat boost with five color-specific specialize faces | `s/SarevokTheUsurper.java` + `SpecializeSarevokEffect` + `SeekLibraryAndConjureDuplicatesInGraveyardEffect` |
 | attack-trigger source-power boost with five keyword/untap specialize faces | `s/SkanosDragonVassal.java` + `SpecializeSkanosEffect` |

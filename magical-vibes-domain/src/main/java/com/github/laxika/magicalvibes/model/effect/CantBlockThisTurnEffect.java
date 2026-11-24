@@ -8,6 +8,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * controller"); which creatures it covers is checked whenever blockers are declared.
  *
  * <p>Forms: {@code target()} (target creature, multi-target-group), {@code attached()} (enchanted creature),
+ * {@code source()} ("this creature can't block this turn" in its own ability; Ydwen Efreet's lost flip),
  * {@code controlledBy(targetPlayer())} ("creatures target player controls"), {@code controlledBy(eachPlayer(), filter)}
  * ("creatures without flying can't block this turn"), {@code controlledBy(controllerOf(target()), creature ∧
  * ¬PermanentIsTargetCardPredicate)} ("other creatures that player controls", Mark for Death),
@@ -25,7 +26,7 @@ public record CantBlockThisTurnEffect(PermanentSubject subject) implements CardE
 
     public CantBlockThisTurnEffect {
         if (!(subject instanceof PermanentSubject.Target || subject instanceof PermanentSubject.Attached
-                || subject instanceof PermanentSubject.ControlledBy || subject instanceof PermanentSubject.ThisWay
+                || subject instanceof PermanentSubject.Source || subject instanceof PermanentSubject.ControlledBy || subject instanceof PermanentSubject.ThisWay
                 || subject instanceof PermanentSubject.Except except
                         && except.permanents() instanceof PermanentSubject.ControlledBy)) {
             throw new IllegalArgumentException("Unsupported can't-block subject: " + subject);
