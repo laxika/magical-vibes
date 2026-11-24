@@ -54,11 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentToughnessBe
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesOnlyLandEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCardsInAllGraveyardsEffect;
-import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCardsInControllerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfAllLandsEffect;
-import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCardsExiledWithBrainCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCardsExiledWithCageCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreaturesWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
@@ -66,7 +62,6 @@ import com.github.laxika.magicalvibes.model.effect.GainActivatedAndTriggeredAbil
 import com.github.laxika.magicalvibes.model.effect.GainAbilitiesOfLastChosenExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreaturesOpponentsControlEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfChosenPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfTopLibraryCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLoyaltyAbilitiesOfOtherPlaneswalkersEffect;
 import com.github.laxika.magicalvibes.model.effect.ShareLoyaltyAbilitiesWithOtherPlaneswalkersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedPermanentEffect;
@@ -75,10 +70,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetHauntedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureWhileMonarchEffect;
-import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsExiledWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCardsExiledWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCardsExiledWithSourceToEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessEffect;
@@ -447,9 +439,6 @@ public final class LayerClassifier {
                         : new LayerClassification(Set.of(Layer.L6_ABILITIES), false, false)));
         map.put(GrantKeywordToOwnCreaturesFromGraveyardEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect.class, fixed(Layer.L6_ABILITIES));
-        map.put(GainKeywordsOfCardsExiledWithSourceEffect.class, fixed(Layer.L6_ABILITIES));
-        map.put(GainKeywordsOfCardsExiledWithSourceToEquippedCreatureEffect.class,
-                fixed(Layer.L6_ABILITIES));
         map.put(RemoveKeywordEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(RemoveAllProtectionUntilEndOfTurnEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectUntilEndOfTurnEffect.class,
@@ -503,23 +492,15 @@ public final class LayerClassifier {
         map.put(GrantKeywordToCreaturesOfChosenParityEffect.class, fixed(Layer.L6_ABILITIES));
         // Self ability-scans (Cairn Wanderer family) carry the CDA flag as a modeling decision
         // of the migration plan — see LAYER_SYSTEM.md "Classification notes".
-        map.put(GainKeywordsOfCreatureCardsInAllGraveyardsEffect.class,
-                fixedCharacteristicDefining(Layer.L6_ABILITIES));
-        map.put(GainKeywordsOfCreatureCardsExiledWithSourceEffect.class,
-                fixedCharacteristicDefining(Layer.L6_ABILITIES));
-        map.put(GainActivatedAbilitiesOfCardsInAllGraveyardsEffect.class,
-                fixedCharacteristicDefining(Layer.L6_ABILITIES));
+        map.put(GainKeywordsOfCreatureCardsExiledWithSourceEffect.class, new Entry(Set.of(Layer.L6_ABILITIES),
+                (effect, fromOwnStaticSlot) -> new LayerClassification(Set.of(Layer.L6_ABILITIES),
+                        ((GainKeywordsOfCreatureCardsExiledWithSourceEffect) effect).recipient()
+                                instanceof PermanentSubject.Source, false)));
         map.put(GainActivatedAbilitiesOfAllLandsEffect.class,
-                fixedCharacteristicDefining(Layer.L6_ABILITIES));
-        map.put(GainActivatedAbilitiesOfCardsInControllerGraveyardEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainActivatedAbilitiesOfExiledCardsEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainActivatedAndTriggeredAbilitiesOfExiledCardsEffect.class,
-                fixedCharacteristicDefining(Layer.L6_ABILITIES));
-        map.put(GainActivatedAbilitiesOfCardsExiledWithBrainCountersEffect.class,
-                fixedCharacteristicDefining(Layer.L6_ABILITIES));
-        map.put(GainActivatedAbilitiesOfCardsExiledWithCageCountersEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainAbilitiesOfLastChosenExiledCardEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
@@ -531,8 +512,6 @@ public final class LayerClassifier {
                 fixed(Layer.L6_ABILITIES));
         map.put(GainActivatedAbilitiesOfOwnCreaturesEffect.class,
                 fixed(Layer.L6_ABILITIES));
-        map.put(GainActivatedAbilitiesOfTopLibraryCardEffect.class,
-                fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainLoyaltyAbilitiesOfOtherPlaneswalkersEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(ShareLoyaltyAbilitiesWithOtherPlaneswalkersEffect.class, fixed(Layer.L6_ABILITIES));
 

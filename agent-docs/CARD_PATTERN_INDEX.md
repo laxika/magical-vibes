@@ -73,7 +73,7 @@
 | playtest artifact that replaces normal turns with sequential phases | `r/RunedTerror.java` + `RunedTerrorEffect` + turn progression phase-cycle support |
 | playtest artifact with tap-to-surveil and temporary graveyard animation | `m/Microscope.java` + `AnimateTargetGraveyardCardEffect` |
 | global static replacement that makes every creature assign combat damage using mana value | `n/NarodTheBeigeFlower.java` + `AssignCombatDamageWithManaValueEffect(Subjects.otherCreatures())` |
-| global static replacement that exiles nontoken creatures with blood counters and grants the source keywords from those exiled cards | `r/RayamiFirstOfTheFallen.java` + `ExileNontokenCreaturesInsteadOfDyingWithBloodCounterEffect` + `GainKeywordsOfCreatureCardsExiledWithSourceEffect(..., BLOOD)` |
+| global static replacement that exiles nontoken creatures with blood counters and grants the source keywords from those exiled cards | `r/RayamiFirstOfTheFallen.java` + `ExileNontokenCreaturesInsteadOfDyingWithBloodCounterEffect` + `GainKeywordsOfCreatureCardsExiledWithSourceEffect(exiledCards(creature with BLOOD counter), COMMON_KEYWORDS, true)` |
 | playtest legendary banding creature with banding-creature cost reduction and band-size attack boosts | `c/ChatzukMightyGuitarist.java` + `ReduceCastCostForMatchingSpellsEffect` + `TriggerMultiplicity.EACH_BAND` + `BoostCreaturesInAttackingBandsEffect` |
 | playtest creature that enters with five custom counters for each Forest or Plant its controller controls | `d/DairyCow.java` + `EnterWithCountersEffect(MILK, Scaled(PermanentCount(Forest or Plant, CONTROLLER), 5))` |
 | playtest creature with library-only ninjutsu and a mandatory combat-damage draw | `p/PanglacialShinobi.java` + `LibraryNinjutsuEffect` + `DrawCardEffect` |

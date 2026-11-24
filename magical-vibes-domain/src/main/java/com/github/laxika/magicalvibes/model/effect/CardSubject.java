@@ -19,8 +19,9 @@ import java.util.Objects;
  * of permanents and spells, so only the perpetual verbs read it.
  *
  * <p>{@link TargetCard} and {@link TargetExiledCard} declare a card target, and a variant of a target player's cards
- * that player ({@link #declaresTarget()}, {@link #targetSpec()}). Every variant reads a stack entry, so a
- * static ability can't use one.
+ * that player ({@link #declaresTarget()}, {@link #targetSpec()}). A static ability can use {@link InExile},
+ * {@link ExiledWithSource}, {@link InGraveyards}, {@link TopmostInLibrary} and {@link ExiledAsCost} with players it
+ * names without a stack entry ({@code SubjectResolutionService.namedCards}); every other variant reads a stack entry.
  *
  * <p>The variants and the wording each stands for are listed in {@code agent-docs/SUBJECTS_REFERENCE.md}.
  */
@@ -132,6 +133,9 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
      * "The exiled card" of an ability whose cost exiled it: the card this ability or spell exiled to pay for itself,
      * while it is in exile (CR 400.7j, 608.2h), whatever the source imprinted or exiled before or since; "the exiled
      * cards" of an activated ability whose cost exiled several from a graveyard (Coin of Fate), those still in exile.
+     * For a static ability of a permanent, the cards exiled to pay the cost of the spell it was with delve (CR 702.66a):
+     * "if a creature card with flying was exiled with this creature's delve ability" asks about the exile, so a card
+     * that has left exile since still counts (Soulflayer).
      */
     record ExiledAsCost() implements CardSubject {
     }
@@ -210,17 +214,25 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
     /**
      * "The cards exiled with this artifact", "the exiled card" of a linked ability (CR 607.2a): the cards exiled with
      * the source, as the permanent it is or last was, that are still in exile; with a {@code filter}, those matching
-     * it as they are now, a card exiled face down as one with no characteristics (CR 406.3a).
+     * it as they are now, a card exiled face down as one with no characteristics (CR 406.3a). With an
+     * {@code abilityLink}, only the cards the source's ability of that link exiled: an ability the source gained
+     * exiles under a link of its own, so "creature cards exiled with it" doesn't read them (CR 607.2a, 607.5).
      *
-     * @param owners "you own": whose cards of them; {@code null} for everybody's
-     * @param filter which of them; {@code null} for all of them
+     * @param owners      "you own": whose cards of them; {@code null} for everybody's
+     * @param filter      which of them; {@code null} for all of them
+     * @param abilityLink the link the exiling ability records on each card it exiles; {@code null} for every card
+     *                    exiled with the source
      */
-    record ExiledWithSource(PlayerSubject owners, CardPredicate filter) implements CardSubject {
+    record ExiledWithSource(PlayerSubject owners, CardPredicate filter, String abilityLink) implements CardSubject {
 
         public ExiledWithSource {
             if (owners != null && owners.declaresTarget()) {
                 throw new IllegalArgumentException("The effect reading the cards declares a player target: " + owners);
             }
+        }
+
+        public ExiledWithSource(PlayerSubject owners, CardPredicate filter) {
+            this(owners, filter, null);
         }
     }
 

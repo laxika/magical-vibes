@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfTopLibraryCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "M21", collectorNumber = "139")
@@ -16,6 +17,7 @@ public class ConspicuousSnoop extends Card {
     public ConspicuousSnoop() {
         addStaticEffect(new PlayWithTopCardRevealedEffect());
         addStaticEffect(new AllowCastFromTopOfLibraryEffect(new CardSubtypePredicate(CardSubtype.GOBLIN)));
-        addStaticEffect(new GainActivatedAbilitiesOfTopLibraryCardEffect(new CardSubtypePredicate(CardSubtype.GOBLIN)));
+        addStaticEffect(new GainActivatedAbilitiesOfExiledCardsEffect(
+                Subjects.topmostCardInYourLibrary(null), new CardSubtypePredicate(CardSubtype.GOBLIN), false));
     }
 }

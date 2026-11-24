@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCardsExiledWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,6 +24,7 @@ public class UrborgScavengers extends Card {
         addTrigger(Triggers.attacks(),
                 ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, null, true),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
-        addStaticEffect(new GainKeywordsOfCardsExiledWithSourceEffect(false));
+        addStaticEffect(new GainKeywordsOfCreatureCardsExiledWithSourceEffect(Subjects.exiledWithSource(),
+                GainKeywordsOfCreatureCardsExiledWithSourceEffect.COMMON_KEYWORDS, false));
     }
 }

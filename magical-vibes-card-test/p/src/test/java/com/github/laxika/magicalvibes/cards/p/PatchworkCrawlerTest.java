@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DarkImpostor;
 import com.github.laxika.magicalvibes.cards.t.TibaltCosmicImpostor;
 import com.github.laxika.magicalvibes.cards.v.ValkiGodOfLies;
 import com.github.laxika.magicalvibes.model.Card;
@@ -215,5 +216,28 @@ class PatchworkCrawlerTest extends BaseCardTest {
     private void addManaForAbility(Player player) {
         harness.addMana(player, ManaColor.BLUE, 1);
         harness.addMana(player, ManaColor.COLORLESS, 2);
+    }
+
+    @Test
+    @CardUsed({DarkImpostor.class, ProdigalPyromancer.class})
+    @DisplayName("Does not have the abilities of a creature it exiled with an exile ability it gained (CR 607.2a)")
+    void doesNotGainAbilitiesOfCreatureExiledWithGainedAbility() {
+        Permanent crawler = addCrawlerReady(player1);
+        Card impostor = new DarkImpostor();
+        harness.setGraveyard(player1, List.of(impostor));
+        addManaForAbility(player1);
+        harness.activateAbility(player1, 0, 0, null, impostor.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        Permanent pyromancer = harness.addToBattlefieldAndReturn(player2, new ProdigalPyromancer());
+
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, 1, null, pyromancer.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getCardsExiledByPermanent(crawler.getId())).contains(pyromancer.getCard());
+        assertThat(gqs.computeStaticBonus(gd, crawler).grantedActivatedAbilities()).hasSize(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

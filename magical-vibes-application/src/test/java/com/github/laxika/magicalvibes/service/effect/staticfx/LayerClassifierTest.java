@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetWhileHasCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsInAllGraveyardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -231,10 +231,24 @@ class LayerClassifierTest {
         @DisplayName("The graveyard keyword-scan self effect is layer 6 with the CDA flag")
         void graveyardKeywordScanIsCdaFlagged() {
             LayerClassification classification = LayerClassifier.classify(
-                    new GainKeywordsOfCreatureCardsInAllGraveyardsEffect(), true);
+                    new GainKeywordsOfCreatureCardsExiledWithSourceEffect(
+                            Subjects.cardsInGraveyards(Subjects.eachPlayer(), null), Set.of(Keyword.FLYING), true),
+                    true);
 
             assertThat(classification.layers()).containsExactly(Layer.L6_ABILITIES);
             assertThat(classification.characteristicDefining()).isTrue();
+        }
+
+        @Test
+        @DisplayName("The keyword scan granted to an equipped creature is layer 6 without the CDA flag")
+        void equippedCreatureKeywordScanIsNotCdaFlagged() {
+            LayerClassification classification = LayerClassifier.classify(
+                    new GainKeywordsOfCreatureCardsExiledWithSourceEffect(Subjects.exiledWithSource(), null,
+                            Set.of(Keyword.FLYING), true, Subjects.attachedCreature()),
+                    false);
+
+            assertThat(classification.layers()).containsExactly(Layer.L6_ABILITIES);
+            assertThat(classification.characteristicDefining()).isFalse();
         }
     }
 }

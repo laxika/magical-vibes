@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.b.BlessedLight;
+import com.github.laxika.magicalvibes.cards.k.KnightOfMalice;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.model.Card;
@@ -132,5 +136,19 @@ class UrborgScavengersTest extends BaseCardTest {
         assertThat(scavengers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.getCardsExiledByPermanent(scavengers.getId())).isEmpty();
+    }
+
+    @Test
+    @CardUsed({KnightOfMalice.class, BlessedLight.class})
+    @DisplayName("Has hexproof from white while a card exiled with it has hexproof from white")
+    void gainsHexproofFromWhiteOfAnExiledCard() {
+        Permanent scavengers = addCreatureReady(player2, new UrborgScavengers());
+        gd.addToExile(player2.getId(), new KnightOfMalice(), scavengers.getId());
+        harness.setHand(player1, List.of(new BlessedLight()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, scavengers.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("has hexproof from white");
     }
 }

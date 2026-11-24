@@ -3,13 +3,14 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -34,6 +35,6 @@ public class DarkImpostor extends Card {
 
         // Dark Impostor has all activated abilities of all creature cards exiled with it.
         addStaticEffect(new GainActivatedAbilitiesOfExiledCardsEffect(
-                false, new CardTypePredicate(CardType.CREATURE), exileAbilityLink));
+                Subjects.exiledWithSourceBy(exileAbilityLink, new CardTypePredicate(CardType.CREATURE))));
     }
 }

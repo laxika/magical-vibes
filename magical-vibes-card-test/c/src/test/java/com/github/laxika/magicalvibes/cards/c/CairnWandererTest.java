@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AxegrinderGiant;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
+import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
+import com.github.laxika.magicalvibes.cards.t.TelJiladChosen;
 import com.github.laxika.magicalvibes.cards.b.BogStriderAsh;
 import com.github.laxika.magicalvibes.cards.b.BurrentonForgeTender;
 import com.github.laxika.magicalvibes.cards.b.BrionStoutarm;
@@ -227,5 +230,30 @@ class CairnWandererTest extends BaseCardTest {
 
         harness.setGraveyard(player2, List.of());
         assertThat(gqs.hasProtectionFrom(gd, wanderer, CardColor.RED)).isFalse();
+    }
+
+    @Test
+    @CardUsed({TelJiladChosen.class, RodOfRuin.class})
+    @DisplayName("Gains a protection that is not from a colour from a creature card in a graveyard")
+    void gainsProtectionFromArtifacts() {
+        Permanent wanderer = addCreatureReady(player1, new CairnWanderer());
+        Permanent rod = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+
+        assertThat(gqs.hasProtectionFromSourceCardTypes(gd, wanderer, rod)).isFalse();
+
+        harness.setGraveyard(player2, List.of(new TelJiladChosen()));
+
+        assertThat(gqs.hasProtectionFromSourceCardTypes(gd, wanderer, rod)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A Wanderer that lost all its abilities gains no keyword from the graveyards")
+    void wandererThatLostItsAbilitiesGainsNothing() {
+        Permanent wanderer = addCreatureReady(player1, new CairnWanderer());
+        harness.setGraveyard(player2, List.of(new PloverKnights()));
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, wanderer);
+
+        assertThat(gqs.hasKeyword(gd, wanderer, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, wanderer, Keyword.FIRST_STRIKE)).isFalse();
     }
 }

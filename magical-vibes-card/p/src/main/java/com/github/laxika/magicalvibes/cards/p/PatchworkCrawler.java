@@ -3,9 +3,12 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardFromGraveyardPutCounterOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
 
@@ -22,6 +25,8 @@ public class PatchworkCrawler extends Card {
                 "{2}{U}: Exile target creature card from your graveyard and put a +1/+1 counter on this creature."
         ));
 
-        addStaticEffect(new GainActivatedAbilitiesOfExiledCardsEffect());
+        addStaticEffect(new GainActivatedAbilitiesOfExiledCardsEffect(Subjects.exiledWithSourceBy(
+                ExileTargetCreatureCardFromGraveyardPutCounterOnSourceEffect.ABILITY_LINK,
+                new CardTypePredicate(CardType.CREATURE))));
     }
 }

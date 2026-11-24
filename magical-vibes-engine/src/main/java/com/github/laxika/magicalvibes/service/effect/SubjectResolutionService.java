@@ -686,7 +686,7 @@ public class SubjectResolutionService {
         List<ExiledCardEntry> inZone;
         synchronized (gameData.exiledCards) {
             inZone = gameData.exiledCards.stream()
-                    .filter(exiled -> sourceId.equals(exiled.sourcePermanentId()))
+                    .filter(exiled -> exiledWithSourceBy(exiled, sourceId, with.abilityLink()))
                     .filter(exiled -> owners == null || owners.contains(exiled.ownerId())).toList();
         }
         return exiledMatching(gameData, entry, inZone, with.filter());
@@ -967,8 +967,9 @@ public class SubjectResolutionService {
      * Whether {@code cards}, for a static ability of {@code source} controlled by {@code controllerId}, names the
      * exiled card {@code exiled}: the one-card form of the static entry point, asked about one card ("you may cast
      * spells from among cards in exile your opponents own with ice counters on them"). Only
-     * {@code exiledCards(players, filter)} has one: its players are judged by
-     * {@link #namesPlayer(Permanent, UUID, UUID, PlayerSubject)}, its filter by {@code reads}, given the card as the
+     * {@code exiledCards(players, filter)} and the cards exiled with {@code source} ({@code exiledWithSource}, by one
+     * linked ability when it names one) have one: their players are judged by
+     * {@link #namesPlayer(Permanent, UUID, UUID, PlayerSubject)}, their filters by {@code reads}, given the card as the
      * filter may see it (a card exiled face down has no characteristics, CR 406.3a) and its owner. A token in exile
      * is never named.
      *
@@ -976,18 +977,118 @@ public class SubjectResolutionService {
      */
     public static boolean namesExiledCard(Permanent source, UUID controllerId, ExiledCardEntry exiled,
                                           CardSubject cards, ExiledCardReads reads) {
-        if (!(cards instanceof CardSubject.InExile in)) {
-            throw new UnsupportedOperationException("No one-card static form for " + cards + " yet");
+        PlayerSubject owners;
+        CardPredicate filter;
+        switch (cards) {
+            case CardSubject.InExile in -> {
+                owners = in.owners();
+                filter = in.filter();
+            }
+            case CardSubject.ExiledWithSource with -> {
+                if (source == null || !exiledWithSourceBy(exiled, source.getId(), with.abilityLink())) {
+                    return false;
+                }
+                owners = with.owners();
+                filter = with.filter();
+            }
+            default -> throw new UnsupportedOperationException("No one-card static form for " + cards + " yet");
         }
         if (exiled.card().isToken()
-                || in.owners() != null && !namesPlayer(source, controllerId, exiled.ownerId(), in.owners())) {
+                || owners != null && !namesPlayer(source, controllerId, exiled.ownerId(), owners)) {
             return false;
         }
         Card judged = exiled.faceDown() ? Card.namedRuntimePlaceholder("") : exiled.card();
-        return in.filter() == null || reads.matches(judged, exiled.ownerId(), in.filter());
+        return filter == null || reads.matches(judged, exiled.ownerId(), filter);
     }
 
-    /** How {@link #namesExiledCard} judges an exiled card against a subject's filter. */
+    /**
+     * The cards {@code cards} names for a static ability of {@code source} controlled by {@code controllerId}, as they
+     * are now: the list form of the static entry point, for a static ability that reads cards outside the battlefield
+     * ("has all activated abilities of all creature cards in all graveyards", "as long as a card exiled with it has
+     * flying"). It looks up only the zones and the source; players are judged by
+     * {@link #namesPlayer(Permanent, UUID, UUID, PlayerSubject)} and filters by {@code reads}, so a layered pass can call
+     * it. The static forms:
+     * <ul>
+     *   <li>{@link CardSubject.InExile} and {@link CardSubject.ExiledWithSource}: each exiled card
+     *       {@link #namesExiledCard} names (a card exiled face down is judged as one with no characteristics,
+     *       CR 406.3a);</li>
+     *   <li>{@link CardSubject.InGraveyards}: the matching cards in the graveyards of the players it names, in turn
+     *       order, no token (CR 108.2b);</li>
+     *   <li>{@link CardSubject.TopmostInLibrary}: in each named library the first card from the top that matches;</li>
+     *   <li>{@link CardSubject.ExiledAsCost}: the cards exiled to pay the cost of the spell {@code source} was with
+     *       delve (CR 702.66a), wherever they are now, located as exiled.</li>
+     * </ul>
+     *
+     * @throws UnsupportedOperationException for any other subject
+     */
+    public static List<LocatedCard> namedCards(GameData gameData, Permanent source, UUID controllerId,
+                                               CardSubject cards, ExiledCardReads reads) {
+        List<LocatedCard> named = new ArrayList<>();
+        switch (cards) {
+            case CardSubject.InExile ignored -> namedExiledCards(gameData, source, controllerId, cards, reads, named);
+            case CardSubject.ExiledWithSource ignored ->
+                    namedExiledCards(gameData, source, controllerId, cards, reads, named);
+            case CardSubject.InGraveyards in -> {
+                for (UUID ownerId : gameData.orderedPlayerIds) {
+                    if (!namesPlayer(source, controllerId, ownerId, in.owners())) {
+                        continue;
+                    }
+                    for (Card card : List.copyOf(gameData.playerGraveyards.getOrDefault(ownerId, List.of()))) {
+                        if (!card.isToken() && (in.filter() == null || reads.matches(card, ownerId, in.filter()))) {
+                            named.add(new LocatedCard(card, Zone.GRAVEYARD, ownerId));
+                        }
+                    }
+                }
+            }
+            case CardSubject.TopmostInLibrary top -> {
+                for (UUID ownerId : gameData.orderedPlayerIds) {
+                    if (!namesPlayer(source, controllerId, ownerId, top.owners())) {
+                        continue;
+                    }
+                    for (Card card : List.copyOf(gameData.playerDecks.getOrDefault(ownerId, List.of()))) {
+                        if (!card.isToken() && (top.filter() == null || reads.matches(card, ownerId, top.filter()))) {
+                            named.add(new LocatedCard(card, Zone.LIBRARY, ownerId));
+                            break;
+                        }
+                    }
+                }
+            }
+            case CardSubject.ExiledAsCost ignored -> {
+                if (source != null) {
+                    for (Card card : source.getDelvedCards()) {
+                        ExiledCardEntry exiled = gameData.findExiledCard(card.getId());
+                        named.add(new LocatedCard(card, Zone.EXILE, exiled != null ? exiled.ownerId() : controllerId));
+                    }
+                }
+            }
+            default -> throw new UnsupportedOperationException("No static form for " + cards + " yet");
+        }
+        return named;
+    }
+
+    private static void namedExiledCards(GameData gameData, Permanent source, UUID controllerId, CardSubject cards,
+                                         ExiledCardReads reads, List<LocatedCard> named) {
+        List<ExiledCardEntry> exiled;
+        synchronized (gameData.exiledCards) {
+            exiled = List.copyOf(gameData.exiledCards);
+        }
+        for (ExiledCardEntry held : exiled) {
+            if (namesExiledCard(source, controllerId, held, cards, reads)) {
+                named.add(new LocatedCard(held.card(), Zone.EXILE, held.ownerId()));
+            }
+        }
+    }
+
+    /**
+     * Whether {@code exiled} was exiled with the permanent {@code sourceId}, by its ability of {@code abilityLink} when
+     * one is given (CR 607.2a).
+     */
+    private static boolean exiledWithSourceBy(ExiledCardEntry exiled, UUID sourceId, String abilityLink) {
+        return sourceId.equals(exiled.sourcePermanentId())
+                && (abilityLink == null || abilityLink.equals(exiled.abilityLink()));
+    }
+
+    /** How {@link #namesExiledCard} and {@link #namedCards} judge a card against a subject's filter. */
     @FunctionalInterface
     public interface ExiledCardReads {
         boolean matches(Card card, UUID ownerId, CardPredicate filter);

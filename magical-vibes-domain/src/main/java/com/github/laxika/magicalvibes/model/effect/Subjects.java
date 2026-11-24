@@ -418,12 +418,20 @@ public final class Subjects {
      * down has no characteristics to match (CR 406.3a).
      */
     public static CardSubject exiledWithSourceMatching(CardPredicate filter) {
-        return new CardSubject.ExiledWithSource(null, filter);
+        return new CardSubject.ExiledWithSource(null, filter, null);
     }
 
     /** "The cards you own exiled with this": of {@link #exiledWithSource()}, those {@code owners} own. */
     public static CardSubject exiledWithSource(PlayerSubject owners) {
         return new CardSubject.ExiledWithSource(owners, null);
+    }
+
+    /**
+     * "The [filter] cards exiled with this" where the source can exile with more than one ability, a gained one
+     * included: of {@link #exiledWithSource()}, those its ability of {@code abilityLink} exiled (CR 607.2a, 607.5).
+     */
+    public static CardSubject exiledWithSourceBy(String abilityLink, CardPredicate filter) {
+        return new CardSubject.ExiledWithSource(null, filter, abilityLink);
     }
 
     /** "The rest": those of {@code cards} that {@code excluded} doesn't name. */

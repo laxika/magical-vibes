@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.cards.b.Bonesplitter;
+import com.github.laxika.magicalvibes.model.effect.CardSubject;
 import com.github.laxika.magicalvibes.cards.c.CurseOfStalkedPrey;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -1991,6 +1992,103 @@ class SubjectResolutionServiceTest extends BaseCardTest {
             gd.playerGraveyards.get(player1.getId()).remove(bears);
 
             assertThat(subjects.cards(gd, entry, EFFECT, Subjects.mostVotedCards())).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("Static card subjects")
+    class StaticCardSubjects {
+
+        private static final SubjectResolutionService.ExiledCardReads TYPE_READS = (card, ownerId, filter) ->
+                filter instanceof CardTypePredicate type && card.hasType(type.cardType());
+
+        private List<Card> named(Permanent source, CardSubject cards) {
+            return SubjectResolutionService.namedCards(gd, source, player1.getId(), cards, TYPE_READS).stream()
+                    .map(SubjectResolutionService.LocatedCard::card)
+                    .toList();
+        }
+
+        private void linkExile(Card card, String abilityLink) {
+            gd.exiledCards.replaceAll(exiled -> exiled.card().getId().equals(card.getId())
+                    ? exiled.withAbilityLink(abilityLink) : exiled);
+        }
+
+        @Test
+        @DisplayName("exiledWithSourceBy names only the cards the linked ability exiled with the source (CR 607.2a)")
+        void exiledWithSourceByReadsOneLinkedAbility() {
+            Permanent source = addCreatureReady(player1, new GrizzlyBears());
+            Card printed = new HillGiant();
+            Card gained = new GrizzlyBears();
+            Card elsewhere = new RuneclawBear();
+            gd.addToExile(player2.getId(), printed, source.getId());
+            gd.addToExile(player2.getId(), gained, source.getId());
+            gd.addToExile(player2.getId(), elsewhere);
+            linkExile(printed, "printed");
+            linkExile(gained, "gained:printed");
+
+            assertThat(named(source, Subjects.exiledWithSourceBy("printed", null))).containsExactly(printed);
+            assertThat(named(source, Subjects.exiledWithSource())).containsExactlyInAnyOrder(printed, gained);
+        }
+
+        @Test
+        @DisplayName("A resolving exiledWithSourceBy reads the same link")
+        void resolvingExiledWithSourceByReadsTheLink() {
+            Permanent source = addCreatureReady(player1, new GrizzlyBears());
+            Card printed = new HillGiant();
+            Card gained = new GrizzlyBears();
+            gd.addToExile(player2.getId(), printed, source.getId());
+            gd.addToExile(player2.getId(), gained, source.getId());
+            linkExile(printed, "printed");
+            StackEntry entry = entry(player1, null, source.getId());
+
+            assertThat(subjects.cards(gd, entry, EFFECT, Subjects.exiledWithSourceBy("printed", null)))
+                    .containsExactly(printed);
+        }
+
+        @Test
+        @DisplayName("cardsInYourGraveyard names the matching cards in the controller's graveyard only")
+        void graveyardSetOfTheController() {
+            Permanent source = addCreatureReady(player1, new GrizzlyBears());
+            Card bears = new GrizzlyBears();
+            Card forest = new Forest();
+            harness.setGraveyard(player1, List.of(bears, forest));
+            harness.setGraveyard(player2, List.of(new HillGiant()));
+
+            assertThat(named(source, Subjects.cardsInYourGraveyard(new CardTypePredicate(CardType.CREATURE))))
+                    .containsExactly(bears);
+        }
+
+        @Test
+        @DisplayName("cardsInGraveyards over each player names the matching cards of every graveyard")
+        void graveyardSetOfEachPlayer() {
+            Permanent source = addCreatureReady(player1, new GrizzlyBears());
+            Card bears = new GrizzlyBears();
+            Card giant = new HillGiant();
+            harness.setGraveyard(player1, List.of(bears));
+            harness.setGraveyard(player2, List.of(giant, new Forest()));
+
+            assertThat(named(source, Subjects.cardsInGraveyards(Subjects.eachPlayer(),
+                    new CardTypePredicate(CardType.CREATURE)))).containsExactlyInAnyOrder(bears, giant);
+        }
+
+        @Test
+        @DisplayName("topmostCardInYourLibrary with no filter names the top card of the controller's library")
+        void topCardOfTheControllersLibrary() {
+            Permanent source = addCreatureReady(player1, new GrizzlyBears());
+            Card forest = new Forest();
+            harness.setLibrary(player1, List.of(forest, new GrizzlyBears()));
+            harness.setLibrary(player2, List.of(new HillGiant()));
+
+            assertThat(named(source, Subjects.topmostCardInYourLibrary(null))).containsExactly(forest);
+        }
+
+        @Test
+        @DisplayName("A subject that reads a stack entry has no static form")
+        void stackSubjectHasNoStaticForm() {
+            Permanent source = addCreatureReady(player1, new GrizzlyBears());
+
+            assertThatThrownBy(() -> named(source, Subjects.cardsThisWay(StepKind.EXILE)))
+                    .isInstanceOf(UnsupportedOperationException.class);
         }
     }
 }

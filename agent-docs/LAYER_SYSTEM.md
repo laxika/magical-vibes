@@ -644,14 +644,14 @@ Reasoning behind the non-obvious mappings:
   keyword itself remains removable in L6; a lose-all also hides the L4 contribution for
   FLOATING changeling grants (subtype leaves check the state's keyword OR the intrinsic one —
   a NATURAL changeling under a lose-all keeps its types via the intrinsic check, per §3).
-- **CDA flag on the Cairn Wanderer family** (`GainKeywordsOfCreatureCardsInAllGraveyards`,
-  `GainActivatedAbilitiesOfCreatureCardsInAllGraveyards`, `GainActivatedAbilitiesOfExiledCards`
-  → L6 + CDA): strictly, CR 604.3a limits CDAs to colors/subtypes/power/toughness — an
+- **CDA flag on the card borrowers** (`GainKeywordsOfCreatureCardsExiledWithSourceEffect` with a
+  `source()` recipient, `GainActivatedAbilitiesOfExiledCardsEffect` → L6 + CDA; the keyword form
+  with another recipient, Eater of Virtue's equipped creature, is plain L6): strictly, CR 604.3a limits CDAs to colors/subtypes/power/toughness — an
   ability-adding effect is NOT a CR-legal CDA. The flag is a deliberate modeling decision from
   the migration plan: these self-scans read out-of-battlefield zones only, so applying them
   before the timestamp-ordered L6 effects cannot change any outcome (a later "loses all
   abilities" strips the scanned keywords either way; ordering among grants is commutative).
-  All three members of the family are flagged for consistency.
+  Every self form of the family is flagged for consistency.
 - **Blood Moon** (`NonbasicLandsBecomeTypeEffect`) is L4 ONLY: the affected land losing its
   printed abilities is a consequence of the land-type override itself (CR 305.7), not a
   separate L6 contribution. Since step 11 this is modeled concretely: every land-type setter

@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17 (each in Findings; the fold queue marks its rows). Fold runs 8 to 18 run in parallel worktrees from 2026-11-24. Next: fold runs 16b, 16c and 18 (running), 15b (`picked-subject`), 17b, 12e (`dup-hand` leftovers), `drafted-step`. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                      |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c (each in Findings; the fold queue marks its rows). Fold runs 8 to 19 run in parallel worktrees from 2026-11-24. Next: fold runs 15b, 16b and 19 (running), 18 (merging), 17b, 18b, 12e, `drafted-step`. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                       |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,719 / 2,982 (after fold run 17) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,711 / 2,975 (after fold run 16c) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,499 rows over 4,422 classes (after fold run 17). Latest verdict per class: `step-9` 882, unique 1,166, absorbed 689, split 601, blocked-other 495, survivor 290, blocked-step-model 141, blocked-player-loop 96, dead 62. Waiting: 882 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,511 rows over 4,424 classes (after fold run 16c). Latest verdict per class: `step-9` 872, unique 1,166, absorbed 697, split 601, blocked-other 497, survivor 292, blocked-step-model 141, blocked-player-loop 96, dead 62. Waiting: 872 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -686,6 +686,13 @@ Delayed and global triggers:
   snapshot, not its effect-laden last-known card (CR 707.2, 608.2h) (fold run 17).
 - `Subjects.exiledWithSourceMatching(filter)`: "a creature card exiled with this"; a card exiled face down matches nothing (CR 406.3a)
   (fold run 17).
+
+- `SubjectResolutionService.namedCards(gameData, source, controllerId, cards, reads)`: the static list form of a card subject; and
+  `namesExiledCard` also judges `ExiledWithSource` (fold run 16c).
+- `CardSubject.ExiledWithSource.abilityLink` / `Subjects.exiledWithSourceBy(link, filter)`: "the cards exiled with it" by one linked
+  ability (CR 607.2a, 607.5) (fold run 16c).
+- `GainActivatedAbilitiesOfExiledCardsEffect(cards, filter, oncePerTurn)` and `GainKeywordsOfCreatureCardsExiledWithSourceEffect(cards,
+  cardFilter, watched, copiesProtection, recipient)` (`COMMON_KEYWORDS`): borrowers over any static card subject (fold run 16c).
 
 ### Blocked causes still open
 
@@ -2236,6 +2243,37 @@ harmful. Loose in the Park reads the enchanted land as last known once the Aura 
 **For the next run (17b).** A targeting card subject on the survivor (Lazav, Likeness Looter, Mimeoplasm, Taskmaster, then The Animus
 over fold run 16's store); an event-cards-as-last-known subject (Spirit of Resilience, Lazav Dimir Mastermind, Kaya: three users); then
 `cost-paid-copy`, `copy-on-enter`, Aegis/Headdress.
+
+### Step 9, fold run 16c (2026-11-24, parallel worktree)
+
+`card-borrowers` and `kw-borrowers`: 8 folded, 2 left. Ratchet in its worktree 3,754 / 3,018 → 3,746 / 3,011. Ledger 12 rows (survivor
+2, absorbed 8, blocked-other 2). 18 card files rewritten, Oracle text checked for all. CR 607.1, 607.2a, 607.3, 607.5, 613.1f, 708.2,
+406.3a, 702.66a, 702.11d, 702.16a, 108.2b, 702.167c checked.
+
+**The shape.** `SubjectResolutionService.namedCards(gameData, source, controllerId, cards, reads)` is the static list form of a card
+subject (`InExile` and `ExiledWithSource` judged by `namesExiledCard`; `InGraveyards` by `namesPlayer`, in turn order, no token;
+`TopmostInLibrary`; `ExiledAsCost` as the source's delve cards wherever they are now); it never re-enters the layered pass.
+`CardSubject.ExiledWithSource(owners, filter, abilityLink)`: with a link, only the cards that ability exiled (CR 607.2a), honoured by
+the resolving form too (null keeps "every card"); `exiledWithSourceBy(link, filter)`. `GainActivatedAbilitiesOfExiledCardsEffect(CardSubject
+cards, CardPredicate filter, boolean oncePerTurn)` and `GainKeywordsOfCreatureCardsExiledWithSourceEffect(cards, cardFilter,
+watchedKeywords, copiesProtection, recipient)` (`COMMON_KEYWORDS`) share one lending check: a face-down exiled card lends nothing (CR
+406.3a), nor a graveyard card while graveyard cards have lost all abilities; "hexproof from" lends with hexproof (CR 702.11d); every
+self-scoped protection lends when protection is listed. Layer 6 (CR 613.1f); a source that lost its abilities or is face down gives none
+(CR 708.2).
+
+| Batch | Result |
+|---|---|
+| `card-borrowers` | 5 folded (all-graveyards, controller-graveyard, top-library, brain, cage). Idris and Koh `blocked-other` (Koh's "last chosen card" subject and Idris's triggered-abilities option would each have one user) |
+| `kw-borrowers` | 3 folded (Urborg Scavengers / Wretched Bonemass, Eater of Virtue, Cairn Wanderer) |
+
+**Behaviour changes.** Patchwork Crawler no longer has the abilities of a card it exiled with a gained Dark Impostor ability (CR
+607.2a, 607.5; failing-first). Urborg Scavengers and Wretched Bonemass gain "hexproof from" (test). Cairn Wanderer gains every
+protection, per its ruling (test with Tel-Jilad Chosen). Soulflayer reads only its delve cards. Face-down exiled cards lend nothing.
+Merged with fold run 17, which had added the same `Subjects.exiledWithSourceMatching(filter)`: one factory kept (fold run 17's Javadoc, the link-aware constructor).
+
+**For the next run.** Give the linkless printed exiles of Myr Welder, Territory Forge and Idris a link, and rewrite gained readers
+(`ReturnCardExiledWithSourceToBattlefieldEffect`, Valki's copy) onto the gained link as Koh does; Valki's copy can take
+`exiledWithSourceBy`.
 
 ## Prompt
 

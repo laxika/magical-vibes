@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FumeSpitter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
@@ -290,5 +291,18 @@ class NecroticOozeTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An Ooze that lost all its abilities has none of the graveyard cards' abilities")
+    void oozeThatLostItsAbilitiesGainsNothing() {
+        Permanent ooze = addCreatureReady(player1, new NecroticOoze());
+        harness.setGraveyard(player1, List.of(new DrudgeSkeletons()));
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, ooze);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
     }
 }

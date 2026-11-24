@@ -10,6 +10,12 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public record ExileTargetCreatureCardFromGraveyardPutCounterOnSourceEffect(
         GraveyardSearchScope scope) implements CardEffect {
 
+    /**
+     * The link this ability records on the card it exiles, which "creature cards exiled with it" reads
+     * ({@link Subjects#exiledWithSourceBy}, CR 607.2a).
+     */
+    public static final String ABILITY_LINK = "exile-creature-card-from-graveyard";
+
     public ExileTargetCreatureCardFromGraveyardPutCounterOnSourceEffect() {
         this(GraveyardSearchScope.ALL_GRAVEYARDS);
     }
