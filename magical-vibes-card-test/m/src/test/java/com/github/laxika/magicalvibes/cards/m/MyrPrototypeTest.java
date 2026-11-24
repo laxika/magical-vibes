@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
+import com.github.laxika.magicalvibes.cards.b.BraveTheSands;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MyrPrototype.class, AlphaMyr.class})
+@CardUsed({MyrPrototype.class, AlphaMyr.class, BraveTheSands.class})
 class MyrPrototypeTest extends BaseCardTest {
 
     @Test
@@ -161,6 +162,25 @@ class MyrPrototypeTest extends BaseCardTest {
         assertThat(attackingMyr.isAttacking()).isTrue();
         assertThat(blockingMyr.isBlocking()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Blocking two attackers pays its counter cost once")
+    void blockingTwoAttackersPaysOnce() {
+        addCreatureReady(player1, new AlphaMyr());
+        addCreatureReady(player1, new AlphaMyr());
+        Permanent myr = addCreatureReady(player2, new MyrPrototype());
+        myr.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.addToBattlefield(player2, new BraveTheSands());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        declareAttackersAndPrepareBlockers(player1, List.of(0, 1));
+
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(0, 1)));
+
+        assertThat(myr.isBlocking()).isTrue();
+        assertThat(myr.getBlockingTargets()).containsExactlyInAnyOrder(0, 1);
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 }

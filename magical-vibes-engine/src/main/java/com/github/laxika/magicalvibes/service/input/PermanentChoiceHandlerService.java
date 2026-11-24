@@ -426,7 +426,6 @@ public class PermanentChoiceHandlerService {
                 || context instanceof PermanentChoiceContext.SacrificePermanentThen
                 || context instanceof PermanentChoiceContext.MaySacrificeForCounterOnSource
                 || context instanceof PermanentChoiceContext.GargantuanGorillaSacrificeForest
-                || context instanceof PermanentChoiceContext.AnyPlayerMaySacrificeCreatureToCounterSpell
                 || context instanceof PermanentChoiceContext.ForcedCostOrElse forcedCost
                         && forcedCost.effect().forcedCost() instanceof SacrificePermanentCost
                 || context instanceof PermanentChoiceContext.TormentSacrifice
@@ -517,8 +516,6 @@ public class PermanentChoiceHandlerService {
                     battlefieldHandler.handleMaySacrificeForCounterOnSource(gameData, permanentId, msfc);
             case PermanentChoiceContext.GargantuanGorillaSacrificeForest ggsf ->
                     battlefieldHandler.handleGargantuanGorillaSacrificeForest(gameData, permanentId, ggsf);
-            case PermanentChoiceContext.AnyPlayerMaySacrificeCreatureToCounterSpell ams ->
-                    battlefieldHandler.handleAnyPlayerMaySacrificeCreatureToCounterSpell(gameData, permanentId, ams);
             case PermanentChoiceContext.ForcedCostOrElse forcedCostOrElse ->
                     battlefieldHandler.handleForcedCostOrElse(gameData, permanentId, forcedCostOrElse);
             case PermanentChoiceContext.TormentSacrifice tormentSacrifice ->
@@ -865,11 +862,9 @@ public class PermanentChoiceHandlerService {
             earthbendThenFightHandler.handleTargetChoice(gameData, permanentId, earthbendFight);
         } else if (context instanceof PermanentChoiceContext.ResolvingModalTarget rmt) {
             triggerHandler.handleResolvingModalTarget(gameData, permanentId, rmt);
-        } else if (context instanceof PermanentChoiceContext.AnyPlayerPaymentSacrifice) {
-            mayPayManaEffectHandler.completeSacrificePick(gameData, java.util.List.of(permanentId));
+        } else if (context instanceof PermanentChoiceContext.AnyPlayerPaymentPick) {
+            mayPayManaEffectHandler.completePaymentPick(gameData, java.util.List.of(permanentId));
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-        } else if (context instanceof PermanentChoiceContext.AnyOpponentMayTapCreatureForToken aotc) {
-            battlefieldHandler.handleAnyOpponentMayTapCreatureForToken(gameData, permanentId, aotc);
         } else if (context instanceof PermanentChoiceContext.LibraryCastSpellTarget lct) {
             spellHandler.handleLibraryCastSpellTarget(gameData, permanentId, lct);
         } else if (context instanceof PermanentChoiceContext.FreeCastSacrificeCost sacrificeCost) {

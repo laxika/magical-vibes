@@ -228,4 +228,53 @@ class MayPayManaEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(entry.getEffectsToResolve()).containsExactly(payment, transform);
     }
+
+    @Test
+    @DisplayName("Paid as each accepts, an accepting player pays before the next player is asked, \"if a player does\" after it")
+    void payingAsEachAcceptsPaysTheAcceptorFirst() {
+        Card card = createCard("Dash Hopes");
+        DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(4, Subjects.acceptedPlayers());
+        DrawCardEffect ifAPlayerDoes = new DrawCardEffect(1);
+        MayPayManaEffect payment = MayPayManaEffect.anyPlayerMay(MayPayPayer.ANY_PLAYER, damage, "Take 4?",
+                ifAPlayerDoes, new SacrificeSelfEffect()).payingAsEachAccepts();
+        MayPayManaEffect answered = payment.asking(List.of(player2Id), List.of(player1Id), List.of());
+        StackEntry entry = createEntry(card, player1Id, List.of(answered));
+        entry.setResolvingEffectIndex(0);
+
+        resolveEffect(gd, entry, answered);
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(entry.getAcceptedPlayerIds()).containsExactly(player1Id);
+        assertThat(entry.getEffectsToResolve()).hasSize(4);
+        assertThat(entry.getEffectsToResolve().subList(1, 3)).containsExactly(damage, ifAPlayerDoes);
+        MayPayManaEffect next = (MayPayManaEffect) entry.getEffectsToResolve().get(3);
+        assertThat(next.loop().remainingPayerIds()).containsExactly(player2Id);
+        assertThat(next.loop().acceptedPayerIds()).isEmpty();
+        assertThat(next.loop().anyPaid()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Paid as each accepts, a later acceptor pays without \"if a player does\" again, and no \"if no one does\" follows")
+    void payingAsEachAcceptsRunsTheOutcomeOnce() {
+        Card card = createCard("Dash Hopes");
+        DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(4, Subjects.acceptedPlayers());
+        SacrificeSelfEffect ifNoOneDoes = new SacrificeSelfEffect();
+        MayPayManaEffect payment = MayPayManaEffect.anyPlayerMay(MayPayPayer.ANY_PLAYER, damage, "Take 4?",
+                new DrawCardEffect(1), ifNoOneDoes).payingAsEachAccepts();
+        MayPayManaEffect secondAccepted = payment.asking(List.of(), List.of(player2Id), List.of(), true);
+        StackEntry entry = createEntry(card, player1Id, List.of(secondAccepted));
+        entry.setResolvingEffectIndex(0);
+
+        resolveEffect(gd, entry, secondAccepted);
+
+        assertThat(entry.getEffectsToResolve()).hasSize(3);
+        assertThat(entry.getEffectsToResolve().get(1)).isEqualTo(damage);
+        MayPayManaEffect last = (MayPayManaEffect) entry.getEffectsToResolve().get(2);
+        entry.setResolvingEffectIndex(2);
+
+        resolveEffect(gd, entry, last);
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(entry.getEffectsToResolve()).hasSize(3).doesNotContain(ifNoOneDoes);
+    }
 }

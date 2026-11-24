@@ -52,6 +52,7 @@ class CounterSpellEffectHandlerTest {
     @Mock private StateTriggerService stateTriggerService;
     @Mock private EffectResolutionService effectResolutionService;
     @Mock private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    @Mock private com.github.laxika.magicalvibes.service.effect.SubjectResolutionService subjectResolutionService;
     @InjectMocks
     private CounterSupport counterSupport;
     private GameData gd;
@@ -123,7 +124,8 @@ class CounterSpellEffectHandlerTest {
         gd.playerIdToName.put(player2Id, "Player2");
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        counterSpellHandler = new CounterSpellEffectHandler(counterSupport, interactionHandlerRegistry, gameQueryService);
+        counterSpellHandler = new CounterSpellEffectHandler(counterSupport, interactionHandlerRegistry, gameQueryService,
+                subjectResolutionService);
 
     }
 
@@ -395,4 +397,36 @@ class CounterSpellEffectHandlerTest {
                 verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Some Creature's ability is countered.")));
             }
+
+    @Test
+    @DisplayName("Counters the triggering spell without a target and leaves the trigger's own entry alone")
+    void countersTheTriggeringSpell() {
+        Card gorgers = createCreatureCard("Brain Gorgers");
+        StackEntry spellEntry = creatureSpellEntry(gorgers, player1Id);
+        gd.stack.add(spellEntry);
+        CounterSpellEffect counter = CounterSpellEffect.triggeringSpell();
+        StackEntry trigger = TestStackDoor.triggered(gorgers, player1Id, "Brain Gorgers's ability", List.of(counter));
+        gd.stack.add(trigger);
+        when(subjectResolutionService.spellOnStack(gd, trigger, counter.spell())).thenReturn(spellEntry);
+
+        counterSpellHandler.resolve(gd, trigger, counter);
+
+        assertThat(gd.stack).containsExactly(trigger);
+        verify(graveyardService).addCardToGraveyardFromSpell(gd, player1Id, gorgers, player1Id);
+    }
+
+    @Test
+    @DisplayName("Does nothing when the triggering spell has left the stack")
+    void doesNothingWhenTheTriggeringSpellLeft() {
+        Card gorgers = createCreatureCard("Brain Gorgers");
+        CounterSpellEffect counter = CounterSpellEffect.triggeringSpell();
+        StackEntry trigger = TestStackDoor.triggered(gorgers, player1Id, "Brain Gorgers's ability", List.of(counter));
+        gd.stack.add(trigger);
+        when(subjectResolutionService.spellOnStack(gd, trigger, counter.spell())).thenReturn(null);
+
+        counterSpellHandler.resolve(gd, trigger, counter);
+
+        assertThat(gd.stack).containsExactly(trigger);
+        verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
+    }
 }

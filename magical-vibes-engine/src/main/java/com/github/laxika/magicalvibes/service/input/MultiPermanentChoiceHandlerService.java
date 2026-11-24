@@ -359,9 +359,9 @@ public class MultiPermanentChoiceHandlerService {
                 && permanentIds.size() != maxCount) {
             throw new IllegalStateException("Must choose exactly " + maxCount + " permanents to sacrifice");
         }
-        if (context instanceof MultiPermanentChoiceContext.AnyPlayerPaymentSacrifice
+        if (context instanceof MultiPermanentChoiceContext.AnyPlayerPaymentPick
                 && permanentIds.size() != maxCount) {
-            throw new IllegalStateException("Must choose exactly " + maxCount + " permanents to sacrifice");
+            throw new IllegalStateException("Must choose exactly " + maxCount + " permanents to pay with");
         }
         if (context instanceof MultiPermanentChoiceContext.ExileForEachLifeLost
                 && permanentIds.size() != maxCount) {
@@ -875,8 +875,8 @@ public class MultiPermanentChoiceHandlerService {
             }
         } else if (context instanceof MultiPermanentChoiceContext.TapOtherCreaturesForUnblockable ctx) {
             handleTapOtherCreaturesForUnblockable(gameData, playerId, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.AnyPlayerPaymentSacrifice) {
-            mayPayManaEffectHandler.completeSacrificePick(gameData, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.AnyPlayerPaymentPick) {
+            mayPayManaEffectHandler.completePaymentPick(gameData, permanentIds);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else if (killsBeforeChangingAnything(context)) {
             completeAskingDeathReplacementsFirst(gameData, multiPermanentChoice, permanentIds);

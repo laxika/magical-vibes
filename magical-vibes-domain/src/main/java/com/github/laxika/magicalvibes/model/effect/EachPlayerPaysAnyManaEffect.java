@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
 import java.util.Objects;
 
@@ -23,11 +24,19 @@ import java.util.Objects;
  * pays it too. Energy is paid by removing energy counters (CR 107.14). Life can be paid only up to the life total
  * and not at all while the player can't lose life (CR 119.4, 119.8), and paying it is losing it.
  *
+ * <p>{@link #lifeExactly} is "[the players] pay N life" with no amount asked: each payer pays the amount evaluated for
+ * them ("half their life, rounded up"), the payments made in turn order as one step and recorded the same way. It is a
+ * payment its players already chose to make (a cost paid on resolution, CR 118.12), so it is used after they could
+ * pay it in full (CR 118.3, 119.4): {@code MayPayManaEffect.anyPlayerMay}'s life payment.
+ *
  * @param startingWithYou whether the controller is asked first, else the active player
  * @param payers          who pays; never a target
  * @param resource        what is paid
+ * @param exactly         the amount each payer pays, evaluated for that payer, instead of an amount they choose;
+ *                        {@code null} for "any amount". Life only
  */
-public record EachPlayerPaysAnyManaEffect(boolean startingWithYou, PlayerSubject payers, Resource resource)
+public record EachPlayerPaysAnyManaEffect(boolean startingWithYou, PlayerSubject payers, Resource resource,
+                                          DynamicAmount exactly)
         implements CardEffect {
 
     /** What a payer pays, and the step kind the payment records. */
@@ -64,6 +73,18 @@ public record EachPlayerPaysAnyManaEffect(boolean startingWithYou, PlayerSubject
         if (payers.declaresTarget()) {
             throw new IllegalArgumentException("The payers of a payment are not targeted: " + payers);
         }
+        if (exactly != null && resource != Resource.LIFE) {
+            throw new IllegalArgumentException("Only a life payment takes an exact amount: " + resource);
+        }
+    }
+
+    public EachPlayerPaysAnyManaEffect(boolean startingWithYou, PlayerSubject payers, Resource resource) {
+        this(startingWithYou, payers, resource, null);
+    }
+
+    /** "[The players] pay {@code amount} life", each paying the amount evaluated for them, in turn order. */
+    public static EachPlayerPaysAnyManaEffect lifeExactly(PlayerSubject payers, DynamicAmount amount) {
+        return new EachPlayerPaysAnyManaEffect(false, payers, Resource.LIFE, Objects.requireNonNull(amount, "amount"));
     }
 
     public EachPlayerPaysAnyManaEffect(boolean startingWithYou) {

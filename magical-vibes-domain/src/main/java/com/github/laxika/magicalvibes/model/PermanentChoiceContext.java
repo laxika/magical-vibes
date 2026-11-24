@@ -833,22 +833,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             implements PermanentChoiceContext {}
 
     /**
-     * A player who accepted a "[any player] may sacrifice a [permanent]" payment ({@code MayPayManaEffect.anyPlayerMay})
-     * picks which one; the pick waits on the payment until every player has answered.
+     * A player who accepted a "[any player] may sacrifice / tap a [permanent]" payment
+     * ({@code MayPayManaEffect.anyPlayerMay}) picks which one; the pick waits on the payment until every player has
+     * answered, unless it is paid as each accepts.
      */
-    record AnyPlayerPaymentSacrifice(UUID playerId) implements PermanentChoiceContext {}
-
-    /** Reservoir Kraken: the accepting opponent is picking which untapped creature to tap. */
-    record AnyOpponentMayTapCreatureForToken(
-            UUID tappingPlayerId, Card sourceCard,
-            com.github.laxika.magicalvibes.model.effect.AnyOpponentMayTapCreatureTapAndCreateTokenSourceEffect effect)
-            implements PermanentChoiceContext {}
-
-    /** Brain Gorgers: the accepting player is picking which creature to sacrifice. */
-    record AnyPlayerMaySacrificeCreatureToCounterSpell(
-            UUID sacrificingPlayerId, Card sourceCard,
-            com.github.laxika.magicalvibes.model.effect.AnyPlayerMaySacrificeCreatureToCounterSpellEffect effect)
-            implements PermanentChoiceContext {}
+    record AnyPlayerPaymentPick(UUID playerId) implements PermanentChoiceContext {}
 
     record ForcedCostOrElse(UUID controllerId, UUID sourcePermanentId, Card sourceCard,
                             com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect effect) implements PermanentChoiceContext {}

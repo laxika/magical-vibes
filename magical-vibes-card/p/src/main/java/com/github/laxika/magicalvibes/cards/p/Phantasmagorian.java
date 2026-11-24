@@ -5,9 +5,13 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.AnyPlayerMayDiscardCardsToCounterSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,7 +21,10 @@ import java.util.List;
 public class Phantasmagorian extends Card {
 
     public Phantasmagorian() {
-        addTrigger(Triggers.youCastThisSpell(), new AnyPlayerMayDiscardCardsToCounterSpellEffect(3));
+        addTrigger(Triggers.youCastThisSpell(), MayPayManaEffect.anyPlayerMay(MayPayPayer.ANY_PLAYER,
+                new DiscardEffect(3, Subjects.acceptedPlayers(), false),
+                "Discard three cards? If a player does, Phantasmagorian is countered.",
+                CounterSpellEffect.triggeringSpell(), null).payingAsEachAccepts());
 
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,

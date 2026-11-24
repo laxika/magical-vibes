@@ -372,7 +372,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
      * Worms' destroyed land) or, failing that, the entry's own target permanent (Hotel of Fears: "Put X +1/+1 counters
      * on target creature you control ... Then sacrifice another creature").
      */
-    private FilterContext filterContextFor(GameData gameData, StackEntry entry) {
+    FilterContext filterContextFor(GameData gameData, StackEntry entry) {
         Permanent source = resolveSourcePermanent(gameData, entry);
         UUID sourceCardId = source != null && source.getOriginalCard() != null
                 ? source.getOriginalCard().getId()

@@ -74,8 +74,6 @@ import com.github.laxika.magicalvibes.service.effect.LandEquilibriumSupport;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.entryfx.UpgradeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMayTapCreatureTapAndCreateTokenSourceEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.AnyPlayerMaySacrificeCreatureToCounterSpellEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachOneOfEquipmentToCreatureSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachOneOfEquipmentToSamuraiSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler;
@@ -263,7 +261,6 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler sacrificePermanentAndReturnHandler;
 
-    private final AnyPlayerMaySacrificeCreatureToCounterSpellEffectHandler anyPlayerMaySacrificeCreatureToCounterSpellHandler;
 
     private final AnimationSupport animationSupport;
 
@@ -343,7 +340,6 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
-    private final AnyOpponentMayTapCreatureTapAndCreateTokenSourceEffectHandler anyOpponentMayTapCreatureHandler;
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesCreatureTheyControlTokenCopyEffectHandler opponentChoosesCreatureTheyControlTokenCopyEffectHandler;
 
@@ -1245,14 +1241,6 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    /** Reservoir Kraken: the accepting opponent picked which untapped creature to tap. */
-    public void handleAnyOpponentMayTapCreatureForToken(GameData gameData, UUID permanentId,
-                                                         PermanentChoiceContext.AnyOpponentMayTapCreatureForToken context) {
-        anyOpponentMayTapCreatureHandler.accept(
-                gameData, context.sourceCard(), context.effect(), context.tappingPlayerId(), permanentId);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
     public void handleActivatedAbilityCostChoice(GameData gameData, Player player, UUID permanentId, PermanentChoiceContext.ActivatedAbilityCostChoice costChoice) {
         abilityActivationService.completeActivatedAbilityCostChoice(gameData, player, costChoice, permanentId);
     }
@@ -1902,14 +1890,6 @@ public class PermanentChoiceBattlefieldHandlerService {
             }
         }
 
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleAnyPlayerMaySacrificeCreatureToCounterSpell(
-            GameData gameData, UUID permanentId,
-            PermanentChoiceContext.AnyPlayerMaySacrificeCreatureToCounterSpell context) {
-        anyPlayerMaySacrificeCreatureToCounterSpellHandler.acceptSacrifice(
-                gameData, context.sourceCard(), context.effect(), context.sacrificingPlayerId(), permanentId);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

@@ -3,16 +3,20 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.b.BrokersVeteran;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -149,7 +153,8 @@ class ReservoirKrakenTest extends BaseCardTest {
 
     @Test
     @CardUsed({ReservoirKraken.class, BrokersVeteran.class, Murder.class})
-    void untappedKrakenDestroyedInResponseCreatesNoFish() {
+    @DisplayName("Destroyed while untapped in response, its ability still resolves and a tapping opponent still gives a Fish")
+    void untappedKrakenDestroyedInResponseStillCreatesFish() {
         Permanent kraken = harness.addToBattlefieldAndReturn(player1, new ReservoirKraken());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new BrokersVeteran());
         harness.setHand(player1, List.of(new Murder()));
@@ -160,10 +165,54 @@ class ReservoirKrakenTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Reservoir Kraken");
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(creature.isTapped()).isFalse();
-        assertThat(findPermanents(player1, "Fish")).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(findPermanents(player1, "Fish")).hasSize(1);
         assertThat(findPermanents(player2, "Fish")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each opponent chooses in turn, the chosen creatures are tapped together and only one Fish is created")
+    void opponentsChooseInTurnThenTapTogetherForOneFish() {
+        Player player3 = addThirdPlayer();
+        Permanent kraken = harness.addToBattlefieldAndReturn(player1, new ReservoirKraken());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new BrokersVeteran());
+        Permanent second = harness.addToBattlefieldAndReturn(player3, new BrokersVeteran());
+
+        resolveBeginningOfCombat(player1);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player3.getId());
+        assertThat(first.isTapped()).isFalse();
+        assertThat(kraken.isTapped()).isFalse();
+
+        harness.handleMayAbilityChosen(player3, true);
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(kraken.isTapped()).isTrue();
+        assertThat(findPermanents(player1, "Fish")).hasSize(1);
+    }
+
+    private Player addThirdPlayer() {
+        UUID player3Id = UUID.randomUUID();
+        Player player3 = new Player(player3Id, "Charlie");
+        gd.playerIds.add(player3Id);
+        gd.orderedPlayerIds.add(player3Id);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(player3Id, "Charlie");
+        gd.playerDecks.put(player3Id, new ArrayList<>());
+        gd.playerHands.put(player3Id, new ArrayList<>());
+        gd.playerBattlefields.put(player3Id, new ArrayList<>());
+        gd.playerGraveyards.put(player3Id, new ArrayList<>());
+        gd.playerCommandZones.put(player3Id, new ArrayList<>());
+        gd.playerManaPools.put(player3Id, new ManaPool());
+        gd.playerLifeTotals.put(player3Id, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), player3Id, "Charlie");
+        return player3;
     }
 
     private void enterBeginningOfCombat(Player activePlayer) {

@@ -15,8 +15,10 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounteredSpellDestination;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +33,7 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
     private final CounterSupport counterSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,22 +43,32 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         entry.recordStep(StepKind.COUNTER_SPELL, StepOutcome.NONE);
-        UUID targetCardId = entry.getTargetId();
-        List<UUID> groupTargets = entry.targetsForEffect(effect);
-        Card targeting = entry.getTargetingCard();
-        boolean boundToGroup = targeting != null && targeting.hasEffectTargetIndex(effect);
-        if (boundToGroup && groupTargets.size() > 1) {
-            counterEachTarget(gameData, entry, groupTargets, ((CounterSpellEffect) effect).destination());
-            return;
-        }
-        if (targetCardId == null && groupTargets.size() == 1) {
-            targetCardId = groupTargets.getFirst();
+        CounterSpellEffect counter = (CounterSpellEffect) effect;
+        boolean triggeringSpell = counter.spell() instanceof PermanentSubject.TriggeringSpell;
+        UUID targetCardId;
+        if (triggeringSpell) {
+            // "Counter that spell" of a cast trigger: the spell the event was about, while it is still on the stack.
+            StackEntry spell = subjectResolutionService.spellOnStack(gameData, entry, counter.spell());
+            if (spell == null) return;
+            targetCardId = spell.getTargetableId();
+        } else {
+            targetCardId = entry.getTargetId();
+            List<UUID> groupTargets = entry.targetsForEffect(effect);
+            Card targeting = entry.getTargetingCard();
+            boolean boundToGroup = targeting != null && targeting.hasEffectTargetIndex(effect);
+            if (boundToGroup && groupTargets.size() > 1) {
+                counterEachTarget(gameData, entry, groupTargets, counter.destination());
+                return;
+            }
+            if (targetCardId == null && groupTargets.size() == 1) {
+                targetCardId = groupTargets.getFirst();
+            }
         }
         if (targetCardId == null) return;
 
         UUID counterTargetId = targetCardId;
         StackEntry targetOnStack = gameData.stack.stream()
-                .filter(stackEntry -> stackEntry.getTargetableId().equals(counterTargetId))
+                .filter(stackEntry -> stackEntry != entry && stackEntry.getTargetableId().equals(counterTargetId))
                 .findFirst()
                 .orElse(null);
         if (targetOnStack != null) {
@@ -76,9 +89,11 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
             }
         }
 
-        StackEntry targetEntry = counterSupport.findCounterTarget(gameData, targetCardId, entry);
+        StackEntry targetEntry = triggeringSpell
+                ? counterSupport.findCounterTargetExcludingSource(gameData, targetCardId, entry)
+                : counterSupport.findCounterTarget(gameData, targetCardId, entry);
         if (targetEntry == null) return;
-        boolean countered = counter(gameData, entry, targetEntry, ((CounterSpellEffect) effect).destination());
+        boolean countered = counter(gameData, entry, targetEntry, counter.destination());
         entry.recordStep(StepKind.COUNTER_SPELL, countered
                 ? StepOutcome.ofObjects(List.of(targetCardId), listOfController(targetEntry),
                 movedCard(gameData, targetCardId, targetEntry))

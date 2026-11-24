@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessPaysPerCounterEffect;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 
@@ -17,7 +18,7 @@ public class PhyrexianMarauder extends Card {
         // This creature can't block.
         addStaticEffect(new CantBlockEffect());
         // This creature can't attack unless you pay {1} for each +1/+1 counter on it.
-        // Read at declare-attackers time by CombatAttackService via AttackCostEffect.
-        addStaticEffect(new CantAttackUnlessPaysPerCounterEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
+        addStaticEffect(CantAttackOrBlockUnlessPaysEffect.attacking(
+                new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE)));
     }
 }

@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  *
  * <p>Contrast the uniform, defender-side {@link RequirePaymentToAttackEffect} (Windborn Muse), which
  * taxes every attacker rather than one enchanted creature, and the self-scoped
- * {@code CantAttackUnlessPaysPerCounterEffect}.
+ * {@code CantAttackOrBlockUnlessPaysEffect}.
  */
 public record EnchantedCreatureCombatTaxEffect(DynamicAmount amount, CombatTaxKind kind) implements CardEffect {
 

@@ -967,7 +967,7 @@ class GravebaneZombieTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie.getCard(), filler);
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Brain Gorgers");
-        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("Gravebane Zombie is sacrificed"))
                 .hasSize(1);
     }
 
@@ -1227,23 +1227,22 @@ class GravebaneZombieTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie.getCard(), filler);
         harness.assertInGraveyard(player1, "Brain Gorgers");
-        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("Gravebane Zombie is sacrificed"))
                 .hasSize(1);
     }
 
     @Test
     @CardUsed({KalitasTraitorOfGhet.class, BrainGorgers.class})
-    @DisplayName("Under Brain Gorgers, the last player's decline asks the picked Zombie's replacement before the sacrifice and counter")
-    void anyPlayerLastDeclineAsksBeforeThePickedZombieIsSacrificed() {
+    @DisplayName("Under Brain Gorgers, the accepting player's Zombie replacement is asked at once, before the sacrifice and counter, and the next player is still asked")
+    void anyPlayerAcceptAsksBeforeThePickedZombieIsSacrificed() {
         Card filler = new WrathOfGod();
         harness.setLibrary(player1, List.of(filler));
         Permanent zombie = harness.addToBattlefieldAndReturn(player1, new GravebaneZombie());
         harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
         harness.castFromHand(player1, new BrainGorgers(), "{3}{B}");
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
-        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                 .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
@@ -1255,8 +1254,13 @@ class GravebaneZombieTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Gravebane Zombie");
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(zombie.getCard(), filler);
         harness.assertInGraveyard(player1, "Brain Gorgers");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+
+        harness.handleMayAbilityChosen(player2, false);
+
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
-        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("Gravebane Zombie is sacrificed"))
                 .hasSize(1);
     }
 

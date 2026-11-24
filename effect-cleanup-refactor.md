@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 24b, 30c, 49b; merge queue 47b. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                 |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 24b, 30c, 49b; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                  |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,077 / 2,491 (after fold run 46c) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,070 / 2,483 (after fold run 47b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,595 rows over 4,559 classes (after fold run 46c). Latest verdict per class: `step-9` 88, unique 1,194, absorbed 1,303, split 670, blocked-other 550, survivor 445, blocked-step-model 139, blocked-player-loop 96, dead 74. Waiting: 88 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,612 rows over 4,559 classes (after fold run 47b). Latest verdict per class: `step-9` 78, unique 1,193, absorbed 1,310, split 670, blocked-other 553, survivor 446, blocked-step-model 139, blocked-player-loop 96, dead 74. Waiting: 78 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1078,6 +1078,15 @@ Sources (Torpor Orb rulings search):
 - [Torpor Orb (BIG 57)](https://scryfall.com/card/big/57)
 
 - `ExileTopCardsAndMayCastSpellsEffect.controllerMayPlayUpTo(DynamicAmount count, int maxPlayCount)`: "exile [that many] from the top; you may play up to N of those cards without paying [its] mana cost". Lands are played during resolution (your turn, a land play left, CR 305.2, 305.3); the rest stay exiled (Vault 112; fold run 46c).
+
+- `MayPayManaEffect.payingAsEachAccepts()` (`PayerLoop.anyPaid`): each accepting player pays at once, "if a player does" after the first payment (the PLC "any player may … If a player does, counter [this spell]" rulings) (fold run 47b).
+- `MayPayManaEffect.anyPlayerMay` payments `TapPermanentsEffect(controlledBy(acceptedPlayers(), filter), null, n)` (picked by each acceptor), `DiscardEffect` (hand size), `EachPlayerPaysAnyManaEffect.lifeExactly`; pick contexts `PermanentChoiceContext` / `MultiPermanentChoiceContext.AnyPlayerPaymentPick` (fold run 47b).
+- `CounterSpellEffect.triggeringSpell()` (`spell` subject `targetSpell()` or `triggeringSpell()`): a cast trigger's untargeted "counter that spell", nothing if it left the stack (CR 701.6a, 608.2b) (fold run 47b).
+- `EachPlayerPaysAnyManaEffect.lifeExactly(payers, DynamicAmount)`: "[the players] pay N life", evaluated per payer, Mastery asked first, records PAY_LIFE (fold run 47b).
+- `CantAttackOrBlockUnlessPaysEffect(amount, Side, attackerFilter)` / `.attacking(amount)` / `.blocking(amount, attackerFilter)`: every self combat mana cost; unfiltered block cost once per blocker, filtered per matching attacker (CR 508.1h, 509.1d) (fold run 47b).
+
+Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671-d50e7ccdb4f0/scratchpad/fold-47b:
+- ledger-rows.csv
 
 ### Blocked causes still open
 
@@ -4898,6 +4907,44 @@ Three batches touched: 4 absorbed, 3 survivor, 4 unique, 1 blocked-other; 5 spen
 - `ExiledCardMayPlayChoiceInteractionHandler` injects an unused `ExileSupport`. Sure; cosmetic.
 
 **For the next run.** `pay-any` is closed. Errant Minion / Power Leak fold only if a second one-shot "prevent N of that damage" card appears.
+
+### Step 9, fold run 47b (2026-11-24, parallel worktree)
+2 of 3 batches. 7 absorbed, 4 survivors widened, 3 `blocked-other`, 3 left `step-9` for 47c (`dyn-cost`, not started). Ratchet 3,094 / 2,501 → 3,087 / 2,493. 8 card files rewritten, Oracle text checked for all 8, rulings for 8 (and Worms).
+
+| Batch | Result |
+|---|---|
+| punisher | 4 folded. Phantasmagorian, Dash Hopes / Temporal Extortion and Brain Gorgers use `anyPlayerMay(...).payingAsEachAccepts()` with `CounterSpellEffect.triggeringSpell()`. Reservoir Kraken uses a tap payment that each acceptor picks. Worms left `blocked-other`: the acceptor chooses between two payments, there is one user, and it belongs to step 10's either-costs. |
+| combat-cost | 3 folded into `CantAttackOrBlockUnlessPaysEffect(amount, Side, attackerFilter)`: Marauder `.attacking(CountersOnSource)`, Myr Prototype, Hipparion `.blocking(Fixed(1), PowerAtLeast(3))`. Floodtide Serpent and Hollow Warrior left `blocked-other`: non-mana costs paid by `AttackReturnToHandCostService` / `CombatTapCostService`, one user each. |
+| dyn-cost | Not started. `PayLifeCost`'s domain `effectiveAmount` / `lifePaid` readers (AI, spells, kicker, forced costs) need an engine-evaluated amount. |
+
+**The survivors.**
+- `paysAsEachAccepts`: an accepting player pays before the next player is asked. "If a player does" follows the first payment only, and `PayerLoop.anyPaid` keeps "if no one does" from running after a payment. PLC rulings: "as soon as any player performs the action, the spell is countered, but the remaining players still get the option".
+- Payments now accepted:
+- `TapPermanentsEffect(controlledBy(acceptedPlayers(), f), null, n)`: picked on acceptance, recorded as CHOOSE, then tapped with `TapPermanentsEffect(thisWay(CHOOSE))`.
+- `DiscardEffect`: needs that many cards in hand (ruling).
+- `EachPlayerPaysAnyManaEffect.lifeExactly`: life at least the amount, the player can lose life, and life can be paid for costs (CR 119.4, 119.8).
+- `CounterSpellEffect` gains a spell subject. `triggeringSpell()` declares no target, excludes the trigger's own entry, and does nothing if the spell left the stack (CR 701.6a, 608.2b).
+- A block cost with no attacker filter is paid once per blocking creature; with a filter, once per matching attacker blocked.
+
+**Behaviour changes.**
+- Brain Gorgers: each sacrifice is made as its player accepts (ruling). Before, it waited for every answer.
+- Kraken: taps are made together after the last answer (CR 101.4). A Kraken destroyed in response still asks, and still gives a Fish, because the intervening "if" reads its last known state (CR 113.7a, 603.4, 608.2h). This reverts the test flip in `74811db8fd`.
+- Myr Prototype: blocking two attackers pays its cost once.
+
+**Tests changed.** BrainGorgers 1 rewritten (ruling). GravebaneZombie: 2 log lines, 1 rewritten (the death-replacement question now comes at acceptance). Kraken: 1 rewritten. New tests: Kraken with three players, Myr blocking two attackers, 2 handler cases each for `MayPayManaEffect` and `CounterSpellEffect`. Ran 73 classes; the last run had 0 failures.
+
+**Cost-shape.** Every payment stays where it was. Step 10's cost-combinator merge would take the tap, discard and life payments of `anyPlayerMay`, the combat return and tap costs, and Worms' either-cost.
+
+**Seen, not changed.**
+- A Temporal Extortion payer whose half life is 0 is not asked (amount > 0 kept), although CR 119.4 allows paying 0 life. Low impact (needs a player at 0 life who hasn't lost).
+- Kraken's record was a `TokenCreatingEffect`; the AI's token reader no longer sees the Fish inside `MayPayManaEffect`. Low impact.
+- `ReservoirKrakenTest` has 5 tests with no `@DisplayName`.
+
+**For the next run.** 47c: `dyn-cost`, a `DynamicAmount` on `PayEnergyCost` / `PayLifeCost`:
+- move `effectiveAmount` / `lifePaid` / `paysLifeForEachCommanderColorIdentity` to engine evaluation;
+- `AbilityActivationService` ~1636–1665 and ~7105–7330;
+- `ActivatedAbilityExecutionService` ~406 / 782–830;
+- the X flag in `CardViewFactory` ~526.
 
 ## Prompt
 

@@ -133,8 +133,8 @@ class BrainGorgersTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("All players choose before creatures are sacrificed and the spell is countered")
-    void sacrificesWaitForAllPlayersChoices() {
+    @DisplayName("The first sacrifice counters it at once, and the next player still gets the choice")
+    void firstSacrificeCountersAtOnceAndTheNextPlayerIsStillAsked() {
         harness.addToBattlefield(player1, new BloodKnight());
         harness.addToBattlefield(player2, new BloodKnight());
         castBrainGorgers(player1);
@@ -142,14 +142,14 @@ class BrainGorgersTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.assertOnBattlefield(player1, "Blood Knight");
+        harness.assertInGraveyard(player1, "Blood Knight");
+        harness.assertInGraveyard(player1, "Brain Gorgers");
         harness.assertOnBattlefield(player2, "Blood Knight");
-        harness.assertNotInGraveyard(player1, "Brain Gorgers");
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
 
         harness.handleMayAbilityChosen(player2, true);
 
-        harness.assertInGraveyard(player1, "Blood Knight");
         harness.assertInGraveyard(player2, "Blood Knight");
         harness.assertInGraveyard(player1, "Brain Gorgers");
         harness.assertNotOnBattlefield(player1, "Brain Gorgers");

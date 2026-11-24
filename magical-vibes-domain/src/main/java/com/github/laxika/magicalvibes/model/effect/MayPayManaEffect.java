@@ -42,11 +42,15 @@ import java.util.UUID;
  * one event (CR 101.4; the punisher rulings: every chosen permanent is sacrificed at the same time), followed by
  * {@code wrapped} ("if a player does"), whatever the payment then did, or, when nobody accepted, by {@code elseEffect}
  * ("if no one does", "unless"; CR 118.12a).
+ * {@code paysAsEachAccepts} ({@link #payingAsEachAccepts()}) instead has each accepting player pay at once, before the
+ * next player is asked, "if a player does" following the first payment only: the PLC "any player may … If a player
+ * does, counter [this spell]" cards, whose rulings say that as soon as any player performs the action the spell is
+ * countered, but the remaining players still get the option (Phantasmagorian, Dash Hopes, Brain Gorgers).
  * {@code loop} is the resolution's progress through the players, {@code null} in a card definition.
  */
 public record MayPayManaEffect(String manaCost, DynamicAmount dynamicManaCost, CardEffect wrapped, String prompt,
                                MayPayPayer payer, CardEffect elseEffect, int lifeCost, CardEffect payment,
-                               PayerLoop loop)
+                               boolean paysAsEachAccepts, PayerLoop loop)
         implements CardEffect {
 
     /**
@@ -55,11 +59,13 @@ public record MayPayManaEffect(String manaCost, DynamicAmount dynamicManaCost, C
      *
      * @param remainingPayerIds   the players not yet asked, the one being asked first
      * @param acceptedPayerIds    the players who chose to pay, in the order they were asked
-     * @param chosenPermanentIds  for a sacrifice payment, the permanents the accepting players chose, sacrificed
-     *                            together once everyone has answered
+     * @param chosenPermanentIds  for a sacrifice or tap payment, the permanents the accepting players chose, sacrificed
+     *                            or tapped together once everyone has answered
+     * @param anyPaid             with {@code paysAsEachAccepts}, whether a player has already paid, so "if a player
+     *                            does" has followed and "if no one does" won't
      */
     public record PayerLoop(List<UUID> remainingPayerIds, List<UUID> acceptedPayerIds,
-                            List<UUID> chosenPermanentIds) {
+                            List<UUID> chosenPermanentIds, boolean anyPaid) {
         public PayerLoop {
             remainingPayerIds = List.copyOf(remainingPayerIds);
             acceptedPayerIds = List.copyOf(acceptedPayerIds);
@@ -77,7 +83,7 @@ public record MayPayManaEffect(String manaCost, DynamicAmount dynamicManaCost, C
 
     public MayPayManaEffect(String manaCost, DynamicAmount dynamicManaCost, CardEffect wrapped, String prompt,
                             MayPayPayer payer, CardEffect elseEffect, int lifeCost) {
-        this(manaCost, dynamicManaCost, wrapped, prompt, payer, elseEffect, lifeCost, null, null);
+        this(manaCost, dynamicManaCost, wrapped, prompt, payer, elseEffect, lifeCost, null, false, null);
     }
 
     /**
@@ -91,14 +97,29 @@ public record MayPayManaEffect(String manaCost, DynamicAmount dynamicManaCost, C
      */
     public static MayPayManaEffect anyPlayerMay(MayPayPayer payers, CardEffect payment, String prompt,
                                                 CardEffect ifAPlayerDoes, CardEffect ifNoOneDoes) {
-        return new MayPayManaEffect(null, null, ifAPlayerDoes, prompt, payers, ifNoOneDoes, 0, payment, null);
+        return new MayPayManaEffect(null, null, ifAPlayerDoes, prompt, payers, ifNoOneDoes, 0, payment, false, null);
+    }
+
+    /** This payment made by each accepting player at once, "if a player does" after the first ({@code paysAsEachAccepts}). */
+    public MayPayManaEffect payingAsEachAccepts() {
+        if (payment == null) {
+            throw new IllegalStateException("Only a non-mana payment offered to any player is paid as each accepts");
+        }
+        return new MayPayManaEffect(manaCost, dynamicManaCost, wrapped, prompt, payer, elseEffect, lifeCost, payment,
+                true, loop);
     }
 
     /** This payment as the resolution goes through the players ({@link PayerLoop}). */
     public MayPayManaEffect asking(List<UUID> remainingPayerIds, List<UUID> acceptedPayerIds,
                                    List<UUID> chosenPermanentIds) {
+        return asking(remainingPayerIds, acceptedPayerIds, chosenPermanentIds, loop != null && loop.anyPaid());
+    }
+
+    /** {@link #asking(List, List, List)}, noting whether a player has already paid. */
+    public MayPayManaEffect asking(List<UUID> remainingPayerIds, List<UUID> acceptedPayerIds,
+                                   List<UUID> chosenPermanentIds, boolean anyPaid) {
         return new MayPayManaEffect(manaCost, dynamicManaCost, wrapped, prompt, payer, elseEffect, lifeCost, payment,
-                new PayerLoop(remainingPayerIds, acceptedPayerIds, chosenPermanentIds));
+                paysAsEachAccepts, new PayerLoop(remainingPayerIds, acceptedPayerIds, chosenPermanentIds, anyPaid));
     }
 
     /** A payment whose generic mana amount is evaluated when the ability resolves. */

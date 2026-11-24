@@ -11582,7 +11582,14 @@ public class GameQueryService {
                 + getEnchantedCreatureBlockerTax(gameData, blocker);
         UUID controllerId = findPermanentController(gameData, blocker.getId());
         for (CardEffect effect : blockCostEffects(gameData, blocker)) {
-            if (effect instanceof BlockCostEffect blockCost) {
+            if (effect instanceof CantAttackOrBlockUnlessPaysEffect unlessPays && unlessPays.attackerFilter() != null) {
+                // "Can't block creatures with power 3 or greater unless you pay": each matching attacker blocked.
+                if (predicateEvaluationService.matchesPermanentPredicate(gameData, attacker,
+                        unlessPays.attackerFilter())) {
+                    tax += amountEvaluationService.evaluate(gameData, unlessPays.amount(),
+                            AmountContext.forStaticEffect(blocker, controllerId));
+                }
+            } else if (effect instanceof BlockCostEffect blockCost) {
                 tax += blockCost.dynamicBlockCost() == null
                         ? blockCost.blockCost(blocker, attackerPower)
                         : amountEvaluationService.evaluate(gameData, blockCost.dynamicBlockCost(),
@@ -11603,8 +11610,9 @@ public class GameQueryService {
         UUID controllerId = findPermanentController(gameData, blocker.getId());
         int tax = 0;
         for (CardEffect effect : blockCostEffects(gameData, blocker)) {
-            if (effect instanceof CantAttackOrBlockUnlessPaysEffect unlessPays) {
-                tax += amountEvaluationService.evaluate(gameData, unlessPays.dynamicBlockCost(),
+            if (effect instanceof CantAttackOrBlockUnlessPaysEffect unlessPays && unlessPays.side().blocks()
+                    && unlessPays.attackerFilter() == null) {
+                tax += amountEvaluationService.evaluate(gameData, unlessPays.amount(),
                         AmountContext.forStaticEffect(blocker, controllerId));
             }
         }

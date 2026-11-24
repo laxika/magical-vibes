@@ -8,12 +8,15 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepOutcome;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaEffect.Resource;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -21,7 +24,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -30,7 +35,8 @@ import java.util.UUID;
  * records the payments once the last payer has answered. A mana prompt lets its player activate mana abilities while
  * it is open; an amount the pool can't cover yet is asked again. Each answer's payment is the first change of the run
  * that answers it, so a life payment's Lich's Duel Mastery question is asked first and the payment made again with
- * the same amount.
+ * the same amount. An exact life payment ({@code lifeExactly}) asks nothing: every payer's amount is evaluated for
+ * them, their Lich's Duel Mastery questions are asked before any life is paid, then each pays in turn order.
  */
 @Component
 @RequiredArgsConstructor
@@ -44,6 +50,7 @@ public class EachPlayerPaysAnyManaEffectHandler implements NormalEffectHandlerBe
     private final LifeSupport lifeSupport;
     private final PotentialManaService potentialManaService;
     private final SubjectResolutionService subjectResolutionService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -59,6 +66,10 @@ public class EachPlayerPaysAnyManaEffectHandler implements NormalEffectHandlerBe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         EachPlayerPaysAnyManaEffect pay = (EachPlayerPaysAnyManaEffect) effect;
+        if (pay.exactly() != null) {
+            payExactly(gameData, entry, pay);
+            return;
+        }
         EachPlayerPayManaState state = gameData.eachPlayerPayMana;
         if (!state.active) {
             state.reset();
@@ -92,6 +103,35 @@ public class EachPlayerPaysAnyManaEffectHandler implements NormalEffectHandlerBe
         gameLogService.append(gameData, GameLog.text(playerName + paidText(amount, pay.resource()) + cardName + "."));
         state.index++;
         promptOrRecord(gameData, entry, pay);
+    }
+
+    /**
+     * "[The players] pay N life": each payer's amount is evaluated for them (CR 608.2h), then paid in turn order from the
+     * active player; recorded as one PAY_LIFE step.
+     */
+    private void payExactly(GameData gameData, StackEntry entry, EachPlayerPaysAnyManaEffect pay) {
+        Set<UUID> payers = new HashSet<>(subjectResolutionService.players(gameData, entry, pay, pay.payers()));
+        List<UUID> ordered = gameData.orderedPlayerIds;
+        int start = Math.max(0, ordered.indexOf(gameData.activePlayerId));
+        AmountContext context = AmountContext.forStackEntry(entry, null);
+        Map<UUID, Integer> amounts = new LinkedHashMap<>();
+        for (int i = 0; i < ordered.size(); i++) {
+            UUID playerId = ordered.get((start + i) % ordered.size());
+            if (payers.contains(playerId)) {
+                amounts.put(playerId, Math.max(0, amountEvaluationService.evaluate(gameData, pay.exactly(),
+                        context.withControllerId(playerId))));
+            }
+        }
+        lifeSupport.askBeforeLifeLosses(gameData, amounts);
+        String cardName = entry.getCard().getName();
+        Map<UUID, Integer> paid = new LinkedHashMap<>();
+        amounts.forEach((playerId, amount) -> {
+            payNow(gameData, playerId, amount, Resource.LIFE, cardName);
+            paid.put(playerId, amount);
+            gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId)
+                    + paidText(amount, Resource.LIFE) + cardName + "."));
+        });
+        entry.recordStep(StepKind.PAY_LIFE, StepOutcome.ofAmounts(paid));
     }
 
     private static void seedOrder(GameData gameData, EachPlayerPayManaState state, UUID firstPlayerId,
