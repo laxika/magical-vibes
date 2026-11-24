@@ -152,7 +152,7 @@ class HarshJudgmentTest extends BaseCardTest {
         harness.castFromHand(player2, new Misfortune(), "{1}{B}{R}{G}");
         harness.passBothPriorities();
 
-        harness.handleMayAbilityChosen(player1, false);
+        harness.handleListChoice(player1, "You put a -1/-1 counter on each creature that player controls and Misfortune deals 4 damage to that player");
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);

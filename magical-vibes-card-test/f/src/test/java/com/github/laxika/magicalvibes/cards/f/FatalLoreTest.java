@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,14 +26,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({FatalLore.class, ElvishRanger.class, GorillaChieftain.class, DeadlyInsect.class, WhiteKnight.class})
 class FatalLoreTest extends BaseCardTest {
 
+    private static final String FIRST_MODE = "You draw three cards";
+    private static final String SECOND_MODE =
+            "You destroy up to two target creatures that player controls; that player draws up to three cards";
+
     @Test
     @DisplayName("The opponent chooses a mode during casting before priority is passed")
     void castingPromptsOpponentChoice() {
         harness.castFromHand(player1, new FatalLore(), "{2}{B}{B}");
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
                 .isEqualTo(player2.getId());
     }
 
@@ -44,7 +51,7 @@ class FatalLoreTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.handleMayAbilityChosen(player2, true);
+        harness.handleListChoice(player2, FIRST_MODE);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 3);
@@ -61,7 +68,7 @@ class FatalLoreTest extends BaseCardTest {
         setupAndCast();
         GameData gd = harness.getGameData();
 
-        harness.handleMayAbilityChosen(player2, false);
+        harness.handleListChoice(player2, SECOND_MODE);
         harness.handleMultiplePermanentsChosen(player1, List.of(rangerA.getId(), rangerB.getId()));
         harness.passBothPriorities();
 
@@ -87,7 +94,7 @@ class FatalLoreTest extends BaseCardTest {
 
         setupAndCast();
         GameData gd = harness.getGameData();
-        harness.handleMayAbilityChosen(player2, false);
+        harness.handleListChoice(player2, SECOND_MODE);
         harness.handleMultiplePermanentsChosen(player1, List.of(chieftain.getId()));
         harness.passBothPriorities();
 
@@ -103,7 +110,7 @@ class FatalLoreTest extends BaseCardTest {
         setupAndCast();
         GameData gd = harness.getGameData();
 
-        harness.handleMayAbilityChosen(player2, false);
+        harness.handleListChoice(player2, SECOND_MODE);
         harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
@@ -122,7 +129,7 @@ class FatalLoreTest extends BaseCardTest {
         setupAndCast();
         GameData gd = harness.getGameData();
 
-        harness.handleMayAbilityChosen(player2, false);
+        harness.handleListChoice(player2, SECOND_MODE);
         harness.passBothPriorities();
 
         int handBefore = gd.playerHands.get(player2.getId()).size();
@@ -138,7 +145,7 @@ class FatalLoreTest extends BaseCardTest {
         Permanent ranger = harness.addToBattlefieldAndReturn(player2, new ElvishRanger());
         setupAndCast();
 
-        harness.handleMayAbilityChosen(player2, false);
+        harness.handleListChoice(player2, SECOND_MODE);
 
         PendingInteraction.MultiPermanentChoice choice = harness.getGameData().interaction
                 .activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -152,7 +159,7 @@ class FatalLoreTest extends BaseCardTest {
         stockLibrary(player2);
         setupAndCast();
 
-        harness.handleMayAbilityChosen(player2, false);
+        harness.handleListChoice(player2, SECOND_MODE);
         harness.handleMultiplePermanentsChosen(player1, List.of(ranger.getId()));
         harness.passBothPriorities();
 
@@ -173,7 +180,7 @@ class FatalLoreTest extends BaseCardTest {
         Permanent ranger = harness.addToBattlefieldAndReturn(player2, new ElvishRanger());
         setupAndCast();
 
-        harness.handleMayAbilityChosen(player2, false);
+        harness.handleListChoice(player2, SECOND_MODE);
 
         PendingInteraction.MultiPermanentChoice choice = harness.getGameData().interaction
                 .activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -190,7 +197,7 @@ class FatalLoreTest extends BaseCardTest {
         Permanent ranger = harness.addToBattlefieldAndReturn(player2, new ElvishRanger());
         setupAndCast();
 
-        harness.handleMayAbilityChosen(player2, false);
+        harness.handleListChoice(player2, SECOND_MODE);
 
         PendingInteraction.MultiPermanentChoice choice = harness.getGameData().interaction
                 .activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -205,7 +212,7 @@ class FatalLoreTest extends BaseCardTest {
         setupAndCast();
         GameData gd = harness.getGameData();
 
-        harness.handleMayAbilityChosen(player2, false);
+        harness.handleListChoice(player2, SECOND_MODE);
         harness.handleMultiplePermanentsChosen(player1, List.of(ranger.getId()));
         gd.playerBattlefields.get(player2.getId()).remove(ranger);
         int handBefore = gd.playerHands.get(player2.getId()).size();
@@ -214,6 +221,31 @@ class FatalLoreTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore);
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(card -> card.getName().equals("Fatal Lore"));
+    }
+
+    @Test
+    @DisplayName("Second mode with two opponents: targets and the draw belong to the opponent who chose it")
+    void secondModeUsesTheChoosingOpponent() {
+        Player player3 = addThirdPlayer();
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new ElvishRanger());
+        Permanent third = harness.addToBattlefieldAndReturn(player3, new ElvishRanger());
+        stockLibrary(player3);
+        setupAndCast();
+        GameData gd = harness.getGameData();
+
+        harness.handlePermanentChosen(player1, player3.getId());
+        harness.handleListChoice(player3, SECOND_MODE);
+
+        PendingInteraction.MultiPermanentChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactly(third.getId());
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(third.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(second);
+        PendingInteraction.XValueChoice draw = gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
+        assertThat(draw.playerId()).isEqualTo(player3.getId());
     }
 
     private void setupAndCast() {
@@ -226,5 +258,23 @@ class FatalLoreTest extends BaseCardTest {
             deck.add(new ElvishRanger());
         }
         harness.setLibrary(player, deck);
+    }
+
+    private Player addThirdPlayer() {
+        UUID id = UUID.randomUUID();
+        Player player = new Player(id, "Charlie");
+        gd.playerIds.add(id);
+        gd.orderedPlayerIds.add(id);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(id, "Charlie");
+        gd.playerDecks.put(id, new ArrayList<>());
+        gd.playerHands.put(id, new ArrayList<>());
+        gd.playerBattlefields.put(id, new ArrayList<>());
+        gd.playerGraveyards.put(id, new ArrayList<>());
+        gd.playerCommandZones.put(id, new ArrayList<>());
+        gd.playerManaPools.put(id, new ManaPool());
+        gd.playerLifeTotals.put(id, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), id, "Charlie");
+        return player;
     }
 }

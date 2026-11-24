@@ -543,6 +543,11 @@ public class StackEntry {
      */
     private List<UUID> acceptedPlayerIds = List.of();
     /**
+     * The opponent who chose this spell's mode as it was cast ("an opponent chooses one —", CR 700.2e), read by
+     * {@code Subjects.modeChooser()} as the mode's "that player"; {@code null} for any other entry.
+     */
+    @Setter private UUID modeChooserId;
+    /**
      * The permanent that granted the triggered ability this entry is ({@link TriggeredAbility#grantingPermanentId()}):
      * "sacrifice this Equipment", "transform Optimus Prime", "other than Animal Friend" in an ability an Aura,
      * Equipment or one-shot grant gave another permanent. Set by the collector that puts the ability on the stack;
@@ -1496,6 +1501,7 @@ public class StackEntry {
         this.awaitingProducedManaColor = source.awaitingProducedManaColor;
         this.heldForManaAbility = source.heldForManaAbility;
         this.acceptedPlayerIds = source.acceptedPlayerIds;
+        this.modeChooserId = source.modeChooserId;
         this.counteredPermanentIdsThisResolution.addAll(source.counteredPermanentIdsThisResolution);
         this.counteredSpellControllerId = source.counteredSpellControllerId;
         this.counteredAbilitySourceId = source.counteredAbilitySourceId;

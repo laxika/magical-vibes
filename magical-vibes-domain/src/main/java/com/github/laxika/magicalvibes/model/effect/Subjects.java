@@ -63,6 +63,7 @@ public final class Subjects {
     private static final PlayerSubject CHOSEN_PLAYER = new PlayerSubject.ChosenPlayer();
     private static final PlayerSubject CHOSEN_PLAYERS = new PlayerSubject.ChosenPlayers();
     private static final PlayerSubject ACCEPTED_PLAYERS = new PlayerSubject.AcceptedPlayers();
+    private static final PlayerSubject MODE_CHOOSER = new PlayerSubject.ModeChooser();
     private static final PlayerSubject PLAYERS_DEALT_DAMAGE = new PlayerSubject.PlayersDealtDamage();
     private static final PlayerSubject SUBGAME_WINNERS = new PlayerSubject.SubgameWinners();
 
@@ -838,6 +839,11 @@ public final class Subjects {
     /** The players who said yes to the preceding "each player may" choice of this resolution. */
     public static PlayerSubject acceptedPlayers() {
         return ACCEPTED_PLAYERS;
+    }
+
+    /** "That player" of "an opponent chooses one —": the opponent who chose the spell's mode (CR 700.2e). */
+    public static PlayerSubject modeChooser() {
+        return MODE_CHOOSER;
     }
 
     /** The players an earlier step of this resolution dealt damage to ("each player dealt damage this way"). */

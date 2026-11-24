@@ -161,7 +161,7 @@ public class CopyImprintedCardAndMayCastCopyHandler implements MayEffectHandlerB
 
     private static ChooseOneEffect singleChoiceModal(Card card) {
         return card.getSpellEffects().stream()
-                .filter(ChooseOneEffect.class::isInstance).map(ChooseOneEffect.class::cast)
+                .filter(ChooseOneEffect::isCastersModal).map(ChooseOneEffect.class::cast)
                 .filter(modal -> modal.choicesRequired() == 1 && !modal.modesMayRepeat())
                 .findFirst().orElse(null);
     }

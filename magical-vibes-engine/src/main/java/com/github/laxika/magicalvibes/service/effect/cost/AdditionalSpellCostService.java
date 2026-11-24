@@ -3422,7 +3422,7 @@ public class AdditionalSpellCostService {
      */
     public int countChosenModes(Card card, int modeEncoding) {
         return card.getCastingCostsAndSpellEffects().stream()
-                .filter(ChooseOneEffect.class::isInstance)
+                .filter(ChooseOneEffect::isCastersModal)
                 .map(ChooseOneEffect.class::cast)
                 .findFirst()
                 .map(coe -> coe.decodeModeIndices(modeEncoding).size())

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -20,6 +21,9 @@ import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMayTakeDamageSacrificeSourceEffectHandler;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -29,6 +33,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -41,6 +46,12 @@ import java.util.UUID;
  *
  * <p>Only plain "choose one" modals whose modes take at most one player or permanent target are
  * announced here. Other modal shapes keep choosing their modes on resolution.</p>
+ *
+ * <p>A spell whose "choose one" an opponent chooses ({@link ChooseOneEffect.ModeChooser#AN_OPPONENT}) goes on the stack
+ * with its modal unresolved and is announced here too, before anyone gets priority (CR 700.2e): its controller picks
+ * which opponent chooses when there is more than one, that opponent chooses among the modes that can be chosen
+ * (CR 700.2a), and the controller then chooses the chosen mode's targets among the permanents that player controls
+ * (CR 601.2c; Fatal Lore's ruling). The opponent is recorded on the entry as the mode's "that player".</p>
  */
 @Slf4j
 @Service
@@ -53,6 +64,8 @@ public class StackedModalTriggerService {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final InputCompletionService inputCompletionService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final ValidTargetService validTargetService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     public StackedModalTriggerService(TriggerTargetCollector triggerTargetCollector,
                                       GameQueryService gameQueryService,
@@ -60,7 +73,9 @@ public class StackedModalTriggerService {
                                       @Lazy PlayerInputService playerInputService,
                                       @Lazy InteractionHandlerRegistry interactionHandlerRegistry,
                                       @Lazy InputCompletionService inputCompletionService,
-                                      @Lazy ConditionEvaluationService conditionEvaluationService) {
+                                      @Lazy ConditionEvaluationService conditionEvaluationService,
+                                      @Lazy ValidTargetService validTargetService,
+                                      @Lazy PredicateEvaluationService predicateEvaluationService) {
         this.triggerTargetCollector = triggerTargetCollector;
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
@@ -68,6 +83,8 @@ public class StackedModalTriggerService {
         this.interactionHandlerRegistry = interactionHandlerRegistry;
         this.inputCompletionService = inputCompletionService;
         this.conditionEvaluationService = conditionEvaluationService;
+        this.validTargetService = validTargetService;
+        this.predicateEvaluationService = predicateEvaluationService;
     }
 
     /**
@@ -78,6 +95,13 @@ public class StackedModalTriggerService {
      */
     public boolean announceNextMode(GameData gameData) {
         for (StackEntry entry : List.copyOf(gameData.stack)) {
+            ChooseOneEffect opponentsModal = opponentChosenModal(entry);
+            if (opponentsModal != null) {
+                if (beginOpponentModeChoice(gameData, entry, opponentsModal)) {
+                    return true;
+                }
+                continue;
+            }
             if (!awaitingModeAnnouncement(gameData, entry)) {
                 continue;
             }
@@ -141,6 +165,10 @@ public class StackedModalTriggerService {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
+        if (opponentChosenModal(entry) != null) {
+            handleOpponentModeChosen(gameData, player, entry, mode, ctx);
+            return;
+        }
         recordChosenMode(gameData, entry, announcedModal(entry), mode);
         List<UUID> validTargets = modeTargets(gameData, entry, mode);
         List<CardEffect> modeEffects = mode.effects();
@@ -201,6 +229,133 @@ public class StackedModalTriggerService {
                     "'s ability targets " + targetName + "."));
         }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Records {@code opponentId} as the opponent who chooses the mode of the spell {@code ctx} names (its controller's
+     * pick among several, CR 700.2e); the mode choice follows before anyone gets priority.
+     */
+    public void handleModeChooserChosen(GameData gameData, UUID opponentId,
+                                        PermanentChoiceContext.ModeChoosingOpponent ctx) {
+        if (!ctx.opponentIds().contains(opponentId)) {
+            throw new IllegalStateException("Invalid player choice");
+        }
+        gameData.interaction.clearAwaitingInput();
+        StackEntry entry = findEntry(gameData, ctx.stackEntryId());
+        if (entry != null) {
+            entry.setModeChooserId(opponentId);
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), ": "
+                    + gameData.playerIdToName.get(opponentId) + " chooses its mode."));
+        }
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * The spell's "an opponent chooses one" modal while its mode is unannounced: the entry's only effect, a modal whose
+     * {@link ChooseOneEffect#chosenByCaster()} is false.
+     */
+    private static ChooseOneEffect opponentChosenModal(StackEntry entry) {
+        if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                || entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                || entry.getEffectsToResolve().size() != 1) {
+            return null;
+        }
+        return entry.getEffectsToResolve().getFirst() instanceof ChooseOneEffect modal && !modal.chosenByCaster()
+                ? modal : null;
+    }
+
+    /**
+     * Begins the next choice of an opponent-chosen modal: the controller's pick of the opponent who chooses when
+     * there is more than one (the only one chooses unasked, CR 608.2d), then that opponent's mode choice among the
+     * modes that can be chosen. A spell with no opponent to choose, or no mode that can be chosen, keeps no mode
+     * and does nothing as it resolves.
+     *
+     * @return whether a choice is now awaiting input
+     */
+    private boolean beginOpponentModeChoice(GameData gameData, StackEntry entry, ChooseOneEffect modal) {
+        UUID controllerId = entry.getControllerId();
+        if (entry.getModeChooserId() == null || !gameData.playerIds.contains(entry.getModeChooserId())) {
+            List<UUID> opponents = AnyOpponentMayTakeDamageSacrificeSourceEffectHandler
+                    .apnapOpponents(gameData, controllerId).stream()
+                    .filter(gameData.playerIds::contains)
+                    .toList();
+            if (opponents.isEmpty()) {
+                entry.replaceEffectsToResolve(List.of());
+                return false;
+            }
+            if (opponents.size() > 1) {
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.ModeChoosingOpponent(entry.getTargetableId(), opponents));
+                playerInputService.beginPlayerChoice(gameData, controllerId, opponents,
+                        entry.getCard().getName() + " - Choose the opponent who chooses its mode.");
+                return true;
+            }
+            entry.setModeChooserId(opponents.getFirst());
+        }
+        UUID chooserId = entry.getModeChooserId();
+        List<ChooseOneEffect.ChooseOneOption> legalModes = modal.options().stream()
+                .filter(mode -> opponentModeTargets(gameData, entry, mode) != null)
+                .toList();
+        if (legalModes.isEmpty()) {
+            entry.replaceEffectsToResolve(List.of());
+            return false;
+        }
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                chooserId, null, null,
+                new ChoiceContext.StackedModalTriggerModeChoice(
+                        entry.getTargetableId(), chooserId, entry.getCard(), new ChooseOneEffect(legalModes)),
+                legalModes.stream().map(ChooseOneEffect.ChooseOneOption::label).toList(),
+                entry.getCard().getName() + " - Choose one for " + gameData.playerIdToName.get(controllerId) + "."));
+        log.info("Game {} - {} awaiting {}'s mode choice", gameData.id, entry.getCard().getName(),
+                gameData.playerIdToName.get(chooserId));
+        return true;
+    }
+
+    /**
+     * Applies the mode the opponent chose: the spell now resolves that mode's effects, and when the mode targets, the
+     * spell's controller chooses its targets now, as the casting completes (CR 601.2c).
+     */
+    private void handleOpponentModeChosen(GameData gameData, Player player, StackEntry entry,
+                                          ChooseOneEffect.ChooseOneOption mode,
+                                          ChoiceContext.StackedModalTriggerModeChoice ctx) {
+        List<UUID> candidates = opponentModeTargets(gameData, entry, mode);
+        entry.replaceEffectsToResolve(mode.effects());
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " chooses \"" + mode.label() + "\" for ", ctx.sourceCard(), "."));
+        log.info("Game {} - {} chooses mode \"{}\" for {}", gameData.id, player.getUsername(), mode.label(),
+                ctx.sourceCard().getName());
+        if (candidates == null || candidates.isEmpty()) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        int maxCount = Math.min(mode.maxTargets(), candidates.size());
+        playerInputService.beginMultiPermanentChoice(gameData, entry.getControllerId(), candidates, maxCount,
+                new MultiPermanentChoiceContext.TargetsAfterOpponentModeChoice(
+                        entry.getTargetableId(), entry.getModeChooserId(), mode.targetFilter()),
+                "Choose " + (mode.minTargets() == 0 ? "up to " : "") + maxCount + " target"
+                        + (maxCount == 1 ? "" : "s") + " for " + ctx.sourceCard().getName() + ".");
+    }
+
+    /**
+     * The permanents an opponent-chosen {@code mode} may target: those the mode chooser controls that match the mode's
+     * target filter and that the spell can target (shroud, hexproof, protection); an empty list for a mode that targets
+     * nothing, or {@code null} when the mode can't be chosen because it has fewer legal targets than it needs
+     * (CR 700.2a).
+     */
+    private List<UUID> opponentModeTargets(GameData gameData, StackEntry entry, ChooseOneEffect.ChooseOneOption mode) {
+        if (mode.targetFilter() == null) {
+            return List.of();
+        }
+        List<UUID> candidates = gameData.playerBattlefields
+                .getOrDefault(entry.getModeChooserId(), List.of()).stream()
+                .filter(Objects::nonNull)
+                .filter(permanent -> predicateEvaluationService.matchesFilters(gameData, permanent,
+                        Set.of(mode.targetFilter())))
+                .filter(permanent -> validTargetService.canPermanentBeTargetedBySpell(
+                        gameData, permanent, entry.getCard(), entry.getControllerId()))
+                .map(Permanent::getId)
+                .toList();
+        return candidates.size() < mode.minTargets() ? null : candidates;
     }
 
     private static boolean awaitingModeAnnouncement(GameData gameData, StackEntry entry) {

@@ -467,7 +467,7 @@ public class CardViewFactory {
      */
     private ChooseOneEffect findModalEffect(Card card) {
         for (CardEffect e : card.getCastingCostsAndSpellEffects()) {
-            if (e instanceof ChooseOneEffect coe) return coe;
+            if (e instanceof ChooseOneEffect coe && coe.chosenByCaster()) return coe;
         }
         return null;
     }

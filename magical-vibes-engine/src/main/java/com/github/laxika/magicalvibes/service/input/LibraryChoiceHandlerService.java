@@ -5202,7 +5202,7 @@ public class LibraryChoiceHandlerService {
 
     private ChooseOneEffect spellModal(Card card) {
         return card.getSpellEffects().stream()
-                .filter(ChooseOneEffect.class::isInstance)
+                .filter(ChooseOneEffect::isCastersModal)
                 .map(ChooseOneEffect.class::cast)
                 .findFirst()
                 .orElse(null);

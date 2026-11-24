@@ -29,7 +29,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -1457,7 +1456,8 @@ public class MultiPermanentChoiceHandlerService {
 
     /**
      * Records the targets a spell's controller chose after an opponent chose the spell's mode (Fatal Lore; CR 601.2c):
-     * they become the spell's targets, each a creature that player controls, checked again as it resolves (CR 608.2b).
+     * they become the spell's targets, each a permanent that player controls, checked again as it resolves against
+     * the mode's target filter (CR 608.2b).
      * The "becomes the target" and crime events happen now, as the spell's casting completes.
      */
     private void handleTargetsAfterOpponentModeChoice(GameData gameData, UUID playerId, List<UUID> permanentIds,
@@ -1468,7 +1468,7 @@ public class MultiPermanentChoiceHandlerService {
                 .orElse(null);
         if (spell != null) {
             spell.setDeclaredTargetIds(permanentIds);
-            spell.setTargetFilter(TargetFilters.creature());
+            spell.setTargetFilter(ctx.targetFilter());
             permanentIds.forEach(id -> spell.getTargetControllersAtCast().put(id, ctx.targetControllerId()));
             String playerName = gameData.playerIdToName.get(playerId);
             String targets = permanentIds.stream()

@@ -23,13 +23,30 @@ import java.util.function.Supplier;
  * during your last combat", By Elspeth's Command). A triggered ability's mode is chosen as it is put on the stack
  * (CR 603.3c, 700.2b), so the restriction is judged, and the chosen mode recorded on the source permanent, there: a
  * mode chosen for an ability that is later countered still counts as chosen.
+ * <p>
+ * {@code chooser} says who chooses the mode. {@link ModeChooser#AN_OPPONENT} is "an opponent chooses one —" (Fatal
+ * Lore, Misfortune, Library of Lat-Nam): the spell goes on the stack with this modal unresolved, and before anyone gets
+ * priority its controller picks which opponent chooses when there is more than one, that opponent chooses the mode, and
+ * the controller then chooses the mode's targets (CR 700.2e, 601.2c; {@code StackedModalTriggerService}). That
+ * opponent is the mode's "that player" ({@link Subjects#modeChooser()}); a mode's permanent targets are among the
+ * permanents that player controls ("target creatures that player controls"). The caster announces no mode, so
+ * the casting and view code skip such a modal ({@link #chosenByCaster()}).
  */
 public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax,
                               boolean allModesWhenOptionalCostPaid, boolean modesMayRepeat,
                               Condition choicesMaxCondition, List<Integer> modeCosts, int modeBudget,
                               boolean choicesEqualModalXValue, boolean anyNumberWhenConditionMet,
-                              boolean allModesWhenConditionMet, ModeRestriction modeRestriction)
+                              boolean allModesWhenConditionMet, ModeRestriction modeRestriction,
+                              ModeChooser chooser)
         implements CardEffect {
+
+    /** Who chooses the mode (CR 700.2a, 700.2e). */
+    public enum ModeChooser {
+        /** The spell's or ability's controller. */
+        CONTROLLER,
+        /** "An opponent chooses one": an opponent of the controller, picked by the controller among several. */
+        AN_OPPONENT
+    }
 
     /**
      * Which modes a triggered modal ability may choose, by the modes its source permanent chose before. The record
@@ -45,6 +62,16 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
         NOT_YET_CHOSEN_THIS_TURN,
         /** "Choose one that wasn't chosen during your last combat": the mode the source chose last time. */
         NOT_CHOSEN_DURING_LAST_COMBAT
+    }
+
+    public ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax,
+                           boolean allModesWhenOptionalCostPaid, boolean modesMayRepeat,
+                           Condition choicesMaxCondition, List<Integer> modeCosts, int modeBudget,
+                           boolean choicesEqualModalXValue, boolean anyNumberWhenConditionMet,
+                           boolean allModesWhenConditionMet, ModeRestriction modeRestriction) {
+        this(options, optional, choicesRequired, choicesMax, allModesWhenOptionalCostPaid, modesMayRepeat,
+                choicesMaxCondition, modeCosts, modeBudget, choicesEqualModalXValue, anyNumberWhenConditionMet,
+                allModesWhenConditionMet, modeRestriction, ModeChooser.CONTROLLER);
     }
 
     public ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax,
@@ -85,6 +112,7 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
 
     public ChooseOneEffect {
         modeRestriction = modeRestriction == null ? ModeRestriction.NONE : modeRestriction;
+        chooser = chooser == null ? ModeChooser.CONTROLLER : chooser;
         if (choicesRequired < 0) {
             throw new IllegalArgumentException("choicesRequired must be >= 0");
         }
@@ -151,11 +179,39 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
         return new ChooseOneEffect(options).withModeRestriction(ModeRestriction.NOT_CHOSEN_DURING_LAST_COMBAT);
     }
 
+    /**
+     * "An opponent chooses one —": a single-mode modal spell whose mode an opponent of its controller chooses as it is
+     * cast (CR 700.2e).
+     */
+    public static ChooseOneEffect anOpponentChooses(List<ChooseOneOption> options) {
+        return new ChooseOneEffect(options).withChooser(ModeChooser.AN_OPPONENT);
+    }
+
+    /** This modal with its mode chosen by {@code modeChooser}. */
+    public ChooseOneEffect withChooser(ModeChooser modeChooser) {
+        return new ChooseOneEffect(options, optional, choicesRequired, choicesMax, allModesWhenOptionalCostPaid,
+                modesMayRepeat, choicesMaxCondition, modeCosts, modeBudget, choicesEqualModalXValue,
+                anyNumberWhenConditionMet, allModesWhenConditionMet, modeRestriction, modeChooser);
+    }
+
+    /** Whether the caster announces this modal's mode as part of casting (CR 601.2b), not another player. */
+    public boolean chosenByCaster() {
+        return chooser == ModeChooser.CONTROLLER;
+    }
+
+    /**
+     * Whether {@code effect} is a modal whose mode its caster announces (CR 601.2b): what the casting, target and view
+     * code looks for in a card's spell effects. An "an opponent chooses one" modal is not; it is announced on the stack.
+     */
+    public static boolean isCastersModal(Object effect) {
+        return effect instanceof ChooseOneEffect modal && modal.chosenByCaster();
+    }
+
     /** This modal with {@code restriction} on the modes its triggered ability may choose. */
     public ChooseOneEffect withModeRestriction(ModeRestriction restriction) {
         return new ChooseOneEffect(options, optional, choicesRequired, choicesMax, allModesWhenOptionalCostPaid,
                 modesMayRepeat, choicesMaxCondition, modeCosts, modeBudget, choicesEqualModalXValue,
-                anyNumberWhenConditionMet, allModesWhenConditionMet, restriction);
+                anyNumberWhenConditionMet, allModesWhenConditionMet, restriction, chooser);
     }
 
     /**
@@ -166,7 +222,7 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
     public ChooseOneEffect withChoiceCount(int choicesRequired, int choicesMax) {
         return new ChooseOneEffect(options, optional, choicesRequired, choicesMax, allModesWhenOptionalCostPaid,
                 modesMayRepeat, choicesMaxCondition, modeCosts, modeBudget, choicesEqualModalXValue,
-                anyNumberWhenConditionMet, allModesWhenConditionMet, modeRestriction);
+                anyNumberWhenConditionMet, allModesWhenConditionMet, modeRestriction, chooser);
     }
 
     @Override

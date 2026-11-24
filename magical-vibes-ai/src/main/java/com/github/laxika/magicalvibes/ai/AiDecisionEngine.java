@@ -3507,7 +3507,7 @@ public abstract class AiDecisionEngine {
      */
     protected ChooseOneEffect findChooseOneEffect(Card card) {
         for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
-            if (effect instanceof ChooseOneEffect coe) {
+            if (effect instanceof ChooseOneEffect coe && coe.chosenByCaster()) {
                 return coe;
             }
         }

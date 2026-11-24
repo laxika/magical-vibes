@@ -1177,6 +1177,16 @@ class SubjectResolutionServiceTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("The mode chooser is the opponent the entry recorded as choosing its mode, else no one")
+        void modeChooserVariant() {
+            StackEntry entry = entry(player1, null, null);
+            entry.setModeChooserId(player2.getId());
+
+            assertThat(players(entry, Subjects.modeChooser())).containsExactly(player2.getId());
+            assertThat(players(entry(player1, null, null), Subjects.modeChooser())).isEmpty();
+        }
+
+        @Test
         @DisplayName("Players dealt damage this resolution are those the entry recorded, in APNAP order")
         void playersDealtDamageVariant() {
             StackEntry entry = entry(player1, null, null);

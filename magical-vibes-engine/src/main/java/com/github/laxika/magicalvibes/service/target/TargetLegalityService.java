@@ -1540,7 +1540,7 @@ public class TargetLegalityService {
             // validation downstream.  computeAllowedTargets(card) uses the raw (unresolved)
             // ChooseOneEffect which doesn't expose inner target types.
             boolean isModal = spellEffects.stream()
-                    .anyMatch(ChooseOneEffect.class::isInstance);
+                    .anyMatch(ChooseOneEffect::isCastersModal);
             if (!isModal) {
                 Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(
                         spellEffects, card.getOwnEntryEffects(),
@@ -5112,12 +5112,12 @@ public class TargetLegalityService {
     public boolean sourceCanTargetOnlyWalls(Card sourceCard, List<CardEffect> sourceEffects,
                                             TargetFilter targetFilter, List<TargetFilter> targetFilters) {
         ChooseOneEffect modal = sourceEffects == null ? null : sourceEffects.stream()
-                .filter(ChooseOneEffect.class::isInstance)
+                .filter(ChooseOneEffect::isCastersModal)
                 .map(ChooseOneEffect.class::cast)
                 .findFirst().orElse(null);
         if (modal == null && sourceCard != null) {
             modal = sourceCard.getSpellEffects().stream()
-                    .filter(ChooseOneEffect.class::isInstance)
+                    .filter(ChooseOneEffect::isCastersModal)
                     .map(ChooseOneEffect.class::cast)
                     .findFirst().orElse(null);
         }

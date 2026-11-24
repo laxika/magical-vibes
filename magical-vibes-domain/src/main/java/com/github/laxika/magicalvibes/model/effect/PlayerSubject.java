@@ -23,7 +23,7 @@ import java.util.Objects;
 public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.TargetPlayer, PlayerSubject.Each,
         PlayerSubject.OpponentsOf, PlayerSubject.ControllerOf, PlayerSubject.OwnerOf, PlayerSubject.TriggeringPlayer,
         PlayerSubject.ActivePlayer, PlayerSubject.DefendingPlayer, PlayerSubject.EnchantedPlayer,
-        PlayerSubject.ChosenPlayer, PlayerSubject.ChosenPlayers, PlayerSubject.AcceptedPlayers,
+        PlayerSubject.ChosenPlayer, PlayerSubject.ChosenPlayers, PlayerSubject.AcceptedPlayers, PlayerSubject.ModeChooser,
         PlayerSubject.PlayersDealtDamage, PlayerSubject.SubgameWinners, PlayerSubject.Except, PlayerSubject.AllOf, PlayerSubject.Matching,
         PlayerSubject.PlayersThisWay, PlayerSubject.Voted {
 
@@ -169,6 +169,18 @@ public sealed interface PlayerSubject permits PlayerSubject.You, PlayerSubject.T
      * recorded them ("each opponent who discarded their hand this way"); a step result.
      */
     record AcceptedPlayers() implements PlayerSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * "That player" of "an opponent chooses one —": the opponent who chose the spell's mode as it was cast
+     * ({@link ChooseOneEffect.ModeChooser#AN_OPPONENT}, CR 700.2e), as the stack entry recorded them.
+     */
+    record ModeChooser() implements PlayerSubject {
 
         @Override
         public boolean needsStackEntry() {

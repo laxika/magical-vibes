@@ -365,7 +365,7 @@ class MultiPermanentChoiceAiStrategyTest {
             UUID playerId, List<UUID> validIds, List<UUID> validPlayerIds, int maxCount) {
         return new PendingInteraction.MultiPermanentChoice(
                 playerId, validIds, validPlayerIds, maxCount,
-                new MultiPermanentChoiceContext.TargetsAfterOpponentModeChoice(UUID.randomUUID(), UUID.randomUUID()),
+                new MultiPermanentChoiceContext.TargetsAfterOpponentModeChoice(UUID.randomUUID(), UUID.randomUUID(), null),
                 "Choose permanents.");
     }
 

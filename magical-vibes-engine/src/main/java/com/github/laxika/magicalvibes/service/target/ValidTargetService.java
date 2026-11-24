@@ -681,7 +681,7 @@ public class ValidTargetService {
     /** Finds the card's modal effect in its spell ability, if any. */
     private ChooseOneEffect findModalEffect(Card card) {
         for (CardEffect e : card.getCastingCostsAndSpellEffects()) {
-            if (e instanceof ChooseOneEffect coe) return coe;
+            if (e instanceof ChooseOneEffect coe && coe.chosenByCaster()) return coe;
         }
         return null;
     }

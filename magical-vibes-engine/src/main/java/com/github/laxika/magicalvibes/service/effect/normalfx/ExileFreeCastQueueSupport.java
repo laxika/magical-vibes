@@ -290,7 +290,7 @@ public class ExileFreeCastQueueSupport {
         StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(cardToCast);
         List<CardEffect> spellEffects = new ArrayList<>(cardToCast.getCastingCostsAndSpellEffects());
         ChooseOneEffect modal = spellEffects.stream()
-                .filter(ChooseOneEffect.class::isInstance)
+                .filter(ChooseOneEffect::isCastersModal)
                 .map(ChooseOneEffect.class::cast)
                 .findFirst()
                 .orElse(null);

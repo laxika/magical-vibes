@@ -19,14 +19,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({LibraryOfLatNam.class, GrizzlyBears.class})
 class LibraryOfLatNamTest extends BaseCardTest {
 
+    private static final String FIRST_MODE = "You draw three cards at the beginning of the next turn's upkeep";
+    private static final String SECOND_MODE =
+            "You search your library for a card and put it into your hand";
+
     @Test
     @DisplayName("Casting prompts the opponent to choose a mode")
     void castingPromptsOpponentChoice() {
         setupAndCast();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
                 .isEqualTo(player2.getId());
     }
 
@@ -38,7 +42,7 @@ class LibraryOfLatNamTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        harness.handleMayAbilityChosen(player2, true);
+        harness.handleListChoice(player2, FIRST_MODE);
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
         harness.passBothPriorities();
 
@@ -71,7 +75,7 @@ class LibraryOfLatNamTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        harness.handleMayAbilityChosen(player2, false);
+        harness.handleListChoice(player2, SECOND_MODE);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -98,7 +102,7 @@ class LibraryOfLatNamTest extends BaseCardTest {
         setupAndCast();
         harness.setLibrary(player1, List.of());
 
-        harness.handleMayAbilityChosen(player2, false);
+        harness.handleListChoice(player2, SECOND_MODE);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -115,7 +119,7 @@ class LibraryOfLatNamTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(searchedCard));
         setupAndCast();
 
-        harness.handleMayAbilityChosen(player2, false);
+        harness.handleListChoice(player2, SECOND_MODE);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);

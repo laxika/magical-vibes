@@ -263,9 +263,11 @@ public sealed interface MultiPermanentChoiceContext {
      * The spell's controller chooses the targets of the mode an opponent chose for the spell (Fatal Lore: "you
      * choose the zero, one, or two targets after that", its ruling; CR 601.2c). The chosen permanents become the
      * targets of the spell on the stack ({@code stackEntryId}), each recorded as controlled by
-     * {@code targetControllerId} ("target creatures that player controls").
+     * {@code targetControllerId} ("target creatures that player controls"), with {@code targetFilter}, the mode's,
+     * checked again as the spell resolves.
      */
-    record TargetsAfterOpponentModeChoice(UUID stackEntryId, UUID targetControllerId)
+    record TargetsAfterOpponentModeChoice(UUID stackEntryId, UUID targetControllerId,
+                                          com.github.laxika.magicalvibes.model.filter.TargetFilter targetFilter)
             implements MultiPermanentChoiceContext {
     }
 

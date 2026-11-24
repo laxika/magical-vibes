@@ -381,7 +381,7 @@ public class ExileSupport {
         }
 
         boolean chooseOneSpell = chosenCard.getSpellEffects().stream()
-                .anyMatch(e -> e instanceof ChooseOneEffect modal
+                .anyMatch(e -> e instanceof ChooseOneEffect modal && modal.chosenByCaster()
                         && (modal.options().stream().anyMatch(option -> option.manaCost() != null)
                         || (modal.choicesRequired() == 1 && !modal.modesMayRepeat())));
         if (chooseOneSpell) {

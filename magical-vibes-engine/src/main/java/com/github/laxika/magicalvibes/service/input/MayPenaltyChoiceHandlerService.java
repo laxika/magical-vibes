@@ -27,9 +27,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.FatalLoreEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryOfLatNamEffect;
-import com.github.laxika.magicalvibes.model.effect.MisfortuneEffect;
 import com.github.laxika.magicalvibes.model.effect.CombustibleGearhulkEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessBlightsEffect;
@@ -89,7 +86,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -137,7 +133,6 @@ public class MayPenaltyChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ForcedCostOrElseEffectHandler forcedCostOrElseEffectHandler;
     private final LifeSupport lifeSupport;
     private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
-    private final ObjectProvider<ValidTargetService> validTargetServiceProvider;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CoinFlipService coinFlipService;
 
     /**
@@ -1407,140 +1402,6 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /**
-     * Library of Lat-Nam: the opponent ({@code player}) chose a mode for the spell's controller.
-     * Accept schedules "the controller draws three cards at the beginning of the next turn's upkeep";
-     * decline puts an unrestricted library search (to hand, then shuffle) onto the stack for the
-     * controller. The opponent is the decision maker, so the controller is the other player.
-     */
-    public void handleLibraryOfLatNamChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        UUID opponentId = ability.controllerId(); // opponent is the decision maker
-        StackEntry spell = gameData.stack.stream()
-                .filter(entry -> entry.getCard() != null
-                        && entry.getCard().getId().equals(ability.sourceCard().getId()))
-                .reduce((first, second) -> second)
-                .orElse(null);
-        if (spell != null) {
-            List<CardEffect> effects = spell.getEffectsToResolve();
-            for (int i = 0; i < effects.size(); i++) {
-                if (effects.get(i) instanceof LibraryOfLatNamEffect latNam && latNam.drawThree() == null) {
-                    spell.replaceEffectToResolve(i, new LibraryOfLatNamEffect(accepted));
-                    break;
-                }
-            }
-            String controllerName = gameData.playerIdToName.get(spell.getControllerId());
-            String opponentName = gameData.playerIdToName.get(opponentId);
-            gameLogService.append(gameData, GameLog.text(opponentName + " chooses: " + controllerName
-                    + (accepted ? " draws three cards at the beginning of the next turn's upkeep."
-                    : " searches their library for a card.")));
-            log.info("Game {} - {} chooses {} for {} (Library of Lat-Nam)", gameData.id, opponentName,
-                    accepted ? "draw-three" : "library search", controllerName);
-        }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /**
-     * Misfortune: the opponent ({@code player}) chooses one of two modes for the spell's controller as
-     * the spell is cast (CR 700.2e). Accept is "you put a +1/+1 counter on each creature you control and
-     * gain 4 life"; decline is "you put a -1/-1 counter on each creature that player controls and
-     * Misfortune deals 4 damage to that player". The choice is recorded on the spell and carried out as
-     * part of its resolution.
-     */
-    public void handleMisfortuneChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        UUID opponentId = ability.controllerId(); // opponent is the decision maker
-        StackEntry spell = gameData.stack.stream()
-                .filter(entry -> entry.getCard() != null
-                        && entry.getCard().getId().equals(ability.sourceCard().getId()))
-                .reduce((first, second) -> second)
-                .orElse(null);
-        if (spell != null) {
-            List<CardEffect> effects = spell.getEffectsToResolve();
-            for (int i = 0; i < effects.size(); i++) {
-                if (effects.get(i) instanceof MisfortuneEffect misfortune && misfortune.accepted() == null) {
-                    spell.replaceEffectToResolve(i, new MisfortuneEffect(accepted));
-                    break;
-                }
-            }
-            String controllerName = gameData.playerIdToName.get(spell.getControllerId());
-            String opponentName = gameData.playerIdToName.get(opponentId);
-            gameLogService.append(gameData, GameLog.text(opponentName + " chooses: " + controllerName
-                    + (accepted ? " puts a +1/+1 counter on each creature they control and gains 4 life."
-                    : " puts a -1/-1 counter on each creature " + opponentName
-                    + " controls and Misfortune deals 4 damage to them.")));
-            log.info("Game {} - {} chooses {} for {} (Misfortune)", gameData.id, opponentName,
-                    accepted ? "counters-and-life" : "shrink-and-burn", controllerName);
-        }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /**
-     * Fatal Lore: the opponent ({@code player}) chooses one of two modes for the spell's controller as
-     * the spell is cast (CR 700.2e). Accept is "you draw three cards"; decline is "you destroy up to two
-     * creatures that player controls, they can't be regenerated, then that player draws up to three
-     * cards". The choice is recorded on the spell and carried out as part of its resolution.
-     */
-    public void handleFatalLoreChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        UUID opponentId = ability.controllerId(); // opponent is the decision maker
-        StackEntry spell = gameData.stack.stream()
-                .filter(entry -> entry.getCard() != null
-                        && entry.getCard().getId().equals(ability.sourceCard().getId()))
-                .reduce((first, second) -> second)
-                .orElse(null);
-        if (spell != null) {
-            List<CardEffect> effects = spell.getEffectsToResolve();
-            for (int i = 0; i < effects.size(); i++) {
-                if (effects.get(i) instanceof FatalLoreEffect fatalLore && fatalLore.accepted() == null) {
-                    spell.replaceEffectToResolve(i, new FatalLoreEffect(accepted));
-                    break;
-                }
-            }
-            String controllerName = gameData.playerIdToName.get(spell.getControllerId());
-            String opponentName = gameData.playerIdToName.get(opponentId);
-            gameLogService.append(gameData, GameLog.text(opponentName + " chooses: " + controllerName
-                    + (accepted ? " draws three cards."
-                    : " destroys up to two creatures " + opponentName + " controls, then " + opponentName
-                    + " draws up to three cards.")));
-            log.info("Game {} - {} chooses mode {} for {} (Fatal Lore)", gameData.id, opponentName,
-                    accepted ? "draw-three" : "destroy", controllerName);
-            if (!accepted && beginFatalLoreTargetChoice(gameData, spell, opponentId)) {
-                return;
-            }
-        }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /**
-     * Fatal Lore's destroy mode: its controller chooses up to two target creatures the choosing opponent controls
-     * right after the opponent's mode choice, while the spell is still being cast (its ruling; CR 601.2c). Only
-     * creatures the spell could target are offered (shroud, hexproof, protection). The answer is completed by
-     * {@code MultiPermanentChoiceHandlerService} through
-     * {@link com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.TargetsAfterOpponentModeChoice}.
-     *
-     * @return whether a choice is now awaiting the controller's answer (none when nothing can be targeted)
-     */
-    private boolean beginFatalLoreTargetChoice(GameData gameData, StackEntry spell, UUID opponentId) {
-        UUID controllerId = spell.getControllerId();
-        ValidTargetService validTargetService = validTargetServiceProvider.getObject();
-        List<UUID> candidates = gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream()
-                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
-                .filter(permanent -> validTargetService.canPermanentBeTargetedBySpell(
-                        gameData, permanent, spell.getCard(), controllerId))
-                .map(Permanent::getId)
-                .toList();
-        if (candidates.isEmpty()) {
-            return false;
-        }
-        int maxCount = Math.min(2, candidates.size());
-        playerInputService.beginMultiPermanentChoice(gameData, controllerId, candidates, maxCount,
-                new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.TargetsAfterOpponentModeChoice(
-                        spell.getTargetableId(), opponentId),
-                "Choose up to " + maxCount + " target creature" + (maxCount == 1 ? "" : "s") + " to destroy.");
-        return true;
     }
 
     /**

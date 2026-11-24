@@ -16,7 +16,7 @@ public final class RoomNameSupport {
 
     public static Set<String> allDoorNames(Card card) {
         return card.getSpellEffects().stream()
-                .filter(ChooseOneEffect.class::isInstance)
+                .filter(ChooseOneEffect::isCastersModal)
                 .map(ChooseOneEffect.class::cast)
                 .findFirst()
                 .map(modal -> modal.options().stream()
@@ -30,7 +30,7 @@ public final class RoomNameSupport {
     /** The name of a Room with both its halves, also for a spell or copy of one named for the door being cast. */
     public static String combinedName(Card card) {
         return card.getSpellEffects().stream()
-                .filter(ChooseOneEffect.class::isInstance)
+                .filter(ChooseOneEffect::isCastersModal)
                 .map(ChooseOneEffect.class::cast)
                 .findFirst()
                 .map(modal -> modal.options().stream()
@@ -41,7 +41,7 @@ public final class RoomNameSupport {
 
     public static Set<String> unlockedDoorNames(Permanent permanent) {
         List<String> doorNames = permanent.getCard().getSpellEffects().stream()
-                .filter(ChooseOneEffect.class::isInstance)
+                .filter(ChooseOneEffect::isCastersModal)
                 .map(ChooseOneEffect.class::cast)
                 .findFirst()
                 .map(modal -> modal.options().stream()

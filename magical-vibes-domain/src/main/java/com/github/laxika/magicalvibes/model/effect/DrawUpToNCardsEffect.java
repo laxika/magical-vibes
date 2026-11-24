@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * A player may draw up to {@code max} cards — they choose any number from 0 to {@code max} at
  * resolution. Used by Arcane Denial's delayed upkeep trigger ("Its controller may draw up to two
  * cards at the beginning of the next turn's upkeep") and by Fatal Lore's second mode ("That player
- * draws up to three cards"), where {@code recipient} is {@link DrawUpToRecipient#OPPONENT}.
+ * draws up to three cards"), where {@code recipient} is {@link DrawUpToRecipient#MODE_CHOOSER}.
  *
  * @param max       the largest number of cards that may be drawn
  * @param recipient who chooses the amount and draws

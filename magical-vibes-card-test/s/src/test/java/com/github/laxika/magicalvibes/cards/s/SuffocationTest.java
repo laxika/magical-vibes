@@ -32,7 +32,7 @@ class SuffocationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castAndResolveSorcery(player1, 0, 0);
-        harness.handleMayAbilityChosen(player2, false);
+        harness.handleListChoice(player2, "You put a -1/-1 counter on each creature that player controls and Misfortune deals 4 damage to that player");
         harness.passBothPriorities();
     }
 

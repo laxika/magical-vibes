@@ -127,6 +127,6 @@ public class ExileGraveyardInstantsOrSorceriesAndCastCopiesEffectHandler impleme
         }
         return copies.stream().noneMatch(copy -> EffectResolution.needsTarget(copy)
                 || EffectResolution.needsSpellTarget(copy)
-                || copy.getSpellEffects().stream().anyMatch(ChooseOneEffect.class::isInstance));
+                || copy.getSpellEffects().stream().anyMatch(ChooseOneEffect::isCastersModal));
     }
 }

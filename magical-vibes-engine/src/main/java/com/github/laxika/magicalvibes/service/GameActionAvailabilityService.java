@@ -1040,7 +1040,7 @@ public class GameActionAvailabilityService {
     private static List<ManaCost> castableCosts(Card card, Set<String> forbiddenCardNames) {
         ManaCost printed = card.getParsedManaCost();
         ChooseOneEffect modal = card.getSpellEffects().stream()
-                .filter(ChooseOneEffect.class::isInstance)
+                .filter(ChooseOneEffect::isCastersModal)
                 .map(ChooseOneEffect.class::cast)
                 .findFirst().orElse(null);
         if (modal == null || modal.options().stream().allMatch(o -> o.manaCost() == null)) {

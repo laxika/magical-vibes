@@ -121,7 +121,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardsAndSeparateIntoPilesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.FatalLoreEffect;
 import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
@@ -130,9 +129,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSourceActivatedAbilities
 import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostUnlessRevealSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.IndependentlyTargetedGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryOfLatNamEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
-import com.github.laxika.magicalvibes.model.effect.MisfortuneEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeEqualToSpellManaValueCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeInsteadOfCommanderTaxEffect;
@@ -1019,7 +1016,7 @@ public class SpellCastingService {
     }
 
     private static boolean isModalSpell(Card card) {
-        return card.getSpellEffects().stream().anyMatch(ChooseOneEffect.class::isInstance);
+        return card.getSpellEffects().stream().anyMatch(ChooseOneEffect::isCastersModal);
     }
 
     private ReturnTargetCardsFromGraveyardToHandEffect restrictBargainedReturnCandidates(
@@ -1188,7 +1185,7 @@ public class SpellCastingService {
                                       boolean kicked, boolean collectEvidenceCostPaid, boolean teamworkCostPaid,
                                       Boolean castFromOwnHand) {
         for (int i = 0; i < effects.size(); i++) {
-            if (effects.get(i) instanceof ChooseOneEffect coe) {
+            if (effects.get(i) instanceof ChooseOneEffect coe && coe.chosenByCaster()) {
                 boolean additionalModesAllowed = coe.additionalModesCondition() == null
                         || conditionEvaluationService.isMet(gameData, coe.additionalModesCondition(),
                         com.github.laxika.magicalvibes.service.effect.ConditionContext.forCasting(
@@ -1615,7 +1612,7 @@ public class SpellCastingService {
         if (card == null || card.getName() == null || !card.getName().contains(" // ")
                 || card.getSubtypes().contains(CardSubtype.ROOM)) return card;
         ChooseOneEffect modal = card.getSpellEffects().stream()
-                .filter(ChooseOneEffect.class::isInstance).map(ChooseOneEffect.class::cast)
+                .filter(ChooseOneEffect::isCastersModal).map(ChooseOneEffect.class::cast)
                 .findFirst().orElse(null);
         if (modal == null) return card;
         List<Integer> modes = modal.decodeModeIndices(modeEncoding);
@@ -1640,7 +1637,7 @@ public class SpellCastingService {
             return split;
         }
         ChooseOneEffect modal = card.getSpellEffects().stream()
-                .filter(ChooseOneEffect.class::isInstance).map(ChooseOneEffect.class::cast)
+                .filter(ChooseOneEffect::isCastersModal).map(ChooseOneEffect.class::cast)
                 .findFirst().orElse(null);
         if (modal == null) {
             return card;
@@ -1660,7 +1657,7 @@ public class SpellCastingService {
 
     private static String selectedModalManaCost(Card card, List<CardEffect> effects, int modeEncoding) {
         for (CardEffect effect : effects) {
-            if (effect instanceof ChooseOneEffect modal) {
+            if (effect instanceof ChooseOneEffect modal && modal.chosenByCaster()) {
                 List<Integer> selectedModes = modal.decodeModeIndices(modeEncoding);
                 if (selectedModes.size() != 1) {
                     return null;
@@ -1680,7 +1677,7 @@ public class SpellCastingService {
             return "";
         }
         ChooseOneEffect modal = effects.stream()
-                .filter(ChooseOneEffect.class::isInstance)
+                .filter(ChooseOneEffect::isCastersModal)
                 .map(ChooseOneEffect.class::cast)
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Spree cost has no modal choices"));
@@ -4473,10 +4470,10 @@ public class SpellCastingService {
         BeholdPowerSnapshot beholdPowerSnapshot = snapshotBeholdPower(gameData, player, additionalCosts, costSelection);
 
         // Handle modal spells (Choose one): unwrap at cast time per MTG CR 700.2a
-        boolean wasModal = filteredSpellEffects.stream().anyMatch(ChooseOneEffect.class::isInstance);
+        boolean wasModal = filteredSpellEffects.stream().anyMatch(ChooseOneEffect::isCastersModal);
         int modeEncoding = effectiveXValue;
         filteredSpellEffects.stream()
-                .filter(ChooseOneEffect.class::isInstance)
+                .filter(ChooseOneEffect::isCastersModal)
                 .map(ChooseOneEffect.class::cast)
                 .forEach(modal -> {
                     validateConditionalModalSelection(gameData, playerId, modal, modeEncoding,
@@ -4484,14 +4481,14 @@ public class SpellCastingService {
                     validateModalXSelection(modal, modeEncoding, modalXValue);
                 });
         int modalModeCount = filteredSpellEffects.stream()
-                 .filter(ChooseOneEffect.class::isInstance)
+                 .filter(ChooseOneEffect::isCastersModal)
                  .map(ChooseOneEffect.class::cast)
                  .findFirst()
                  .map(modal -> modal.decodeModeIndices(modeEncoding).size())
                  .orElse(0);
          if (additionalCosts.entwineManaCost() != null) {
              ChooseOneEffect entwineModal = filteredSpellEffects.stream()
-                     .filter(ChooseOneEffect.class::isInstance)
+                     .filter(ChooseOneEffect::isCastersModal)
                      .map(ChooseOneEffect.class::cast)
                      .findFirst()
                      .orElseThrow(() -> new IllegalStateException(
@@ -4504,7 +4501,7 @@ public class SpellCastingService {
         // A split half keeps its own cost on the stack (CR 709.3b), so only other cost-bearing modes
         // restore the printed cost.
         boolean preservePrintedModeManaCost = filteredSpellEffects.stream()
-                .filter(ChooseOneEffect.class::isInstance).map(ChooseOneEffect.class::cast)
+                .filter(ChooseOneEffect::isCastersModal).map(ChooseOneEffect.class::cast)
                 .anyMatch(modal -> modal.decodeModeIndices(modeEncoding).size() == 1
                         && modal.options().get(modal.decodeModeIndices(modeEncoding).getFirst()).manaCost() != null
                         && modal.options().get(modal.decodeModeIndices(modeEncoding).getFirst()).spellType() == null
@@ -4512,7 +4509,7 @@ public class SpellCastingService {
                         modal.options().get(modal.decodeModeIndices(modeEncoding).getFirst())) == null);
         AdditionalSpellCostService.ExtractedCosts modalSelectionCosts = additionalCosts;
         filteredSpellEffects.stream()
-                .filter(ChooseOneEffect.class::isInstance)
+                .filter(ChooseOneEffect::isCastersModal)
                 .map(ChooseOneEffect.class::cast)
                 .forEach(modal -> validateOptionalCostModalSelection(
                         modal, modalSelectionCosts, costSelection, modeEncoding));
@@ -11093,11 +11090,11 @@ public class SpellCastingService {
         List<CardEffect> spellEffects = new ArrayList<>(castHalf.getCastingCostsAndSpellEffects());
         AdditionalSpellCostService.ExtractedCosts additionalCosts =
                 additionalSpellCostService.extractAndRemove(gameData, playerId, castHalf, spellEffects);
-        if (spellEffects.stream().anyMatch(ChooseOneEffect.class::isInstance)) {
+        if (spellEffects.stream().anyMatch(ChooseOneEffect::isCastersModal)) {
             // The modes are chosen as the spell is cast (CR 601.2b), so a jump-start or flashback cast
             // resolves only the chosen modes.
             for (CardEffect spellEffect : spellEffects) {
-                if (spellEffect instanceof ChooseOneEffect modal) {
+                if (spellEffect instanceof ChooseOneEffect modal && modal.chosenByCaster()) {
                     validateConditionalModalSelection(gameData, playerId, modal, effectiveXValue,
                             false, false, false);
                 }
@@ -13252,7 +13249,7 @@ public class SpellCastingService {
 
     private static void expandOutsideGameModalModeSelection(List<CardEffect> effects) {
         for (int i = 0; i < effects.size(); i++) {
-            if (!(effects.get(i) instanceof ChooseOneEffect modal) || modal.isBudgeted()
+            if (!(effects.get(i) instanceof ChooseOneEffect modal) || !modal.chosenByCaster() || modal.isBudgeted()
                     || modal.choicesMax() >= modal.options().size()) {
                 continue;
             }
@@ -18469,49 +18466,6 @@ public class SpellCastingService {
      *                          its spell-cast triggers see the back face's characteristics
      */
     /**
-     * CR 700.2e: when an opponent chooses the mode of a spell (Library of Lat-Nam), that choice is made as
-     * the spell is cast. The opponent answers through the may-ability prompt; the answer is recorded on the
-     * spell by {@code MayPenaltyChoiceHandlerService#handleLibraryOfLatNamChoice}.
-     */
-    private void queueOpponentModeChoice(GameData gameData, StackEntry castEntry, UUID controllerId) {
-        boolean latNamChoice = castEntry.getEffectsToResolve().stream()
-                .anyMatch(effect -> effect instanceof LibraryOfLatNamEffect latNam && latNam.drawThree() == null);
-        boolean misfortuneChoice = castEntry.getEffectsToResolve().stream()
-                .anyMatch(effect -> effect instanceof MisfortuneEffect misfortune && misfortune.accepted() == null);
-        boolean fatalLoreChoice = castEntry.getEffectsToResolve().stream()
-                .anyMatch(effect -> effect instanceof FatalLoreEffect fatalLore && fatalLore.accepted() == null);
-        if (!latNamChoice && !misfortuneChoice && !fatalLoreChoice) {
-            return;
-        }
-        UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
-        if (opponentId == null) {
-            return;
-        }
-        String controllerName = gameData.playerIdToName.get(controllerId);
-        if (latNamChoice) {
-            String prompt = "Choose one for " + controllerName + " (Library of Lat-Nam)"
-                    + " — Accept: they draw three cards at the beginning of the next turn's upkeep."
-                    + " Decline: they search their library for a card and put it into their hand.";
-            gameData.pendingMayAbilities.add(new PendingMayAbility(castEntry.getCard(), opponentId,
-                    List.of(new LibraryOfLatNamEffect()), prompt));
-        }
-        if (fatalLoreChoice) {
-            String prompt = "Choose one for " + controllerName + " (Fatal Lore) — Accept: they draw three"
-                    + " cards. Decline: they destroy up to two creatures you control (they can't be"
-                    + " regenerated) and you draw up to three cards.";
-            gameData.pendingMayAbilities.add(new PendingMayAbility(castEntry.getCard(), opponentId,
-                    List.of(new FatalLoreEffect()), prompt));
-        }
-        if (misfortuneChoice) {
-            String prompt = "Choose one for " + controllerName + " (Misfortune) — Accept: they put a +1/+1"
-                    + " counter on each creature they control and gain 4 life. Decline: they put a -1/-1"
-                    + " counter on each creature you control and Misfortune deals 4 damage to you.";
-            gameData.pendingMayAbilities.add(new PendingMayAbility(castEntry.getCard(), opponentId,
-                    List.of(new MisfortuneEffect()), prompt));
-        }
-    }
-
-    /**
      * Applies "it perpetually becomes a creature" to a spell as it is cast, so the change is in place
      * on the stack and stays with the card if the spell is countered. The new characteristics are
      * recorded against the card's identity as well, matching every other perpetual card change.
@@ -18685,7 +18639,6 @@ public class SpellCastingService {
                             .contains(CardSubtype.FAERIE));
             castEntry.setControlledFaerieAsCast(controlledFaerie);
             ActionEvents.crimeCommitted(gameData, castEntry);
-            queueOpponentModeChoice(gameData, castEntry, playerId);
         }
         if (commandCast) {
             spellEvents.cast(

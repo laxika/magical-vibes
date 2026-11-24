@@ -1917,6 +1917,9 @@ public class SubjectResolutionService {
                     : gameQueryService.defendingPlayerOfAttackTarget(gameData, ctx.entry().getAttackedTargetId()));
             case PlayerSubject.EnchantedPlayer ignored -> listOf(enchantedPlayer(ctx));
             case PlayerSubject.ChosenPlayer ignored -> listOf(chosenPlayer(ctx));
+            case PlayerSubject.ModeChooser ignored -> listOf(ctx.entry().getModeChooserId()).stream()
+                    .filter(gameData.playerIds::contains)
+                    .toList();
             case PlayerSubject.AcceptedPlayers ignored -> ctx.entry().getAcceptedPlayerIds().stream()
                     .filter(gameData.playerIds::contains)
                     .toList();

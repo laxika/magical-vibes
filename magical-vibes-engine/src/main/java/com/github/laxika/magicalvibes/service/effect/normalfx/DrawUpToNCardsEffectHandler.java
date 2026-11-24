@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawUpToNCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawUpToRecipient;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +23,6 @@ import org.springframework.stereotype.Component;
 public class DrawUpToNCardsEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
-    private final GameQueryService gameQueryService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PlayerInteractionSupport playerInteractionSupport;
 
@@ -37,7 +35,7 @@ public class DrawUpToNCardsEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DrawUpToNCardsEffect) effect;
         UUID playerId = switch (e.recipient()) {
-            case OPPONENT -> gameQueryService.getOpponentId(gameData, entry.getControllerId());
+            case MODE_CHOOSER -> entry.getModeChooserId();
             case CONTROLLER -> entry.getControllerId();
             case TARGET_PLAYER -> entry.getTargetId();
         };

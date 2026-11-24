@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b (each in Findings; the fold queue marks its rows). Fold runs 17c, 21 and 12e are running in worktrees; 19b and 20 wait to merge. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                             |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b (each in Findings; the fold queue marks its rows). Fold runs 17c, 21 and 12e are running in worktrees; 20 waits to merge. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                              |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,676 / 2,940 (after fold run 18b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,673 / 2,934 (after fold run 19b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,572 rows over 4,429 classes (after fold run 18b). Latest verdict per class: `step-9` 825, unique 1,169, absorbed 729, split 606, blocked-other 502, survivor 300, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 825 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,583 rows over 4,430 classes (after fold run 19b). Latest verdict per class: `step-9` 823, unique 1,168, absorbed 732, split 606, blocked-other 502, survivor 301, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 823 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -726,6 +726,10 @@ Delayed and global triggers:
 - `CastCardFromGraveyardEffect.of(CardSubject)` (`sourceCard()`, `triggeringCards(filter)`, `targetCard(filter, scope)`) with `.withoutPayingItsManaCost()`, `.spendingManaOfAnyType()`, `.exilingInsteadOfGraveyard()`, `.allowingAdventure()`, `.ifCast(effect)`: the graveyard cast-now offer. Several named cards form one choice group; a free cast pays its cost increases (CR 601.2f) (fold run 18b).
 - `CastCardsWithoutPayingManaCostEffect` over graveyard cards (`cardsInGraveyards(you(), filter)`): offered one round at a time, a declined card offered again after each cast (CR 608.2g; Chandra Ablaze) (fold run 18b).
 - "If you haven't cast a spell this turn, you may cast … If you do, you can't cast additional spells this turn": `ConditionalEffect(NotCondition(ControllerCastSpellThisTurn(null)), CastCardFromGraveyardEffect.of(…).ifCast(PlayerRestrictionEffect.thisTurn(you(), castingSpells())))` (Conduit of Worlds; fold run 18b).
+
+- `ChooseOneEffect.anOpponentChooses(options)` / `ModeChooser` / `isCastersModal`: "an opponent chooses one —", announced by `StackedModalTriggerService` before priority (controller picks among several opponents, CR 700.2e; targets after the mode, CR 601.2c) (fold run 19b).
+- `Subjects.modeChooser()` (`StackEntry.modeChooserId`) and `DrawUpToRecipient.MODE_CHOOSER`: "that player" of an opponent-chosen mode (fold run 19b).
+- `MultiPermanentChoiceContext.TargetsAfterOpponentModeChoice(entry, controller, targetFilter)`: the mode's targets chosen after the mode (fold run 19b).
 
 ### Blocked causes still open
 
@@ -2477,6 +2481,51 @@ Batches: `gy-cast-now` taken; `exile-markers` given a verdict; `look-cast` not t
 - `MayCastDiscardedCardWithoutPayingManaCostEffect(CardSubject)` is a second graveyard/exile cast-now record over a card subject: a step-10 merge candidate with the survivor.
 
 **For the next run (18c).** `look-cast`: one `LookAtTopCardsAndMayCastEffect` with a `DynamicAmount` count, a reveal flag and one place for the looked-at cards to wait (Aetherworks leaves them in the library, Velomachus and Cosmic Cube take them out, Kiora exiles them). Read `LibrarySearch CAST_WITHOUT_PAYING`'s completion first, to see how it treats both placements.
+
+### Step 9, fold run 19b (2026-11-24, parallel worktree)
+
+Batch `opp-mode` done; `tempting` not taken (19c). Ratchet 3,700 / 2,963 → 3,697 / 2,957. Ledger 11 rows (absorbed 3, survivor 1, `step-9` 7). 3 card files rewritten, Oracle text checked for 3; rulings for Fatal Lore and the tempting offers. CR 700.2e, 700.2a, 601.2b, 601.2c, 608.2d, 101.4 checked.
+
+**Shape (opp-mode).** `ChooseOneEffect.anOpponentChooses(options)` (`ModeChooser.AN_OPPONENT`). The caster announces no mode, so every cast, target, view and AI site that looks for the caster's modal skips it (`ChooseOneEffect.isCastersModal`, `chosenByCaster`). The spell goes on the stack with the modal unresolved. Before priority, `StackedModalTriggerService.announceNextMode` does three things:
+- the controller picks the opponent when there are several (`PermanentChoiceContext.ModeChoosingOpponent`); a lone opponent is chosen unasked;
+- that opponent picks among the modes that can be chosen (`StackedModalTriggerModeChoice`; a mode with fewer legal targets than its minimum is left out, CR 700.2a);
+- the controller picks the mode's targets among that player's permanents (`TargetsAfterOpponentModeChoice(entry, chooser, targetFilter)`, the option's min/max).
+
+The opponent is kept on `StackEntry.modeChooserId`, read by `Subjects.modeChooser()` ("that player") and `DrawUpToRecipient.MODE_CHOOSER`.
+
+| Member | Result |
+|---|---|
+| LibraryOfLatNamEffect | absorbed: [RegisterDrawCardsAtNextUpkeepEffect(3)] / [SearchLibraryEffect()] |
+| MisfortuneEffect | absorbed: [+1/+1 on each creature you control, gain 4] / [PutCounterOnTargetPermanentEffect(controlledBy(modeChooser(), creature), -1/-1) + DealDamageToPlayersEffect(4, modeChooser())] |
+| FatalLoreEffect | absorbed: [DrawCardEffect(3)] / option(DestroyEachTargetPermanentEffect(true) + DrawUpToNCardsEffect(3, MODE_CHOOSER), creature, 0..2) |
+| `tempting` (7) | left for 19c, design below |
+
+**Behaviour changes.**
+- Misfortune's second mode hits only the choosing opponent (Oracle "that player"; new test).
+- Fatal Lore's targets and draw belong to the choosing opponent (new test).
+- The controller picks the choosing opponent among several (CR 700.2e; new test).
+- The prompt is a mode list instead of accept/decline, so five card tests answer with `handleListChoice`. Logs are the survivor's.
+- The 3 records, 3 normalfx handlers, 3 mayfx handlers, `SpellCastingService.queueOpponentModeChoice` and three `MayPenaltyChoiceHandlerService` branches are gone.
+
+**Tempting design (19c).** The C13 rulings say opponents decide in turn order, then the effect happens at once for each acceptor, then for you once per acceptor. Shape:
+1. An each-opponent-may accept step, asked in turn order from the opponent after you (`apnapOpponents`), that records `StackEntry.acceptedPlayerIds`.
+2. The payload over `acceptedPlayers()`, done once for all of them.
+3. `RepeatEffect(accepted count, payload over you())`.
+
+Payloads:
+- Glory: counters over `controlledBy(acceptedPlayers(), creature)`.
+- Bunnies: `DrawCardEffect(1, acceptedPlayers())` + a token.
+- Discovery: `EachPlayerSearchesLibraryEffect` without shuffling, then the shuffle step for the players who searched; count only opponents who searched.
+- Immortality: a per-player graveyard return; count only opponents who returned one.
+
+Blockers found:
+- Vengeance, Contract, Bunnies and Reflections need a `PlayerSubject` token controller on `CreateTokenEffect` / the token copies (the open token-controller cause).
+- Mayhem needs a player form of the spell copy.
+- `ResolveRiderForPlayerEffect` is not a fit: its derived entry drops X and can't pause for a prompt.
+
+**Seen, not changed.** A free cast that skips `finishSpellCast` (exile and library free casts) should now get its mode announced at the next auto-pass; not tested.
+
+**For the next run.** 19c builds the token-controller subject first, then folds `tempting` as above; the Fold-line defect "Tempt with Glory, Bunnies, Mayhem, Immortality act as each opponent accepts" is still open.
 
 ## Prompt
 

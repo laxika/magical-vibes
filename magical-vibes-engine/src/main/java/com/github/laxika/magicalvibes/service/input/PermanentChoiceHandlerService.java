@@ -950,6 +950,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleEntersTrigger(gameData, permanentId, ett);
         } else if (context instanceof PermanentChoiceContext.StackedModalTriggerTarget stackedModalTarget) {
             stackedModalTriggerService.handleTargetChosen(gameData, permanentId, stackedModalTarget);
+        } else if (context instanceof PermanentChoiceContext.ModeChoosingOpponent modeChoosingOpponent) {
+            stackedModalTriggerService.handleModeChooserChosen(gameData, permanentId, modeChoosingOpponent);
         } else if (context instanceof PermanentChoiceContext.CyclopeanTombUpkeepLandChoice cyclopean) {
             removeAllMireCountersFromChosenLandEffectHandler.completeChoice(gameData, permanentId, cyclopean);
         } else if (context instanceof PermanentChoiceContext.DayNightTransformAttachment dnta) {

@@ -343,6 +343,18 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    @DisplayName("Deep copy keeps the opponent who chose a spell's mode")
+    void deepCopyKeepsModeChooser() {
+        StackEntry spell = TestStackDoor.triggered(new SerraAngel(), player1.getId(), "Spell", List.of());
+        spell.setModeChooserId(player2.getId());
+        gd.stack.add(spell);
+
+        GameData copy = gd.simulationCopy();
+
+        assertThat(copy.stack.getFirst().getModeChooserId()).isEqualTo(player2.getId());
+    }
+
+    @Test
     @DisplayName("Deep copy keeps how many of its controller's upkeeps began since a permanent came under control")
     void deepCopyPreservesControllerUpkeepsSinceControlled() {
         Permanent origPerm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());

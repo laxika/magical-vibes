@@ -30,6 +30,11 @@ public class ChooseOneEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        if (!((ChooseOneEffect) effect).chosenByCaster()) {
+            // "An opponent chooses one" is announced on the stack (StackedModalTriggerService); a spell that reaches
+            // its resolution unannounced had no opponent to choose, so no mode was chosen.
+            return;
+        }
         // The controller of a modal activated ability chooses its mode (CR 700.2a), even when the
         // activation happens during another player's turn.
         java.util.UUID choicePlayerId = entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY

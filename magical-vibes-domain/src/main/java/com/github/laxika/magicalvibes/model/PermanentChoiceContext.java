@@ -1411,6 +1411,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             implements PermanentChoiceContext {}
 
     /**
+     * The controller of a spell whose mode "an opponent chooses" picks which of {@code opponentIds} chooses it
+     * (CR 700.2e). {@code stackEntryId} is the spell's {@link StackEntry#getTargetableId()}.
+     */
+    record ModeChoosingOpponent(UUID stackEntryId, List<UUID> opponentIds) implements PermanentChoiceContext {
+
+        public ModeChoosingOpponent {
+            opponentIds = List.copyOf(opponentIds);
+        }
+    }
+
+    /**
      * A triggered modal ability whose mode is chosen as it is put on the stack (CR 603.3c). Which modes its source
      * permanent's record excludes, and which record the chosen mode goes to, follow the modal's
      * {@link ChooseOneEffect#modeRestriction()}: {@code consumeModes} ("hasn't been chosen"),
