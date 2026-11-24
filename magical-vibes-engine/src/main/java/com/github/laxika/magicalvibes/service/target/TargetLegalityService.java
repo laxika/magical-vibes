@@ -6331,7 +6331,8 @@ public class TargetLegalityService {
                             && gameData.orderedPlayerIds.stream()
                             .noneMatch(candidateId -> gameData.getLife(candidateId) > gameData.getLife(targetPlayerId));
             case PlayerLifeExactlyPredicate lifeExactly ->
-                    targetPlayerId != null && gameData.getLife(targetPlayerId) == lifeExactly.life();
+                    targetPlayerId != null && gameData.getLife(targetPlayerId) == amountEvaluationService.evaluate(
+                            gameData, lifeExactly.life(), AmountContext.forEstimation(controllerId));
             case PlayerHasMoreLifeThanControllerPredicate ignored ->
                     controllerId != null
                             && !controllerId.equals(targetPlayerId)

@@ -204,7 +204,6 @@ public class InteractionPromptProjectionRegistry {
                 this::projectTargetPlayerChoosesCardsFromHandChoice);
         register(PendingInteraction.TargetedHandBattlefieldChoice.class,
                 this::projectTargetedHandBattlefieldChoice);
-        register(PendingInteraction.SpectersShriekChoice.class, this::projectSpectersShriekChoice);
         register(PendingInteraction.RevealCardsDiscardChoice.class,
                 this::projectRevealCardsDiscardChoice);
         register(PendingInteraction.AlternatingHandExileChoice.class,
@@ -1331,14 +1330,6 @@ public class InteractionPromptProjectionRegistry {
 
     private InteractionPromptMessage projectTargetedHandBattlefieldChoice(
             GameData gameData, PendingInteraction.TargetedHandBattlefieldChoice interaction) {
-        List<CardView> cardViews =
-                cardViews(gameData.playerHands.getOrDefault(interaction.targetPlayerId(), List.of()));
-        return InteractionPromptMessage.cardIndexPick(
-                cardViews, interaction.validIndices(), interaction.prompt(), true);
-    }
-
-    private InteractionPromptMessage projectSpectersShriekChoice(
-            GameData gameData, PendingInteraction.SpectersShriekChoice interaction) {
         List<CardView> cardViews =
                 cardViews(gameData.playerHands.getOrDefault(interaction.targetPlayerId(), List.of()));
         return InteractionPromptMessage.cardIndexPick(

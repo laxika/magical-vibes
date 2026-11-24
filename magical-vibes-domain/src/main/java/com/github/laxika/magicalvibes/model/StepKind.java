@@ -52,7 +52,8 @@ package com.github.laxika.magicalvibes.model;
  *       PutExiledCardsIntoOwnersGraveyardEffect}; a card a replacement sent elsewhere is not counted), those cards,
  *       their owners;</li>
  *   <li>{@link #REVEAL}: the number of cards revealed from the top of libraries
- *       ({@code RevealTopCardOfLibraryEffect}, {@code RevealCardsFromTopUntilEffect}) or shown from hands
+ *       ({@code RevealTopCardOfLibraryEffect}, {@code RevealCardsFromTopUntilEffect}, the reveal form of
+ *       {@code LookAtTopCardsAndMayCastEffect}, recorded before its cast choice) or shown from hands
  *       ({@code RevealCardsFromHandEffect}, a look included, CR 701.20e), those cards, their players, each one's
  *       {@link StepOutcome#movedCards()} entry naming its player's library or hand, which revealing doesn't make it
  *       leave (CR 701.20b);</li>

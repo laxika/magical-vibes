@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityServic
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DemonstrateEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RevealUntilCardPredicateRestOnBottomRandomEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.TheMasterGallifreysEndEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseAttackTargetsForCreatedTokensEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCopySupport;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
@@ -58,7 +57,6 @@ public class PermanentChoiceTriggerHandlerService {
     private final DemonstrateEffectHandler demonstrateEffectHandler;
     private final TokenCopySupport tokenCopySupport;
     private final RevealUntilCardPredicateRestOnBottomRandomEffectHandler revealUntilCardHandler;
-    private final TheMasterGallifreysEndEffectHandler theMasterHandler;
     private final ChooseAttackTargetsForCreatedTokensEffectHandler createdTokenAttackTargetsHandler;
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
@@ -393,12 +391,6 @@ public class PermanentChoiceTriggerHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleTheMasterMostLifeChoice(GameData gameData, UUID playerId,
-                                               PermanentChoiceContext.TheMasterMostLifeChoice context) {
-        theMasterHandler.completeMostLifeChoice(gameData, playerId, context);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handlePucasMischiefOwnTarget(GameData gameData, UUID permanentId,

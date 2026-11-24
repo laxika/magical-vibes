@@ -202,8 +202,6 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerSacrificesCreatureCreateTokenEqualToTotalPowerEffectHandler
             eachPlayerSacrificesCreatureCreateTokenEqualToTotalPowerHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.DanseMacabreEffectHandler
-            danseMacabreEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachOpponentSacrificesCreatureCreateTokensEffectHandler
             eachOpponentSacrificesCreatureCreateTokensHandler;
@@ -429,10 +427,6 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.EachPlayerSacrificesCreatureCreateTokenEqualToTotalPower
                 && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one creature must be selected");
-        }
-        if (context instanceof MultiPermanentChoiceContext.DanseMacabreSacrifice
-                && permanentIds.size() != 1) {
-            throw new IllegalStateException("Exactly one nontoken creature must be selected");
         }
         if (context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesCreatureCreateTokens
                 && permanentIds.size() != 1) {
@@ -1595,7 +1589,6 @@ public class MultiPermanentChoiceHandlerService {
     private boolean killsBeforeChangingAnything(MultiPermanentChoiceContext context) {
         return context instanceof MultiPermanentChoiceContext.ForcedSacrifice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerSacrificesCreatureCreateTokenEqualToTotalPower
-                || context instanceof MultiPermanentChoiceContext.DanseMacabreSacrifice
                 || context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesCreatureCreateTokens
                 || context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesPermanentCreateTokens
                 || context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesNontokenCreatureConjuresDuplicates
@@ -1663,8 +1656,6 @@ public class MultiPermanentChoiceHandlerService {
             case MultiPermanentChoiceContext.EachPlayerSacrificesCreatureCreateTokenEqualToTotalPower ctx ->
                     eachPlayerSacrificesCreatureCreateTokenEqualToTotalPowerHandler.completeChoice(
                             gameData, permanentIds, ctx);
-            case MultiPermanentChoiceContext.DanseMacabreSacrifice ctx ->
-                    danseMacabreEffectHandler.completeChoice(gameData, permanentIds, ctx);
             case MultiPermanentChoiceContext.EachOpponentSacrificesCreatureCreateTokens ctx ->
                     eachOpponentSacrificesCreatureCreateTokensHandler.completeChoice(gameData, permanentIds, ctx);
             case MultiPermanentChoiceContext.EachOpponentSacrificesPermanentCreateTokens ctx ->

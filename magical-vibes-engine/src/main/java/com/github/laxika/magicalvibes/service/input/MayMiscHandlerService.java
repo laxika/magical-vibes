@@ -711,49 +711,6 @@ public class MayMiscHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    /**
-     * Unexpected Results, land branch: "you may put it onto the battlefield and return Unexpected
-     * Results to its owner's hand". Both halves are one choice, so a decline leaves the land on top
-     * of the library and lets the sorcery go to the graveyard as normal. Putting the land onto the
-     * battlefield is not a land play, so it neither uses up the turn's land drop nor fires
-     * plays-a-land triggers.
-     */
-    public void handleUnexpectedResultsLandChoice(
-            GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        UUID controllerId = player.getId();
-        Card land = ability.sourceCard();
-        List<Card> deck = gameData.playerDecks.get(controllerId);
-
-        if (!accepted) {
-            gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " declines to put ", land, " onto the battlefield."));
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        if (deck.isEmpty() || !deck.getFirst().getId().equals(land.getId())) {
-            gameLogService.append(gameData, GameLog.cardThen(land, " is no longer on top of the library."));
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        deck.removeFirst();
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId,
-                new Permanent(land, Zone.LIBRARY));
-        gameLogService.append(gameData, GameLog.textCardText(
-                player.getUsername() + " puts ", land, " onto the battlefield."));
-        log.info("Game {} - {} puts {} onto the battlefield (Unexpected Results)",
-                gameData.id, player.getUsername(), land.getName());
-        battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, land, null, false);
-
-        StackEntry parked = gameData.pendingEffectResolutionEntry;
-        if (parked != null && parked.getCard().getId().equals(ability.targetCardId())) {
-            parked.setReturnToHandAfterResolving(true);
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
     public void handleLeylineChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         if (accepted) {
             Card card = ability.sourceCard();

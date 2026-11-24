@@ -1484,15 +1484,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Soulbond self-enter: choose another unpaired creature you control to pair with the source. */
     record SoulbondChoosePartner(UUID sourcePermanentId, UUID controllerId) implements PermanentChoiceContext {}
 
-    /** The Master's choice of an opponent tied for most life. */
-    record TheMasterMostLifeChoice(Card sourceCard, UUID controllerId,
-                                   List<UUID> eligiblePlayerIds)
-            implements PermanentChoiceContext {
-        public TheMasterMostLifeChoice {
-            eligiblePlayerIds = List.copyOf(eligiblePlayerIds);
-        }
-    }
-
     /** Cyclopean Tomb's resolution-time choice of a tracked land to clean up. */
     record CyclopeanTombUpkeepLandChoice(UUID delayedActionId, PermanentPredicate permanentFilter)
             implements PermanentChoiceContext {}

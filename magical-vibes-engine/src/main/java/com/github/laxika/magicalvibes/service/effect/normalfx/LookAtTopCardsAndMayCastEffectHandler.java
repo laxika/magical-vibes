@@ -6,9 +6,13 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
+import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsAndMayCastEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
@@ -33,7 +37,10 @@ import java.util.UUID;
  * the top cards to their owner (or to every player when they are revealed) and offers the matching spells in one
  * {@code LibrarySearch} prompt with the {@code CAST_WITHOUT_PAYING} destination, which casts the chosen one from the
  * library during the resolution (CR 608.2g) and puts the rest on the bottom in a random order, or leaves them. The
- * cards stay in the library until then (CR 701.20b). Nothing offered, nothing is asked.
+ * cards stay in the library until then (CR 701.20b). Nothing offered, nothing is asked. Revealed cards are the step's
+ * {@code StepKind.REVEAL} result, recorded before the cast choice, so a later step reads "it" or "if it's a land card"
+ * of the card wherever it then is (a card not cast is still in the library); the cast resumes the resolution with the
+ * next step (CR 608.2g).
  */
 @Component
 @RequiredArgsConstructor
@@ -62,6 +69,9 @@ public class LookAtTopCardsAndMayCastEffectHandler implements NormalEffectHandle
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }
+        if (look.reveals()) {
+            entry.recordStep(StepKind.REVEAL, StepOutcome.NONE);
+        }
         AmountContext context = AmountContext.forStackEntry(entry, source);
         int count = Math.max(0, amountEvaluationService.evaluate(gameData, look.count(), context));
         Integer manaValueBound = look.spellManaValueAtMost() == null ? null
@@ -82,6 +92,10 @@ public class LookAtTopCardsAndMayCastEffectHandler implements NormalEffectHandle
             }
             gameLogService.append(gameData, line.text(" (" + sourceName + ").").build());
             cardRevealService.revealToAllPlayers(gameData, controllerId, GameEventFact.RevealZone.LIBRARY, topCards);
+            entry.recordStep(StepKind.REVEAL, StepOutcome.ofObjects(
+                    topCards.stream().map(Card::getId).toList(), List.of(controllerId),
+                    topCards.stream().map(card -> new MovedCard(card.getId(), card.getId(), Zone.LIBRARY,
+                            controllerId)).toList()));
         } else {
             gameLogService.append(gameData, GameLog.text(playerName + " looks at the top "
                     + LibraryRevealSupport.pluralCards(looked) + " of their library (" + sourceName + ")."));

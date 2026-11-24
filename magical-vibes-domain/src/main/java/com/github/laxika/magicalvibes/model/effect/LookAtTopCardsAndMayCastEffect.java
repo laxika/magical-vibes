@@ -12,7 +12,9 @@ import java.util.Objects;
  * and the mana-value bound are evaluated once as the effect resolves (CR 608.2h); a spell chosen is cast then and
  * there (CR 608.2g), its additional costs still paid (CR 118.8). The looked-at cards stay in the library while the
  * choice is made: looking at or revealing a card doesn't move it (CR 701.20b, 701.20e), so the spell is cast from the
- * library.
+ * library. Revealed cards are the step's {@code StepKind.REVEAL} result: "if it's a land card" and "if you don't cast it,
+ * put it into your hand" are later steps reading {@code HappenedThisWay.toACard(REVEAL, …)} and
+ * {@code Subjects.revealedThisWay()}, which name a card not cast where it still is (Unexpected Results, Rashmi).
  *
  * <p>A land can't be cast, so a land face is never offered. A modal double-faced card is offered when either face
  * matches, its caster choosing the face as they cast it (CR 712.8b). The mana-value bound is a bound on the spell: a

@@ -1868,52 +1868,6 @@ public class CardChoiceHandlerService {
         }
     }
 
-    public void handleSpectersShriekCardChosen(GameData gameData, Player player, int cardIndex) {
-        PendingInteraction.SpectersShriekChoice choice =
-                gameData.interaction.activeInteraction(PendingInteraction.SpectersShriekChoice.class);
-        if (choice == null || !player.getId().equals(choice.choosingPlayerId())) {
-            throw new IllegalStateException("Not your turn to choose");
-        }
-
-        if (cardIndex == -1) {
-            gameData.interaction.clearAwaitingInput();
-            resumeAfterSpectersShriekChoice(gameData);
-            return;
-        }
-        if (!choice.validIndices().contains(cardIndex)) {
-            throw new IllegalStateException("Invalid card index: " + cardIndex);
-        }
-
-        UUID targetPlayerId = choice.targetPlayerId();
-        List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
-        Card chosenCard = targetHand.remove(cardIndex);
-        exileService.exileCard(gameData, targetPlayerId, chosenCard);
-
-        String targetName = gameData.playerIdToName.get(targetPlayerId);
-        gameLogService.append(gameData, GameLog.textCardText(
-                player.getUsername() + " exiles ", chosenCard, " from " + targetName + "'s hand."));
-
-        gameData.interaction.clearAwaitingInput();
-        List<Card> casterHand = gameData.playerHands.get(player.getId());
-        if (!chosenCard.getColors().contains(CardColor.BLACK) && casterHand != null && !casterHand.isEmpty()) {
-            playerInputService.beginExileFromHandChoice(gameData, player.getId(), null, null, 1);
-            return;
-        }
-
-        resumeAfterSpectersShriekChoice(gameData);
-    }
-
-    private void resumeAfterSpectersShriekChoice(GameData gameData) {
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-        if (!gameData.interaction.isAwaitingInput()) {
-            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-        }
-    }
-
     /**
      * Whether the resolving enter ability belongs to a card whose return is a separate
      * leaves-the-battlefield ability (Mesmeric Fiend), so the exile still happens when the source

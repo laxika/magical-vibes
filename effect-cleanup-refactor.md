@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50, 48b (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 50b, D11; merge queue 8e. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                             |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b, 47c, 24c, 48, 8c, 7c, 8d, 50, 48b, 8e (each in Findings; the fold queue marks its rows). Running in parallel worktrees: D11, D12, D13; merge queue 50b. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                              |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,020 / 2,448 (after fold run 48b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,015 / 2,442 (after fold run 8e) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,726 rows over 4,577 classes (after fold run 48b). Latest verdict per class: `step-9` 12, unique 1,196, absorbed 1,352, split 683, blocked-other 561, survivor 460, blocked-step-model 140, blocked-player-loop 96, dead 77. Waiting: 12 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,732 rows over 4,577 classes (after fold run 8e). Latest verdict per class: `step-9` 7, unique 1,196, absorbed 1,352, split 688, blocked-other 561, survivor 460, blocked-step-model 140, blocked-player-loop 96, dead 77. Waiting: 7 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1142,6 +1142,9 @@ Ledger rows are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cd
 
 Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671-d50e7ccdb4f0/scratchpad/fold-48b:
 - ledger-rows.csv (23 rows)
+
+- `LookAtTopCardsAndMayCastEffect.reveal(...)` records REVEAL (cards, controller, library) before its cast choice, and the cast resumes the later steps (CR 608.2g). "If it's a land card …" is `toACard(REVEAL, land)`; "if you don't cast it, put it into your hand" is `PutCardsIntoHandEffect(revealedThisWay())` (Unexpected Results, Rashmi; fold run 8e).
+- `PlayerLifeExactlyPredicate(DynamicAmount)`: "an opponent with the most life among your opponents" is `matching(eachOpponent(), new PlayerLifeExactlyPredicate(new HighestOpponentLifeTotal()))`, evaluated for the controller (The Master, Gallifrey's End; fold run 8e).
 
 ### Blocked causes still open
 
@@ -5302,6 +5305,47 @@ For the next run: the copy pair (`BecomeCopyOfCardUntilEndOfTurnEffect` with `Be
 - `TimmerianFiendsAnteExchangeEffect`'s Javadoc said ownership stays unchanged. Fixed: the handler already swaps owners.
 
 **For the next run.** All three Run 48 batches are closed. The alt-cost pair waits for a casting-path redesign (step 10).
+
+### Step 9, fold run 8e (2026-11-24, parallel worktree)
+Batch `splits`, last 5 rows: all 5 split onto existing steps; the batch is closed. Ratchet 3,041 / 2,465 → 3,036 / 2,459. CR 101.4, 118.8, 400.7, 601.3, 603.12, 608.2c, 608.2d, 608.2g, 608.2h, 701.20b, 701.55d, 709.3a, 709.4, 712.8c checked with `get_rule`. 5 card files rewritten; Oracle text checked for all 5, rulings for all 5.
+
+| Folded | Into |
+|---|---|
+| Unexpected Results | shuffle + `LookAtTopCardsAndMayCastEffect.reveal(1).leavingTheRest()` + `ConditionalEffect(toACard(REVEAL, land), MayEffect(put revealedThisWay(land) + ConditionalEffect(returned(), ReturnToHandEffect.selfSpell())))` |
+| Rashmi, Eternities Crafter | `reveal(1).withSpellManaValueAtMost(Sum(TargetSpellManaValue, -1)).leavingTheRest()` + `PutCardsIntoHandEffect(revealedThisWay())` |
+| Specter's Shriek | `ChooseCardsFromTargetHandEffect` (up to one nonland, EXILE) + `ConditionalEffect(toACard(EXILE, nonblack), ExileCardFromHandEffect())` |
+| The Master, Gallifrey's End | `MayEffect`(exile `triggeringCards()` + `ConditionalEffect(exiled(), ChoosePlayerEffect(matching(eachOpponent(), PlayerLifeExactlyPredicate(HighestOpponentLifeTotal))) + villainousChoiceFacedBy(playersThisWay(CHOOSE), …))`) |
+| Danse Macabre | `SacrificePermanentsEffect(…, eachPlayer()).withSimultaneousChoices()` + `RollD20Effect.withAddedAmount(sacrificedToughness().controlledByYou(), oneOf / upTo(2) of cardsThisWay(SACRIFICE, creature) + put under your control)` |
+
+**The pieces.**
+- The reveal form of `LookAtTopCardsAndMayCastEffect` records REVEAL (cards, controller, library) before its cast choice, which gives it two users.
+- The cast resuming the later steps was already true: every epilogue resumes the parked resolution, and a targeted or modal cast resumes after its answer (CR 608.2g). Tests cover it.
+- `PlayerLifeExactlyPredicate` takes a `DynamicAmount` (int overload kept for Triskaidekaphobia).
+
+**Where the triage / 8c notes were wrong.**
+- `LibrarySearchDestination.CAST_WITHOUT_PAYING_OR_PUT_INTO_HAND` does not fit Rashmi: it casts an exiled card, and nothing produces it (dead).
+- Specter's Shriek's record was harmful and the hand head is benign. Only activated abilities read the polarity, and the opponent-only filter decides the target, so nothing changes.
+- Danse's ruling says choices go "starting with you". At sorcery speed that is the active player, so APNAP (CR 101.4) is the same.
+
+**Behaviour changes.**
+- Unexpected Results: the land goes through the entry batch and the can't-enter check (Worms of the Earth; the Fold: defect). The spell returns only if the land entered (ruling). New test.
+- Rashmi: a split card's half within the bound is offered (Oracle "a spell with lesser mana value", CR 709.3a). New test.
+- Both now use the library-cast prompt.
+- Danse: a lone returnable card is taken unasked (CR 608.2d).
+- The survivors' log lines win.
+
+**Deleted.**
+- The 5 records, their 6 handlers (one mayfx).
+- `MayMiscHandlerService.handleUnexpectedResultsLandChoice`.
+- `PendingInteraction.SpectersShriekChoice`, its projection, interaction handler, AI strategy and `CardChoiceHandlerService` path.
+- `PermanentChoiceContext.TheMasterMostLifeChoice` and its completion.
+- `MultiPermanentChoiceContext.DanseMacabreSacrifice` and its completion.
+
+**Seen, not changed.**
+- `LookAtTopCardsAndMayCastEffect` offers spells that can't be cast (no legal target, a spell limit, an unpayable mandatory additional cost); picking one logs "can't be cast" (CR 608.2d: an impossible option can't be chosen). Fairly sure.
+- `CAST_WITHOUT_PAYING_OR_PUT_INTO_HAND` and `handleCastOrPutIntoHandChoice` are dead.
+
+**For the next run.** `splits` is closed. Remove the dead destination and stop offering uncastable spells in the library-cast prompt in a defect run.
 
 ## Prompt
 

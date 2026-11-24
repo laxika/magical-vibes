@@ -32,7 +32,7 @@ class SpectersShriekTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.SpectersShriekChoice.class);
+                .isInstanceOf(PendingInteraction.RevealedHandChoice.class);
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction())
@@ -185,6 +185,35 @@ class SpectersShriekTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(opponentCard);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(second);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The chosen card from the revealed hand is logged by name")
+    void chosenCardIsPublic() {
+        Card opponentCard = new Gingerbrute();
+        harness.setHand(player1, List.of(new SpectersShriek()));
+        harness.setHand(player2, List.of(opponentCard));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gameLogContains("exiles Gingerbrute")).isTrue();
+    }
+
+    @Test
+    @DisplayName("With no card in the caster's hand, exiling a nonblack card asks nothing more")
+    void nonblackExileWithEmptyCasterHandAsksNothing() {
+        Card opponentCard = new Gingerbrute();
+        harness.setHand(player1, List.of(new SpectersShriek()));
+        harness.setHand(player2, List.of(opponentCard));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(opponentCard);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

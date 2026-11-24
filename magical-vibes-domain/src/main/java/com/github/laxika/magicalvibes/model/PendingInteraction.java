@@ -108,7 +108,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.ColorChoice, PendingInteraction.RevealedHandChoice,
         PendingInteraction.TargetPlayerChoosesCardsFromHandChoice,
         PendingInteraction.TargetedHandBattlefieldChoice,
-        PendingInteraction.SpectersShriekChoice,
         PendingInteraction.RevealCardsDiscardChoice,
         PendingInteraction.AlternatingHandExileChoice,
         PendingInteraction.GraveyardChoice, PendingInteraction.GraveyardExileCostChoice,
@@ -3116,25 +3115,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             implements PendingInteraction {
 
         public TargetedHandBattlefieldChoice {
-            validIndices = java.util.List.copyOf(validIndices);
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return choosingPlayerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.CardIndexPick(validIndices, true);
-        }
-    }
-
-    record SpectersShriekChoice(UUID choosingPlayerId, UUID targetPlayerId,
-                                java.util.List<Integer> validIndices, String prompt)
-            implements PendingInteraction {
-
-        public SpectersShriekChoice {
             validIndices = java.util.List.copyOf(validIndices);
         }
 

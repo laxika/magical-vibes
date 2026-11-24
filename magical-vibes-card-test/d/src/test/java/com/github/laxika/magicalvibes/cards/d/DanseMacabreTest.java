@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -41,6 +42,7 @@ class DanseMacabreTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A total of 14 or less returns one chosen creature card put into a graveyard this way")
     void lowResultReturnsOneChosenSacrifice() {
         Permanent casterChoice = addCreatureReady(player1, new GrizzlyBears());
         Permanent casterAlternative = addCreatureReady(player1, new HillGiant());
@@ -52,7 +54,7 @@ class DanseMacabreTest extends BaseCardTest {
         PendingInteraction.MultiPermanentChoice sacrificeChoice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(sacrificeChoice.playerId()).isEqualTo(player1.getId());
-        assertThat(sacrificeChoice.context()).isInstanceOf(MultiPermanentChoiceContext.DanseMacabreSacrifice.class);
+        assertThat(sacrificeChoice.context()).isInstanceOf(MultiPermanentChoiceContext.ForcedSacrifice.class);
 
         harness.handleMultiplePermanentsChosen(player1, List.of(casterChoice.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -77,6 +79,7 @@ class DanseMacabreTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A total of 15 or more returns up to two of them under the caster's control")
     void highResultReturnsUpToTwoSacrificesUnderCasterControl() {
         Card casterCreature = new GrizzlyBears();
         Card opposingCreature = new HillGiant();
@@ -102,6 +105,7 @@ class DanseMacabreTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only the toughness of the creature the caster sacrificed is added")
     void casterWithoutCreatureDoesNotAddOpponentsToughness() {
         Card opposingCreature = new HillGiant();
         addCreatureReady(player2, opposingCreature);
@@ -109,17 +113,15 @@ class DanseMacabreTest extends BaseCardTest {
 
         castDanseMacabre();
 
-        PendingInteraction.MultiGraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
-        assertThat(choice.minCount()).isEqualTo(1);
-        assertThat(choice.maxCount()).isEqualTo(1);
-        harness.handleMultipleCardsChosen(player1, List.of(opposingCreature.getId()));
+        // The lone creature card put into a graveyard this way is the one returned, unasked (CR 608.2d).
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getId())
                 .contains(opposingCreature.getId());
     }
 
     @Test
+    @DisplayName("A high total may return no creature card")
     void highResultAllowsReturningNoCreatures() {
         Card casterCreature = new GrizzlyBears();
         Card opposingCreature = new HillGiant();
@@ -138,6 +140,7 @@ class DanseMacabreTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only creature cards put into a graveyard this way are offered")
     void highResultAllowsReturningOnlyOneAndExcludesOlderGraveyardCards() {
         Card casterCreature = new GrizzlyBears();
         Card opposingCreature = new HillGiant();
@@ -163,6 +166,7 @@ class DanseMacabreTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The sacrificed creature's toughness is read as it last existed on the battlefield")
     void addsModifiedToughnessBeforeSacrifice() {
         Permanent casterCreature = addCreatureReady(player1, new GrizzlyBears());
         casterCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
@@ -184,6 +188,7 @@ class DanseMacabreTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With no creature sacrificed the d20 is still rolled and nothing is asked")
     void noCreaturesStillRollsAndCompletesWithoutReturnChoice() {
         setRoll(20);
 
@@ -196,6 +201,7 @@ class DanseMacabreTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A card that can't enter the battlefield stays in its owner's graveyard")
     void blockedOpposingCreatureReturnLeavesCardInOwnersGraveyard() {
         Card opposingCreature = new HillGiant();
         addCreatureReady(player2, opposingCreature);
@@ -203,8 +209,8 @@ class DanseMacabreTest extends BaseCardTest {
         setRoll(14);
 
         castDanseMacabre();
-        harness.handleMultipleCardsChosen(player1, List.of(opposingCreature.getId()));
 
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getId().equals(opposingCreature.getId()));
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(opposingCreature);
@@ -212,6 +218,7 @@ class DanseMacabreTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Every player chooses before the chosen creatures are sacrificed together")
     void allPlayersChooseBeforeAnyCreatureIsSacrificed() {
         Permanent casterChoice = addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new HillGiant());

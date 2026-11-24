@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GruulCharm;
 import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
+import com.github.laxika.magicalvibes.cards.w.WormsOfTheEarth;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UnexpectedResults.class, Forest.class, GrizzlyBears.class, Pyroclasm.class, GruulCharm.class})
+@CardUsed({UnexpectedResults.class, Forest.class, GrizzlyBears.class, Pyroclasm.class, GruulCharm.class,
+        WormsOfTheEarth.class})
 class UnexpectedResultsTest extends BaseCardTest {
 
     /**
@@ -47,8 +49,8 @@ class UnexpectedResultsTest extends BaseCardTest {
 
         castUnexpectedResults();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.stack).isNotEmpty();
         harness.passBothPriorities();
@@ -66,8 +68,8 @@ class UnexpectedResultsTest extends BaseCardTest {
 
         castUnexpectedResults();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(pyroclasm);
         harness.assertInGraveyard(player1, "Unexpected Results");
@@ -131,7 +133,7 @@ class UnexpectedResultsTest extends BaseCardTest {
         stackLibrary(new GrizzlyBears());
 
         castUnexpectedResults();
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -148,8 +150,35 @@ class UnexpectedResultsTest extends BaseCardTest {
         stackLibrary(new GruulCharm());
 
         castUnexpectedResults();
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+    }
+
+    @Test
+    @DisplayName("A land that can't enter stays on top and Unexpected Results goes to the graveyard")
+    void landThatCantEnterStaysOnTopAndSpellIsNotReturned() {
+        harness.addToBattlefield(player2, new WormsOfTheEarth());
+        Card forest = new Forest();
+        stackLibrary(forest);
+
+        castUnexpectedResults();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        harness.assertInGraveyard(player1, "Unexpected Results");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The revealed card is shown to every player")
+    void revealedCardIsShownToEveryPlayer() {
+        stackLibrary(new Forest());
+
+        castUnexpectedResults();
+
+        assertThat(gameLogContains("reveals Forest")).isTrue();
     }
 }

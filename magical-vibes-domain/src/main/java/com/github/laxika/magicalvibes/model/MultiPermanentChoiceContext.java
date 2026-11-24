@@ -468,18 +468,6 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
-    /** Each player chooses a nontoken creature for Danse Macabre before all are sacrificed. */
-    record DanseMacabreSacrifice(
-            java.util.List<PendingForcedSacrifice> remainingChoosers,
-            java.util.List<UUID> accumulatedSacrificeIds,
-            StackEntry resolvingEntry)
-            implements MultiPermanentChoiceContext {
-        public DanseMacabreSacrifice {
-            remainingChoosers = java.util.List.copyOf(remainingChoosers);
-            accumulatedSacrificeIds = java.util.List.copyOf(accumulatedSacrificeIds);
-        }
-    }
-
     /** Each opponent chooses a creature before the chosen creatures are sacrificed together. */
     record EachOpponentSacrificesCreatureCreateTokens(
             java.util.List<PendingForcedSacrifice> remainingChoosers,

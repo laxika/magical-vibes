@@ -42,7 +42,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.TheMasterGallifreysEndEffect;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -426,7 +425,7 @@ class LichsDuelMasteryRiderTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, myr.getId());
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleListChoice(player2, TheMasterGallifreysEndEffect.LOSE_LIFE_OPTION);
+        harness.handleListChoice(player2, TheMasterGallifreysEnd.LOSE_LIFE_OPTION);
 
         assertMasteryAskedLibraryOrExile();
         assertThat(gd.getPlayerExiledCards(player1.getId())).anyMatch(card -> "Copper Myr".equals(card.getName()));

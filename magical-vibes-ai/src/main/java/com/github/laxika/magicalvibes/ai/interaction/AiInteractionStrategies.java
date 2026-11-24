@@ -107,7 +107,6 @@ public final class AiInteractionStrategies {
         register(new MultiGraveyardChoiceAiStrategy());
         register(new ColorChoiceAiStrategy());
         register(new RevealedHandChoiceAiStrategy());
-        register(new SpectersShriekChoiceAiStrategy());
         register(new RevealCardsDiscardChoiceAiStrategy());
         register(new AlternatingHandExileChoiceAiStrategy());
         register(new MasterOfPredicamentsCardChoiceAiStrategy());
