@@ -6,7 +6,10 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayPutMatchingOntoBattlefieldOrCreateTokenEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayPutMatchingOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
@@ -17,9 +20,8 @@ public class RulikMonsWarrenChief extends Card {
 
     public RulikMonsWarrenChief() {
         addTrigger(Triggers.attacks(),
-                new LookAtTopCardMayPutMatchingOntoBattlefieldOrCreateTokenEffect(
-                        new CardTypePredicate(CardType.LAND),
-                        true,
+                new LookAtTopCardMayPutMatchingOntoBattlefieldEffect(new CardTypePredicate(CardType.LAND), true),
+                new ConditionalEffect(new NotCondition(HappenedThisWay.returned()),
                         new CreateTokenEffect("Goblin", 1, 1, CardColor.RED,
                                 List.of(CardSubtype.GOBLIN), Set.of(), Set.of())));
     }

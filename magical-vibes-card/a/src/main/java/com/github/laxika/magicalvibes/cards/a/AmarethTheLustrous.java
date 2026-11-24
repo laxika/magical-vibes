@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealSharingCardTypeWithEnteringPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithPermanentsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -21,6 +23,8 @@ public class AmarethTheLustrous extends Card {
                                 new PermanentControlledBySourceControllerPredicate(),
                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))),
                         ObjectRelation.YOU_CONTROL),
-                new LookAtTopCardMayRevealSharingCardTypeWithEnteringPermanentToHandEffect());
+                new LookAtTopCardMayRevealMatchingToHandEffect(
+                        new CardSharesCardTypeWithPermanentsPredicate(Subjects.triggering()),
+                        LookAtTopCardMayRevealMatchingToHandEffect.OtherwiseDestination.TOP));
     }
 }

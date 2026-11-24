@@ -383,10 +383,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    /** Descendants' Fury: choose a creature from the triggering combat-damage event. */
-    record SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureType(
-            UUID controllerId, Card sourceCard) implements PermanentChoiceContext {}
-
     /**
      * The losing player chooses which of several loss replacements applies, by the permanent it belongs to
      * (CR 616.1); {@code lossReason} names the {@code LossReason} being replaced.

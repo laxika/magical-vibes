@@ -103,7 +103,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.PopulateSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PreventCombatDamageByTargetCreatureIfSharesColorWithChosenPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PutCounterOnEitherTargetPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PutSacrificedPermanentCountersAndAttachEquipmentEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SoulbondSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesAttackingCreatureThenCreateTokensEqualToToughnessEffectHandler;
@@ -263,9 +262,6 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffectHandler
             targetPlayerSacrificesNontokenCreatureThenConjuresDuplicateHandler;
-
-    private final SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffectHandler
-            sacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeHandler;
 
     private final SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler sacrificePermanentAndReturnHandler;
 
@@ -810,19 +806,6 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         // Begun mid-resolution (opponent/target-player-chooses-creature-to-destroy effects) —
         // same parked-resolution resume requirement as handleSacrificeCreature above.
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleSacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureType(
-            GameData gameData, UUID permanentId,
-            PermanentChoiceContext.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureType context) {
-        Permanent creature = gameQueryService.findPermanentById(gameData, permanentId);
-        if (creature == null) {
-            throw new IllegalStateException("Chosen creature no longer exists");
-        }
-
-        sacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeHandler.resolveAfterChoice(
-                gameData, context.sourceCard(), context.controllerId(), creature);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

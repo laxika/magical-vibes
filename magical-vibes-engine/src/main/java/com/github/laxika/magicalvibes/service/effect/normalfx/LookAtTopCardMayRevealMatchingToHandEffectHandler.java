@@ -5,20 +5,29 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingToHandEffect.Stage;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
- * Private peek at the top card, then may reveal a matching card to hand; when the effect opts in,
- * a card that stays out of hand may instead be put into the graveyard or on the library bottom.
+ * Private peek at the top card (CR 701.20e), then may reveal a matching card to hand; a card that stays out of hand
+ * stays on top, may be put into the graveyard, is put on the bottom, or may be put on the bottom, as the effect says.
+ * The predicate's subjects ("shares a card type with that permanent") are bound to the entry as the card is looked at
+ * (CR 608.2h). A {@link StepKind#REVEAL} step: nothing as it begins, the card as the may-reveal is accepted.
  */
 @Slf4j
 @Component
@@ -28,8 +37,9 @@ public class LookAtTopCardMayRevealMatchingToHandEffectHandler
 
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
-    @org.springframework.beans.factory.annotation.Autowired
-    private com.github.laxika.magicalvibes.service.CardRevealService cardRevealService;
+    private final SubjectResolutionService subjectResolutionService;
+    @Autowired
+    private CardRevealService cardRevealService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,6 +53,7 @@ public class LookAtTopCardMayRevealMatchingToHandEffectHandler
         if (e.stage() != Stage.LOOK) {
             return;
         }
+        entry.recordStep(StepKind.REVEAL, StepOutcome.NONE);
 
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
@@ -60,13 +71,13 @@ public class LookAtTopCardMayRevealMatchingToHandEffectHandler
                 GameLog.text(playerName + " looks at the top card of their library (" + sourceName + ")."));
 
         Card topCard = deck.getFirst();
-        cardRevealService.revealToPlayer(gameData, controllerId,
-                com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.LIBRARY,
+        cardRevealService.revealToPlayer(gameData, controllerId, GameEventFact.RevealZone.LIBRARY,
                 List.of(topCard), controllerId);
+        CardPredicate predicate = subjectResolutionService.bindCardSubjects(gameData, entry, e, e.predicate());
         // The source may have left the battlefield while its ability was on the stack; the entry's
         // snapshot keeps the chosen characteristic (Gathering Stone's chosen type) for the match.
         boolean matches = predicateEvaluationService.matchesCardPredicate(
-                topCard, e.predicate(), entry.getCard().getId(), gameData, controllerId,
+                topCard, predicate, entry.getCard().getId(), gameData, controllerId,
                 entry.getSourcePermanentId(), null, null, entry.getSourcePermanentSnapshot());
 
         if (matches) {
@@ -81,31 +92,36 @@ public class LookAtTopCardMayRevealMatchingToHandEffectHandler
             return;
         }
 
-        if (e.otherwiseDestination()
-                == LookAtTopCardMayRevealMatchingToHandEffect.OtherwiseDestination.BOTTOM) {
-            Card bottomCard = deck.removeFirst();
-            deck.addLast(bottomCard);
-            gameLogService.append(gameData, GameLog.text(
-                    playerName + " puts the card on the bottom of their library (" + sourceName + ")."));
-            log.info("Game {} - {} puts non-matching {} on the bottom of their library ({})",
-                    gameData.id, playerName, bottomCard.getName(), sourceName);
-            return;
-        }
-
-        if (e.otherwiseDestination()
-                != LookAtTopCardMayRevealMatchingToHandEffect.OtherwiseDestination.GRAVEYARD) {
-            log.info("Game {} - {} looks at non-matching top card — it stays on top ({})",
+        switch (e.otherwiseDestination()) {
+            case BOTTOM -> {
+                Card bottomCard = deck.removeFirst();
+                deck.addLast(bottomCard);
+                gameLogService.append(gameData, GameLog.text(
+                        playerName + " puts the card on the bottom of their library (" + sourceName + ")."));
+                log.info("Game {} - {} puts non-matching {} on the bottom of their library ({})",
+                        gameData.id, playerName, bottomCard.getName(), sourceName);
+            }
+            case GRAVEYARD -> {
+                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                        entry.getCard(),
+                        controllerId,
+                        List.of(e.withStage(Stage.MAY_GRAVEYARD)),
+                        sourceName + " — Put " + topCard.getName() + " into your graveyard?"
+                ));
+                log.info("Game {} - {} looks at non-matching {} — may put to graveyard ({})",
+                        gameData.id, playerName, topCard.getName(), sourceName);
+            }
+            case MAY_BOTTOM -> gameData.pendingMayAbilities.addFirst(mayBottom(entry.getCard(), controllerId,
+                    e, topCard));
+            case TOP -> log.info("Game {} - {} looks at non-matching top card — it stays on top ({})",
                     gameData.id, playerName, sourceName);
-            return;
         }
+    }
 
-        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                entry.getCard(),
-                controllerId,
-                List.of(e.withStage(Stage.MAY_GRAVEYARD)),
-                sourceName + " — Put " + topCard.getName() + " into your graveyard?"
-        ));
-        log.info("Game {} - {} looks at non-matching {} — may put to graveyard ({})",
-                gameData.id, playerName, topCard.getName(), sourceName);
+    /** "You may put it on the bottom of your library", asked of the looking player about the card they saw. */
+    public static PendingMayAbility mayBottom(Card sourceCard, UUID controllerId,
+                                              LookAtTopCardMayRevealMatchingToHandEffect effect, Card topCard) {
+        return new PendingMayAbility(sourceCard, controllerId, List.of(effect.withStage(Stage.MAY_BOTTOM)),
+                sourceCard.getName() + " — Put " + topCard.getName() + " on the bottom of your library?");
     }
 }

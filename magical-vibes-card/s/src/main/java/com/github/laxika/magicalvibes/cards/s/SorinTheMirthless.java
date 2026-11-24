@@ -9,7 +9,11 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealToHandAndLoseLifeEqualToManaValueEffect;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -21,7 +25,9 @@ public class SorinTheMirthless extends Card {
     public SorinTheMirthless() {
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new LookAtTopCardMayRevealToHandAndLoseLifeEqualToManaValueEffect()),
+                List.of(new LookAtTopCardMayRevealMatchingToHandEffect(new CardTruePredicate(),
+                        LookAtTopCardMayRevealMatchingToHandEffect.OtherwiseDestination.TOP,
+                        List.of(new LoseLifeEffect(AmountThisWay.revealedManaValue(), Subjects.you())))),
                 "+1: Look at the top card of your library. You may reveal that card and put it into your hand. "
                         + "If you do, you lose life equal to its mana value."
         ));

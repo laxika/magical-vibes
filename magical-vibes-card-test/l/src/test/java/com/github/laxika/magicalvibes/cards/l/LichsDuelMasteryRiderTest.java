@@ -443,8 +443,8 @@ class LichsDuelMasteryRiderTest extends BaseCardTest {
     @Test
     @CardUsed({SorinTheMirthless.class, DoomedDissenter.class})
     @FailOnLegacyDepartureFallback
-    @DisplayName("Accepting Sorin's +1 asks the Mastery before the card leaves the library")
-    void sorinAsksTheMasteryBeforeTheCardMoves() {
+    @DisplayName("Accepting Sorin's +1 asks the Mastery after the card is put into the hand and before any life is lost")
+    void sorinAsksTheMasteryAfterTheCardMoves() {
         Permanent mastery = noncreatureShieldlessMasteryBetweenWheelAndLeyline();
         Permanent sorin = harness.addToBattlefieldAndReturn(player2, new SorinTheMirthless());
         sorin.setCounterCount(CounterType.LOYALTY, 4);
@@ -460,8 +460,8 @@ class LichsDuelMasteryRiderTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         assertMasteryAskedLibraryOrExile();
-        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard);
-        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(topCard);
         harness.assertLife(player2, 20);
 
         harness.handleListChoice(player2, EXILE);

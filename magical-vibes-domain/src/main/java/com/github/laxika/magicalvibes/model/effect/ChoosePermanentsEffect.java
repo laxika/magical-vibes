@@ -43,12 +43,15 @@ import java.util.Objects;
  *                   restriction
  * @param triggeringSpellCouldTarget "[permanents] that spell could target": only the candidates the spell the trigger
  *                   event was about could target, as its controller would target them (CR 115.1)
+ * @param sacrificing "[the chooser] sacrifices one of them", "you may sacrifice one of them": only the candidates
+ *                   the chooser could sacrifice, those they control that can be sacrificed (CR 608.2d, 701.21a);
+ *                   the sacrifice is the following step over {@code Subjects.thisWay(StepKind.CHOOSE)}
  */
 public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount minimum, DynamicAmount maximum,
                                      Different different, String label, PlayerSubject oneForEach,
                                      boolean random, PlayerSubject chooser, ForEachVote forEachVote,
                                      PermanentSubject attachableTo, PermanentSubject hostFor,
-                                     boolean triggeringSpellCouldTarget)
+                                     boolean triggeringSpellCouldTarget, boolean sacrificing)
         implements CardEffect {
 
     /**
@@ -125,7 +128,7 @@ public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount 
     public ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount minimum, DynamicAmount maximum,
                                   Different different, String label, PlayerSubject oneForEach,
                                   boolean random, PlayerSubject chooser) {
-        this(candidates, minimum, maximum, different, label, oneForEach, random, chooser, null, null, null, false);
+        this(candidates, minimum, maximum, different, label, oneForEach, random, chooser, null, null, null, false, false);
     }
 
     /** "Target opponent chooses …" declares that player target; the candidates never declare one. */
@@ -155,7 +158,7 @@ public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount 
     public static ChoosePermanentsEffect forEachVote(String option, PermanentSubject candidates, VoterRelation relation,
                                                      boolean byVoter, String label) {
         return new ChoosePermanentsEffect(candidates, new Fixed(1), new Fixed(1), null, label, null, false, null,
-                new ForEachVote(option, relation, byVoter), null, null, false);
+                new ForEachVote(option, relation, byVoter), null, null, false, false);
     }
 
     /** "[Count] of [candidates] chosen at random." */
@@ -183,14 +186,14 @@ public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount 
     public ChoosePermanentsEffect withDifferent(Different quality) {
         return new ChoosePermanentsEffect(candidates, minimum, maximum, quality,
                 label + " with different " + quality.plural(), oneForEach, random, chooser, forEachVote,
-                attachableTo, hostFor, triggeringSpellCouldTarget);
+                attachableTo, hostFor, triggeringSpellCouldTarget, sacrificing);
     }
 
     /** The same choice made by {@code player} ("target opponent chooses a creature they control"). */
     public ChoosePermanentsEffect chosenBy(PlayerSubject player) {
         return new ChoosePermanentsEffect(candidates, minimum, maximum, different, label, oneForEach, random,
                 Objects.requireNonNull(player, "player"), forEachVote, attachableTo, hostFor,
-                triggeringSpellCouldTarget);
+                triggeringSpellCouldTarget, sacrificing);
     }
 
     /**
@@ -200,7 +203,7 @@ public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount 
      */
     public ChoosePermanentsEffect thatCanBeAttachedTo(PermanentSubject host) {
         return new ChoosePermanentsEffect(candidates, minimum, maximum, different, label, oneForEach, random, chooser,
-                forEachVote, Objects.requireNonNull(host, "host"), hostFor, triggeringSpellCouldTarget);
+                forEachVote, Objects.requireNonNull(host, "host"), hostFor, triggeringSpellCouldTarget, sacrificing);
     }
 
     /**
@@ -211,7 +214,7 @@ public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount 
     public ChoosePermanentsEffect thatCanHost(PermanentSubject attachments) {
         return new ChoosePermanentsEffect(candidates, minimum, maximum, different, label, oneForEach, random, chooser,
                 forEachVote, attachableTo, Objects.requireNonNull(attachments, "attachments"),
-                triggeringSpellCouldTarget);
+                triggeringSpellCouldTarget, sacrificing);
     }
 
     /**
@@ -221,7 +224,17 @@ public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount 
      */
     public ChoosePermanentsEffect thatTheTriggeringSpellCouldTarget() {
         return new ChoosePermanentsEffect(candidates, minimum, maximum, different, label, oneForEach, random, chooser,
-                forEachVote, attachableTo, hostFor, true);
+                forEachVote, attachableTo, hostFor, true, sacrificing);
+    }
+
+    /**
+     * The same choice of one to sacrifice ("that player sacrifices one of them", "you may sacrifice one of them"):
+     * only the candidates the chooser controls and could sacrifice are offered (CR 608.2d, 701.21a), so the
+     * {@code SacrificeSelfEffect} over {@code Subjects.thisWay(StepKind.CHOOSE)} after it sacrifices what was chosen.
+     */
+    public ChoosePermanentsEffect toSacrifice() {
+        return new ChoosePermanentsEffect(candidates, minimum, maximum, different, label, oneForEach, random, chooser,
+                forEachVote, attachableTo, hostFor, triggeringSpellCouldTarget, true);
     }
 
     /** Who makes the choice. */

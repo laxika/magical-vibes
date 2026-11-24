@@ -65,6 +65,14 @@ public class ChoosePermanentsEffectHandler implements NormalEffectHandlerBean {
         if (chooserId == null) {
             return;
         }
+        if (choose.sacrificing()) {
+            // One to sacrifice: a permanent the chooser couldn't sacrifice is no option (CR 608.2d, 701.21a).
+            candidates = candidates.stream()
+                    .filter(permanent -> chooserId.equals(gameQueryService.findPermanentController(gameData,
+                            permanent.getId())))
+                    .filter(permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent))
+                    .toList();
+        }
         AmountContext context = AmountContext.forStackEntry(entry, entry.getSourcePermanentSnapshot());
         int maximum = choose.maximum() == null ? candidates.size() : Math.min(candidates.size(),
                 amountEvaluationService.evaluate(gameData, choose.maximum(), context));

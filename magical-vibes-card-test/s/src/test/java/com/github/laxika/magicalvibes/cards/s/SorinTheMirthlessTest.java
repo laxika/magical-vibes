@@ -191,6 +191,21 @@ class SorinTheMirthlessTest extends BaseCardTest {
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }
 
+    @Test
+    @DisplayName("+1's look privately shows the top card to Sorin's controller")
+    void plusOneShowsTopCardOnlyToController() {
+        addReadySorin(player1, 4);
+        gd.playerDecks.get(player1.getId()).addFirst(new DoomedDissenter());
+        harness.clearMessages();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_LIBRARY_TOP"))
+                .anyMatch(message -> message.contains("Doomed Dissenter"));
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_LIBRARY_TOP")).isEmpty();
+    }
+
     private Permanent addReadySorin(Player player, int loyalty) {
         Permanent sorin = harness.addToBattlefieldAndReturn(player, new SorinTheMirthless());
         sorin.setCounterCount(CounterType.LOYALTY, loyalty);

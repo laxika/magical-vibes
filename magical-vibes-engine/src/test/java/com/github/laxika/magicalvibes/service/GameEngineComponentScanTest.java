@@ -18,9 +18,9 @@ class GameEngineComponentScanTest {
         scanner.scan(GameEngineConfig.class.getPackageName());
 
         String normalHandler = com.github.laxika.magicalvibes.service.effect.normalfx
-                .LookAtTopCardMayPutMatchingOntoBattlefieldOrBottomEffectHandler.class.getName();
+                .ExileTopUntilNonlandMayCastByDiscardEffectHandler.class.getName();
         String mayHandler = com.github.laxika.magicalvibes.service.effect.mayfx
-                .LookAtTopCardMayPutMatchingOntoBattlefieldOrBottomEffectHandler.class.getName();
+                .ExileTopUntilNonlandMayCastByDiscardEffectHandler.class.getName();
         assertThat(beanFactory.getBeanDefinitionNames())
                 .extracting(name -> beanFactory.getBeanDefinition(name).getBeanClassName())
                 .filteredOn(className -> normalHandler.equals(className) || mayHandler.equals(className))

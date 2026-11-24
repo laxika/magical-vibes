@@ -240,4 +240,20 @@ class BucolicRanchTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Nameless Inversion");
         harness.assertInGraveyard(player2, "Prairie Dog");
     }
+
+    @Test
+    @DisplayName("Looking at the top card privately shows it to the controller")
+    void lookShowsTopCardOnlyToController() {
+        harness.addToBattlefield(player1, new BucolicRanch());
+        harness.setLibrary(player1, List.of(new TrainedArynx()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.clearMessages();
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_LIBRARY_TOP"))
+                .anyMatch(message -> message.contains("Trained Arynx"));
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_LIBRARY_TOP")).isEmpty();
+    }
 }

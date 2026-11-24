@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -143,5 +144,21 @@ class LanternOfRevealingTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(lantern.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Looking at the top card privately shows it to the controller")
+    void lookShowsTopCardOnlyToController() {
+        harness.addToBattlefield(player1, new LanternOfRevealing());
+        harness.setLibrary(player1, List.of(new MeteorGolem(), new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.clearMessages();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_LIBRARY_TOP"))
+                .anyMatch(message -> message.contains("Meteor Golem"));
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_LIBRARY_TOP")).isEmpty();
     }
 }

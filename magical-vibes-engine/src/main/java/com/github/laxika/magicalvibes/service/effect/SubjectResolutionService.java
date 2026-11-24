@@ -458,9 +458,10 @@ public class SubjectResolutionService {
     }
 
     /**
-     * The card types of what {@code subject} names, for "shares a card type with the sacrificed permanent": each
-     * permanent's as it is on the battlefield, else as a removal step of this resolution recorded it as it left
-     * ({@code DepartureResult.lastKnownCardTypes}, CR 608.2h).
+     * The card types of what {@code subject} names, for "shares a card type with the sacrificed permanent", "with that
+     * permanent": each permanent's as it is on the battlefield, else as a removal step of this resolution recorded it
+     * as it left ({@code DepartureResult.lastKnownCardTypes}), else as the entry's own snapshot of it last had them
+     * (its triggering, sacrificed, attached or source permanent; CR 608.2h).
      */
     public Set<CardType> cardTypes(GameData gameData, StackEntry entry, CardEffect effect, PermanentSubject subject) {
         Set<CardType> types = EnumSet.noneOf(CardType.class);
@@ -473,7 +474,12 @@ public class SubjectResolutionService {
             entry.getResolutionResults().departures().stream()
                     .filter(departure -> departure.permanentId().equals(id))
                     .findFirst()
-                    .ifPresent(departure -> types.addAll(departure.lastKnownCardTypes()));
+                    .ifPresentOrElse(departure -> types.addAll(departure.lastKnownCardTypes()), () -> {
+                        Permanent snapshot = lastKnownSnapshot(gameData, entry, id);
+                        if (snapshot != null) {
+                            types.addAll(gameQueryService.getEffectiveCardTypes(gameData, snapshot));
+                        }
+                    });
         }
         return types;
     }

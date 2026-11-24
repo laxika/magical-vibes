@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.a.AssaultSuit;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Incriminate.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({Incriminate.class, GrizzlyBears.class, HillGiant.class, AssaultSuit.class})
 class IncriminateTest extends BaseCardTest {
 
     private void castIncriminate(Permanent first, Permanent second) {
@@ -146,5 +147,19 @@ class IncriminateTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(bears.getId(), bears.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A target that can't be sacrificed is no choice: the other one is sacrificed unasked")
+    void creatureThatCantBeSacrificedIsNotOffered() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent giant = addCreatureReady(player2, new HillGiant());
+        harness.addToBattlefieldAndReturn(player2, new AssaultSuit()).setAttachedTo(giant.getId());
+
+        castIncriminate(bears, giant);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(bears.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(giant);
     }
 }

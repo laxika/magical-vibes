@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 41c, 40b; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                     |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 44b, 45b; merge queue 40b. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                      |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,144 / 2,560 (after fold run 37b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,136 / 2,545 (after fold run 41c) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,465 rows over 4,538 classes (after fold run 37b). Latest verdict per class: `step-9` 172, unique 1,189, absorbed 1,237, split 665, blocked-other 543, survivor 426, blocked-step-model 140, blocked-player-loop 96, dead 70. Waiting: 172 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,476 rows over 4,539 classes (after fold run 41c). Latest verdict per class: `step-9` 164, unique 1,189, absorbed 1,243, split 667, blocked-other 543, survivor 428, blocked-step-model 139, blocked-player-loop 96, dead 70. Waiting: 164 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1021,6 +1021,11 @@ Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671
 - `ProtectionFromColorsEffect.ColorSet` (`FIXED`, `CHOSEN`, `AMONG_PERMANENTS_YOU_CONTROL`, `OUTSIDE_COMMANDER_IDENTITY`) with `chosenColor([subject])`, `amongPermanentsYouControl([subject])`, `outsideCommanderColorIdentity(subject)`, `withColors(colors)`: every "protection from [colour set]" (fold run 37b).
 - `GameQueryService.protectionColors(gd, protection, holder)` / `protectionColorsForStaticEvaluation(gd, protection, holder, controllerId)`: the one colour-protection reader, judged for the permanent that has the ability; `protectionFromColors()` is the fixed colours only (fold run 37b).
 - `ProtectionFromColorsSelfEffectHandler`: a permanent's own board-reading colour protection applied in layer 6 (fold run 37b).
+
+- `LookAtTopCardMayRevealMatchingToHandEffect` `OtherwiseDestination.MAY_BOTTOM`, predicate subjects bound to the entry, `StepKind.REVEAL` of the card put into hand: "you may put it on the bottom", "if it shares a card type with that permanent", "if you do, lose life equal to its mana value" (`effectsIfCardPutIntoHand` + `AmountThisWay.revealedManaValue()`) (fold run 41c).
+- `LookAtTopCardMayPutMatchingOntoBattlefieldEffect.Otherwise {TOP, HAND, MAY_BOTTOM}`, the predicate judged with the source or its snapshot, `StepKind.RETURN`: "if you didn't put a card onto the battlefield this way" = `ConditionalEffect(NotCondition(HappenedThisWay.returned()), …)` (Rulik Mons; fold run 41c).
+- `ChoosePermanentsEffect.toSacrifice()`: "[that player] sacrifices one of them", "you may sacrifice one of them": only the candidates the chooser controls and could sacrifice (CR 608.2d, 701.21a), then `SacrificeSelfEffect(thisWay(CHOOSE))` (Incriminate, Descendants' Fury; fold run 41c).
+- `SubjectResolutionService.cardTypes` falls back to the entry's last-known snapshot of a permanent no removal step recorded (CR 608.2h) (fold run 41c).
 
 ### Blocked causes still open
 
@@ -4537,6 +4542,32 @@ For the next run: a targets-x run (one target-aware reader that sums every categ
 - Fixed-colour Auras without "doesn't remove" text (Mask of Law and Grace, Shield of Duty and Reason, the Strength Auras) stay exempt from their own protection when recoloured. Fairly sure; low impact.
 
 **For the next run.** `prot-dyn` is closed. Re-triage `GrantProtectionFromChosenColorToPermanentsEffect` (Ward Sliver, `unique`) against `ProtectionFromColorsEffect.chosenColor(subject)` over a `controlledBy` set.
+
+### Step 9, fold run 41c (2026-11-24, parallel worktree)
+3 batches, 8 members: absorbed 6, split 2; survivors 3 (two look survivors, ChoosePermanentsEffect). Ratchet 3,190 / 2,605 → 3,182 / 2,590. 11 card files rewritten, all 11 checked with get_card; rulings read for Descendants' Fury and Incriminate. CR 400.7, 608.2c, 608.2d, 608.2h, 616.1, 701.20a, 701.20b, 701.20e, 701.21a, 702.73a checked.
+
+| Batch | Result |
+|---|---|
+| may-reveal-hand | 3 folded. The survivor gains `OtherwiseDestination.MAY_BOTTOM` / `Stage.MAY_BOTTOM` (Bucolic Ranch, Cabaretti), binds card subjects in its predicate (`CardSharesCardTypeWithPermanentsPredicate(triggering())`, Amareth) and records `StepKind.REVEAL` for the card put into hand; Sorin is `(CardTruePredicate, TOP, [LoseLifeEffect(AmountThisWay.revealedManaValue(), you())])`. `SubjectResolutionService.cardTypes` reads the entry's last-known snapshot of a permanent that left (CR 608.2h), as the old Amareth handler did. |
+| topcard-bf | 4 folded. `boolean otherwiseToHand` becomes `Otherwise {TOP, HAND, MAY_BOTTOM}` + `Stage` (the boolean constructor kept); the predicate is judged with the game and the source permanent or its snapshot (Nissa: `CardManaValueAtMostSourceCountersPredicate(LOYALTY)`); the step records RETURN, so Rulik Mons is the survivor + `ConditionalEffect(NotCondition(HappenedThisWay.returned()), token)`. A HAND card enters through `GameData.addCardToHand` (the old survivor added it to the list directly). |
+| same-quality (Descendants' Fury) | Split onto choose + `SacrificeSelfEffect(thisWay(CHOOSE))` + `ConditionalEffect(sacrificed(), RevealUntil…(allOf(CREATURE, CardSharesCreatureTypeWithPermanentsPredicate(departedThisWay(SACRIFICE)))))`. The old `cantBeChosenToSacrifice` filter became `ChoosePermanentsEffect.toSacrifice()`: only the candidates the chooser controls and could sacrifice (CR 608.2d), also given to Incriminate. |
+
+**Behaviour changes.**
+- Descendants' Fury: a Kindred non-creature card is no longer "a creature card" (the old predicate took Kindred).
+- Incriminate: a target that can't be sacrificed is not offered, so the other one is sacrificed without asking.
+- Bucolic Ranch, Cabaretti, Lantern, Believe, Sorin: the look is now shown to its looker only (CR 701.20e).
+- Sorin: the Mastery's question comes after the card is in the hand and before the loss (CR 608.2c, 616.1), matching the rider test class's own rule.
+
+All of these have tests that would fail on the old code by reasoning. Prompts and logs are the survivors'.
+
+**Tests changed.** LichsDuelMasteryRiderTest (Sorin mid-state, rules), GravebaneZombieTest (log line), GameEngineComponentScanTest (repointed to ExileTopUntilNonlandMayCastByDiscard's same-named pair). Added: DescendantsFury ×3 (can't be sacrificed, Kindred, changeling), Incriminate, and private-look tests in Bucolic, Lantern, ReasonBelieve and Sorin.
+
+**Seen, not changed.**
+- Barrin's Spite ("chooses and sacrifices one of them"): it can choose a target that can't be sacrificed. Left alone because with neither sacrificeable `.toSacrifice()` would return both; unsure.
+- The battlefield survivor's Aura put path (`beginAnyTargetChoice`) records no RETURN; no current card reaches it.
+
+**For the next run.**
+- `LookAtTopCardMayPutMatchingOntoBattlefieldElseToHandEffect` (5 cards, unaudited) is the bf survivor with `Otherwise.HAND` plus `tapped`. Its Aura put goes through the entry batch, which the survivor's own Aura path should adopt when they merge.
 
 ## Prompt
 

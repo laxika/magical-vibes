@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayPutCreatureOntoBattlefieldElseToHandEffect;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayPutMatchingOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 /**
  * Believe — back half of Reason // Believe.
@@ -15,8 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayPutCreatureOn
 public class Believe extends Card {
 
     public Believe() {
-        // Look at top; may put creature onto battlefield, else to hand.
-        addSpellEffect(new LookAtTopCardMayPutCreatureOntoBattlefieldElseToHandEffect());
+        addSpellEffect(new LookAtTopCardMayPutMatchingOntoBattlefieldEffect(new CardTypePredicate(CardType.CREATURE),
+                false, LookAtTopCardMayPutMatchingOntoBattlefieldEffect.Otherwise.HAND));
         // Aftermath cost equals this half's mana cost; exile after leaving the stack.
         addCastingOption(new FlashbackCast("{4}{G}"));
     }

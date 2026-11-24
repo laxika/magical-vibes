@@ -15,7 +15,7 @@ public class Incriminate extends Card {
     public Incriminate() {
         target(TargetFilters.creature())
                 .addSpellEffect(ChoosePermanentsEffect.exactly(1, Subjects.allTargets(), "a creature to sacrifice")
-                        .chosenBy(Subjects.controllerOf(Subjects.allTargets())))
+                        .chosenBy(Subjects.controllerOf(Subjects.allTargets())).toSacrifice())
                 .addSpellEffect(new SacrificeSelfEffect(Subjects.thisWay(StepKind.CHOOSE),
                         Subjects.controllerOf(Subjects.thisWay(StepKind.CHOOSE))));
         target(TargetFilters.creature());

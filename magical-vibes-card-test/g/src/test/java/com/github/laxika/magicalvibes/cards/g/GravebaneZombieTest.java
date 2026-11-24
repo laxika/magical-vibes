@@ -870,7 +870,7 @@ class GravebaneZombieTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard() == libraryZombie).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(shock);
-        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("Gravebane Zombie is sacrificed"))
                 .hasSize(1);
     }
 

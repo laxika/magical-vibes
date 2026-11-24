@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.effect.MayEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CelestialJudgmentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachCurseToOpponentAndDrawEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AllureOfTheUnknownEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DawnbreakReclaimerEffectHandler;
@@ -125,7 +124,6 @@ public class PermanentChoiceHandlerService {
             returnAurasFromGraveyardAttachedToCreaturesEffectHandler;
     private final RedHerringExchangeEffectHandler redHerringExchangeEffectHandler;
     private final RingTemptsYouEffectHandler ringTemptsYouEffectHandler;
-    private final SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffectHandler descendantsFuryEffectHandler;
     private final InfernalOfferingEffectHandler infernalOfferingEffectHandler;
     private final MayEffectHandlerRegistry mayEffectHandlerRegistry;
     private final ToymakersTrapEffectHandler toymakersTrapEffectHandler;
@@ -423,7 +421,6 @@ public class PermanentChoiceHandlerService {
                 || context instanceof PermanentChoiceContext.SacrificeArtifactForDividedDamage
                 || context instanceof PermanentChoiceContext.ExploitSacrifice
                 || context instanceof PermanentChoiceContext.SacrificePermanentThen
-                || context instanceof PermanentChoiceContext.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureType
                 || context instanceof PermanentChoiceContext.MaySacrificeForCounterOnSource
                 || context instanceof PermanentChoiceContext.GargantuanGorillaSacrificeForest
                 || context instanceof PermanentChoiceContext.AnyOpponentSacrificeCreatureForTapAndCounter
@@ -518,14 +515,6 @@ public class PermanentChoiceHandlerService {
                     battlefieldHandler.handleExploitSacrifice(gameData, permanentId, exploitSac);
             case PermanentChoiceContext.SacrificePermanentThen spt ->
                     battlefieldHandler.handleSacrificePermanentThen(gameData, permanentId, spt);
-            case PermanentChoiceContext.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureType descendantsFury -> {
-                gameData.playerBattlefields.getOrDefault(descendantsFury.controllerId(), java.util.List.of()).stream()
-                        .filter(permanent -> permanent.getId().equals(permanentId))
-                        .findFirst()
-                        .ifPresent(permanent -> descendantsFuryEffectHandler.resolveAfterChoice(
-                                gameData, descendantsFury.sourceCard(), descendantsFury.controllerId(), permanent));
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            }
             case PermanentChoiceContext.MaySacrificeForCounterOnSource msfc ->
                     battlefieldHandler.handleMaySacrificeForCounterOnSource(gameData, permanentId, msfc);
             case PermanentChoiceContext.GargantuanGorillaSacrificeForest ggsf ->

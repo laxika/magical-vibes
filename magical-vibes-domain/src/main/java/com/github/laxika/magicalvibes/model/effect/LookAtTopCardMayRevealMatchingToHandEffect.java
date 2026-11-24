@@ -11,9 +11,17 @@ import java.util.List;
  * {@code otherwiseDestination}.
  *
  * <p>Domri Rade's +1 uses {@link OtherwiseDestination#TOP}; Archghoul of Thraben uses
- * {@link OtherwiseDestination#GRAVEYARD}; Vivien's Grizzly uses {@link OtherwiseDestination#BOTTOM}.
- * The {@link Stage} field distinguishes the initial look (stack resolution) from the may-ability
- * follow-ups.
+ * {@link OtherwiseDestination#GRAVEYARD}; Vivien's Grizzly uses {@link OtherwiseDestination#BOTTOM};
+ * Bucolic Ranch uses {@link OtherwiseDestination#MAY_BOTTOM}. "If it shares a card type with that
+ * permanent" is {@code CardSharesCardTypeWithPermanentsPredicate(Subjects.triggering())} (Amareth): the
+ * predicate's subjects are bound to the resolving entry as the card is looked at. "You may reveal that card
+ * and put it into your hand" with no condition is {@code CardTruePredicate}.
+ *
+ * <p>A {@code StepKind.REVEAL} step: the card revealed and put into hand (its {@code MovedCard} naming the hand),
+ * or nothing. "If you do, you lose life equal to its mana value" (Sorin the Mirthless) is
+ * {@code effectsIfCardPutIntoHand} = {@code LoseLifeEffect(AmountThisWay.revealedManaValue(), you())}, run after
+ * the card is in the hand. The {@link Stage} field distinguishes the initial look (stack resolution) from the
+ * may-ability follow-ups.
  */
 public record LookAtTopCardMayRevealMatchingToHandEffect(
         CardPredicate predicate,
@@ -28,9 +36,14 @@ public record LookAtTopCardMayRevealMatchingToHandEffect(
     }
 
     public enum OtherwiseDestination {
+        /** The card stays on top of the library. */
         TOP,
+        /** The controller may put the card into their graveyard. */
         GRAVEYARD,
-        BOTTOM
+        /** The card is put on the bottom of the library. */
+        BOTTOM,
+        /** The controller may put the card on the bottom of the library ("you may put it on the bottom"). */
+        MAY_BOTTOM
     }
 
     public enum Stage {
@@ -39,7 +52,9 @@ public record LookAtTopCardMayRevealMatchingToHandEffect(
         /** May: reveal matching top card and put it into hand. */
         MAY_HAND,
         /** May: put the top card into the graveyard. */
-        MAY_GRAVEYARD
+        MAY_GRAVEYARD,
+        /** May: put the top card on the bottom of the library. */
+        MAY_BOTTOM
     }
 
     public LookAtTopCardMayRevealMatchingToHandEffect(CardPredicate predicate, boolean mayGraveyardOtherwise) {
@@ -61,6 +76,12 @@ public record LookAtTopCardMayRevealMatchingToHandEffect(
     public LookAtTopCardMayRevealMatchingToHandEffect(
             CardPredicate predicate, OtherwiseDestination otherwiseDestination) {
         this(predicate, otherwiseDestination, Stage.LOOK, List.of());
+    }
+
+    public LookAtTopCardMayRevealMatchingToHandEffect(
+            CardPredicate predicate, OtherwiseDestination otherwiseDestination,
+            List<CardEffect> effectsIfCardPutIntoHand) {
+        this(predicate, otherwiseDestination, Stage.LOOK, effectsIfCardPutIntoHand);
     }
 
     public LookAtTopCardMayRevealMatchingToHandEffect(

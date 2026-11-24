@@ -3,14 +3,20 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardPutLandOrCreatureWithinLoyaltyEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayPutMatchingOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourceCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -37,7 +43,11 @@ public class NissaStewardOfElements extends Card {
         //    card onto the battlefield.
         addActivatedAbility(new ActivatedAbility(
                 0,
-                List.of(new LookAtTopCardPutLandOrCreatureWithinLoyaltyEffect()),
+                List.of(new LookAtTopCardMayPutMatchingOntoBattlefieldEffect(new CardAnyOfPredicate(List.of(
+                        new CardTypePredicate(CardType.LAND),
+                        new CardAllOfPredicate(List.of(
+                                new CardTypePredicate(CardType.CREATURE),
+                                new CardManaValueAtMostSourceCountersPredicate(CounterType.LOYALTY))))))),
                 "0: Look at the top card of your library. If it's a land card or a creature card with "
                         + "mana value less than or equal to the number of loyalty counters on Nissa, "
                         + "you may put that card onto the battlefield."

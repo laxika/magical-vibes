@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingToHandOrMayBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
@@ -32,8 +32,9 @@ public class BucolicRanch extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}",
-                List.of(new LookAtTopCardMayRevealMatchingToHandOrMayBottomEffect(
-                        new CardSubtypePredicate(CardSubtype.MOUNT))),
+                List.of(new LookAtTopCardMayRevealMatchingToHandEffect(
+                        new CardSubtypePredicate(CardSubtype.MOUNT),
+                        LookAtTopCardMayRevealMatchingToHandEffect.OtherwiseDestination.MAY_BOTTOM)),
                 "{3}, {T}: Look at the top card of your library. If it's a Mount card, you may reveal it and put it into your hand. If you don't put it into your hand, you may put it on the bottom of your library."
         ));
     }

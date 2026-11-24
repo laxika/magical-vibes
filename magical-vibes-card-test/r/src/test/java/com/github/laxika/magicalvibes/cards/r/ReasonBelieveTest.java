@@ -177,4 +177,19 @@ class ReasonBelieveTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Reason // Believe"));
     }
+
+    @Test
+    @DisplayName("Believe's look privately shows the top card to its caster")
+    void believeShowsTopCardOnlyToCaster() {
+        harness.setLibrary(player1, List.of(new Forest(), new Island()));
+        harness.setGraveyard(player1, List.of(new ReasonBelieve()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.clearMessages();
+
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_LIBRARY_TOP"))
+                .anyMatch(message -> message.contains("Forest"));
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_LIBRARY_TOP")).isEmpty();
+    }
 }

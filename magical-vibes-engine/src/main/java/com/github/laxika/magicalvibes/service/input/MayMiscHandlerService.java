@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
@@ -570,11 +572,6 @@ public class MayMiscHandlerService {
     }
 
     /**
-     * Nissa, Steward of Elements 0 — the controller may put the looked-at top card (already
-     * confirmed to be a land or a low-enough-cost creature) onto the battlefield; otherwise it
-     * stays on top of the library.
-     */
-    /**
      * The Maelstrom's reveal: the revealed permanent card goes onto the battlefield. An Aura with no legal
      * object to enchant can't enter, so it is not put onto the battlefield and goes to the bottom of the
      * library instead (The Maelstrom: "If you revealed a card but didn't put it onto the battlefield, put it
@@ -600,14 +597,14 @@ public class MayMiscHandlerService {
     }
 
     public void handleLookAtTopCardPutLandOrCreatureChoice(GameData gameData, Player player, boolean accepted) {
-        handleLookAtTopCardPutLandOrCreatureChoice(gameData, player, accepted, false);
+        handleLookAtTopCardPutLandOrCreatureChoice(gameData, player, accepted, false, false);
     }
 
-    public void handleLookAtTopCardPutLandOrCreatureChoice(GameData gameData, Player player, boolean accepted,
-                                                            boolean enterTapped) {
-        handleLookAtTopCardPutLandOrCreatureChoice(gameData, player, accepted, enterTapped, false);
-    }
-
+    /**
+     * The looked-at or revealed top card goes onto the battlefield when {@code accepted}, recorded on the parked
+     * resolution as its {@code StepKind.RETURN} step (an Aura first asks what it enchants); otherwise it goes into the
+     * hand ({@code otherwiseToHand}) or stays on top.
+     */
     public void handleLookAtTopCardPutLandOrCreatureChoice(GameData gameData, Player player, boolean accepted,
                                                             boolean enterTapped, boolean otherwiseToHand) {
         UUID controllerId = player.getId();
@@ -642,53 +639,22 @@ public class MayMiscHandlerService {
             }
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, topCard, null, false);
+            if (gameData.pendingEffectResolutionEntry != null) {
+                gameData.pendingEffectResolutionEntry.recordStep(StepKind.RETURN, StepOutcome.ofObjects(
+                        List.of(perm.getId()), List.of(controllerId)));
+            }
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " puts ", topCard, " onto the battlefield."));
             log.info("Game {} - {} puts {} onto the battlefield from the top of their library",
                     gameData.id, player.getUsername(), topCard.getName());
         } else if (otherwiseToHand && !deck.isEmpty()) {
             Card topCard = deck.removeFirst();
-            gameData.playerHands.get(controllerId).add(topCard);
+            gameData.addCardToHand(controllerId, topCard);
             gameLogService.append(gameData, GameLog.text(
                     player.getUsername() + " puts the top card of their library into their hand."));
         } else {
             gameLogService.append(gameData, GameLog.text(
                     player.getUsername() + " leaves the top card on their library."));
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /**
-     * Believe: accept → top card onto battlefield; decline → top card into hand.
-     */
-    public void handleLookAtTopCardMayPutCreatureElseToHandChoice(
-            GameData gameData, Player player, boolean accepted) {
-        UUID controllerId = player.getId();
-        List<Card> deck = gameData.playerDecks.get(controllerId);
-
-        if (deck.isEmpty()) {
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        Card topCard = deck.removeFirst();
-        if (accepted) {
-            Permanent perm = new Permanent(topCard, Zone.LIBRARY);
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
-            if (topCard.hasType(CardType.CREATURE)) {
-                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, topCard, null, false);
-            }
-            gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " puts ", topCard, " onto the battlefield."));
-            log.info("Game {} - {} puts {} onto the battlefield (Believe)",
-                    gameData.id, player.getUsername(), topCard.getName());
-        } else {
-            gameData.addCardToHand(controllerId, topCard);
-            gameLogService.append(gameData, GameLog.text(
-                    player.getUsername() + " puts the top card into their hand."));
-            log.info("Game {} - {} puts {} into hand from library top (Believe)",
-                    gameData.id, player.getUsername(), topCard.getName());
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
