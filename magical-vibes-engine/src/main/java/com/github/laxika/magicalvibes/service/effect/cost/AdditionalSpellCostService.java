@@ -31,10 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
-import com.github.laxika.magicalvibes.model.effect.EscalateDiscardCost;
-import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
-import com.github.laxika.magicalvibes.model.effect.EscalateSacrificeCost;
-import com.github.laxika.magicalvibes.model.effect.EscalateTapCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateCost;
 import com.github.laxika.magicalvibes.model.effect.EntwineManaCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreatureCost;
@@ -59,12 +56,10 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost;
 import com.github.laxika.magicalvibes.model.effect.RevealCardFromHandCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForCostReductionEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAllPermanentsYouControlCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeAllMatchingPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrDiscardCardOrPayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
 import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeFractionRoundedUpCost;
@@ -126,20 +121,17 @@ public class AdditionalSpellCostService {
      * the classification guard test enforces that this never happens silently.
      */
     public static final Set<Class<? extends CardEffect>> HANDLED_SPELL_COST_TYPES = Set.of(
-            SacrificeAllCreaturesYouControlCost.class,
-            SacrificeAllPermanentsYouControlCost.class,
+            SacrificeAllMatchingPermanentsCost.class,
             SacrificeCreatureCost.class,
             SacrificeCreatureOrDiscardCardOrPayLifeCost.class,
             CasualtyCost.class,
             ForageOrPayManaCost.class,
             SacrificePermanentOrPayManaCost.class,
-            SacrificePermanentOrDiscardCardCost.class,
             SacrificePermanentCost.class,
             ExileCreatureCost.class,
             SacrificeMultiplePermanentsCost.class,
             SacrificeFractionRoundedUpCost.class,
-            EscalateSacrificeCost.class,
-            EscalateTapCost.class,
+            EscalateCost.class,
             SacrificeAnyNumberOfPermanentsCost.class,
             TapAnyNumberOfPermanentsCost.class,
             TapCreaturesForManaCost.class,
@@ -170,8 +162,6 @@ public class AdditionalSpellCostService {
             DiscardCardOrSacrificePermanentCost.class,
             DiscardHandCost.class,
             DiscardXCardsCost.class,
-            EscalateDiscardCost.class,
-            EscalateManaCost.class,
             EntwineManaCost.class,
             RepeatableAdditionalManaCost.class,
             ChooseXValueCost.class,
@@ -256,21 +246,18 @@ public class AdditionalSpellCostService {
      * costs. {@code SpellCastingService.payAdditionalCosts} must consume every field.
      */
     public record ExtractedCosts(
-            boolean sacrificeAllCreatures,
-            boolean sacrificeAllPermanents,
+            SacrificeAllMatchingPermanentsCost sacrificeAllCost,
             SacrificeCreatureCost sacrificeCreatureCost,
             SacrificeCreatureOrDiscardCardOrPayLifeCost sacrificeCreatureOrDiscardCardOrPayLifeCost,
             CasualtyCost casualtyCost,
             SacrificePermanentOrPayManaCost sacrificePermanentOrPayManaCost,
             TapPermanentOrPayManaCost tapPermanentOrPayManaCost,
-            SacrificePermanentOrDiscardCardCost sacrificePermanentOrDiscardCardCost,
             SacrificePermanentCost sacrificePermanentCost,
             DiscardCardOrSacrificePermanentCost discardCardOrSacrificePermanentCost,
             ExileCreatureCost exileCreatureCost,
             SacrificeMultiplePermanentsCost sacrificeMultiplePermanentsCost,
             SacrificeFractionRoundedUpCost sacrificeFractionRoundedUpCost,
-            EscalateSacrificeCost escalateSacrificeCost,
-            EscalateTapCost escalateTapCost,
+            EscalateCost escalateCost,
             SacrificeAnyNumberOfPermanentsCost sacrificeAnyNumberCost,
             TapAnyNumberOfPermanentsCost tapAnyNumberCost,
             TapCreaturesForManaCost tapCreaturesForManaCost,
@@ -298,8 +285,6 @@ public class AdditionalSpellCostService {
             DiscardCardOrPayLifeCost discardCardOrPayLifeCost,
             boolean discardHand,
             DiscardXCardsCost discardXCardsCost,
-            EscalateDiscardCost escalateDiscardCost,
-            EscalateManaCost escalateManaCost,
             EntwineManaCost entwineManaCost,
             RepeatableAdditionalManaCost repeatableManaCost,
             ChooseXValueCost chooseXValueCost,
@@ -324,14 +309,13 @@ public class AdditionalSpellCostService {
 
         /** True when the spell has an additional cost that is not charged per extra mode. */
         public boolean hasNonEscalateCost() {
-            return sacrificeAllCreatures || sacrificeAllPermanents || sacrificeCreatureCost != null
+            return sacrificeAllCost != null || sacrificeCreatureCost != null
                     || sacrificeCreatureOrDiscardCardOrPayLifeCost != null || casualtyCost != null
                     || sacrificePermanentCost != null || exileCreatureCost != null
                     || sacrificeMultiplePermanentsCost != null
                     || sacrificeFractionRoundedUpCost != null
                     || sacrificePermanentOrPayManaCost != null
                     || tapPermanentOrPayManaCost != null
-                    || sacrificePermanentOrDiscardCardCost != null
                     || sacrificeAnyNumberCost != null
                     || tapAnyNumberCost != null || tapCreaturesForManaCost != null
                     || tapMultipleCost != null || returnAnyNumberCost != null
@@ -366,8 +350,7 @@ public class AdditionalSpellCostService {
 
         /** True when the spell has any per-extra-mode cost. */
         public boolean hasEscalate() {
-            return escalateDiscardCost != null || escalateManaCost != null || escalateSacrificeCost != null
-                    || escalateTapCost != null;
+            return escalateCost != null;
         }
     }
 
@@ -500,16 +483,13 @@ public class AdditionalSpellCostService {
      */
     public ExtractedCosts extractAndRemove(List<CardEffect> effects) {
         boolean landDropCost = effects.removeIf(LandDropCost.class::isInstance);
-        boolean sacAllCreatures = effects.removeIf(SacrificeAllCreaturesYouControlCost.class::isInstance);
-        boolean sacAllPermanents = effects.removeIf(SacrificeAllPermanentsYouControlCost.class::isInstance);
+        SacrificeAllMatchingPermanentsCost sacAllCost = removeFirst(effects, SacrificeAllMatchingPermanentsCost.class);
         SacrificeCreatureCost sacCreature = removeFirst(effects, SacrificeCreatureCost.class);
         SacrificeCreatureOrDiscardCardOrPayLifeCost sacCreatureOrDiscardOrPayLife =
                 removeFirst(effects, SacrificeCreatureOrDiscardCardOrPayLifeCost.class);
         CasualtyCost casualtyCost = removeFirst(effects, CasualtyCost.class);
         SacrificePermanentOrPayManaCost sacOrPay = removeFirst(effects, SacrificePermanentOrPayManaCost.class);
         TapPermanentOrPayManaCost tapOrPay = removeFirst(effects, TapPermanentOrPayManaCost.class);
-        SacrificePermanentOrDiscardCardCost sacOrDiscard =
-                removeFirst(effects, SacrificePermanentOrDiscardCardCost.class);
         SacrificePermanentCost permCost = removeFirst(effects, SacrificePermanentCost.class);
         DiscardCardOrSacrificePermanentCost discardOrSacrifice =
                 removeFirst(effects, DiscardCardOrSacrificePermanentCost.class);
@@ -517,8 +497,7 @@ public class AdditionalSpellCostService {
         SacrificeMultiplePermanentsCost multiPermCost = removeFirst(effects, SacrificeMultiplePermanentsCost.class);
         SacrificeFractionRoundedUpCost fractionRoundedUpCost =
                 removeFirst(effects, SacrificeFractionRoundedUpCost.class);
-        EscalateSacrificeCost escalateSacrificeCost = removeFirst(effects, EscalateSacrificeCost.class);
-        EscalateTapCost escalateTapCost = removeFirst(effects, EscalateTapCost.class);
+        EscalateCost escalateCost = removeFirst(effects, EscalateCost.class);
         SacrificeAnyNumberOfPermanentsCost sacAnyNumberCost =
                 removeFirst(effects, SacrificeAnyNumberOfPermanentsCost.class);
         TapAnyNumberOfPermanentsCost tapAnyNumberCost = removeFirst(effects, TapAnyNumberOfPermanentsCost.class);
@@ -564,8 +543,6 @@ public class AdditionalSpellCostService {
         DiscardCardOrPayLifeCost discardOrPayLife = removeFirst(effects, DiscardCardOrPayLifeCost.class);
         boolean discardHand = effects.removeIf(DiscardHandCost.class::isInstance);
         DiscardXCardsCost discardXCards = removeFirst(effects, DiscardXCardsCost.class);
-        EscalateDiscardCost escalateDiscardCost = removeFirst(effects, EscalateDiscardCost.class);
-        EscalateManaCost escalateManaCost = removeFirst(effects, EscalateManaCost.class);
         EntwineManaCost entwineManaCost = removeFirst(effects, EntwineManaCost.class);
         List<RepeatableAdditionalManaCost> repeatableManaCosts = effects.stream()
                 .filter(RepeatableAdditionalManaCost.class::isInstance)
@@ -591,10 +568,10 @@ public class AdditionalSpellCostService {
         SpreeAdditionalManaCost spreeAdditionalManaCost = removeFirst(effects, SpreeAdditionalManaCost.class);
         WaterbendCost waterbendCost = removeFirst(effects, WaterbendCost.class);
         ForageOrPayManaCost forageOrPayManaCost = removeFirst(effects, ForageOrPayManaCost.class);
-        return new ExtractedCosts(sacAllCreatures, sacAllPermanents, sacCreature,
+        return new ExtractedCosts(sacAllCost, sacCreature,
                 sacCreatureOrDiscardOrPayLife, casualtyCost, sacOrPay, tapOrPay,
-                sacOrDiscard, permCost, discardOrSacrifice, exileCreatureCost, multiPermCost,
-                fractionRoundedUpCost, escalateSacrificeCost, escalateTapCost,
+                permCost, discardOrSacrifice, exileCreatureCost, multiPermCost,
+                fractionRoundedUpCost, escalateCost,
                 sacAnyNumberCost, tapAnyNumberCost, tapCreaturesForManaCost, tapMultipleCost, teamworkCost, returnAnyNumberCost,
                 returnPermanentToHand, returnCreature,
                 putCounterCost, putCountersOrPayManaCost,
@@ -603,7 +580,7 @@ public class AdditionalSpellCostService {
                 exileGraveyardCost, exileXCardsCost, putOpponentOwnedExiledCardIntoGraveyardCost,
                 collectEvidenceCost, exileNCardsCost, exileNCardsOrPayManaCost, discardCost, discardRandomCost,
                 discardOrPay, discardOrPayLife,
-                discardHand, discardXCards, escalateDiscardCost, escalateManaCost, entwineManaCost, repeatableManaCost,
+                discardHand, discardXCards, entwineManaCost, repeatableManaCost,
                 chooseXValueCost, beholdCost, beholdSelectionCost, chosenCreatureOrWarpedCardCost,
                 delveCost, revealCardCost, chooseCreatureOrRevealCreatureCardCost, chooseCreatureTypeCost, tieredManaCost,
                 payLifeOrSacrificePermanentCost, spreeAdditionalManaCost, waterbendCost,
@@ -798,14 +775,6 @@ public class AdditionalSpellCostService {
                         return false;
                     }
                 }
-                case SacrificePermanentOrDiscardCardCost cost -> {
-                    boolean hasPermanent = battlefield.stream().anyMatch(p ->
-                            predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter())
-                                    && gameQueryService.canChooseToSacrificeForCosts(gameData, p));
-                    boolean hasDiscard = !discardCostIndices(gameData, playerId, card,
-                            new DiscardCardTypeCost(null, null)).isEmpty();
-                    if (!hasPermanent && !hasDiscard) return false;
-                }
                 case ExileCreatureCost ignored -> {
                     if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p))) return false;
                 }
@@ -996,19 +965,14 @@ public class AdditionalSpellCostService {
                 }
                  // Escalate is payable with a single mode (zero extra payments), so it never blocks
                  // playability by itself — concrete mode+payment selections are validated at cast.
-                 case EscalateDiscardCost ignored -> { }
-                 case EscalateManaCost ignored -> { }
+                 case EscalateCost ignored -> { }
                  // Entwine is paid as a fixed mana suffix only when all modes are selected.
                  case EntwineManaCost ignored -> { }
                  case TieredManaCost ignored -> { }
-                case EscalateSacrificeCost ignored -> { }
-                case EscalateTapCost ignored -> { }
-                case SacrificeAllCreaturesYouControlCost ignored -> {
-                    if (battlefield.stream().anyMatch(p -> gameQueryService.isCreature(gameData, p)
+                case SacrificeAllMatchingPermanentsCost cost -> {
+                    if (battlefield.stream().anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, p, cost.filter())
                             && !gameQueryService.canSacrificePermanentForCosts(gameData, p))) return false;
-                }
-                case SacrificeAllPermanentsYouControlCost ignored -> {
-                    if (battlefield.stream().anyMatch(p -> !gameQueryService.canSacrificePermanentForCosts(gameData, p))) return false;
                 }
                 // Discarding your entire hand is legal with an empty hand.
                 case DiscardHandCost ignored -> { }
@@ -1087,9 +1051,6 @@ public class AdditionalSpellCostService {
             return discardCostIndices(gameData, playerId, card, costs.discardCost());
         }
         if (costs.discardCardOrPayManaCost() != null) {
-            return discardCostIndices(gameData, playerId, card, new DiscardCardTypeCost(null, null));
-        }
-        if (costs.sacrificePermanentOrDiscardCardCost() != null) {
             return discardCostIndices(gameData, playerId, card, new DiscardCardTypeCost(null, null));
         }
         if (costs.discardCardOrPayLifeCost() != null) {
@@ -1196,14 +1157,12 @@ public class AdditionalSpellCostService {
         if (costs.landDropCost()) {
             validateLandDropCost(gameData, player, card);
         }
-        if (costs.sacrificeAllCreatures()
-                && battlefield.stream().anyMatch(p -> gameQueryService.isCreature(gameData, p)
+        if (costs.sacrificeAllCost() != null
+                && battlefield.stream().anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, p, costs.sacrificeAllCost().filter())
                 && !gameQueryService.canSacrificePermanentForCosts(gameData, p))) {
-            throw new IllegalStateException("Players can't sacrifice creatures to cast " + card.getName());
-        }
-        if (costs.sacrificeAllPermanents()
-                && battlefield.stream().anyMatch(p -> !gameQueryService.canSacrificePermanentForCosts(gameData, p))) {
-            throw new IllegalStateException("Players can't sacrifice nonland permanents to cast " + card.getName());
+            throw new IllegalStateException("A permanent " + card.getName()
+                    + " would sacrifice can't be sacrificed to cast it");
         }
         if (costs.payLifeCost() != null) {
             validatePayLifeCost(gameData, player, card, costs.payLifeCost());
@@ -1291,24 +1250,6 @@ public class AdditionalSpellCostService {
             validateForageOrPayManaCost(
                     gameData, player, card, costs.forageOrPayManaCost(), selection, -1);
         }
-        if (costs.sacrificePermanentOrDiscardCardCost() != null) {
-            SacrificePermanentOrDiscardCardCost cost = costs.sacrificePermanentOrDiscardCardCost();
-            if (selection.sacrificePermanentId() != null) {
-                Permanent selected = gameQueryService.findPermanentById(gameData, selection.sacrificePermanentId());
-                if (selected != null && gameQueryService.isCreature(gameData, selected)) {
-                    validateCanSacrificeCreatureForCost(gameData, card);
-                }
-                validateSingleSacrificeCost(gameData, player, card, selection.sacrificePermanentId(),
-                        cost.description(),
-                        p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()));
-            } else if (selection.discardHandCardIndex() != null) {
-                validateDiscardCost(gameData, player, card, new DiscardCardTypeCost(null, null),
-                        selection.discardHandCardIndex(), selection.spellCardIndex());
-            } else {
-                throw new IllegalStateException("Must sacrifice " + cost.description()
-                        + " or discard a card to cast " + card.getName());
-            }
-        }
         if (costs.discardCardOrPayManaCost() != null) {
             if (selection.discardHandCardIndex() != null) {
                 validateDiscardCost(gameData, player, card, new DiscardCardTypeCost(null, null),
@@ -1362,12 +1303,12 @@ public class AdditionalSpellCostService {
             validateSacrificeFractionRoundedUpCost(gameData, player, card,
                     costs.sacrificeFractionRoundedUpCost(), selection.sacrificePermanentIds());
         }
-        if (costs.escalateSacrificeCost() != null) {
-            validateEscalateSacrificeCost(gameData, player, card, costs.escalateSacrificeCost(),
+        if (costs.escalateCost() != null && costs.escalateCost().sacrifices()) {
+            validateEscalateSacrificeCost(gameData, player, card, costs.escalateCost(),
                     selection.escalateModeCount(), selection.sacrificePermanentIds());
         }
-        if (costs.escalateTapCost() != null) {
-            validateEscalateTapCost(gameData, player, card, costs.escalateTapCost(),
+        if (costs.escalateCost() != null && costs.escalateCost().taps()) {
+            validateEscalateTapCost(gameData, player, card, costs.escalateCost(),
                     selection.escalateModeCount(), selection.sacrificePermanentIds());
         }
         if (costs.sacrificeAnyNumberCost() != null) {
@@ -1487,12 +1428,15 @@ public class AdditionalSpellCostService {
         if (costs.discardRandomCost() != null) {
             validateRandomDiscardCost(gameData, player, card);
         }
-        if (costs.escalateDiscardCost() != null) {
-            validateEscalateDiscardCost(gameData, player, card, selection.escalateModeCount(),
-                    selection.discardHandCardIndices(), selection.spellCardIndex());
+        if (costs.escalateCost() != null) {
+            if (costs.escalateCost().manaCost() != null && selection.escalateModeCount() < 1) {
+                throw new IllegalStateException("Must choose at least one mode to cast " + card.getName());
+            }
+            escalatePayments(card, costs.escalateCost(), selection.escalateModeCount());
         }
-        if (costs.escalateManaCost() != null) {
-            validateEscalateManaCost(card, costs.escalateManaCost(), selection.escalateModeCount());
+        if (costs.escalateCost() != null && costs.escalateCost().discards()) {
+            validateEscalateDiscardCost(gameData, player, card, costs.escalateCost(), selection.escalateModeCount(),
+                    selection.discardHandCardIndices(), selection.spellCardIndex());
         }
         if (costs.tieredManaCost() != null) {
             validateTieredManaCost(card, costs.tieredManaCost(), announcedXValue == null ? 0 : announcedXValue);
@@ -1823,18 +1767,38 @@ public class AdditionalSpellCostService {
     }
 
     /**
-     * Builds the mana-symbol suffix paid for escalate (the escalate cost repeated once per mode
-     * beyond the first). Empty when there is no escalate mana cost or only one mode is chosen.
+     * Builds the mana-symbol suffix paid for a mana escalate or entwine cost: the cost repeated once per payment
+     * {@link #escalatePayments} owes. Empty when there is no mana escalate or entwine cost or nothing is owed.
      */
-    public String escalateManaSuffix(EscalateManaCost cost, int modesChosen) {
-        if (cost == null || cost.manaCost() == null || cost.manaCost().isEmpty()) {
+    public String escalateManaSuffix(Card card, EscalateCost cost, int modesChosen) {
+        if (cost == null || cost.manaCost() == null) {
             return "";
         }
-        int times = Math.max(0, modesChosen - 1);
-        if (times == 0) {
-            return "";
+        return cost.manaCost().repeat(escalatePayments(card, cost, modesChosen));
+    }
+
+    /**
+     * How many times an escalate or entwine cost is paid for {@code modesChosen} modes of {@code card}'s modal
+     * choice (CR 702.120a: one payment per mode beyond the first; CR 702.42a: one payment for choosing all modes
+     * instead of the number specified); none when no mode count is known. Rejects an entwine choice of more modes
+     * than specified but fewer than all.
+     */
+    public int escalatePayments(Card card, EscalateCost cost, int modesChosen) {
+        if (modesChosen < 1) {
+            return 0;
         }
-        return cost.manaCost().repeat(times);
+        ChooseOneEffect modal = card.getCastingCostsAndSpellEffects().stream()
+                .filter(ChooseOneEffect::isCastersModal)
+                .map(ChooseOneEffect.class::cast)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "Escalate and entwine require a modal spell: " + card.getName()));
+        if (cost.kind() == EscalateCost.Kind.ENTWINE && modesChosen > modal.choicesRequired()
+                && modesChosen != modal.options().size()) {
+            throw new IllegalStateException("Choose exactly " + modal.choicesRequired()
+                    + " modes, or all modes when paying entwine for " + card.getName());
+        }
+        return cost.payments(modesChosen, modal.choicesRequired());
     }
 
     /** Builds the fixed additional mana-cost suffix for an entwined modal spell. */
@@ -1915,19 +1879,6 @@ public class AdditionalSpellCostService {
             paymentCounts[optionIndex]++;
         }
         return String.join("", payments);
-    }
-
-    /**
-     * Validates escalate's mana-cost-per-extra-mode declaration (CR 702.124). Mana affordability is
-     * checked by the cast path as part of the spell's total cost; this only guards the mode count.
-     */
-    public void validateEscalateManaCost(Card card, EscalateManaCost cost, int modesChosen) {
-        if (modesChosen < 1) {
-            throw new IllegalStateException("Must choose at least one mode to cast " + card.getName());
-        }
-        if (cost.manaCost() == null || cost.manaCost().isEmpty()) {
-            throw new IllegalStateException("Escalate mana cost is missing on " + card.getName());
-        }
     }
 
     /**
@@ -2353,24 +2304,25 @@ public class AdditionalSpellCostService {
     }
 
     /**
-     * Validates a sacrifice cost that is paid once for each selected mode beyond the first.
+     * Validates an escalate or entwine cost paid by sacrificing permanents, once per payment owed.
      */
     public List<Permanent> validateEscalateSacrificeCost(GameData gameData, Player player, Card card,
-                                                         EscalateSacrificeCost cost, int modesChosen,
+                                                         EscalateCost cost, int modesChosen,
                                                          List<UUID> sacrificePermanentIds) {
-        int required = cost.count() * Math.max(0, modesChosen - 1);
+        int required = cost.permanentsPerPayment() * escalatePayments(card, cost, modesChosen);
         List<UUID> ids = sacrificePermanentIds != null ? sacrificePermanentIds : List.of();
         if (ids.size() != required) {
             throw new IllegalStateException("Must sacrifice " + required
-                    + " permanents to escalate " + card.getName());
+                    + " permanents to " + cost.verb() + " " + card.getName());
         }
         if (ids.stream().distinct().count() != ids.size()) {
-            throw new IllegalStateException("Duplicate escalate sacrifice targets for " + card.getName());
+            throw new IllegalStateException("Duplicate " + cost.verb() + " sacrifice targets for " + card.getName());
         }
         List<Permanent> chosen = new ArrayList<>();
         for (UUID id : ids) {
             Permanent permanent = validateSingleSacrificeCost(gameData, player, card, id, "a matching permanent",
-                    p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()));
+                    p -> predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, p, cost.consumedPermanentFilter()));
             if (gameQueryService.isCreature(gameData, permanent)) {
                 validateCanSacrificeCreatureForCost(gameData, card);
             }
@@ -2379,21 +2331,22 @@ public class AdditionalSpellCostService {
         return chosen;
     }
 
-    /** Validates the tap payment required for each selected mode beyond the first. */
+    /** Validates an escalate or entwine cost paid by tapping permanents, once per payment owed. */
     public List<Permanent> validateEscalateTapCost(GameData gameData, Player player, Card card,
-                                                    EscalateTapCost cost, int modesChosen,
+                                                    EscalateCost cost, int modesChosen,
                                                     List<UUID> tapPermanentIds) {
-        int required = Math.max(0, modesChosen - 1);
+        int required = cost.permanentsPerPayment() * escalatePayments(card, cost, modesChosen);
         List<UUID> ids = tapPermanentIds != null ? tapPermanentIds : List.of();
         if (ids.size() != required) {
-            throw new IllegalStateException("Must tap " + required + " permanents to escalate " + card.getName());
+            throw new IllegalStateException("Must tap " + required + " permanents to " + cost.verb() + " "
+                    + card.getName());
         }
         if (ids.stream().distinct().count() != ids.size()) {
-            throw new IllegalStateException("Duplicate escalate tap targets for " + card.getName());
+            throw new IllegalStateException("Duplicate " + cost.verb() + " tap targets for " + card.getName());
         }
         List<Permanent> chosen = new ArrayList<>();
         for (UUID id : ids) {
-            chosen.add(validateSingleTapCost(gameData, player, card, cost.filter(), id));
+            chosen.add(validateSingleTapCost(gameData, player, card, cost.consumedPermanentFilter(), id));
         }
         return chosen;
     }
@@ -3340,14 +3293,14 @@ public class AdditionalSpellCostService {
     }
 
     /**
-     * Validates escalate's "discard a card for each mode beyond the first" cost without mutating.
+     * Validates an escalate or entwine "discard a card" cost, once per payment owed, without mutating.
      * Returns the post-spell-removal hand indices that would be discarded (descending order ready
      * for payment). {@code modesChosen} must be &gt;= 1.
      */
     public List<Integer> validateEscalateDiscardCost(GameData gameData, Player player, Card card,
-                                                     int modesChosen, List<Integer> discardHandCardIndices,
-                                                     int spellCardIndex) {
-        int required = Math.max(0, modesChosen - 1);
+                                                     EscalateCost cost, int modesChosen,
+                                                     List<Integer> discardHandCardIndices, int spellCardIndex) {
+        int required = escalatePayments(card, cost, modesChosen);
         if (required == 0) {
             if (discardHandCardIndices != null && !discardHandCardIndices.isEmpty()) {
                 throw new IllegalStateException("No escalate discard required for a single mode of " + card.getName());

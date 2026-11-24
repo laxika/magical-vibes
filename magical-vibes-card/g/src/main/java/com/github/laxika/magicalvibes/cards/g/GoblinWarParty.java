@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -19,7 +19,7 @@ import java.util.Set;
 public class GoblinWarParty extends Card {
 
     public GoblinWarParty() {
-        addCastingCost(new EscalateManaCost("{2}{R}"));
+        addCastingCost(EscalateCost.entwine("{2}{R}"));
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Create three 1/1 red Goblin creature tokens",

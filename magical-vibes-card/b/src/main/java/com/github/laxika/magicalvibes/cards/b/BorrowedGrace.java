@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateCost;
 
 import java.util.List;
 
@@ -13,7 +13,7 @@ import java.util.List;
 public class BorrowedGrace extends Card {
 
     public BorrowedGrace() {
-        addCastingCost(new EscalateManaCost("{1}{W}"));
+        addCastingCost(EscalateCost.escalate("{1}{W}"));
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you control get +2/+0 until end of turn",

@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EscalateSacrificeCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -17,7 +18,7 @@ import java.util.List;
 public class SolarTide extends Card {
 
     public SolarTide() {
-        addCastingCost(new EscalateSacrificeCost(2, new PermanentIsLandPredicate()));
+        addCastingCost(EscalateCost.entwine(new SacrificeMultiplePermanentsCost(2, new PermanentIsLandPredicate())));
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy all creatures with power 2 or less",

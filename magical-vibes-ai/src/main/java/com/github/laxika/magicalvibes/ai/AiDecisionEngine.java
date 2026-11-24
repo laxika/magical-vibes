@@ -46,7 +46,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanent
 import com.github.laxika.magicalvibes.model.effect.SacrificeFractionRoundedUpCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
 import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
@@ -3154,8 +3153,7 @@ public abstract class AiDecisionEngine {
      * whenever the shared cost query finds an eligible card.
      */
     protected boolean hasAvailableDiscardAlternative(GameData gameData, Card card, CardEffect effect) {
-        if (!(effect instanceof DiscardCardOrSacrificePermanentCost)
-                && !(effect instanceof SacrificePermanentOrDiscardCardCost)) {
+        if (!(effect instanceof DiscardCardOrSacrificePermanentCost)) {
             return false;
         }
         List<Integer> validDiscardIndices = castingCostService.validDiscardCostIndices(

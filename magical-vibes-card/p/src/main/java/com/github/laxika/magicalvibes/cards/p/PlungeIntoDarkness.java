@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateCost;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaEffect;
 public class PlungeIntoDarkness extends Card {
 
     public PlungeIntoDarkness() {
-        addCastingCost(new EscalateManaCost("{B}"));
+        addCastingCost(EscalateCost.entwine("{B}"));
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Sacrifice any number of creatures and gain 3 life for each",

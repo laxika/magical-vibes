@@ -97,7 +97,6 @@ class CostEffectClassificationTest {
             "RevealSourceChosenSubtypeCost",
             "RevealTwoCardsSharingColorCost",
             "RevealXCardsFromHandCost",
-            "SacrificeAllMatchingPermanentsCost",
             "SacrificeDistinctNamePermanentsCost",
             "SacrificePermanentsSequenceCost",
             "SacrificeSelfCost",
@@ -119,8 +118,7 @@ class CostEffectClassificationTest {
      * the permanent it consumes through {@code CostEffect.consumedPermanentFilter()}.
      */
     private static final Set<String> NON_PERMANENT_SPELL_COST_TYPES = Set.of(
-            "SacrificeAllCreaturesYouControlCost",
-            "SacrificeAllPermanentsYouControlCost",
+            "SacrificeAllMatchingPermanentsCost",
             "PayXLifeCost",
             "LandDropCost",
             "PayLifeCost",
@@ -141,8 +139,6 @@ class CostEffectClassificationTest {
             "DiscardCardOrPayLifeCost",
             "DiscardHandCost",
             "DiscardXCardsCost",
-            "EscalateDiscardCost",
-            "EscalateManaCost",
             "EntwineManaCost",
             "TieredManaCost",
             "RepeatableAdditionalManaCost",

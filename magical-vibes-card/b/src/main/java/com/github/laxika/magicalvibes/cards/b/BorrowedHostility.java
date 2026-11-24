@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,7 +21,7 @@ public class BorrowedHostility extends Card {
 
     public BorrowedHostility() {
         // Escalate {3} (Pay this cost for each mode chosen beyond the first.)
-        addCastingCost(new EscalateManaCost("{3}"));
+        addCastingCost(EscalateCost.escalate("{3}"));
 
         var creatureFilter = new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),

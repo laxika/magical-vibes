@@ -134,6 +134,24 @@ class DemandAnswersTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrificing an artifact and discarding a card together is refused: exactly one option is paid")
+    void cannotPayBothOptions() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Cryptex());
+        harness.setHand(player1, List.of(new DemandAnswers(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(), false,
+                artifact.getId(), null, List.of(), null, List.of(), false, 1))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Must discard a card or sacrifice an artifact");
+
+        harness.assertOnBattlefield(player1, "Cryptex");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     void cannotDiscardTheSpellItself() {
         harness.setHand(player1, List.of(new DemandAnswers(), new Forest()));
         harness.addMana(player1, ManaColor.RED, 1);

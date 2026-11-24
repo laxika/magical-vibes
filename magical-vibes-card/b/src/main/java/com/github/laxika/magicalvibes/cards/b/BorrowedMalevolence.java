@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -15,7 +15,7 @@ import java.util.List;
 public class BorrowedMalevolence extends Card {
 
     public BorrowedMalevolence() {
-        addCastingCost(new EscalateManaCost("{2}"));
+        addCastingCost(EscalateCost.escalate("{2}"));
 
         var creatureFilter = new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),

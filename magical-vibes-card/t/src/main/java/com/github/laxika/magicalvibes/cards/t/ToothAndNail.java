@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateCost;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldTogetherEffect;
@@ -26,7 +26,7 @@ public class ToothAndNail extends Card {
 
     public ToothAndNail() {
         CardTypePredicate creature = new CardTypePredicate(CardType.CREATURE);
-        addCastingCost(new EscalateManaCost("{2}"));
+        addCastingCost(EscalateCost.entwine("{2}"));
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Search your library for up to two creature cards, reveal them, and put them into your hand",

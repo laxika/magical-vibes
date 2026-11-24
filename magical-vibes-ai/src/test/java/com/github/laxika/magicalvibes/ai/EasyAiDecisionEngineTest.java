@@ -117,7 +117,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
@@ -1069,7 +1069,7 @@ class EasyAiDecisionEngineTest {
             card.setManaCost("{1}{R}");
             card.setPower(2);
             card.setToughness(2);
-            card.addCastingCost(new SacrificePermanentOrDiscardCardCost(new PermanentIsArtifactPredicate(), "an artifact"));
+            card.addCastingCost(new DiscardCardOrSacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact"));
             return card;
         }
 

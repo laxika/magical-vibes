@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateCost;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateAllOwnCreaturesEffect;
 
@@ -13,7 +13,7 @@ import java.util.List;
 public class WailOfTheNim extends Card {
 
     public WailOfTheNim() {
-        addCastingCost(new EscalateManaCost("{B}"));
+        addCastingCost(EscalateCost.entwine("{B}"));
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Regenerate each creature you control",

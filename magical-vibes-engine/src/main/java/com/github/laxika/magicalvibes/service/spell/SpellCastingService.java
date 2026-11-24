@@ -105,10 +105,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EscalateDiscardCost;
-import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
-import com.github.laxika.magicalvibes.model.effect.EscalateSacrificeCost;
-import com.github.laxika.magicalvibes.model.effect.EscalateTapCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateCost;
 import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCardsFromHandCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
@@ -152,6 +149,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreaturesOfChosen
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardFromHandCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeAllMatchingPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrDiscardCardOrPayLifeCost;
@@ -160,7 +158,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeFractionRoundedUpCos
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
@@ -942,12 +939,12 @@ public class SpellCastingService {
      * Pays escalate's discard-per-extra-mode cost. Discards highest post-removal hand indices
      * first so earlier removals do not shift later ones.
      */
-    private void payEscalateDiscardCost(GameData gameData, Player player, Card card, EscalateDiscardCost cost,
+    private void payEscalateDiscardCost(GameData gameData, Player player, Card card, EscalateCost cost,
                                         int modesChosen, List<Integer> discardHandCardIndices, int spellCardIndex) {
-        if (cost == null) return;
+        if (cost == null || !cost.discards()) return;
         List<Integer> effectiveIndices = new ArrayList<>(
                 additionalSpellCostService.validateEscalateDiscardCost(
-                        gameData, player, card, modesChosen, discardHandCardIndices, spellCardIndex));
+                        gameData, player, card, cost, modesChosen, discardHandCardIndices, spellCardIndex));
         effectiveIndices.sort(java.util.Collections.reverseOrder());
         UUID playerId = player.getId();
         List<Card> hand = gameData.playerHands.get(playerId);
@@ -958,7 +955,7 @@ public class SpellCastingService {
             gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " discards ")
                     .card(toDiscard)
-                    .text(" to escalate ")
+                    .text(" to " + cost.verb() + " ")
                     .card(card)
                     .text(".")
                     .build());
@@ -4422,7 +4419,7 @@ public class SpellCastingService {
                 additionalCosts.tieredManaCost(), effectiveXValue);
         String escalateManaSuffix = tieredManaSuffix
                 + additionalSpellCostService.escalateManaSuffix(
-                additionalCosts.escalateManaCost(), escalateModeCount)
+                card, additionalCosts.escalateCost(), escalateModeCount)
                 + additionalSpellCostService.repeatedAdditionalCostSuffix(
                         card, additionalCosts.repeatableManaCost(), repeatedAdditionalCosts)
                 + spreeManaSuffix(additionalCosts.spreeAdditionalManaCost(),
@@ -7598,7 +7595,7 @@ public class SpellCastingService {
                         filteredSpellEffects, resolvedXValue, targetId,
                         null, Map.of(), Zone.GRAVEYARD, graveyardTargetIds, targetIds
                 ));
-            } else if (targetId != null && !targetIds.isEmpty() && !additionalCosts.sacrificeAllCreatures()) {
+            } else if (targetId != null && !targetIds.isEmpty() && additionalCosts.sacrificeAllCost() == null) {
                 // Preserve a separately transported target alongside modal target groups (e.g.
                 // Grab the Reins entwined: targetIds contains group 0's control target, while
                 // targetId contains group 1's damage target).
@@ -7613,7 +7610,7 @@ public class SpellCastingService {
                 gameData.stack.add(entry);
             } else if (!targetIds.isEmpty()
                     && (needsSingleGraveyardTargeting || needsGraveyardEffectTargeting || hasBoundGraveyardTargetGroup)
-                    && !additionalCosts.sacrificeAllCreatures()) {
+                    && additionalCosts.sacrificeAllCost() == null) {
                 List<UUID> graveyardTargetIds = graveyardTargetIds(gameData, null, targetIds);
                 StackEntry graveyardEntry = new StackEntry(
                         entryType, card, playerId, card.getName(),
@@ -7624,7 +7621,7 @@ public class SpellCastingService {
                     graveyardEntry.setTargetGroupSizes(modalTargetGroupSizes);
                 }
                 gameData.stack.add(graveyardEntry);
-            } else if (!targetIds.isEmpty() && !additionalCosts.sacrificeAllCreatures()) {
+            } else if (!targetIds.isEmpty() && additionalCosts.sacrificeAllCost() == null) {
                 // Multi-target spell (e.g. "one or two target creatures each get +2/+1")
                 StackEntry multiTargetEntry = new StackEntry(
                         entryType, card, playerId, card.getName(),
@@ -7896,7 +7893,7 @@ public class SpellCastingService {
             throw new IllegalStateException("The same card cannot pay Dream Halls and an additional discard cost for "
                     + card.getName());
         }
-        if (costs.discardXCardsCost() != null || costs.escalateDiscardCost() != null) {
+        if (costs.discardXCardsCost() != null || costs.escalateCost() != null && costs.escalateCost().discards()) {
             if (selection.discardHandCardIndices() != null
                     && selection.discardHandCardIndices().contains(sharedColorDiscardHandCardIndex)) {
                 throw new IllegalStateException("The same card cannot pay Dream Halls and an additional discard cost for "
@@ -8083,9 +8080,9 @@ public class SpellCastingService {
     }
 
     /**
-     * CR 616.1: before a prepared free cast pays its "sacrifice all creatures you control" cost, asks the death
-     * replacement questions of those creatures. The cast is made while something resolves, so it is paused, not
-     * stopped and made again; nothing is asked inside a rerun window, whose completion asks as the creatures leave.
+     * CR 616.1: before a prepared free cast pays its "sacrifice all [permanents] you control" cost, asks the death
+     * replacement questions of those permanents. The cast is made while something resolves, so it is paused, not
+     * stopped and made again; nothing is asked inside a rerun window, whose completion asks as the permanents leave.
      *
      * @return whether a question was asked
      */
@@ -8093,9 +8090,18 @@ public class SpellCastingService {
         if (gameData.deathReplacementsCanRerunEffect) {
             return false;
         }
+        SacrificeAllMatchingPermanentsCost cost = entry.getEffectsToResolve().stream()
+                .filter(SacrificeAllMatchingPermanentsCost.class::isInstance)
+                .map(SacrificeAllMatchingPermanentsCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (cost == null) {
+            return false;
+        }
         List<DepartureIntent> intents = gameData.playerBattlefields
                 .getOrDefault(entry.getControllerId(), List.of()).stream()
-                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, permanent, cost.filter()))
                 .map(permanent -> DepartureIntent.sacrifice(permanent.getId()))
                 .toList();
         if (intents.isEmpty()) {
@@ -8260,9 +8266,6 @@ public class SpellCastingService {
         resolvedXValue = sacrificeCostPayment.resolvedXValue();
         paySacrificeCreatureOrDiscardCardOrPayLifeCost(gameData, player, card,
                 costs.sacrificeCreatureOrDiscardCardOrPayLifeCost(), selection);
-        paySacrificePermanentOrDiscardCardCost(gameData, player, card,
-                costs.sacrificePermanentOrDiscardCardCost(), selection.sacrificePermanentId(),
-                selection.discardHandCardIndex(), selection.spellCardIndex());
         SacrificeCostPayment discardOrSacrificeCostPayment = payDiscardCardOrSacrificePermanentCost(
                 gameData, player, card, costs.discardCardOrSacrificePermanentCost(),
                 selection.sacrificePermanentId(), selection.discardHandCardIndex(),
@@ -8273,9 +8276,9 @@ public class SpellCastingService {
                 selection.sacrificePermanentIds());
         paySacrificeFractionRoundedUpCost(gameData, player, card, costs.sacrificeFractionRoundedUpCost(),
                 selection.sacrificePermanentIds());
-        payEscalateSacrificeCost(gameData, player, card, costs.escalateSacrificeCost(),
+        payEscalateSacrificeCost(gameData, player, card, costs.escalateCost(),
                 selection.escalateModeCount(), selection.sacrificePermanentIds());
-        payEscalateTapCost(gameData, player, card, costs.escalateTapCost(),
+        payEscalateTapCost(gameData, player, card, costs.escalateCost(),
                 selection.escalateModeCount(), selection.sacrificePermanentIds());
         List<UUID> tappedPermanentIds = List.of();
         if (costs.sacrificeAnyNumberCost() != null) {
@@ -8375,7 +8378,7 @@ public class SpellCastingService {
                 resolvedXValue = discardedManaValue;
             }
         }
-        payEscalateDiscardCost(gameData, player, card, costs.escalateDiscardCost(),
+        payEscalateDiscardCost(gameData, player, card, costs.escalateCost(),
                 selection.escalateModeCount(), selection.discardHandCardIndices(), selection.spellCardIndex());
         SacrificeCostPayment effectiveSacrificePayment = sacrificeCostPayment.sacrificedCardId() != null
                 ? sacrificeCostPayment : discardOrSacrificeCostPayment;
@@ -8741,11 +8744,11 @@ public class SpellCastingService {
                 sacrificedToughness = stats.toughness();
             }
         }
-        if (costs.sacrificeAllCreatures()) {
-            resolvedXValue = paySacrificeAllCreaturesYouControlCost(gameData, player, card);
-        }
-        if (costs.sacrificeAllPermanents()) {
-            paySacrificeAllPermanentsYouControlCost(gameData, player, card);
+        if (costs.sacrificeAllCost() != null) {
+            int totalPower = paySacrificeAllMatchingPermanentsCost(gameData, player, card, costs.sacrificeAllCost());
+            if (costs.sacrificeAllCost().trackSacrificedPower()) {
+                resolvedXValue = totalPower;
+            }
         }
         return new SacrificeCostPayment(resolvedXValue, sacrificedCardId, sacrificedCardSnapshot,
                 sacrificedPermanentSnapshot, sacrificedPower, sacrificedToughness);
@@ -8798,26 +8801,28 @@ public class SpellCastingService {
         }
     }
 
-    /** Pays the permanent cost for each mode chosen beyond the first. */
+    /** Pays an escalate or entwine cost paid by sacrificing permanents, once per payment owed. */
     private void payEscalateSacrificeCost(GameData gameData, Player player, Card card,
-                                          EscalateSacrificeCost cost, int modesChosen,
+                                          EscalateCost cost, int modesChosen,
                                           List<UUID> sacrificePermanentIds) {
-        if (cost == null) {
+        if (cost == null || !cost.sacrifices()) {
             return;
         }
-        int required = cost.count() * Math.max(0, modesChosen - 1);
+        int required = cost.permanentsPerPayment() * additionalSpellCostService.escalatePayments(
+                card, cost, modesChosen);
         if (required == 0) {
             return;
         }
         for (UUID id : sacrificePermanentIds) {
             paySingleSacrificeCost(gameData, player, card, id, "a matching permanent",
-                    p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()));
+                    p -> predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, p, cost.consumedPermanentFilter()));
         }
     }
 
     private void payEscalateTapCost(GameData gameData, Player player, Card card,
-                                    EscalateTapCost cost, int modesChosen, List<UUID> tapPermanentIds) {
-        if (cost == null) {
+                                    EscalateCost cost, int modesChosen, List<UUID> tapPermanentIds) {
+        if (cost == null || !cost.taps()) {
             return;
         }
         List<Permanent> toTap = additionalSpellCostService.validateEscalateTapCost(
@@ -8830,7 +8835,7 @@ public class SpellCastingService {
                 gameLogService.append(gameData, GameLog.builder()
                         .text(player.getUsername() + " taps ")
                         .card(permanent.getCard())
-                        .text("to escalate ")
+                        .text(" to " + cost.verb() + " ")
                         .card(card)
                         .text(".")
                         .build());
@@ -9420,7 +9425,6 @@ public class SpellCastingService {
         List<UUID> chosenIds = selection.sacrificePermanentIds() != null ? selection.sacrificePermanentIds() : List.of();
         if (chosenId != null && (costs.payLifeOrSacrificePermanentCost() != null || costs.casualtyCost() != null
                 || costs.sacrificeCreatureOrDiscardCardOrPayLifeCost() != null
-                || costs.sacrificePermanentOrDiscardCardCost() != null
                 || costs.discardCardOrSacrificePermanentCost() != null || costs.forageOrPayManaCost() != null
                 || costs.sacrificePermanentOrPayManaCost() != null)) {
             ids.add(chosenId);
@@ -9428,15 +9432,17 @@ public class SpellCastingService {
         if (chosenId != null && (costs.sacrificeCreature() || costs.sacrificePermanentCost() != null)) {
             ids.add(chosenId);
         }
-        if (costs.sacrificeAllCreatures() || costs.sacrificeAllPermanents()) {
+        if (costs.sacrificeAllCost() != null) {
             gameData.playerBattlefields.getOrDefault(player.getId(), List.of()).stream()
-                    .filter(permanent -> costs.sacrificeAllPermanents() || gameQueryService.isCreature(gameData, permanent))
+                    .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, permanent, costs.sacrificeAllCost().filter()))
                     .forEach(permanent -> ids.add(permanent.getId()));
         }
         if (costs.sacrificeMultiplePermanentsCost() != null || costs.sacrificeAnyNumberCost() != null
                 || costs.sacrificeFractionRoundedUpCost() != null
-                || costs.escalateSacrificeCost() != null && costs.escalateSacrificeCost().count()
-                        * Math.max(0, selection.escalateModeCount() - 1) > 0) {
+                || costs.escalateCost() != null && costs.escalateCost().sacrifices()
+                        && additionalSpellCostService.escalatePayments(
+                                card, costs.escalateCost(), selection.escalateModeCount()) > 0) {
             ids.addAll(chosenIds);
         }
         if (kicker != null && kicker.hasSacrificeCost()) {
@@ -9632,29 +9638,22 @@ public class SpellCastingService {
                 power, toughness, permanentSnapshot);
     }
 
-    private int paySacrificeAllCreaturesYouControlCost(GameData gameData, Player player, Card sourceCard) {
-        UUID playerId = player.getId();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        List<Permanent> creaturesToSacrifice = battlefield.stream()
-                .filter(p -> gameQueryService.isCreature(gameData, p))
+    /**
+     * Pays "sacrifice all [matching permanents] you control": every matching permanent leaves together. Returns
+     * their total power (at least 0), read before any of them leaves.
+     */
+    private int paySacrificeAllMatchingPermanentsCost(GameData gameData, Player player, Card sourceCard,
+                                                      SacrificeAllMatchingPermanentsCost cost) {
+        List<Permanent> toSacrifice = gameData.playerBattlefields.get(player.getId()).stream()
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
                 .toList();
-
-        // Snapshot total power first, because all chosen creatures are sacrificed together.
         int totalPower = 0;
-        for (Permanent creature : creaturesToSacrifice) {
-            totalPower += gameQueryService.getEffectivePower(gameData, creature);
+        for (Permanent permanent : toSacrifice) {
+            totalPower += gameQueryService.getEffectivePower(gameData, permanent);
         }
-        sacrificeForSpellCost(gameData, player, sourceCard, creaturesToSacrifice, " for ",
-                creature -> permanentRemovalService.snapshotEffectivePermanentCard(gameData, creature), true);
-        return Math.max(0, totalPower);
-    }
-
-    private void paySacrificeAllPermanentsYouControlCost(GameData gameData, Player player, Card sourceCard) {
-        UUID playerId = player.getId();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        List<Permanent> toSacrifice = List.copyOf(battlefield);
         sacrificeForSpellCost(gameData, player, sourceCard, toSacrifice, " for ",
                 permanent -> permanentRemovalService.snapshotEffectivePermanentCard(gameData, permanent), true);
+        return Math.max(0, totalPower);
     }
 
     private void payDiscardHandCost(GameData gameData, Player player, Card sourceCard) {
@@ -9875,24 +9874,6 @@ public class SpellCastingService {
                 gameData.playerManaPools.put(player.getId(), preManaPaymentPool);
             }
             throw e;
-        }
-    }
-
-    private void paySacrificePermanentOrDiscardCardCost(GameData gameData, Player player, Card card,
-                                                        SacrificePermanentOrDiscardCardCost cost,
-                                                        UUID sacrificePermanentId,
-                                                        Integer discardHandCardIndex,
-                                                        int spellCardIndex) {
-        if (cost == null) {
-            return;
-        }
-        if (sacrificePermanentId != null) {
-            paySingleSacrificeCost(gameData, player, card, sacrificePermanentId,
-                    cost.description(), p -> predicateEvaluationService.matchesPermanentPredicate(
-                            gameData, p, cost.filter()));
-        } else {
-            payDiscardCost(gameData, player, card, new DiscardCardTypeCost(null, null),
-                    discardHandCardIndex, spellCardIndex);
         }
     }
 
@@ -11135,11 +11116,9 @@ public class SpellCastingService {
         }
         // Exile-N, fixed tap-multiple, and sacrifice-a-creature costs are handled below; reject
         // unsupported costs rather than silently skipping them.
-        boolean hasUnsupportedAdditionalCost = additionalCosts.sacrificeAllCreatures()
-                || additionalCosts.sacrificeAllPermanents()
+        boolean hasUnsupportedAdditionalCost = additionalCosts.sacrificeAllCost() != null
                 || additionalCosts.sacrificeCreatureOrDiscardCardOrPayLifeCost() != null
                 || additionalCosts.sacrificePermanentOrPayManaCost() != null
-                || additionalCosts.sacrificePermanentOrDiscardCardCost() != null
                 || additionalCosts.discardCardOrSacrificePermanentCost() != null
                 || additionalCosts.discardCardOrPayLifeCost() != null
                 || additionalCosts.returnPermanentToHand() != null
@@ -11153,9 +11132,7 @@ public class SpellCastingService {
                 || additionalCosts.exileNCardsOrPayManaCost() != null
                 || additionalCosts.discardRandomCost() != null
                 || additionalCosts.discardCardOrPayManaCost() != null || additionalCosts.discardHand()
-                || additionalCosts.escalateDiscardCost() != null
-                || additionalCosts.escalateManaCost() != null
-                || additionalCosts.escalateSacrificeCost() != null
+                || additionalCosts.escalateCost() != null && !additionalCosts.escalateCost().taps()
                 || additionalCosts.sacrificeFractionRoundedUpCost() != null
                 || additionalCosts.tieredManaCost() != null
                 || additionalCosts.chooseCreatureTypeCost() != null
@@ -14356,8 +14333,8 @@ public class SpellCastingService {
      * cast without paying its mana cost (CR 702.120a: escalate is an additional cost, so it is still paid).
      */
     public boolean canPayFreeCastEscalateMana(GameData gameData, UUID playerId, Card card,
-                                              EscalateManaCost cost, int modesChosen) {
-        String suffix = additionalSpellCostService.escalateManaSuffix(cost, modesChosen);
+                                              EscalateCost cost, int modesChosen) {
+        String suffix = additionalSpellCostService.escalateManaSuffix(card, cost, modesChosen);
         if (suffix.isEmpty()) {
             return true;
         }
@@ -14367,9 +14344,9 @@ public class SpellCastingService {
     }
 
     /** Pays escalate's mana for {@code modesChosen} modes of a prepared spell cast without paying its mana cost. */
-    public void payFreeCastEscalateMana(GameData gameData, StackEntry entry, EscalateManaCost cost, int modesChosen) {
+    public void payFreeCastEscalateMana(GameData gameData, StackEntry entry, EscalateCost cost, int modesChosen) {
         payEscalateManaOnly(gameData, entry.getControllerId(), entry.getCard(),
-                additionalSpellCostService.escalateManaSuffix(cost, modesChosen), 0);
+                additionalSpellCostService.escalateManaSuffix(entry.getCard(), cost, modesChosen), 0);
     }
 
     private <T> T withMulticoloredSpellMana(GameData gameData, UUID playerId, Card card,

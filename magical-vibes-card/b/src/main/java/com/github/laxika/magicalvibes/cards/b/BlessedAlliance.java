@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateCost;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -23,7 +23,7 @@ import java.util.List;
 public class BlessedAlliance extends Card {
 
     public BlessedAlliance() {
-        addCastingCost(new EscalateManaCost("{2}"));
+        addCastingCost(EscalateCost.escalate("{2}"));
         setAllowSharedTargets(true);
 
         var anyPlayerFilter = new PlayerPredicateTargetFilter(

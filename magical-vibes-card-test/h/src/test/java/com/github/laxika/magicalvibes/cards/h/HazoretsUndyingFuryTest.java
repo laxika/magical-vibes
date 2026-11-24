@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
+import com.github.laxika.magicalvibes.cards.b.BoneShards;
 import com.github.laxika.magicalvibes.cards.b.BorrowedGrace;
 import com.github.laxika.magicalvibes.cards.c.CollectiveBrutality;
 import com.github.laxika.magicalvibes.cards.c.CollectiveEffort;
@@ -8,8 +9,10 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
+import com.github.laxika.magicalvibes.cards.m.MinionMissile;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SoulsOfTheLost;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -29,13 +32,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({HazoretsUndyingFury.class, AvatarOfMight.class, BorrowedGrace.class, CollectiveBrutality.class,
         CollectiveEffort.class, Forest.class, GloriousAnthem.class, GrizzlyBears.class, HollowOne.class, Plains.class, Shock.class,
-        InvasionOfZendikar.class})
+        InvasionOfZendikar.class, BoneShards.class, MinionMissile.class, SoulsOfTheLost.class})
 class HazoretsUndyingFuryTest extends BaseCardTest {
 
     @Nested
     @CardUsed({HazoretsUndyingFury.class, AvatarOfMight.class, BorrowedGrace.class, CollectiveBrutality.class,
             CollectiveEffort.class, Forest.class, GloriousAnthem.class, GrizzlyBears.class, HollowOne.class, Shock.class,
-            InvasionOfZendikar.class})
+            InvasionOfZendikar.class, BoneShards.class, MinionMissile.class, SoulsOfTheLost.class})
     @DisplayName("Shuffle, exile the top four, may cast spells with mana value 5 or less")
     class ExileAndCast {
 
@@ -261,6 +264,67 @@ class HazoretsUndyingFuryTest extends BaseCardTest {
             assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.ColorChoice.class);
             harness.handlePermanentChosen(player1, player2.getId());
             assertThat(gd.stack).anyMatch(e -> e.getCard().getName().equals("Collective Brutality"));
+        }
+
+        @Test
+        @DisplayName("A free Bone Shards asks whether to discard or sacrifice, then pays the sacrifice chosen")
+        void freeBoneShardsPaysTheChosenSacrifice() {
+            BoneShards shards = new BoneShards();
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            Permanent fodder = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            cast(List.of(shards));
+            Forest kept = new Forest();
+            harness.setHand(player1, List.of(kept));
+
+            harness.handleMultipleCardsChosen(player1, List.of(shards.getId()));
+            harness.handlePermanentChosen(player1, target.getId());
+
+            PendingInteraction.ColorChoice payment =
+                    (PendingInteraction.ColorChoice) gd.interaction.activeInteraction();
+            assertThat(payment.options()).containsExactly("Discard a card", "Sacrifice a creature");
+            harness.handleListChoice(player1, "Sacrifice a creature");
+            harness.handlePermanentChosen(player1, fodder.getId());
+
+            assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(fodder);
+            assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept);
+            assertThat(gd.stack).anyMatch(e -> e.getCard() == shards);
+            harness.passBothPriorities();
+            assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        }
+
+        @Test
+        @DisplayName("A free Minion Missile with an empty hand sacrifices a creature for its additional cost")
+        void freeMinionMissileSacrificesWithAnEmptyHand() {
+            MinionMissile missile = new MinionMissile();
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            Permanent fodder = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            cast(List.of(missile));
+            harness.setHand(player1, List.of());
+
+            harness.handleMultipleCardsChosen(player1, List.of(missile.getId()));
+            harness.handlePermanentChosen(player1, target.getId());
+
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+            harness.handlePermanentChosen(player1, fodder.getId());
+
+            assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(fodder);
+            assertThat(gd.stack).anyMatch(e -> e.getCard() == missile);
+        }
+
+        @Test
+        @DisplayName("A free Souls of the Lost with nothing to sacrifice discards a card for its additional cost")
+        void freeSoulsOfTheLostDiscardsWithNothingToSacrifice() {
+            SoulsOfTheLost souls = new SoulsOfTheLost();
+            cast(List.of(souls));
+            Forest discarded = new Forest();
+            harness.setHand(player1, List.of(discarded));
+
+            harness.handleMultipleCardsChosen(player1, List.of(souls.getId()));
+            harness.handleCardChosen(player1, 0);
+
+            assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+            assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+            assertThat(gd.stack).anyMatch(e -> e.getCard() == souls);
         }
     }
 

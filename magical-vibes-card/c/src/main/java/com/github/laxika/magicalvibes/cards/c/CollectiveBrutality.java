@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.EscalateDiscardCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateCost;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -30,7 +31,7 @@ public class CollectiveBrutality extends Card {
     public CollectiveBrutality() {
         setAllowSharedTargets(true);
         // Escalate—Discard a card. (Pay this cost for each mode chosen beyond the first.)
-        addCastingCost(new EscalateDiscardCost());
+        addCastingCost(EscalateCost.escalate(new DiscardCardTypeCost(null, null)));
 
         var opponentFilter = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

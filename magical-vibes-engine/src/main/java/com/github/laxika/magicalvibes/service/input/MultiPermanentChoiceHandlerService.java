@@ -914,8 +914,9 @@ public class MultiPermanentChoiceHandlerService {
         } else if (context instanceof MultiPermanentChoiceContext.FreeCastTapCost tapCost
                 && tapCost.entry().getEffectsToResolve().stream()
                         .filter(com.github.laxika.magicalvibes.model.effect.CostEffect.class::isInstance)
-                        .allMatch(com.github.laxika.magicalvibes.model.effect.EscalateSacrificeCost.class::isInstance)) {
-            // An escalate cost paid by sacrificing: its death replacements are asked before anything leaves.
+                        .allMatch(cost -> cost instanceof com.github.laxika.magicalvibes.model.effect.EscalateCost escalate
+                                && escalate.sacrifices())) {
+            // An escalate or entwine cost paid by sacrificing: its death replacements are asked before anything leaves.
             completeAskingDeathReplacementsFirst(gameData, multiPermanentChoice, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.FreeCastTapCost tapCost) {
             exileFreeCastQueueSupport.completeTapCost(gameData, permanentIds, tapCost);

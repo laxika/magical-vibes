@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 
 import java.util.List;
@@ -23,7 +23,7 @@ import java.util.Set;
 public class PromiseOfPower extends Card {
 
     public PromiseOfPower() {
-        addCastingCost(new EscalateManaCost("{4}"));
+        addCastingCost(EscalateCost.entwine("{4}"));
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "You draw five cards and you lose 5 life",

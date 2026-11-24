@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesZonesIntoLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateCost;
 
 import java.util.List;
 
@@ -13,7 +13,7 @@ import java.util.List;
 public class TemporalCascade extends Card {
 
     public TemporalCascade() {
-        addCastingCost(new EscalateManaCost("{2}"));
+        addCastingCost(EscalateCost.entwine("{2}"));
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Each player shuffles their hand and graveyard into their library",

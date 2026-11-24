@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -20,7 +20,7 @@ import java.util.Set;
 public class CollectiveResistance extends Card {
 
     public CollectiveResistance() {
-        addCastingCost(new EscalateManaCost("{G}"));
+        addCastingCost(EscalateCost.escalate("{G}"));
 
         setAllowSharedTargets(true);
         var artifactFilter = new PermanentPredicateTargetFilter(

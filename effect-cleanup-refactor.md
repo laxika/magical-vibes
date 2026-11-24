@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 49b, 47c, 48; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                    |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47, 49, 24, 7b, 30b, 6c, 46c, 47b, 24b, 30c, 49b (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 47c, 48, 24c, 8c; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                                     |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,064 / 2,479 (after fold run 30c) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,058 / 2,479 (after fold run 49b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,630 rows over 4,562 classes (after fold run 30c). Latest verdict per class: `step-9` 71, unique 1,194, absorbed 1,316, split 670, blocked-other 552, survivor 448, blocked-step-model 140, blocked-player-loop 96, dead 75. Waiting: 71 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,640 rows over 4,564 classes (after fold run 49b). Latest verdict per class: `step-9` 64, unique 1,193, absorbed 1,323, split 670, blocked-other 552, survivor 451, blocked-step-model 140, blocked-player-loop 96, dead 75. Waiting: 64 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1099,6 +1099,9 @@ Ledger rows are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cd
 - `SpendManaAsAnyColorForActivatedAbilitiesEffect(subject, borrowedAbilitiesOnly, fromColor)` / `.blueManaForOwnAbilities()`; `controlledBy(you(), not(PermanentOwnedBySourceControllerPredicate))` is "permanents you control but don't own" (fold run 30c).
 - `SpendAnyManaTypeToCastEffect.asThoughAnyColor(CardPredicate)`: any-colour cast permission ({C} still needs colorless), read by `CastingPermissionService.canSpendManaAsAnyColorToCastFromBattlefield` (fold run 30c).
 - Static subject sets judge `PermanentOwnedBySourceControllerPredicate` against the ability's controller (`SubjectResolutionService.setFilterMatches`) (fold run 30c).
+
+- `EscalateCost(perModeCost, Kind ESCALATE | ENTWINE)` with `escalate("{M}")` / `escalate(cost)` / `entwine("{M}")` / `entwine(cost)`: "Escalate [cost]" and two-mode "Entwine [cost]" (CR 702.120a, 702.42a). Payments are counted by `AdditionalSpellCostService.escalatePayments` (fold run 49b).
+- `SacrificeAllMatchingPermanentsCost(filter, trackSacrificedPower)`: "sacrifice all [permanents] you control" as an activated-ability cost or a spell's additional cost, with total power as X (Soulblast) (fold run 49b).
 
 ### Blocked causes still open
 
@@ -5005,6 +5008,30 @@ Three batches touched: 4 absorbed, 3 survivor, 4 unique, 1 blocked-other; 5 spen
 
 **For the next run.**
 1. A defect run: split `AllowPlayCardsFromExileEffect.withAnyManaType()` / `AllowCastMatchingCardsFromGraveyardThisTurnEffect.spendingManaOfAnyType()` into any type and any colour per Oracle text, and make the exile payment's `anyColorForColoredSymbols` apply to any colour only.
+
+### Step 9, fold run 49b (2026-11-24, parallel worktree)
+Ratchet goes from 3,080 / 2,494 to 3,074 / 2,494: 7 records absorbed, 1 new, no handlers deleted. 38 card files were rewritten, with Oracle text checked for all 38 plus the three free-cast test cards. CR rules checked: 118.3, 118.9, 118.9d, 601.2f, 601.2h, 603.10a, 616.1, 702.42a, 702.42b, 702.120a.
+
+| Batch | Result |
+|---|---|
+| modal-cost | 3 folded, plus `EscalateManaCost` (needed for one field), into the new `EscalateCost(CostEffect perModeCost, Kind ESCALATE \| ENTWINE)`. One payment is `PayManaCost`, `DiscardCardTypeCost(null, null)`, `SacrificeMultiplePermanentsCost(n, f)` or `TapMultiplePermanentsCost(1, f)`. `AdditionalSpellCostService.escalatePayments(card, cost, modes)` counts payments: ESCALATE pays once per mode beyond the first, ENTWINE once for all modes and rejects an in-between count. The four `ExtractedCosts` fields became one; validators and payers stayed where they were. `consumedPermanentFilter` delegates to the per-mode cost, so the AI sees what it did before. The 24 Mirrodin-block/MH1 mana cards and Betrayal of Flesh / Solar Tide are entwine. With two modes the payment is the same, and the log now says "entwine". |
+| sac-all-cost | 2 folded into `SacrificeAllMatchingPermanentsCost(filter, trackSacrificedPower)`, which is now also a spell cost. The Soulblast guard on the three StackEntry multi-target branches dates from Soulblast's first implementation (a955e96b6c) and has no rule behind it: it makes a single-target spell ignore a stray `targetIds` list. It now covers any sacrifice-all cost. The free-cast readers (`ExileFreeCastQueueSupport`, `askFreeCastSacrificeAllFirst`, `paysOnlySacrificeCosts`) use the cost's filter. Kaervek's Spite stays refused in exile free casts because it has two costs. |
+| cost-aliases | `SacrificePermanentOrDiscardCardCost` folded into `DiscardCardOrSacrificePermanentCost`. The survivor's validation refuses both picks (Bone Shards ruling: exactly one) and records the sacrificed card. The free-cast readers, Jetsam's refusal list and the AI now read the survivor. |
+
+Behaviour changes:
+- Exile free casts pay Bone Shards', Minion Missile's and Souls of the Lost's sacrifice-or-discard cost; before, the cast was skipped (CR 118.9d; 3 Hazoret tests).
+- Jetsam refuses Bone Shards instead of casting it with the cost skipped (CR 601.2h; Flotsam // Jetsam test).
+- Demand Answers refuses a request naming both a sacrifice and a discard (Demand Answers test).
+- The escalate tap log line has its missing space (Collective Effort test).
+- The graveyard-cast refusal keeps Collective Effort's tap escalate allowed, as before.
+
+Cost-shape: payments stay where they were. Step 10's cost-combinator merge would join the escalate payers with the `SacrificeMultiplePermanentsCost` / `TapMultiplePermanentsCost` / discard payers they wrap. It would also join `paySacrificeAllMatchingPermanentsCost` with `AllMatchingPermanentSacrificeCostHandler`.
+
+Seen, not changed:
+- The escalate/entwine sacrifice payer and `payMultipleSacrificeCost` sacrifice one permanent at a time, so Betrayal of Flesh's three lands leave as three separate events (CR 603.10a). Fairly sure of the code.
+- `EntwineManaCost` (Kaya's Guile) is refused in exile free casts, because it counts as a non-escalate cost. Sure of the code.
+
+For the next run: fold `EntwineManaCost` (5 cards) onto `EscalateCost.entwine` once the free-cast mode picker can express "the required number or all modes".
 
 ## Prompt
 

@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.b.BoneShards;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.d.Deduce;
 import com.github.laxika.magicalvibes.cards.d.DemandAnswers;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FlotsamJetsam.class, CounselOfTheSoratami.class, Island.class, Deduce.class, DemandAnswers.class})
+@CardUsed({FlotsamJetsam.class, CounselOfTheSoratami.class, Island.class, Deduce.class, DemandAnswers.class,
+        BoneShards.class, GrizzlyBears.class})
 class FlotsamJetsamTest extends BaseCardTest {
 
     @Test
@@ -156,5 +159,26 @@ class FlotsamJetsamTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(demand);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Jetsam doesn't cast Bone Shards with its sacrifice-or-discard cost unpaid")
+    void jetsamDoesNotSkipBoneShardsAdditionalCost() {
+        BoneShards shards = new BoneShards();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setGraveyard(player2, List.of(shards));
+        harness.setLibrary(player2, List.of());
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
+        harness.setHand(player1, List.of(new FlotsamJetsam()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castModalSorcery(player1, 0, 1, List.of());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(shards);
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() == shards);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 }

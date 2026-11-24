@@ -129,7 +129,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -2577,7 +2577,7 @@ class MediumAiDecisionEngineTest {
         card.setManaCost("{1}{R}");
         card.setPower(2);
         card.setToughness(2);
-        card.addCastingCost(new SacrificePermanentOrDiscardCardCost(new PermanentIsArtifactPredicate(), "an artifact"));
+        card.addCastingCost(new DiscardCardOrSacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact"));
         return card;
     }
 

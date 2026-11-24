@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EscalateTapCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateCost;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -27,7 +28,7 @@ import java.util.List;
 public class CollectiveEffort extends Card {
 
     public CollectiveEffort() {
-        addCastingCost(new EscalateTapCost(new PermanentIsCreaturePredicate()));
+        addCastingCost(EscalateCost.escalate(new TapMultiplePermanentsCost(1, new PermanentIsCreaturePredicate())));
 
         var creatureFilter = new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

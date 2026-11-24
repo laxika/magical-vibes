@@ -449,8 +449,8 @@ public class PermanentChoiceHandlerService {
         return !costs.isEmpty() && costs.stream().allMatch(cost ->
                 cost instanceof com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost
                         || cost instanceof SacrificePermanentCost
-                        || cost instanceof com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost
-                        || cost instanceof com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost);
+                        || cost instanceof com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost
+                        || cost instanceof com.github.laxika.magicalvibes.model.effect.SacrificeAllMatchingPermanentsCost);
     }
 
     private void completeKillingChoice(GameData gameData, PendingInteraction.PermanentChoice choice,

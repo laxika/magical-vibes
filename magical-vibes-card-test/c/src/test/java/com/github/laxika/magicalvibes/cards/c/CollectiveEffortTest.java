@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -238,6 +239,21 @@ class CollectiveEffortTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(survivor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Tapping a creature for escalate is logged with the creature and the spell")
+    void logsTheEscalateTap() {
+        Permanent tapper = addCreatureReady(player1, new GrizzlyBears());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new CampaignOfVengeance());
+        harness.setHand(player1, List.of(new CollectiveEffort()));
+        addMana();
+
+        harness.castModalSorceryWithModesAndTaps(player1, 0, 1, 3,
+                new int[]{1, 2}, List.of(enchantment.getId(), player1.getId()), List.of(tapper.getId()));
+
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(line -> line.contains("taps Grizzly Bears to escalate Collective Effort."));
     }
 
     private void addMana() {
