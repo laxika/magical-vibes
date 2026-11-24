@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -16,7 +17,7 @@ public class AuraFinesse extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.AURA),
                 "Target must be an Aura you control"))
-                .addSpellEffect(new AttachTargetAuraToTargetCreatureEffect())
+                .addSpellEffect(new AttachSourceEquipmentToTargetCreatureEffect(Subjects.target(0), Subjects.target(1)))
                 .addSpellEffect(new DrawCardEffect(1));
         target(TargetFilters.creature());
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -12,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureU
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedWatchedCreaturesCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TransformGrantingPermanentEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -29,6 +29,6 @@ public class OptimusPrimeAutobotLeader extends Card {
                 new BolsterEffect(2, true),
                 new GrantKeywordToChosenCreatureUntilEndOfTurnEffect(Keyword.TRAMPLE, null),
                 RegisterDelayedWatchedCreaturesCombatDamageEffect.forChosenCreatureThisTurn(
-                        List.of(new TransformGrantingPermanentEffect()))));
+                        List.of(new TransformSelfEffect(Subjects.granter())))));
     }
 }

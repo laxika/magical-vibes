@@ -230,6 +230,7 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
             case GOAD -> "goaded";
             case SEARCH -> "found";
             case BID -> "bid";
+            case ATTACH -> "attached";
         };
     }
 }

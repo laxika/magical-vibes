@@ -33,6 +33,23 @@ class DarksteelGarrisonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Fortifying the land it already fortifies does nothing and keeps its timestamp (CR 701.3b)")
+    void fortifyingTheSameLandDoesNothing() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new DryadArbor());
+        Permanent garrison = harness.addToBattlefieldAndReturn(player1, new DarksteelGarrison());
+        garrison.setAttachedTo(land.getId());
+        long timestamp = garrison.getTimestamp();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        prepareMainPhase(player1);
+
+        harness.activateAbility(player1, indexOf(player1, garrison), null, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(garrison.getAttachedTo()).isEqualTo(land.getId());
+        assertThat(garrison.getTimestamp()).isEqualTo(timestamp);
+    }
+
+    @Test
     @DisplayName("Fortify cannot target a creature")
     void fortifyCannotTargetCreature() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new NessianCourser());

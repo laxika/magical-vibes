@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -12,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffec
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformCreatedPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -45,7 +46,7 @@ public class HighMarshalArguel extends Card {
                 controlsArguelsBloodFastAndTemple,
                 SequenceEffect.of(
                         new ConjureCardToBattlefieldEffect("XLN", "90"),
-                        new MayEffect(new TransformCreatedPermanentEffect(), "Transform it?")),
+                        new MayEffect(new TransformSelfEffect(Subjects.createdThisResolution()), "Transform it?")),
                 vampireDemons));
     }
 }

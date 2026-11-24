@@ -1,29 +1,35 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 /**
- * Attaches the effect's Equipment to its host, both named by {@link SubjectResolutionService}. An Equipment that can't
- * be attached to the host stays where it is (CR 301.5c, 701.3b); one already attached to it doesn't move, but still
- * counts as attached for the reflexive continuation. A moved Equipment gets a new timestamp (CR 613.7e), its
- * unattach triggers and "becomes attached" triggers.
+ * The attach verb: attaches the effect's Auras, Equipment and Fortifications to its host permanent or player, all named
+ * by {@link SubjectResolutionService}. One that can't be attached to the host stays where it is, and one already
+ * attached to it doesn't move but still counts as attached for the reflexive continuation (CR 701.3b); the legality
+ * and the move are {@link EquipSupport#canAttach} and {@link EquipSupport#attach} (a new timestamp, CR 613.7e, the
+ * unattach and "becomes attached" events, control recomputed). Records {@link StepKind#ATTACH}: the attachments that
+ * moved and their controllers.
  */
 @Slf4j
 @Component
@@ -31,7 +37,6 @@ import java.util.UUID;
 public class AttachSourceEquipmentToTargetCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final SubjectResolutionService subjectResolutionService;
-    private final DurationClock durationClock;
     private final GameLogService gameLogService;
     private final EquipSupport equipSupport;
 
@@ -43,44 +48,69 @@ public class AttachSourceEquipmentToTargetCreatureEffectHandler implements Norma
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var attachEffect = (AttachSourceEquipmentToTargetCreatureEffect) effect;
-        List<Permanent> equipments = subjectResolutionService.permanents(gameData, entry, effect,
+        entry.recordStep(StepKind.ATTACH, StepOutcome.NONE);
+        List<Permanent> attachments = subjectResolutionService.permanents(gameData, entry, effect,
                 attachEffect.equipment());
-        if (equipments.isEmpty()) {
-            if (!attachEffect.equipment().declaresTarget()) {
+        if (attachments.isEmpty()) {
+            if (attachEffect.equipment() instanceof PermanentSubject.Source) {
                 gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
-                        "'s attach ability fizzles (the Equipment is no longer on the battlefield)."));
-                log.info("Game {} - Attach equipment fizzles, equipment left battlefield", gameData.id);
+                        "'s attach ability fizzles (the attachment is no longer on the battlefield)."));
+                log.info("Game {} - Attach fizzles, attachment left battlefield", gameData.id);
             }
             return;
         }
-        Permanent host = subjectResolutionService.permanent(gameData, entry, effect, attachEffect.host());
-        if (host == null) {
-            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
-                    "'s attach ability fizzles (the creature is no longer on the battlefield)."));
-            log.info("Game {} - Attach equipment fizzles, host left battlefield", gameData.id);
-            return;
+        Permanent host = null;
+        UUID playerHostId = null;
+        if (attachEffect.playerHost() != null) {
+            playerHostId = subjectResolutionService.player(gameData, entry, effect, attachEffect.playerHost());
+            if (playerHostId == null) {
+                return;
+            }
+        } else {
+            host = subjectResolutionService.permanent(gameData, entry, effect, attachEffect.host());
+            if (host == null) {
+                if (!(attachEffect.host() instanceof PermanentSubject.ThisWay)
+                        && !(attachEffect.host() instanceof PermanentSubject.ReturnedThisResolution)) {
+                    gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                            "'s attach ability fizzles (the creature is no longer on the battlefield)."));
+                    log.info("Game {} - Attach fizzles, host left battlefield", gameData.id);
+                }
+                return;
+            }
         }
 
         boolean attached = false;
-        for (Permanent equipment : equipments) {
-            if (!equipSupport.canAttachEquipment(gameData, equipment, host)) {
+        List<UUID> moved = new ArrayList<>();
+        List<UUID> controllers = new ArrayList<>();
+        for (Permanent attachment : attachments) {
+            boolean legal = host != null
+                    ? equipSupport.canAttach(gameData, attachment, host)
+                    : equipSupport.canAttachToPlayer(gameData, attachment, playerHostId);
+            if (!legal) {
                 continue;
             }
             attached = true;
-            UUID oldAttachedTo = equipment.getAttachedTo();
-            if (host.getId().equals(oldAttachedTo)) {
+            UUID hostId = host != null ? host.getId() : playerHostId;
+            if (!equipSupport.attach(gameData, attachment, hostId)) {
                 continue;
             }
-            durationClock.sourceUnattached(gameData, equipment.getId());
-            equipment.setAttachedTo(host.getId());
-            equipment.setTimestamp(gameData.nextTimestamp());
-            equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, host.getId());
-            equipSupport.notifyEquipmentAttached(gameData, equipment, oldAttachedTo);
-            gameLogService.append(gameData,
-                    GameLog.cardTextCard(equipment.getCard(), " is now attached to ", host.getCard(), "."));
-            log.info("Game {} - {} attached to {} via {}", gameData.id, equipment.getCard().getName(),
-                    host.getCard().getName(), entry.getCard().getName());
+            moved.add(attachment.getId());
+            UUID controllerId = gameData.findControllerOf(attachment);
+            if (controllerId != null) {
+                controllers.add(controllerId);
+            }
+            if (host != null) {
+                gameLogService.append(gameData,
+                        GameLog.cardTextCard(attachment.getCard(), " is now attached to ", host.getCard(), "."));
+            } else {
+                gameLogService.append(gameData, GameLog.text(FaceDownVisibility.publicName(gameData, attachment)
+                        + " is now attached to " + gameData.playerIdToName.get(playerHostId) + "."));
+            }
+            log.info("Game {} - {} attached to {} via {}", gameData.id, attachment.getCard().getName(), hostId,
+                    entry.getCard().getName());
         }
+        entry.recordStep(StepKind.ATTACH, moved.isEmpty() ? StepOutcome.NONE
+                : StepOutcome.ofObjects(moved, controllers));
 
         if (attached && attachEffect.thenEffect() != null) {
             int effectIndex = findEffectIndex(entry, effect);

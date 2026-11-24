@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.AttachOneOfControlledEquipmentToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentsToTargetCreatureThenEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetToSourcePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -199,7 +199,8 @@ class TargetPolarityGuardTest {
                         new DiscoverEffect(new TargetManaValue()), ThenEffectRecipient.TARGET_OWNER), aiPlayerId))
                 .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
         assertThat(classifier.classify(gd,
-                new AttachOneOfControlledEquipmentToTargetCreatureEffect(), aiPlayerId))
+                new AttachSourceEquipmentToTargetCreatureEffect(Subjects.thisWay(StepKind.CHOOSE), Subjects.target()),
+                aiPlayerId))
                 .isEqualTo(TargetPolarity.BENEFICIAL);
         assertThat(classifier.classify(gd,
                 new TargetCreatureDealsPowerDamageToEachOtherCreatureEffect(), aiPlayerId))

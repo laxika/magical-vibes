@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -7,7 +11,6 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BecomeNightEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformAnyNumberOfPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -37,7 +40,10 @@ public class TovolarDireOverlord extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.WEREWOLF)));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new ControlsPermanentCount(3, wolfOrWerewolf)),
-                SequenceEffect.of(new BecomeNightEffect(), new TransformAnyNumberOfPermanentsEffect(humanWerewolf)));
+                SequenceEffect.of(new BecomeNightEffect(),
+                        ChoosePermanentsEffect.anyNumber(Subjects.controlledBy(Subjects.you(), humanWerewolf),
+                                "Human Werewolves you control to transform"),
+                        new TransformSelfEffect(Subjects.thisWay(StepKind.CHOOSE))));
     }
 
     @Override

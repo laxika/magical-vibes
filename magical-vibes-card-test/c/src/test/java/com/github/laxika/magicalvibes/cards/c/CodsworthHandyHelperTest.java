@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -21,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CodsworthHandyHelper.class, BoneSaw.class, GrizzlyBears.class, IntangibleVirtue.class,
-        Pacifism.class, Shock.class, BrassKnuckles.class, DogmeatEverLoyal.class})
+        Pacifism.class, Shock.class, BrassKnuckles.class, DogmeatEverLoyal.class, ControlMagic.class})
 class CodsworthHandyHelperTest extends BaseCardTest {
 
     @Test
@@ -101,6 +102,32 @@ class CodsworthHandyHelperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Moving a control Aura off a stolen creature gives that creature back at once")
+    void movingControlAuraReturnsTheStolenCreature() {
+        Permanent codsworth = addCodsworthReady(player1);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent stolen = addCreatureReady(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new ControlMagic()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castEnchantment(player1, 0, stolen.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(stolen);
+
+        Permanent aura = findPermanent(player1, "Control Magic");
+        harness.clearPriorityPassed();
+        harness.activateAbilityWithMultiTargets(player1, battlefieldIndex(codsworth), 1,
+                List.of(aura.getId(), ownCreature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(aura.getAttachedTo()).isEqualTo(ownCreature.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(stolen);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(stolen);
     }
 
     @Test

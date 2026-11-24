@@ -35,10 +35,17 @@ import java.util.Objects;
  * @param random     whether they are chosen at random, {@code maximum} of them
  * @param chooser    who makes the one choice; {@code null} for the controller
  * @param forEachVote for each vote of which option one is chosen, and by and about whom; {@code null} for none
+ * @param attachableTo "an Equipment you control [that could be attached to it]": only the candidates that could be
+ *                     attached to the one permanent this names as the choice is made (CR 701.3a); {@code null} for no
+ *                     such restriction
+ * @param hostFor    "another permanent [every one of those Auras could enchant]": only the candidates every permanent
+ *                   this names could be attached to, none of them a candidate itself; {@code null} for no such
+ *                   restriction
  */
 public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount minimum, DynamicAmount maximum,
                                      Different different, String label, PlayerSubject oneForEach,
-                                     boolean random, PlayerSubject chooser, ForEachVote forEachVote)
+                                     boolean random, PlayerSubject chooser, ForEachVote forEachVote,
+                                     PermanentSubject attachableTo, PermanentSubject hostFor)
         implements CardEffect {
 
     /**
@@ -106,12 +113,16 @@ public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount 
                 || !minimum.equals(new Fixed(1)) || !new Fixed(1).equals(maximum))) {
             throw new IllegalArgumentException("One is chosen for each vote, by the voter or by you: " + forEachVote);
         }
+        if ((attachableTo != null && attachableTo.declaresTarget() && !(attachableTo instanceof PermanentSubject.Target))
+                || (hostFor != null && hostFor.declaresTarget() && !(hostFor instanceof PermanentSubject.Target))) {
+            throw new IllegalArgumentException("An attach restriction names its permanents without targeting them");
+        }
     }
 
     public ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount minimum, DynamicAmount maximum,
                                   Different different, String label, PlayerSubject oneForEach,
                                   boolean random, PlayerSubject chooser) {
-        this(candidates, minimum, maximum, different, label, oneForEach, random, chooser, null);
+        this(candidates, minimum, maximum, different, label, oneForEach, random, chooser, null, null, null);
     }
 
     /** "Target opponent chooses …" declares that player target; the candidates never declare one. */
@@ -141,7 +152,7 @@ public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount 
     public static ChoosePermanentsEffect forEachVote(String option, PermanentSubject candidates, VoterRelation relation,
                                                      boolean byVoter, String label) {
         return new ChoosePermanentsEffect(candidates, new Fixed(1), new Fixed(1), null, label, null, false, null,
-                new ForEachVote(option, relation, byVoter));
+                new ForEachVote(option, relation, byVoter), null, null);
     }
 
     /** "[Count] of [candidates] chosen at random." */
@@ -168,13 +179,34 @@ public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount 
     /** These, no two with the same {@code quality}. */
     public ChoosePermanentsEffect withDifferent(Different quality) {
         return new ChoosePermanentsEffect(candidates, minimum, maximum, quality,
-                label + " with different " + quality.plural(), oneForEach, random, chooser, forEachVote);
+                label + " with different " + quality.plural(), oneForEach, random, chooser, forEachVote,
+                attachableTo, hostFor);
     }
 
     /** The same choice made by {@code player} ("target opponent chooses a creature they control"). */
     public ChoosePermanentsEffect chosenBy(PlayerSubject player) {
         return new ChoosePermanentsEffect(candidates, minimum, maximum, different, label, oneForEach, random,
-                Objects.requireNonNull(player, "player"), forEachVote);
+                Objects.requireNonNull(player, "player"), forEachVote, attachableTo, hostFor);
+    }
+
+    /**
+     * Only the candidates that could be attached to the permanent {@code host} names ("you may attach an Equipment you
+     * control to it": an Equipment that couldn't equip it is no option, Heavenly Blademaster's ruling); with no such
+     * permanent, none.
+     */
+    public ChoosePermanentsEffect thatCanBeAttachedTo(PermanentSubject host) {
+        return new ChoosePermanentsEffect(candidates, minimum, maximum, different, label, oneForEach, random, chooser,
+                forEachVote, Objects.requireNonNull(host, "host"), hostFor);
+    }
+
+    /**
+     * Only the candidates that every permanent {@code attachments} names could be attached to ("another permanent with
+     * the same controller" that each of the Auras could enchant, Glamer Spinners' and Simic Guildmage's rulings); with
+     * no such attachment, none.
+     */
+    public ChoosePermanentsEffect thatCanHost(PermanentSubject attachments) {
+        return new ChoosePermanentsEffect(candidates, minimum, maximum, different, label, oneForEach, random, chooser,
+                forEachVote, attachableTo, Objects.requireNonNull(attachments, "attachments"));
     }
 
     /** Who makes the choice. */

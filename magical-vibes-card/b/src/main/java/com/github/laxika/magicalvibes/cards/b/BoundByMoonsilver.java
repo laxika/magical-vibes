@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -32,7 +32,7 @@ public class BoundByMoonsilver extends Card {
                 null,
                 List.of(
                         new SacrificePermanentCost(new PermanentTruePredicate(), "Sacrifice another permanent"),
-                        new AttachSourceAuraToTargetCreatureEffect()
+                        new AttachSourceEquipmentToTargetCreatureEffect()
                 ),
                 "Sacrifice another permanent: Attach this Aura to target creature. Activate only as a sorcery and only once each turn.",
                 TargetFilters.creature(),

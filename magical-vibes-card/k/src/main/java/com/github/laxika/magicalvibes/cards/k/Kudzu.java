@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
-import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -26,7 +28,13 @@ public class Kudzu extends Card {
                 SequenceEffect.of(
                         new DestroyTargetPermanentEffect(Subjects.triggering()),
                         new MayEffect(
-                                new AttachSourceAuraToChosenPermanentEffect(new PermanentIsLandPredicate()),
+                                SequenceEffect.of(
+                                        ChoosePermanentsEffect.exactly(1,
+                                                Subjects.controlledBy(Subjects.eachPlayer(), new PermanentIsLandPredicate()), "a land")
+                                        .chosenBy(Subjects.controllerOf(Subjects.triggering()))
+                                        .thatCanHost(Subjects.source()),
+                                        new AttachSourceEquipmentToTargetCreatureEffect(Subjects.source(),
+                                                Subjects.thisWay(StepKind.CHOOSE))),
                                 "Attach Kudzu to a land?",
                                 null,
                                 MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER)));

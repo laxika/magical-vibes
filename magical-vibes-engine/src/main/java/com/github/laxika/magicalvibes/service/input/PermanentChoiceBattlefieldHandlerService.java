@@ -710,23 +710,6 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    public void handleAttachSourceAuraToChosenPermanent(GameData gameData, UUID permanentId,
-                                                        PermanentChoiceContext.AttachSourceAuraToChosenPermanent ctx) {
-        Permanent aura = gameQueryService.findPermanentById(gameData, ctx.auraPermanentId());
-        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
-        if (aura == null || target == null) {
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        durationClock.sourceUnattached(gameData, aura.getId());
-        aura.setAttachedTo(target.getId());
-        aura.setTimestamp(gameData.nextTimestamp());
-        gameLogService.append(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", target.getCard(), "."));
-        gameData.rulesEvents.occur(new AttachmentEvent.AuraAttached(aura, target.getId()));
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
     public void handlePutCounterOnEitherTarget(GameData gameData, UUID permanentId,
                                                 PermanentChoiceContext.PutCounterOnEitherTarget context) {
         putCounterOnEitherTargetEffectHandler.continueCounterPlacement(gameData, permanentId, context);

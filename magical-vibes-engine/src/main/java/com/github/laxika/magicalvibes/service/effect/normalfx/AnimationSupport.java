@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.AsTransformsIntoThisEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
-import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
@@ -36,9 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.rules.PermanentChange;
 import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
-import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -74,7 +71,6 @@ public class AnimationSupport {
     private final DurationClock durationClock;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
-    private final CreatureControlService creatureControlService;
     private final AmountEvaluationService amountEvaluationService;
     private final TriggerTargetCollector triggerTargetCollector;
     private final com.github.laxika.magicalvibes.service.target.ValidTargetService validTargetService;
@@ -703,43 +699,6 @@ public class AnimationSupport {
         }
 
         animateOneWithFloatingDuration(gameData, entry, effect, target.getId());
-    }
-
-    /**
-     * Completes Soul Seizer-style transform-and-attach after the controller chooses a target creature.
-     */
-    public void completeTransformAndAttach(GameData gameData, UUID controllerId, UUID sourcePermId, UUID targetPermId) {
-        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermId);
-        Permanent target = gameQueryService.findPermanentById(gameData, targetPermId);
-        if (source == null) {
-            String logEntry = "Transform-and-attach fizzles — source no longer on the battlefield.";
-            gameLogService.append(gameData, GameLog.text(logEntry));
-            return;
-        }
-        if (target == null || !gameQueryService.isCreature(gameData, target)) {
-            gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
-                    "'s ability fizzles — target creature no longer exists."));
-            return;
-        }
-
-        if (!transformToBackFace(gameData, source)) {
-            return;
-        }
-
-        durationClock.sourceUnattached(gameData, source.getId());
-        source.setAttachedTo(target.getId());
-        // CR 613.7e: an attachment receives a new timestamp each time it becomes attached.
-        source.setTimestamp(gameData.nextTimestamp());
-        gameLogService.append(gameData, GameLog.cardTextCard(source.getCard(), " is attached to ", target.getCard(), "."));
-        log.info("Game {} - {} attached to {}", gameData.id, source.getCard().getName(), target.getCard().getName());
-
-        boolean hasControlEffect = source.getCard().getStaticEffects().stream()
-                .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
-        if (hasControlEffect) {
-            creatureControlService.applyControlEffect(gameData, controllerId, target,
-                    new ControlEnchantedCreatureEffect(), Duration.WHILE_ATTACHED,
-                    source.getId(), FaceDownVisibility.publicName(gameData, source));
-        }
     }
 
     public boolean transformToBackFace(GameData gameData, Permanent self) {

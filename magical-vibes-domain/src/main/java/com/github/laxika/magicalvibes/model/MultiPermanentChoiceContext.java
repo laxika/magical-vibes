@@ -197,22 +197,8 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
-    /** Transform [source] and attach it to a creature the damaged player controls. */
-    record TransformAndAttach(UUID sourcePermanentId) implements MultiPermanentChoiceContext {
-    }
-
-    /** The controller transforms any number of matching permanents. */
-    record TransformAnyNumber(StackEntry resolvingEntry, PermanentPredicate filter)
-            implements MultiPermanentChoiceContext {
-    }
-
     /** The controller selected Equipment they control to attach to the targeted creature. */
     record AttachAnyNumberOfControlledEquipmentToTargetCreature(UUID targetCreatureId)
-            implements MultiPermanentChoiceContext {
-    }
-
-    /** The controller selected Auras and Equipment they control to attach to the source creature. */
-    record AttachAnyNumberOfControlledAurasAndEquipmentToSource(UUID sourcePermanentId)
             implements MultiPermanentChoiceContext {
     }
 

@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16 (each in Findings; the fold queue marks its rows). Fold runs 8 to 17 run in parallel worktrees from 2026-11-24. Next: fold runs 12d and 17 (running), 16b, 16c, `drafted-step`, 18. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                   |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15 (each in Findings; the fold queue marks its rows). Fold runs 8 to 17 run in parallel worktrees from 2026-11-24. Next: fold runs 12d, 16c and 17 (running), 16b, 15b (`picked-subject`), `drafted-step`, 18. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                    |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,754 / 3,018 (after fold run 16) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,736 / 3,000 (after fold run 15) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,432 rows over 4,420 classes (after fold run 16). Latest verdict per class: `step-9` 931, unique 1,165, absorbed 668, split 585, blocked-other 486, survivor 287, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 931 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,467 rows over 4,420 classes (after fold run 15). Latest verdict per class: `step-9` 905, unique 1,165, absorbed 678, split 593, blocked-other 493, survivor 288, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 905 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -662,6 +662,14 @@ Delayed and global triggers:
   `HappenedThisWay.removedCounters()` (fold run 16).
 - `PlayFromAmongExiledCardsEffect(exiledCards(players, filter)[, snowManaAsAnyColor])`: static "you may [play lands and] cast spells
   from among …", judged by `SubjectResolutionService.namesExiledCard` (fold run 16).
+
+- The attach verb `AttachSourceEquipmentToTargetCreatureEffect`: any Aura, Equipment or Fortification, a set attachment, step-result
+  hosts (`thisWay(kind)`, `returnedThisResolution()`), `.toPlayer(attachments, player)`; legality and the move are
+  `EquipSupport.canAttach` / `canAttachToPlayer` / `attach` (control reconciled); records `StepKind.ATTACH` (fold run 15).
+- `ChoosePermanentsEffect.thatCanBeAttachedTo(host)` / `.thatCanHost(attachments)`: offer only what the attach verb could attach (fold
+  run 15).
+- `UnattachEquipmentFromTargetPermanentsEffect(PermanentSubject equipment)`; `TransformSelfEffect` over `granter()`, `thisWay(kind)`,
+  `createdThisResolution()`; `CloakTopCardOfControllerLibraryEffect` records MANIFEST (fold run 15).
 
 ### Blocked causes still open
 
@@ -2120,6 +2128,42 @@ removal falsifies the condition must be one `SequenceEffect`.
 **For the next run.** 16b: merge time counters into the store, add a generic counters-removed-in-exile event and `sourceCard()` in
 exile with its stay, then fold refine, delay, egg, Darigaaz, suspend and time adjust. 16c: card-borrowers and kw-borrowers over
 `namesExiledCard`, with the CR 607.2a link (`CardSubject.ExiledWithSource` still ignores `abilityLink`).
+
+### Step 9, fold run 15 (2026-11-24, parallel worktree)
+
+`attach` (23), `unattach` (3), `transform` (7): 18 folded (10 absorbed, 8 split), 3 survivor rows, 7 blocked-other, 7 left `step-9`.
+Ratchet in its worktree 3,774 / 3,037 → 3,756 / 3,019. 34 card files rewritten, all checked with `get_card`; rulings for Glamer
+Spinners, Simic Guildmage, Heavenly Blademaster, Maddening Hex, Steam Vines, Lynde. CR 301.5c, 301.6, 303.4d, 303.4i, 603.12, 608.2d,
+613.7e, 701.3a–d, 702.16c, 702.16d checked. Merged with fold run 8b (`ChoosePermanentsEffect` ends `chooser, forEachVote, attachableTo,
+hostFor`; `StepKind` ends `BID, ATTACH`).
+
+**Shape.** `AttachSourceEquipmentToTargetCreatureEffect(thenEffect, optional, targetPredicate, equipment, host, playerHost)` is the
+attach verb: the attachment is any `PermanentSubject` (one or a set); the host is one permanent (`source`, `target`, `triggering`,
+`triggeringOrSource`, `thisWay(kind)`, `returnedThisResolution`) or a player (`.toPlayer(attachments, player)`). Legality is
+`EquipSupport.canAttach` / `canAttachToPlayer`: an Aura must be able to enchant the host (judged with its controller) and is never itself
+or a creature (CR 303.4d); an Equipment goes through `canAttachEquipment` (CR 301.5c); a Fortification needs a land, protection checked
+(CR 301.6, 702.16d); anything else doesn't move (CR 701.3b). `EquipSupport.attach` does nothing on the host it is already attached to;
+otherwise it ends the while-attached effects, gives a new timestamp (CR 613.7e), raises the attach events, and reconciles control. The
+verb records `StepKind.ATTACH` ("if you do" = `HappenedThisWay(ATTACH)`, "unattach it" = `thisWay(ATTACH)`).
+`ChoosePermanentsEffect.thatCanBeAttachedTo(host)` / `.thatCanHost(attachments)` narrow a choice to what the verb could attach (Glamer,
+Simic and Heavenly Blademaster rulings). CR 303.4i stays with `PutCardsOntoBattlefieldEffect.attachedTo`.
+
+| Batch | Result |
+|---|---|
+| `attach` | 12 folded: the Aura source forms (9 cards), Aura Finesse, Archnemesis (`toPlayer(source(), triggeringPlayer())`), Fortify (2), Codsworth / Halvar, Pre-War Formalwear (`returnedThisResolution()`), Balan / Vulshok (`controlledBy` sets), Kudzu / Steam Vines, Resolute Strike / Vow / Unexpected Request, Winter Soldier / Yuffie, Heavenly Blademaster, Cryptic Coat (cloak records MANIFEST). 11 left: Grip of Phyresis (living weapon builds its record), Thorin (a reflexive sourced at the host), Glamer (no effect declares its target), Simic (no "host of target Aura" subject), Lynde (two CHOOSE results), Maddening Hex (an enchantable-opponent filter), Iron Man / Armored Skyhunter / Palico / Gilgamesh (`picked-subject`), Shifting Shadow (time) |
+| `unattach` | `UnattachEquipmentFromTargetPermanentsEffect(PermanentSubject equipment)` (null keeps "all Equipment attached to the targets"); Carry Away and Tamiyo's Compleation use `attached()`; reads effective subtypes. `UnattachEquipmentIfAttachedToControlledCreatureEffect` left (one-user condition) |
+| `transform` | `TransformSelfEffect` accepts `granter()`, `thisWay(kind)`, `createdThisResolution()` and transforms each permanent its subject names: Optimus Prime, High Marshal Arguel, Tovolar, Sidequest: Play Blitzball (transform, choose, attach), Soul Seizer. Left: Sunder the Gateway / Nick Fury (`picked-subject`) |
+
+**Behaviour changes.** Fortify on its own land does nothing; protection stops it (new test). Archnemesis does nothing on the player it
+already enchants. Codsworth and Halvar raise the Equipment becomes-attached event. A moved control Aura reconciles control at once. An
+Aura that is a creature can't attach. Sidequest: Play Blitzball's attach can't be skipped ("transform this enchantment, then attach it
+to a creature you control"), a lone creature chosen unasked. Unexpected Request schedules no unattach for an Equipment already on the
+creature. Soul Seizer's target spec is benign. Cloak records MANIFEST; TRANSFORM records every transformed permanent.
+
+**For the next run.** A `picked-subject` batch: a `PermanentSubject` naming the resolution's picks (`StackEntry.recordPicks`;
+`LookAtTopCardsEffect` follow-ups, `PutCardToBattlefieldThenEffect`) folds Nick Fury, Armored Skyhunter, Palico, Gilgamesh (with its
+reflexive), The Invincible Iron Man and Sunder the Gateway. Then a living-weapon run folding Grip of Phyresis with
+`LivingWeaponEffectHandler`'s source form.
 
 ## Prompt
 

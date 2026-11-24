@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -20,6 +22,10 @@ public class SteamVines extends Card {
                 SequenceEffect.of(
                         new DestroyTargetPermanentEffect(Subjects.triggering()),
                         new DealDamageToPlayersEffect(1, Subjects.controllerOf(Subjects.triggering())),
-                        new AttachSourceAuraToChosenPermanentEffect(new PermanentIsLandPredicate())));
+                        ChoosePermanentsEffect.exactly(1,
+                                                Subjects.controlledBy(Subjects.eachPlayer(), new PermanentIsLandPredicate()), "a land")
+                                        .chosenBy(Subjects.controllerOf(Subjects.triggering()))
+                                        .thatCanHost(Subjects.source()),
+                        new AttachSourceEquipmentToTargetCreatureEffect(Subjects.source(), Subjects.thisWay(StepKind.CHOOSE))));
     }
 }

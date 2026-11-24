@@ -59,6 +59,8 @@ class PermanentTimestampTest {
     @Mock private UnattachTriggerSupport unattachTriggerSupport;
     @Mock private DurationClock durationClock;
     @Mock private AsEntersDiscardSupport asEntersDiscardSupport;
+    @Mock private com.github.laxika.magicalvibes.service.aura.AuraAttachmentService auraAttachmentService;
+    @Mock private CreatureControlService creatureControlService;
 
     private BattlefieldEntryService battlefieldEntryService;
     private EquipSupport equipSupport;
@@ -81,7 +83,7 @@ class PermanentTimestampTest {
         equipSupport = new EquipSupport(gameQueryService, gameLogService, permanentRemovalService,
                 predicateEvaluationService, unattachTriggerSupport,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.AttachmentTriggers.class),
-                durationClock);
+                durationClock, auraAttachmentService, creatureControlService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -165,6 +167,25 @@ class PermanentTimestampTest {
             assertThat(equipment.getTimestamp()).isGreaterThan(stampBeforeAttach);
             assertThat(equipment.getTimestamp()).isGreaterThan(creature.getTimestamp());
             assertThat(equipment.getTimestamp()).isEqualTo(gd.timestampCounter);
+        }
+
+        @Test
+        @DisplayName("The attach verb re-stamps an attachment that moves and leaves one already attached there alone")
+        void attachVerbRestampsOnlyARealMove() {
+            Permanent equipment = createEquipment("Darksteel Axe");
+            Permanent creature = createCreature("Grizzly Bears");
+            battlefieldEntryService.putPermanentOntoBattlefield(gd, player1Id, equipment);
+            battlefieldEntryService.putPermanentOntoBattlefield(gd, player1Id, creature);
+            long stampBeforeAttach = equipment.getTimestamp();
+            when(gameQueryService.hasEffectiveSubtype(gd, equipment, CardSubtype.EQUIPMENT)).thenReturn(true);
+
+            assertThat(equipSupport.attach(gd, equipment, creature.getId())).isTrue();
+            long stampAfterAttach = equipment.getTimestamp();
+            assertThat(stampAfterAttach).isGreaterThan(stampBeforeAttach);
+
+            assertThat(equipSupport.attach(gd, equipment, creature.getId())).isFalse();
+            assertThat(equipment.getTimestamp()).isEqualTo(stampAfterAttach);
+            assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
         }
     }
 

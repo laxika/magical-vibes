@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.w.WorldChampionCelestialWeapon;
 import com.github.laxika.magicalvibes.model.Card;
@@ -7,7 +13,6 @@ import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerDealtCombatDamageAtLeastThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfAndAttachToCreatureYouControlEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -29,7 +34,12 @@ public class SidequestPlayBlitzball extends Card {
                                         new ControllerTurn(),
                                         new AnyPlayerDealtCombatDamageAtLeastThisTurn(6)
                                 ))),
-                new TransformSelfAndAttachToCreatureYouControlEffect());
+                SequenceEffect.of(
+                        new TransformSelfEffect(),
+                        ChoosePermanentsEffect.exactly(1, Subjects.creaturesYouControl(), "a creature you control")
+                                .thatCanHost(Subjects.source()),
+                        new AttachSourceEquipmentToTargetCreatureEffect(Subjects.source(),
+                                Subjects.thisWay(StepKind.CHOOSE))));
     }
 
     @Override

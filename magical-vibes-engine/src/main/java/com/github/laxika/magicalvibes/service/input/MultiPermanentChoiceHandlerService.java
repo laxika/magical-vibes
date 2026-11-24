@@ -167,9 +167,6 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .AttachAnyNumberOfControlledEquipmentToTargetCreatureEffectHandler
             attachAnyNumberOfControlledEquipmentHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx
-            .AttachAnyNumberOfControlledAurasAndEquipmentToSourceEffectHandler
-            attachAnyNumberOfControlledAurasAndEquipmentToSourceHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.InventoryManagementEffectHandler
             inventoryManagementEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
@@ -807,16 +804,8 @@ public class MultiPermanentChoiceHandlerService {
             handleGainControlOfPermanentAndAssignNoCombatDamage(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamage) {
             completeAskingDeathReplacementsFirst(gameData, multiPermanentChoice, permanentIds);
-        } else if (context instanceof MultiPermanentChoiceContext.TransformAndAttach ctx) {
-            handleTransformAndAttach(gameData, playerId, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.TransformAnyNumber ctx) {
-            handleTransformAnyNumber(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.AttachAnyNumberOfControlledEquipmentToTargetCreature ctx) {
             attachAnyNumberOfControlledEquipmentHandler.completeChoice(gameData, playerId, permanentIds, ctx);
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-        } else if (context instanceof MultiPermanentChoiceContext.AttachAnyNumberOfControlledAurasAndEquipmentToSource ctx) {
-            attachAnyNumberOfControlledAurasAndEquipmentToSourceHandler.completeChoice(
-                    gameData, playerId, permanentIds, ctx);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.InventoryManagementAttachmentSelection) {
             inventoryManagementEffectHandler.completeAttachmentSelection(gameData, playerId, permanentIds);
@@ -1293,41 +1282,6 @@ public class MultiPermanentChoiceHandlerService {
                         Duration.UNTIL_END_OF_TURN);
                 gameLogService.append(gameData,
                         GameLog.cardThen(source.getCard(), " assigns no combat damage this turn."));
-            }
-        }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    private void handleTransformAndAttach(GameData gameData, UUID playerId, List<UUID> permanentIds,
-                                          MultiPermanentChoiceContext.TransformAndAttach context) {
-        UUID sourcePermId = context.sourcePermanentId();
-
-        if (permanentIds.isEmpty()) {
-            String logEntry = gameData.playerIdToName.get(playerId) + " chooses not to attach.";
-            gameLogService.append(gameData, GameLog.text(logEntry));
-        } else {
-            animationSupport.completeTransformAndAttach(
-                    gameData, playerId, sourcePermId, permanentIds.getFirst());
-        }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    private void handleTransformAnyNumber(GameData gameData, UUID playerId, List<UUID> permanentIds,
-                                          MultiPermanentChoiceContext.TransformAnyNumber context) {
-        for (UUID permanentId : permanentIds) {
-            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
-            if (permanent == null
-                    || !playerId.equals(gameQueryService.findPermanentController(gameData, permanentId))
-                    || !predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, context.filter())
-                    || gameQueryService.isTransformPrevented(gameData, permanent)) {
-                continue;
-            }
-            if (!permanent.isTransformed()) {
-                animationSupport.transformToBackFace(gameData, permanent);
-            } else {
-                animationSupport.transformToFrontFace(gameData, permanent);
             }
         }
 

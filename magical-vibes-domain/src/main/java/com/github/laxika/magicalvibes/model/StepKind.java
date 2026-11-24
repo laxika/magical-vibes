@@ -31,8 +31,9 @@ package com.github.laxika.magicalvibes.model;
  *   <li>{@link #PUT_COUNTERS}, {@link #REMOVE_COUNTERS}: the number of counters, the permanents, their controllers;</li>
  *   <li>{@link #COUNTER_SPELL}, {@link #COPY_SPELL}: 1 when the spell was countered or copied, else 0; a countered
  *       spell's {@link StepOutcome#movedCards()} name the card it became in its graveyard or in exile;</li>
- *   <li>{@link #MANIFEST}: the number of permanents manifested, those permanents, their controllers;</li>
- *   <li>{@link #TRANSFORM}: 1 when the source transformed (or converted), else 0; that permanent, its controller;</li>
+ *   <li>{@link #MANIFEST}: the number of permanents manifested or cloaked, those permanents, their controllers;</li>
+ *   <li>{@link #TRANSFORM}: the number of permanents that transformed (or converted), those permanents, their
+ *       controllers;</li>
  *   <li>{@link #SEEK}: the number of cards sought into a hand ({@code SeekCardsToHandEffect}), those cards, the
  *       player; a sought card is followed into the hand it went to, as seek's cards are (digital only);</li>
  *   <li>{@link #CHOOSE}: the number of cards chosen without moving them ({@code ChooseCardEffect}, a revealed-hand
@@ -90,6 +91,10 @@ package com.github.laxika.magicalvibes.model;
  *   <li>{@link #BID}: the high bid once it stands ({@code BidLifeEffect}), nothing, the high bidder: "the high bidder
  *       loses life equal to the high bid" ({@code AmountThisWay(BID)}, {@code playersThisWay(BID)}), "if you win the
  *       bidding" ({@code HappenedThisWay.toAPlayer(BID, SELF)}).</li>
+ *   <li>{@link #ATTACH}: the number of Auras, Equipment and Fortifications the step attached to another object or
+ *       player ({@code AttachSourceEquipmentToTargetCreatureEffect}, never prompting), those attachments, their
+ *       controllers: "if you do" after "you may attach". One it couldn't attach, or one already attached to that
+ *       object or player, is not attached this way (CR 701.3b).</li>
  * </ul>
  *
  * <p>A later step may read a step only if that step finishes before the next one starts (CR 608.2c): its handler never
@@ -159,5 +164,6 @@ public enum StepKind {
     TAP,
     GOAD,
     SEARCH,
-    BID
+    BID,
+    ATTACH
 }

@@ -45,6 +45,7 @@ public class ChoosePermanentsEffectHandler implements NormalEffectHandlerBean {
     private final AmountEvaluationService amountEvaluationService;
     private final PlayerInputService playerInputService;
     private final GameLogService gameLogService;
+    private final EquipSupport equipSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -54,8 +55,9 @@ public class ChoosePermanentsEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var choose = (ChoosePermanentsEffect) effect;
-        List<Permanent> candidates = subjectResolutionService.permanents(gameData, entry, effect, choose.candidates())
-                .stream().filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent)).toList();
+        List<Permanent> candidates = attachFits(gameData, entry, choose,
+                subjectResolutionService.permanents(gameData, entry, effect, choose.candidates()).stream()
+                        .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent)).toList());
         entry.recordStep(StepKind.CHOOSE, StepOutcome.NONE);
         UUID chooserId = chooserId(gameData, entry, choose);
         if (chooserId == null) {
@@ -143,6 +145,34 @@ public class ChoosePermanentsEffectHandler implements NormalEffectHandlerBean {
                             + " vote)."));
         }
         return offers;
+    }
+
+    /**
+     * {@code candidates} narrowed by the choice's attach restrictions ({@link ChoosePermanentsEffect#attachableTo()},
+     * {@link ChoosePermanentsEffect#hostFor()}), judged by the attach verb's legality ({@link EquipSupport#canAttach});
+     * an attachment already attached to the host is no option either, as attaching it there would do nothing
+     * (CR 701.3b).
+     */
+    private List<Permanent> attachFits(GameData gameData, StackEntry entry, ChoosePermanentsEffect choose,
+                                       List<Permanent> candidates) {
+        List<Permanent> fits = candidates;
+        if (choose.attachableTo() != null) {
+            Permanent host = subjectResolutionService.permanent(gameData, entry, choose, choose.attachableTo());
+            fits = host == null ? List.of() : fits.stream()
+                    .filter(candidate -> !host.getId().equals(candidate.getAttachedTo())
+                            && equipSupport.canAttach(gameData, candidate, host)).toList();
+        }
+        if (choose.hostFor() != null) {
+            List<Permanent> attachments = subjectResolutionService.permanents(gameData, entry, choose,
+                    choose.hostFor());
+            fits = attachments.isEmpty() ? List.of() : fits.stream()
+                    .filter(candidate -> attachments.stream().allMatch(attachment ->
+                            !attachment.getId().equals(candidate.getId())
+                                    && !candidate.getId().equals(attachment.getAttachedTo())
+                                    && equipSupport.canAttach(gameData, attachment, candidate)))
+                    .toList();
+        }
+        return fits;
     }
 
     /**

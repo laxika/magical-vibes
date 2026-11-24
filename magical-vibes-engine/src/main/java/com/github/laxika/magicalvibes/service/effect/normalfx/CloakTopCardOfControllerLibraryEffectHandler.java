@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CloakTopCardOfControllerLibraryEffect;
@@ -13,10 +15,14 @@ import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/** Resolves cloaking the top card of each named player's library, in APNAP order. */
+/**
+ * Resolves cloaking the top card of each named player's library, in APNAP order. Records {@link StepKind#MANIFEST}:
+ * the cloaked permanents and their controllers ("then attach this Equipment to it", Cryptic Coat).
+ */
 @Component
 @RequiredArgsConstructor
 public class CloakTopCardOfControllerLibraryEffectHandler implements NormalEffectHandlerBean {
@@ -33,15 +39,23 @@ public class CloakTopCardOfControllerLibraryEffectHandler implements NormalEffec
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var cloak = (CloakTopCardOfControllerLibraryEffect) effect;
+        entry.recordStep(StepKind.MANIFEST, StepOutcome.NONE);
+        List<UUID> cloakedIds = new ArrayList<>();
+        List<UUID> controllers = new ArrayList<>();
         for (UUID playerId : subjectResolutionService.players(gameData, entry, cloak, cloak.player())) {
-            cloakTopCard(gameData, playerId);
+            Permanent cloaked = cloakTopCard(gameData, playerId);
+            if (cloaked != null && gameData.findControllerOf(cloaked) != null) {
+                cloakedIds.add(cloaked.getId());
+                controllers.add(playerId);
+            }
         }
+        entry.recordStep(StepKind.MANIFEST, StepOutcome.ofObjects(cloakedIds, controllers));
     }
 
-    private void cloakTopCard(GameData gameData, UUID controllerId) {
+    private Permanent cloakTopCard(GameData gameData, UUID controllerId) {
         List<Card> library = gameData.playerDecks.get(controllerId);
         if (library == null || library.isEmpty()) {
-            return;
+            return null;
         }
 
         Card topCard = library.removeFirst();
@@ -52,5 +66,6 @@ public class CloakTopCardOfControllerLibraryEffectHandler implements NormalEffec
 
         gameLogService.append(gameData, GameLog.text(
                 gameData.playerIdToName.get(controllerId) + " cloaks the top card of their library."));
+        return cloaked;
     }
 }

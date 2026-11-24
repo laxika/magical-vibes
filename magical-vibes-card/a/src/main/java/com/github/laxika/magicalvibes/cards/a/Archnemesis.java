@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
-import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -38,6 +38,6 @@ public class Archnemesis extends Card {
                         ));
         addTrigger(Triggers.playerAttacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new OpponentAttacksWithAtLeastCreatures(1, false)),
-                new MayEffect(new AttachSourceAuraToTargetPlayerEffect(), "Attach Archnemesis to that player?"));
+                new MayEffect(AttachSourceEquipmentToTargetCreatureEffect.toPlayer(Subjects.source(), Subjects.triggeringPlayer()), "Attach Archnemesis to that player?"));
     }
 }

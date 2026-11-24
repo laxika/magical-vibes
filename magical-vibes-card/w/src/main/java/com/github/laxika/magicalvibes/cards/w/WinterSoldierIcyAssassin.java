@@ -1,5 +1,12 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -8,7 +15,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.effect.AttachOneOfControlledEquipmentToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
@@ -29,7 +35,11 @@ public class WinterSoldierIcyAssassin extends Card {
                         new ReturnSourceCardFromGraveyardToBattlefieldEffect(
                                 false, false, Set.of(), CounterType.FINALITY, false, true),
                         new MayEffect(
-                                new AttachOneOfControlledEquipmentToSourceEffect(),
+                                SequenceEffect.of(
+                                        ChoosePermanentsEffect.exactly(1, Subjects.controlledBy(Subjects.you(),
+                                        new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT)), "an Equipment you control")
+                                        .thatCanBeAttachedTo(Subjects.source()),
+                                        new AttachSourceEquipmentToTargetCreatureEffect(Subjects.thisWay(StepKind.CHOOSE), Subjects.source())),
                                 "Attach an Equipment you control to Winter Soldier?")),
                 "{3}{W}{B}: Return this card from your graveyard to the battlefield with a finality counter on it. "
                         + "Then you may attach an Equipment you control to it."

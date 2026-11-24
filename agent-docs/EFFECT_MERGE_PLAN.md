@@ -1776,6 +1776,8 @@ source-restriction axis handled in `DamageSupport.dealCreatureDamage`.
 
 ### Step 23 — Attach family
 
+**Done (effect-cleanup step 9, fold run 15):** `AttachSourceAuraToTargetCreatureEffect` and `AttachTargetAuraToTargetCreatureEffect` are absorbed into `AttachSourceEquipmentToTargetCreatureEffect`, which attaches any Aura, Equipment or Fortification (`EquipSupport.canAttach` / `attach`) to a permanent or player host; the text below is history.
+
 **23a Target**: `AttachSourceToTargetPermanentEffect()` — source attaches to `targetId`.
 **Absorbs**: `AttachSourceAuraToTargetCreatureEffect` (2),
 `AttachSourceEquipmentToTargetCreatureEffect` (3). Both have a non-targeting form reading the stack entry's triggering permanent (`AttachSourceAuraToTargetCreatureEffect.ofTriggeringPermanent()`, `AttachSourceEquipmentToTargetCreatureEffect.forTriggeringCreature()`) that the merged effect keeps.

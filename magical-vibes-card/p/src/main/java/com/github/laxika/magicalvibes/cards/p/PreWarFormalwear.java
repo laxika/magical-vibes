@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToReturnedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -38,7 +38,7 @@ public class PreWarFormalwear extends Card {
                         .filter(creatureCard)
                         .targetGraveyard(true)
                         .build(),
-                new AttachSourceEquipmentToReturnedPermanentEffect()));
+                new AttachSourceEquipmentToTargetCreatureEffect(Subjects.source(), Subjects.returnedThisResolution())));
         addStaticEffect(new AttachedBoostEffect(new Fixed(2), new Fixed(2), Subjects.attachedCreature()));
         addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{3}"));

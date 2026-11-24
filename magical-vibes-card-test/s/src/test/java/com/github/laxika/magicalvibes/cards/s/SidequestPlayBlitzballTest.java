@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -50,8 +49,6 @@ class SidequestPlayBlitzballTest extends BaseCardTest {
         resolveCombat(player1);
 
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(attacker.getId()));
 
         assertThat(source.isTransformed()).isTrue();
         assertThat(source.getCard()).isInstanceOf(WorldChampionCelestialWeapon.class);
@@ -142,7 +139,9 @@ class SidequestPlayBlitzballTest extends BaseCardTest {
 
         resolveCombat(player1);
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(source.isTransformed()).isTrue();
+        harness.handlePermanentChosen(player1, second.getId());
 
         assertThat(source.isTransformed()).isTrue();
         assertThat(source.getAttachedTo()).isEqualTo(second.getId());

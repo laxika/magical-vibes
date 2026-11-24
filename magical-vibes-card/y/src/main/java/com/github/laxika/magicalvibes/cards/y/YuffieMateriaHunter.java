@@ -1,8 +1,13 @@
 package com.github.laxika.magicalvibes.cards.y;
 
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AttachOneOfControlledEquipmentToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -32,7 +37,11 @@ public class YuffieMateriaHunter extends Card {
                 "Target must be a noncreature artifact"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                         new GainControlOfTargetEffect(Duration.WHILE_SOURCE_ON_BATTLEFIELD),
-                        new MayEffect(new AttachOneOfControlledEquipmentToSourceEffect(),
+                        new MayEffect(SequenceEffect.of(
+                                        ChoosePermanentsEffect.exactly(1, Subjects.controlledBy(Subjects.you(),
+                                        new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT)), "an Equipment you control")
+                                        .thatCanBeAttachedTo(Subjects.source()),
+                                        new AttachSourceEquipmentToTargetCreatureEffect(Subjects.thisWay(StepKind.CHOOSE), Subjects.source())),
                                 "Attach an Equipment you control to Yuffie?")));
     }
 }

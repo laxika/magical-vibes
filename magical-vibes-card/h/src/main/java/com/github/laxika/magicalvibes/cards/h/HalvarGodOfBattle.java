@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.s.SwordOfTheRealms;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraOrEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -56,7 +56,7 @@ public class HalvarGodOfBattle extends Card {
                         new PermanentControlledBySourceControllerPredicate())),
                 "Target must be a creature you control"));
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY), new MayEffect(
-                new AttachTargetAuraOrEquipmentToTargetCreatureEffect(),
+                new AttachSourceEquipmentToTargetCreatureEffect(Subjects.target(0), Subjects.target(1)),
                 "Attach target Aura or Equipment to target creature you control?"));
 
         addSpellEffect(new ChooseOneEffect(List.of(
