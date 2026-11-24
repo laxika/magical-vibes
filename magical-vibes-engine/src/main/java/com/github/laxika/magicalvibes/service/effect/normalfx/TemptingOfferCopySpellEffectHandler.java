@@ -49,7 +49,7 @@ public class TemptingOfferCopySpellEffectHandler implements NormalEffectHandlerB
         }
 
         List<UUID> opponents = offer.remainingOpponentIds() == null
-                ? new ArrayList<>(AnyOpponentMayTakeDamageSacrificeSourceEffectHandler
+                ? new ArrayList<>(MayPayManaEffectHandler
                         .apnapOpponents(gameData, controllerId))
                 : new ArrayList<>(offer.remainingOpponentIds());
         opponents.removeIf(id -> !gameData.playerIds.contains(id));

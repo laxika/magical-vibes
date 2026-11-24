@@ -51,7 +51,7 @@ public class ExplosionOfRichesEffectHandler implements NormalEffectHandlerBean {
         }
 
         List<UUID> opponents = riches.remainingOpponentIds() == null
-                ? AnyOpponentMayTakeDamageSacrificeSourceEffectHandler.apnapOpponents(gameData, controllerId)
+                ? MayPayManaEffectHandler.apnapOpponents(gameData, controllerId)
                 : new ArrayList<>(riches.remainingOpponentIds());
         opponents.removeIf(id -> !gameData.playerIds.contains(id));
         if (opponents.isEmpty()) {
@@ -105,7 +105,7 @@ public class ExplosionOfRichesEffectHandler implements NormalEffectHandlerBean {
      * by the door, which picks its "target opponent chosen at random" as it goes there (CR 603.3d).
      */
     private void queueDamageTriggers(GameData gameData, Card sourceCard, UUID controllerId, int count) {
-        if (AnyOpponentMayTakeDamageSacrificeSourceEffectHandler.apnapOpponents(gameData, controllerId).isEmpty()) {
+        if (MayPayManaEffectHandler.apnapOpponents(gameData, controllerId).isEmpty()) {
             return;
         }
         StackEntry resolving = ReflexiveAbilitySupport.resolvingEntryOf(gameData, sourceCard, null);

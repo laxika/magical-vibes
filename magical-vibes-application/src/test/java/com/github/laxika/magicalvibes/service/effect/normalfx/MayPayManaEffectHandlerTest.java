@@ -3,9 +3,15 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.util.List;
@@ -180,5 +186,46 @@ class MayPayManaEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
         assertThat(gd.pendingMayAbilities.getFirst().additionalLifeCost()).isEqualTo(2);
         // Distinct from the "pay {M} or N life" cost, which stays untouched.
         assertThat(gd.pendingMayAbilities.getFirst().lifeCost()).isZero();
+    }
+
+    @Test
+    @DisplayName("A non-mana payment offered to any opponent asks the first opponent, carrying who is left to ask")
+    void nonManaPaymentAsksTheFirstOpponent() {
+        Card card = createCard("Vexing Devil");
+        MayPayManaEffect payment = MayPayManaEffect.anyPlayerMay(MayPayPayer.ANY_OPPONENT,
+                new DealDamageToPlayersEffect(4, Subjects.acceptedPlayers()), "Take 4?", new SacrificeSelfEffect(),
+                null);
+        StackEntry entry = createEntry(card, player1Id, List.of(payment));
+        gd.activePlayerId = player1Id;
+
+        resolveEffect(gd, entry, payment);
+
+        assertThat(gd.resolvingMayEffectFromStack).isTrue();
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.pendingMayAbilities.getFirst().controllerId()).isEqualTo(player2Id);
+        assertThat(gd.pendingMayAbilities.getFirst().manaCost()).isNull();
+        MayPayManaEffect asking = (MayPayManaEffect) gd.pendingMayAbilities.getFirst().effects().getFirst();
+        assertThat(asking.loop().remainingPayerIds()).containsExactly(player2Id);
+        assertThat(asking.loop().acceptedPayerIds()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A player who couldn't sacrifice isn't asked, and with nobody left \"if no one does\" is the next step")
+    void playerWhoCannotPayIsSkippedAndTheElseEffectFollows() {
+        Card card = createCard("Innocent Traveler");
+        SacrificePermanentsEffect sacrifice = new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
+                Subjects.acceptedPlayers());
+        TransformSelfEffect transform = new TransformSelfEffect();
+        MayPayManaEffect payment = MayPayManaEffect.anyPlayerMay(MayPayPayer.ANY_OPPONENT, sacrifice,
+                "Sacrifice a creature?", null, transform);
+        StackEntry entry = createEntry(card, player1Id, List.of(payment));
+        entry.setResolvingEffectIndex(0);
+        when(sacrificePermanentsEffectHandler.hasLegalSacrificeChoice(eq(gd), eq(entry), eq(sacrifice), eq(player2Id)))
+                .thenReturn(false);
+
+        resolveEffect(gd, entry, payment);
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(entry.getEffectsToResolve()).containsExactly(payment, transform);
     }
 }

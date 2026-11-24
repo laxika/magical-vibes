@@ -55,7 +55,7 @@ public class RevealTopCardAnyOpponentMayGraveyardOrDealDamageEffectHandler
                         + sourceName + ").")
                 .build());
 
-        List<UUID> opponents = AnyOpponentMayTakeDamageSacrificeSourceEffectHandler
+        List<UUID> opponents = MayPayManaEffectHandler
                 .apnapOpponents(gameData, controllerId);
         if (opponents.isEmpty()) {
             deck.removeFirst();

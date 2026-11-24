@@ -32,7 +32,7 @@ public class ReflectEffectHandler implements NormalEffectHandlerBean {
                 ? reflect.sourcePermanentId()
                 : entry.getSourcePermanentId();
         List<UUID> opponents = reflect.remainingOpponentIds() == null
-                ? AnyOpponentMayTakeDamageSacrificeSourceEffectHandler.apnapOpponents(gameData, controllerId)
+                ? MayPayManaEffectHandler.apnapOpponents(gameData, controllerId)
                 : new ArrayList<>(reflect.remainingOpponentIds());
         opponents.removeIf(id -> !gameData.playerIds.contains(id));
 

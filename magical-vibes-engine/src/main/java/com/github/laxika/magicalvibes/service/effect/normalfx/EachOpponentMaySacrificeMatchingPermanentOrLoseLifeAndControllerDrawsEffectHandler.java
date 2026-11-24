@@ -46,7 +46,7 @@ public class EachOpponentMaySacrificeMatchingPermanentOrLoseLifeAndControllerDra
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var braidsEffect = (EachOpponentMaySacrificeMatchingPermanentOrLoseLifeAndControllerDrawsEffect) effect;
-        List<UUID> opponents = AnyOpponentMayTakeDamageSacrificeSourceEffectHandler
+        List<UUID> opponents = MayPayManaEffectHandler
                 .apnapOpponents(gameData, entry.getControllerId());
         Map<UUID, Integer> lossesAtOnce = new LinkedHashMap<>();
         for (UUID opponentId : opponents) {

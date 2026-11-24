@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMayTakeDamageSacrificeSourceEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.MayPayManaEffectHandler;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -275,7 +275,7 @@ public class StackedModalTriggerService {
     private boolean beginOpponentModeChoice(GameData gameData, StackEntry entry, ChooseOneEffect modal) {
         UUID controllerId = entry.getControllerId();
         if (entry.getModeChooserId() == null || !gameData.playerIds.contains(entry.getModeChooserId())) {
-            List<UUID> opponents = AnyOpponentMayTakeDamageSacrificeSourceEffectHandler
+            List<UUID> opponents = MayPayManaEffectHandler
                     .apnapOpponents(gameData, controllerId).stream()
                     .filter(gameData.playerIds::contains)
                     .toList();

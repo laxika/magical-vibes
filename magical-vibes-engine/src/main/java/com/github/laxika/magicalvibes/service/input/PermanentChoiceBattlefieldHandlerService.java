@@ -74,10 +74,8 @@ import com.github.laxika.magicalvibes.service.effect.LandEquilibriumSupport;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.entryfx.UpgradeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeNontokenCreatureTapAndSeekLandSourceEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMayTapCreatureTapAndCreateTokenSourceEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnyPlayerMaySacrificeCreatureToCounterSpellEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.AnyPlayerMaySacrificeLandPutSourceOnTopEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachOneOfEquipmentToCreatureSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachOneOfEquipmentToSamuraiSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler;
@@ -265,8 +263,6 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler sacrificePermanentAndReturnHandler;
 
-    private final AnyPlayerMaySacrificeLandPutSourceOnTopEffectHandler anyPlayerMaySacrificeLandHandler;
-
     private final AnyPlayerMaySacrificeCreatureToCounterSpellEffectHandler anyPlayerMaySacrificeCreatureToCounterSpellHandler;
 
     private final AnimationSupport animationSupport;
@@ -346,14 +342,6 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final ExileSelfAndReturnUnderOpponentControlEffectHandler exileSelfAndReturnUnderOpponentControlHandler;
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
-
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffectHandler anyOpponentSacrificeForTapAndCounterHandler;
-
-    private final AnyOpponentMaySacrificeNontokenCreatureTapAndSeekLandSourceEffectHandler anyOpponentSacrificeForTapAndSeekLandHandler;
-
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureOrTransformSourceEffectHandler anyOpponentSacrificeForTransformHandler;
-
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureTapAndGainLifeAndDrawSourceEffectHandler anyOpponentSacrificeForTapAndGainLifeAndDrawHandler;
 
     private final AnyOpponentMayTapCreatureTapAndCreateTokenSourceEffectHandler anyOpponentMayTapCreatureHandler;
 
@@ -1257,47 +1245,6 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    /** Desecration Demon: the accepting opponent picked which creature to sacrifice. */
-    public void handleAnyOpponentSacrificeCreatureForTapAndCounter(GameData gameData, UUID permanentId,
-                                                                   PermanentChoiceContext.AnyOpponentSacrificeCreatureForTapAndCounter context) {
-        anyOpponentSacrificeForTapAndCounterHandler.sacrifice(gameData, context.sacrificingPlayerId(), permanentId);
-        anyOpponentSacrificeForTapAndCounterHandler.advance(
-                gameData, context.sourceCard(), context.effect(), context.sacrificingPlayerId(), true);
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /** Gitrog, Horror of Zhava: the accepting opponent picked which nontoken creature to sacrifice. */
-    public void handleAnyOpponentSacrificeNontokenCreatureForTapAndSeekLand(
-            GameData gameData, UUID permanentId,
-            PermanentChoiceContext.AnyOpponentSacrificeNontokenCreatureForTapAndSeekLand context) {
-        anyOpponentSacrificeForTapAndSeekLandHandler.sacrifice(
-                gameData, context.sacrificingPlayerId(), permanentId);
-        anyOpponentSacrificeForTapAndSeekLandHandler.advance(
-                gameData, context.sourceCard(), context.effect(), context.sacrificingPlayerId(), true);
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /** Innocent Traveler: the accepting opponent picked which creature to sacrifice. */
-    public void handleAnyOpponentSacrificeCreatureForTransform(GameData gameData, UUID permanentId,
-                                                               PermanentChoiceContext.AnyOpponentSacrificeCreatureForTransform context) {
-        anyOpponentSacrificeForTransformHandler.advance(
-                gameData, context.sourceCard(), context.effect(), context.sacrificingPlayerId(), permanentId);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /** Clackbridge Troll: the accepting opponent picked which creature to sacrifice. */
-    public void handleAnyOpponentSacrificeCreatureForTapAndGainLifeAndDraw(GameData gameData, UUID permanentId,
-                                                                            PermanentChoiceContext.AnyOpponentSacrificeCreatureForTapAndGainLifeAndDraw context) {
-        anyOpponentSacrificeForTapAndGainLifeAndDrawHandler.sacrifice(
-                gameData, context.sacrificingPlayerId(), permanentId);
-        anyOpponentSacrificeForTapAndGainLifeAndDrawHandler.advance(
-                gameData, context.sourceCard(), context.effect(), context.sacrificingPlayerId(), true);
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
     /** Reservoir Kraken: the accepting opponent picked which untapped creature to tap. */
     public void handleAnyOpponentMayTapCreatureForToken(GameData gameData, UUID permanentId,
                                                          PermanentChoiceContext.AnyOpponentMayTapCreatureForToken context) {
@@ -1955,18 +1902,6 @@ public class PermanentChoiceBattlefieldHandlerService {
             }
         }
 
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleAnyPlayerMaySacrificeLandPutSourceOnTop(
-            GameData gameData, UUID permanentId,
-            PermanentChoiceContext.AnyPlayerMaySacrificeLandPutSourceOnTop context) {
-        anyPlayerMaySacrificeLandHandler.sacrificeLand(
-                gameData, context.sacrificingPlayerId(), permanentId);
-        anyPlayerMaySacrificeLandHandler.putSourceOnTop(
-                gameData, context.sourceCard(), context.effect());
-        anyPlayerMaySacrificeLandHandler.advance(
-                gameData, context.sourceCard(), context.effect(), context.sacrificingPlayerId());
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

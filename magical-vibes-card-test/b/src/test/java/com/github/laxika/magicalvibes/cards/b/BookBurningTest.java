@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.cards.p.PrismaticStrands;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -26,6 +27,7 @@ class BookBurningTest extends BaseCardTest {
         castBookBurning(player2.getId());
 
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 6);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(6);
@@ -47,8 +49,8 @@ class BookBurningTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The first accepting player stops the remaining choices")
-    void firstAcceptanceStopsChoices() {
+    @DisplayName("The last player accepting prevents the mill")
+    void lastPlayerAcceptingPreventsMill() {
         harness.setLibrary(player2, List.of(new BorderPatrol(), new BorderPatrol(), new BorderPatrol(),
                 new BorderPatrol(), new BorderPatrol(), new BorderPatrol()));
         int lifeBefore = gd.getLife(player2.getId());
@@ -58,6 +60,24 @@ class BookBurningTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 6);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(6);
+    }
+
+    @Test
+    @DisplayName("Every player is asked even after one accepts, and each accepting player is dealt 6 damage")
+    void everyPlayerIsAskedAfterAnAcceptance() {
+        harness.setLibrary(player2, List.of(new BorderPatrol(), new BorderPatrol(), new BorderPatrol(),
+                new BorderPatrol(), new BorderPatrol(), new BorderPatrol()));
+        castBookBurning(player2.getId());
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 14);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(6);
     }
 
@@ -90,6 +110,7 @@ class BookBurningTest extends BaseCardTest {
         castBookBurning(player2.getId());
 
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 6);
@@ -98,8 +119,8 @@ class BookBurningTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The first accepting player stops the remaining choices")
-    void firstAcceptanceStopsChoicesJudReview() {
+    @DisplayName("The last player accepting prevents the mill and asks nothing more")
+    void lastPlayerAcceptingPreventsMillJudReview() {
         harness.setLibrary(player2, List.of(new SuntailHawk(), new SuntailHawk(), new SuntailHawk(),
                 new SuntailHawk(), new SuntailHawk(), new SuntailHawk()));
         int lifeBefore = gd.getLife(player2.getId());
@@ -174,6 +195,7 @@ class BookBurningTest extends BaseCardTest {
         castBookBurning(player2.getId());
 
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 6);

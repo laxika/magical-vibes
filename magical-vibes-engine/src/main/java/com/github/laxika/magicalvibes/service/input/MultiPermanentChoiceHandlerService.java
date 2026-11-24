@@ -100,13 +100,10 @@ public class MultiPermanentChoiceHandlerService {
     private com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService
             triggeredAbilityStackService;
 
+    private final InputCompletionService inputCompletionService;
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
-    private com.github.laxika.magicalvibes.service.effect.mayfx
-            .AnyPlayerMaySacrificeCreaturesThenSacrificeSourceHandler
-            anyPlayerMaySacrificeCreaturesThenSacrificeSourceHandler;
-
-    private final InputCompletionService inputCompletionService;
+    private com.github.laxika.magicalvibes.service.effect.normalfx.MayPayManaEffectHandler mayPayManaEffectHandler;
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.combat.CombatDamageService combatDamageService;
@@ -362,9 +359,9 @@ public class MultiPermanentChoiceHandlerService {
                 && permanentIds.size() != maxCount) {
             throw new IllegalStateException("Must choose exactly " + maxCount + " permanents to sacrifice");
         }
-        if (context instanceof MultiPermanentChoiceContext.AnyPlayerSacrificeCreaturesChoice
+        if (context instanceof MultiPermanentChoiceContext.AnyPlayerPaymentSacrifice
                 && permanentIds.size() != maxCount) {
-            throw new IllegalStateException("Must choose exactly " + maxCount + " creatures to sacrifice");
+            throw new IllegalStateException("Must choose exactly " + maxCount + " permanents to sacrifice");
         }
         if (context instanceof MultiPermanentChoiceContext.ExileForEachLifeLost
                 && permanentIds.size() != maxCount) {
@@ -878,8 +875,9 @@ public class MultiPermanentChoiceHandlerService {
             }
         } else if (context instanceof MultiPermanentChoiceContext.TapOtherCreaturesForUnblockable ctx) {
             handleTapOtherCreaturesForUnblockable(gameData, playerId, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.AnyPlayerSacrificeCreaturesChoice ctx) {
-            completeAskingDeathReplacementsFirst(gameData, multiPermanentChoice, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.AnyPlayerPaymentSacrifice) {
+            mayPayManaEffectHandler.completeSacrificePick(gameData, permanentIds);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else if (killsBeforeChangingAnything(context)) {
             completeAskingDeathReplacementsFirst(gameData, multiPermanentChoice, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext
@@ -1676,10 +1674,6 @@ public class MultiPermanentChoiceHandlerService {
             }
             case MultiPermanentChoiceContext.ForcedSacrifice ctx -> {
                 handleForcedSacrifice(gameData, permanentIds, ctx);
-                return;
-            }
-            case MultiPermanentChoiceContext.AnyPlayerSacrificeCreaturesChoice ctx -> {
-                anyPlayerMaySacrificeCreaturesThenSacrificeSourceHandler.completeChoice(gameData, ctx, permanentIds);
                 return;
             }
             case MultiPermanentChoiceContext.EachPlayerSacrificesCreatureCreateTokenEqualToTotalPower ctx ->

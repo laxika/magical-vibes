@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PrismaticStrands;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -25,6 +26,7 @@ class BreakingPointTest extends BaseCardTest {
 
         castBreakingPoint();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, false);
 
         harness.assertLife(player1, lifeBefore - 6);
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -65,8 +67,8 @@ class BreakingPointTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The first accepting player stops the remaining choices")
-    void firstAcceptanceStopsChoices() {
+    @DisplayName("The last player accepting prevents the destruction")
+    void lastPlayerAcceptingPreventsDestruction() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
         int lifeBefore = gd.getLife(player2.getId());
@@ -78,6 +80,23 @@ class BreakingPointTest extends BaseCardTest {
         harness.assertLife(player2, lifeBefore - 6);
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Every player is asked even after one accepts, and each accepting player is dealt 6 damage")
+    void everyPlayerIsAskedAfterAnAcceptance() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        castBreakingPoint();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 14);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -128,6 +147,7 @@ class BreakingPointTest extends BaseCardTest {
 
         castBreakingPoint();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, false);
 
         harness.assertLife(player1, lifeBefore - 6);
         harness.assertInGraveyard(player1, "Breaking Point");

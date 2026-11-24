@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 47, 49, 24; merge queue empty. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                          |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40, 43, 37, 42, 41b, 44, 45, 46, 37b, 41c, 40b, 44b, 45b, 46b, 47 (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 24; merge queue 49. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                                           |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,117 / 2,527 (after fold run 46b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,103 / 2,501 (after fold run 47) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,514 rows over 4,544 classes (after fold run 46b). Latest verdict per class: `step-9` 139, unique 1,187, absorbed 1,261, split 670, blocked-other 548, survivor 434, blocked-step-model 139, blocked-player-loop 96, dead 70. Waiting: 139 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,534 rows over 4,544 classes (after fold run 47). Latest verdict per class: `step-9` 125, unique 1,186, absorbed 1,275, split 670, blocked-other 548, survivor 435, blocked-step-model 139, blocked-player-loop 96, dead 70. Waiting: 125 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -1045,6 +1045,10 @@ Files are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671
 - `TargetGraveyardCardManaValueEqualsStepAmount(StepKind)`: "return target … with mana value X" after "you may pay {X}", the target declared on the trigger and compared with the latest step's amount; reads a triggered ability's single graveyard target (fold run 46b).
 - `GrantKeywordEffect` over `controlledBy(players, filter)`: amount predicates in the filter (`PermanentPowerAtLeast/AtMostAmountPredicate`) are fixed as it resolves (CR 608.2h) (fold run 46b).
 - "You may pay {X}. When you do, [ability reading X]": `MayEffect(SequenceEffect.of(EachPlayerPaysAnyManaEffect.byYou(X_MANA), QueueReflexiveAbilityEffect.withEventValue(effect, manaPaid())))`, X read as the event value; `CastTargetInstantOrSorceryFromGraveyardEffect` binds `CardManaValueEqualsEventValuePredicate` (fold run 46b).
+
+- `MayPayManaEffect.anyPlayerMay(payers, payment, prompt, ifAPlayerDoes, ifNoOneDoes)` with `PayerLoop`: "any player / any opponent may [non-mana payment]. If a player does / if no one does", and "[effect] unless any player …". The payment is over `Subjects.acceptedPlayers()`. Players are asked in APNAP order, sacrifices are picked as they accept, and the payment is made together after the last answer (CR 101.4, 118.3, 118.12, 118.12a; fold run 47).
+- `SacrificePermanentsEffectHandler.sacrificeCandidates` / `sacrificeCount`: the permanents a player could sacrifice for a sacrifice spec (CR 608.2d; fold run 47).
+- `MayPayManaEffectHandler.apnapOpponents` (moved from the deleted Vexing Devil handler; 11 callers).
 
 ### Blocked causes still open
 
@@ -4681,6 +4685,44 @@ All of these have tests that would fail on the old code by reasoning. Prompts an
 - The AI's value readers don't look inside `MayEffect` / `ConditionalEffect` / the reflexive ability (Localized Destruction's `KeywordGrantingEffect` view is now inside a `ConditionalEffect`).
 
 **For the next run.** 46c: Errant Minion/Power Leak (prevent-N-of-that-damage rider, payer `targetPlayerDeclaredElsewhere()`), Vault 112 (play-now `chooseOne`, look for a second user).
+
+### Step 9, fold run 47 (2026-11-24, parallel worktree)
+2 of 4 batches. 14 absorbed, 1 survivor widened, 5 left `step-9` for 47b. `dyn-cost` and `combat-cost` not started. Ratchet 3,136 / 2,545 → 3,122 / 2,519. 16 card files rewritten, Oracle text checked for all 16, rulings for 9. CR 101.4, 118.3, 118.12, 118.12a, 603.12 and 608.2d checked.
+
+| Batch | Result |
+|---|---|
+| punisher | 12 folded into `MayPayManaEffect.anyPlayerMay(payers, payment, prompt, ifAPlayerDoes, ifNoOneDoes)`. Damage payments: Vexing Devil, Longhorn Firebeast, Browbeat, Book Burning, Breaking Point, Barbarian Bully. Sacrifice payments: Desecration Demon, Clackbridge Troll, Gitrog, Innocent Traveler, Prowling Pangolin, Argothian Wurm, Shivan Wumpus. Draw payment: Development. 5 left: Phantasmagorian, Dash Hopes / Temporal Extortion and Brain Gorgers need a step that counters the triggering spell (`CounterSpellEffect` counters only its target); Reservoir Kraken needs a tap each acceptor picks for themselves; Worms of the Earth is an either-payment. |
+| may-pay-fixed | 2 folded. Llanowar Sentinel is `MayPayManaEffect({1}{G}, SearchLibraryEffect(CardNamedPredicate, BATTLEFIELD))`. Tolarian Kraken is `MayPayManaEffect({1}, QueueReflexiveAbilityEffect(MayEffect(TapOrUntap…)))` (CR 603.12). |
+| dyn-cost, combat-cost | Not started. dyn-cost touches the cost checks and payments of `AbilityActivationService` and `ActivatedAbilityExecutionService`, and the X flag in `CardViewFactory` (PayXEnergyCost). |
+
+**The survivor.**
+- `payment` is a step over `Subjects.acceptedPlayers()`, or another subject ("has you draw a card"). `PayerLoop` holds the remaining players, the accepted players and the picked permanents.
+- Every player the payer names who could pay in full (CR 118.3) is asked in APNAP order (CR 101.4), and later players are still asked after one accepts.
+- A sacrifice is picked as the player accepts: unasked when only that many could be sacrificed (CR 608.2d), else a pick prompt.
+- After the last answer, the payment is made once for everyone who accepted: sacrifices as one departure step, damage as one event. Then "if a player does" follows, whatever the payment did (CR 118.12), else "if no one does" (CR 118.12a).
+- The mana loop is unchanged.
+
+**Behaviour changes.**
+- Bully, Breaking Point, Book Burning ask every player (the old code stopped at the first acceptance).
+- Demon, Troll, Gitrog, Wurm, Wumpus sacrifice together after every answer (Clackbridge and Innocent Traveler rulings; defect 449).
+- The Devil's damage goes to all acceptors together.
+- Sacrifice candidates are the same check for every card (`SacrificePermanentsEffectHandler.sacrificeCandidates`).
+- Breaking Point's destroy and Innocent Traveler's transform are now real steps of the entry.
+- The AI's board-wipe reader looks into `MayPayManaEffect`.
+
+**Tests changed.** BookBurning, BreakingPoint and BarbarianBully (answer the second player; two renames). GravebaneZombie ×3, InnocentTraveler and LlanowarSentinel: log lines only. New: one per damage card, Clackbridge with three players, 2 handler unit tests. Ran 59 classes, 763 cases, 0 failures.
+
+**Seen, not changed.**
+- The mana any-player loop still stops at the first payer (Scarwood Bandits and others), unlike the punisher rulings. Sure of the code; low impact.
+- Hard AI values every punisher offer at 0 and declines it (existing behaviour).
+- `leave-battlefield-redesign.md` still names `AnyOpponentMayTakeDamageSacrificeSource`.
+
+**For the next run.** 47b, in this order:
+1. A step that counters the triggering spell (`CounterSpellEffect` over `triggeringSpell()`), then fold the three counter records with discard and life `canPay`.
+2. Kraken's tap pick.
+3. Worms.
+4. dyn-cost.
+5. combat-cost.
 
 ## Prompt
 

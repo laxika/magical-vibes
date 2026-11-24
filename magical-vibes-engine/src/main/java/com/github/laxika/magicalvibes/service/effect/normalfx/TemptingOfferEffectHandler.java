@@ -36,7 +36,7 @@ public class TemptingOfferEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var offer = (TemptingOfferEffect) effect;
-        List<UUID> opponents = new ArrayList<>(AnyOpponentMayTakeDamageSacrificeSourceEffectHandler
+        List<UUID> opponents = new ArrayList<>(MayPayManaEffectHandler
                 .apnapOpponents(gameData, entry.getControllerId()));
         // An opponent who couldn't do what is offered can't accept it, so isn't asked (CR 608.2d).
         List<UUID> couldAccept = subjectResolutionService.players(gameData, entry, effect, offer.offeredTo());

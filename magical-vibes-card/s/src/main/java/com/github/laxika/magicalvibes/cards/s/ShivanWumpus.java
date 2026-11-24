@@ -2,7 +2,12 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AnyPlayerMaySacrificeLandPutSourceOnTopEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
+import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -10,6 +15,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ShivanWumpus extends Card {
 
     public ShivanWumpus() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new AnyPlayerMaySacrificeLandPutSourceOnTopEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), MayPayManaEffect.anyPlayerMay(MayPayPayer.ANY_PLAYER,
+                new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), Subjects.acceptedPlayers()),
+                "Sacrifice a land? If a player does, it is put on top of its owner's library.",
+                PutTargetOnTopOfLibraryEffect.self(), null));
     }
 }

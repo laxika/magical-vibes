@@ -100,28 +100,36 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
 
     public boolean hasLegalSacrificeChoice(GameData gameData, StackEntry entry,
             SacrificePermanentsEffect effect, UUID playerId) {
-        if (playerId == null || !gameData.playerIds.contains(playerId)
-                || isSacrificeProtected(gameData, entry, playerId)) {
-            return false;
-        }
-
-        int count = evaluateCount(gameData, entry, effect, playerId);
+        int count = sacrificeCount(gameData, entry, effect, playerId);
         if (count <= 0) {
             return false;
         }
+        int matchingCount = sacrificeCandidates(gameData, entry, effect, playerId).size();
+        return effect.upToCount() ? matchingCount > 0 : matchingCount >= count;
+    }
 
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null || battlefield.isEmpty()) {
-            return false;
+    /**
+     * The permanents {@code playerId} could sacrifice for {@code effect}: those they control matching its filter that
+     * can be sacrificed (CR 608.2d); none while the effect can't make them sacrifice.
+     */
+    public List<UUID> sacrificeCandidates(GameData gameData, StackEntry entry, SacrificePermanentsEffect effect,
+            UUID playerId) {
+        if (playerId == null || !gameData.playerIds.contains(playerId)
+                || isSacrificeProtected(gameData, entry, playerId)) {
+            return List.of();
         }
-
         FilterContext filterContext = filterContextFor(gameData, entry);
-        long matchingCount = battlefield.stream()
+        return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, effect.filter(), filterContext))
                 .filter(p -> !gameQueryService.cantBeChosenToSacrifice(gameData, p, effect.filter()))
                 .filter(p -> !gameQueryService.isCreatureTokenProtectedFromResolvingTriggeredAbility(gameData, p))
-                .count();
-        return effect.upToCount() ? matchingCount > 0 : matchingCount >= count;
+                .map(Permanent::getId)
+                .toList();
+    }
+
+    /** How many permanents {@code effect} has {@code playerId} sacrifice. */
+    public int sacrificeCount(GameData gameData, StackEntry entry, SacrificePermanentsEffect effect, UUID playerId) {
+        return evaluateCount(gameData, entry, effect, playerId);
     }
 
     /**

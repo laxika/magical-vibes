@@ -57,7 +57,7 @@ class LlanowarSentinelTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(countSentinelsOnBattlefield()).isEqualTo(1);
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("can't pay {1}{G}"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("cannot pay {1}{G}"));
     }
 
     @Test

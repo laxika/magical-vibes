@@ -907,7 +907,7 @@ class GravebaneZombieTest extends BaseCardTest {
         assertThat(demon.isTapped()).isTrue();
         assertThat(demon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
-        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("Gravebane Zombie is sacrificed"))
                 .hasSize(1);
     }
 
@@ -1171,7 +1171,7 @@ class GravebaneZombieTest extends BaseCardTest {
         assertThat(demon.isTapped()).isTrue();
         assertThat(demon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
-        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("Gravebane Zombie is sacrificed"))
                 .hasSize(1);
     }
 
@@ -2621,7 +2621,7 @@ class GravebaneZombieTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie.getCard(), filler);
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(bears.getCard());
         harness.assertNotInGraveyard(player2, "Gravebane Zombie");
-        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("Gravebane Zombie is sacrificed"))
                 .hasSize(1);
         harness.assertInGraveyard(player1, "Prowling Pangolin");
         assertThat(gd.playerBattlefields.get(player1.getId())).extracting(permanent -> permanent.getCard().getName())

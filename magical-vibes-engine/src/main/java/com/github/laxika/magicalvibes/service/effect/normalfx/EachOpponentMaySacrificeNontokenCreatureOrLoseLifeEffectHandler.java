@@ -66,7 +66,7 @@ public class EachOpponentMaySacrificeNontokenCreatureOrLoseLifeEffectHandler
             return;
         }
 
-        List<UUID> opponents = AnyOpponentMayTakeDamageSacrificeSourceEffectHandler
+        List<UUID> opponents = MayPayManaEffectHandler
                 .apnapOpponents(gameData, controllerId);
         Map<UUID, Integer> lossesAtOnce = new LinkedHashMap<>();
         for (UUID opponentId : opponents) {

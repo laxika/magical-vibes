@@ -201,7 +201,7 @@ class InnocentTravelerTest extends BaseCardTest {
                 .contains(zombie.getCard().getId());
         assertThat(gd.playerBattlefields.get(player3.getId())).hasSize(2);
         assertThat(traveler.isTransformed()).isFalse();
-        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("Gravebane Zombie is sacrificed"))
                 .hasSize(1);
     }
 

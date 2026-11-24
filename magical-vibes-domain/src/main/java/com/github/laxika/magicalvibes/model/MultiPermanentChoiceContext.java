@@ -558,15 +558,10 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
-     * An accepting player's pick of which creatures to sacrifice for an any-player "may sacrifice" ability
-     * (Prowling Pangolin). The pick is only recorded in {@code effect}'s accepted ids; nothing is sacrificed
-     * until every player has answered.
+     * A player who accepted a "[any player] may sacrifice N [permanents]" payment ({@code MayPayManaEffect.anyPlayerMay})
+     * picks which ones; the picks wait on the payment until every player has answered (Prowling Pangolin).
      */
-    record AnyPlayerSacrificeCreaturesChoice(
-            Card sourceCard,
-            com.github.laxika.magicalvibes.model.effect.AnyPlayerMaySacrificeCreaturesThenSacrificeSourceEffect effect,
-            java.util.List<UUID> remainingPlayerIds)
-            implements MultiPermanentChoiceContext {
+    record AnyPlayerPaymentSacrifice(UUID playerId) implements MultiPermanentChoiceContext {
     }
 
     /**

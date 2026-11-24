@@ -40,7 +40,7 @@ All paths relative to `cards/`.
 | Damage + self-damage | `o/OrcishArtillery.java` | Two effects: damage target + DealDamageToPlayersEffect(3, Subjects.you()) |
 | Pump self | `f/FurnaceWhelp.java` | `(false, "{R}", BoostSelfEffect, false)` |
 | Pump self + exact-power reflexive trigger | `i/InfernoOfTheStarMounts.java` | `(false, "{R}", BoostSelfAndTriggerWhenPowerBecomesEffect(BoostSelfEffect, threshold, triggeredEffect), false)`; the activated ability is untargeted and the linked target is chosen only when the threshold trigger fires |
-| Discard at random, then any player may take damage instead of a self-pump | `b/BarbarianBully.java` | `DiscardRandomCardCost` + `AnyPlayerMayTakeDamageOrBoostSelfEffect(4, 2, 2)` with max activations per turn 1 |
+| Discard at random, then any player may take damage instead of a self-pump | `b/BarbarianBully.java` | `DiscardRandomCardCost` + `MayPayManaEffect.anyPlayerMay(ANY_PLAYER, DealDamageToPlayersEffect(4, acceptedPlayers()), …, null, BoostSelfEffect(2, 2))` with max activations per turn 1 |
 | Pump self + conditional sacrifice | `d/DragonWhelp.java` | BoostSelfEffect activated ability + Triggers.endStep(ActivePlayer.ANY) ConditionalEffect(new ActivationCount(threshold, abilityIndex), SacrificeSelfEffect) |
 | Self unblockable (Phyrexian mana) | `t/TrespassingSouleater.java` | `(false, "{U/P}", MakeCreatureUnblockableEffect(true), ...)` — Phyrexian mana activated, self-targeting unblockable |
 | Pump target | `g/GhostWarden.java` | `(true, null, BoostTargetCreatureEffect, true)` |

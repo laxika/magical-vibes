@@ -3,13 +3,16 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.g.Gingerbrute;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -150,6 +153,52 @@ class ClackbridgeTrollTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         harness.assertOnBattlefield(player1, "Gingerbrute");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each opponent chooses in turn; the chosen creatures are sacrificed together and the reward comes once")
+    void opponentsChooseThenSacrificeTogetherAndRewardOnce() {
+        Player player3 = addThirdPlayer();
+        Permanent troll = harness.addToBattlefieldAndReturn(player1, new ClackbridgeTroll());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new Gingerbrute());
+        Permanent second = harness.addToBattlefieldAndReturn(player3, new Gingerbrute());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, new ArrayList<>());
+        harness.setLibrary(player1, List.of(new Gingerbrute(), new Gingerbrute()));
+
+        resolveBeginningOfCombat(player1);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player3.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(first);
+        assertThat(troll.isTapped()).isFalse();
+
+        harness.handleMayAbilityChosen(player3, true);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(first);
+        assertThat(gd.playerBattlefields.get(player3.getId())).doesNotContain(second);
+        assertThat(troll.isTapped()).isTrue();
+        harness.assertLife(player1, 23);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    private Player addThirdPlayer() {
+        UUID player3Id = UUID.randomUUID();
+        Player player3 = new Player(player3Id, "Charlie");
+        gd.playerIds.add(player3Id);
+        gd.orderedPlayerIds.add(player3Id);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(player3Id, "Charlie");
+        gd.playerDecks.put(player3Id, new ArrayList<>());
+        gd.playerHands.put(player3Id, new ArrayList<>());
+        gd.playerBattlefields.put(player3Id, new ArrayList<>());
+        gd.playerGraveyards.put(player3Id, new ArrayList<>());
+        gd.playerCommandZones.put(player3Id, new ArrayList<>());
+        gd.playerManaPools.put(player3Id, new ManaPool());
+        gd.playerLifeTotals.put(player3Id, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), player3Id, "Charlie");
+        return player3;
     }
 
     private void resolveBeginningOfCombat(Player activePlayer) {

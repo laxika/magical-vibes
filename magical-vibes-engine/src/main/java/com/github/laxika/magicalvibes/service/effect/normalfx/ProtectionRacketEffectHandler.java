@@ -37,7 +37,7 @@ public class ProtectionRacketEffectHandler implements NormalEffectHandlerBean {
         ProtectionRacketEffect racket = (ProtectionRacketEffect) effect;
         UUID controllerId = entry.getControllerId();
         List<UUID> opponents = racket.remainingOpponentIds().isEmpty()
-                ? AnyOpponentMayTakeDamageSacrificeSourceEffectHandler.apnapOpponents(gameData, controllerId)
+                ? MayPayManaEffectHandler.apnapOpponents(gameData, controllerId)
                 : new ArrayList<>(racket.remainingOpponentIds());
         opponents.removeIf(id -> !gameData.playerIds.contains(id));
         if (opponents.isEmpty()) {

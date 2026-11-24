@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -57,6 +58,23 @@ class BarbarianBullyTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 16);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A player is still asked after another accepts, and each accepting player is dealt 4 damage")
+    void laterPlayerIsAskedAfterAnAcceptance() {
+        Permanent bully = activateWithHand(new BarbarianBully());
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.assertLife(player1, 20);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 16);
+        assertThat(PermanentGrants.powerBoostOf(gd, bully)).isZero();
     }
 
     @Test
@@ -195,6 +213,7 @@ class BarbarianBullyTest extends BaseCardTest {
         Permanent bully = activateWithHandForJudReview(new SuntailHawk());
 
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(PermanentGrants.powerBoostOf(gd, bully)).isZero();
         assertThat(PermanentGrants.toughnessBoostOf(gd, bully)).isZero();

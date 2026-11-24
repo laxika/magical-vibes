@@ -115,6 +115,9 @@ public class PermanentChoiceHandlerService {
     private final DrawDiscardAndConniveEffectHandler drawDiscardAndConniveEffectHandler;
     private final BoostEquippedCreatureUntilEndOfTurnEffectHandler boostEquippedCreatureUntilEndOfTurnEffectHandler;
     private final InputCompletionService inputCompletionService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.MayPayManaEffectHandler mayPayManaEffectHandler;
     private final EarthbendTargetLandThenFightEffectHandler earthbendThenFightHandler;
     private final ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler
             returnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler;
@@ -423,11 +426,6 @@ public class PermanentChoiceHandlerService {
                 || context instanceof PermanentChoiceContext.SacrificePermanentThen
                 || context instanceof PermanentChoiceContext.MaySacrificeForCounterOnSource
                 || context instanceof PermanentChoiceContext.GargantuanGorillaSacrificeForest
-                || context instanceof PermanentChoiceContext.AnyOpponentSacrificeCreatureForTapAndCounter
-                || context instanceof PermanentChoiceContext.AnyOpponentSacrificeNontokenCreatureForTapAndSeekLand
-                || context instanceof PermanentChoiceContext.AnyOpponentSacrificeCreatureForTransform
-                || context instanceof PermanentChoiceContext.AnyOpponentSacrificeCreatureForTapAndGainLifeAndDraw
-                || context instanceof PermanentChoiceContext.AnyPlayerMaySacrificeLandPutSourceOnTop
                 || context instanceof PermanentChoiceContext.AnyPlayerMaySacrificeCreatureToCounterSpell
                 || context instanceof PermanentChoiceContext.ForcedCostOrElse forcedCost
                         && forcedCost.effect().forcedCost() instanceof SacrificePermanentCost
@@ -519,18 +517,6 @@ public class PermanentChoiceHandlerService {
                     battlefieldHandler.handleMaySacrificeForCounterOnSource(gameData, permanentId, msfc);
             case PermanentChoiceContext.GargantuanGorillaSacrificeForest ggsf ->
                     battlefieldHandler.handleGargantuanGorillaSacrificeForest(gameData, permanentId, ggsf);
-            case PermanentChoiceContext.AnyOpponentSacrificeCreatureForTapAndCounter aosc ->
-                    battlefieldHandler.handleAnyOpponentSacrificeCreatureForTapAndCounter(gameData, permanentId, aosc);
-            case PermanentChoiceContext.AnyOpponentSacrificeNontokenCreatureForTapAndSeekLand ansc ->
-                    battlefieldHandler.handleAnyOpponentSacrificeNontokenCreatureForTapAndSeekLand(
-                            gameData, permanentId, ansc);
-            case PermanentChoiceContext.AnyOpponentSacrificeCreatureForTransform aosc ->
-                    battlefieldHandler.handleAnyOpponentSacrificeCreatureForTransform(gameData, permanentId, aosc);
-            case PermanentChoiceContext.AnyOpponentSacrificeCreatureForTapAndGainLifeAndDraw aosc ->
-                    battlefieldHandler.handleAnyOpponentSacrificeCreatureForTapAndGainLifeAndDraw(
-                            gameData, permanentId, aosc);
-            case PermanentChoiceContext.AnyPlayerMaySacrificeLandPutSourceOnTop ams ->
-                    battlefieldHandler.handleAnyPlayerMaySacrificeLandPutSourceOnTop(gameData, permanentId, ams);
             case PermanentChoiceContext.AnyPlayerMaySacrificeCreatureToCounterSpell ams ->
                     battlefieldHandler.handleAnyPlayerMaySacrificeCreatureToCounterSpell(gameData, permanentId, ams);
             case PermanentChoiceContext.ForcedCostOrElse forcedCostOrElse ->
@@ -879,6 +865,9 @@ public class PermanentChoiceHandlerService {
             earthbendThenFightHandler.handleTargetChoice(gameData, permanentId, earthbendFight);
         } else if (context instanceof PermanentChoiceContext.ResolvingModalTarget rmt) {
             triggerHandler.handleResolvingModalTarget(gameData, permanentId, rmt);
+        } else if (context instanceof PermanentChoiceContext.AnyPlayerPaymentSacrifice) {
+            mayPayManaEffectHandler.completeSacrificePick(gameData, java.util.List.of(permanentId));
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.AnyOpponentMayTapCreatureForToken aotc) {
             battlefieldHandler.handleAnyOpponentMayTapCreatureForToken(gameData, permanentId, aotc);
         } else if (context instanceof PermanentChoiceContext.LibraryCastSpellTarget lct) {

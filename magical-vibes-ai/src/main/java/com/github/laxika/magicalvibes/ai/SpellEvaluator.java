@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
@@ -467,6 +468,11 @@ public class SpellEvaluator {
             return coe.options().stream()
                     .flatMap(option -> option.effects().stream())
                     .anyMatch(this::isBoardWipeEffect);
+        }
+        // "If no one does, destroy all creatures" (Breaking Point): the wipe behind a punisher payment.
+        if (effect instanceof MayPayManaEffect mayPay) {
+            return mayPay.wrapped() != null && isBoardWipeEffect(mayPay.wrapped())
+                    || mayPay.elseEffect() != null && isBoardWipeEffect(mayPay.elseEffect());
         }
         return false;
     }

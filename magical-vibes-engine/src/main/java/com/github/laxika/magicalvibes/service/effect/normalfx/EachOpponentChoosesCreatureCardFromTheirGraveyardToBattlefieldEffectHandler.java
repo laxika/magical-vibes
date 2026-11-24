@@ -34,7 +34,7 @@ public class EachOpponentChoosesCreatureCardFromTheirGraveyardToBattlefieldEffec
         gameData.pendingGraveyardReturnBatch = new PendingGraveyardReturnBatch(
                 controllerId, List.of(), java.util.Map.of());
 
-        List<UUID> opponents = AnyOpponentMayTakeDamageSacrificeSourceEffectHandler.apnapOpponents(
+        List<UUID> opponents = MayPayManaEffectHandler.apnapOpponents(
                 gameData, controllerId);
         CardTypePredicate creatureFilter = new CardTypePredicate(CardType.CREATURE);
         for (UUID opponentId : opponents) {

@@ -833,43 +833,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             implements PermanentChoiceContext {}
 
     /**
-     * Desecration Demon: {@code sacrificingPlayerId} accepted the "any opponent may sacrifice a
-     * creature" combat trigger and is picking which of their creatures to sacrifice. {@code effect}
-     * carries the remaining-opponent queue so the prompt chain resumes after the choice.
+     * A player who accepted a "[any player] may sacrifice a [permanent]" payment ({@code MayPayManaEffect.anyPlayerMay})
+     * picks which one; the pick waits on the payment until every player has answered.
      */
-    record AnyOpponentSacrificeCreatureForTapAndCounter(
-            UUID sacrificingPlayerId, Card sourceCard,
-            com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffect effect)
-            implements PermanentChoiceContext {}
-
-    /** Gitrog, Horror of Zhava: the accepting opponent is picking which nontoken creature to sacrifice. */
-    record AnyOpponentSacrificeNontokenCreatureForTapAndSeekLand(
-            UUID sacrificingPlayerId, Card sourceCard,
-            com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeNontokenCreatureTapAndSeekLandSourceEffect effect)
-            implements PermanentChoiceContext {}
-
-    /** Innocent Traveler: the accepting opponent is picking which creature to sacrifice. */
-    record AnyOpponentSacrificeCreatureForTransform(
-            UUID sacrificingPlayerId, Card sourceCard,
-            com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeCreatureOrTransformSourceEffect effect)
-            implements PermanentChoiceContext {}
-
-    /** Clackbridge Troll: the accepting opponent is picking which creature to sacrifice. */
-    record AnyOpponentSacrificeCreatureForTapAndGainLifeAndDraw(
-            UUID sacrificingPlayerId, Card sourceCard,
-            com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeCreatureTapAndGainLifeAndDrawSourceEffect effect)
-            implements PermanentChoiceContext {}
+    record AnyPlayerPaymentSacrifice(UUID playerId) implements PermanentChoiceContext {}
 
     /** Reservoir Kraken: the accepting opponent is picking which untapped creature to tap. */
     record AnyOpponentMayTapCreatureForToken(
             UUID tappingPlayerId, Card sourceCard,
             com.github.laxika.magicalvibes.model.effect.AnyOpponentMayTapCreatureTapAndCreateTokenSourceEffect effect)
-            implements PermanentChoiceContext {}
-
-    /** Argothian Wurm: the accepting player is picking which land to sacrifice. */
-    record AnyPlayerMaySacrificeLandPutSourceOnTop(
-            UUID sacrificingPlayerId, Card sourceCard,
-            com.github.laxika.magicalvibes.model.effect.AnyPlayerMaySacrificeLandPutSourceOnTopEffect effect)
             implements PermanentChoiceContext {}
 
     /** Brain Gorgers: the accepting player is picking which creature to sacrifice. */

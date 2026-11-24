@@ -60,6 +60,7 @@ abstract class AbstractPlayerInteractionHandlerTest {
     @Mock protected ConditionEvaluationService conditionEvaluationService;
     @Mock protected PotentialManaService potentialManaService;
     @Mock protected ValidTargetService validTargetService;
+    @Mock protected SacrificePermanentsEffectHandler sacrificePermanentsEffectHandler;
 
     protected EffectHandlerRegistry registry;
     protected PlayerInteractionSupport support;
@@ -88,7 +89,8 @@ abstract class AbstractPlayerInteractionHandlerTest {
                         StepDepartureSupport.class, stepDepartureSupport,
                         ConditionEvaluationService.class, conditionEvaluationService,
                         PotentialManaService.class, potentialManaService,
-                        ValidTargetService.class, validTargetService));
+                        ValidTargetService.class, validTargetService,
+                        SacrificePermanentsEffectHandler.class, sacrificePermanentsEffectHandler));
         PlayerInteractionHandlerTestSupport.registerHandler(registry, handler);
         setUpHandler();
     }

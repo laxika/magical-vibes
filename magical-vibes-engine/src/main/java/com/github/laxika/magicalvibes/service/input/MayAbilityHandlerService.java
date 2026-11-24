@@ -40,6 +40,7 @@ import org.springframework.context.annotation.Lazy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -68,6 +69,10 @@ public class MayAbilityHandlerService {
 
     @Autowired @Lazy
     private PermanentChoiceHandlerService permanentChoiceHandlerService;
+
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.MayPayManaEffectHandler mayPayManaEffectHandler;
+
 
     public MayAbilityHandlerService(InputCompletionService inputCompletionService,
                                     MayCastHandlerService mayCastHandlerService,
@@ -299,7 +304,7 @@ public class MayAbilityHandlerService {
                 .map(MayPayManaEffect.class::cast)
                 .findFirst().orElse(null);
         if (anyPlayerMayPay != null) {
-            handleAnyPlayerMayPayChoice(gameData, player, accepted, ability);
+            handleAnyPlayerMayPayChoice(gameData, player, accepted, ability, anyPlayerMayPay);
             return;
         }
         RegisterDelayedCounterTriggerEffect dct = ability.effects().stream().filter(e -> e instanceof RegisterDelayedCounterTriggerEffect).map(e -> (RegisterDelayedCounterTriggerEffect) e).findFirst().orElse(null);
@@ -449,7 +454,11 @@ public class MayAbilityHandlerService {
     }
 
     private void handleAnyPlayerMayPayChoice(GameData gameData, Player player, boolean accepted,
-                                             PendingMayAbility ability) {
+                                             PendingMayAbility ability, MayPayManaEffect mayPay) {
+        if (mayPay.payment() != null) {
+            handleNonManaPaymentChoice(gameData, player, accepted, ability, mayPay);
+            return;
+        }
         if (accepted && ability.manaCost() != null) {
             ManaCost cost = new ManaCost(ability.manaCost());
             ManaPool pool = gameData.playerManaPools.get(player.getId());
@@ -479,6 +488,26 @@ public class MayAbilityHandlerService {
 
         gameData.anyPlayerMayPayManaRemainingPlayers.clear();
         gameData.resolvedMayAccepted = false;
+        resumeAfterResolutionTimeMayChoice(gameData);
+    }
+
+    /**
+     * One player's answer to a non-mana payment offered to any player: it is noted, and the payment moves on to the next
+     * player once a sacrifice's pick is made; nothing is paid until every player has answered (CR 101.4). An accepting
+     * player could pay it in full (CR 118.3): they were asked only then, and nothing changes while the players decide.
+     */
+    private void handleNonManaPaymentChoice(GameData gameData, Player player, boolean accepted,
+                                            PendingMayAbility ability, MayPayManaEffect mayPay) {
+        if (accepted) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " accepts ", ability.sourceCard(), "'s offer."));
+        } else {
+            gameLogService.append(gameData,
+                    GameLog.playerDeclinesAbility(player.getUsername(), ability.sourceCard()));
+        }
+        if (mayPayManaEffectHandler.answerPayment(gameData, player.getId(), accepted, mayPay)) {
+            return;
+        }
         resumeAfterResolutionTimeMayChoice(gameData);
     }
 

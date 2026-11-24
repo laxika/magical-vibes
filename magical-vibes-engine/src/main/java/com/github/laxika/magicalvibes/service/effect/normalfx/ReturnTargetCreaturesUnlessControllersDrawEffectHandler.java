@@ -124,7 +124,7 @@ public class ReturnTargetCreaturesUnlessControllersDrawEffectHandler implements 
     /** Orders the chosen creatures by their controllers' turn order starting with the active player (APNAP). */
     private List<UUID> turnOrderTargets(GameData gameData, UUID casterId, List<UUID> targetIds) {
         List<UUID> ordered = new ArrayList<>();
-        for (UUID opponentId : AnyOpponentMayTakeDamageSacrificeSourceEffectHandler.apnapOpponents(gameData, casterId)) {
+        for (UUID opponentId : MayPayManaEffectHandler.apnapOpponents(gameData, casterId)) {
             for (UUID targetId : targetIds) {
                 if (opponentId.equals(gameQueryService.findPermanentController(gameData, targetId))
                         && !ordered.contains(targetId)) {

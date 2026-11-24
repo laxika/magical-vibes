@@ -43,7 +43,7 @@ public class AnyOpponentMayTapCreatureTapAndCreateTokenSourceEffectHandler
         }
 
         List<UUID> opponents = new ArrayList<>(
-                AnyOpponentMayTakeDamageSacrificeSourceEffectHandler.apnapOpponents(
+                MayPayManaEffectHandler.apnapOpponents(
                         gameData, entry.getControllerId()));
         opponents.removeIf(id -> untappedCreatureIds(gameData, id).isEmpty());
         if (opponents.isEmpty()) {
