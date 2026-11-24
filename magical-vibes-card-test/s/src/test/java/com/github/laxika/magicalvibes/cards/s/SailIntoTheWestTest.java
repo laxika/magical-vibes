@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -30,8 +29,8 @@ class SailIntoTheWestTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(player2First, player2Second));
 
         cast();
-        harness.handleListChoice(player1, ChoiceContext.SailIntoTheWestChoice.RETURN);
-        harness.handleListChoice(player2, ChoiceContext.SailIntoTheWestChoice.RETURN);
+        harness.handleListChoice(player1, SailIntoTheWest.RETURN);
+        harness.handleListChoice(player2, SailIntoTheWest.RETURN);
 
         harness.handleGraveyardCardChosen(player1, 0);
         harness.handleGraveyardCardChosen(player1, 1);
@@ -57,8 +56,8 @@ class SailIntoTheWestTest extends BaseCardTest {
         harness.setLibrary(player2, sevenCards());
 
         cast();
-        harness.handleListChoice(player1, ChoiceContext.SailIntoTheWestChoice.RETURN);
-        harness.handleListChoice(player2, ChoiceContext.SailIntoTheWestChoice.EMBARK);
+        harness.handleListChoice(player1, SailIntoTheWest.RETURN);
+        harness.handleListChoice(player2, SailIntoTheWest.EMBARK);
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player2, false);
@@ -81,8 +80,8 @@ class SailIntoTheWestTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(opponentCard));
 
         cast();
-        harness.handleListChoice(player1, ChoiceContext.SailIntoTheWestChoice.RETURN);
-        harness.handleListChoice(player2, ChoiceContext.SailIntoTheWestChoice.RETURN);
+        harness.handleListChoice(player1, SailIntoTheWest.RETURN);
+        harness.handleListChoice(player2, SailIntoTheWest.RETURN);
         harness.handleGraveyardCardChosen(player1, 0);
         harness.handleGraveyardCardChosen(player1, -1);
         harness.handleGraveyardCardChosen(player2, -1);
@@ -101,8 +100,8 @@ class SailIntoTheWestTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of());
 
         cast();
-        harness.handleListChoice(player1, ChoiceContext.SailIntoTheWestChoice.RETURN);
-        harness.handleListChoice(player2, ChoiceContext.SailIntoTheWestChoice.RETURN);
+        harness.handleListChoice(player1, SailIntoTheWest.RETURN);
+        harness.handleListChoice(player2, SailIntoTheWest.RETURN);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
@@ -120,8 +119,8 @@ class SailIntoTheWestTest extends BaseCardTest {
         harness.setLibrary(player2, secondLibrary);
 
         cast();
-        harness.handleListChoice(player1, ChoiceContext.SailIntoTheWestChoice.EMBARK);
-        harness.handleListChoice(player2, ChoiceContext.SailIntoTheWestChoice.EMBARK);
+        harness.handleListChoice(player1, SailIntoTheWest.EMBARK);
+        harness.handleListChoice(player2, SailIntoTheWest.EMBARK);
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player2, true);
 
@@ -144,7 +143,7 @@ class SailIntoTheWestTest extends BaseCardTest {
         PendingInteraction.ColorChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.options()).containsExactlyElementsOf(ChoiceContext.SailIntoTheWestChoice.OPTIONS);
+        assertThat(choice.options()).containsExactlyElementsOf(List.of(SailIntoTheWest.RETURN, SailIntoTheWest.EMBARK));
     }
 
     private List<Card> sevenCards() {

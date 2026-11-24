@@ -33,7 +33,6 @@ public class VotingSupport {
      */
     public List<UUID> voterOrder(GameData gameData, UUID firstVoterId) {
         gameData.additionalVotesTaken.clear();
-        gameData.additionalVoteAccepted = null;
         List<UUID> orderedPlayerIds = new ArrayList<>(gameData.orderedPlayerIds);
         int firstIndex = orderedPlayerIds.indexOf(firstVoterId);
         if (firstIndex <= 0) {
@@ -68,18 +67,8 @@ public class VotingSupport {
     }
 
     /**
-     * Asks the voter whether to vote an additional time for a vote that keeps its own progress and reruns
-     * its effect to read the answer from {@link GameData#additionalVoteAccepted}.
-     */
-    public void offerAdditionalVoteToRerunningEffect(GameData gameData, UUID voterId, String sourceName) {
-        gameData.rerunCurrentEffectAfterInteraction = true;
-        beginOffer(gameData, new ChoiceContext.AdditionalVoteChoice(voterId, null, null, List.of(), sourceName));
-    }
-
-    /**
      * Records the voter's answer to an additional-vote offer and returns the held vote prompt to answer
      * again: unchanged when they continue, with the voter queued to vote next when they vote again.
-     * Returns {@code null} for a rerunning vote, whose effect reads the answer itself.
      */
     public PendingInteraction recordAdditionalVoteDecision(GameData gameData,
                                                            ChoiceContext.AdditionalVoteChoice offer,
@@ -89,10 +78,6 @@ public class VotingSupport {
             gameData.additionalVotesTaken.merge(voterId, 1, Integer::sum);
         } else {
             gameData.additionalVotesTaken.put(voterId, gameQueryService.countAdditionalVotes(gameData, voterId));
-        }
-        if (offer.answeredVote() == null) {
-            gameData.additionalVoteAccepted = voteAgain;
-            return null;
         }
         if (!voteAgain) {
             return offer.answeredVote();

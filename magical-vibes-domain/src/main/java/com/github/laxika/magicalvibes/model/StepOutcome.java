@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -29,10 +30,24 @@ import java.util.UUID;
  *                       hand this way"); 0 for every other step
  * @param amountByPlayer how much of the amount is each player's, for a payment or shuffle-into-library step ("the
  *                       amount of mana they paid this way"); empty for every other step
+ * @param votes          for a vote step, each vote in the order it was cast, who cast it and for what (CR 701.38a);
+ *                       empty for every other step
  */
 public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds, List<MovedCard> movedCards,
                           List<LastKnownCardStats> lastKnownCards, List<LastKnownCardStats> lastKnownPermanents,
-                          int fromHand, Map<UUID, Integer> amountByPlayer) {
+                          int fromHand, Map<UUID, Integer> amountByPlayer, List<Vote> votes) {
+
+    /**
+     * One vote of a vote step: {@code voterId} chose {@code choice}, one of the options the vote listed (CR 701.38b). A
+     * player who votes an additional time casts several (CR 701.38d).
+     */
+    public record Vote(UUID voterId, String choice) {
+
+        public Vote {
+            Objects.requireNonNull(voterId, "voterId");
+            Objects.requireNonNull(choice, "choice");
+        }
+    }
 
     /** A step that did nothing. */
     public static final StepOutcome NONE = new StepOutcome(0, List.of(), List.of());
@@ -47,6 +62,15 @@ public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds
         lastKnownCards = lastKnownCards == null ? List.of() : List.copyOf(lastKnownCards);
         lastKnownPermanents = lastKnownPermanents == null ? List.of() : List.copyOf(lastKnownPermanents);
         amountByPlayer = amountByPlayer == null ? Map.of() : Map.copyOf(amountByPlayer);
+        votes = votes == null ? List.of() : List.copyOf(votes);
+    }
+
+    /** An outcome that recorded no vote. */
+    public StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds, List<MovedCard> movedCards,
+                       List<LastKnownCardStats> lastKnownCards, List<LastKnownCardStats> lastKnownPermanents,
+                       int fromHand, Map<UUID, Integer> amountByPlayer) {
+        this(amount, objectIds, playerIds, movedCards, lastKnownCards, lastKnownPermanents, fromHand, amountByPlayer,
+                List.of());
     }
 
     /** An outcome with no amount of any one player's. */
@@ -106,22 +130,33 @@ public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds
         return new StepOutcome(total, List.of(), payers, List.of(), List.of(), List.of(), 0, amounts);
     }
 
+    /** A vote step's outcome: the votes cast, in order, and the players who cast them. */
+    public static StepOutcome ofVotes(List<Vote> votes) {
+        List<UUID> voters = votes.stream().map(Vote::voterId).toList();
+        return new StepOutcome(votes.size(), List.of(), voters, List.of(), List.of(), List.of(), 0, Map.of(), votes);
+    }
+
+    /** How many of this vote step's votes are for {@code choice} ("for each [option] vote"). */
+    public int votesFor(String choice) {
+        return (int) votes.stream().filter(vote -> vote.choice().equals(choice)).count();
+    }
+
     /** This outcome with {@code cards}, the cards it exiled from a graveyard as each last existed there. */
     public StepOutcome withLastKnownCards(List<LastKnownCardStats> cards) {
         return new StepOutcome(amount, objectIds, playerIds, movedCards, cards, lastKnownPermanents, fromHand,
-                amountByPlayer);
+                amountByPlayer, votes);
     }
 
     /** This outcome with {@code permanents}, the permanents it exiled as each last existed on the battlefield. */
     public StepOutcome withLastKnownPermanents(List<LastKnownCardStats> permanents) {
         return new StepOutcome(amount, objectIds, playerIds, movedCards, lastKnownCards, permanents, fromHand,
-                amountByPlayer);
+                amountByPlayer, votes);
     }
 
     /** This outcome with {@code count} of its cards exiled from a hand. */
     public StepOutcome withFromHand(int count) {
         return new StepOutcome(amount, objectIds, playerIds, movedCards, lastKnownCards, lastKnownPermanents, count,
-                amountByPlayer);
+                amountByPlayer, votes);
     }
 
     /** {@code permanentId} as it last existed on the battlefield this step exiled it from, if the step recorded it. */
@@ -140,7 +175,7 @@ public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds
     }
 
     /**
-     * This outcome with {@code more} added: amounts summed, objects, players, moved cards and last-known cards
+     * This outcome with {@code more} added: amounts summed, objects, players, moved cards, last-known cards and votes
      * appended.
      */
     public StepOutcome plus(StepOutcome more) {
@@ -156,7 +191,9 @@ public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds
         knownPermanents.addAll(more.lastKnownPermanents);
         Map<UUID, Integer> byPlayer = new HashMap<>(amountByPlayer);
         more.amountByPlayer.forEach((playerId, part) -> byPlayer.merge(playerId, part, SaturatingMath::add));
+        List<Vote> allVotes = new ArrayList<>(votes);
+        allVotes.addAll(more.votes);
         return new StepOutcome(SaturatingMath.add(amount, more.amount), objects, players, moved, known,
-                knownPermanents, SaturatingMath.add(fromHand, more.fromHand), byPlayer);
+                knownPermanents, SaturatingMath.add(fromHand, more.fromHand), byPlayer, allVotes);
     }
 }

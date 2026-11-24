@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TivitSellerOfSecrets.class, SwordsToPlowshares.class, PleaForPower.class, MarneusCalgar.class, ModelOfUnity.class})
@@ -22,16 +24,16 @@ class TivitSellerOfSecretsTest extends BaseCardTest {
         castTivit();
 
         assertThat(activeVote().playerId()).isEqualTo(player1.getId());
-        harness.handleListChoice(player1, ChoiceContext.CouncilDilemmaChoice.EVIDENCE);
+        harness.handleListChoice(player1, TivitSellerOfSecrets.EVIDENCE);
 
         assertThat(activeAdditionalVote().playerId()).isEqualTo(player1.getId());
         harness.handleListChoice(player1, ChoiceContext.AdditionalVoteChoice.VOTE_AGAIN);
 
         assertThat(activeVote().playerId()).isEqualTo(player1.getId());
-        harness.handleListChoice(player1, ChoiceContext.CouncilDilemmaChoice.BRIBERY);
+        harness.handleListChoice(player1, TivitSellerOfSecrets.BRIBERY);
 
         assertThat(activeVote().playerId()).isEqualTo(player2.getId());
-        harness.handleListChoice(player2, ChoiceContext.CouncilDilemmaChoice.EVIDENCE);
+        harness.handleListChoice(player2, TivitSellerOfSecrets.EVIDENCE);
 
         assertThat(countPermanents(player1, "Clue")).isEqualTo(2);
         assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
@@ -41,12 +43,12 @@ class TivitSellerOfSecretsTest extends BaseCardTest {
     void controllerMayDeclineTheAdditionalVote() {
         castTivit();
 
-        harness.handleListChoice(player1, ChoiceContext.CouncilDilemmaChoice.EVIDENCE);
+        harness.handleListChoice(player1, TivitSellerOfSecrets.EVIDENCE);
         assertThat(activeAdditionalVote().playerId()).isEqualTo(player1.getId());
         harness.handleListChoice(player1, ChoiceContext.AdditionalVoteChoice.CONTINUE);
 
         assertThat(activeVote().playerId()).isEqualTo(player2.getId());
-        harness.handleListChoice(player2, ChoiceContext.CouncilDilemmaChoice.BRIBERY);
+        harness.handleListChoice(player2, TivitSellerOfSecrets.BRIBERY);
 
         assertThat(countPermanents(player1, "Clue")).isEqualTo(1);
         assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
@@ -60,9 +62,9 @@ class TivitSellerOfSecretsTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(activeVote().playerId()).isEqualTo(player1.getId());
-        harness.handleListChoice(player1, ChoiceContext.CouncilDilemmaChoice.EVIDENCE);
+        harness.handleListChoice(player1, TivitSellerOfSecrets.EVIDENCE);
         harness.handleListChoice(player1, ChoiceContext.AdditionalVoteChoice.CONTINUE);
-        harness.handleListChoice(player2, ChoiceContext.CouncilDilemmaChoice.BRIBERY);
+        harness.handleListChoice(player2, TivitSellerOfSecrets.BRIBERY);
 
         assertThat(countPermanents(player1, "Clue")).isEqualTo(1);
         assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
@@ -78,9 +80,9 @@ class TivitSellerOfSecretsTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(activeVote().playerId()).isEqualTo(player1.getId());
-        harness.handleListChoice(player1, ChoiceContext.CouncilDilemmaChoice.EVIDENCE);
+        harness.handleListChoice(player1, TivitSellerOfSecrets.EVIDENCE);
         assertThat(activeVote().playerId()).isEqualTo(player2.getId());
-        harness.handleListChoice(player2, ChoiceContext.CouncilDilemmaChoice.BRIBERY);
+        harness.handleListChoice(player2, TivitSellerOfSecrets.BRIBERY);
 
         assertThat(countPermanents(player1, "Clue")).isEqualTo(1);
         assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
@@ -97,16 +99,16 @@ class TivitSellerOfSecretsTest extends BaseCardTest {
         harness.castSorcery(player1, 0);
         resolveAllTriggers();
 
-        harness.handleListChoice(player1, ChoiceContext.PleaForPowerChoice.TIME);
+        harness.handleListChoice(player1, PleaForPower.TIME);
         assertThat(activeAdditionalVote().playerId()).isEqualTo(player1.getId());
         harness.handleListChoice(player1, ChoiceContext.AdditionalVoteChoice.VOTE_AGAIN);
         PendingInteraction.ColorChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.playerId()).isEqualTo(player1.getId());
-        assertThat(choice.options()).containsExactlyElementsOf(ChoiceContext.PleaForPowerChoice.OPTIONS);
-        harness.handleListChoice(player1, ChoiceContext.PleaForPowerChoice.TIME);
-        harness.handleListChoice(player2, ChoiceContext.PleaForPowerChoice.KNOWLEDGE);
+        assertThat(choice.options()).containsExactlyElementsOf(List.of(PleaForPower.TIME, PleaForPower.KNOWLEDGE));
+        harness.handleListChoice(player1, PleaForPower.TIME);
+        harness.handleListChoice(player2, PleaForPower.KNOWLEDGE);
 
         assertThat(gd.extraTurns).containsExactly(player1.getId());
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -123,12 +125,12 @@ class TivitSellerOfSecretsTest extends BaseCardTest {
         harness.castSorcery(player1, 0);
         resolveAllTriggers();
 
-        harness.handleListChoice(player1, ChoiceContext.PleaForPowerChoice.TIME);
+        harness.handleListChoice(player1, PleaForPower.TIME);
         harness.handleListChoice(player1, ChoiceContext.AdditionalVoteChoice.CONTINUE);
         PendingInteraction.ColorChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice.playerId()).isEqualTo(player2.getId());
-        harness.handleListChoice(player2, ChoiceContext.PleaForPowerChoice.KNOWLEDGE);
+        harness.handleListChoice(player2, PleaForPower.KNOWLEDGE);
 
         assertThat(gd.extraTurns).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
@@ -145,9 +147,9 @@ class TivitSellerOfSecretsTest extends BaseCardTest {
         harness.castSorcery(player1, 0);
         resolveAllTriggers();
 
-        harness.handleListChoice(player1, ChoiceContext.PleaForPowerChoice.KNOWLEDGE);
+        harness.handleListChoice(player1, PleaForPower.KNOWLEDGE);
         harness.handleListChoice(player1, ChoiceContext.AdditionalVoteChoice.CONTINUE);
-        harness.handleListChoice(player2, ChoiceContext.PleaForPowerChoice.TIME);
+        harness.handleListChoice(player2, PleaForPower.TIME);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
@@ -160,10 +162,10 @@ class TivitSellerOfSecretsTest extends BaseCardTest {
                 new TivitSellerOfSecrets(), new TivitSellerOfSecrets(), new TivitSellerOfSecrets()));
         castTivit();
 
-        harness.handleListChoice(player1, ChoiceContext.CouncilDilemmaChoice.EVIDENCE);
+        harness.handleListChoice(player1, TivitSellerOfSecrets.EVIDENCE);
         harness.handleListChoice(player1, ChoiceContext.AdditionalVoteChoice.VOTE_AGAIN);
-        harness.handleListChoice(player1, ChoiceContext.CouncilDilemmaChoice.EVIDENCE);
-        harness.handleListChoice(player2, ChoiceContext.CouncilDilemmaChoice.EVIDENCE);
+        harness.handleListChoice(player1, TivitSellerOfSecrets.EVIDENCE);
+        harness.handleListChoice(player2, TivitSellerOfSecrets.EVIDENCE);
         resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Clue")).isEqualTo(3);
@@ -178,10 +180,10 @@ class TivitSellerOfSecretsTest extends BaseCardTest {
                 new TivitSellerOfSecrets(), new TivitSellerOfSecrets(), new TivitSellerOfSecrets()));
         castTivit();
 
-        harness.handleListChoice(player1, ChoiceContext.CouncilDilemmaChoice.BRIBERY);
+        harness.handleListChoice(player1, TivitSellerOfSecrets.BRIBERY);
         harness.handleListChoice(player1, ChoiceContext.AdditionalVoteChoice.VOTE_AGAIN);
-        harness.handleListChoice(player1, ChoiceContext.CouncilDilemmaChoice.BRIBERY);
-        harness.handleListChoice(player2, ChoiceContext.CouncilDilemmaChoice.BRIBERY);
+        harness.handleListChoice(player1, TivitSellerOfSecrets.BRIBERY);
+        harness.handleListChoice(player2, TivitSellerOfSecrets.BRIBERY);
         resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Clue")).isZero();
@@ -194,9 +196,9 @@ class TivitSellerOfSecretsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ModelOfUnity());
         castTivit();
 
-        harness.handleListChoice(player1, ChoiceContext.CouncilDilemmaChoice.EVIDENCE);
+        harness.handleListChoice(player1, TivitSellerOfSecrets.EVIDENCE);
         harness.handleListChoice(player1, ChoiceContext.AdditionalVoteChoice.CONTINUE);
-        harness.handleListChoice(player2, ChoiceContext.CouncilDilemmaChoice.EVIDENCE);
+        harness.handleListChoice(player2, TivitSellerOfSecrets.EVIDENCE);
         resolveAllTriggers();
 
         PendingInteraction.MayAbilityChoice choice =
@@ -218,12 +220,12 @@ class TivitSellerOfSecretsTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(activeVote().playerId()).isEqualTo(player2.getId());
-        harness.handleListChoice(player2, ChoiceContext.CouncilDilemmaChoice.BRIBERY);
+        harness.handleListChoice(player2, TivitSellerOfSecrets.BRIBERY);
         assertThat(activeAdditionalVote().playerId()).isEqualTo(player2.getId());
         harness.handleListChoice(player2, ChoiceContext.AdditionalVoteChoice.VOTE_AGAIN);
-        harness.handleListChoice(player2, ChoiceContext.CouncilDilemmaChoice.BRIBERY);
+        harness.handleListChoice(player2, TivitSellerOfSecrets.BRIBERY);
         assertThat(activeVote().playerId()).isEqualTo(player1.getId());
-        harness.handleListChoice(player1, ChoiceContext.CouncilDilemmaChoice.EVIDENCE);
+        harness.handleListChoice(player1, TivitSellerOfSecrets.EVIDENCE);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(tivit);
         assertThat(countPermanents(player2, "Clue")).isEqualTo(1);
@@ -246,7 +248,7 @@ class TivitSellerOfSecretsTest extends BaseCardTest {
         PendingInteraction.ColorChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.options()).containsExactlyElementsOf(ChoiceContext.CouncilDilemmaChoice.OPTIONS);
+        assertThat(choice.options()).containsExactlyElementsOf(List.of(TivitSellerOfSecrets.EVIDENCE, TivitSellerOfSecrets.BRIBERY));
         return choice;
     }
 

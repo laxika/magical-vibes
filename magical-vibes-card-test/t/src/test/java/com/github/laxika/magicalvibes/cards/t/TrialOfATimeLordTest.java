@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.c.ClockworkDroid;
 import com.github.laxika.magicalvibes.cards.m.ModelOfUnity;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -58,9 +57,9 @@ class TrialOfATimeLordTest extends BaseCardTest {
         advanceToNextChapter();
         harness.passBothPriorities();
 
-        harness.handleListChoice(player1, ChoiceContext.VoteForInnocentOrGuiltyChoice.GUILTY);
-        harness.handleListChoice(player2, ChoiceContext.VoteForInnocentOrGuiltyChoice.GUILTY);
-        harness.handleListChoice(player3, ChoiceContext.VoteForInnocentOrGuiltyChoice.INNOCENT);
+        harness.handleListChoice(player1, TrialOfATimeLord.GUILTY);
+        harness.handleListChoice(player2, TrialOfATimeLord.GUILTY);
+        harness.handleListChoice(player3, TrialOfATimeLord.INNOCENT);
 
         PendingInteraction.LibraryReorder reorder =
                 gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
@@ -84,8 +83,8 @@ class TrialOfATimeLordTest extends BaseCardTest {
         advanceToNextChapter();
         harness.passBothPriorities();
 
-        harness.handleListChoice(player1, ChoiceContext.VoteForInnocentOrGuiltyChoice.INNOCENT);
-        harness.handleListChoice(player2, ChoiceContext.VoteForInnocentOrGuiltyChoice.GUILTY);
+        harness.handleListChoice(player1, TrialOfATimeLord.INNOCENT);
+        harness.handleListChoice(player2, TrialOfATimeLord.GUILTY);
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(permanent -> permanent.getCard() == target.getCard());
@@ -165,11 +164,11 @@ class TrialOfATimeLordTest extends BaseCardTest {
         advanceToNextChapter();
         harness.passBothPriorities();
 
-        harness.handleListChoice(player1, ChoiceContext.VoteForInnocentOrGuiltyChoice.INNOCENT);
-        harness.handleListChoice(player2, ChoiceContext.VoteForInnocentOrGuiltyChoice.INNOCENT);
+        harness.handleListChoice(player1, TrialOfATimeLord.INNOCENT);
+        harness.handleListChoice(player2, TrialOfATimeLord.INNOCENT);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
         assertThat(gd.exiledCards).anyMatch(exiled -> exiled.card() == target.getCard());
-        harness.handleListChoice(player3, ChoiceContext.VoteForInnocentOrGuiltyChoice.GUILTY);
+        harness.handleListChoice(player3, TrialOfATimeLord.GUILTY);
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(permanent -> permanent.getCard() == target.getCard());
@@ -197,8 +196,8 @@ class TrialOfATimeLordTest extends BaseCardTest {
         PendingInteraction.ColorChoice firstVote =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(firstVote.playerId()).isEqualTo(player2.getId());
-        harness.handleListChoice(player2, ChoiceContext.VoteForInnocentOrGuiltyChoice.GUILTY);
-        harness.handleListChoice(player1, ChoiceContext.VoteForInnocentOrGuiltyChoice.GUILTY);
+        harness.handleListChoice(player2, TrialOfATimeLord.GUILTY);
+        harness.handleListChoice(player1, TrialOfATimeLord.GUILTY);
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(target.getCard());
         assertThat(gd.exiledCards).anyMatch(exiled -> exiled.card() == otherTarget.getCard());
@@ -217,8 +216,8 @@ class TrialOfATimeLordTest extends BaseCardTest {
         advanceToNextChapter();
         harness.passBothPriorities();
 
-        harness.handleListChoice(player1, ChoiceContext.VoteForInnocentOrGuiltyChoice.GUILTY);
-        harness.handleListChoice(player2, ChoiceContext.VoteForInnocentOrGuiltyChoice.GUILTY);
+        harness.handleListChoice(player1, TrialOfATimeLord.GUILTY);
+        harness.handleListChoice(player2, TrialOfATimeLord.GUILTY);
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(target.getCard());
         assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(target.getCard());
@@ -234,8 +233,8 @@ class TrialOfATimeLordTest extends BaseCardTest {
         advanceToNextChapter();
         harness.passBothPriorities();
 
-        harness.handleListChoice(player1, ChoiceContext.VoteForInnocentOrGuiltyChoice.INNOCENT);
-        harness.handleListChoice(player2, ChoiceContext.VoteForInnocentOrGuiltyChoice.INNOCENT);
+        harness.handleListChoice(player1, TrialOfATimeLord.INNOCENT);
+        harness.handleListChoice(player2, TrialOfATimeLord.INNOCENT);
         resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();

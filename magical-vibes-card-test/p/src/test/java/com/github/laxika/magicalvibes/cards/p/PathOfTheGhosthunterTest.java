@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.m.ModelOfUnity;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
@@ -37,8 +36,8 @@ class PathOfTheGhosthunterTest extends BaseCardTest {
     void createsXSpiritsAndPlaneswalksOnAPlaneswalkMajority() {
         cast(2);
 
-        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
-        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
+        harness.handleListChoice(player1, PathOfTheGhosthunter.PLANESWALK);
+        harness.handleListChoice(player2, PathOfTheGhosthunter.PLANESWALK);
 
         assertThat(findPermanents(player1, "Spirit")).hasSize(2);
         assertThat(gd.planechase.faceUp)
@@ -52,8 +51,8 @@ class PathOfTheGhosthunterTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(drawn));
         cast(1);
 
-        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
-        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.handleListChoice(player1, PathOfTheGhosthunter.PLANESWALK);
+        harness.handleListChoice(player2, PathOfTheGhosthunter.CHAOS);
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Spirit")).hasSize(1);
@@ -68,10 +67,10 @@ class PathOfTheGhosthunterTest extends BaseCardTest {
         cast(2);
 
         assertThat(findPermanents(player1, "Spirit")).hasSize(2);
-        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.handleListChoice(player1, PathOfTheGhosthunter.CHAOS);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
                 .isEqualTo(player2.getId());
-        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.handleListChoice(player2, PathOfTheGhosthunter.CHAOS);
         harness.passBothPriorities();
 
         assertThat(gd.planechase.faceUp).containsExactly(startingPlane);
@@ -84,8 +83,8 @@ class PathOfTheGhosthunterTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(drawn));
         cast(0);
 
-        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
-        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.handleListChoice(player1, PathOfTheGhosthunter.CHAOS);
+        harness.handleListChoice(player2, PathOfTheGhosthunter.CHAOS);
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Spirit")).isEmpty();
@@ -98,8 +97,8 @@ class PathOfTheGhosthunterTest extends BaseCardTest {
         gd.planechase = null;
         cast(3);
 
-        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
-        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
+        harness.handleListChoice(player1, PathOfTheGhosthunter.PLANESWALK);
+        harness.handleListChoice(player2, PathOfTheGhosthunter.PLANESWALK);
 
         assertThat(findPermanents(player1, "Spirit")).hasSize(3);
         assertThat(gd.stack).isEmpty();
@@ -111,8 +110,8 @@ class PathOfTheGhosthunterTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new ModelOfUnity());
         cast(0);
 
-        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
-        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.handleListChoice(player1, PathOfTheGhosthunter.CHAOS);
+        harness.handleListChoice(player2, PathOfTheGhosthunter.CHAOS);
         resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
@@ -135,7 +134,7 @@ class PathOfTheGhosthunterTest extends BaseCardTest {
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.options())
-                .containsExactlyElementsOf(ChoiceContext.WillOfThePlaneswalkersChoice.OPTIONS);
+                .containsExactlyElementsOf(List.of(PathOfTheGhosthunter.PLANESWALK, PathOfTheGhosthunter.CHAOS));
         assertThat(choice.playerId()).isEqualTo(player1.getId());
     }
 }

@@ -63,6 +63,10 @@ package com.github.laxika.magicalvibes.model;
  *   <li>{@link #GAIN_CONTROL}: the number of permanents whose controller the step changed
  *       ({@code GainControlOfTargetEffect}; one the gaining player already controlled is not counted), those
  *       permanents, the gaining player.</li>
+ *   <li>{@link #VOTE}: the number of votes cast ({@code VoteEffect}: an additional vote counts, CR 701.38d), nothing,
+ *       the voters in the order they voted, and each vote, who cast it and for what
+ *       ({@link StepOutcome#votes()}): "for each [option] vote" ({@code VotesFor}), "if [option] gets more votes"
+ *       ({@code VoteResult}).</li>
  * </ul>
  *
  * <p>A later step may read a step only if that step finishes before the next one starts (CR 608.2c): its handler never
@@ -89,7 +93,7 @@ package com.github.laxika.magicalvibes.model;
  * cards ({@code DiscardCardsEffect}: a replacement's question ends it) and the any-amount payment
  * ({@code EachPlayerPaysAnyManaEffect}: it resolves again at its own index for each answer and records after the last),
  * the shuffle of each player's zones into their library ({@code EachPlayerShufflesZonesIntoLibraryEffect}, never
- * prompting), the put onto the battlefield ({@code PutCardsOntoBattlefieldEffect}: its entry choices come before
+ * prompting), the vote ({@code VoteEffect}: it records as its last vote is cast), the put onto the battlefield ({@code PutCardsOntoBattlefieldEffect}: its entry choices come before
  * anything moves and it records as its batch enters); deal damage, return a card from a graveyard,
  * remove counters and return to hand only on the paths that
  * don't prompt mid-step. A handler that pauses mid-step by rerunning itself after changes, or by a continuation of its
@@ -122,5 +126,6 @@ public enum StepKind {
     SHUFFLE_INTO_LIBRARY,
     PUT_INTO_LIBRARY,
     GAIN_CONTROL,
-    NOTE
+    NOTE,
+    VOTE
 }

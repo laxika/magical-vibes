@@ -24,8 +24,8 @@ class TravelThroughCaradhrasTest extends BaseCardTest {
         Forest secondLand = new Forest();
         TravelThroughCaradhras spell = cast(List.of(firstLand, secondLand), List.of());
 
-        harness.handleListChoice(player1, ChoiceContext.TravelThroughCaradhrasChoice.REDHORN_PASS);
-        harness.handleListChoice(player2, ChoiceContext.TravelThroughCaradhrasChoice.REDHORN_PASS);
+        harness.handleListChoice(player1, TravelThroughCaradhras.REDHORN_PASS);
+        harness.handleListChoice(player2, TravelThroughCaradhras.REDHORN_PASS);
 
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
@@ -42,8 +42,8 @@ class TravelThroughCaradhrasTest extends BaseCardTest {
         Card secondCard = new GrizzlyBears();
         TravelThroughCaradhras spell = cast(List.of(), List.of(firstCard, secondCard));
 
-        harness.handleListChoice(player1, ChoiceContext.TravelThroughCaradhrasChoice.MINES_OF_MORIA);
-        harness.handleListChoice(player2, ChoiceContext.TravelThroughCaradhrasChoice.MINES_OF_MORIA);
+        harness.handleListChoice(player1, TravelThroughCaradhras.MINES_OF_MORIA);
+        harness.handleListChoice(player2, TravelThroughCaradhras.MINES_OF_MORIA);
 
         harness.handleGraveyardCardChosen(player1, 0);
         harness.handleGraveyardCardChosen(player1, 0);
@@ -62,8 +62,8 @@ class TravelThroughCaradhrasTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(opponentsCard));
         TravelThroughCaradhras spell = cast(List.of(land), List.of(recovered));
 
-        harness.handleListChoice(player1, ChoiceContext.TravelThroughCaradhrasChoice.MINES_OF_MORIA);
-        harness.handleListChoice(player2, ChoiceContext.TravelThroughCaradhrasChoice.REDHORN_PASS);
+        harness.handleListChoice(player1, TravelThroughCaradhras.MINES_OF_MORIA);
+        harness.handleListChoice(player2, TravelThroughCaradhras.REDHORN_PASS);
         harness.handleCardChosen(player1, 0);
         harness.handleGraveyardCardChosen(player1, 0);
 
@@ -78,8 +78,8 @@ class TravelThroughCaradhrasTest extends BaseCardTest {
     void emptyZonesStillExileSpell() {
         TravelThroughCaradhras spell = cast(List.of(), List.of());
 
-        harness.handleListChoice(player1, ChoiceContext.TravelThroughCaradhrasChoice.REDHORN_PASS);
-        harness.handleListChoice(player2, ChoiceContext.TravelThroughCaradhrasChoice.MINES_OF_MORIA);
+        harness.handleListChoice(player1, TravelThroughCaradhras.REDHORN_PASS);
+        harness.handleListChoice(player2, TravelThroughCaradhras.MINES_OF_MORIA);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
@@ -92,15 +92,15 @@ class TravelThroughCaradhrasTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TheValeyard());
         cast(List.of(), List.of());
 
-        harness.handleListChoice(player1, ChoiceContext.TravelThroughCaradhrasChoice.REDHORN_PASS);
+        harness.handleListChoice(player1, TravelThroughCaradhras.REDHORN_PASS);
         harness.handleListChoice(player1, ChoiceContext.AdditionalVoteChoice.VOTE_AGAIN);
 
         PendingInteraction.ColorChoice nextVote =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(nextVote).isNotNull();
         assertThat(nextVote.playerId()).isEqualTo(player1.getId());
-        harness.handleListChoice(player1, ChoiceContext.TravelThroughCaradhrasChoice.MINES_OF_MORIA);
-        harness.handleListChoice(player2, ChoiceContext.TravelThroughCaradhrasChoice.MINES_OF_MORIA);
+        harness.handleListChoice(player1, TravelThroughCaradhras.MINES_OF_MORIA);
+        harness.handleListChoice(player2, TravelThroughCaradhras.MINES_OF_MORIA);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -115,7 +115,7 @@ class TravelThroughCaradhrasTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.options())
-                .containsExactlyElementsOf(ChoiceContext.TravelThroughCaradhrasChoice.OPTIONS);
+                .containsExactlyElementsOf(List.of(TravelThroughCaradhras.REDHORN_PASS, TravelThroughCaradhras.MINES_OF_MORIA));
         return spell;
     }
 }

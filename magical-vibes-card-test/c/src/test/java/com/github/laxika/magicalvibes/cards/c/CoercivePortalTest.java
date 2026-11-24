@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -30,9 +29,9 @@ class CoercivePortalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(activeVote().playerId()).isEqualTo(player1.getId());
-        harness.handleListChoice(player1, ChoiceContext.CoercivePortalChoice.CARNAGE);
+        harness.handleListChoice(player1, CoercivePortal.CARNAGE);
         assertThat(activeVote().playerId()).isEqualTo(player2.getId());
-        harness.handleListChoice(player2, ChoiceContext.CoercivePortalChoice.HOMAGE);
+        harness.handleListChoice(player2, CoercivePortal.HOMAGE);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(portal);
         assertThat(gd.playerHands.get(player1.getId())).contains(forest);
@@ -48,8 +47,8 @@ class CoercivePortalTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, ChoiceContext.CoercivePortalChoice.CARNAGE);
-        harness.handleListChoice(player2, ChoiceContext.CoercivePortalChoice.CARNAGE);
+        harness.handleListChoice(player1, CoercivePortal.CARNAGE);
+        harness.handleListChoice(player2, CoercivePortal.CARNAGE);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(portal, player1Creature);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(player2Creature);
@@ -68,8 +67,8 @@ class CoercivePortalTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, ChoiceContext.CoercivePortalChoice.HOMAGE);
-        harness.handleListChoice(player2, ChoiceContext.CoercivePortalChoice.HOMAGE);
+        harness.handleListChoice(player1, CoercivePortal.HOMAGE);
+        harness.handleListChoice(player2, CoercivePortal.HOMAGE);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second);
@@ -89,9 +88,9 @@ class CoercivePortalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(activeVote().playerId()).isEqualTo(player2.getId());
-        harness.handleListChoice(player2, ChoiceContext.CoercivePortalChoice.HOMAGE);
+        harness.handleListChoice(player2, CoercivePortal.HOMAGE);
         assertThat(activeVote().playerId()).isEqualTo(player1.getId());
-        harness.handleListChoice(player1, ChoiceContext.CoercivePortalChoice.CARNAGE);
+        harness.handleListChoice(player1, CoercivePortal.CARNAGE);
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(forest);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -125,8 +124,8 @@ class CoercivePortalTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Coercive Portal");
         harness.passBothPriorities();
 
-        String vote = carnage ? ChoiceContext.CoercivePortalChoice.CARNAGE
-                : ChoiceContext.CoercivePortalChoice.HOMAGE;
+        String vote = carnage ? CoercivePortal.CARNAGE
+                : CoercivePortal.HOMAGE;
         harness.handleListChoice(player1, vote);
         harness.handleListChoice(player2, vote);
 
@@ -145,7 +144,7 @@ class CoercivePortalTest extends BaseCardTest {
         PendingInteraction.ColorChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.options()).containsExactlyElementsOf(ChoiceContext.CoercivePortalChoice.OPTIONS);
+        assertThat(choice.options()).containsExactlyElementsOf(List.of(CoercivePortal.CARNAGE, CoercivePortal.HOMAGE));
         return choice;
     }
 }

@@ -1168,11 +1168,6 @@ public class GameData {
      * time"; a declined offer counts as every one of them taken, so it isn't offered again.
      */
     public final Map<UUID, Integer> additionalVotesTaken = new ConcurrentHashMap<>();
-    /**
-     * Answer to an additional-vote offer made by a vote that reruns its effect to read it (Truth or
-     * Consequences); {@code null} while no answer is waiting.
-     */
-    public Boolean additionalVoteAccepted;
     public PendingReverseMiracleSearch pendingReverseMiracleSearch;
     /** CR 603.5 — set when a MayEffect is encountered during stack resolution, cleared after player responds. */
     public boolean resolvingMayEffectFromStack;
@@ -1334,8 +1329,6 @@ public class GameData {
     public final EachPlayerPayManaState eachPlayerPayMana = new EachPlayerPayManaState();
     /** Progress state for Goblin Game's hidden item-count choices. */
     public final GoblinGameState goblinGame = new GoblinGameState();
-    /** Progress state for Truth or Consequences' hidden votes. */
-    public final TruthOrConsequencesState truthOrConsequences = new TruthOrConsequencesState();
     /** Progress state for Expert-Level Safe's two-player hidden-number choice. */
     public final ExpertLevelSafeState expertLevelSafe = new ExpertLevelSafeState();
     /** Progress state for Illicit Auction's "each player may bid life for control" auction. */
@@ -9821,7 +9814,6 @@ public class GameData {
             copy.votingChoicesByController.put(controllerId, choicesCopy);
         });
         copy.additionalVotesTaken.putAll(this.additionalVotesTaken);
-        copy.additionalVoteAccepted = this.additionalVoteAccepted;
         copy.wordOfCommandPendingResolutionEntry = this.wordOfCommandPendingResolutionEntry != null
                 ? new StackEntry(this.wordOfCommandPendingResolutionEntry) : null;
         copy.pendingReverseMiracleSearch = this.pendingReverseMiracleSearch;
@@ -9967,12 +9959,6 @@ public class GameData {
         copy.goblinGame.index = this.goblinGame.index;
         copy.goblinGame.itemCounts.putAll(this.goblinGame.itemCounts);
         copy.goblinGame.currentPlayerId = this.goblinGame.currentPlayerId;
-        copy.truthOrConsequences.active = this.truthOrConsequences.active;
-        copy.truthOrConsequences.order.addAll(this.truthOrConsequences.order);
-        copy.truthOrConsequences.index = this.truthOrConsequences.index;
-        copy.truthOrConsequences.choices.putAll(this.truthOrConsequences.choices);
-        copy.truthOrConsequences.voteChoices.addAll(this.truthOrConsequences.voteChoices);
-        copy.truthOrConsequences.currentPlayerId = this.truthOrConsequences.currentPlayerId;
         copy.expertLevelSafe.active = this.expertLevelSafe.active;
         copy.expertLevelSafe.sourcePermanentId = this.expertLevelSafe.sourcePermanentId;
         copy.expertLevelSafe.controllerId = this.expertLevelSafe.controllerId;

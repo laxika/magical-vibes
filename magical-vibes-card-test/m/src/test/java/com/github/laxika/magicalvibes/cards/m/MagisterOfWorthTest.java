@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -26,9 +25,9 @@ class MagisterOfWorthTest extends BaseCardTest {
         castMagister(new MagisterOfWorth());
 
         assertThat(activeVote().playerId()).isEqualTo(player1.getId());
-        harness.handleListChoice(player1, ChoiceContext.GraceOrCondemnationChoice.GRACE);
+        harness.handleListChoice(player1, MagisterOfWorth.GRACE);
         assertThat(activeVote().playerId()).isEqualTo(player2.getId());
-        harness.handleListChoice(player2, ChoiceContext.GraceOrCondemnationChoice.GRACE);
+        harness.handleListChoice(player2, MagisterOfWorth.GRACE);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == player1Creature);
@@ -49,8 +48,8 @@ class MagisterOfWorthTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard() == magister)
                 .findFirst().orElseThrow();
 
-        harness.handleListChoice(player1, ChoiceContext.GraceOrCondemnationChoice.GRACE);
-        harness.handleListChoice(player2, ChoiceContext.GraceOrCondemnationChoice.CONDEMNATION);
+        harness.handleListChoice(player1, MagisterOfWorth.GRACE);
+        harness.handleListChoice(player2, MagisterOfWorth.CONDEMNATION);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(source);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(player1Creature);
@@ -68,12 +67,12 @@ class MagisterOfWorthTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(opposingArtifact, opposingCreature));
         castMagister(new MagisterOfWorth());
 
-        harness.handleListChoice(player1, ChoiceContext.GraceOrCondemnationChoice.GRACE);
+        harness.handleListChoice(player1, MagisterOfWorth.GRACE);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .containsExactly(firstCreature, firstArtifact, secondCreature);
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .containsExactly(opposingArtifact, opposingCreature);
-        harness.handleListChoice(player2, ChoiceContext.GraceOrCondemnationChoice.GRACE);
+        harness.handleListChoice(player2, MagisterOfWorth.GRACE);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(Permanent::getCard).contains(firstCreature, secondCreature);
@@ -93,10 +92,10 @@ class MagisterOfWorthTest extends BaseCardTest {
         Card source = new MagisterOfWorth();
         castMagister(source);
 
-        harness.handleListChoice(player1, ChoiceContext.GraceOrCondemnationChoice.CONDEMNATION);
+        harness.handleListChoice(player1, MagisterOfWorth.CONDEMNATION);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(otherMagister, artifact);
-        harness.handleListChoice(player2, ChoiceContext.GraceOrCondemnationChoice.CONDEMNATION);
+        harness.handleListChoice(player2, MagisterOfWorth.CONDEMNATION);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(Permanent::getCard).containsExactly(source);
@@ -114,8 +113,8 @@ class MagisterOfWorthTest extends BaseCardTest {
         Card source = new MagisterOfWorth();
         castMagister(source);
 
-        harness.handleListChoice(player1, ChoiceContext.GraceOrCondemnationChoice.GRACE);
-        harness.handleListChoice(player2, ChoiceContext.GraceOrCondemnationChoice.GRACE);
+        harness.handleListChoice(player1, MagisterOfWorth.GRACE);
+        harness.handleListChoice(player2, MagisterOfWorth.GRACE);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(Permanent::getCard).containsExactly(source);
@@ -135,7 +134,7 @@ class MagisterOfWorthTest extends BaseCardTest {
         PendingInteraction.ColorChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.options()).containsExactlyElementsOf(ChoiceContext.GraceOrCondemnationChoice.OPTIONS);
+        assertThat(choice.options()).containsExactlyElementsOf(List.of(MagisterOfWorth.GRACE, MagisterOfWorth.CONDEMNATION));
         return choice;
     }
 }

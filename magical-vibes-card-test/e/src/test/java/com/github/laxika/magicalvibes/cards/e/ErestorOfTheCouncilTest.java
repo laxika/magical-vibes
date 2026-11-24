@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.c.CommandTower;
 import com.github.laxika.magicalvibes.cards.p.PleaForPower;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -24,8 +23,8 @@ class ErestorOfTheCouncilTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new ErestorOfTheCouncil());
         castPleaForPower();
 
-        harness.handleListChoice(player1, ChoiceContext.PleaForPowerChoice.TIME);
-        harness.handleListChoice(player2, ChoiceContext.PleaForPowerChoice.TIME);
+        harness.handleListChoice(player1, PleaForPower.TIME);
+        harness.handleListChoice(player2, PleaForPower.TIME);
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Treasure")).isZero();
@@ -43,8 +42,8 @@ class ErestorOfTheCouncilTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new ErestorOfTheCouncil());
         castPleaForPower();
 
-        harness.handleListChoice(player1, ChoiceContext.PleaForPowerChoice.TIME);
-        harness.handleListChoice(player2, ChoiceContext.PleaForPowerChoice.KNOWLEDGE);
+        harness.handleListChoice(player1, PleaForPower.TIME);
+        harness.handleListChoice(player2, PleaForPower.KNOWLEDGE);
         harness.passBothPriorities();
 
         PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
@@ -68,8 +67,8 @@ class ErestorOfTheCouncilTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new ErestorOfTheCouncil());
         castPleaForPower();
 
-        harness.handleListChoice(player1, ChoiceContext.PleaForPowerChoice.TIME);
-        harness.handleListChoice(player2, ChoiceContext.PleaForPowerChoice.KNOWLEDGE);
+        harness.handleListChoice(player1, PleaForPower.TIME);
+        harness.handleListChoice(player2, PleaForPower.KNOWLEDGE);
         harness.passBothPriorities();
 
         PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
@@ -92,8 +91,8 @@ class ErestorOfTheCouncilTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player2, new ErestorOfTheCouncil());
         castPleaForPower();
 
-        harness.handleListChoice(player1, ChoiceContext.PleaForPowerChoice.TIME);
-        harness.handleListChoice(player2, ChoiceContext.PleaForPowerChoice.TIME);
+        harness.handleListChoice(player1, PleaForPower.TIME);
+        harness.handleListChoice(player2, PleaForPower.TIME);
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);

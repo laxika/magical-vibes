@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -38,8 +37,8 @@ class ModelOfUnityTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new ModelOfUnity());
         castPleaForPower();
 
-        harness.handleListChoice(player1, ChoiceContext.PleaForPowerChoice.TIME);
-        harness.handleListChoice(player2, ChoiceContext.PleaForPowerChoice.TIME);
+        harness.handleListChoice(player1, PleaForPower.TIME);
+        harness.handleListChoice(player2, PleaForPower.TIME);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -61,8 +60,8 @@ class ModelOfUnityTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new ModelOfUnity());
         castPleaForPower();
 
-        harness.handleListChoice(player1, ChoiceContext.PleaForPowerChoice.TIME);
-        harness.handleListChoice(player2, ChoiceContext.PleaForPowerChoice.KNOWLEDGE);
+        harness.handleListChoice(player1, PleaForPower.TIME);
+        harness.handleListChoice(player2, PleaForPower.KNOWLEDGE);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -82,8 +81,8 @@ class ModelOfUnityTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new ModelOfUnity());
         castPleaForPower();
 
-        harness.handleListChoice(player1, ChoiceContext.PleaForPowerChoice.TIME);
-        harness.handleListChoice(player2, ChoiceContext.PleaForPowerChoice.TIME);
+        harness.handleListChoice(player1, PleaForPower.TIME);
+        harness.handleListChoice(player2, PleaForPower.TIME);
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, false);
@@ -107,8 +106,8 @@ class ModelOfUnityTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player2, new ModelOfUnity());
         castPleaForPower();
 
-        harness.handleListChoice(player1, ChoiceContext.PleaForPowerChoice.KNOWLEDGE);
-        harness.handleListChoice(player2, ChoiceContext.PleaForPowerChoice.TIME);
+        harness.handleListChoice(player1, PleaForPower.KNOWLEDGE);
+        harness.handleListChoice(player2, PleaForPower.TIME);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())

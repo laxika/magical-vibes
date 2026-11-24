@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsDelved;
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedByTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedOrCycledThisTurn;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.amount.VotesFor;
 import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisResolution;
 import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsExiledWithSource;
@@ -578,6 +579,8 @@ public class AmountEvaluationService {
                     ctx.stackEntry() == null ? 0 : ctx.stackEntry().getDrawnCardIdsThisResolution().size();
             case AmountThisWay thisWay ->
                     ctx.stackEntry() == null ? 0 : amountThisWay(gameData, ctx, thisWay);
+            case VotesFor votes -> ctx.stackEntry() == null ? 0
+                    : ctx.stackEntry().getResolutionResults().outcome(StepKind.VOTE).votesFor(votes.option());
             case CardsDrawnThisTurn c ->
                     countCardsDrawnThisTurn(gameData, c, ctx);
             case OpponentsWithAtLeastCardsDrawnThisTurn c ->

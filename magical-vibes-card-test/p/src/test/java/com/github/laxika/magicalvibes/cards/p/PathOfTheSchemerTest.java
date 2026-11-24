@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RecklessFireweaver;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -68,8 +67,8 @@ class PathOfTheSchemerTest extends BaseCardTest {
         var reanimated = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.isArtifact(gd, reanimated)).isTrue();
 
-        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
-        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
+        harness.handleListChoice(player1, PathOfTheSchemer.PLANESWALK);
+        harness.handleListChoice(player2, PathOfTheSchemer.PLANESWALK);
 
         assertThat(gd.planechase.faceUp).noneMatch(object -> object == startingPlane).hasSize(1);
     }
@@ -83,8 +82,8 @@ class PathOfTheSchemerTest extends BaseCardTest {
 
         cast();
         harness.handleGraveyardCardChosen(player1, 0);
-        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
-        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.handleListChoice(player1, PathOfTheSchemer.PLANESWALK);
+        harness.handleListChoice(player2, PathOfTheSchemer.CHAOS);
         harness.passBothPriorities();
 
         assertThat(gd.planechase.faceUp).containsExactly(startingPlane);
@@ -102,8 +101,8 @@ class PathOfTheSchemerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, -1))
                 .isInstanceOf(IllegalStateException.class);
         harness.handleGraveyardCardChosen(player1, 0);
-        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
-        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.handleListChoice(player1, PathOfTheSchemer.CHAOS);
+        harness.handleListChoice(player2, PathOfTheSchemer.CHAOS);
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
@@ -123,8 +122,8 @@ class PathOfTheSchemerTest extends BaseCardTest {
         assertThat(gqs.isArtifact(gd, returned)).isTrue();
         assertThat(gqs.isCreature(gd, returned)).isTrue();
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
-        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
-        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.handleListChoice(player1, PathOfTheSchemer.CHAOS);
+        harness.handleListChoice(player2, PathOfTheSchemer.CHAOS);
         harness.passBothPriorities();
     }
 
@@ -139,9 +138,9 @@ class PathOfTheSchemerTest extends BaseCardTest {
 
         cast();
         harness.handleListChoice(player1, tiedVote
-                ? ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK
-                : ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
-        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+                ? PathOfTheSchemer.PLANESWALK
+                : PathOfTheSchemer.CHAOS);
+        harness.handleListChoice(player2, PathOfTheSchemer.CHAOS);
         harness.passBothPriorities();
 
         assertThat(gd.planechase.faceUp).containsExactly(startingPlane);
@@ -161,8 +160,8 @@ class PathOfTheSchemerTest extends BaseCardTest {
 
         cast();
         harness.handleGraveyardCardChosen(player1, 0);
-        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
-        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.handleListChoice(player1, PathOfTheSchemer.CHAOS);
+        harness.handleListChoice(player2, PathOfTheSchemer.CHAOS);
         harness.passBothPriorities();
         harness.passBothPriorities();
 

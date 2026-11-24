@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -48,8 +47,8 @@ class PathOfThePyromancerTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(drawn);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(discardedOne, discardedTwo);
 
-        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
-        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.handleListChoice(player1, PathOfThePyromancer.CHAOS);
+        harness.handleListChoice(player2, PathOfThePyromancer.CHAOS);
         harness.passBothPriorities();
     }
 
@@ -67,27 +66,27 @@ class PathOfThePyromancerTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
 
-        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
-        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.handleListChoice(player1, PathOfThePyromancer.CHAOS);
+        harness.handleListChoice(player2, PathOfThePyromancer.CHAOS);
         harness.passBothPriorities();
     }
 
     @Test
     void planeswalkMajorityChangesThePlane() {
-        verifyVoteOutcome(ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK,
-                ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK, true);
+        verifyVoteOutcome(PathOfThePyromancer.PLANESWALK,
+                PathOfThePyromancer.PLANESWALK, true);
     }
 
     @Test
     void chaosMajorityTriggersChaosWithoutPlaneswalking() {
-        verifyVoteOutcome(ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS,
-                ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS, false);
+        verifyVoteOutcome(PathOfThePyromancer.CHAOS,
+                PathOfThePyromancer.CHAOS, false);
     }
 
     @Test
     void tiedVoteTriggersChaosWithoutPlaneswalking() {
-        verifyVoteOutcome(ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK,
-                ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS, false);
+        verifyVoteOutcome(PathOfThePyromancer.PLANESWALK,
+                PathOfThePyromancer.CHAOS, false);
     }
 
     @Test
@@ -101,8 +100,8 @@ class PathOfThePyromancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castAndResolveSorcery(player1, 0, 0);
-        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
-        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
+        harness.handleListChoice(player1, PathOfThePyromancer.PLANESWALK);
+        harness.handleListChoice(player2, PathOfThePyromancer.PLANESWALK);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(drawn);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);

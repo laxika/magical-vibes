@@ -2433,78 +2433,6 @@ public sealed interface ChoiceContext {
         }
     }
 
-    /** Plea for Power: the current player voted for time or knowledge. */
-    record PleaForPowerChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
-                              Map<String, Integer> votes, String sourceName)
-            implements ChoiceContext, VoteChoiceContext {
-        public static final String TIME = "Time";
-        public static final String KNOWLEDGE = "Knowledge";
-        public static final List<String> OPTIONS = List.of(TIME, KNOWLEDGE);
-
-        public PleaForPowerChoice {
-            remainingPlayerIds = List.copyOf(remainingPlayerIds);
-            votes = Map.copyOf(votes);
-        }
-
-        @Override
-        public List<UUID> remainingVoterIds() {
-            return remainingPlayerIds;
-        }
-
-        @Override
-        public PleaForPowerChoice withRemainingVoterIds(List<UUID> remainingVoterIds) {
-            return new PleaForPowerChoice(effectControllerId, remainingVoterIds, votes, sourceName);
-        }
-    }
-
-    /** Travel Through Caradhras: the current player voted for Redhorn Pass or Mines of Moria. */
-    record TravelThroughCaradhrasChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
-                                        int redhornPassVotes, int minesOfMoriaVotes,
-                                        String sourceName) implements ChoiceContext, VoteChoiceContext {
-        public static final String REDHORN_PASS = "Redhorn Pass";
-        public static final String MINES_OF_MORIA = "Mines of Moria";
-        public static final List<String> OPTIONS = List.of(REDHORN_PASS, MINES_OF_MORIA);
-
-        public TravelThroughCaradhrasChoice {
-            remainingPlayerIds = List.copyOf(remainingPlayerIds);
-        }
-
-        @Override
-        public List<UUID> remainingVoterIds() {
-            return remainingPlayerIds;
-        }
-
-        @Override
-        public TravelThroughCaradhrasChoice withRemainingVoterIds(List<UUID> remainingVoterIds) {
-            return new TravelThroughCaradhrasChoice(effectControllerId, remainingVoterIds,
-                    redhornPassVotes, minesOfMoriaVotes, sourceName);
-        }
-    }
-
-    /** Sail into the West: the current player voted for return or embark. */
-    record SailIntoTheWestChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
-                                 int returnVotes, int embarkVotes, String sourceName)
-            implements ChoiceContext, VoteChoiceContext {
-        public static final String RETURN = "Return";
-        public static final String EMBARK = "Embark";
-        public static final List<String> OPTIONS = List.of(RETURN, EMBARK);
-
-        public SailIntoTheWestChoice {
-            remainingPlayerIds = List.copyOf(remainingPlayerIds);
-        }
-
-        @Override
-        public List<UUID> remainingVoterIds() {
-            return remainingPlayerIds;
-        }
-
-        @Override
-        public SailIntoTheWestChoice withRemainingVoterIds(List<UUID> remainingVoterIds) {
-            return new SailIntoTheWestChoice(effectControllerId, remainingVoterIds,
-                    returnVotes, embarkVotes, sourceName);
-        }
-    }
-
     /** Master of Ceremonies: the current opponent chooses money, friends, or secrets. */
     record MasterOfCeremoniesChoice(UUID effectControllerId, List<UUID> remainingOpponentIds,
                                     List<UUID> moneyPlayerIds, List<UUID> friendsPlayerIds,
@@ -2560,35 +2488,37 @@ public sealed interface ChoiceContext {
         }
     }
 
-    /** Tivit: the current player voted for evidence or bribery. */
-    record CouncilDilemmaChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
-                                int evidenceVotes, int briberyVotes, String sourceName)
+    /**
+     * A {@code VoteEffect}'s vote: the voter answering chooses one of {@code options} (CR 701.38a); the votes cast
+     * before it, {@code votes}, are kept here until the last one is cast, as a secret vote's are hidden until then.
+     *
+     * @param effectControllerId the vote's controller, whose "players finish voting" event it is
+     * @param remainingVoterIds  the players still to vote after this answer, in voting order
+     * @param votes              the votes cast so far
+     * @param options            the words voted for
+     * @param secret             whether the votes are revealed only after the last one
+     * @param sourceName         the vote's source as every player reads it
+     */
+    record VoteChoice(UUID effectControllerId, List<UUID> remainingVoterIds, List<StepOutcome.Vote> votes,
+                      List<String> options, boolean secret, String sourceName)
             implements ChoiceContext, VoteChoiceContext {
-        public static final String EVIDENCE = "Evidence";
-        public static final String BRIBERY = "Bribery";
-        public static final List<String> OPTIONS = List.of(EVIDENCE, BRIBERY);
 
-        public CouncilDilemmaChoice {
-            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+        public VoteChoice {
+            remainingVoterIds = List.copyOf(remainingVoterIds);
+            votes = List.copyOf(votes);
+            options = List.copyOf(options);
         }
 
         @Override
-        public List<UUID> remainingVoterIds() {
-            return remainingPlayerIds;
-        }
-
-        @Override
-        public CouncilDilemmaChoice withRemainingVoterIds(List<UUID> remainingVoterIds) {
-            return new CouncilDilemmaChoice(effectControllerId, remainingVoterIds,
-                    evidenceVotes, briberyVotes, sourceName);
+        public VoteChoice withRemainingVoterIds(List<UUID> remainingVoterIds) {
+            return new VoteChoice(effectControllerId, remainingVoterIds, votes, options, secret, sourceName);
         }
     }
 
     /**
      * "While voting, you may vote an additional time": the voter who just answered {@code answeredVote}
      * with {@code answer} (a word vote) or {@code selectedIds} (a vote for objects or players) chooses
-     * whether to vote again before that vote is counted. A {@code null} {@code answeredVote} belongs to a
-     * vote that keeps its own progress and reruns its effect for the answer (Truth or Consequences).
+     * whether to vote again before that vote is counted.
      */
     record AdditionalVoteChoice(UUID voterId, PendingInteraction answeredVote, String answer,
                                 List<UUID> selectedIds, String sourceName) implements ChoiceContext {
@@ -2654,175 +2584,6 @@ public sealed interface ChoiceContext {
         @Override
         public FatefulTempestChoice withRemainingVoterIds(List<UUID> remainingVoterIds) {
             return new FatefulTempestChoice(effectControllerId, remainingVoterIds, votes, sourceName);
-        }
-    }
-
-    /** Selvala's Stampede: the current player voted for wild or free. */
-    record SelvalasStampedeChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
-                                  Map<String, Integer> votes, String sourceName)
-            implements ChoiceContext, VoteChoiceContext {
-        public static final String WILD = "Wild";
-        public static final String FREE = "Free";
-        public static final List<String> OPTIONS = List.of(WILD, FREE);
-
-        public SelvalasStampedeChoice {
-            remainingPlayerIds = List.copyOf(remainingPlayerIds);
-            votes = Map.copyOf(votes);
-        }
-
-        @Override
-        public List<UUID> remainingVoterIds() {
-            return remainingPlayerIds;
-        }
-
-        @Override
-        public SelvalasStampedeChoice withRemainingVoterIds(List<UUID> remainingVoterIds) {
-            return new SelvalasStampedeChoice(effectControllerId, remainingVoterIds, votes, sourceName);
-        }
-    }
-
-    /** Split Decision: the current player voted for denial or duplication. */
-    record VoteForDenialOrDuplicationChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
-                                             Map<String, Integer> votes, String sourceName)
-            implements ChoiceContext, VoteChoiceContext {
-        public static final String DENIAL = "Denial";
-        public static final String DUPLICATION = "Duplication";
-        public static final List<String> OPTIONS = List.of(DENIAL, DUPLICATION);
-
-        public VoteForDenialOrDuplicationChoice {
-            remainingPlayerIds = List.copyOf(remainingPlayerIds);
-            votes = Map.copyOf(votes);
-        }
-
-        @Override
-        public List<UUID> remainingVoterIds() {
-            return remainingPlayerIds;
-        }
-
-        @Override
-        public VoteForDenialOrDuplicationChoice withRemainingVoterIds(List<UUID> remainingVoterIds) {
-            return new VoteForDenialOrDuplicationChoice(effectControllerId, remainingVoterIds,
-                    votes, sourceName);
-        }
-    }
-
-    /** Tyrant's Choice: the current player voted for death or torture. */
-    record TyrantsChoiceChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
-                               Map<String, Integer> votes, String sourceName)
-            implements ChoiceContext, VoteChoiceContext {
-        public static final String DEATH = "Death";
-        public static final String TORTURE = "Torture";
-        public static final List<String> OPTIONS = List.of(DEATH, TORTURE);
-
-        public TyrantsChoiceChoice {
-            remainingPlayerIds = List.copyOf(remainingPlayerIds);
-            votes = Map.copyOf(votes);
-        }
-
-        @Override
-        public List<UUID> remainingVoterIds() {
-            return remainingPlayerIds;
-        }
-
-        @Override
-        public TyrantsChoiceChoice withRemainingVoterIds(List<UUID> remainingVoterIds) {
-            return new TyrantsChoiceChoice(effectControllerId, remainingVoterIds, votes, sourceName);
-        }
-    }
-
-    /** Magister of Worth: the current player voted for grace or condemnation. */
-    record GraceOrCondemnationChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
-                                     Map<String, Integer> votes, String sourceName)
-            implements ChoiceContext, VoteChoiceContext {
-        public static final String GRACE = "Grace";
-        public static final String CONDEMNATION = "Condemnation";
-        public static final List<String> OPTIONS = List.of(GRACE, CONDEMNATION);
-
-        public GraceOrCondemnationChoice {
-            remainingPlayerIds = List.copyOf(remainingPlayerIds);
-            votes = Map.copyOf(votes);
-        }
-
-        @Override
-        public List<UUID> remainingVoterIds() {
-            return remainingPlayerIds;
-        }
-
-        @Override
-        public GraceOrCondemnationChoice withRemainingVoterIds(List<UUID> remainingVoterIds) {
-            return new GraceOrCondemnationChoice(effectControllerId, remainingVoterIds, votes, sourceName);
-        }
-    }
-
-    /** Coercive Portal: the current player voted for carnage or homage. */
-    record CoercivePortalChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
-                                Map<String, Integer> votes, String sourceName)
-            implements ChoiceContext, VoteChoiceContext {
-        public static final String CARNAGE = "Carnage";
-        public static final String HOMAGE = "Homage";
-        public static final List<String> OPTIONS = List.of(CARNAGE, HOMAGE);
-
-        public CoercivePortalChoice {
-            remainingPlayerIds = List.copyOf(remainingPlayerIds);
-            votes = Map.copyOf(votes);
-        }
-
-        @Override
-        public List<UUID> remainingVoterIds() {
-            return remainingPlayerIds;
-        }
-
-        @Override
-        public CoercivePortalChoice withRemainingVoterIds(List<UUID> remainingVoterIds) {
-            return new CoercivePortalChoice(effectControllerId, remainingVoterIds, votes, sourceName);
-        }
-    }
-
-    /** Path of the Ghosthunter: the current player voted for planeswalk or chaos. */
-    record WillOfThePlaneswalkersChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
-                                        Map<String, Integer> votes, String sourceName)
-            implements ChoiceContext, VoteChoiceContext {
-        public static final String PLANESWALK = "Planeswalk";
-        public static final String CHAOS = "Chaos";
-        public static final List<String> OPTIONS = List.of(PLANESWALK, CHAOS);
-
-        public WillOfThePlaneswalkersChoice {
-            remainingPlayerIds = List.copyOf(remainingPlayerIds);
-            votes = Map.copyOf(votes);
-        }
-
-        @Override
-        public List<UUID> remainingVoterIds() {
-            return remainingPlayerIds;
-        }
-
-        @Override
-        public WillOfThePlaneswalkersChoice withRemainingVoterIds(List<UUID> remainingVoterIds) {
-            return new WillOfThePlaneswalkersChoice(effectControllerId, remainingVoterIds, votes, sourceName);
-        }
-    }
-
-    /** Galadriel, Elven-Queen: the current player voted for dominion or guidance. */
-    record GaladrielElvenQueenChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
-                                     Map<String, Integer> votes, String sourceName)
-            implements ChoiceContext, VoteChoiceContext {
-        public static final String DOMINION = "Dominion";
-        public static final String GUIDANCE = "Guidance";
-        public static final List<String> OPTIONS = List.of(DOMINION, GUIDANCE);
-
-        public GaladrielElvenQueenChoice {
-            remainingPlayerIds = List.copyOf(remainingPlayerIds);
-            votes = Map.copyOf(votes);
-        }
-
-        @Override
-        public List<UUID> remainingVoterIds() {
-            return remainingPlayerIds;
-        }
-
-        @Override
-        public GaladrielElvenQueenChoice withRemainingVoterIds(List<UUID> remainingVoterIds) {
-            return new GaladrielElvenQueenChoice(effectControllerId, remainingVoterIds, votes, sourceName);
         }
     }
 
@@ -3240,30 +3001,6 @@ public sealed interface ChoiceContext {
                 case MINUS_ONE_MINUS_ONE -> "-1/-1 counters";
                 default -> counterType.name().toLowerCase().replace('_', ' ') + " counters";
             };
-        }
-    }
-
-    record VoteForInnocentOrGuiltyChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
-                                         Map<String, Integer> votes, String sourceName)
-            implements ChoiceContext, VoteChoiceContext {
-        public static final String INNOCENT = "Innocent";
-        public static final String GUILTY = "Guilty";
-        public static final List<String> OPTIONS = List.of(INNOCENT, GUILTY);
-
-        public VoteForInnocentOrGuiltyChoice {
-            remainingPlayerIds = List.copyOf(remainingPlayerIds);
-            votes = Map.copyOf(votes);
-        }
-
-        @Override
-        public List<UUID> remainingVoterIds() {
-            return remainingPlayerIds;
-        }
-
-        @Override
-        public VoteForInnocentOrGuiltyChoice withRemainingVoterIds(List<UUID> remainingVoterIds) {
-            return new VoteForInnocentOrGuiltyChoice(effectControllerId, remainingVoterIds,
-                    votes, sourceName);
         }
     }
 

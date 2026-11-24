@@ -229,44 +229,21 @@ public class ChoiceHandlerService {
             unlockControlledRoomDoorEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LockOrUnlockTargetRoomDoorEffectHandler
             lockOrUnlockTargetRoomDoorEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.PleaForPowerEffectHandler
-            pleaForPowerEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.SelvalasStampedeEffectHandler
-            selvalasStampedeEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.TravelThroughCaradhrasEffectHandler
-            travelThroughCaradhrasEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.SailIntoTheWestEffectHandler
-            sailIntoTheWestEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesMasterOfCeremoniesEffectHandler
             eachOpponentChoosesMasterOfCeremoniesEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PrisonersDilemmaEffectHandler
             prisonersDilemmaEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ExpropriateEffectHandler
             expropriateEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.CouncilDilemmaEffectHandler
-            councilDilemmaEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ZndrsplatsJudgmentEffectHandler
             zndrsplatsJudgmentEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.SeizeTheSpotlightEffectHandler
             seizeTheSpotlightEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.FatefulTempestEffectHandler
             fatefulTempestEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.VoteForDenialOrDuplicationEffectHandler
-            voteForDenialOrDuplicationEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.TyrantsChoiceEffectHandler
-            tyrantsChoiceEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.GraceOrCondemnationEffectHandler
-            graceOrCondemnationEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.CoercivePortalEffectHandler
-            coercivePortalEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.VoteForInnocentOrGuiltyEffectHandler
-            voteForInnocentOrGuiltyEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.WillOfThePlaneswalkersEffectHandler
-            willOfThePlaneswalkersEffectHandler;
     private final EachPlayerChoosesTokenEffectHandler eachPlayerChoosesTokenEffectHandler;
     private final EachPlayerChoosesPlanarModeEffectHandler eachPlayerChoosesPlanarModeEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.GaladrielElvenQueenEffectHandler
-            galadrielElvenQueenEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.VoteEffectHandler voteEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ElrondOfTheWhiteCouncilEffectHandler
             elrondOfTheWhiteCouncilEffectHandler;
     private final ManaSourceColorSupport manaSourceColorSupport;
@@ -1336,45 +1313,12 @@ public class ChoiceHandlerService {
             handleTriggeredModalChoice(gameData, player, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.PleaForPowerChoice ctx) {
-            if (!ctx.OPTIONS.contains(colorName)) {
-                throw new IllegalArgumentException("Invalid Plea for Power vote: " + colorName);
+        if (colorChoice.context() instanceof ChoiceContext.VoteChoice ctx) {
+            if (!ctx.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid vote for " + ctx.sourceName() + ": " + colorName);
             }
             gameData.interaction.clearAwaitingInput();
-            pleaForPowerEffectHandler.completeVote(gameData, colorName, ctx);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.SelvalasStampedeChoice ctx) {
-            if (!ctx.OPTIONS.contains(colorName)) {
-                throw new IllegalArgumentException("Invalid Selvala's Stampede vote: " + colorName);
-            }
-            gameData.interaction.clearAwaitingInput();
-            selvalasStampedeEffectHandler.completeVote(gameData, colorName, ctx);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.TravelThroughCaradhrasChoice ctx) {
-            if (!ctx.OPTIONS.contains(colorName)) {
-                throw new IllegalArgumentException("Invalid Travel Through Caradhras vote: " + colorName);
-            }
-            gameData.interaction.clearAwaitingInput();
-            travelThroughCaradhrasEffectHandler.completeVote(gameData, colorName, ctx);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.SailIntoTheWestChoice ctx) {
-            if (!ctx.OPTIONS.contains(colorName)) {
-                throw new IllegalArgumentException("Invalid Sail into the West vote: " + colorName);
-            }
-            gameData.interaction.clearAwaitingInput();
-            sailIntoTheWestEffectHandler.completeVote(gameData, colorName, ctx);
+            voteEffectHandler.completeVote(gameData, player.getId(), colorName, ctx);
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             }
@@ -1414,17 +1358,6 @@ public class ChoiceHandlerService {
             }
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.CouncilDilemmaChoice ctx) {
-            if (!ctx.OPTIONS.contains(colorName)) {
-                throw new IllegalArgumentException("Invalid council's dilemma vote: " + colorName);
-            }
-            gameData.interaction.clearAwaitingInput();
-            councilDilemmaEffectHandler.completeVote(gameData, colorName, ctx);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
-            return;
-        }
         if (colorChoice.context() instanceof ChoiceContext.ZndrsplatsJudgmentChoice ctx) {
             if (!ctx.OPTIONS.contains(colorName)) {
                 throw new IllegalArgumentException("Invalid Zndrsplt's Judgment choice: " + colorName);
@@ -1453,83 +1386,6 @@ public class ChoiceHandlerService {
             }
             gameData.interaction.clearAwaitingInput();
             fatefulTempestEffectHandler.completeVote(gameData, colorName, ctx);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.VoteForDenialOrDuplicationChoice ctx) {
-            if (!ctx.OPTIONS.contains(colorName)) {
-                throw new IllegalArgumentException("Invalid Split Decision vote: " + colorName);
-            }
-            gameData.interaction.clearAwaitingInput();
-            voteForDenialOrDuplicationEffectHandler.completeVote(gameData, colorName, ctx);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.TyrantsChoiceChoice ctx) {
-            if (!ctx.OPTIONS.contains(colorName)) {
-                throw new IllegalArgumentException("Invalid Tyrant's Choice vote: " + colorName);
-            }
-            gameData.interaction.clearAwaitingInput();
-            tyrantsChoiceEffectHandler.completeVote(gameData, colorName, ctx);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.GraceOrCondemnationChoice ctx) {
-            if (!ctx.OPTIONS.contains(colorName)) {
-                throw new IllegalArgumentException("Invalid grace-or-condemnation vote: " + colorName);
-            }
-            gameData.interaction.clearAwaitingInput();
-            graceOrCondemnationEffectHandler.completeVote(gameData, colorName, ctx);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.CoercivePortalChoice ctx) {
-            if (!ctx.OPTIONS.contains(colorName)) {
-                throw new IllegalArgumentException("Invalid Coercive Portal vote: " + colorName);
-            }
-            gameData.interaction.clearAwaitingInput();
-            coercivePortalEffectHandler.completeVote(gameData, colorName, ctx);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.VoteForInnocentOrGuiltyChoice ctx) {
-            if (!ctx.OPTIONS.contains(colorName)) {
-                throw new IllegalArgumentException("Invalid innocent-or-guilty vote: " + colorName);
-            }
-            gameData.interaction.clearAwaitingInput();
-            voteForInnocentOrGuiltyEffectHandler.completeVote(gameData, colorName, ctx);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.WillOfThePlaneswalkersChoice ctx) {
-            if (!ctx.OPTIONS.contains(colorName)) {
-                throw new IllegalArgumentException("Invalid Will of the Planeswalkers vote: " + colorName);
-            }
-            gameData.interaction.clearAwaitingInput();
-            willOfThePlaneswalkersEffectHandler.completeVote(gameData, colorName, ctx);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.GaladrielElvenQueenChoice ctx) {
-            if (!ctx.OPTIONS.contains(colorName)) {
-                throw new IllegalArgumentException("Invalid Galadriel, Elven-Queen vote: " + colorName);
-            }
-            gameData.interaction.clearAwaitingInput();
-            galadrielElvenQueenEffectHandler.completeVote(gameData, colorName, ctx);
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             }
@@ -1752,10 +1608,6 @@ public class ChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
         PendingInteraction heldVote = votingSupport.recordAdditionalVoteDecision(
                 gameData, offer, ChoiceContext.AdditionalVoteChoice.VOTE_AGAIN.equals(choice));
-        if (heldVote == null) {
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
         interactionHandlerRegistry.beginWithoutPrompt(gameData, heldVote);
         if (heldVote instanceof PendingInteraction.MultiPermanentChoice) {
             multiPermanentChoiceHandlerServiceProvider.getObject()
@@ -1767,49 +1619,13 @@ public class ChoiceHandlerService {
 
     private void recordVotingChoiceIfApplicable(GameData gameData, UUID voterId, String choice,
                                                 ChoiceContext context) {
-        if (context instanceof ChoiceContext.PleaForPowerChoice vote
-                && vote.OPTIONS.contains(choice)) {
-            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
-        } else if (context instanceof ChoiceContext.TravelThroughCaradhrasChoice vote
-                && vote.OPTIONS.contains(choice)) {
-            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
-        } else if (context instanceof ChoiceContext.SailIntoTheWestChoice vote
-                && vote.OPTIONS.contains(choice)) {
-            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
-        } else if (context instanceof ChoiceContext.ExpropriateChoice vote
-                && vote.OPTIONS.contains(choice)) {
-            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
-        } else if (context instanceof ChoiceContext.VoteForDenialOrDuplicationChoice vote
-                && vote.OPTIONS.contains(choice)) {
-            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
-        } else if (context instanceof ChoiceContext.TyrantsChoiceChoice vote
-                && vote.OPTIONS.contains(choice)) {
-            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
-        } else if (context instanceof ChoiceContext.GraceOrCondemnationChoice vote
-                && vote.OPTIONS.contains(choice)) {
-            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
-        } else if (context instanceof ChoiceContext.CoercivePortalChoice vote
-                && vote.OPTIONS.contains(choice)) {
-            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
-        } else if (context instanceof ChoiceContext.GaladrielElvenQueenChoice vote
-                && vote.OPTIONS.contains(choice)) {
-            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
-        } else if (context instanceof ChoiceContext.CouncilDilemmaChoice vote
+        if (context instanceof ChoiceContext.ExpropriateChoice vote
                 && vote.OPTIONS.contains(choice)) {
             votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
         } else if (context instanceof ChoiceContext.ElrondOfTheWhiteCouncilChoice vote
                 && vote.OPTIONS.contains(choice)) {
             votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
         } else if (context instanceof ChoiceContext.FatefulTempestChoice vote
-                && vote.OPTIONS.contains(choice)) {
-            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
-        } else if (context instanceof ChoiceContext.SelvalasStampedeChoice vote
-                && vote.OPTIONS.contains(choice)) {
-            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
-        } else if (context instanceof ChoiceContext.WillOfThePlaneswalkersChoice vote
-                && vote.OPTIONS.contains(choice)) {
-            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
-        } else if (context instanceof ChoiceContext.VoteForInnocentOrGuiltyChoice vote
                 && vote.OPTIONS.contains(choice)) {
             votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
         }

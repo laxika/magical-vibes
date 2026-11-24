@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.ModelOfUnity;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,8 +26,8 @@ class SelvalasStampedeTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), first, new Forest(), second));
 
         cast();
-        vote(ChoiceContext.SelvalasStampedeChoice.WILD,
-                ChoiceContext.SelvalasStampedeChoice.WILD);
+        vote(SelvalasStampede.WILD,
+                SelvalasStampede.WILD);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getCard)
                 .containsExactly(first, second);
@@ -47,8 +46,8 @@ class SelvalasStampedeTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0);
         harness.passBothPriorities();
-        vote(ChoiceContext.SelvalasStampedeChoice.FREE,
-                ChoiceContext.SelvalasStampedeChoice.FREE);
+        vote(SelvalasStampede.FREE,
+                SelvalasStampede.FREE);
 
         PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice.class);
@@ -73,8 +72,8 @@ class SelvalasStampedeTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0);
         harness.passBothPriorities();
-        vote(ChoiceContext.SelvalasStampedeChoice.WILD,
-                ChoiceContext.SelvalasStampedeChoice.FREE);
+        vote(SelvalasStampede.WILD,
+                SelvalasStampede.FREE);
 
         PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice.class);
@@ -93,8 +92,8 @@ class SelvalasStampedeTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(forest, bears));
 
         cast();
-        vote(ChoiceContext.SelvalasStampedeChoice.WILD,
-                ChoiceContext.SelvalasStampedeChoice.WILD);
+        vote(SelvalasStampede.WILD,
+                SelvalasStampede.WILD);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getCard)
                 .containsExactly(bears);
@@ -109,8 +108,8 @@ class SelvalasStampedeTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(first, second));
 
         cast();
-        vote(ChoiceContext.SelvalasStampedeChoice.WILD,
-                ChoiceContext.SelvalasStampedeChoice.WILD);
+        vote(SelvalasStampede.WILD,
+                SelvalasStampede.WILD);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(first, second);
@@ -127,8 +126,8 @@ class SelvalasStampedeTest extends BaseCardTest {
         addMana();
         harness.castSorcery(player1, 0);
         harness.passBothPriorities();
-        vote(ChoiceContext.SelvalasStampedeChoice.FREE,
-                ChoiceContext.SelvalasStampedeChoice.FREE);
+        vote(SelvalasStampede.FREE,
+                SelvalasStampede.FREE);
 
         assertThat(gd.interaction.activeInteraction(
                 PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice.class).validCardIds())
@@ -148,8 +147,8 @@ class SelvalasStampedeTest extends BaseCardTest {
         addMana();
         harness.castSorcery(player1, 0);
         harness.passBothPriorities();
-        vote(ChoiceContext.SelvalasStampedeChoice.WILD,
-                ChoiceContext.SelvalasStampedeChoice.FREE);
+        vote(SelvalasStampede.WILD,
+                SelvalasStampede.FREE);
         harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getCard)
@@ -169,10 +168,10 @@ class SelvalasStampedeTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
                 .isEqualTo(player2.getId());
-        harness.handleListChoice(player2, ChoiceContext.SelvalasStampedeChoice.WILD);
+        harness.handleListChoice(player2, SelvalasStampede.WILD);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
                 .isEqualTo(player1.getId());
-        harness.handleListChoice(player1, ChoiceContext.SelvalasStampedeChoice.WILD);
+        harness.handleListChoice(player1, SelvalasStampede.WILD);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getCard)
                 .containsExactly(bears);
@@ -188,8 +187,8 @@ class SelvalasStampedeTest extends BaseCardTest {
         addMana();
         harness.castSorcery(player1, 0);
         harness.passBothPriorities();
-        vote(ChoiceContext.SelvalasStampedeChoice.FREE,
-                ChoiceContext.SelvalasStampedeChoice.FREE);
+        vote(SelvalasStampede.FREE,
+                SelvalasStampede.FREE);
         harness.handleMultipleCardsChosen(player1, List.of(solemn.getId()));
 
         assertThat(gd.stack).hasSize(1);
@@ -211,8 +210,8 @@ class SelvalasStampedeTest extends BaseCardTest {
         addMana();
         harness.castSorcery(player1, 0);
         harness.passBothPriorities();
-        vote(ChoiceContext.SelvalasStampedeChoice.FREE,
-                ChoiceContext.SelvalasStampedeChoice.FREE);
+        vote(SelvalasStampede.FREE,
+                SelvalasStampede.FREE);
         harness.handleMultipleCardsChosen(player1, List.of(aura.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(aura);
@@ -225,7 +224,7 @@ class SelvalasStampedeTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new ModelOfUnity());
         cast();
 
-        vote(ChoiceContext.SelvalasStampedeChoice.WILD, ChoiceContext.SelvalasStampedeChoice.WILD);
+        vote(SelvalasStampede.WILD, SelvalasStampede.WILD);
         resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();

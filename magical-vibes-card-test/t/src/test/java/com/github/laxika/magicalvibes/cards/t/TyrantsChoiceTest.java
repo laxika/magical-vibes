@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -19,8 +18,8 @@ class TyrantsChoiceTest extends BaseCardTest {
     void tortureWinsOnTieAndEachOpponentLosesFourLife() {
         cast();
 
-        harness.handleListChoice(player1, ChoiceContext.TyrantsChoiceChoice.TORTURE);
-        harness.handleListChoice(player2, ChoiceContext.TyrantsChoiceChoice.DEATH);
+        harness.handleListChoice(player1, TyrantsChoice.TORTURE);
+        harness.handleListChoice(player2, TyrantsChoice.DEATH);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -32,8 +31,8 @@ class TyrantsChoiceTest extends BaseCardTest {
         Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         cast();
 
-        harness.handleListChoice(player1, ChoiceContext.TyrantsChoiceChoice.DEATH);
-        harness.handleListChoice(player2, ChoiceContext.TyrantsChoiceChoice.DEATH);
+        harness.handleListChoice(player1, TyrantsChoice.DEATH);
+        harness.handleListChoice(player2, TyrantsChoice.DEATH);
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -54,11 +53,11 @@ class TyrantsChoiceTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
                 .isEqualTo(player1.getId());
-        harness.handleListChoice(player1, ChoiceContext.TyrantsChoiceChoice.TORTURE);
+        harness.handleListChoice(player1, TyrantsChoice.TORTURE);
         harness.assertLife(player2, 20);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
                 .isEqualTo(player2.getId());
-        harness.handleListChoice(player2, ChoiceContext.TyrantsChoiceChoice.TORTURE);
+        harness.handleListChoice(player2, TyrantsChoice.TORTURE);
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 16);
@@ -70,8 +69,8 @@ class TyrantsChoiceTest extends BaseCardTest {
     @Test
     void reverseTieAlsoCausesLifeLoss() {
         cast();
-        harness.handleListChoice(player1, ChoiceContext.TyrantsChoiceChoice.DEATH);
-        harness.handleListChoice(player2, ChoiceContext.TyrantsChoiceChoice.TORTURE);
+        harness.handleListChoice(player1, TyrantsChoice.DEATH);
+        harness.handleListChoice(player2, TyrantsChoice.TORTURE);
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 16);
@@ -82,8 +81,8 @@ class TyrantsChoiceTest extends BaseCardTest {
     void deathWithoutOpposingCreaturesLeavesControllerUnaffected() {
         Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         cast();
-        harness.handleListChoice(player1, ChoiceContext.TyrantsChoiceChoice.DEATH);
-        harness.handleListChoice(player2, ChoiceContext.TyrantsChoiceChoice.DEATH);
+        harness.handleListChoice(player1, TyrantsChoice.DEATH);
+        harness.handleListChoice(player2, TyrantsChoice.DEATH);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(own);
         harness.assertLife(player1, 20);

@@ -41,9 +41,9 @@ class SplitDecisionTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         assertThat(activeVote().playerId()).isEqualTo(player1.getId());
-        harness.handleListChoice(player1, ChoiceContext.VoteForDenialOrDuplicationChoice.DENIAL);
+        harness.handleListChoice(player1, SplitDecision.DENIAL);
         assertThat(activeVote().playerId()).isEqualTo(player2.getId());
-        harness.handleListChoice(player2, ChoiceContext.VoteForDenialOrDuplicationChoice.DENIAL);
+        harness.handleListChoice(player2, SplitDecision.DENIAL);
 
         assertThat(gd.stack).hasSize(0);
         assertThat(gd.playerGraveyards.get(player2.getId()))
@@ -66,8 +66,8 @@ class SplitDecisionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        harness.handleListChoice(player1, ChoiceContext.VoteForDenialOrDuplicationChoice.DENIAL);
-        harness.handleListChoice(player2, ChoiceContext.VoteForDenialOrDuplicationChoice.DUPLICATION);
+        harness.handleListChoice(player1, SplitDecision.DENIAL);
+        harness.handleListChoice(player2, SplitDecision.DUPLICATION);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
@@ -101,8 +101,8 @@ class SplitDecisionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castAndResolveInstant(player1, 0, originalId);
-        harness.handleListChoice(player1, ChoiceContext.VoteForDenialOrDuplicationChoice.DUPLICATION);
-        harness.handleListChoice(player2, ChoiceContext.VoteForDenialOrDuplicationChoice.DUPLICATION);
+        harness.handleListChoice(player1, SplitDecision.DUPLICATION);
+        harness.handleListChoice(player2, SplitDecision.DUPLICATION);
 
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getFirst().getTargetableId()).isEqualTo(originalId);
@@ -127,8 +127,8 @@ class SplitDecisionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castAndResolveInstant(player1, 0, counterspellId);
-        harness.handleListChoice(player1, ChoiceContext.VoteForDenialOrDuplicationChoice.DENIAL);
-        harness.handleListChoice(player2, ChoiceContext.VoteForDenialOrDuplicationChoice.DUPLICATION);
+        harness.handleListChoice(player1, SplitDecision.DENIAL);
+        harness.handleListChoice(player2, SplitDecision.DUPLICATION);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -153,12 +153,12 @@ class SplitDecisionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castAndResolveInstant(player1, 0, originalId);
-        harness.handleListChoice(player1, ChoiceContext.VoteForDenialOrDuplicationChoice.DUPLICATION);
-        harness.handleListChoice(player2, ChoiceContext.VoteForDenialOrDuplicationChoice.DENIAL);
+        harness.handleListChoice(player1, SplitDecision.DUPLICATION);
+        harness.handleListChoice(player2, SplitDecision.DENIAL);
         harness.handleListChoice(player2, ChoiceContext.AdditionalVoteChoice.VOTE_AGAIN);
 
         assertThat(activeVote().playerId()).isEqualTo(player2.getId());
-        harness.handleListChoice(player2, ChoiceContext.VoteForDenialOrDuplicationChoice.DENIAL);
+        harness.handleListChoice(player2, SplitDecision.DENIAL);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId()))
@@ -170,7 +170,7 @@ class SplitDecisionTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.options())
-                .containsExactlyElementsOf(ChoiceContext.VoteForDenialOrDuplicationChoice.OPTIONS);
+                .containsExactlyElementsOf(List.of(SplitDecision.DENIAL, SplitDecision.DUPLICATION));
         return choice;
     }
 }

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.t.TheValeyard;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -61,8 +60,8 @@ class PathOfTheAnimistTest extends BaseCardTest {
                 .filteredOn(Permanent::isTapped)
                 .hasSize(2);
 
-        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
-        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.handleListChoice(player1, PathOfTheAnimist.PLANESWALK);
+        harness.handleListChoice(player2, PathOfTheAnimist.CHAOS);
         harness.passBothPriorities();
 
         assertThat(gd.planechase.faceUp).containsExactly(startingPlane);
@@ -75,8 +74,8 @@ class PathOfTheAnimistTest extends BaseCardTest {
         cast();
 
         harness.handleCardChosen(player1, 0);
-        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
-        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
+        harness.handleListChoice(player1, PathOfTheAnimist.PLANESWALK);
+        harness.handleListChoice(player2, PathOfTheAnimist.PLANESWALK);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
@@ -98,8 +97,8 @@ class PathOfTheAnimistTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(forest, island);
         int handBeforeChaos = gd.playerHands.get(player1.getId()).size();
 
-        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
-        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.handleListChoice(player1, PathOfTheAnimist.CHAOS);
+        harness.handleListChoice(player2, PathOfTheAnimist.CHAOS);
         harness.passBothPriorities();
 
         assertThat(gd.planechase.faceUp).containsExactly(startingPlane);
@@ -124,8 +123,8 @@ class PathOfTheAnimistTest extends BaseCardTest {
                 });
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(island);
 
-        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
-        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
+        harness.handleListChoice(player1, PathOfTheAnimist.PLANESWALK);
+        harness.handleListChoice(player2, PathOfTheAnimist.PLANESWALK);
 
         assertThat(gd.planechase.faceUp).noneMatch(object -> object == startingPlane).hasSize(1);
         harness.assertInGraveyard(player1, "Path of the Animist");
@@ -141,8 +140,8 @@ class PathOfTheAnimistTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bears);
 
-        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
-        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.handleListChoice(player1, PathOfTheAnimist.CHAOS);
+        harness.handleListChoice(player2, PathOfTheAnimist.CHAOS);
         harness.passBothPriorities();
 
         assertThat(gd.planechase.faceUp).containsExactly(startingPlane);
@@ -157,7 +156,7 @@ class PathOfTheAnimistTest extends BaseCardTest {
         cast();
         harness.handleCardChosen(player1, -1);
 
-        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
+        harness.handleListChoice(player1, PathOfTheAnimist.PLANESWALK);
 
         PendingInteraction.ColorChoice additionalVote =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);

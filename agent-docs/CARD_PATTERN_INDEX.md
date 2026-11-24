@@ -165,7 +165,7 @@
 | commander cast-cost reduction plus draw when that commander enters the command zone | `m/MythUnbound.java` + `ReduceCommanderCastCostEffect(CommanderCastsFromCommandZoneThisGame)` + `Triggers.putIntoCommandZone(PermanentIsCommanderPredicate(true), ObjectRelation.YOU_OWN) DrawCardEffect` ("your commander" is the filter) |
 | playtest creature with custom nimble evasion and thoughtweft keyword sharing | `b/BrigidWhosSeenSomeStuff.java` + filtered `GrantKeywordEffect` |
 | playtest Sliver lord with a custom damage-prevention keyword | `s/SliverOfHope.java` + filtered `GrantKeywordEffect(Keyword.HOPE)`; Hope is enforced by the damage pipeline for attacking creatures |
-| council's dilemma vote for wild or free, revealing creatures and putting permanents from hand onto the battlefield | `s/SelvalasStampede.java` + `SelvalasStampedeEffect` |
+| council's dilemma vote for wild or free, revealing creatures and putting permanents from hand onto the battlefield | `s/SelvalasStampede.java` + `VoteEffect` and the steps reading it (`VoteResult`, `VotesFor`) |
 | scheme creates a nonlegendary token copy of the controller's commander from any zone | `CreateTokenCopyOfCommanderEffect` |
 | scheme draws three, grants no maximum hand size until the controller's next turn, then conditionally offers up to three free hand spells | `p/PowerWithoutEqual.java` + `DrawCardEffect(3)` + `GrantNoMaximumHandSizeEffect(UNTIL_NEXT_TURN)` + `ConditionalEffect(ControlsPermanentCount(6, PermanentIsLandPredicate), CastUpToNSpellsFromHandWithoutPayingManaCostEffect(3))` |
 | scheme makes the next scheme set happen three times | `p/PlotsThatSpanCenturies.java` + `Triggers.youSetSchemeInMotion()` `RegisterNextSchemeSetInMotionReplacementEffect()` |
@@ -237,8 +237,8 @@
 | seek two cards, optionally shuffle those exact cards back, then seek two more | `c/ChoiceOfFortunes.java` + `SeekTwoCardsThenMayShuffleAndSeekEffect` |
 | sacrifice a creature, then Seek a creature with mana value one higher onto the battlefield and add a subtype | `s/SpawningPod.java` + `SacrificeCreatureCost(true)` + `SeekLibraryEffect(..., BATTLEFIELD, ManaValueBound(true, 1), CardSubtype.PHYREXIAN)` |
 | ETB seeks exact-mana-value spells into source-tracked exile, then upkeep copies one for free | `s/SignatureSpells.java` + `SeekLibraryEffect(..., EXILE_WITH_SOURCE, ManaValueBound)` + `CopyCardsExiledWithSourceAndMayCastCopiesEffect(false, FREE)` |
-| council's dilemma vote with one basic-land search or graveyard return per vote | `t/TravelThroughCaradhras.java` + `TravelThroughCaradhrasEffect` |
-| council's dilemma vote with a majority graveyard return or tied/embark hand refresh | `s/SailIntoTheWest.java` + `SailIntoTheWestEffect` |
+| council's dilemma vote with one basic-land search or graveyard return per vote | `t/TravelThroughCaradhras.java` + `VoteEffect` and the steps reading it (`VoteResult`, `VotesFor`) |
+| council's dilemma vote with a majority graveyard return or tied/embark hand refresh | `s/SailIntoTheWest.java` + `VoteEffect` and the steps reading it (`VoteResult`, `VotesFor`) |
 | secret player vote, vote-counted draws, and zero-vote permanent cards from hand | `c/CirdanTheShipwright.java` + `CirdanTheShipwrightEffect` |
 | secret player vote, damage to each opponent for each vote, and draw for votes received | `m/MobVerdict.java` + `MobVerdictEffect` |
 | secret opponent choices with revealed all-same or mixed damage branches | `p/PrisonersDilemma.java` + `PrisonersDilemmaEffect` |
@@ -482,7 +482,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | cast trigger reveals each player's top card and sets entry counters | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | first spell each turn, random opponent damage | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | first spell during each opponent's turn, face-down top-card exile with indefinite play permission | `b/BlightwingBandit.java` + `Triggers.youCastSpell().duringOpponentsTurn().nthThisTurn(1)` + `new ExileTopCardMayPlayThisTurnEffect(1, false).fromLibraryOf(Subjects.activePlayer()).exiledFaceDown().withAnyManaType().until(Duration.PERMANENT)` |
-| secret council vote, draw for one vote and damage a random opponent for the other | `t/TruthOrConsequences.java` + `TruthOrConsequencesEffect` |
+| secret council vote, draw for one vote and damage a random opponent for the other | `t/TruthOrConsequences.java` + `VoteEffect` and the steps reading it (`VoteResult`, `VotesFor`) |
 | controller draw, per-opponent may-draw choices, and one random-target damage trigger per card drawn | `e/ExplosionOfRiches.java` + `ExplosionOfRichesEffect` |
 | exact-1-damage source trigger reflected to each matching permanent or player | `g/GhyrsonStarnKelermorph.java` (`Triggers.anotherSourceYouControlDealsDamageToPermanentOrPlayer()` + event condition) |
 | beginning-of-combat random opponent attack requirement | `r/RuhanOfTheFomori.java` |

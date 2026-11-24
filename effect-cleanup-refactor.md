@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10 (each in Findings; the fold queue marks its rows). Fold runs 8 to 11 run in parallel worktrees from 2026-11-24. Next: fold run 9b, fold run 11 (vote), `opp-card` as its own run (10b). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).    |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11 (each in Findings; the fold queue marks its rows). Fold runs 8 to 12 run in parallel worktrees from 2026-11-24. Next: fold runs 9b and 12 (running), 10b (`opp-card`), 11b (`object-vote`). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).     |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,883 / 3,145 (after fold run 10) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,871 / 3,133 (after fold run 11) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,200 rows over 4,406 classes (after fold run 10). Latest verdict per class: `step-9` 1,085, unique 1,167, absorbed 598, split 517, blocked-other 470, survivor 272, blocked-step-model 140, blocked-player-loop 97, dead 60. Waiting: 1,085 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,221 rows over 4,408 classes (after fold run 11). Latest verdict per class: `step-9` 1,070, unique 1,167, absorbed 598, split 530, blocked-other 473, survivor 273, blocked-step-model 140, blocked-player-loop 97, dead 60. Waiting: 1,070 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -544,6 +544,12 @@ Delayed and global triggers:
   of Fate); the manifest step `SeekCreatureAndManifestEffect` and Lurker in the Deep's record wait for (fold run 10).
 - "Put up to N … from graveyards onto the battlefield under your control": `ChooseCardEffect.upTo(cardsInGraveyards(eachPlayer(),
   filter), n)` + `PutCardsOntoBattlefieldEffect(cardsThisWay(CHOOSE)).underControlOf(you())` (Liliana, the Necromancer; fold run 10).
+
+- `VoteEffect.startingWithYou(options)` / `.secretly(options)`: the VOTE step (`StepKind.VOTE`, `StepOutcome.votes()`), with
+  additional votes through `VotingSupport`, open votes logged as cast and secret votes revealed together; word votes only (fold run 11).
+- `VoteResult.moreVotes(option)` / `.moreVotesOrTied(option)` / `.anyVotes(option)` in a `ConditionalEffect` for "if [option] gets
+  more votes [or the vote is tied]"; `VotesFor(option)` for "for each [option] vote", with `RepeatEffect` for one event per vote
+  (fold run 11).
 
 ### Blocked causes still open
 
@@ -1507,6 +1513,49 @@ Darigaaz declares no target ("that player").
 Fold: line) is still open. `returned-reflexive` needs a reflexive ability about the permanent a return step put onto the battlefield
 (making the return record picks is unsafe: 7 handlers read picks); Jailbreak also needs its Hushbringer-style check and a mana-value
 bound.
+
+### Step 9, fold run 11 (2026-11-24, parallel worktree)
+
+Batch `vote` (19 rows; Fateful Tempest left for main by the orchestrator, after fold run 9's mill split) plus the unaudited
+`WillOfThePlaneswalkersEffect` (5 cards; the shared record says the same for each). Ratchet in its worktree 3,906 / 3,171 → 3,894 /
+3,159. Ledger 21 rows (split 13, survivor 1, blocked-other 3, `step-9` 4). 17 card files rewritten, Oracle checked for all; rulings
+for Plea for Power, Tivit, Selvala's Stampede, Trap the Trespassers, Truth or Consequences. CR 101.4, 120.8, 401.4, 608.2c, 608.2d,
+701.38a–d, 800.4a checked.
+
+**The step's shape.** `VoteEffect(options, firstVoter, secret)`, built with `startingWithYou(...)` or `secretly(...)` (`secretly`
+starts with the active player, CR 101.4, as Truth or Consequences did). Each player in turn order answers a list prompt
+(`ChoiceContext.VoteChoice`, a `VoteChoiceContext`), so `VotingSupport`'s additional-vote offer works unchanged (CR 701.38d). Players
+who have left the game don't vote. After the last vote the step records `StepKind.VOTE` with `StepOutcome.votes()` (each
+`Vote(voterId, choice)` in order; amount = votes; players = voters). Readers: `VoteResult` (`moreVotes`, `moreVotesOrTied` — "tied"
+means more than one option has the most votes, per the Plea for Power ruling, 3-1-1 is not tied — and `anyVotes`) and the
+`VotesFor(option)` amount, with `RepeatEffect` when each vote is its own event. P10's payload-per-outcome form became plain
+`ConditionalEffect` steps.
+
+| Batch row | Result |
+|---|---|
+| Will of the council (Plea for Power, Tyrant's Choice, Magister of Worth, Coercive Portal, Galadriel, Split Decision, Sail into the West, Trial of a Time Lord, the five Paths) | `VoteEffect` + `moreVotes` / `moreVotesOrTied` conditionals; Split Decision's two conditionals share its single spell target |
+| Council's dilemma (Tivit, Travel Through Caradhras, Selvala's Stampede) | `RepeatEffect(VotesFor(x), …)`, or `anyVotes`-gated steps where the old code skipped a zero count |
+| Secret council (Truth or Consequences) | `VoteEffect.secretly` + `anyVotes`-gated draw and random-opponent damage `Scaled(VotesFor, 3)` |
+| Left `step-9` | Vault 11, Trap the Trespassers, Círdan (votes on permanents or players: fold run 11b); Fateful Tempest (take on main) |
+| Left `blocked-other` | Elrond, Expropriate (one choice per vote by or about that vote's voter); Erestor (reads the triggering vote) |
+
+**Where the triage was wrong.** P14's "secret votes need a tally per candidate" holds only for votes on objects and players.
+Expropriate's and Elrond's notes assumed `oneForEach` / `playersThisWay(VOTE)` could do the per-vote choice; `oneForEach` is one
+controller choice per player among what that player controls.
+
+**Deleted.** 12 vote `ChoiceContext` records, `TruthOrConsequencesState`, `GameData.additionalVoteAccepted`,
+`VotingSupport.offerAdditionalVoteToRerunningEffect`.
+
+**Behaviour changes.** Open votes are logged as cast (Plea for Power ruling: later voters know earlier votes); new test. Secret
+votes are revealed in one line after the last vote; Truth's prompt is a list. The losing branch logs "'s vote ability does nothing
+(…)". The left-the-game voter guard (Tivit's) applies to every vote. Trial of a Time Lord's guilty put goes through
+`PutCardsIntoLibraryEffect` (CR 401.4). AI and simulation answer a `VoteChoice` as before.
+
+**For the next run.** Fold run 11b (`object-vote`): candidates on `VoteEffect` for permanents and players (one candidate voted
+unasked, CR 608.2d) plus readers: a "most votes or tied for most" permanent subject (Vault 11, WillOfTheCouncil ×3), per-permanent
+and per-player vote counts (Trap the Trespassers, Círdan, Mob Verdict), a "received no votes" player subject; Vault 11's secret votes
+revealed in its finish step (once, not again on the death-replacement replay). Then a per-vote choose step for Elrond and
+Expropriate. Fateful Tempest onto `VoteEffect` on main.
 
 ## Prompt
 

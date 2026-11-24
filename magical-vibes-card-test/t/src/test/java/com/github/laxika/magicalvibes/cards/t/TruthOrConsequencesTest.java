@@ -24,10 +24,10 @@ class TruthOrConsequencesTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(first, second));
 
         cast();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.XValueChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
 
-        harness.handleXValueChosen(player1, 0);
-        harness.handleXValueChosen(player2, 0);
+        harness.handleListChoice(player1, TruthOrConsequences.TRUTH);
+        harness.handleListChoice(player2, TruthOrConsequences.TRUTH);
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
@@ -39,8 +39,8 @@ class TruthOrConsequencesTest extends BaseCardTest {
     void consequencesVotesDealDamage() {
         cast();
 
-        harness.handleXValueChosen(player1, 1);
-        harness.handleXValueChosen(player2, 1);
+        harness.handleListChoice(player1, TruthOrConsequences.CONSEQUENCES);
+        harness.handleListChoice(player2, TruthOrConsequences.CONSEQUENCES);
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -55,8 +55,8 @@ class TruthOrConsequencesTest extends BaseCardTest {
 
         cast();
 
-        harness.handleXValueChosen(player1, 0);
-        harness.handleXValueChosen(player2, 1);
+        harness.handleListChoice(player1, TruthOrConsequences.TRUTH);
+        harness.handleListChoice(player2, TruthOrConsequences.CONSEQUENCES);
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
@@ -64,36 +64,38 @@ class TruthOrConsequencesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Votes stay secret and do nothing until every player has voted, then are revealed together")
     void votesStaySecretAndHaveNoEffectUntilEveryoneHasVoted() {
         Forest drawn = new Forest();
         harness.setLibrary(player1, List.of(drawn));
 
         cast();
-        harness.handleXValueChosen(player1, 0);
+        harness.handleListChoice(player1, TruthOrConsequences.TRUTH);
 
-        assertThat(gameLogContains("votes truth")).isFalse();
-        assertThat(gameLogContains("votes consequences")).isFalse();
+        assertThat(gameLogContains("votes for Truth")).isFalse();
+        assertThat(gameLogContains("votes for Consequences")).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertLife(player2, 20);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).playerId())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
                 .isEqualTo(player2.getId());
 
-        harness.handleXValueChosen(player2, 1);
+        harness.handleListChoice(player2, TruthOrConsequences.CONSEQUENCES);
         resolveAllTriggers();
 
-        assertThat(gameLogContains("votes truth")).isTrue();
-        assertThat(gameLogContains("votes consequences")).isTrue();
+        assertThat(gameLogContains("votes for Truth")).isTrue();
+        assertThat(gameLogContains("votes for Consequences")).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
         harness.assertLife(player2, 17);
     }
 
     @Test
+    @DisplayName("Finishing the secret vote triggers Model of Unity for the voters who matched")
     void finishingSecretVotingTriggersModelOfUnityForMatchingVoters() {
         harness.enterBattlefieldAndReturn(player1, new ModelOfUnity());
 
         cast();
-        harness.handleXValueChosen(player1, 1);
-        harness.handleXValueChosen(player2, 1);
+        harness.handleListChoice(player1, TruthOrConsequences.CONSEQUENCES);
+        harness.handleListChoice(player2, TruthOrConsequences.CONSEQUENCES);
         resolveAllTriggers();
 
         harness.assertLife(player2, 14);
@@ -110,25 +112,26 @@ class TruthOrConsequencesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Valeyard's controller may cast an additional secret vote")
     void valeyardControllerMayCastAnAdditionalSecretVote() {
         harness.addToBattlefield(player1, new TheValeyard());
         Forest drawn = new Forest();
         harness.setLibrary(player1, List.of(drawn));
 
         cast();
-        harness.handleXValueChosen(player1, 0);
+        harness.handleListChoice(player1, TruthOrConsequences.TRUTH);
         PendingInteraction.ColorChoice offer = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(offer).isNotNull();
         assertThat(offer.playerId()).isEqualTo(player1.getId());
         assertThat(offer.options()).containsExactlyElementsOf(ChoiceContext.AdditionalVoteChoice.OPTIONS);
         harness.handleListChoice(player1, ChoiceContext.AdditionalVoteChoice.VOTE_AGAIN);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).playerId())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
                 .isEqualTo(player1.getId());
-        harness.handleXValueChosen(player1, 1);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).playerId())
+        harness.handleListChoice(player1, TruthOrConsequences.CONSEQUENCES);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
                 .isEqualTo(player2.getId());
-        harness.handleXValueChosen(player2, 1);
+        harness.handleListChoice(player2, TruthOrConsequences.CONSEQUENCES);
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
@@ -136,16 +139,17 @@ class TruthOrConsequencesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Valeyard's controller may decline the additional secret vote")
     void valeyardControllerMayDeclineTheAdditionalSecretVote() {
         harness.addToBattlefield(player1, new TheValeyard());
 
         cast();
-        harness.handleXValueChosen(player1, 1);
+        harness.handleListChoice(player1, TruthOrConsequences.CONSEQUENCES);
         harness.handleListChoice(player1, ChoiceContext.AdditionalVoteChoice.CONTINUE);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).playerId())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
                 .isEqualTo(player2.getId());
-        harness.handleXValueChosen(player2, 1);
+        harness.handleListChoice(player2, TruthOrConsequences.CONSEQUENCES);
         resolveAllTriggers();
 
         harness.assertLife(player2, 14);

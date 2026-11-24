@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -43,8 +42,8 @@ class PathOfTheEnigmaTest extends BaseCardTest {
         int targetHandBefore = gd.playerHands.get(player2.getId()).size();
         cast(player2.getId());
 
-        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
-        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
+        harness.handleListChoice(player1, PathOfTheEnigma.PLANESWALK);
+        harness.handleListChoice(player2, PathOfTheEnigma.PLANESWALK);
 
         assertThat(gd.playerHands.get(player2.getId()))
                 .hasSize(targetHandBefore + 4)
@@ -61,8 +60,8 @@ class PathOfTheEnigmaTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
         cast(player2.getId());
 
-        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
-        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.handleListChoice(player1, PathOfTheEnigma.PLANESWALK);
+        harness.handleListChoice(player2, PathOfTheEnigma.CHAOS);
         harness.passBothPriorities();
 
         assertThat(gd.planechase.faceUp).containsExactly(startingPlane);
@@ -78,10 +77,10 @@ class PathOfTheEnigmaTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(cards);
         assertThat(gd.planechase.faceUp).containsExactly(startingPlane);
 
-        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.handleListChoice(player1, PathOfTheEnigma.CHAOS);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
                 .isEqualTo(player2.getId());
-        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
+        harness.handleListChoice(player2, PathOfTheEnigma.PLANESWALK);
 
         assertThat(gd.planechase.faceUp).containsExactly(startingPlane);
     }
@@ -93,8 +92,8 @@ class PathOfTheEnigmaTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
         cast(player2.getId());
 
-        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
-        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.handleListChoice(player1, PathOfTheEnigma.CHAOS);
+        harness.handleListChoice(player2, PathOfTheEnigma.CHAOS);
         harness.passBothPriorities();
 
         assertThat(gd.planechase.faceUp).containsExactly(startingPlane);
@@ -109,8 +108,8 @@ class PathOfTheEnigmaTest extends BaseCardTest {
         int targetHandBefore = gd.playerHands.get(player2.getId()).size();
         cast(player2.getId());
 
-        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
-        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.PLANESWALK);
+        harness.handleListChoice(player1, PathOfTheEnigma.PLANESWALK);
+        harness.handleListChoice(player2, PathOfTheEnigma.PLANESWALK);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(targetHandBefore + 4).containsAll(cards);
         assertThat(gd.stack).isEmpty();
@@ -140,7 +139,7 @@ class PathOfTheEnigmaTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.options())
-                .containsExactlyElementsOf(ChoiceContext.WillOfThePlaneswalkersChoice.OPTIONS);
+                .containsExactlyElementsOf(List.of(PathOfTheEnigma.PLANESWALK, PathOfTheEnigma.CHAOS));
         assertThat(choice.playerId()).isEqualTo(player1.getId());
     }
 }

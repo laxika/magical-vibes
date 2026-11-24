@@ -342,6 +342,7 @@ public sealed interface Condition permits
         PermanentEnteredThisTurn,
         PermanentLeftBattlefieldUnderYourControlThisTurn,
         HappenedThisWay,
+        VoteResult,
         PermanentTurnedFaceUpThisTurn,
         VoidCondition,
         PermanentPutIntoYourHandFromBattlefieldThisTurn,

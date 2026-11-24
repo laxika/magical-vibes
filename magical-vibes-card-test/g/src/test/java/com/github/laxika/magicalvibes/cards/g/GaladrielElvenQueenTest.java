@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.a.ArborElf;
 import com.github.laxika.magicalvibes.cards.b.BirdsOfParadise;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.MaskwoodNexus;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -30,8 +29,8 @@ class GaladrielElvenQueenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(activeVote().playerId()).isEqualTo(player1.getId());
-        harness.handleListChoice(player1, ChoiceContext.GaladrielElvenQueenChoice.DOMINION);
-        harness.handleListChoice(player2, ChoiceContext.GaladrielElvenQueenChoice.DOMINION);
+        harness.handleListChoice(player1, GaladrielElvenQueen.DOMINION);
+        harness.handleListChoice(player2, GaladrielElvenQueen.DOMINION);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
         harness.handlePermanentChosen(player1, galadriel.getId());
@@ -52,8 +51,8 @@ class GaladrielElvenQueenTest extends BaseCardTest {
         advanceToBeginningOfCombat(player1);
         harness.passBothPriorities();
 
-        harness.handleListChoice(player1, ChoiceContext.GaladrielElvenQueenChoice.DOMINION);
-        harness.handleListChoice(player2, ChoiceContext.GaladrielElvenQueenChoice.GUIDANCE);
+        harness.handleListChoice(player1, GaladrielElvenQueen.DOMINION);
+        harness.handleListChoice(player2, GaladrielElvenQueen.GUIDANCE);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(forest).hasSize(handSizeBefore + 1);
         assertThat(gd.ringLevels).doesNotContainKey(player1.getId());
@@ -79,9 +78,9 @@ class GaladrielElvenQueenTest extends BaseCardTest {
 
         advanceToBeginningOfCombat(player1);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, ChoiceContext.GaladrielElvenQueenChoice.GUIDANCE);
+        harness.handleListChoice(player1, GaladrielElvenQueen.GUIDANCE);
         assertThat(activeVote().playerId()).isEqualTo(player2.getId());
-        harness.handleListChoice(player2, ChoiceContext.GaladrielElvenQueenChoice.GUIDANCE);
+        harness.handleListChoice(player2, GaladrielElvenQueen.GUIDANCE);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard).hasSize(handSizeBefore + 1);
         assertThat(gd.ringLevels).doesNotContainKey(player1.getId());
@@ -128,8 +127,8 @@ class GaladrielElvenQueenTest extends BaseCardTest {
 
         advanceToBeginningOfCombat(player1);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, ChoiceContext.GaladrielElvenQueenChoice.GUIDANCE);
-        harness.handleListChoice(player2, ChoiceContext.GaladrielElvenQueenChoice.GUIDANCE);
+        harness.handleListChoice(player1, GaladrielElvenQueen.GUIDANCE);
+        harness.handleListChoice(player2, GaladrielElvenQueen.GUIDANCE);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);
     }
@@ -154,8 +153,8 @@ class GaladrielElvenQueenTest extends BaseCardTest {
 
         advanceToBeginningOfCombat(player1);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, ChoiceContext.GaladrielElvenQueenChoice.DOMINION);
-        harness.handleListChoice(player2, ChoiceContext.GaladrielElvenQueenChoice.DOMINION);
+        harness.handleListChoice(player1, GaladrielElvenQueen.DOMINION);
+        harness.handleListChoice(player2, GaladrielElvenQueen.DOMINION);
         harness.handlePermanentChosen(player1, elf.getId());
 
         assertThat(gd.ringLevels).containsEntry(player1.getId(), 4);
@@ -176,8 +175,8 @@ class GaladrielElvenQueenTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, ChoiceContext.GaladrielElvenQueenChoice.GUIDANCE);
-        harness.handleListChoice(player2, ChoiceContext.GaladrielElvenQueenChoice.GUIDANCE);
+        harness.handleListChoice(player1, GaladrielElvenQueen.GUIDANCE);
+        harness.handleListChoice(player2, GaladrielElvenQueen.GUIDANCE);
         assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);
     }
 
@@ -185,7 +184,7 @@ class GaladrielElvenQueenTest extends BaseCardTest {
         PendingInteraction.ColorChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.options()).containsExactlyElementsOf(ChoiceContext.GaladrielElvenQueenChoice.OPTIONS);
+        assertThat(choice.options()).containsExactlyElementsOf(List.of(GaladrielElvenQueen.DOMINION, GaladrielElvenQueen.GUIDANCE));
         return choice;
     }
 

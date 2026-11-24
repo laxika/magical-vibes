@@ -20,8 +20,10 @@ import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.amount.VotesFor;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.condition.VoteResult;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
@@ -55,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ManifestTopCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.VoteEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -1145,6 +1148,64 @@ class StepResultsTest extends BaseCardTest {
             resolve(player1, bears.getId(), null, remove, ifDone(StepKind.REMOVE_COUNTERS, new GainLifeEffect(1)));
 
             assertThat(bears.getCounterCount(CounterType.VITALITY)).isZero();
+            assertThat(gd.getLife(player1.getId())).isEqualTo(21);
+        }
+    }
+
+    @Nested
+    @DisplayName("Vote")
+    class Votes {
+
+        private StackEntry vote(String first, String second, CardEffect... readers) {
+            List<CardEffect> effects = new java.util.ArrayList<>();
+            effects.add(VoteEffect.startingWithYou("Yes", "No"));
+            effects.addAll(List.of(readers));
+            StackEntry entry = resolve(player1, null, null, effects.toArray(CardEffect[]::new));
+            harness.handleListChoice(player1, first);
+            harness.handleListChoice(player2, second);
+            return entry;
+        }
+
+        @Test
+        @DisplayName("A vote records each vote, who cast it and for what, in voting order")
+        void recordsEachVote() {
+            StackEntry entry = vote("Yes", "No");
+
+            StepOutcome outcome = entry.getResolutionResults().outcome(StepKind.VOTE);
+            assertThat(outcome.amount()).isEqualTo(2);
+            assertThat(outcome.votes()).containsExactly(new StepOutcome.Vote(player1.getId(), "Yes"),
+                    new StepOutcome.Vote(player2.getId(), "No"));
+            assertThat(outcome.playerIds()).containsExactly(player1.getId(), player2.getId());
+        }
+
+        @Test
+        @DisplayName("\"For each yes vote\" counts the votes for that option")
+        void countsTheVotesForAnOption() {
+            vote("Yes", "Yes", new GainLifeEffect(new VotesFor("Yes")), new LoseLifeEffect(new VotesFor("No"),
+                    Subjects.you()));
+
+            assertThat(gd.getLife(player1.getId())).isEqualTo(22);
+        }
+
+        @Test
+        @DisplayName("A 1-1 vote is tied: \"more votes\" fails for both, \"more votes or tied\" holds")
+        void aSplitVoteIsTied() {
+            vote("Yes", "No",
+                    new ConditionalEffect(VoteResult.moreVotes("Yes"), new GainLifeEffect(1)),
+                    new ConditionalEffect(VoteResult.moreVotes("No"), new GainLifeEffect(2)),
+                    new ConditionalEffect(VoteResult.moreVotesOrTied("No"), new GainLifeEffect(4)));
+
+            assertThat(gd.getLife(player1.getId())).isEqualTo(24);
+        }
+
+        @Test
+        @DisplayName("An option with every vote gets more votes; the other neither gets more nor ties, nor has any")
+        void aUnanimousVoteIsNotTied() {
+            vote("Yes", "Yes",
+                    new ConditionalEffect(VoteResult.moreVotes("Yes"), new GainLifeEffect(1)),
+                    new ConditionalEffect(VoteResult.moreVotesOrTied("No"), new GainLifeEffect(2)),
+                    new ConditionalEffect(VoteResult.anyVotes("No"), new GainLifeEffect(4)));
+
             assertThat(gd.getLife(player1.getId())).isEqualTo(21);
         }
     }

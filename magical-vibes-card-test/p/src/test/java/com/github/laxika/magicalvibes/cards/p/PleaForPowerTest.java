@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -22,10 +21,10 @@ class PleaForPowerTest extends BaseCardTest {
         cast();
 
         assertThat(activeVote().playerId()).isEqualTo(player1.getId());
-        harness.handleListChoice(player1, ChoiceContext.PleaForPowerChoice.TIME);
+        harness.handleListChoice(player1, PleaForPower.TIME);
         assertThat(activeVote().playerId()).isEqualTo(player2.getId());
 
-        harness.handleListChoice(player2, ChoiceContext.PleaForPowerChoice.TIME);
+        harness.handleListChoice(player2, PleaForPower.TIME);
 
         assertThat(gd.extraTurns).containsExactly(player1.getId());
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -40,8 +39,8 @@ class PleaForPowerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(first, second, third));
         cast();
 
-        harness.handleListChoice(player1, ChoiceContext.PleaForPowerChoice.TIME);
-        harness.handleListChoice(player2, ChoiceContext.PleaForPowerChoice.KNOWLEDGE);
+        harness.handleListChoice(player1, PleaForPower.TIME);
+        harness.handleListChoice(player2, PleaForPower.KNOWLEDGE);
 
         assertThat(gd.extraTurns).isEmpty();
         assertThat(gd.playerHands.get(player1.getId()))
@@ -59,9 +58,9 @@ class PleaForPowerTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         cast();
 
-        harness.handleListChoice(player1, ChoiceContext.PleaForPowerChoice.KNOWLEDGE);
+        harness.handleListChoice(player1, PleaForPower.KNOWLEDGE);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        harness.handleListChoice(player2, ChoiceContext.PleaForPowerChoice.KNOWLEDGE);
+        harness.handleListChoice(player2, PleaForPower.KNOWLEDGE);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second, third);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth);
@@ -80,14 +79,28 @@ class PleaForPowerTest extends BaseCardTest {
         harness.castAndResolveSorcery(player2, 0, 0);
 
         assertThat(activeVote().playerId()).isEqualTo(player2.getId());
-        harness.handleListChoice(player2, ChoiceContext.PleaForPowerChoice.TIME);
+        harness.handleListChoice(player2, PleaForPower.TIME);
         assertThat(gd.extraTurns).isEmpty();
         assertThat(activeVote().playerId()).isEqualTo(player1.getId());
-        harness.handleListChoice(player1, ChoiceContext.PleaForPowerChoice.TIME);
+        harness.handleListChoice(player1, PleaForPower.TIME);
 
         assertThat(gd.extraTurns).containsExactly(player2.getId());
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         harness.assertInGraveyard(player2, "Plea for Power");
+    }
+
+    @Test
+    @DisplayName("Each vote is logged as it is cast, so the players voting after it know it")
+    void eachVoteIsLoggedAsItIsCast() {
+        cast();
+
+        harness.handleListChoice(player1, PleaForPower.TIME);
+
+        assertThat(gameLogContains(player1.getUsername() + " votes for Time (Plea for Power).")).isTrue();
+        assertThat(activeVote().playerId()).isEqualTo(player2.getId());
+        harness.handleListChoice(player2, PleaForPower.KNOWLEDGE);
+
+        assertThat(gameLogContains(player2.getUsername() + " votes for Knowledge (Plea for Power).")).isTrue();
     }
 
     private void cast() {
@@ -100,7 +113,7 @@ class PleaForPowerTest extends BaseCardTest {
     private PendingInteraction.ColorChoice activeVote() {
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.options()).containsExactlyElementsOf(ChoiceContext.PleaForPowerChoice.OPTIONS);
+        assertThat(choice.options()).containsExactlyElementsOf(List.of(PleaForPower.TIME, PleaForPower.KNOWLEDGE));
         return choice;
     }
 }

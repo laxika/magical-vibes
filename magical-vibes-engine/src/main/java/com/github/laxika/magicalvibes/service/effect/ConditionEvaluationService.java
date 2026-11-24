@@ -14,11 +14,13 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.condition.VoteResult;
 import com.github.laxika.magicalvibes.model.condition.APlayerControlsMoreCreaturesThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.APlayerHasMoreCardsInHandThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.APlayerHasMoreLifeThanEachOtherPlayer;
@@ -541,6 +543,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.room.RoomNameSupport;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1416,6 +1419,7 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null
                             && gameData.playersWhosePermanentsLeftBattlefieldThisTurn
                                     .contains(ctx.controllerId());
+            case VoteResult c -> voteResult(ctx.resolutionResults().outcome(StepKind.VOTE), c);
             case HappenedThisWay c -> c.kind() == StepKind.REVEAL && c.cardFilter() != null
                     ? revealedCardMatches(gameData, ctx, c)
                     : c.cardFilter() != null
@@ -2936,6 +2940,27 @@ public class ConditionEvaluationService {
     }
 
     /** "If it's a land card": one of the cards the reveal step showed matches, judged as it is now where it is. */
+    /**
+     * {@link VoteResult}: the option's votes in the entry's most recent vote against each other option's. The vote is
+     * tied when more than one option got the most votes (Plea for Power's ruling); no vote cast at all fails.
+     */
+    private static boolean voteResult(StepOutcome vote, VoteResult condition) {
+        if (vote.votes().isEmpty()) {
+            return false;
+        }
+        Map<String, Integer> tally = new HashMap<>();
+        vote.votes().forEach(cast -> tally.merge(cast.choice(), 1, Integer::sum));
+        int mine = tally.getOrDefault(condition.option(), 0);
+        int most = Collections.max(tally.values());
+        long withMost = tally.values().stream().filter(count -> count == most).count();
+        boolean moreVotes = mine == most && withMost == 1;
+        return switch (condition.reading()) {
+            case MORE_VOTES -> moreVotes;
+            case MORE_VOTES_OR_TIED -> moreVotes || withMost > 1;
+            case ANY_VOTES -> mine > 0;
+        };
+    }
+
     private boolean revealedCardMatches(GameData gameData, ConditionContext ctx, HappenedThisWay condition) {
         return ctx.resolutionResults().outcome(StepKind.REVEAL).movedCards().stream().anyMatch(shown -> {
             Card card = gameQueryService.findCardById(gameData, shown.cardId());
