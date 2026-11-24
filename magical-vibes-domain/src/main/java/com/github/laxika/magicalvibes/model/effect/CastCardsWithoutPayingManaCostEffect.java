@@ -17,6 +17,11 @@ import java.util.Objects;
  * cast; a face-down card has no characteristics, CR 406.3a). Narrow them with the subject's own filter
  * ({@code Subjects.exiledCards(eachOpponent(), filter)}, {@code cardsThisWay(EXILE, filter)}).
  *
+ * <p>Spell cards it names in a graveyard ("cast any number of red instant and/or sorcery cards from your graveyard",
+ * {@code Subjects.cardsInGraveyards(you(), filter)}) are offered one round at a time instead: each with a "may", the
+ * chosen one cast, then the rest offered again, so the caster still picks the order (CR 608.2g). Graveyard cards are
+ * named alone, with no total mana-value limit.
+ *
  * @param cards          the cards the spells are cast from among
  * @param maxCount       how many spells may be cast at most ({@link Integer#MAX_VALUE} for any number)
  * @param totalManaValue the most their total mana value may be, evaluated once as the effect resolves, each split

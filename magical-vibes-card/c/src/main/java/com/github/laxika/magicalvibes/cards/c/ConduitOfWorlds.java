@@ -6,7 +6,13 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.CastTargetCardFromGraveyardIfNoSpellThisTurnEffect;
+import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.effect.CastCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestrictionEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
@@ -30,8 +36,11 @@ public class ConduitOfWorlds extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new CastTargetCardFromGraveyardIfNoSpellThisTurnEffect(
-                        nonlandPermanent, GraveyardSearchScope.CONTROLLERS_GRAVEYARD)),
+                List.of(new ConditionalEffect(new NotCondition(new ControllerCastSpellThisTurn(null)),
+                        CastCardFromGraveyardEffect.of(Subjects.targetCard(
+                                        nonlandPermanent, GraveyardSearchScope.CONTROLLERS_GRAVEYARD))
+                                .ifCast(PlayerRestrictionEffect.thisTurn(Subjects.you(),
+                                        PlayerRestriction.castingSpells())))),
                 "Cast target nonland permanent card from your graveyard if you haven't cast a spell this turn.",
                 null,
                 null,

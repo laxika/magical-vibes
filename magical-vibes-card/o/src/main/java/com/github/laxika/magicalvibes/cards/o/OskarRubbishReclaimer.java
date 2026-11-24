@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.DistinctManaValuesAmongCardsInGraveyard;
-import com.github.laxika.magicalvibes.model.effect.CastDiscardedCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,7 +17,8 @@ public class OskarRubbishReclaimer extends Card {
 
     public OskarRubbishReclaimer() {
         addStaticEffect(new ReduceOwnCastCostEffect(new DistinctManaValuesAmongCardsInGraveyard()));
-        addTrigger(Triggers.youDiscardCard().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.LAND))),
-                new CastDiscardedCardFromGraveyardEffect());
+        CardNotPredicate nonland = new CardNotPredicate(new CardTypePredicate(CardType.LAND));
+        addTrigger(Triggers.youDiscardCard().withFilter(nonland),
+                CastCardFromGraveyardEffect.of(Subjects.triggeringCards(nonland)).allowingAdventure());
     }
 }

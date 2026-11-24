@@ -101,6 +101,33 @@ class ThunderbladeChargeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Isn't offered for a cast once it left the graveyard and came back")
+    void notOfferedAfterLeavingAndReturningToGraveyard() {
+        Card charge = putChargeInGraveyard();
+        gd.markGraveyardEntry(charge);
+        addReadyAttacker();
+        harness.setLife(player2, 20);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.setGraveyard(player1, List.of());
+        gd.markGraveyardExit(charge.getId());
+        harness.setGraveyard(player1, List.of(charge));
+        gd.markGraveyardEntry(charge);
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.addMana(player1, ManaColor.RED, 3);
+            harness.addMana(player1, ManaColor.COLORLESS, 2);
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(charge);
+    }
+
+    @Test
     @DisplayName("One or more combat-damage dealers create only one graveyard trigger")
     void batchesCombatDamageTrigger() {
         putChargeInGraveyard();

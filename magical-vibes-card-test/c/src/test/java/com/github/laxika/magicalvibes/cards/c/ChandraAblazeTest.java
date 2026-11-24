@@ -192,4 +192,28 @@ class ChandraAblazeTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Elemental");
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sorcery, instant);
     }
+
+    @Test
+    @DisplayName("-7 casts in the order chosen: a card declined first is offered again after another is cast")
+    void minusSevenOffersADeclinedCardAgain() {
+        addReadyChandra(player1, 8);
+        ElementalAppeal sorcery = new ElementalAppeal();
+        Shock instant = new Shock();
+        harness.setGraveyard(player1, List.of(sorcery, instant));
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+        harness.assertOnBattlefield(player1, "Elemental");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sorcery, instant);
+    }
 }

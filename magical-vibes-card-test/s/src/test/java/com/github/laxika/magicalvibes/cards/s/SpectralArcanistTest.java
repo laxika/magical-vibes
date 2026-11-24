@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
+import com.github.laxika.magicalvibes.cards.t.ThornOfAmethyst;
 
 import java.util.List;
 
@@ -71,6 +72,50 @@ class SpectralArcanistTest extends BaseCardTest {
         var spirit = harness.addToBattlefieldAndReturn(player1, new LanternSpirit());
         spirit.tap();
         harness.addToBattlefield(player2, new RuleOfLaw());
+        harness.setGraveyard(player1, List.of(new Vitalize()));
+        harness.setHand(player1, List.of(new SpectralArcanist()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(spirit.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Vitalize");
+    }
+
+    @Test
+    @CardUsed({ThornOfAmethyst.class})
+    @DisplayName("The free cast still pays Thorn of Amethyst's cost increase")
+    void freeCastPaysCostIncrease() {
+        var spirit = harness.addToBattlefieldAndReturn(player1, new LanternSpirit());
+        spirit.tap();
+        harness.addToBattlefield(player2, new ThornOfAmethyst());
+        Vitalize vitalize = new Vitalize();
+        harness.setGraveyard(player1, List.of(vitalize));
+        harness.setHand(player1, List.of(new SpectralArcanist()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == vitalize);
+    }
+
+    @Test
+    @CardUsed({ThornOfAmethyst.class})
+    @DisplayName("A free cast whose cost increase can't be paid leaves the card in the graveyard")
+    void unpaidCostIncreaseLeavesCardInGraveyard() {
+        var spirit = harness.addToBattlefieldAndReturn(player1, new LanternSpirit());
+        spirit.tap();
+        harness.addToBattlefield(player2, new ThornOfAmethyst());
         harness.setGraveyard(player1, List.of(new Vitalize()));
         harness.setHand(player1, List.of(new SpectralArcanist()));
         harness.addMana(player1, ManaColor.BLUE, 1);

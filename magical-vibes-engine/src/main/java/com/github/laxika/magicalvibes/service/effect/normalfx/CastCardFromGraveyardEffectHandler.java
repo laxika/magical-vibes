@@ -12,7 +12,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,7 @@ public class CastCardFromGraveyardEffectHandler implements NormalEffectHandlerBe
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,6 +44,11 @@ public class CastCardFromGraveyardEffectHandler implements NormalEffectHandlerBe
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         CastCardFromGraveyardEffect castEffect = (CastCardFromGraveyardEffect) effect;
         UUID controllerId = entry.getControllerId();
+
+        if (castEffect.cards() != null) {
+            offerNamedCards(gameData, entry, castEffect);
+            return;
+        }
 
         // A card chosen as the ability went on the stack; a player there is the trigger event's ("that player", the
         // player dealt damage), not a chosen card.
@@ -85,6 +93,29 @@ public class CastCardFromGraveyardEffectHandler implements NormalEffectHandlerBe
         }
     }
 
+    /**
+     * The cards the effect's subject names in a graveyard that may be cast: one is offered with a "may", several as
+     * offers of one choice group, of which accepting one withdraws the others.
+     */
+    private void offerNamedCards(GameData gameData, StackEntry entry, CastCardFromGraveyardEffect castEffect) {
+        List<Card> named = subjectResolutionService.locatedCards(gameData, entry, castEffect, castEffect.cards())
+                .stream()
+                .filter(located -> located.zone() == Zone.GRAVEYARD)
+                .map(SubjectResolutionService.LocatedCard::card)
+                .filter(card -> isLegal(gameData, entry, castEffect, card))
+                .toList();
+        if (named.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(entry.getDescription()
+                    + " — no card in a graveyard can be cast this way."));
+            return;
+        }
+        CastCardFromGraveyardEffect offer = named.size() == 1 || castEffect.choiceGroupId() != null
+                ? castEffect : castEffect.inChoiceGroup(UUID.randomUUID());
+        for (int i = named.size() - 1; i >= 0; i--) {
+            offerCast(gameData, entry, offer, named.get(i));
+        }
+    }
+
     private boolean isLegal(GameData gameData, StackEntry entry,
                             CastCardFromGraveyardEffect effect, Card card) {
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
@@ -115,9 +146,16 @@ public class CastCardFromGraveyardEffectHandler implements NormalEffectHandlerBe
                 card,
                 entry.getControllerId(),
                 List.of(effect),
-                entry.getCard().getName() + " — Cast " + card.getName() + " from your graveyard?",
+                entry.getCard().getName() + " — Cast " + card.getName() + " from " + graveyardName(gameData, entry, card)
+                        + (effect.withoutPayingManaCost() ? " without paying its mana cost?" : "?"),
                 entry.getSourcePermanentId(),
                 entry.getTriggeringPermanentPowerAtTrigger(),
                 entry.getXValue()));
+    }
+
+    private String graveyardName(GameData gameData, StackEntry entry, Card card) {
+        UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
+        return ownerId == null || ownerId.equals(entry.getControllerId())
+                ? "your graveyard" : gameData.playerIdToName.get(ownerId) + "'s graveyard";
     }
 }

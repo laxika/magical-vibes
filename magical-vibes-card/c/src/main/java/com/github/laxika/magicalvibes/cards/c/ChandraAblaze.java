@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
-import com.github.laxika.magicalvibes.model.effect.CastMatchingInstantOrSorceryFromGraveyardWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.CastCardsWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -51,8 +51,8 @@ public class ChandraAblaze extends Card {
         ));
         addActivatedAbility(new ActivatedAbility(
                 -7,
-                List.of(new CastMatchingInstantOrSorceryFromGraveyardWithoutPayingManaCostEffect(
-                        redInstantOrSorcery)),
+                List.of(CastCardsWithoutPayingManaCostEffect.anyNumber(
+                        Subjects.cardsInGraveyards(Subjects.you(), redInstantOrSorcery))),
                 "−7: Cast any number of red instant and/or sorcery cards from your graveyard without paying their mana costs."
         ));
     }

@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.CastTargetCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -21,7 +22,7 @@ public class TinybonesThePickpocket extends Card {
                 new CardIsPermanentPredicate(),
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new CastTargetCardFromGraveyardEffect(
-                        nonlandPermanent, GraveyardSearchScope.OPPONENT_GRAVEYARD, true));
+                CastCardFromGraveyardEffect.of(Subjects.targetCard(
+                        nonlandPermanent, GraveyardSearchScope.OPPONENT_GRAVEYARD)).spendingManaOfAnyType());
     }
 }

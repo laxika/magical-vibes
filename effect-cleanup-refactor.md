@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19 (each in Findings; the fold queue marks its rows). Fold runs 18b, 19b and 20 are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                            |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b (each in Findings; the fold queue marks its rows). Fold runs 17c, 21 and 12e are running in worktrees; 19b and 20 wait to merge. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                             |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,683 / 2,951 (after fold run 19) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,676 / 2,940 (after fold run 18b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,561 rows over 4,429 classes (after fold run 19). Latest verdict per class: `step-9` 834, unique 1,167, absorbed 723, split 605, blocked-other 502, survivor 299, blocked-step-model 141, blocked-player-loop 96, dead 62. Waiting: 834 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,572 rows over 4,429 classes (after fold run 18b). Latest verdict per class: `step-9` 825, unique 1,169, absorbed 729, split 606, blocked-other 502, survivor 300, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 825 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -722,6 +722,10 @@ Delayed and global triggers:
 - `ReselectAttackingCreatureAttackTargetEffect(PermanentSubject attacker, boolean playersOnly)`; `FirstTokenCreationCopiesAttachedPermanentEffect`
   + `EsixTokenReplacementSupport.offerAttachedCopy`; `ControllerSpellsCantBeCounteredEffect(PlayerSubject players, Set<CardType>,
   CardPredicate)` read over active static abilities (fold run 19).
+
+- `CastCardFromGraveyardEffect.of(CardSubject)` (`sourceCard()`, `triggeringCards(filter)`, `targetCard(filter, scope)`) with `.withoutPayingItsManaCost()`, `.spendingManaOfAnyType()`, `.exilingInsteadOfGraveyard()`, `.allowingAdventure()`, `.ifCast(effect)`: the graveyard cast-now offer. Several named cards form one choice group; a free cast pays its cost increases (CR 601.2f) (fold run 18b).
+- `CastCardsWithoutPayingManaCostEffect` over graveyard cards (`cardsInGraveyards(you(), filter)`): offered one round at a time, a declined card offered again after each cast (CR 608.2g; Chandra Ablaze) (fold run 18b).
+- "If you haven't cast a spell this turn, you may cast … If you do, you can't cast additional spells this turn": `ConditionalEffect(NotCondition(ControllerCastSpellThisTurn(null)), CastCardFromGraveyardEffect.of(…).ifCast(PlayerRestrictionEffect.thisTurn(you(), castingSpells())))` (Conduit of Worlds; fold run 18b).
 
 ### Blocked causes still open
 
@@ -2451,6 +2455,28 @@ losing 3) aren't implemented (CR 701.54c): `missing-features-to-do.md` entry 82.
 **For the next run (19b).** `opp-mode`: an opponent chooser on `ChooseOneEffect` at cast (CR 700.2e: the controller picks which
 opponent chooses), with `FatalLoreEffect` and the targets-after-mode-choice context, replacing `SpellCastingService.queueOpponentModeChoice`.
 `tempting`: `TemptingOfferEffect(payload)`, all opponents deciding in turn order, then the payloads (C13 ruling).
+
+### Step 9, fold run 18b (2026-11-24, parallel worktree)
+
+Batches: `gy-cast-now` taken; `exile-markers` given a verdict; `look-cast` not taken. Ratchet in its worktree 3,700 / 2,963 → 3,693 / 2,952. Ledger 11 rows (absorbed 6, split 1, unique 2, survivor 2). 8 card files rewritten, Oracle text checked for 9. CR 608.2g, 601.2f, 118.8, 118.9, 118.9a, 716.3a, 608.2b, 608.2d, 400.7, 702.62a, 709.3a, 305.2, 305.3 checked.
+
+**Record shape.** `CastCardFromGraveyardEffect` gains `CardSubject cards`, plus the engine-built `choiceGroupId` and `nextOffers`. `CastCardFromGraveyardEffect.of(cards)` takes `sourceCard()`, `triggeringCards(filter)` or `targetCard(filter, scope)`; the target subject declares the target, and its scope becomes the record's scope. Withers: `.withoutPayingItsManaCost()`, `.spendingManaOfAnyType()`, `.exilingInsteadOfGraveyard()`, `.allowingAdventure()`, `.ifCast(effect)`. Each named card is offered with a "may". Several named cards form one choice group: accepting one withdraws the others. The legacy filter-and-scope search is unchanged when `cards` is null.
+
+`CastCardsWithoutPayingManaCostEffect` also accepts graveyard cards, alone and with no total cap. Each round offers every matching card as a `CastCardFromGraveyardEffect` offer in one group. Once a cast begins, the next round is inserted, bounded by this round's offers, so a cast that fails can't loop. The exile queue (`ExileFreeCastQueueSupport`) is exile-bound, so the graveyard branch reuses the graveyard cast flow instead.
+
+| Batch | Result |
+|---|---|
+| `gy-cast-now` | 7 folded. Oskar (`triggeringCards(nonland)`, Adventure allowed), Sproutback (`sourceCard()`), Thunderblade (`sourceCard()` free, inside its MayPayManaEffect; cost-shape payment unchanged), Tinybones (`targetCard(…, OPPONENT_GRAVEYARD)`, any mana type), Vadrok (`targetCard`, free) and Victor (`targetCard`, free, exile instead) are absorbed. Conduit is split: `ConditionalEffect(NotCondition(ControllerCastSpellThisTurn(null)), ….ifCast(PlayerRestrictionEffect.thisTurn(you(), castingSpells())))`. Chandra moves onto `CastCardsWithoutPayingManaCostEffect.anyNumber(cardsInGraveyards(you(), filter))`. 1 left: `PlayTargetCardFromGraveyardWithoutPayingManaCostEffect` is unique, kept for Horde's land play and two engine builders |
+| `exile-markers` | `CastExiledCardWithoutPayingManaCostEffect` is unique. It is a stack-resolved cast step naming its card (suspend's trigger wraps it in a MayEffect; Cruelclaw's paid discard runs it with no second ask). The survivor is a PendingMayAbility marker, so folding would only swap shapes |
+| `look-cast` | not taken: the looked-at cards wait in three places (taken out of the library, left in it, Kiora's exile) and Sunbird's split-half cap needs its own run |
+
+**Behaviour changes.** Free survivor casts pay cost increases (CR 601.2f): Spectral Arcanist tests. A Phyrexian life payment is recorded on the survivor's spell, so compleated loyalty is right. Chandra's order is the caster's and a declined card is offered again (CR 608.2g; test). Thunderblade's graveyard stay was already held by the stay-aware `SourceCardInGraveyard`; `sourceCard()` keeps it (regression test). Moved cards get the survivor's checks: additional costs paid on free casts (CR 118.8), X, modes and Adventure. Prompts and logs are the survivor's.
+
+**Seen, not changed.**
+- Horde of Notions plays a land from its graveyard without checking the turn or a remaining land play (CR 305.2, 305.3). Fairly sure. Untestable without an Elemental land card.
+- `MayCastDiscardedCardWithoutPayingManaCostEffect(CardSubject)` is a second graveyard/exile cast-now record over a card subject: a step-10 merge candidate with the survivor.
+
+**For the next run (18c).** `look-cast`: one `LookAtTopCardsAndMayCastEffect` with a `DynamicAmount` count, a reveal flag and one place for the looked-at cards to wait (Aetherworks leaves them in the library, Velomachus and Cosmic Cube take them out, Kiora exiles them). Read `LibrarySearch CAST_WITHOUT_PAYING`'s completion first, to see how it treats both placements.
 
 ## Prompt
 
