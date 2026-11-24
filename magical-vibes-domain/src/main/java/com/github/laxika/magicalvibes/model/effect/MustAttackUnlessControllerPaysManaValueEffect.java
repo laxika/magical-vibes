@@ -9,7 +9,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * restricts it to a creature they have controlled continuously since the beginning of the turn).
  * Declining, or being unable to pay, applies both halves of the penalty, which are the same
  * effects Norritt applies unconditionally ({@link SetCombatRequirementThisTurnEffect} with
- * {@link CombatRequirement#MUST_ATTACK} plus {@link DestroyTargetIfDidNotAttackAtEndStepEffect}).
+ * {@link CombatRequirement#MUST_ATTACK} plus a {@link RegisterDelayedStepTriggerEffect} about the target that destroys
+ * it at the next end step if it didn't attack).
  *
  * <p>Used by Arcum's Whistle.
  */

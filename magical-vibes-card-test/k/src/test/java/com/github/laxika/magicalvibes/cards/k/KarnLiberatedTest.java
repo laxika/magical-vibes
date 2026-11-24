@@ -10,6 +10,10 @@ import com.github.laxika.magicalvibes.cards.b.Batterskull;
 import com.github.laxika.magicalvibes.cards.m.MutagenicGrowth;
 import com.github.laxika.magicalvibes.cards.n.NumbingDose;
 import com.github.laxika.magicalvibes.cards.p.PorcelainLegionnaire;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
+import com.github.laxika.magicalvibes.model.trigger.AbilityTrigger;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +23,6 @@ import com.github.laxika.magicalvibes.model.RingState;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.CopyNextExhaustAbilityThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -314,7 +317,9 @@ class KarnLiberatedTest extends BaseCardTest {
             Permanent karn = addReadyKarn(player1);
             karn.setCounterCount(CounterType.LOYALTY, 14);
             gd.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.nextThisTurn(player1.getId(),
-                    new GrizzlyBears(), new CopyNextExhaustAbilityThisTurnEffect().delayedAbility(), null));
+                    new GrizzlyBears(), new TriggeredAbility(Triggers.youActivateNonManaAbility()
+                            .withKind(AbilityTrigger.AbilityKind.EXHAUST), new CopyTriggeringSpellOrAbilityEffect()),
+                    null));
             gd.temporaryGlobalTriggeredAbilities.add(new TemporaryGlobalTriggeredAbility(player2.getId(),
                     new GrizzlyBears(), new CopyNextInstantOrSorceryCastThisTurnEffect().delayedAbility()));
 

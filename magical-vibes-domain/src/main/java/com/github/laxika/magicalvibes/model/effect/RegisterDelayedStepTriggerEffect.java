@@ -33,10 +33,13 @@ import java.util.Objects;
  *                         played the card" (CR 603.4)
  * @param alsoIfNothingHappened whether it does more than act on those objects, so it is created even when that step
  *                         did nothing
- * @param permanent        the permanent it is about when it is about no step ({@link #aboutAtNext}): its entry's
- *                         non-targeting object and triggering permanent, which it doesn't affect once that permanent
- *                         has left the battlefield (CR 603.7c); not created when the subject names none; {@code null}
- *                         for none
+ * @param permanent        the permanents it is about when it is about no step ({@link #aboutAtNext}): its entry's
+ *                         non-targeting objects, the first its triggering permanent and, of several, all of them its
+ *                         triggering permanents, which it doesn't affect once they have left the battlefield
+ *                         (CR 603.7c); not created when the subject names none. A {@code target()} subject is the
+ *                         target of the spell or ability that creates it ("sacrifice target creature at the beginning
+ *                         of the next end step"), which this effect declares; the delayed ability itself targets
+ *                         nothing (CR 115.10a). {@code null} for none
  * @param orStep           another step it waits for, whichever begins first ("the next main phase": the precombat or
  *                         the postcombat main phase); {@code null} for none
  * @param thisTurn         whether it has the stated duration "this turn" ("at the beginning of your next main phase
@@ -73,9 +76,12 @@ public record RegisterDelayedStepTriggerEffect(StepKind about, StepTrigger step,
         if (player != null && player.declaresTarget()) {
             throw new IllegalArgumentException("The step that did it declares the target: " + player);
         }
-        if (permanent != null && (about != null || permanent.declaresTarget())) {
-            throw new IllegalArgumentException("An ability about a permanent is about no step, and is made about it, "
-                    + "not targeting it: " + permanent);
+        if (permanent != null && about != null) {
+            throw new IllegalArgumentException("An ability about a permanent is about no step: " + permanent);
+        }
+        if (permanent != null && permanent.declaresTarget() && !(permanent instanceof PermanentSubject.Target)) {
+            throw new IllegalArgumentException("An ability about a target is about the target the effect declares: "
+                    + permanent);
         }
         if ((thisTurn || orStep != null)
                 && (about != null || permanent != null || player != null || afterThisTurn || card != null)) {
@@ -125,9 +131,12 @@ public record RegisterDelayedStepTriggerEffect(StepKind about, StepTrigger step,
     }
 
     /**
-     * At the next {@code step}, {@code effects} about the permanent {@code permanent} names ("put two +1/+1 counters
+     * At the next {@code step}, {@code effects} about the permanents {@code permanent} names ("put two +1/+1 counters
      * on it at the beginning of the next end step" of a creature that fought, {@code Subjects.triggering()}), as it
-     * names it as this resolves: not created when it names none.
+     * names them as this resolves: not created when it names none. {@code Subjects.target()} ("destroy target creature
+     * at the beginning of the next end step", "target creature you control gets +3/+3 until end of turn. Sacrifice it at
+     * the beginning of the next end step") declares the target, and the ability is about it. Its effects name "it" as
+     * {@code Subjects.triggering()} and "them", of several, as {@code Subjects.triggeringAll()}.
      */
     public static RegisterDelayedStepTriggerEffect aboutAtNext(StepTrigger step, PermanentSubject permanent,
                                                                CardEffect... effects) {
@@ -197,6 +206,22 @@ public record RegisterDelayedStepTriggerEffect(StepKind about, StepTrigger step,
         }
         return new RegisterDelayedStepTriggerEffect(about, step, effects, player, afterThisTurn, true,
                 alsoIfNothingHappened, permanent, orStep, thisTurn, card);
+    }
+
+    /**
+     * The target of the spell or ability that creates an ability about its target: any permanent, removed by what the
+     * ability does to it ("destroy / sacrifice it at the beginning of the next end step"); the card's target filter says
+     * what it may be.
+     */
+    @Override
+    public TargetSpec targetSpec() {
+        return permanent != null && permanent.declaresTarget()
+                ? TargetSpec.harmful(TargetPredicates.permanent()) : TargetSpec.NONE;
+    }
+
+    @Override
+    public int targetGroup() {
+        return permanent instanceof PermanentSubject.Target target && target.group() != null ? target.group() : -1;
     }
 
     /** This ability, which does more than act on those objects ("..., then draw a card"). */

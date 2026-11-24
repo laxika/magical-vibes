@@ -357,7 +357,7 @@ public class RulesEventPipeline {
      * What a delayed step ability's stack entry records, whatever its effects are: the player whose step it is as the
      * active player, the permanent it is about as its non-targeting object and triggering permanent (or else the
      * player it is about as its non-targeting object), and its other objects (CR 603.7c): the permanents as its
-     * declared objects, the cards as its target cards, a lone card as its triggering card in its graveyard stay.
+     * declared objects (and, of several about a permanent, as its triggering permanents: "them"), the cards as its target cards, a lone card as its triggering card in its graveyard stay.
      * What was attached to the permanent as it left the battlefield stays with it as last known (CR 608.2h). An
      * ability made after a step reads that step's results.
      */
@@ -377,6 +377,10 @@ public class RulesEventPipeline {
             }
             if (!referents.permanentIds().isEmpty()) {
                 entry.setDeclaredTargetIds(referents.permanentIds());
+                if (delayed.watchedPermanentId() != null && referents.permanentIds().size() > 1) {
+                    // "Sacrifice them": every permanent it is about is a triggering permanent.
+                    entry.setTriggeringPermanentIds(referents.permanentIds());
+                }
             }
             if (!referents.cardIds().isEmpty()) {
                 entry.setTargetCardIds(new ArrayList<>(referents.cardIds()));

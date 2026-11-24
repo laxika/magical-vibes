@@ -126,6 +126,28 @@ class NorrittTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The end-step ability triggers even if the target attacked, and checks the attack as it resolves")
+    void endStepAbilityChecksTheAttackAsItResolves() {
+        addReadyNorritt();
+        Permanent attacker = addCreatureReady(player2, new BalduvianBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        harness.activateAbility(player1, 0, 1, null, attacker.getId());
+        harness.passBothPriorities();
+        declareAttackers(player2, List.of(0));
+
+        harness.forceStep(TurnStep.END_STEP);
+        gd.interaction.clearAwaitingInput();
+        harness.inMutationScope(
+                () -> GameTestEngineContext.get().getBean(StepTriggerService.class).handleEndStepTriggers(gd));
+
+        assertThat(gd.stack).singleElement().satisfies(entry -> assertThat(entry.getCard()).isInstanceOf(Norritt.class));
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
+    }
+
+    @Test
     @DisplayName("Cannot target a Wall or a creature not controlled since the turn began")
     void rejectsWallAndNewlyControlledCreature() {
         addReadyNorritt();

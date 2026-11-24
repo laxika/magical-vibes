@@ -6,8 +6,10 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeTargetPermanentAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -28,7 +30,9 @@ public class JunkyoBell extends Card {
                         new BoostTargetCreatureEffect(
                                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
                                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)),
-                        new SacrificeTargetPermanentAtEndStepEffect(false, true)),
+                        RegisterDelayedStepTriggerEffect.aboutAtNext(Triggers.endStep(ActivePlayer.ANY),
+                                Subjects.target(),
+                                SacrificeSelfEffect.ofTriggeringPermanent())),
                 "Have target creature you control get +X/+X until end of turn?"
         ));
     }

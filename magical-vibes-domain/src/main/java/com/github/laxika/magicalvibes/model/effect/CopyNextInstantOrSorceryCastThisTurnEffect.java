@@ -49,10 +49,6 @@ public record CopyNextInstantOrSorceryCastThisTurnEffect(
         return delayedAbility(dynamicCopyCount == null ? copy : copy.withCopies(dynamicCopyCount));
     }
 
-    /** As {@link #delayedAbility()}, making {@code copies} copies ("copy that spell X times", fixed as it is made). */
-    public TriggeredAbility delayedAbility(int copies) {
-        return delayedAbility(new CopyTriggeringSpellEffect().withCopies(copies));
-    }
 
     private TriggeredAbility delayedAbility(CopyTriggeringSpellEffect copy) {
         CardPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(

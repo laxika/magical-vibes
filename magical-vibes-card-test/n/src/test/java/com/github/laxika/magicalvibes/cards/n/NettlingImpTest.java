@@ -169,11 +169,11 @@ class NettlingImpTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, 0, target.getId());
         harness.passBothPriorities();
+        assertThat(imp.isTapped()).isTrue();
         declareAttackers(player2, List.of(0));
+        assertThat(target.isAttackedThisTurn()).isTrue();
         runEndStep();
 
-        assertThat(imp.isTapped()).isTrue();
-        assertThat(target.isAttackedThisTurn()).isTrue();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
     }
 

@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByFewerThanNCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
@@ -12,7 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -21,6 +24,23 @@ import java.util.UUID;
 public final class AiUtils {
 
     private AiUtils() {}
+
+    /**
+     * {@code effects} with the effects of each delayed ability about the target they make ("this creature deals 2
+     * damage to that creature at end of combat", Dwarven Sea Clan) after it: what will happen to the target, read as
+     * what the ability does to it.
+     */
+    public static List<CardEffect> withEffectsDelayedAboutTheTarget(List<? extends CardEffect> effects) {
+        List<CardEffect> all = new ArrayList<>();
+        for (CardEffect effect : effects) {
+            all.add(effect);
+            if (effect instanceof RegisterDelayedStepTriggerEffect delayed && delayed.permanent() != null
+                    && delayed.permanent().declaresTarget()) {
+                all.addAll(delayed.effects());
+            }
+        }
+        return all;
+    }
 
     /**
      * Whether the card's target filter contains a {@link PermanentManaValueEqualsXPredicate}, so

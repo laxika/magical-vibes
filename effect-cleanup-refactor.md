@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25 (each in Findings; the fold queue marks its rows). Fold runs 31, 26 and 30 are running in worktrees; 28 waits to merge. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                            |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28 (each in Findings; the fold queue marks its rows). Fold runs 31, 26 and 30 are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                             |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,547 / 2,839 (after fold run 25) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,532 / 2,825 (after fold run 28) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,775 rows over 4,443 classes (after fold run 25). Latest verdict per class: `step-9` 688, unique 1,170, absorbed 835, split 631, blocked-other 503, survivor 318, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 688 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,792 rows over 4,443 classes (after fold run 28). Latest verdict per class: `step-9` 673, unique 1,170, absorbed 850, split 631, blocked-other 503, survivor 318, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 673 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -792,6 +792,11 @@ Delayed and global triggers:
 - `DoubleDamageToOpponentsAndTheirPermanentsEffect(players, permanents)` / `.toPlayersOnly(players)`: recipient doublers over `eachOpponent()`, `chosenPlayer()`, `you()` + `source()`, `enchantedPlayer()`; floated over `you()` on a player by `GrantStaticEffectToPlayerEffect` (fold run 25).
 - `DoubleControllerDamageEffect(multiplier, …)` and `DoubleControllerDamageToOpponentsAndTheirPermanentsEffect(multiplier, noncombatOnly, toTheirPermanents)`, floated by `GrantStaticEffectToPlayerEffect.untilEndOfTurn` and read as floating copies on the source's controller (fold run 25).
 - `BoostControllerDamageThisTurnEffect(DynamicAmount, color, noncombatOnly)` / `.fromSourcesOfColor` / `.noncombatPlusX()`: "+N this turn" for your sources, fixed on resolution (fold run 25).
+
+- `RegisterDelayedStepTriggerEffect.aboutAtNext(step, Subjects.target(), effects…)`: "destroy / sacrifice target X at the beginning of the next end step", "this creature deals N damage to that creature at end of combat". The registering object declares the harmful target; the delayed ability is about every permanent named, "it" `triggering()`, "them" `triggeringAll()` (fold run 28).
+- `SacrificeSelfEffect(Subjects.triggeringAll())`: "sacrifice them" of a delayed ability about several permanents, those you control, as one event (Depthshaker Titan; fold run 28).
+- `RegisterGlobalTriggeredAbilityEffect.nextThisTurn(ability)`: "when you next cast / activate … this turn": triggers once and is used up (CR 603.7b). It keeps the noted amount and works in a mana ability through `RegisterGlobalTriggeredAbilityManaAbilityEffectHandler` (fold run 28).
+- `AiUtils.withEffectsDelayedAboutTheTarget(effects)`: the AI's damage readers look into a delayed ability about the target (fold run 28).
 
 ### Blocked causes still open
 
@@ -3038,6 +3043,29 @@ Ratchet 3,595 / 2,868 → 3,578 / 2,862. Ledger 25 rows (survivor 4, absorbed 18
 - Blind Fury's doubling skips Maro's Gone Nuts. Sure.
 
 **For the next run.** `add-dmg` needs one bonus reader with source and recipient filters, judged like `getAdditionalDamageToOpponentsBonuses` (Ghostly Flame colours). The add-dmg "Fold:" defect (Sulfuric Vapors, Disciples, Enhanced Surveillance guards) goes with it. Overblaze and Jeska need a timed grant of `DoubleDamageFromCreaturesEffect(source())` onto a permanent, read by `getSourceDamageMultiplier`.
+
+### Step 9, fold run 28 (2026-11-24, parallel worktree)
+
+Batches `delayed-target` and `next-time`. Ratchet 3,588 / 2,861 → 3,573 / 2,847. Ledger: 17 rows (absorbed 15, survivor 2). 33 card files rewritten, Oracle text checked for all (and Arcum's Whistle). Rulings read: Angrath, Norritt, Berserk, Storm King's Thunder. CR 115.10a, 603.4, 603.7a–e, 608.2h, 701.21a checked.
+
+| Batch | Result |
+|---|---|
+| delayed-target | 9 absorbed into `RegisterDelayedStepTriggerEffect.aboutAtNext(step, target() / triggering(), effects)`. The registering object declares the harmful target and the delayed ability is about it without targeting it. "It" is `triggering()`; "them" is `triggeringAll()`. "If it [didn't] attack / has mana value N or less" is `ConditionalEffect(TriggeringPermanentMatches(...))` checked as it resolves. Spinal Embrace is sacrifice + `HappenedThisWay.sacrificed()` + `AmountThisWay.sacrificedToughness()`. |
+| next-time | 6 absorbed into `RegisterGlobalTriggeredAbilityEffect.nextThisTurn(TriggeredAbility)` (CR 603.7b). The survivor keeps the noted amount, so Storm King's Thunder is `NoteAmountEffect(XValue)` + `ConditionalEffect(atLeast(NOTE, 1), …)`, which keeps the old "none at X 0". A new manafx handler serves Magus Lucea Kane and Yuna. |
+| value-binding, ability-copy | not reached |
+
+**Behaviour changes.**
+- Depthshaker Titan sacrifices only the animated artifacts you control (CR 701.21a; the old record made their new controller sacrifice them). Test.
+- Norritt, Nettling Imp, Arcum's Whistle: the "if" is not an intervening "if" (CR 603.4: it doesn't follow the trigger condition; Angrath's ruling uses the same template). The ability triggers and checks the attack as it resolves. Norritt test. NettlingImpTest's precombat case asserts before the end step, because the harness overshoots after the new trigger.
+- Basalt Golem, Tolarian Entrancer, Sawtooth Ogre no longer declare a harmful target (the triage 3/5 "Seen" item).
+- Angrath and Spinal Embrace register even if control wasn't gained (CR 603.7a). Not observable in practice.
+- Registration log lines are gone. The survivor's lines win.
+
+**Also gone:** `CopyNextInstantOrSorceryCastThisTurnEffect.delayedAbility(int)`, and four by-name entries in `TargetPolarityClassifier`.
+
+**Seen, not changed.** `leave-battlefield-redesign.md` still names the deleted Spinal Embrace handler in its history; I left it, since it is a history document.
+
+**For the next run.** `value-binding` needs one binder: a resolution choice (creature type, planeswalker type, chosen player) or a source's chosen subtype or card type, written into a `PermanentPredicate` / `CardPredicate` when the trigger or rule is registered. `bindCardSubjects` and `bindAmounts` are the models, and its first users are Walking Desecration, Leori, The Black Gate, Progenitor's Icon and Apex Observatory. `ability-copy` (Gogo and the engine-built copy and retarget markers) also needs the "Unverified" queue line on `CopyControllerActivatedAbilityEffect` checked. `CopyNextSpellCastThisTurnEffect` (4 cards) and `CopyNextInstantOrSorceryCastThisTurnEffect` (21 cards) could fold onto `nextThisTurn` the same way; I did not audit them.
 
 ## Prompt
 

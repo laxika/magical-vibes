@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 /**
  * Registers the delayed triggered ability with what the step it is about did, as that is now: each card bound to its
  * stay (CR 603.7c), so the ability's effects read that step as the steps of the resolution that made it do. One about
- * a permanent is registered about it, one about a card in a graveyard about that card in that stay, one about no step
+ * permanents is registered about them (a target of the resolving spell or ability among them), one about a card in a graveyard about that card in that stay, one about no step
  * and no permanent about nothing. Each keeps the number the resolution noted, if it noted one.
  */
 @Component
@@ -62,8 +62,9 @@ public class RegisterDelayedStepTriggerEffectHandler implements NormalEffectHand
             if (about.isEmpty()) {
                 return;
             }
+            // One ability about every permanent named ("sacrifice them"), the first its triggering permanent.
             UUID permanentId = about.getFirst();
-            DelayedReferents referents = DelayedReferents.permanents(List.of(permanentId));
+            DelayedReferents referents = DelayedReferents.permanents(List.copyOf(about));
             register(gameData, entry, TemporaryGlobalTriggeredAbility.atNextStep(
                     entry.getControllerId(), entry.getCard(),
                     new TriggeredAbility(register.step(), TriggerOptions.DEFAULT,

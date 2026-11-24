@@ -36,7 +36,7 @@ import java.util.UUID;
  * ({@link DepartureService#departAsStep}). The form with a token for the sacrificing player creates it for the
  * player who controlled the permanent as it was sacrificed, once it has left. A {@code thisWay(CHOOSE)} subject names
  * every permanent chosen ("that player sacrifices all permanents in the pile of their choice"): those of them the
- * sacrificer controls leave as one event (CR 101.4); an {@code allTargets()} subject names every still legal target,
+ * sacrificer controls leave as one event (CR 101.4), as do those of a {@code triggeringAll()} subject; an {@code allTargets()} subject names every still legal target,
  * each sacrificed by its controller when that player is one of the sacrificers, as one event.
  */
 @Component
@@ -65,7 +65,8 @@ public class SacrificeSelfEffectHandler implements NormalEffectHandlerBean, Asks
             schemeAbandonSupport.abandon(gameData, entry.getCard(), entry.getSourcePermanentId());
             return;
         }
-        if (sacrifice.subject() instanceof PermanentSubject.ThisWay) {
+        if (sacrifice.subject() instanceof PermanentSubject.ThisWay
+                || sacrifice.subject() instanceof PermanentSubject.TriggeringAll) {
             sacrificeAllChosen(gameData, entry, sacrifice);
             return;
         }
@@ -97,7 +98,7 @@ public class SacrificeSelfEffectHandler implements NormalEffectHandlerBean, Asks
         stepDepartureSupport.sacrificeThenContinue(gameData, entry, effect, sacrificed.getId(), this);
     }
 
-    /** Every chosen permanent the sacrificer controls and can sacrifice, as one batch. */
+    /** Every chosen (or triggering) permanent the sacrificer controls and can sacrifice, as one batch. */
     private void sacrificeAllChosen(GameData gameData, StackEntry entry, SacrificeSelfEffect sacrifice) {
         UUID sacrificerId = subjectResolutionService.player(gameData, entry, sacrifice, sacrifice.sacrificer());
         List<DepartureIntent> intents = sacrificerId == null

@@ -4,9 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyNextExhaustAbilityThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.trigger.AbilityTrigger;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,7 +28,9 @@ public class PitAutomaton extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",
-                List.of(new CopyNextExhaustAbilityThisTurnEffect()),
+                List.of(RegisterGlobalTriggeredAbilityEffect.nextThisTurn(new TriggeredAbility(
+                        Triggers.youActivateNonManaAbility().withKind(AbilityTrigger.AbilityKind.EXHAUST),
+                        new CopyTriggeringSpellOrAbilityEffect()))),
                 "{2}, {T}: When you next activate an exhaust ability that isn't a mana ability this turn, copy it."
                         + " You may choose new targets for the copy."
         ));

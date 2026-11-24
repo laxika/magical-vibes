@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCombatOpponentAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,6 +31,7 @@ public class BasaltGolem extends Card {
                 List.of(CardSubtype.WALL), Set.of(Keyword.DEFENDER), Set.of(CardType.ARTIFACT));
         addTrigger(Triggers.becomesBlocked(),
                 TriggerOptions.EACH_BLOCKER,
-                new SacrificeCombatOpponentAtEndOfCombatEffect(wallToken));
+                RegisterDelayedStepTriggerEffect.aboutAtNext(Triggers.endOfCombat(), Subjects.triggering(),
+                        SacrificeSelfEffect.ofTriggeringPermanent(true, wallToken)));
     }
 }

@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeTargetPermanentAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -35,7 +36,9 @@ public class HazoretsFavor extends Card {
                 SequenceEffect.of(
                         new BoostTargetCreatureEffect(2, 0),
                         new GrantKeywordEffect(Keyword.HASTE, Subjects.target()),
-                        new SacrificeTargetPermanentAtEndStepEffect(false, true)
+                        RegisterDelayedStepTriggerEffect.aboutAtNext(Triggers.endStep(ActivePlayer.ANY),
+                                Subjects.target(),
+                                SacrificeSelfEffect.ofTriggeringPermanent())
                 ),
                 "You may have target creature you control get +2/+0 and gain haste until end of turn. "
                         + "If you do, sacrifice it at the beginning of the next end step."

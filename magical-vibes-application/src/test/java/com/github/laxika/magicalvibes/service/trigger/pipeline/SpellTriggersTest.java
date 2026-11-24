@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyNextLoyaltyAbilityThisTurnEffect;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.trigger.AbilityTrigger;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -298,7 +299,8 @@ class SpellTriggersTest {
     void delayedActivationAbilityTriggersOnTheNextMatchingActivationOnly() {
         Card maker = createCard("Jaya's Phoenix");
         TemporaryGlobalTriggeredAbility next = TemporaryGlobalTriggeredAbility.nextThisTurn(player1Id, maker,
-                new CopyNextLoyaltyAbilityThisTurnEffect().delayedAbility(), null);
+                new TriggeredAbility(Triggers.youActivateAbility().withKind(AbilityTrigger.AbilityKind.LOYALTY),
+                        new CopyTriggeringSpellOrAbilityEffect()), null);
         gd.temporaryGlobalTriggeredAbilities.add(next);
         when(triggerIndex.delayedAbilities(gd))
                 .thenAnswer(invocation -> List.copyOf(gd.temporaryGlobalTriggeredAbilities));

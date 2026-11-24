@@ -51,6 +51,28 @@ class DepthshakerTitanTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Doesn't sacrifice an animated artifact another player has gained control of")
+    void sparesAnAnimatedArtifactAnotherPlayerControls() {
+        Permanent firstShield = harness.addToBattlefieldAndReturn(player1, new AccordersShield());
+        Permanent secondShield = harness.addToBattlefieldAndReturn(player1, new AccordersShield());
+
+        castTitan(List.of(firstShield.getId(), secondShield.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(firstShield);
+        gd.playerBattlefields.get(player2.getId()).add(firstShield);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            gs.advanceStep(gd);
+            resolveAllTriggers();
+        });
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(firstShield);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(secondShield);
+        harness.assertInGraveyard(player1, "Accorder's Shield");
+    }
+
+    @Test
     @DisplayName("Gives artifact creatures you control melee, trample, and haste")
     void grantsKeywordsToOwnArtifactCreatures() {
         Permanent ownMemnite = harness.addToBattlefieldAndReturn(player1, new Memnite());

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.turn;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeTargetPermanentAtEndStepAndGainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 
@@ -2347,22 +2346,23 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("A delayed sacrifice that gains life goes on the stack about its permanent at the next end step")
-        void sacrificesDelayedTargetAndGainsLife() {
+        @DisplayName("A delayed sacrifice goes on the stack about its permanent at the next end step")
+        void sacrificesDelayedTarget() {
             Card sourceCard = createCardWithName("Spinal Embrace");
             Card targetCard = createCardWithName("Target Creature");
             Permanent target = new Permanent(targetCard);
             gd.playerBattlefields.get(player1Id).add(target);
             gd.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                     Triggers.endStep(ActivePlayer.ANY), player1Id, sourceCard, null, target.getId(),
-                    new SacrificeTargetPermanentAtEndStepAndGainLifeEqualToToughnessEffect(true)));
+                    SacrificeSelfEffect.ofTriggeringPermanent()));
 
             sut.handleEndStepTriggers(gd);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getEffectsToResolve()).singleElement()
-                    .isInstanceOf(SacrificeTargetPermanentAtEndStepAndGainLifeEqualToToughnessEffect.class);
+                    .isInstanceOf(SacrificeSelfEffect.class);
             assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+            assertThat(gd.stack.getFirst().getTriggeringPermanentId()).isEqualTo(target.getId());
             assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
         }
 

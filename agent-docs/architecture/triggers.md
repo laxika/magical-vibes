@@ -824,8 +824,8 @@ card's. Delayed graveyard returns use `CardIdSetPredicate` with entry versions.
   player [or planeswalker]" (one naming a player is about that player alone), "deals combat damage to you" and "to this
   planeswalker" (its source permanent). Untap and control-change matchers list those about the permanent; "another"
   excludes the maker's source. Attack and block families list them.
-- "When you next cast / activate … this turn" (`CopyNext…ThisTurnEffect`s, `WhenYouNextCastCreatureSpellThisTurnEffect`)
-  is `nextThisTurn` from the effect's `delayedAbility()` (its mana-ability handler for a mana ability), triggering only
+- "When you next cast / activate … this turn" (`RegisterGlobalTriggeredAbilityEffect.nextThisTurn`, the remaining
+  `CopyNext…ThisTurnEffect`s) is `nextThisTurn` (a mana-ability handler for a mana ability), triggering only
   the next time (CR 603.7b); a cast-and-activation one (Repeated Reverberation, Magus Lucea Kane) is used up by the
   first. Registrations (`RegisterDelayedControllerSpellCastTriggerEffect`, `RegisterDelayedTargetPlayerSpellCastTriggerEffect`,
   The Ruinous Powers' and Medomai's Prophecy's handlers) make one from

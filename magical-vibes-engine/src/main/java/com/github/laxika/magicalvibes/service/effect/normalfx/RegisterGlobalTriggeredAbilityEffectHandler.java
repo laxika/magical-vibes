@@ -19,7 +19,7 @@ import java.util.UUID;
 
 /**
  * Stores a global trigger registered by a resolving spell or ability until turn cleanup, or until the beginning of its
- * controller's next turn. The trigger remains active if the registering spell has already moved to its owner's
+ * controller's next turn, or, of a "when you next ..." one, until it first triggers. The trigger remains active if the registering spell has already moved to its owner's
  * graveyard.
  */
 @Slf4j
@@ -48,10 +48,13 @@ public class RegisterGlobalTriggeredAbilityEffectHandler implements NormalEffect
         UUID watchedPermanentId = ability.hasWatchedTrigger(Triggers.creatureAttacksYouOrYourPlaneswalker())
                 ? entry.getSourcePermanentId() : null;
         boolean untilNextTurn = Duration.UNTIL_YOUR_NEXT_TURN.equals(registration.duration());
+        // A "when you next ..." one is used up the first time it triggers (CR 603.7b); each keeps the number the
+        // resolution noted ("copy that spell X times").
         gameData.temporaryGlobalTriggeredAbilities.add(new TemporaryGlobalTriggeredAbility(
                 entry.getControllerId(), entry.getCard(), ability, null, false, untilNextTurn,
                 untilNextTurn ? gameData.turnNumber : -1, null, watchedPermanentId,
-                entry.getSourcePermanentId(), watchedPlayerId, linkedExiledCardId(gameData, entry)));
+                entry.getSourcePermanentId(), watchedPlayerId, linkedExiledCardId(gameData, entry), false,
+                registration.next()).keepingNotedAmount(entry.getResolutionResults()));
         String until = untilNextTurn ? "until their next turn" : "until end of turn";
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " registers a global triggered ability " + until + "."));

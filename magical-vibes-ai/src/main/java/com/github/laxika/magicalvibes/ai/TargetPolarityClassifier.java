@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -141,6 +142,18 @@ public class TargetPolarityClassifier {
         return best;
     }
 
+    /** Whether a delayed ability's effect removes the permanent it is about: destroys or sacrifices it, maybe. */
+    private static boolean removesItLater(CardEffect effect) {
+        return switch (effect) {
+            case SacrificeSelfEffect ignored -> true;
+            case RemovalEffect ignored -> true;
+            case ConditionalEffect conditional -> removesItLater(conditional.wrapped());
+            case FlipCoinWinEffect flip -> flip.wrapped() != null && removesItLater(flip.wrapped())
+                    || flip.lost() != null && removesItLater(flip.lost());
+            default -> false;
+        };
+    }
+
     /**
      * Effect-level polarity. Returns null for shapes this classifier does not know —
      * the guard test keeps that set empty for the card pool's spell/ETB surface.
@@ -221,6 +234,18 @@ public class TargetPolarityClassifier {
         }
         if (effect instanceof BoostTargetCreaturesByPositionEffect boosts) {
             return classifyGroup(gameData, boosts.boosts(), aiPlayerId);
+        }
+        // "Destroy / sacrifice it at the beginning of the next end step" about the target: the target still leaves, so
+        // removal outranks a pump riding along (Blood Frenzy) and aims at the opponent; own-board uses (Hazoret's Favor,
+        // Slave of Bolas's stolen creature) are kept to their boards by their target filters.
+        if (effect instanceof RegisterDelayedStepTriggerEffect delayed && delayed.permanent() != null
+                && delayed.permanent().declaresTarget()) {
+            TargetPolarity best = null;
+            for (CardEffect later : delayed.effects()) {
+                best = higherPriority(best, removesItLater(later) ? TargetPolarity.HARMFUL_REMOVAL
+                        : classify(gameData, later, aiPlayerId));
+            }
+            return best;
         }
         if (effect instanceof SequenceEffect sequence) {
             TargetPolarity best = null;
@@ -608,10 +633,6 @@ public class TargetPolarityClassifier {
             entry("DestroyEachTargetPermanentEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("DestroyTwoTargetCreaturesIfSameColorsEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("DisorientingChoiceEffect", TargetPolarity.HARMFUL_REMOVAL),
-            // Blood Frenzy: the pump rides along, but the target still dies at the next end
-            // step, so removal outranks the boost's BENEFICIAL and aims at the opponent.
-            entry("DestroyTargetPermanentAtEndStepEffect", TargetPolarity.HARMFUL_REMOVAL),
-            entry("DestroyTargetPermanentAtEndStepIfAttackedEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("PhaseOutTargetCreatureUntilSourceLeavesEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("PutCountersOnSelfEffect", TargetPolarity.NEUTRAL),
             entry("DestroyTargetPermanentThenEffect", TargetPolarity.HARMFUL_REMOVAL),
@@ -633,10 +654,6 @@ public class TargetPolarityClassifier {
             // Commit // Memory: library tuck of a spell or nonland permanent.
             entry("PutTargetSpellOrPermanentIntoLibraryNFromTopEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ReturnTargetPermanentToHandThenEffect", TargetPolarity.HARMFUL_REMOVAL),
-            // Slave of Bolas: the stolen target is sacrificed at end step — net removal. Own-board
-            // uses (Hazoret's Favor) are safe: their target filters restrict candidates anyway.
-            entry("SacrificeTargetPermanentAtEndStepEffect", TargetPolarity.HARMFUL_REMOVAL),
-            entry("SacrificeTargetPermanentAtEndStepAndGainLifeEqualToToughnessEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ShuffleTargetPermanentIntoLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("EquipoiseEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("WintersChillEffect", TargetPolarity.HARMFUL_REMOVAL),

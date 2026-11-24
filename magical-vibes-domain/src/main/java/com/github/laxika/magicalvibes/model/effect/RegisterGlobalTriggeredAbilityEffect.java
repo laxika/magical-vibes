@@ -9,12 +9,16 @@ import java.util.Objects;
  * Registers a global triggered ability for a stated duration: "this turn, whenever …" ({@code UNTIL_END_OF_TURN}) or
  * "until your next turn, whenever …" ({@code UNTIL_YOUR_NEXT_TURN}, Vraska the Unseen, Don't Move). This is used for
  * effects that watch an event across all players' permanents and therefore cannot be stored on one permanent; the
- * ability triggers every time its event occurs within the duration (CR 603.7b).
+ * ability triggers every time its event occurs within the duration (CR 603.7b), or, {@link #nextThisTurn}, only the
+ * next time ("when you next cast a creature spell this turn, ..."). A mana ability registers it too (Magus Lucea Kane,
+ * Yuna, Grand Summoner), with the permanent as its source.
  *
  * @param grantedAbility the delayed triggered ability
  * @param duration       how long it lasts: until end of turn, or until the controller's next turn begins
+ * @param next           whether it triggers only the next time its event occurs this turn and is then used up
+ *                       (CR 603.7b); only until end of turn
  */
-public record RegisterGlobalTriggeredAbilityEffect(Ability grantedAbility, Duration duration)
+public record RegisterGlobalTriggeredAbilityEffect(Ability grantedAbility, Duration duration, boolean next)
         implements CardEffect {
 
     public RegisterGlobalTriggeredAbilityEffect {
@@ -23,11 +27,27 @@ public record RegisterGlobalTriggeredAbilityEffect(Ability grantedAbility, Durat
             throw new IllegalArgumentException("A global triggered ability lasts until end of turn or until your next "
                     + "turn: " + duration);
         }
+        if (next && !Duration.UNTIL_END_OF_TURN.equals(duration)) {
+            throw new IllegalArgumentException("A \"when you next ... this turn\" ability lasts until end of turn");
+        }
+    }
+
+    /** {@code grantedAbility} for {@code duration}, triggering every time its event occurs. */
+    public RegisterGlobalTriggeredAbilityEffect(Ability grantedAbility, Duration duration) {
+        this(grantedAbility, duration, false);
     }
 
     /** {@code grantedAbility} until end of turn. */
     public RegisterGlobalTriggeredAbilityEffect(Ability grantedAbility) {
         this(grantedAbility, Duration.UNTIL_END_OF_TURN);
+    }
+
+    /**
+     * "When you next [event] this turn, [effect]": {@code grantedAbility} triggers only the next time its event occurs
+     * this turn, or the first of its events to occur, and ends with the turn if none has (CR 603.7b).
+     */
+    public static RegisterGlobalTriggeredAbilityEffect nextThisTurn(Ability grantedAbility) {
+        return new RegisterGlobalTriggeredAbilityEffect(grantedAbility, Duration.UNTIL_END_OF_TURN, true);
     }
 
     /** "Until your next turn, [grantedAbility]": it ends as its controller's next turn begins. */

@@ -22,7 +22,8 @@ import java.util.Objects;
  * chosen permanent the sacrificer controls, as one event: Liliana of the Veil) or {@link Subjects#allTargets()} ("for each
  * player, choose target permanent that player controls. Those players sacrifice those permanents", sacrificed by
  * {@code controllerOf(allTargets())}: each still legal target its controller sacrifices, all as one event; Vaevictis
- * Asmadi, the Dire).
+ * Asmadi, the Dire) or {@link Subjects#triggeringAll()} ("sacrifice them" of a delayed ability about several
+ * permanents: those the sacrificer controls, as one event; Depthshaker Titan).
  *
  * <p>"Sacrifice it. If you do, ..." is this effect followed by a {@code ConditionalEffect} of
  * {@code HappenedThisWay.sacrificed()} (in a {@link SequenceEffect} where the steps must stay one effect); "when you
@@ -55,6 +56,7 @@ public record SacrificeSelfEffect(PermanentSubject subject,
                 || subject instanceof PermanentSubject.Attached || subject instanceof PermanentSubject.AttachedAtTrigger
                 || subject instanceof PermanentSubject.Target || subject instanceof PermanentSubject.AllTargets
                 || subject instanceof PermanentSubject.TriggeringOrSource
+                || subject instanceof PermanentSubject.TriggeringAll
                 || subject instanceof PermanentSubject.Granter
                 || subject instanceof PermanentSubject.ThisWay thisWay && thisWay.kind() == StepKind.CHOOSE)) {
             throw new IllegalArgumentException("Sacrifices the source, the triggering (or else the source), the "
@@ -64,7 +66,8 @@ public record SacrificeSelfEffect(PermanentSubject subject,
             throw new IllegalArgumentException("A target filter needs a target subject: " + subject);
         }
         if (tokenForSacrificingPlayer != null
-                && (subject instanceof PermanentSubject.ThisWay || subject instanceof PermanentSubject.AllTargets)) {
+                && (subject instanceof PermanentSubject.ThisWay || subject instanceof PermanentSubject.AllTargets
+                || subject instanceof PermanentSubject.TriggeringAll)) {
             throw new IllegalArgumentException("A token rider follows one named permanent: " + subject);
         }
     }

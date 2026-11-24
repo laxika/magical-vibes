@@ -410,7 +410,7 @@ public class BoardEvaluator {
     private double activatedAbilityThreat(GameData gameData, Permanent perm, UUID controllerId) {
         double bonus = 0;
         for (ActivatedAbility ability : perm.getCard().getActivatedAbilities(Zone.BATTLEFIELD)) {
-            for (CardEffect effect : ability.getEffects()) {
+            for (CardEffect effect : AiUtils.withEffectsDelayedAboutTheTarget(ability.getEffects())) {
                 if (effect instanceof CostEffect) continue;
                 if (effect instanceof DamageDealingEffect dmg && dmg.canDamageCreatures()) {
                     bonus += amountEvaluationService.evaluate(gameData, dmg.damageAmount(),

@@ -7,7 +7,15 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetIfDidNotAttackAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentMatches;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttackedThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.MustAttackUnlessControllerPaysManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
@@ -30,7 +38,7 @@ public class MustAttackUnlessControllerPaysManaValueEffectHandler implements Nor
 
     private final GameQueryService gameQueryService;
     private final SetCombatRequirementThisTurnEffectHandler setCombatRequirementThisTurnEffectHandler;
-    private final DestroyTargetIfDidNotAttackAtEndStepEffectHandler destroyTargetIfDidNotAttackAtEndStepEffectHandler;
+    private final RegisterDelayedStepTriggerEffectHandler registerDelayedStepTriggerEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -64,11 +72,15 @@ public class MustAttackUnlessControllerPaysManaValueEffectHandler implements Nor
     public void applyPenalty(GameData gameData, Card sourceCard, UUID abilityControllerId, UUID targetPermanentId) {
         SetCombatRequirementThisTurnEffect mustAttack =
                 new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_ATTACK);
-        DestroyTargetIfDidNotAttackAtEndStepEffect destroy = new DestroyTargetIfDidNotAttackAtEndStepEffect();
+        RegisterDelayedStepTriggerEffect destroy = RegisterDelayedStepTriggerEffect.aboutAtNext(
+                Triggers.endStep(ActivePlayer.ANY), Subjects.target(), new ConditionalEffect(
+                        new TriggeringPermanentMatches(
+                                new PermanentNotPredicate(new PermanentAttackedThisTurnPredicate())),
+                        new DestroyTargetPermanentEffect(Subjects.triggering())));
         StackEntry syntheticEntry = StackEntry.carrier(sourceCard, abilityControllerId,
                 sourceCard.getName() + " - must attack or be destroyed",
                 List.of(mustAttack, destroy), targetPermanentId, (UUID) null);
         setCombatRequirementThisTurnEffectHandler.resolve(gameData, syntheticEntry, mustAttack);
-        destroyTargetIfDidNotAttackAtEndStepEffectHandler.resolve(gameData, syntheticEntry, destroy);
+        registerDelayedStepTriggerEffectHandler.resolve(gameData, syntheticEntry, destroy);
     }
 }
