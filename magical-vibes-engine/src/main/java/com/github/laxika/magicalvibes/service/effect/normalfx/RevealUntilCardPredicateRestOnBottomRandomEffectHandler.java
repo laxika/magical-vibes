@@ -176,8 +176,10 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
             return;
         }
 
-        // "With greater mana value" than the exiled creature's is read as the effect applies (CR 608.2h).
-        CardPredicate filter = amountEvaluationService.bindAmounts(gameData, typedEffect.predicate(),
+        // "With greater mana value" than the exiled creature's, "shares a card type with the sacrificed permanent" are
+        // read as the effect applies (CR 608.2h).
+        CardPredicate filter = amountEvaluationService.bindAmounts(gameData,
+                subjectResolutionService.bindResolutionFilter(gameData, entry, typedEffect, typedEffect.predicate()),
                 AmountContext.forStackEntry(entry, entry.getSourcePermanentSnapshot()));
         List<Card> revealedCards = new ArrayList<>();
         Card foundCard = null;

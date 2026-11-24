@@ -266,6 +266,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardSharesNameWithPermanentsPredicate) {
             return "card with the same name as one of those permanents";
         }
+        if (predicate instanceof CardSharesCardTypeWithPermanentsPredicate) {
+            return "card that shares a card type with that permanent";
+        }
         if (predicate instanceof CardNotPredicate p && p.predicate() instanceof CardSharesNameWithPermanentsPredicate) {
             return "card with a different name";
         }

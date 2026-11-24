@@ -108,6 +108,7 @@ public sealed interface CardPredicate permits
         CardToughnessLessThanSourceToughnessPredicate,
         CardSharesNameWithAPermanentPredicate,
         CardSharesNameWithPermanentsPredicate,
+        CardSharesCardTypeWithPermanentsPredicate,
         CardCouldEnchantPredicate,
         CardSharesNameWithTriggeringSpellPredicate,
         CardSharesCardTypeWithTriggeringSpellPredicate,

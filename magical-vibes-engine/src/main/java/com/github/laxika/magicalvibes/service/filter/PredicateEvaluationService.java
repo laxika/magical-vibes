@@ -130,6 +130,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPutIntoGraveyardFromNonBa
 import com.github.laxika.magicalvibes.model.filter.CardPutIntoGraveyardFromLibraryThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPutIntoGraveyardThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithCardsPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithPermanentsPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostXPredicate;
@@ -1417,6 +1418,7 @@ public class PredicateEvaluationService {
             // (SubjectResolutionService.bindCardSubjects).
             case CardSharesCardTypeWithCardsPredicate ignored -> false;
             case CardSharesNameWithPermanentsPredicate ignored -> false;
+            case CardSharesCardTypeWithPermanentsPredicate ignored -> false;
             // Bound to the matching library cards by the search that has the resolving entry (SearchLibraryEffectHandler).
             case CardCouldEnchantPredicate ignored -> false;
             case CardSharesNameWithLegendaryControlledPermanentPredicate ignored -> {

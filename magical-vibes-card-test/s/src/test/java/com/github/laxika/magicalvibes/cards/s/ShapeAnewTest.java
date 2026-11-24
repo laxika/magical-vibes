@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.cards.c.CarapaceForger;
 import com.github.laxika.magicalvibes.cards.m.MoxOpal;
+import com.github.laxika.magicalvibes.cards.h.HithlainRope;
+import com.github.laxika.magicalvibes.cards.t.TajuruPreserver;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.p.PrecursorGolem;
@@ -20,7 +22,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShapeAnew.class, Memnite.class, CarapaceForger.class, MoxOpal.class, PrecursorGolem.class})
+@CardUsed({ShapeAnew.class, Memnite.class, CarapaceForger.class, MoxOpal.class, PrecursorGolem.class,
+        HithlainRope.class, TajuruPreserver.class})
 class ShapeAnewTest extends BaseCardTest {
 
 
@@ -267,5 +270,37 @@ class ShapeAnewTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).extracting(c -> c.getName())
                 .containsExactly("Carapace Forger");
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An artifact that can't be sacrificed stays, and its controller still reveals until an artifact")
+    void artifactThatCantBeSacrificedStillRevealsAndPutsArtifact() {
+        harness.addToBattlefield(player2, new HithlainRope());
+        harness.setHand(player1, List.of(new ShapeAnew()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.setLibrary(player2, List.of(new CarapaceForger(), new MoxOpal()));
+
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Hithlain Rope"));
+
+        harness.assertOnBattlefield(player2, "Hithlain Rope");
+        harness.assertOnBattlefield(player2, "Mox Opal");
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(c -> c.getName())
+                .containsExactly("Carapace Forger");
+    }
+
+    @Test
+    @DisplayName("Tajuru Preserver keeps its controller's artifact, and the reveal still happens")
+    void tajuruPreserverStopsTheSacrificeButNotTheReveal() {
+        harness.addToBattlefield(player2, new TajuruPreserver());
+        harness.addToBattlefield(player2, new Memnite());
+        harness.setHand(player1, List.of(new ShapeAnew()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.setLibrary(player2, List.of(new MoxOpal()));
+
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Memnite"));
+
+        harness.assertOnBattlefield(player2, "Memnite");
+        harness.assertNotInGraveyard(player2, "Memnite");
+        harness.assertOnBattlefield(player2, "Mox Opal");
     }
 }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromTopUntilEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -23,7 +24,9 @@ import java.util.UUID;
 /**
  * Resolves {@link ExileCardsFromTopUntilEffect}: each named player, in APNAP order, exiles cards from the top of their
  * library one at a time (each its own zone-change event) until one matches the effect's card filter or the library is
- * empty, each exiled with the source permanent when the effect says so. Records the {@link StepKind#EXILE} step: every card exiled and its owner, or nothing. It never prompts.
+ * empty, each exiled with the source permanent when the effect says so. The card filter is bound as the step begins
+ * ({@code SubjectResolutionService.bindResolutionFilter}): a spell-relative stop ("shares a card type with it", "a
+ * different name than that spell") reads the spell as it is or last existed (CR 608.2h). Records the {@link StepKind#EXILE} step: every card exiled and its owner, or nothing. It never prompts.
  */
 @Slf4j
 @Component
@@ -43,6 +46,8 @@ public class ExileCardsFromTopUntilEffectHandler implements NormalEffectHandlerB
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var until = (ExileCardsFromTopUntilEffect) effect;
+        // "Shares a card type with it", "a different name than that spell": read once, as the step begins (CR 608.2h).
+        CardPredicate stop = subjectResolutionService.bindResolutionFilter(gameData, entry, effect, until.until());
         entry.recordStep(StepKind.EXILE, StepOutcome.NONE);
         // "Exiled with [this]" (CR 607.2a): linked to the source permanent.
         UUID linkedSourceId = until.linkedToSource() ? entry.getSourcePermanentId() : null;
@@ -73,7 +78,7 @@ public class ExileCardsFromTopUntilEffectHandler implements NormalEffectHandlerB
                         hit = top;
                         break;
                     }
-                } else if (predicateEvaluationService.matchesCardPredicate(top, until.until(), entry.getCard().getId(),
+                } else if (predicateEvaluationService.matchesCardPredicate(top, stop, entry.getCard().getId(),
                         gameData, playerId)) {
                     hit = top;
                     break;

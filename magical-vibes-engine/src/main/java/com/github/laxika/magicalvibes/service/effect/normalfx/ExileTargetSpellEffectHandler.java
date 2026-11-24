@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
@@ -19,7 +20,10 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
-/** Exiles the target spells from the stack. */
+/**
+ * Exiles the target spells from the stack, or the triggering spell of a spell-cast trigger while it is still there
+ * ({@code ExileTargetSpellEffect.spell()} {@code triggeringSpell()}: a spell that already left is not exiled).
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -39,10 +43,7 @@ public class ExileTargetSpellEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var exile = (ExileTargetSpellEffect) effect;
         entry.recordStep(StepKind.EXILE, StepOutcome.NONE);
-        List<UUID> targetIds = List.copyOf(entry.targetsForEffect(effect));
-        if (targetIds.isEmpty() && entry.getTargetId() != null) {
-            targetIds = List.of(entry.getTargetId());
-        }
+        List<UUID> targetIds = spellIds(entry, exile);
         UUID sourceId = exile.trackWithSource() ? sourcePermanentId(gameData, entry) : null;
         for (UUID targetId : targetIds) {
             StackEntry spell = gameData.stack.stream()
@@ -75,6 +76,18 @@ public class ExileTargetSpellEffectHandler implements NormalEffectHandlerBean {
             log.info("Game {} - {} exiled from the stack by {}",
                     gameData.id, spell.getCard().getName(), entry.getCard().getName());
         }
+    }
+
+    /** The spells exiled: the effect's targets, or the spell the trigger event was about. */
+    private static List<UUID> spellIds(StackEntry entry, ExileTargetSpellEffect exile) {
+        if (exile.spell() instanceof PermanentSubject.TriggeringSpell) {
+            return entry.getTriggeringCardId() == null ? List.of() : List.of(entry.getTriggeringCardId());
+        }
+        List<UUID> targetIds = List.copyOf(entry.targetsForEffect(exile));
+        if (targetIds.isEmpty() && entry.getTargetId() != null) {
+            targetIds = List.of(entry.getTargetId());
+        }
+        return targetIds;
     }
 
     /**

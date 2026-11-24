@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.d.Demolish;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Memnite;
+import com.github.laxika.magicalvibes.cards.s.SeatOfTheSynod;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -20,7 +22,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LumithreadField.class, Pacifism.class, PossibilityStorm.class, CounselOfTheSoratami.class, Forest.class, GrizzlyBears.class, Demolish.class})
+@CardUsed({LumithreadField.class, Pacifism.class, PossibilityStorm.class, CounselOfTheSoratami.class, Forest.class, GrizzlyBears.class, Demolish.class,
+        Memnite.class, SeatOfTheSynod.class})
 class PossibilityStormTest extends BaseCardTest {
 
     private UUID setUpStorm(List<Card> player1Library) {
@@ -182,5 +185,23 @@ class PossibilityStormTest extends BaseCardTest {
         assertThat(gd.getCardsExiledByPermanent(stormId)).hasSize(3);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).description())
                 .contains("Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A land card that shares a card type stops the dig but can't be cast, so nothing is offered")
+    void sharedTypeLandIsNotOffered() {
+        UUID stormId = setUpStorm(List.of(new SeatOfTheSynod(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Memnite()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.getCardsExiledByPermanent(stormId)).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Grizzly Bears", "Seat of the Synod", "Memnite");
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
     }
 }

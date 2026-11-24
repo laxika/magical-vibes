@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.h.HondenOfSeeingWinds;
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
 import com.github.laxika.magicalvibes.cards.j.JadeIdol;
 import com.github.laxika.magicalvibes.cards.s.SenseisDiviningTop;
+import com.github.laxika.magicalvibes.cards.t.TajuruPreserver;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -26,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Reweave.class, ReachThroughMists.class, IsamaruHoundOfKonda.class,
         SenseisDiviningTop.class, Forest.class, HondenOfSeeingWinds.class, JadeIdol.class,
-        Bitterblossom.class, DivinersWand.class, HithlainRope.class})
+        Bitterblossom.class, DivinersWand.class, HithlainRope.class, TajuruPreserver.class})
 class ReweaveTest extends BaseCardTest {
 
     @Test
@@ -232,5 +233,21 @@ class ReweaveTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Isamaru, Hound of Konda");
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(forest);
         harness.assertInGraveyard(player1, "Reweave");
+    }
+
+    @Test
+    @DisplayName("A player Tajuru Preserver protects doesn't sacrifice, so nothing is revealed")
+    void tajuruPreserverStopsTheSacrificeAndTheReveal() {
+        harness.addToBattlefield(player2, new TajuruPreserver());
+        harness.setHand(player1, List.of(new Reweave()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.setLibrary(player2, List.of(new Forest(), new IsamaruHoundOfKonda()));
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Tajuru Preserver"));
+
+        harness.assertOnBattlefield(player2, "Tajuru Preserver");
+        harness.assertNotOnBattlefield(player2, "Isamaru, Hound of Konda");
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .extracting(c -> c.getName()).containsExactly("Forest", "Isamaru, Hound of Konda");
     }
 }

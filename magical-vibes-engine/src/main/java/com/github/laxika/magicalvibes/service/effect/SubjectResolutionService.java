@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithCardsPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithPermanentsPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithPermanentsPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -223,7 +224,8 @@ public class SubjectResolutionService {
      * names have as the effect applies ("a card that doesn't share a card type with the discarded card"): it becomes
      * "is any of those types", which matches nothing when the subject names no card; and each
      * {@link CardSharesNameWithPermanentsPredicate} to the names those permanents have ({@link #names}), which matches
-     * nothing when they have none. A filter without the predicates is returned as it is.
+     * nothing when they have none; and each {@link CardSharesCardTypeWithPermanentsPredicate} to their card types
+     * ({@link #cardTypes}). A filter without the predicates is returned as it is.
      */
     public CardPredicate bindCardSubjects(GameData gameData, StackEntry entry, CardEffect effect, CardPredicate filter) {
         return switch (filter) {
@@ -243,6 +245,9 @@ public class SubjectResolutionService {
             case CardSharesNameWithPermanentsPredicate shares -> new CardAnyOfPredicate(
                     names(gameData, entry, effect, shares.permanents()).stream()
                             .<CardPredicate>map(CardNamedPredicate::new).toList());
+            case CardSharesCardTypeWithPermanentsPredicate shares -> new CardAnyOfPredicate(
+                    cardTypes(gameData, entry, effect, shares.permanents()).stream()
+                            .<CardPredicate>map(CardTypePredicate::new).toList());
             case CardAllOfPredicate all -> new CardAllOfPredicate(all.predicates().stream()
                     .map(part -> bindCardSubjects(gameData, entry, effect, part)).toList());
             case CardAnyOfPredicate any -> new CardAnyOfPredicate(any.predicates().stream()
@@ -250,6 +255,21 @@ public class SubjectResolutionService {
             case CardNotPredicate not -> new CardNotPredicate(bindCardSubjects(gameData, entry, effect, not.predicate()));
             default -> filter;
         };
+    }
+
+    /**
+     * {@code filter} with every part that needs the resolving entry bound as the effect applies (CR 608.2h): the card
+     * subjects ({@link #bindCardSubjects}: "a different name than that spell" over {@code targetSpell()}) and the
+     * triggering spell's card types, name and mana value ({@code AmountEvaluationService.bindTriggeringSpellCardTypes},
+     * {@code bindTriggeringSpellName}, {@code bindTriggeringSpellManaValue}: "a card that shares a card type with it"),
+     * the spell as it is on the stack, else as it last existed there. A filter without them is returned as it is.
+     */
+    public CardPredicate bindResolutionFilter(GameData gameData, StackEntry entry, CardEffect effect,
+                                              CardPredicate filter) {
+        CardPredicate bound = bindCardSubjects(gameData, entry, effect, filter);
+        bound = AmountEvaluationService.bindTriggeringSpellCardTypes(gameData, bound, entry);
+        bound = AmountEvaluationService.bindTriggeringSpellName(gameData, bound, entry);
+        return AmountEvaluationService.bindTriggeringSpellManaValue(gameData, bound, entry);
     }
 
     /**
@@ -376,6 +396,27 @@ public class SubjectResolutionService {
             }
         }
         return names;
+    }
+
+    /**
+     * The card types of what {@code subject} names, for "shares a card type with the sacrificed permanent": each
+     * permanent's as it is on the battlefield, else as a removal step of this resolution recorded it as it left
+     * ({@code DepartureResult.lastKnownCardTypes}, CR 608.2h).
+     */
+    public Set<CardType> cardTypes(GameData gameData, StackEntry entry, CardEffect effect, PermanentSubject subject) {
+        Set<CardType> types = EnumSet.noneOf(CardType.class);
+        for (UUID id : permanentIds(gameData, entry, effect, subject)) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+            if (permanent != null) {
+                types.addAll(gameQueryService.getEffectiveCardTypes(gameData, permanent));
+                continue;
+            }
+            entry.getResolutionResults().departures().stream()
+                    .filter(departure -> departure.permanentId().equals(id))
+                    .findFirst()
+                    .ifPresent(departure -> types.addAll(departure.lastKnownCardTypes()));
+        }
+        return types;
     }
 
     /**

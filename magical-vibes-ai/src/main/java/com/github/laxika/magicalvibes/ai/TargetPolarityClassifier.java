@@ -122,6 +122,9 @@ public class TargetPolarityClassifier {
      * before the consolidation. Returns null when no effect classifies.
      */
     public TargetPolarity classifyCard(GameData gameData, Card card, UUID aiPlayerId) {
+        if (tradesTheTargetForAnother(card.getCastingCostsAndSpellEffects())) {
+            return TargetPolarity.NEUTRAL;
+        }
         TargetPolarity best = null;
         for (CardEffect effect : card.getOwnEntryEffects()) {
             best = higherPriority(best, classify(gameData, effect, aiPlayerId));
@@ -625,8 +628,24 @@ public class TargetPolarityClassifier {
      * whose effects carry no direction (Duelist's Flame's combat-damage card advantage, Town-Razer Tyrant's
      * sacrifice-or-damage) is NEUTRAL, and the card's other effects decide the target.
      */
-    /** "Its controller reveals ... until a creature card, puts it onto the battlefield" (Polymorph): as good as bad. */
+    /**
+     * "Target permanent's controller sacrifices it, then reveals ... until [a card of its type], puts that card onto
+     * the battlefield" (Shape Anew, Reweave): an edict that hands its controller another permanent, as good as bad.
+     */
+    private static boolean tradesTheTargetForAnother(List<? extends CardEffect> effects) {
+        return effects.stream().anyMatch(effect -> effect instanceof SacrificeSelfEffect sacrifice
+                && sacrifice.subject().declaresTarget() && sacrifice.sacrificer() instanceof PlayerSubject.ControllerOf)
+                && effects.stream().anyMatch(TargetPolarityClassifier::replacesTheTargetForItsController);
+    }
+
+    /**
+     * "Its controller reveals ... until a creature card, puts it onto the battlefield" (Polymorph, Shape Anew), also
+     * after "if the player does" (Reweave): as good as bad.
+     */
     private static boolean replacesTheTargetForItsController(CardEffect effect) {
+        if (effect instanceof ConditionalEffect conditional) {
+            return replacesTheTargetForItsController(conditional.wrapped());
+        }
         return effect instanceof RevealUntilCardPredicateRestOnBottomRandomEffect reveal
                 && (reveal.revealedBy()
                 instanceof RevealUntilCardPredicateRestOnBottomRandomEffect.ControllerOfEachExiledThisWay
@@ -851,7 +870,6 @@ public class TargetPolarityClassifier {
             entry("RemoveCounterFromTargetPermanentEffect", TargetPolarity.NEUTRAL),
             entry("RegisterControlLossUnattachTriggerEffect", TargetPolarity.NEUTRAL),
             entry("SearchLibraryForTargetCreatureNameToBattlefieldEffect", TargetPolarity.NEUTRAL),
-            entry("SacrificeTargetThenRevealUntilTypeToBattlefieldEffect", TargetPolarity.NEUTRAL),
             // Reality Scramble: a permanent its caster owns, traded for a random one sharing a card type.
             entry("PutTargetOnBottomThenRevealUntilSharedCardTypeToBattlefieldRestOnBottomRandomEffect",
                     TargetPolarity.NEUTRAL),

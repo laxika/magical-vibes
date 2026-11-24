@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36 (each in Findings; the fold queue marks its rows). Fold runs 29c, 27b and 32b are reported and wait to merge; 29d, 38 and 35b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                  |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c (each in Findings; the fold queue marks its rows). Fold runs 27b and 32b are reported and wait to merge; 29d, 38 and 35b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                   |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,334 / 2,685 (after fold run 36) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,331 / 2,682 (after fold run 29c) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,115 rows over 4,489 classes (after fold run 36). Latest verdict per class: `step-9` 437, unique 1,173, absorbed 1,044, split 646, blocked-other 521, survivor 367, blocked-step-model 140, blocked-player-loop 96, dead 65. Waiting: 437 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,125 rows over 4,489 classes (after fold run 29c). Latest verdict per class: `step-9` 434, unique 1,173, absorbed 1,044, split 649, blocked-other 521, survivor 367, blocked-step-model 140, blocked-player-loop 96, dead 65. Waiting: 434 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -907,6 +907,12 @@ Delayed and global triggers:
 - `CreaturesCantAttackControllerUntilNextTurnEffect(PlayerSubject attackers, PlayerSubject protectedPlayers, boolean protectsPlaneswalkers, Duration)` (fold run 36).
 - `OpponentsMustAttackControllerEffect.attackingAnyone()` (fold run 36).
 - `CreaturesWithCounterAttackTogetherEffect(attackers, required)`: `ifSourceAttacks()`, `ifAnotherYouControlAttacks()`, `opponentsAttackTogether()` (fold run 36).
+
+- `ExileTargetSpellEffect.triggeringSpellWithSource()` (`spell` subject `targetSpell()` or `triggeringSpell()`): a spell-cast trigger's non-target "[that player] exiles it", only while the spell is on the stack, exiled with the source (Possibility Storm; fold run 29c).
+- `MayCastDiscardedCardWithoutPayingManaCostEffect.castBy(PlayerSubject)`: "that player / they may cast that card"; the graveyard check is the caster's own graveyard (Possibility Storm, Tibalt's Trickery; fold run 29c).
+- `SubjectResolutionService.bindResolutionFilter(gd, entry, effect, filter)`: card subjects plus the triggering spell's types, name and mana value, bound as the step resolves. Read by the exile-until stop, the reveal-until predicate and the cast-now filter, so "that card" is `cardsThisWay(EXILE)` with the step's own stop (fold run 29c).
+- `CardSharesCardTypeWithPermanentsPredicate(PermanentSubject)` + `SubjectResolutionService.cardTypes`: "shares a card type with the sacrificed permanent", read live or from the removal step's `DepartureResult.lastKnownCardTypes` (Reweave; Reality Scramble once its put-on-bottom step records a departure; fold run 29c).
+- `TargetPolarityClassifier.tradesTheTargetForAnother`: an edict on the target followed by a reveal-onto-battlefield for its controller is NEUTRAL (Shape Anew, Reweave; fold run 29c).
 
 ### Blocked causes still open
 
@@ -3862,6 +3868,39 @@ Okk, Champions of Minas Tirith, Call for Aid, Seeker of Slaanesh, Viashino Bey, 
 **Seen, not changed.** `CantAttackThisTurnEffectHandler`'s set branch floats `entry.getCard().getName()` (no face-down redaction) and doesn't bind its filter's chosen values (only the except branch goes through `lastingRule`). Sure of the code, no card hits it today.
 
 **For the next run.** `defender-cond` after fold run 34b lands (defending-player conditions), then `attack-target` as its own run.
+
+### Step 9, fold run 29c (2026-11-24, parallel worktree)
+`exile-until-rel` done (3 of 3 left by 29b), `land-or-cast` not started. Ratchet 3,396 / 2,724 → 3,393 / 2,721. Ledger 10 rows: split 3, survivor 4, blocked-other 1 (updated), step-9 2 (left). 4 card files rewritten (Possibility Storm, Tibalt's Trickery, Reweave, Shape Anew), Oracle text checked for all 4. Rulings read for Possibility Storm, Tibalt's Trickery, Reweave, Shape Anew, Omen Machine and Wild Evocation. CR 118.9, 201.2a, 201.2c, 305.1, 400.7, 601.2f, 607.2a, 608.2g and 608.2h checked.
+
+| Batch | Result |
+|---|---|
+| exile-until-rel | 3 folded (all split). Possibility Storm: `SequenceEffect.of(ExileTargetSpellEffect.triggeringSpellWithSource(), new ExileCardsFromTopUntilEffect(controllerOf(triggeringSpell()), CardSharesCardTypeWithTriggeringSpellPredicate).withSource(), MayCastDiscardedCardWithoutPayingManaCostEffect(cardsThisWay(EXILE), same filter).castBy(caster), PutCardsIntoLibraryEffect.onBottomInRandomOrder(exiledWithSource()))`. Tibalt's Trickery: `CounterSpellEffect` + `ChooseOneAtRandomEffect` of `MillEffect(1/2/3, controllerOf(targetSpell()))` + the exile-until, cast and bottom steps with `allOf(NONLAND, not(CardSharesNameWithPermanentsPredicate(targetSpell())))`. Reweave and Shape Anew (one record): `SacrificeSelfEffect(target(), controllerOf(target()), filter)` + `RevealUntilCardPredicateRestOnBottomRandomEffect.ontoBattlefield(filter, Players(controllerOf(target()))).shufflingRest()`, with Reweave's reveal behind `HappenedThisWay.sacrificed()` over `CardSharesCardTypeWithPermanentsPredicate(departedThisWay(SACRIFICE))`. |
+| land-or-cast | not started (see For the next run) |
+
+**Step model.** `MayCastDiscardedCardWithoutPayingManaCostEffect` is an earlier step: it ends its step by queuing the offer, and the resolution waits for the pending offer and any target prompt before it resumes. So "then put the exiled cards on the bottom" is a plain later step, run after the cast is complete. Possibility Storm and Tibalt's Trickery no longer use `MayCastExiledCardThenBottomRestEffect` or `deferredExileBottomSourceIds`; both stay for Unpredictable Cyclone's draw-replacement payload.
+
+**Rules checked.** "A different name than that spell" with a face-down spell: every named card has a different name (CR 201.2c). "Shares a card type with it" reads the triggering spell as effects saw it, face-down aware, and as it last existed on the stack once it has left (CR 608.2h). "Choose 1, 2, or 3 at random" is not a die roll; `ChooseOneAtRandomEffect` over three mill steps expresses it without a new parameter.
+
+**Behaviour changes.**
+- Possibility Storm doesn't offer a shared-type land card (it can't be cast); it is bottomed with the rest (new test).
+- Shape Anew reveals even when the artifact can't be sacrificed (ruling; new test with Hithlain Rope).
+- Shape Anew and Reweave respect "can't cause you to sacrifice" (Tajuru Preserver, Sigarda); the old handler ignored it. Shape Anew still reveals, Reweave doesn't (new tests).
+- Shape Anew and Reweave put the found card through the entry batch; a card that can't enter from a library stays there.
+- The spell Possibility Storm exiles goes to its owner's exile as its physical card (was the caster's). Untested.
+- Tibalt's Trickery's exiled cards are no longer linked to the spell's card. Log lines are the shared steps' lines.
+
+**Seen, not changed.**
+- `ExileFreeCastSupport.castSelectedFace` (every exile free cast: Possibility Storm, Tibalt's Trickery, the cast-now step from exile) charges no cost increase (CR 601.2f). It belongs with the existing defect line for the library and exile free-cast flows. Sure.
+- Reality Scramble stays blocked: `PutTargetOnBottomOfLibraryEffect` records no `DepartureResult`, so `departedThisWay` has nothing to read. The filter now exists. Sure.
+
+**For the next run.**
+- `land-or-cast` (Omen Machine, Wild Evocation): build one mandatory step over a `CardSubject`.
+- A land card goes onto the battlefield through the entry batch. This is a special action, not a cast (CR 305.1).
+- Otherwise the card is cast without paying its mana cost if able (CR 118.9). It pays cost increases and mandatory additional costs (CR 601.2f): base it on `MayCastHandlerService`'s free-cast payment, not on `ExileFreeCastSupport`.
+- Omen Machine: `ExileTopCardOfOwnLibraryEffect` over the active player + the step.
+- Wild Evocation: `RevealCardsFromHandEffect.atRandom` + the step over the hand card.
+- The "Fold:" defect on Omen Machine is fixed with it.
+- Eye of the Storm can use `ExileTargetSpellEffect.triggeringSpellWithSource()` once `CopyImprintedCardAndMayCastCopyEffect` has a caster.
 
 ## Prompt
 
