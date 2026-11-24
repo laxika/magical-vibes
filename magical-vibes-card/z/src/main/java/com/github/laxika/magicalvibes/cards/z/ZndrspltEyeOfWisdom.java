@@ -23,7 +23,7 @@ public class ZndrspltEyeOfWisdom extends Card {
                 null,
                 MayChoicePlayer.TARGET_PLAYER));
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new FlipUntilLoseEffect(null));
+                FlipUntilLoseEffect.untilLose());
         addTrigger(Triggers.playerWinsCoinFlip(), new DrawCardEffect());
     }
 }

@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate;
+import com.github.laxika.magicalvibes.model.condition.SacrificedCardMatches;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardIfSacrificedCreatureWasSuspectedEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 import java.util.List;
@@ -19,7 +21,9 @@ public class AgencyCoroner extends Card {
                 List.of(
                         new SacrificeCreatureCost(false, false, false, true, null, true),
                         new DrawCardEffect(1),
-                        new DrawCardIfSacrificedCreatureWasSuspectedEffect()
+                        new ConditionalEffect(
+                                SacrificedCardMatches.permanent(new PermanentIsSuspectedPredicate(), "suspected"),
+                                new DrawCardEffect(1))
                 ),
                 "{2}{B}, Sacrifice another creature: Draw a card. If the sacrificed creature was suspected, draw two cards instead."
         ));

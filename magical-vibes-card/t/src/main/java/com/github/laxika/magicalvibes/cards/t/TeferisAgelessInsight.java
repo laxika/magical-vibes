@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DoubleDrawExceptFirstDrawStepDrawEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 
 @CardRegistration(set = "M21", collectorNumber = "76")
 @CardRegistration(set = "M21", collectorNumber = "294")
@@ -12,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDrawExceptFirstDrawStep
 public class TeferisAgelessInsight extends Card {
 
     public TeferisAgelessInsight() {
-        addStaticEffect(new DoubleDrawExceptFirstDrawStepDrawEffect());
+        addStaticEffect(DoubleDrawReplacementEffect.exceptFirstDrawInEachOfYourDrawSteps());
     }
 }

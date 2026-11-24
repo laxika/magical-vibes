@@ -101,6 +101,9 @@ package com.github.laxika.magicalvibes.model;
  *       player ({@code AttachSourceEquipmentToTargetCreatureEffect}, never prompting), those attachments, their
  *       controllers: "if you do" after "you may attach". One it couldn't attach, or one already attached to that
  *       object or player, is not attached this way (CR 701.3b).</li>
+ *   <li>{@link #FLIP}: the number of flips the flipping player won, or of coins that came up heads where no player
+ *       wins or loses the flips (CR 705.2) ({@code FlipUntilLoseEffect}), nothing, the flipping player: "put a +1/+1
+ *       counter on this creature for each flip you won", "if you won five flips this way".</li>
  * </ul>
  *
  * <p>A later step may read a step only if that step finishes before the next one starts (CR 608.2c): its handler never
@@ -126,7 +129,8 @@ package com.github.laxika.magicalvibes.model;
  * {@code RevealCardsFromTopUntilEffect}, {@code RevealCardsFromHandEffect}, never prompting), the discard of named
  * cards ({@code DiscardCardsEffect}: a replacement's question ends it) and the any-amount payment
  * ({@code EachPlayerPaysAnyManaEffect}: it resolves again at its own index for each answer and records after the last),
- * the tap ({@code TapPermanentsEffect}: its up-to-N choice adds what it taps as it is answered), the goad
+ * the coin flips ({@code FlipUntilLoseEffect}: it resolves again from its last checkpoint and records after
+ * its last flip), the tap ({@code TapPermanentsEffect}: its up-to-N choice adds what it taps as it is answered), the goad
  * ({@code GoadTargetCreatureUntilNextTurnEffect}, never prompting), the shuffle of each player's zones into their library
  * ({@code EachPlayerShufflesZonesIntoLibraryEffect}, never prompting), the vote ({@code VoteEffect}: it records as its last
  * vote is cast), the life bid ({@code BidLifeEffect}: it resolves again for each bid and records as the high bid stands), the library search ({@code SearchLibraryEffect}, {@code SearchTargetLibraryEffect}: nothing as it begins,
@@ -171,5 +175,6 @@ public enum StepKind {
     GOAD,
     SEARCH,
     BID,
-    ATTACH
+    ATTACH,
+    FLIP
 }

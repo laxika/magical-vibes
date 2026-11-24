@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.condition.SacrificedCardMatches;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardIfSacrificedCardMatchesEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -16,6 +18,8 @@ public class SplittingThePowerstone extends Card {
     public SplittingThePowerstone() {
         addCastingCost(new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false));
         addSpellEffect(CreateTokenEffect.ofPowerstoneToken(new Fixed(2)));
-        addSpellEffect(new DrawCardIfSacrificedCardMatchesEffect(new CardSupertypePredicate(CardSupertype.LEGENDARY)));
+        addSpellEffect(new ConditionalEffect(
+                new SacrificedCardMatches(new CardSupertypePredicate(CardSupertype.LEGENDARY), "legendary"),
+                new DrawCardEffect(1)));
     }
 }

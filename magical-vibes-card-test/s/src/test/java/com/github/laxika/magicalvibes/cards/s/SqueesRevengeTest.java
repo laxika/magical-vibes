@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.i.Index;
+import com.github.laxika.magicalvibes.cards.k.KarplusanMinotaur;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +17,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-@CardUsed({SqueesRevenge.class, Index.class})
+@CardUsed({SqueesRevenge.class, Index.class, KarplusanMinotaur.class})
 class SqueesRevengeTest extends BaseCardTest {
 
     @Test
@@ -99,6 +100,25 @@ class SqueesRevengeTest extends BaseCardTest {
             assertThat(gd.playerHands.get(player1.getId())).isEmpty();
             assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
             harness.assertInGraveyard(player1, "Squee's Revenge");
+        }
+    }
+
+    @Test
+    @DisplayName("The lost flip is a lost coin flip that triggers Karplusan Minotaur")
+    void lostFlipTriggersLoseACoinFlipAbilities() {
+        harness.addToBattlefield(player1, new KarplusanMinotaur());
+        harness.setLibrary(player1, List.of(new Index(), new Index()));
+        ThreadLocalRandom random = mock(ThreadLocalRandom.class);
+        when(random.nextBoolean()).thenReturn(false);
+        try (var coins = mockStatic(ThreadLocalRandom.class)) {
+            coins.when(ThreadLocalRandom::current).thenReturn(random);
+            castAndChooseNumber(3);
+
+            assertThat(coinFlipLogs()).singleElement().asString().contains("loses the coin flip");
+            PendingInteraction.PermanentChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+            assertThat(choice).isNotNull();
+            assertThat(choice.playerId()).isEqualTo(player2.getId());
         }
     }
 

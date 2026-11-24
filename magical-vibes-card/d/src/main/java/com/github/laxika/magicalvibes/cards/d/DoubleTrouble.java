@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.DoubleTargetCreaturePowerEffect;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DoubleAllOwnCreaturesPowerEffect;
 
 @CardRegistration(set = "SPE", collectorNumber = "13")
 public class DoubleTrouble extends Card {
 
     public DoubleTrouble() {
-        addSpellEffect(new DoubleAllOwnCreaturesPowerEffect());
+        addSpellEffect(DoubleTargetCreaturePowerEffect.ofCreaturesYouControl(null));
     }
 }

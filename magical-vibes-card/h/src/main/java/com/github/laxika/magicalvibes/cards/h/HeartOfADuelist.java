@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawFromAnywhereInLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawFromBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class HeartOfADuelist extends Card {
 
     public HeartOfADuelist() {
-        addStaticEffect(new DrawFromAnywhereInLibraryEffect());
+        addStaticEffect(DrawFromBottomOfLibraryEffect.fromAnywhere());
         addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
     }
 }

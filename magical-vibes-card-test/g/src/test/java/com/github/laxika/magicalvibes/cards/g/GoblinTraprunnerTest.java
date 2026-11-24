@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.k.KarplusanMinotaur;
 import com.github.laxika.magicalvibes.cards.u.UnholyHeat;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -12,10 +13,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
-@CardUsed({GoblinTraprunner.class, UnholyHeat.class})
+@CardUsed({GoblinTraprunner.class, UnholyHeat.class, KarplusanMinotaur.class})
 class GoblinTraprunnerTest extends BaseCardTest {
 
     @Test
@@ -84,6 +89,26 @@ class GoblinTraprunnerTest extends BaseCardTest {
 
         harness.assertLife(player2, 20 - wins);
         assertThat(findPermanents(player1, "Goblin")).hasSize(wins);
+    }
+
+    @Test
+    @DisplayName("Each lost flip is a lost coin flip that triggers Karplusan Minotaur")
+    void lostFlipsTriggerLoseACoinFlipAbilities() {
+        addCreatureReady(player1, new GoblinTraprunner());
+        harness.addToBattlefield(player1, new KarplusanMinotaur());
+        ThreadLocalRandom random = mock(ThreadLocalRandom.class);
+        when(random.nextBoolean()).thenReturn(false);
+        try (var coins = mockStatic(ThreadLocalRandom.class)) {
+            coins.when(ThreadLocalRandom::current).thenReturn(random);
+            declareAttackers(List.of(0));
+            harness.passBothPriorities();
+
+            assertThat(findPermanents(player1, "Goblin")).noneMatch(permanent -> permanent.getCard().isToken());
+            PendingInteraction.PermanentChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+            assertThat(choice).isNotNull();
+            assertThat(choice.playerId()).isEqualTo(player2.getId());
+        }
     }
 
     private void resolveTokenAttackChoices() {

@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.FlipUntilLoseEffect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.FlipCoinsPerHeadsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetThenUntapAnotherTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -40,7 +40,7 @@ public class RalZarek extends Card {
         // −7: Flip five coins. Take an extra turn after this one for each coin that comes up heads.
         addActivatedAbility(new ActivatedAbility(
                 -7,
-                List.of(new FlipCoinsPerHeadsEffect(5, new ControllerExtraTurnEffect(1))),
+                List.of(FlipUntilLoseEffect.headsOrTails(5, new ControllerExtraTurnEffect(1))),
                 "−7: Flip five coins. Take an extra turn after this one for each coin that comes up heads."
         ));
     }

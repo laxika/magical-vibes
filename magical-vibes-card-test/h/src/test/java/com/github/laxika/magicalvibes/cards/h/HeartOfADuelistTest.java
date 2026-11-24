@@ -3,17 +3,19 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.t.ThoughtReflection;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({HeartOfADuelist.class, Forest.class, GrizzlyBears.class, LlanowarElves.class,
-        ThoughtReflection.class})
+        ThoughtReflection.class, Opalescence.class, Humility.class})
 class HeartOfADuelistTest extends BaseCardTest {
 
     @Test
@@ -48,6 +50,20 @@ class HeartOfADuelistTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(card -> card.getName())
                 .containsExactly("Forest", "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Once it has lost its abilities, its controller draws from the top")
+    void lostAbilitiesDrawFromTheTop() {
+        harness.addToBattlefield(player1, new HeartOfADuelist());
+        harness.addToBattlefield(player1, new Opalescence());
+        harness.addToBattlefield(player1, new Humility());
+        harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears(), new LlanowarElves()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInHand(player1, "Forest");
     }
 
     @Test

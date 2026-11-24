@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DoubleDrawExceptFirstDrawStepDrawEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 
 @CardRegistration(set = "HOB", collectorNumber = "144")
@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 public class BardKingOfDale extends Card {
 
     public BardKingOfDale() {
-        addStaticEffect(new DoubleDrawExceptFirstDrawStepDrawEffect());
+        addStaticEffect(DoubleDrawReplacementEffect.exceptFirstDrawInEachOfYourDrawSteps());
         addStaticEffect(new MultiplyTokenCreationEffect(2));
     }
 }

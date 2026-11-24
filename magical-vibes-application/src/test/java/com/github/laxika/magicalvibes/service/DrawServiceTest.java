@@ -99,8 +99,12 @@ class DrawServiceTest {
     @Test
     void drawFromBottomReplacementUsesTheControllerBottomOfLibrary() {
         Card lantern = createCard("Lantern of Undersight", CardType.ARTIFACT);
-        lantern.addStaticEffect(new DrawFromBottomOfLibraryEffect());
-        gd.playerBattlefields.get(player1Id).add(new Permanent(lantern));
+        DrawFromBottomOfLibraryEffect fromBottom = new DrawFromBottomOfLibraryEffect();
+        lantern.addStaticEffect(fromBottom);
+        Permanent lanternPermanent = new Permanent(lantern);
+        gd.playerBattlefields.get(player1Id).add(lanternPermanent);
+        lenient().when(gameQueryService.activeStaticEffects(gd, player1Id, DrawFromBottomOfLibraryEffect.class)).thenReturn(
+                List.of(new GameQueryService.ActiveStaticEffect<>(fromBottom, lanternPermanent, player1Id)));
         Card top = createCard("Top", CardType.CREATURE);
         Card bottom = createCard("Bottom", CardType.CREATURE);
         gd.playerDecks.put(player1Id, new ArrayList<>(List.of(top, bottom)));

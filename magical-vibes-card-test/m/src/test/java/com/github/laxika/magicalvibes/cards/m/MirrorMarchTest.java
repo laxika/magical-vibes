@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.a.AxebaneBeast;
 import com.github.laxika.magicalvibes.cards.a.ArrestersAdmonition;
 import com.github.laxika.magicalvibes.cards.q.Quasiduplicate;
+import com.github.laxika.magicalvibes.cards.w.WoodlandChampion;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -23,7 +25,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-@CardUsed({MirrorMarch.class, AxebaneBeast.class, ArrestersAdmonition.class, Quasiduplicate.class})
+@CardUsed({MirrorMarch.class, AxebaneBeast.class, ArrestersAdmonition.class, Quasiduplicate.class,
+        WoodlandChampion.class})
 class MirrorMarchTest extends BaseCardTest {
 
     @Test
@@ -148,6 +151,26 @@ class MirrorMarchTest extends BaseCardTest {
             resolveAllTriggers();
             assertThat(findPermanents(player1, "Axebane Beast")).singleElement()
                     .satisfies(beast -> assertThat(beast.getCard().isToken()).isFalse());
+        }
+    }
+
+    @Test
+    @DisplayName("All the tokens enter at the same time, as one event")
+    void tokensEnterTogether() {
+        Permanent champion = harness.addToBattlefieldAndReturn(player1, new WoodlandChampion());
+        ThreadLocalRandom random = mock(ThreadLocalRandom.class);
+        when(random.nextBoolean()).thenReturn(true, true, false);
+        try (var coins = mockStatic(ThreadLocalRandom.class)) {
+            coins.when(ThreadLocalRandom::current).thenReturn(random);
+            castBeastWithMirrorMarch();
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            assertThat(findPermanents(player1, "Axebane Beast")).hasSize(3);
+            assertThat(gd.stack).singleElement()
+                    .satisfies(trigger -> assertThat(trigger.getCard()).isInstanceOf(WoodlandChampion.class));
+            resolveAllTriggers();
+            assertThat(champion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         }
     }
 

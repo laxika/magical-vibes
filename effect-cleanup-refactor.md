@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39 (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 42, 37; merge queue 40, 43. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                            |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c, 41, 39, 40 (each in Findings; the fold queue marks its rows). Running in parallel worktrees: 42, 37, 41b; merge queue 43. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                             |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,274 / 2,650 (after fold run 39) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,263 / 2,641 (after fold run 40) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,234 rows over 4,511 classes (after fold run 39). Latest verdict per class: `step-9` 354, unique 1,178, absorbed 1,106, split 657, blocked-other 525, survivor 388, blocked-step-model 140, blocked-player-loop 96, dead 67. Waiting: 354 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,257 rows over 4,516 classes (after fold run 40). Latest verdict per class: `step-9` 337, unique 1,177, absorbed 1,117, split 657, blocked-other 530, survivor 393, blocked-step-model 140, blocked-player-loop 96, dead 69. Waiting: 337 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -964,6 +964,11 @@ Delayed and global triggers:
 - `SkipAllExtraTurnsReplacementEffect(PlayerSubject)` / `.opponents()` (fold run 39).
 - `CreatureEnteringDontCauseTriggersEffect(Event, types, abilityControllers)`, with `.artifactsOrCreaturesEntering()` / `.creaturesDying()` / `.permanentsEnteringForOpponents()` (fold run 39).
 - `LookAtTopCardsChooseOneToHandDrawReplacementEffect(lookCount, restToGraveyard)` / `.restOnBottom(n)` / `.restIntoGraveyard(n)` (fold run 39).
+
+- `StepKind.FLIP` + `AmountThisWay(FLIP)`: "for each flip you won", read after `FlipUntilLoseEffect` (one event: copies, counters, tokens) (fold run 40).
+- `FlipUntilLoseEffect.untilLose()` / `.upTo(coins, allWins)` / `.flip(coins, perWin, perLoss, allWins)` / `.headsOrTails(n, perHeads)`: every multi-coin flip by the controller (fold run 40).
+- `SacrificedCardMatches.permanent(PermanentPredicate, description)` + `ConditionContext.sacrificedPermanent`: "if the sacrificed permanent was [suspected / a commander]", read as it last existed (fold run 40).
+- `DrawFromBottomOfLibraryEffect.fromAnywhere()` (`From.ANY_POSITION`), `DoubleDrawReplacementEffect.exceptFirstDrawInEachOfYourDrawSteps()`, `DoubleTargetCreaturePowerEffect.of(subject)` / `.ofCreaturesYouControl(filter)` (fold run 40).
 
 ### Blocked causes still open
 
@@ -4223,6 +4228,42 @@ All 11 batches done. Ratchet 3,324 / 2,675 → 3,311 / 2,670. Ledger 24 rows: ab
 - Not tested: the Throne face-down fix, the token entry-path fix, the Elesh Norn multiplayer change.
 
 **For the next run.** The face-down draw-replacement defects: Pursuit of Knowledge, Uba Mask, Tomorrow.
+
+### Step 9, fold run 40 (2026-11-24, parallel worktree)
+
+11 folded, 6 survivor, 5 blocked-other, 2 dead. Ratchet 3,324 / 2,675 → 3,313 / 2,666. 19 card files rewritten; Oracle text checked for 14. CR 121.2, 608.2h, 613.1f, 705.2 and 707.10 checked.
+
+| Batch | Result |
+|---|---|
+| per-object-flips | 0 folded, 3 `blocked-other`. Which grouping is right is unsettled: Edgar's ruling ("flip multiple coins at once") doesn't say whether "flip a coin for each X" is one set. Rakdos flips at once (and the rulings have its tails creatures destroyed together); Fighting Chance and Mutalith flip one at a time, so a survivor changes one side (owner's question). Also missing: a per-flip "that creature / that player" binding, a one-shot prevent-combat-damage verb that takes a subject (Fighting Chance), and a FLIP result naming the tails permanents (Rakdos). |
+| multi-flip | 4 folded into `FlipUntilLoseEffect(coins, stopAtLoss, contested, perWin, perLoss, allWins)`. Squee's Revenge is `upTo`. Yusri is `flip`, with `allWins` under `SpellXAtLeast(5)` (same as the old coins==5 && wins==5). Crazed Firecat is the flip plus `PutCountersOnSelfEffect(AmountThisWay(FLIP))`. Goblin Traprunner is the flip plus `CreateTokenEffect.withAmount(AmountThisWay(FLIP))`. Both Ral Zareks are `headsOrTails`. Mirror March became the flip plus one copy step with `AmountThisWay(FLIP)`. `perLoss` has one user (Yusri), as the queue row named; Mutalith would be the second. |
+| two-dice | not started (an R record with spell-number prompts); stays `step-9`. |
+| sac-condition | 3 folded. `SacrificedCardMatches` gains `permanentFilter`, judged on `ConditionContext.sacrificedPermanent` (the entry's snapshot, CR 608.2h). The card filter falls back to the snapshot's card, as the old handler did (copies, CR 707.10). |
+| lib-pos-draw | 1 folded. `DrawFromBottomOfLibraryEffect(From BOTTOM / ANY_POSITION)` is read through one `activeStaticEffects` pass. Both marker interfaces deleted. |
+| draw-new | 0 folded. Wyll: a cost-shape row that needs a target payer, for step 10. Jon Irenicus: a NotCondition step would judge the libraries again after the draw (6 vs 5 draws, then 5 vs 5 also mills); it needs `ConditionalEffect` otherwise-branch, which only it would use. |
+| draw-doublers | `DoubleDrawReplacementEffect(exceptFirstDrawStepDraw)` absorbed DoubleDrawExceptFirstDrawStepDrawEffect (3 cards, same text). One reader takes the kind as a parameter; the dead `findExceptFirstDoubleDrawSourceCard` is removed. |
+| power-doublers | 2 folded. `DoubleTargetCreaturePowerEffect(times, subject)` with `of(subject)` and `ofCreaturesYouControl(filter)`. |
+
+**Shape.** `StepKind.FLIP` is recorded after the last flip, before `allWins`: the flips won, or the heads where no one wins. Flips that stop at a loss are separate flips with checkpoints, and the resume point is the wins so far. A counted set flipped at once is one `flipCoins` call. Lost flips fire the lost event. Heads-or-tails coins fire nothing, unless Edgar made them won flips.
+
+**Behaviour changes.**
+- Mirror March: the tokens enter at once (ruling). Test with Woodland Champion.
+- Squee's Revenge, Okaun, Zndrsplt and Goblin Traprunner: a lost flip fires the lost event (CR 705.2). Tests with Karplusan Minotaur. This is the "Fold: multi-flip" defect.
+- Heart of a Duelist: it no longer replaces draws after losing its abilities (CR 613.1f). Test with Opalescence and Humility.
+- Two Maro's Gone Nuts: a targeted power doubling is ×8, not ×16, the shared `MaroGoneNutsSupport` rule. Test with Unleash Fury.
+- The AI no longer sees the conditional draws of Agency Coroner, Splitting the Powerstone and Tevesh Szat (`ConditionalEffect` hides `CardDrawingEffect`).
+- Log lines: the survivor's lines win. A set flipped at once logs "flips N coins … K heads" and, when contested, a line per flip. Power doubling logs one line per creature. No asserting test changed.
+
+**Tests.**
+- Added: Squee's Revenge, Goblin Traprunner, Mirror March, Heart of a Duelist, Maro's Gone Nuts.
+- Moved: the two flip handler tests went into `FlipUntilLoseEffectHandlerTest`.
+- Changed: `DrawServiceTest` stubs `activeStaticEffects` for its Lantern case.
+
+**Seen, not changed.**
+- Edgar's ruling makes heads-or-tails flips won flips. `FlipCoinWinEffect.headsOrTails` (Odds) and Rakdos fire no won event under Edgar. Fairly sure.
+- Mutalith fires coin-flip events for a Pokey d20 result (already queued).
+
+**For the next run.** `two-dice`: check `RollTwoD20IgnoreLowerEffect` and `RollWithAdvantageEffect` first. Then the per-object flips, after the owner rules on grouping.
 
 ## Prompt
 

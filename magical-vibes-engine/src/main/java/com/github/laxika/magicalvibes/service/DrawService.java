@@ -40,7 +40,6 @@ import com.github.laxika.magicalvibes.model.effect.CounterDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterThresholdDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CyclingDrawReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DoubleDrawExceptFirstDrawStepDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentExtraDrawsRedirectedEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentDrawTwoOrMoreReplacedEffect;
@@ -52,8 +51,7 @@ import com.github.laxika.magicalvibes.model.effect.IslandSanctuaryEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardThenBottomRestEffect;
 import com.github.laxika.magicalvibes.model.effect.MaySkipDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawFromAnywhereInLibraryReplacement;
-import com.github.laxika.magicalvibes.model.effect.DrawFromBottomOfLibraryReplacement;
+import com.github.laxika.magicalvibes.model.effect.DrawFromBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.service.effect.DredgeSupport;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileBottomRandomSupport;
@@ -223,12 +221,13 @@ public class DrawService {
         while (!gameData.pendingReplacementCardDraws.isEmpty() && gameData.status != GameStatus.FINISHED) {
             UUID drawingPlayerId = gameData.pendingReplacementCardDraws.removeFirst();
             List<Card> deck = gameData.playerDecks.get(drawingPlayerId);
-            if (findDrawFromAnywhereSource(gameData, drawingPlayerId) != null && deck != null && !deck.isEmpty()) {
+            DrawFromBottomOfLibraryEffect.From from = drawPosition(gameData, drawingPlayerId);
+            if (from == DrawFromBottomOfLibraryEffect.From.ANY_POSITION && deck != null && !deck.isEmpty()) {
                 interactionHandlerRegistry.begin(gameData,
                         new PendingInteraction.DrawFromLibraryPositionChoice(drawingPlayerId, deck.size()));
                 return;
             }
-            if (findDrawFromBottomSource(gameData, drawingPlayerId) != null) {
+            if (from != null) {
                 performDrawCardFromBottom(gameData, drawingPlayerId);
             } else {
                 performDrawCard(gameData, drawingPlayerId);
@@ -896,8 +895,8 @@ public class DrawService {
             return;
         }
 
-        Permanent drawFromAnywhereSource = findDrawFromAnywhereSource(gameData, playerId);
-        if (drawFromAnywhereSource != null) {
+        DrawFromBottomOfLibraryEffect.From from = drawPosition(gameData, playerId);
+        if (from == DrawFromBottomOfLibraryEffect.From.ANY_POSITION) {
             List<Card> deck = gameData.playerDecks.get(playerId);
             if (deck != null && !deck.isEmpty()) {
                 interactionHandlerRegistry.begin(gameData,
@@ -906,8 +905,7 @@ public class DrawService {
             }
         }
 
-        Permanent drawFromBottomSource = findDrawFromBottomSource(gameData, playerId);
-        if (drawFromBottomSource != null) {
+        if (from != null) {
             performDrawCardFromBottom(gameData, playerId);
         } else {
             performDrawCard(gameData, playerId);
@@ -1264,37 +1262,20 @@ public class DrawService {
         return sources.isEmpty() ? null : sources.getFirst().source();
     }
 
-    private Permanent findDrawFromAnywhereSource(GameData gameData, UUID playerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return null;
-        }
-
-        for (Permanent permanent : battlefield) {
-            boolean hasEffect = permanent.getCard().getStaticEffects().stream()
-                    .anyMatch(DrawFromAnywhereInLibraryReplacement.class::isInstance);
-            if (hasEffect) {
-                return permanent;
+    /**
+     * Where {@code playerId}'s permanents make them draw from ({@link DrawFromBottomOfLibraryEffect}), or {@code null}
+     * for the top: a choice of any position when one lets them draw from anywhere (it includes the bottom), else the
+     * bottom. Only active static abilities count: none of a face-down permanent or one that lost its abilities.
+     */
+    private DrawFromBottomOfLibraryEffect.From drawPosition(GameData gameData, UUID playerId) {
+        DrawFromBottomOfLibraryEffect.From from = null;
+        for (var active : gameQueryService.activeStaticEffects(gameData, playerId, DrawFromBottomOfLibraryEffect.class)) {
+            if (active.effect().from() == DrawFromBottomOfLibraryEffect.From.ANY_POSITION) {
+                return DrawFromBottomOfLibraryEffect.From.ANY_POSITION;
             }
+            from = active.effect().from();
         }
-        return null;
-    }
-
-    private Permanent findDrawFromBottomSource(GameData gameData, UUID playerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return null;
-        }
-
-        for (Permanent permanent : battlefield) {
-            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-            boolean hasEffect = permanent.getCard().getStaticEffects().stream()
-                    .anyMatch(DrawFromBottomOfLibraryReplacement.class::isInstance);
-            if (hasEffect) {
-                return permanent;
-            }
-        }
-        return null;
+        return from;
     }
 
     /** Replaces the controller's draw with a face-down exile tracked with the source permanent. */
@@ -1711,8 +1692,9 @@ public class DrawService {
         for (Permanent permanent : battlefield) {
             if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
             for (CardEffect effect : permanent.getCard().getStaticEffects()) {
-                if (isActiveDoubleDrawReplacement(gameData, permanent, playerId, effect)
-                        || (!firstDrawStepDraw && effect instanceof DoubleDrawExceptFirstDrawStepDrawEffect)) {
+                if (isActiveDoubleDrawReplacement(gameData, permanent, playerId, effect, false)
+                        || (!firstDrawStepDraw
+                        && isActiveDoubleDrawReplacement(gameData, permanent, playerId, effect, true))) {
                     return permanent;
                 }
             }
@@ -1727,8 +1709,7 @@ public class DrawService {
         for (Permanent permanent : battlefield) {
             if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
             for (CardEffect effect : permanent.getCard().getStaticEffects()) {
-                if (exceptFirst ? effect instanceof DoubleDrawExceptFirstDrawStepDrawEffect
-                        : isActiveDoubleDrawReplacement(gameData, permanent, playerId, effect)) {
+                if (isActiveDoubleDrawReplacement(gameData, permanent, playerId, effect, exceptFirst)) {
                     count++;
                 }
             }
@@ -1736,18 +1717,22 @@ public class DrawService {
         return count;
     }
 
+    /**
+     * Whether {@code effect} is a {@link DoubleDrawReplacementEffect} of the given kind (that leaves the first draw of
+     * each draw step alone or not) that applies now: as it is, or wrapped in a {@link ConditionalEffect} whose condition
+     * holds for its permanent.
+     */
     private boolean isActiveDoubleDrawReplacement(GameData gameData, Permanent permanent,
-                                                   UUID controllerId, CardEffect effect) {
-        if (effect.getClass() == DoubleDrawReplacementEffect.class) {
-            return true;
+                                                   UUID controllerId, CardEffect effect, boolean exceptFirst) {
+        if (effect instanceof DoubleDrawReplacementEffect doubler) {
+            return doubler.exceptFirstDrawStepDraw() == exceptFirst;
         }
-        if (effect.getClass() != ConditionalEffect.class) {
+        if (!(effect instanceof ConditionalEffect conditional)
+                || !(conditional.wrapped() instanceof DoubleDrawReplacementEffect doubler)
+                || doubler.exceptFirstDrawStepDraw() != exceptFirst) {
             return false;
         }
-
-        ConditionalEffect conditional = (ConditionalEffect) effect;
-        return conditional.wrapped().getClass() == DoubleDrawReplacementEffect.class
-                && conditionEvaluationService.isMet(gameData, conditional.condition(),
+        return conditionEvaluationService.isMet(gameData, conditional.condition(),
                 ConditionContext.forPermanent(permanent, controllerId));
     }
 
@@ -1787,22 +1772,6 @@ public class DrawService {
                             && permanent.getCounterCount(effect.counterType()) >= effect.minimumCounters());
             if (active) {
                 return permanent;
-            }
-        }
-        return null;
-    }
-
-    private Card findExceptFirstDoubleDrawSourceCard(GameData gameData, UUID playerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return null;
-        }
-
-        for (Permanent permanent : battlefield) {
-            boolean hasEffect = permanent.getCard().getStaticEffects().stream()
-                    .anyMatch(effect -> effect instanceof DoubleDrawExceptFirstDrawStepDrawEffect);
-            if (hasEffect) {
-                return permanent.getCard();
             }
         }
         return null;

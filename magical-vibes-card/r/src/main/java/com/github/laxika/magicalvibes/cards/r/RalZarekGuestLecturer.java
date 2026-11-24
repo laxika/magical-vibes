@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.FlipUntilLoseEffect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.FlipCoinsPerHeadsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
@@ -52,7 +52,7 @@ public class RalZarekGuestLecturer extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -7,
-                List.of(new FlipCoinsPerHeadsEffect(5,
+                List.of(FlipUntilLoseEffect.headsOrTails(5,
                         new SkipNextEffect(SkipKind.TURN, Subjects.targetPlayer()))),
                 "−7: Flip five coins. Target opponent skips their next X turns, where X is the number of coins that came up heads.",
                 opponent()

@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.condition.SacrificedCardMatches;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardIfSacrificedPermanentWasCommanderEffect;
 import com.github.laxika.magicalvibes.model.effect.CardSubject;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -53,7 +54,10 @@ public class TeveshSzatDoomOfFools extends Card {
                                 SACRIFICE_FILTER,
                                 SequenceEffect.of(
                                         new DrawCardEffect(2),
-                                        new DrawCardIfSacrificedPermanentWasCommanderEffect()),
+                                        new ConditionalEffect(
+                                                SacrificedCardMatches.permanent(
+                                                        new PermanentIsCommanderPredicate(), "a commander"),
+                                                new DrawCardEffect(1))),
                                 "another creature or planeswalker"),
                         "Sacrifice another creature or planeswalker?")),
                 "+1: You may sacrifice another creature or planeswalker. If you do, draw two cards, then draw another card if the sacrificed permanent was a commander."

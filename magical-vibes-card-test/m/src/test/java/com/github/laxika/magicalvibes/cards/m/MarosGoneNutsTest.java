@@ -153,6 +153,21 @@ class MarosGoneNutsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Two Maro's Gone Nuts octuple a targeted power doubling, as they do every other doubling")
+    void twoCopiesOctupleUnleashFury() {
+        harness.addToBattlefield(player1, new MarosGoneNuts());
+        harness.addToBattlefield(player2, new MarosGoneNuts());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BladeSplicer());
+        harness.setHand(player1, List.of(new UnleashFury()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("A face-down Maro's Gone Nuts has no doubling ability")
     void faceDownCopyDoesNotModifyDoubling() {
         Permanent faceDown = harness.addToBattlefieldAndReturn(player1, new MarosGoneNuts());

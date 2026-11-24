@@ -2244,10 +2244,7 @@ public class ConditionEvaluationService {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.getCard().isToken();
             }
-            case SacrificedCardMatches c ->
-                    ctx.sacrificedCard() != null
-                            && predicateEvaluationService.matchesCardPredicate(
-                            ctx.sacrificedCard(), c.filter(), null, gameData, ctx.sacrificedCard().getOwnerId());
+            case SacrificedCardMatches c -> sacrificedPermanentMatches(gameData, ctx, c);
             case TopCardOfLibraryColor c ->
                     isTopCardOfLibraryColor(gameData, ctx.controllerId(), c);
             case TopCardOfLibraryMatchesPredicate c ->
@@ -3019,6 +3016,22 @@ public class ConditionEvaluationService {
                     ctx.sourceCard() == null ? null : ctx.sourceCard().getId(), gameData, shown.ownerId(),
                     ctx.sourcePermanentId(), null, ctx.xValue(), ctx.sourcePermanent());
         });
+    }
+
+    /**
+     * "If the sacrificed permanent was …": the permanent as it last existed on the battlefield for a permanent filter
+     * (CR 608.2h); for a card filter its card, the snapshot of the permanent's card when the entry recorded no card (a
+     * copy refers to the original's sacrificed permanent, CR 707.10).
+     */
+    private boolean sacrificedPermanentMatches(GameData gameData, ConditionContext ctx, SacrificedCardMatches c) {
+        if (c.permanentFilter() != null) {
+            return ctx.sacrificedPermanent() != null
+                    && matchesPermanent(gameData, ctx.sacrificedPermanent(), c.permanentFilter(), ctx);
+        }
+        Card sacrificed = ctx.sacrificedCard() != null ? ctx.sacrificedCard()
+                : ctx.sacrificedPermanent() != null ? ctx.sacrificedPermanent().getCard() : null;
+        return sacrificed != null && predicateEvaluationService.matchesCardPredicate(
+                sacrificed, c.filter(), null, gameData, sacrificed.getOwnerId());
     }
 
     /**
