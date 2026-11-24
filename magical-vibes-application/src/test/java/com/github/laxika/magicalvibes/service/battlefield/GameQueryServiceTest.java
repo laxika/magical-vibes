@@ -89,6 +89,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageDealtByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromEverythingEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromManaValueParityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -4243,6 +4245,88 @@ class GameQueryServiceTest {
         void returnsFalseWhenNoProtection() {
             assertThat(gqs.playerHasProtectionFromColor(gd, player2Id, CardColor.RED)).isFalse();
             assertThat(gqs.playerHasProtectionFromColor(gd, player1Id, null)).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("playerProtectionFrom")
+    class PlayerProtectionFrom {
+
+        private Card ownedBy(UUID ownerId) {
+            Card card = createCreature("Graveyard Card", 2, 2, CardColor.GREEN);
+            card.setOwnerId(ownerId);
+            return card;
+        }
+
+        private GameQueryService.ProtectionSource uncontrolled(Card card) {
+            return new GameQueryService.ProtectionSource(card, null, null, Set.of(CardColor.GREEN));
+        }
+
+        @Test
+        @DisplayName("Protection from a player covers a card that player owns and no player controls")
+        void protectionFromPlayerCoversOwnedUncontrolledCard() {
+            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1Id,
+                    new ProtectionFromPlayersEffect(Set.of(player2Id), false), player1Id, Duration.UNTIL_END_OF_TURN));
+
+            assertThat(gqs.playerProtectionFrom(gd, player1Id, uncontrolled(ownedBy(player2Id))))
+                    .isEqualTo("the source's owner");
+            assertThat(gqs.playerProtectionFrom(gd, player1Id, uncontrolled(ownedBy(player1Id)))).isNull();
+        }
+
+        @Test
+        @DisplayName("Protection from a player doesn't cover a card that player owns while another player controls it")
+        void protectionFromPlayerIgnoresOwnedCardAnotherPlayerControls() {
+            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1Id,
+                    new ProtectionFromPlayersEffect(Set.of(player2Id), false), player1Id, Duration.UNTIL_END_OF_TURN));
+
+            assertThat(gqs.playerProtectionFrom(gd, player1Id, new GameQueryService.ProtectionSource(
+                    ownedBy(player2Id), null, player1Id, Set.of()))).isNull();
+        }
+
+        @Test
+        @DisplayName("Protection from each opponent covers a card an opponent owns and no player controls")
+        void eachOpponentCoversOpponentOwnedUncontrolledCard() {
+            addPermanent(player1Id, createEnchantmentWithStaticEffect("Virtue",
+                    new PlayerHasProtectionEffect(PlayerHasProtectionEffect.Quality.EACH_OPPONENT)));
+
+            assertThat(gqs.playerProtectionFrom(gd, player1Id, uncontrolled(ownedBy(player2Id)))).isNotNull();
+            assertThat(gqs.playerProtectionFrom(gd, player1Id, uncontrolled(ownedBy(player1Id)))).isNull();
+            assertThat(gqs.playerProtectionFrom(gd, player2Id, uncontrolled(ownedBy(player1Id)))).isNull();
+        }
+
+        @Test
+        @DisplayName("Protection from each opponent floated on a player protects that player")
+        void floatedEachOpponentProtectsThePlayer() {
+            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1Id,
+                    new PlayerHasProtectionEffect(PlayerHasProtectionEffect.Quality.EACH_OPPONENT), player1Id,
+                    Duration.UNTIL_END_OF_TURN));
+
+            assertThat(gqs.playerProtectionFrom(gd, player1Id, new GameQueryService.ProtectionSource(
+                    ownedBy(player2Id), null, player2Id, Set.of()))).isEqualTo("the source's controller");
+            assertThat(gqs.playerProtectionFrom(gd, player2Id, new GameQueryService.ProtectionSource(
+                    ownedBy(player1Id), null, player1Id, Set.of()))).isNull();
+        }
+
+        @Test
+        @DisplayName("A face-down permanent gives its controller no protection")
+        void faceDownPermanentGivesNoProtection() {
+            Permanent virtue = addPermanent(player1Id, createCreatureWithStaticEffect("Virtue", 8, 8, CardColor.WHITE,
+                    new PlayerHasProtectionEffect(PlayerHasProtectionEffect.Quality.EACH_OPPONENT)));
+            virtue.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+            assertThat(gqs.playerProtectionFrom(gd, player1Id, new GameQueryService.ProtectionSource(
+                    ownedBy(player2Id), null, player2Id, Set.of()))).isNull();
+        }
+
+        @Test
+        @DisplayName("Protection from a color covers a source with that color among others")
+        void colorProtectionCoversMulticoloredSource() {
+            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1Id,
+                    new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.RED), player1Id,
+                    Duration.UNTIL_END_OF_TURN));
+
+            assertThat(gqs.playerProtectionFrom(gd, player1Id, new GameQueryService.ProtectionSource(
+                    ownedBy(player2Id), null, player2Id, Set.of(CardColor.GREEN, CardColor.RED)))).isEqualTo("red");
         }
     }
 

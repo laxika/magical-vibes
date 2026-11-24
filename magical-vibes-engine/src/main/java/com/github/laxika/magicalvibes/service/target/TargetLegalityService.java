@@ -1581,21 +1581,6 @@ public class TargetLegalityService {
             if (peaceTalks != null) return Optional.of(peaceTalks);
             String playerReason = checkPlayerUntargetableReason(gameData, targetId, controllerId, card);
             if (playerReason != null) return Optional.of(playerReason);
-            CardColor effectiveColor = gameQueryService.getEffectiveCardColor(gameData, card);
-            if (effectiveColor != null
-                    && gameQueryService.playerHasProtectionFromColor(gameData, targetId, effectiveColor)) {
-                return Optional.of(gameData.playerIdToName.get(targetId)
-                        + " has protection from " + effectiveColor.name().toLowerCase());
-            }
-            if (card != null
-                    && gameQueryService.playerHasProtectionFromChosenName(gameData, targetId, card)) {
-                return Optional.of(gameData.playerIdToName.get(targetId)
-                        + " has protection from " + card.getName());
-            }
-            if (gameQueryService.playerHasProtectionFromChosenCardType(gameData, targetId, card)) {
-                return Optional.of(gameData.playerIdToName.get(targetId)
-                        + " has protection from the source's card type");
-            }
         }
 
         if (target == null
@@ -1734,17 +1719,6 @@ public class TargetLegalityService {
         }
         if (peaceTalksUntargetableReason(gameData) != null
                 || checkPlayerUntargetableReason(gameData, candidate, controllerId, card) != null) {
-            return false;
-        }
-        CardColor effectiveColor = gameQueryService.getEffectiveCardColor(gameData, card);
-        if (effectiveColor != null
-                && gameQueryService.playerHasProtectionFromColor(gameData, candidate, effectiveColor)) {
-            return false;
-        }
-        if (gameQueryService.playerHasProtectionFromChosenName(gameData, candidate, card)) {
-            return false;
-        }
-        if (gameQueryService.playerHasProtectionFromChosenCardType(gameData, candidate, card)) {
             return false;
         }
         if (targetFilter instanceof PlayerPredicateTargetFilter playerFilter
@@ -3935,21 +3909,9 @@ public class TargetLegalityService {
                         targetFizzled = true;
                     } else {
                     String playerReason = checkPlayerUntargetableReason(
-                            gameData, entry.getTargetId(), entry.getControllerId(), entry.getCard());
+                            gameData, entry.getTargetId(), entry.getControllerId(), entry.getCard(),
+                            entryProtectionSource(gameData, entry));
                     if (playerReason != null) {
-                        targetFizzled = true;
-                    } else if (effectiveSpellColors(gameData, entry).stream()
-                            .anyMatch(color -> gameQueryService.playerHasProtectionFromColor(
-                                    gameData, entry.getTargetId(), color))) {
-                        targetFizzled = true;
-                    } else if (entry.getCard() != null
-                            && gameQueryService.playerHasProtectionFromChosenName(gameData, entry.getTargetId(),
-                                    entry.getCard())) {
-                        targetFizzled = true;
-                    } else if (gameQueryService.playerHasProtectionFromChosenCardType(
-                            gameData, entry.getTargetId(), entry.getCard(),
-                            entry.getSourcePermanentId() == null
-                                    ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()))) {
                         targetFizzled = true;
                     }
                     if (!targetFizzled) {
@@ -4452,23 +4414,8 @@ public class TargetLegalityService {
             if (isBlockedByPeaceTalksForEntry(gameData, entry)) {
                 return false;
             }
-            if (checkPlayerUntargetableReason(gameData, targetId, entry.getControllerId(), entry.getCard()) != null) {
-                return false;
-            }
-            Card sourceCard = entry.getCard();
-            CardColor effectiveColor = gameQueryService.getEffectiveCardColor(gameData, sourceCard);
-            if (effectiveColor != null
-                    && gameQueryService.playerHasProtectionFromColor(gameData, targetId, effectiveColor)) {
-                return false;
-            }
-            if (sourceCard != null
-                    && gameQueryService.playerHasProtectionFromChosenName(gameData, targetId, sourceCard)) {
-                return false;
-            }
-            if (gameQueryService.playerHasProtectionFromChosenCardType(
-                    gameData, targetId, sourceCard,
-                    entry.getSourcePermanentId() == null
-                            ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()))) {
+            if (checkPlayerUntargetableReason(gameData, targetId, entry.getControllerId(), entry.getCard(),
+                    entryProtectionSource(gameData, entry)) != null) {
                 return false;
             }
             if (targetFilter instanceof PlayerPredicateTargetFilter playerFilter) {
@@ -4983,15 +4930,23 @@ public class TargetLegalityService {
 
     private String checkPlayerUntargetableReason(GameData gameData, UUID targetPlayerId, UUID sourcePlayerId,
                                                  Card sourceCard) {
+        return checkPlayerUntargetableReason(gameData, targetPlayerId, sourcePlayerId, sourceCard,
+                cardProtectionSource(gameData, sourceCard, sourcePlayerId));
+    }
+
+    /**
+     * Why a spell or ability can't target this player, or {@code null} if it can: shroud, protection from a quality of
+     * {@code protectionSource} (CR 702.16b; {@link GameQueryService#playerProtectionFrom}), hexproof.
+     */
+    private String checkPlayerUntargetableReason(GameData gameData, UUID targetPlayerId, UUID sourcePlayerId,
+                                                 Card sourceCard, GameQueryService.ProtectionSource protectionSource) {
         if (gameQueryService.playerHasShroud(gameData, targetPlayerId)) {
             return gameData.playerIdToName.get(targetPlayerId) + " has shroud and can't be targeted";
         }
-        if (gameQueryService.playerHasProtectionFromEverything(gameData, targetPlayerId)) {
-            return gameData.playerIdToName.get(targetPlayerId) + " has protection from everything and can't be targeted";
-        }
-        if (gameQueryService.playerHasProtectionFromOpponents(gameData, targetPlayerId, sourcePlayerId)) {
-            return gameData.playerIdToName.get(targetPlayerId)
-                    + " has protection from the source's controller and can't be targeted";
+        String protection = gameQueryService.playerProtectionFrom(gameData, targetPlayerId, protectionSource);
+        if (protection != null) {
+            return gameData.playerIdToName.get(targetPlayerId) + " has protection from " + protection
+                    + " and can't be targeted";
         }
         if (sourcePlayerId != null && !sourcePlayerId.equals(targetPlayerId)
                 && gameQueryService.playerHasHexproof(gameData, targetPlayerId)
@@ -4999,28 +4954,41 @@ public class TargetLegalityService {
             return gameData.playerIdToName.get(targetPlayerId) + " has hexproof and can't be targeted";
         }
         CardColor effectiveColor = gameQueryService.getEffectiveCardColor(gameData, sourceCard);
-        for (CardColor color : effectiveSourceColors(gameData, sourceCard)) {
-            if (gameQueryService.playerHasProtectionFromColor(gameData, targetPlayerId, color)) {
-                return gameData.playerIdToName.get(targetPlayerId) + " has protection from " + color.name().toLowerCase();
-            }
-        }
         if (sourcePlayerId != null && !sourcePlayerId.equals(targetPlayerId)
                 && effectiveColor != null
                 && gameQueryService.playerHasHexproofFromColor(gameData, targetPlayerId, effectiveColor)) {
             return gameData.playerIdToName.get(targetPlayerId) + " has hexproof from "
                     + effectiveColor.name().toLowerCase();
         }
-        if (sourceCard != null
-                && gameQueryService.playerHasProtectionFromChosenCardType(gameData, targetPlayerId, sourceCard)) {
-            return gameData.playerIdToName.get(targetPlayerId)
-                    + " has protection from the source's card type and can't be targeted";
-        }
-        if (sourceCard != null
-                && gameQueryService.playerHasProtectionFromChosenName(gameData, targetPlayerId, sourceCard)) {
-            return gameData.playerIdToName.get(targetPlayerId)
-                    + " has protection from " + sourceCard.getName() + " and can't be targeted";
-        }
         return null;
+    }
+
+    /**
+     * A spell or an ability's source card as player protection judges it at targeting: the card's permanent while it is
+     * on the battlefield, its colors as {@link #effectiveSourceColors(GameData, Card)} gives them, and the spell's or
+     * ability's controller.
+     */
+    private GameQueryService.ProtectionSource cardProtectionSource(GameData gameData, Card sourceCard,
+                                                                   UUID sourcePlayerId) {
+        if (sourceCard == null) {
+            return new GameQueryService.ProtectionSource(null, null, sourcePlayerId, Set.of());
+        }
+        UUID sourcePermanentId = findSourcePermanentIdByCardId(gameData, sourceCard.getId());
+        Permanent sourcePermanent = sourcePermanentId == null
+                ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        return new GameQueryService.ProtectionSource(sourceCard, sourcePermanent, sourcePlayerId,
+                effectiveSourceColors(gameData, sourceCard));
+    }
+
+    /**
+     * A resolving entry as player protection judges it: its card, its source permanent while that is on the
+     * battlefield, its controller, and the colors {@link #effectiveSpellColors} gives it.
+     */
+    private GameQueryService.ProtectionSource entryProtectionSource(GameData gameData, StackEntry entry) {
+        Permanent sourcePermanent = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        return new GameQueryService.ProtectionSource(entry.getCard(), sourcePermanent, entry.getControllerId(),
+                effectiveSpellColors(gameData, entry));
     }
 
     private void validatePlayerTargetable(GameData gameData, UUID targetPlayerId, UUID sourcePlayerId) {

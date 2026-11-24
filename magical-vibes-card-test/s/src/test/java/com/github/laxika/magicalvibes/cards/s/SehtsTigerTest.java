@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.Cindervines;
+import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.e.EmberwildeAugur;
 import com.github.laxika.magicalvibes.cards.r.RiddleOfLightning;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -18,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SehtsTiger.class, RiddleOfLightning.class, EmberwildeAugur.class, SliverLegion.class})
+@CardUsed({SehtsTiger.class, Cindervines.class, Divination.class, RiddleOfLightning.class, EmberwildeAugur.class, SliverLegion.class})
 class SehtsTigerTest extends BaseCardTest {
 
     @Test
@@ -63,6 +65,22 @@ class SehtsTigerTest extends BaseCardTest {
         addCreatureReady(player2, new EmberwildeAugur());
         declareAttackers(player2, List.of(0));
         resolveCombat(player2);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = CardColor.class, names = {"RED", "GREEN"})
+    @DisplayName("Protection prevents noncombat damage from a source with any matching color")
+    void protectionPreventsMulticoloredNoncombatDamage(CardColor chosenColor) {
+        harness.castFromHand(player1, new SehtsTiger(), "{2}{W}{W}");
+        resolveAllTriggers();
+        harness.handleListChoice(player1, chosenColor.name());
+
+        harness.addToBattlefield(player2, new Cindervines());
+        harness.setHand(player1, List.of(new Divination()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
     }

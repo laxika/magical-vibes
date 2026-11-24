@@ -138,8 +138,9 @@ class TargetLegalityServiceTest {
         Card source = new Card();
         when(gameQueryService.getEffectiveCardColors(gd, source))
                 .thenReturn(Set.of(CardColor.BLUE, CardColor.BLACK));
-        when(gameQueryService.playerHasProtectionFromColor(eq(gd), eq(player2Id), any(CardColor.class)))
-                .thenAnswer(invocation -> invocation.getArgument(2) == CardColor.BLACK);
+        when(gameQueryService.playerProtectionFrom(eq(gd), eq(player2Id), any(GameQueryService.ProtectionSource.class)))
+                .thenAnswer(invocation -> invocation.<GameQueryService.ProtectionSource>getArgument(2).colors()
+                        .contains(CardColor.BLACK) ? "black" : null);
         var filter = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent");
 

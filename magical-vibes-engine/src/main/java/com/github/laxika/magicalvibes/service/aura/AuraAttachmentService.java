@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -526,13 +525,9 @@ public class AuraAttachmentService {
                 gameData, auraControllerId, playerId, playerFilter.predicate()))) {
             return false;
         }
-        return !gameQueryService.playerHasProtectionFromEverything(gameData, playerId)
-                && !gameQueryService.playerHasProtectionFromOpponents(gameData, playerId, auraControllerId)
-                && gameQueryService.getEffectiveCardColors(gameData, auraCard).stream()
-                .noneMatch(color -> gameQueryService.playerHasProtectionFromColor(gameData, playerId, color))
-                && !gameQueryService.playerHasProtectionFromChosenName(
-                gameData, playerId, auraCard)
-                && !gameQueryService.playerHasProtectionFromChosenCardType(gameData, playerId, auraCard);
+        // CR 702.16c: a player with protection can't be enchanted by an Aura with the quality.
+        return gameQueryService.playerProtectionFrom(gameData, playerId, new GameQueryService.ProtectionSource(
+                auraCard, null, auraControllerId, gameQueryService.getEffectiveCardColors(gameData, auraCard))) == null;
     }
 
     /**
@@ -557,27 +552,13 @@ public class AuraAttachmentService {
                     gameData, controllerId, attachedTo, playerFilter.predicate())) {
                 return "it can no longer enchant that player";
             }
-            // Aura enchanting a player (curse-style): illegal while the player has protection
-            // from one of the aura's colors
+            // CR 702.16c: an Aura enchanting a player with protection from one of its qualities is illegal.
             if (isAura) {
-                if (gameQueryService.playerHasProtectionFromEverything(gameData, attachedTo)) {
-                    return "enchanted player has protection from everything";
-                }
-                if (gameQueryService.playerHasProtectionFromOpponents(gameData, attachedTo, controllerId)) {
-                    return "enchanted player has protection from the Aura's controller";
-                }
-                for (CardColor color : gameQueryService.getEffectiveColors(gameData, attachment)) {
-                    if (gameQueryService.playerHasProtectionFromColor(gameData, attachedTo, color)) {
-                        return "enchanted player has protection from it";
-                    }
-                }
-                if (gameQueryService.playerHasProtectionFromChosenCardType(
-                        gameData, attachedTo, attachment.getCard(), attachment)) {
-                    return "enchanted player has protection from the Aura's card type";
-                }
-                if (gameQueryService.playerHasProtectionFromChosenName(
-                        gameData, attachedTo, attachment.getCard())) {
-                    return "enchanted player has protection from the Aura's name";
+                String protection = gameQueryService.playerProtectionFrom(gameData, attachedTo,
+                        new GameQueryService.ProtectionSource(attachment.getCard(), attachment, controllerId,
+                                gameQueryService.getEffectiveColors(gameData, attachment)));
+                if (protection != null) {
+                    return "enchanted player has protection from " + protection;
                 }
             }
             if (isFortification) {

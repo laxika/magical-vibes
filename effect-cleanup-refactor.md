@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b (each in Findings; the fold queue marks its rows). Fold run 35c is reported and waits to merge; 39, 40 and 41 are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                         |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b, 36, 29c, 27b, 32b, 35b, 29d, 38, 36b, 35c (each in Findings; the fold queue marks its rows). Fold runs 41 and 39 are reported and wait to merge; 40, 42 and 43 are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                          |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,294 / 2,659 (after fold run 36b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,293 / 2,659 (after fold run 35c) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,197 rows over 4,506 classes (after fold run 36b). Latest verdict per class: `step-9` 384, unique 1,176, absorbed 1,086, split 655, blocked-other 524, survivor 378, blocked-step-model 140, blocked-player-loop 96, dead 67. Waiting: 384 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,200 rows over 4,507 classes (after fold run 35c). Latest verdict per class: `step-9` 382, unique 1,176, absorbed 1,088, split 655, blocked-other 524, survivor 379, blocked-step-model 140, blocked-player-loop 96, dead 67. Waiting: 382 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -944,6 +944,9 @@ Delayed and global triggers:
 - `PlayerControlsCreaturesSharingCreatureTypePredicate(min)`: "controls N or more creatures that share a creature type" (fold run 36b).
 - `CantAttackCardOwnerEffect(attacker, players, includePlaneswalkers)` / `.cantAttack(players, pw)` / `.enchantedCreatureCantAttack(players, pw)`: every "[this / enchanted / equipped creature] can't attack [its owner / its controller / you] [or planeswalkers …]", read by `AttackLegalityService.isRestrictedFromAttackingTarget` (fold run 36b).
 - `SubjectResolutionService.namesPlayer` also judges `ownerOf(source())` (current owner, with the board) and `controllerOf(source())` (fold run 36b).
+
+- `PlayerHasProtectionEffect(Quality EACH_OPPONENT | CHOSEN_NAME)`: static "you have protection from [quality]", printed (protects its controller) or floated by `GrantStaticEffectToPlayerEffect` (fold run 35c).
+- `GameQueryService.playerProtectionFrom(gd, player, ProtectionSource(card, permanent, controllerId, colors))`: the one player-protection reader, giving the quality text or null. Used by targeting, Aura attachment and the `PlayerProtection` damage rule. It reads everything, players (owner when uncontrolled, CR 702.16k), colours, chosen card type and chosen name (fold run 35c).
 
 ### Blocked causes still open
 
@@ -4104,6 +4107,36 @@ Both Run 36 batches left by fold run 36 are done. Ratchet 3,334 / 2,685 → 3,32
 - The block step's defender is `getOpponentId(activePlayer)` (CombatBlockService), and `DefendingPlayerControlsPermanent` also uses `getOpponentId`. Both are right for two players only. Sure.
 
 **For the next run.** Step 10 could rename `CantAttackCardOwnerEffect` (to something like `CantAttackPlayersEffect`) and `CantBeBlockedIfDefenderControlsMatchingPermanentEffect` (to something like `CantBeBlockedWhileDefenderEffect`, with its predicate as `TargetPlayerControlsPermanent`), and could fold `CreaturesCantAttackControllerUnlessPredicateEffect`'s Aura-less forms onto the same restricted-`PlayerSubject` reader.
+
+### Step 9, fold run 35c (2026-11-24, parallel worktree)
+Batch `player-prot` is done: 2 folded, 0 left. Ratchet 3,325 / 2,676 → 3,324 / 2,676. Ledger 3 rows (absorbed 2, survivor 1). 2 card files rewritten, Oracle text checked for both, plus the rulings of Seht's Tiger, Faith's Shield, Serra's Emissary and Teferi's Protection. CR 702.16a, b, c, e, j and k, 702.11d, 708.2, 708.2a, 613.1f and 709.4a checked.
+
+| Batch | Result |
+|---|---|
+| player-prot | Absolute Virtue and Runed Halo moved onto the new `PlayerHasProtectionEffect(Quality EACH_OPPONENT / CHOSEN_NAME)`. It is a static printed on a permanent (protecting its controller), or floated by `GrantStaticEffectToPlayerEffect`. `GameQueryService.playerProtectionFrom(gd, player, ProtectionSource(card, permanent, controllerId, colors))` is now the one reader. It is used by every player-target check in TargetLegalityService (cast, flagbearer, trigger and resolution paths), by Aura attachment (`canEnchantPlayer`, `illegalAttachmentReason`) and by one damage rule (`PlayerProtection`). It reads protection from everything, from players, from colours, from the chosen card type and from the chosen name, over active statics, granted statics and floated copies. |
+
+**Behaviour changes**
+- CR 702.16k: protection from a player covers objects that player owns and no player controls. The old reader returned false for a null controller. Test: GameQueryServiceTest$PlayerProtectionFrom.
+- CR 702.16e: player colour protection against damage now checks every colour of the source after Ghostly Flame. Before, it checked the printed colour (noncombat) or one layered colour (combat). Test: SehtsTiger vs Cindervines, RED and GREEN.
+- CR 708.2a and 613.1f: a face-down or ability-less Absolute Virtue or Runed Halo gives no protection. Copies of Runed Halo now protect (active statics read the current card).
+- Protection from everything is now also read by the damage rule (CR 702.16j). Teferi's Protection keeps its separate prevention float; both are pure, so nobody is prompted, but one "prevented" log line is added.
+- At cast time, the chosen card type is now judged against the source permanent's layered types.
+- Logs: player-target reasons are now "<player> has protection from <quality> and can't be targeted"; Aura reasons are "enchanted player has protection from <quality>"; the four damage families are now one, `PlayerProtection`, labelled "Protection from <quality>".
+
+**Tests changed:** TargetLegalityServiceTest and AuraAttachmentServiceTest now stub `playerProtectionFrom`. New: GameQueryServiceTest$PlayerProtectionFrom (6) and SehtsTigerTest noncombat multicolour (2).
+
+**Seen, not changed**
+- Serra's Emissary's chosen-card-type read uses only the printed statics, with no face-down check (CR 708.2a). Sure of the code.
+- Player "hexproof from [colour]" checks one effective colour of a multicolour source (CR 702.11d). Fairly sure.
+- Teferi's Protection-style handlers float a redundant "prevent all damage" next to protection from everything. Harmless; could be dropped.
+
+**For the next run**
+- Move the remaining player-protection payloads onto `PlayerHasProtectionEffect` qualities:
+- colour: the floated `GrantProtectionFromColorUntilEndOfTurnEffect` from the run-18 `GrantProtectionChoiceToController*` rows (Seht's Tiger, Faith's Shield);
+- everything: `GrantProtectionFromEverythingUntilNextTurnEffect`, 4 cards;
+- the chosen card type: Serra's Emissary's controller half;
+- players: the `ProtectionFromPlayersEffect` floats.
+- The reader already reads all of them, so these become parameter folds.
 
 ## Prompt
 

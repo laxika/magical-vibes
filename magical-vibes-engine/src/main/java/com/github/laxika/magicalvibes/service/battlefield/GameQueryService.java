@@ -126,9 +126,8 @@ import com.github.laxika.magicalvibes.model.effect.DamageDealtAsInfectBelowZeroL
 import com.github.laxika.magicalvibes.model.effect.DamageDoesNotCauseLifeLossEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourcesOfColorsAreColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromChosenNameEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenCardTypeToControllerAndOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromOpponentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerDamageReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceSpellDamageEffect;
@@ -10024,9 +10023,63 @@ public class GameQueryService {
     }
 
     /**
+     * What a player's protection is judged against (CR 702.16b, 702.16c, 702.16e): a spell, the source of an ability,
+     * an Aura, or a source of damage.
+     *
+     * @param card         the object's card: its name, and its card types when it isn't a permanent
+     * @param permanent    the object while it is a permanent (its layered card types; face down it has no name), else
+     *                     {@code null}
+     * @param controllerId the object's controller, or {@code null} when it has none (a card in a graveyard)
+     * @param colors       the object's colors as the caller judges them: a spell's, an Aura's, or a damage source's
+     *                     after Ghostly Flame
+     */
+    public record ProtectionSource(Card card, Permanent permanent, UUID controllerId, Set<CardColor> colors) {
+
+        public ProtectionSource {
+            colors = colors == null ? Set.of() : Set.copyOf(colors);
+        }
+    }
+
+    /**
+     * The quality {@code playerId} has protection from that {@code source} has, as text ("everything", "red", the
+     * name), or {@code null} when no protection of the player covers it. The one reader of a player's protection, asked
+     * by targeting, Aura attachment and damage prevention (CR 702.16b, 702.16c, 702.16e). It reads protection from
+     * everything ({@link #playerHasProtectionFromEverything}), from players ({@link #playerHasProtectionFromOpponents}:
+     * the source's controller, or its owner when no player controls it, CR 702.16k), from colors
+     * ({@link #playerHasProtectionFromColor}), from the chosen card type (Serra's Emissary) and from the chosen card
+     * name ({@link PlayerHasProtectionEffect}, Runed Halo); printed statics, granted ones and copies floated on the
+     * player alike.
+     */
+    public String playerProtectionFrom(GameData gameData, UUID playerId, ProtectionSource source) {
+        if (gameData == null || playerId == null || source == null) {
+            return null;
+        }
+        if (playerHasProtectionFromEverything(gameData, playerId)) {
+            return "everything";
+        }
+        UUID sourcePlayerId = source.controllerId() != null ? source.controllerId()
+                : source.card() != null ? gameData.ownerOf(source.card()) : null;
+        if (playerHasProtectionFromOpponents(gameData, playerId, sourcePlayerId)) {
+            return source.controllerId() != null ? "the source's controller" : "the source's owner";
+        }
+        for (CardColor color : source.colors()) {
+            if (playerHasProtectionFromColor(gameData, playerId, color)) {
+                return color.name().toLowerCase();
+            }
+        }
+        if (playerHasProtectionFromChosenCardType(gameData, playerId, source.card(), source.permanent())) {
+            return "the source's card type";
+        }
+        if (playerHasProtectionFromChosenName(gameData, playerId, source)) {
+            return source.card().getName();
+        }
+        return null;
+    }
+
+    /**
      * Returns {@code true} if the player has protection from the given color until end of turn
-     * (e.g. Faith's Shield fateful hour). Such a player can't be targeted by spells or abilities
-     * of that color and can't be dealt damage by sources of that color.
+     * (e.g. Faith's Shield fateful hour, Seht's Tiger). One facet of {@link #playerProtectionFrom}, which the rules
+     * paths ask.
      */
     public boolean playerHasProtectionFromColor(GameData gameData, UUID playerId, CardColor color) {
         if (color == null) {
@@ -10041,86 +10094,99 @@ public class GameQueryService {
         return false;
     }
 
-    /** Returns whether the player has protection from every source until their next turn. */
+    /**
+     * Returns whether the player has protection from every source until their next turn (CR 702.16j). One facet of
+     * {@link #playerProtectionFrom}, which the rules paths ask.
+     */
     public boolean playerHasProtectionFromEverything(GameData gameData, UUID playerId) {
         return gameData.hasFloatingEffectOnPlayer(playerId, GrantProtectionFromEverythingUntilNextTurnEffect.class);
     }
 
     /**
-     * Returns whether the player has protection from a source controlled by the given player: a
-     * {@link ProtectionFromPlayersEffect} floated on them ({@code GrantProtectionFromPlayerEffect}) naming that player,
-     * or, for an opponent, a static effect on a permanent they control.
+     * Returns whether the player has protection from {@code sourcePlayerId} (the source's controller, or its owner when
+     * no player controls it, CR 702.16k): a {@link ProtectionFromPlayersEffect} floated on them
+     * ({@code GrantProtectionFromPlayerEffect}) naming that player, or, for an opponent, a
+     * {@link PlayerHasProtectionEffect} from each opponent: an active static ability of a permanent they control (none
+     * of a face-down or ability-less one's, nor one an effect removed, CR 613.1f), one granted to it, or one floated on
+     * them. One facet of {@link #playerProtectionFrom}, which the rules paths ask.
      */
-    public boolean playerHasProtectionFromOpponents(GameData gameData, UUID playerId,
-                                                    UUID sourceControllerId) {
-        if (playerId == null || sourceControllerId == null) {
+    public boolean playerHasProtectionFromOpponents(GameData gameData, UUID playerId, UUID sourcePlayerId) {
+        if (playerId == null || sourcePlayerId == null) {
             return false;
         }
         for (CardEffect effect : gameData.floatingPlayerEffects(playerId, ProtectionFromPlayersEffect.class)) {
-            if (((ProtectionFromPlayersEffect) effect).playerIds().contains(sourceControllerId)) {
+            if (((ProtectionFromPlayersEffect) effect).playerIds().contains(sourcePlayerId)) {
                 return true;
             }
         }
-        if (playerId.equals(sourceControllerId)) {
+        return !playerId.equals(sourcePlayerId)
+                && (hasFloatedPlayerProtection(gameData, playerId, PlayerHasProtectionEffect.Quality.EACH_OPPONENT)
+                || !playerProtectionPermanents(gameData, playerId, PlayerHasProtectionEffect.Quality.EACH_OPPONENT)
+                .isEmpty());
+    }
+
+    /**
+     * Whether the player has protection from the source's name: a {@link PlayerHasProtectionEffect} from the chosen
+     * name of a permanent they control whose chosen name is one of the source's names, either half of a split card
+     * included (CR 709.4a). A face-down source has no name (CR 708.2).
+     */
+    private boolean playerHasProtectionFromChosenName(GameData gameData, UUID playerId, ProtectionSource source) {
+        if (source.card() == null || source.permanent() != null && source.permanent().isFaceDown()) {
             return false;
+        }
+        for (Permanent halo : playerProtectionPermanents(gameData, playerId,
+                PlayerHasProtectionEffect.Quality.CHOSEN_NAME)) {
+            if (cardHasChosenName(gameData, source.card(), halo.getChosenName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Whether a {@link PlayerHasProtectionEffect} of {@code quality} is floated on the player. */
+    private boolean hasFloatedPlayerProtection(GameData gameData, UUID playerId,
+                                               PlayerHasProtectionEffect.Quality quality) {
+        for (CardEffect effect : gameData.floatingPlayerEffects(playerId, PlayerHasProtectionEffect.class)) {
+            if (((PlayerHasProtectionEffect) effect).from() == quality) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * The permanents {@code playerId} controls that give them a {@link PlayerHasProtectionEffect} of {@code quality}:
+     * an active static ability (none of a face-down or ability-less permanent's, CR 708.2a) that no effect removed
+     * (CR 613.1f), or one an effect granted it that the layers left it.
+     */
+    private List<Permanent> playerProtectionPermanents(GameData gameData, UUID playerId,
+                                                       PlayerHasProtectionEffect.Quality quality) {
+        List<Permanent> found = new ArrayList<>();
+        for (var active : activeStaticEffects(gameData, playerId, PlayerHasProtectionEffect.class)) {
+            if (active.effect().from() == quality
+                    && !gameData.removesOwnStaticAbility(active.source().getId(), PlayerHasProtectionEffect.class)) {
+                found.add(active.source());
+            }
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return false;
-        }
-        for (Permanent permanent : battlefield) {
-            if (gameData.losesAllAbilitiesByEffect(permanent)
-                    || computeStaticBonus(gameData, permanent).losesAllAbilities()
-                    || gameData.removesOwnStaticAbility(permanent.getId(), PlayerHasProtectionFromOpponentsEffect.class)) {
-                continue;
-            }
-            if (permanent.getCard().getStaticEffects().stream()
-                    .anyMatch(PlayerHasProtectionFromOpponentsEffect.class::isInstance)) {
-                return true;
+        if (battlefield != null) {
+            for (Permanent permanent : battlefield) {
+                if (!found.contains(permanent) && computeStaticBonus(gameData, permanent).grantedEffects().stream()
+                        .anyMatch(effect -> effect instanceof PlayerHasProtectionEffect granted
+                                && granted.from() == quality)) {
+                    found.add(permanent);
+                }
             }
         }
-        return false;
+        return found;
     }
 
     /**
-     * Returns {@code true} if the player controls a permanent with a
-     * {@link PlayerHasProtectionFromChosenNameEffect} static effect whose chosen card name is one of
-     * {@code source}'s names, either half of a split card included (CR 709.4a) (Runed Halo). Such a
-     * player can't be targeted, dealt damage, or enchanted by anything with that name.
+     * Whether the player controls a permanent granting protection from the source's card type, based on that
+     * permanent's chosen card type (Serra's Emissary). The permanent's card types include those granted by the layer
+     * system, such as a creature's temporary animation.
      */
-    public boolean playerHasProtectionFromChosenName(GameData gameData, UUID playerId, Card source) {
-        if (source == null) {
-            return false;
-        }
-        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-        if (bf == null) {
-            return false;
-        }
-        for (Permanent perm : bf) {
-            if (cardHasChosenName(gameData, source, perm.getChosenName())
-                    && !hasLostAllAbilities(gameData, perm)
-                    && perm.getCard().getStaticEffects().stream()
-                            .anyMatch(PlayerHasProtectionFromChosenNameEffect.class::isInstance)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Returns whether the player controls a permanent granting protection from the source's card
-     * type, based on that permanent's chosen card type (Serra's Emissary).
-     */
-    public boolean playerHasProtectionFromChosenCardType(GameData gameData, UUID playerId,
-                                                          Card sourceCard) {
-        return playerHasProtectionFromChosenCardType(gameData, playerId, sourceCard, null);
-    }
-
-    /**
-     * Permanent-source overload for chosen card-type protection. The permanent overload includes
-     * card types granted by the layer system, such as a creature's temporary animation.
-     */
-    public boolean playerHasProtectionFromChosenCardType(GameData gameData, UUID playerId,
+    private boolean playerHasProtectionFromChosenCardType(GameData gameData, UUID playerId,
                                                           Card sourceCard, Permanent sourcePermanent) {
         if (gameData == null || playerId == null || (sourceCard == null && sourcePermanent == null)) {
             return false;

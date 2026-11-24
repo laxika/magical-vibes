@@ -459,7 +459,8 @@ class AuraAttachmentServiceTest {
             gd.playerBattlefields.get(player1Id).add(aura);
 
             when(gameQueryService.getEffectiveColors(gd, aura)).thenReturn(Set.of(CardColor.BLACK));
-            when(gameQueryService.playerHasProtectionFromColor(gd, player2Id, CardColor.BLACK)).thenReturn(true);
+            when(gameQueryService.playerProtectionFrom(eq(gd), eq(player2Id),
+                    argThat(source -> source.colors().contains(CardColor.BLACK)))).thenReturn("black");
             when(graveyardService.addCardToGraveyard(
                     gd, player1Id, aura.getOriginalCard(), Zone.BATTLEFIELD, player1Id, aura)).thenReturn(true);
 

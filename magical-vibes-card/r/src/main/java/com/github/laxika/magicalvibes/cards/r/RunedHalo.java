@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromChosenNameEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionEffect;
 
 @CardRegistration(set = "SHM", collectorNumber = "21")
 @CardRegistration(set = "M21", collectorNumber = "32")
@@ -13,6 +13,6 @@ public class RunedHalo extends Card {
 
     public RunedHalo() {
         addStaticEffect(new ChooseCardNameOnEnterEffect());
-        addStaticEffect(new PlayerHasProtectionFromChosenNameEffect());
+        addStaticEffect(new PlayerHasProtectionEffect(PlayerHasProtectionEffect.Quality.CHOSEN_NAME));
     }
 }

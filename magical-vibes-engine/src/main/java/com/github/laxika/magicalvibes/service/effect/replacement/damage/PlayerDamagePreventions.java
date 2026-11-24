@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.replacement.damage;
 
 import com.github.laxika.magicalvibes.model.effect.PreventionScope;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
@@ -107,18 +105,10 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                 preventAll("SourcePreventedFromDealingDamage", "Prevent all damage the source would deal",
                         ctx -> !ctx.combat() && damageSupport.getObject().isSourcePermanentPreventedFromDealingDamage(
                                 ctx.gameData(), ctx.entry(), false)),
-                preventAll("ProtectionFromColor", "Protection from the source's color",
-                        ctx -> preventable(ctx) && gameQueryService.playerHasProtectionFromColor(ctx.gameData(), ctx.playerId(),
-                                gameQueryService.getDamageSourceColor(ctx.gameData(), sourceColor(ctx)))),
-                preventAll("ProtectionFromOpponents", "Protection from your opponents",
-                        ctx -> preventable(ctx) && gameQueryService.playerHasProtectionFromOpponents(
-                                ctx.gameData(), ctx.playerId(), ctx.sourceControllerId())),
-                preventAll("ProtectionFromName", "Protection from the chosen name",
-                        ctx -> preventable(ctx) && gameQueryService.playerHasProtectionFromChosenName(
-                                ctx.gameData(), ctx.playerId(), chosenNameCheckSource(ctx))),
-                preventAll("ProtectionFromCardType", "Protection from the chosen card type",
-                        ctx -> preventable(ctx) && gameQueryService.playerHasProtectionFromChosenCardType(
-                                ctx.gameData(), ctx.playerId(), ctx.source(), ctx.sourcePermanent())),
+                pure("PlayerProtection", PREVENTION,
+                        ctx -> preventable(ctx) && protection(ctx) != null,
+                        ctx -> "Protection from " + protection(ctx),
+                        PlayerDamageCandidateSource::prevented, this::logPrevented),
                 pure("OpponentSourceReduction", PREVENTION,
                         ctx -> opponentSourceReduction(ctx) < ctx.amount(),
                         ctx -> "Prevent " + (ctx.amount() - opponentSourceReduction(ctx))
@@ -262,12 +252,14 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
         return rules;
     }
 
-    /** A face-down source has no name (CR 708.2), so it matches no chosen name. */
-    private static Card chosenNameCheckSource(PlayerDamageContext ctx) {
-        if (ctx.sourcePermanent() != null && ctx.sourcePermanent().isFaceDown()) {
-            return null;
-        }
-        return ctx.source();
+    /**
+     * The quality of the damage source the damaged player has protection from, or {@code null} (CR 702.16e): the
+     * source's colors for damage purposes (after Ghostly Flame), its controller, card type and name.
+     */
+    private String protection(PlayerDamageContext ctx) {
+        return gameQueryService.playerProtectionFrom(ctx.gameData(), ctx.playerId(),
+                new GameQueryService.ProtectionSource(ctx.source(), ctx.sourcePermanent(), ctx.sourceControllerId(),
+                        ctx.damageSourceColors()));
     }
 
     /**
@@ -297,13 +289,6 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
 
     private boolean preventable(PlayerDamageContext ctx) {
         return gameQueryService.isDamagePreventable(ctx.gameData(), ctx.combat());
-    }
-
-    /** The source's color for protection: an attacker's or blocker's current color, else the card's. */
-    private CardColor sourceColor(PlayerDamageContext ctx) {
-        return ctx.combat() && ctx.sourcePermanent() != null
-                ? gameQueryService.getEffectiveColor(ctx.gameData(), ctx.sourcePermanent())
-                : ctx.source().getColor();
     }
 
     private Rule<PlayerDamageContext> preventAll(String family, String label, Predicate<PlayerDamageContext> applies) {
