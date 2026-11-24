@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.AddTokenCreationEffect;
 public class Xorn extends Card {
 
     public Xorn() {
-        addStaticEffect(new AddTokenCreationEffect(1, CardSubtype.TREASURE));
+        addStaticEffect(AddTokenCreationEffect.plus(AddTokenCreationEffect.TREASURE, AddTokenCreationEffect.TokenKind.withAnySubtype(CardSubtype.TREASURE)));
     }
 }

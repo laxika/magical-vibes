@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.effect.AddTokenCreationEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AddMapTokenToArtifactTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -16,7 +16,7 @@ import java.util.List;
 public class WorldwalkerHelm extends Card {
 
     public WorldwalkerHelm() {
-        addStaticEffect(new AddMapTokenToArtifactTokenCreationEffect());
+        addStaticEffect(AddTokenCreationEffect.plus(AddTokenCreationEffect.MAP, AddTokenCreationEffect.TokenKind.artifact()));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{U}",

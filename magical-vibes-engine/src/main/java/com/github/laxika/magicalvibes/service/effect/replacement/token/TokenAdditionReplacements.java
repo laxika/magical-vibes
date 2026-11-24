@@ -1,86 +1,46 @@
 package com.github.laxika.magicalvibes.service.effect.replacement.token;
 
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.AcademyManufactorTokenReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.AddClueTokenToTokenCreationEffect;
-import com.github.laxika.magicalvibes.model.effect.AddFoodTokenToTokenCreationEffect;
-import com.github.laxika.magicalvibes.model.effect.AddFrogTokenToTokenCreationEffect;
-import com.github.laxika.magicalvibes.model.effect.AddMapTokenToArtifactTokenCreationEffect;
-import com.github.laxika.magicalvibes.model.effect.AddMutagenTokenToTokenCreationEffect;
-import com.github.laxika.magicalvibes.model.effect.AddSoldierTokenToCreatureTokenCreationEffect;
-import com.github.laxika.magicalvibes.model.effect.AddSquirrelTokenToTokenCreationEffect;
-import com.github.laxika.magicalvibes.model.effect.AddThopterTokenToArtifactTokenCreationEffect;
-import com.github.laxika.magicalvibes.model.effect.AddTreasureToFoodTokenCreationEffect;
+import com.github.laxika.magicalvibes.model.effect.AddTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
 import com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCreationReplacementSupport;
 import com.github.laxika.magicalvibes.service.replacement.ReplacementCandidateSource;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
- * "Those tokens plus ..." replacements that add tokens of another kind to a token creation event
- * under their controller's control, one option per effect instance: Queen Allenal of Ruadach's
- * Soldier (creature tokens only), Quina Qu Gourmet's Frog, Chatterfang's "that many" Squirrels,
- * Worldwalker Helm's Map and Stridehangar Automaton's Thopter (artifact tokens only), Donatello's
- * Mutagen, Tippy-Toe's Food, a solved Case of the Pilfered Proof's Clue, Bilbo's Treasure for each
- * Food token and Academy Manufactor's "one of each" for every Clue, Food and Treasure token. They only
- * rewrite the event, so they are pure; ordered with the count replacements, a doubler applied after an
- * addition doubles the added tokens too, and an addition applies to tokens another addition put in the
- * event before it (CR 616.1f).
+ * The {@link AddTokenCreationEffect} replacements that apply to a token creation event, one option per active static
+ * effect instance of the permanents the tokens' creator controls: Xorn's Treasure, Queen Allenal of Ruadach's Soldier,
+ * Chatterfang's Squirrels, Bilbo's Treasures, Academy Manufactor's "one of each" and the rest. The creator is the
+ * player under whose control the tokens would be created once Crafty Cutpurse's replacement has applied (Chatterfang's
+ * ruling). They only rewrite the event, so they are pure; ordered with the count replacements, a doubler applied after
+ * an addition doubles the added tokens too, and an addition applies to tokens another replacement put in the event
+ * before it (CR 616.1f).
  */
 @Component
 public class TokenAdditionReplacements implements ReplacementCandidateSource<TokenCreationEvent> {
 
-    /** Asks whether a permanent has lost its static abilities, a static "loses all abilities" included (CR 613.1f). */
+    /** Reads a permanent's active static abilities, a static "loses all abilities" and a solved Case included. */
     @Autowired
     @Lazy
     private GameQueryService gameQueryService;
 
     private static final String KEY_PREFIX = "TokenAddition:";
 
-    private enum Addition {
-        SOLDIER(AddSoldierTokenToCreatureTokenCreationEffect.class, "create an additional 1/1 Soldier token"),
-        FROG(AddFrogTokenToTokenCreationEffect.class, "create an additional 1/1 Frog token"),
-        SQUIRREL(AddSquirrelTokenToTokenCreationEffect.class, "create that many additional 1/1 Squirrel tokens"),
-        MAP(AddMapTokenToArtifactTokenCreationEffect.class, "create an additional Map token"),
-        THOPTER(AddThopterTokenToArtifactTokenCreationEffect.class, "create an additional 1/1 Thopter token"),
-        MUTAGEN(AddMutagenTokenToTokenCreationEffect.class, "create an additional Mutagen token"),
-        FOOD(AddFoodTokenToTokenCreationEffect.class, "create an additional Food token"),
-        CLUE(AddClueTokenToTokenCreationEffect.class, "create an additional Clue token"),
-        TREASURE(AddTreasureToFoodTokenCreationEffect.class, "create a Treasure token for each Food token"),
-        ONE_OF_EACH(AcademyManufactorTokenReplacementEffect.class,
-                "create a Clue, a Food and a Treasure token for each Clue, Food and Treasure token");
-
-        private final Class<? extends CardEffect> effectType;
-        private final String description;
-
-        Addition(Class<? extends CardEffect> effectType, String description) {
-            this.effectType = effectType;
-            this.description = description;
-        }
-
-        static Addition of(CardEffect effect) {
-            for (Addition addition : values()) {
-                if (addition.effectType.isInstance(effect)) {
-                    return addition;
-                }
-            }
-            return null;
-        }
-    }
-
-    private record Instance(String key, String label, Addition addition) {}
+    private record Instance(String key, String label, AddTokenCreationEffect addition) {}
 
     @Override
     public Class<TokenCreationEvent> eventType() {
@@ -97,80 +57,110 @@ public class TokenAdditionReplacements implements ReplacementCandidateSource<Tok
 
     @Override
     public TokenCreationEvent transform(GameData gameData, TokenCreationEvent event, ReplacementOption option) {
-        Instance instance = instances(gameData, event).stream()
+        AddTokenCreationEffect addition = instances(gameData, event).stream()
                 .filter(candidate -> candidate.key().equals(option.key()))
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Token addition replacement source left: " + option.key()));
-        CreateTokenEffect original = event.token();
-        return switch (instance.addition()) {
-            case SOLDIER -> event.plus(TokenCreationReplacementSupport.additionalSoldierToken(original), 1);
-            case FROG -> event.plus(TokenCreationReplacementSupport.additionalFrogToken(original), 1);
-            case SQUIRREL -> event.plus(TokenCreationReplacementSupport.additionalSquirrelToken(original),
-                    event.amount());
-            case MAP -> event.plus(TokenCreationReplacementSupport.additionalMapToken(original), 1);
-            case THOPTER -> event.plus(TokenCreationReplacementSupport.additionalThopterToken(original), 1);
-            case MUTAGEN -> event.plus(TokenCreationReplacementSupport.additionalMutagenToken(original), 1);
-            case FOOD -> event.plus(TokenCreationReplacementSupport.additionalFoodToken(original), 1);
-            case CLUE -> event.plus(TokenCreationReplacementSupport.additionalClueToken(original), 1);
-            case TREASURE -> forEachToken(event, blueprint -> TokenCreationReplacementSupport.isFoodToken(blueprint)
-                    ? List.of(TokenCreationReplacementSupport.additionalTreasureToken(blueprint)) : List.of());
-            case ONE_OF_EACH -> forEachToken(event, TokenCreationReplacementSupport::academyManufactorAdditions);
-        };
-    }
-
-    /**
-     * {@code event} with the tokens {@code additions} lists for each token it creates, each carrying the
-     * riders of the token it was added for.
-     */
-    private static TokenCreationEvent forEachToken(TokenCreationEvent event,
-                                                   Function<CreateTokenEffect, List<CreateTokenEffect>> additions) {
+                .orElseThrow(() -> new IllegalStateException("Token addition replacement source left: " + option.key()))
+                .addition();
+        if (addition.count() == AddTokenCreationEffect.Count.ONE) {
+            TokenCreationEvent result = event;
+            for (CreateTokenEffect token : addition.tokens()) {
+                result = result.plus(TokenCreationReplacementSupport.withEventModifiers(token, event.token()), 1);
+            }
+            return result;
+        }
         TokenCreationEvent result = event;
-        if (event.tokenCount() > 0) {
-            for (CreateTokenEffect added : additions.apply(event.token())) {
+        if (event.tokenCount() > 0 && addition.when().matches(event.token(), event.creatureToken())) {
+            for (CreateTokenEffect added : additionsFor(addition, event.token())) {
                 result = result.plus(added, event.tokenCount());
             }
         }
         for (TokenCreationEvent.TokenGroup group : event.addedTokens()) {
-            for (CreateTokenEffect added : additions.apply(group.blueprint())) {
-                result = result.plus(added, group.count());
+            if (addition.when().matches(group.blueprint(), group.creature())) {
+                for (CreateTokenEffect added : additionsFor(addition, group.blueprint())) {
+                    result = result.plus(added, group.count());
+                }
             }
         }
         return result;
     }
 
-    private static boolean applies(Addition addition, Permanent permanent, TokenCreationEvent event) {
-        return switch (addition) {
-            case SOLDIER -> event.createsCreatureToken();
-            case MAP, THOPTER -> event.createsToken(TokenCreationReplacementSupport::isArtifactToken);
-            case TREASURE -> event.createsToken(TokenCreationReplacementSupport::isFoodToken);
-            case ONE_OF_EACH -> event.createsToken(blueprint ->
-                    !TokenCreationReplacementSupport.academyManufactorAdditions(blueprint).isEmpty());
-            case CLUE -> permanent.isSolved();
-            case FROG, SQUIRREL, MUTAGEN, FOOD -> true;
-        };
+    /**
+     * The tokens {@code addition} adds for one token of {@code original}'s kind, each with the riders of
+     * {@code original}: every blueprint, or for {@link AddTokenCreationEffect.Count#ONE_OF_EACH} those sharing no
+     * subtype with it.
+     */
+    private static List<CreateTokenEffect> additionsFor(AddTokenCreationEffect addition, CreateTokenEffect original) {
+        List<CreateTokenEffect> added = new ArrayList<>(addition.tokens().size());
+        for (CreateTokenEffect token : addition.tokens()) {
+            if (addition.count() == AddTokenCreationEffect.Count.ONE_OF_EACH && sharesSubtype(token, original)) {
+                continue;
+            }
+            added.add(TokenCreationReplacementSupport.withEventModifiers(token, original));
+        }
+        return added;
+    }
+
+    private static boolean sharesSubtype(CreateTokenEffect token, CreateTokenEffect original) {
+        return token.subtypes() != null && original.subtypes() != null
+                && token.subtypes().stream().anyMatch(original.subtypes()::contains);
+    }
+
+    /** Whether {@code addition} adds a token to {@code event} as it stands (CR 616.1f). */
+    private static boolean applies(AddTokenCreationEffect addition, TokenCreationEvent event) {
+        if (event.tokenCount() > 0 && addition.when().matches(event.token(), event.creatureToken())
+                && (addition.count() == AddTokenCreationEffect.Count.ONE
+                || !additionsFor(addition, event.token()).isEmpty())) {
+            return true;
+        }
+        return event.addedTokens().stream().anyMatch(group -> addition.when().matches(group.blueprint(), group.creature())
+                && (addition.count() == AddTokenCreationEffect.Count.ONE
+                || !additionsFor(addition, group.blueprint()).isEmpty()));
     }
 
     private List<Instance> instances(GameData gameData, TokenCreationEvent event) {
         if (event.amount() <= 0) {
             return List.of();
         }
+        UUID creatorId = gameQueryService.resolveTokenCreationController(gameData, event.controllerId(), false);
         List<Instance> instances = new ArrayList<>();
-        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(event.controllerId(), List.of())) {
-            if (permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
-                continue;
-            }
-            List<CardEffect> statics = permanent.getCard().getStaticEffects();
+        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(creatorId, List.of())) {
+            List<CardEffect> statics = gameQueryService.getActiveStaticEffects(gameData, permanent, creatorId);
             for (int i = 0; i < statics.size(); i++) {
-                CardEffect effect = statics.get(i);
-                Addition addition = Addition.of(effect);
-                if (addition == null || gameData.removesOwnStaticAbility(permanent.getId(), effect.getClass())
-                        || !applies(addition, permanent, event)) {
-                    continue;
+                if (statics.get(i) instanceof AddTokenCreationEffect addition
+                        && !gameData.removesOwnStaticAbility(permanent.getId(), AddTokenCreationEffect.class)
+                        && applies(addition, event)) {
+                    instances.add(new Instance(KEY_PREFIX + permanent.getId() + ":" + i,
+                            FaceDownVisibility.publicName(gameData, permanent) + ": " + describe(addition),
+                            addition));
                 }
-                instances.add(new Instance(KEY_PREFIX + permanent.getId() + ":" + i,
-                        FaceDownVisibility.publicName(gameData, permanent) + ": " + addition.description, addition));
             }
         }
         return instances;
+    }
+
+    private static String describe(AddTokenCreationEffect addition) {
+        String tokens = addition.tokens().stream().map(TokenAdditionReplacements::describe)
+                .collect(Collectors.joining(" and "));
+        String kind = describe(addition.when());
+        return switch (addition.count()) {
+            case ONE -> "create an additional " + tokens + " token";
+            case PER_TOKEN -> "create that many additional " + tokens + " tokens";
+            case ONE_OF_EACH -> "create one each of " + tokens + " for each " + kind + " token";
+        };
+    }
+
+    private static String describe(CreateTokenEffect token) {
+        return token.primaryType() == CardType.CREATURE
+                ? token.tokenPower() + "/" + token.tokenToughness() + " " + token.tokenName()
+                : token.tokenName();
+    }
+
+    private static String describe(AddTokenCreationEffect.TokenKind kind) {
+        if (!kind.subtypes().isEmpty()) {
+            return kind.subtypes().stream().map(subtype -> subtype.getDisplayName()).sorted()
+                    .collect(Collectors.joining(", ", "", ""));
+        }
+        return kind.type() == null ? "" : kind.type().name().toLowerCase();
     }
 }

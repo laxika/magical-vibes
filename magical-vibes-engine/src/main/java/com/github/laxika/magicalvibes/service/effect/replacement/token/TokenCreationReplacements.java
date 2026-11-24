@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.replacement.token;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.effect.AddTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
 import com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent;
@@ -18,14 +17,12 @@ import java.util.Optional;
 
 /**
  * Token-count replacements that apply to a token creation event, one option per effect instance:
- * Xorn's additional token, Doubling Season's and Parallel Lives' multiplier and Halving Season's
- * halving. They only rewrite counts, so they are pure; the player creating the tokens is
- * prompted only when the order in which they apply changes the tokens created (CR 616.1).
+ * Doubling Season's and Parallel Lives' multiplier and Halving Season's halving. They only rewrite
+ * counts, so they are pure; the player creating the tokens is prompted only when the order in which they apply changes the tokens created (CR 616.1).
  *
  * <p>An effect rewrites the count of every group of tokens in the event it applies to ("twice that
  * many of those tokens"), including tokens an addition such as Queen Allenal of Ruadach put in the
- * event before it. An effect that adds tokens of a kind (Xorn) adds them once, to the first group
- * of that kind.
+ * event before it.
  *
  * <p>Applicability is judged per group of the event as it stands (CR 616.1f): an effect that applies to none of
  * the original tokens becomes an option once an addition puts a token it applies to in the event (a
@@ -61,28 +58,25 @@ public class TokenCreationReplacements implements ReplacementCandidateSource<Tok
 
     @Override
     public TokenCreationEvent transform(GameData gameData, TokenCreationEvent event, ReplacementOption option) {
-        boolean addsOnce = false;
-        boolean added = false;
+        boolean applied = false;
         TokenCreationEvent result = event;
         Optional<GameQueryService.TokenCreationReplacement> base = find(replacementsForBase(gameData, event), option);
         if (base.isPresent()) {
-            addsOnce = base.get().effect() instanceof AddTokenCreationEffect;
             result = result.withTokenCount(replace(gameData, base.get(), event.tokenCount()));
-            added = true;
+            applied = true;
         }
         List<TokenCreationEvent.TokenGroup> groups = new ArrayList<>(event.addedTokens().size());
         for (TokenCreationEvent.TokenGroup group : event.addedTokens()) {
             Optional<GameQueryService.TokenCreationReplacement> forGroup =
-                    added && addsOnce ? Optional.empty() : find(replacementsFor(gameData, event, group), option);
+                    find(replacementsFor(gameData, event, group), option);
             if (forGroup.isPresent()) {
-                addsOnce = forGroup.get().effect() instanceof AddTokenCreationEffect;
-                added = true;
+                applied = true;
                 groups.add(group.withCount(replace(gameData, forGroup.get(), group.count())));
             } else {
                 groups.add(group);
             }
         }
-        if (!added) {
+        if (!applied) {
             throw new IllegalStateException("Token creation replacement source left: " + option.key());
         }
         return result.withAddedTokens(groups);

@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.AddTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
-import com.github.laxika.magicalvibes.model.effect.AddClueTokenToTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SolveSourceEffect;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
@@ -49,6 +50,7 @@ public class CaseOfThePilferedProof extends Card {
                                 ))),
                 new SolveSourceEffect());
 
-        addStaticEffect(new AddClueTokenToTokenCreationEffect());
+        addStaticEffect(new ConditionalEffect(new SourceIsSolved(),
+                AddTokenCreationEffect.plus(AddTokenCreationEffect.CLUE, AddTokenCreationEffect.TokenKind.any())));
     }
 }

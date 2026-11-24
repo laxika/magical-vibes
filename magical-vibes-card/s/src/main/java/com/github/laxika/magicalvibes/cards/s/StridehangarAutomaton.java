@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.AddTokenCreationEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.AddThopterTokenToArtifactTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -20,6 +20,6 @@ public class StridehangarAutomaton extends Card {
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.THOPTER))));
 
         // Artifact-token creation also creates one additional Thopter token.
-        addStaticEffect(new AddThopterTokenToArtifactTokenCreationEffect());
+        addStaticEffect(AddTokenCreationEffect.plus(AddTokenCreationEffect.THOPTER, AddTokenCreationEffect.TokenKind.artifact()));
     }
 }

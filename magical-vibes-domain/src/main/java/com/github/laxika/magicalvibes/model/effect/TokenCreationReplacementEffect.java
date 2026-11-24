@@ -5,7 +5,7 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.UUID;
 
-/** Describes a static replacement that changes the count of matching created tokens. */
+/** A static replacement that changes the count of matching created tokens: a multiplier or Halving Season's halving. */
 public interface TokenCreationReplacementEffect extends CardEffect {
 
     /** The token subtype this replacement applies to, or {@code null} for every token. */

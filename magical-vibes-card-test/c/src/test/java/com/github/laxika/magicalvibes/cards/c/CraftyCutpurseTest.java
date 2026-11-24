@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.t.TippyToeTerrificPartner;
 import com.github.laxika.magicalvibes.cards.a.AnointedProcession;
 import com.github.laxika.magicalvibes.cards.g.GatherTheTownsfolk;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -19,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({CraftyCutpurse.class, AnointedProcession.class, GatherTheTownsfolk.class,
-        GrizzlyBears.class, LeoninWarleader.class, SailorOfMeans.class})
+        GrizzlyBears.class, LeoninWarleader.class, SailorOfMeans.class, ChatterfangSquirrelGeneral.class,
+        TippyToeTerrificPartner.class})
 class CraftyCutpurseTest extends BaseCardTest {
 
     @Test
@@ -148,6 +150,25 @@ class CraftyCutpurseTest extends BaseCardTest {
             assertThat(cat.isTapped()).isTrue();
             assertThat(cat.isAttacking()).isFalse();
         });
+    }
+
+    @Test
+    @DisplayName("Redirected tokens get the receiving controller's token additions, not the creating player's")
+    void appliesReceivingControllersTokenAdditions() {
+        harness.addToBattlefield(player1, new ChatterfangSquirrelGeneral());
+        harness.addToBattlefield(player2, new TippyToeTerrificPartner());
+        resolveCraftyCutpurse();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new GatherTheTownsfolk()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castAndResolveSorcery(player2, 0, 0);
+
+        assertThat(tokenCount(player1, "Human")).isEqualTo(2);
+        assertThat(tokenCount(player1, "Squirrel")).isEqualTo(2);
+        assertThat(tokenCount(player1, "Food")).isZero();
+        assertThat(tokenCount(player2, "Food")).isZero();
     }
 
     private void castSailorOfMeans(Player player) {

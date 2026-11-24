@@ -59,7 +59,7 @@ Why: False Dawn's color change must not apply twice.
 ## Token creation
 
 ### Token creation is one ordered event (CR 616.1)
-The creating player orders count, addition, kind and Jinnie Fay replacements; create through `applyCreateToken` or `TokenCopySupport`, never multiply a count yourself. Tokens of an ordered event are marked `Permanent.tokenKindReplacementsApplied` so entering doesn't replace them again (CR 614.5). Known gap: three handlers still call `GameQueryService.getTokenMultiplier` in a fixed order.
+The creating player orders count, addition, kind and Jinnie Fay replacements; create through `applyCreateToken` or `TokenCopySupport`, never multiply a count yourself. Tokens of an ordered event are marked `Permanent.tokenKindReplacementsApplied` so entering doesn't replace them again (CR 614.5). Known gap: two handlers still call `GameQueryService.getTokenMultiplier` in a fixed order.
 Owner: `PermanentControlSupport` (`applyCreateToken`), `TokenCopySupport`.
 Why: a doubler applied after an addition doubles the added tokens too.
 

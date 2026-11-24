@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.AddMapTokenToArtifactTokenCreationEffect;
+import com.github.laxika.magicalvibes.model.effect.AddTokenCreationEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -90,7 +90,7 @@ class WorldwalkerHelmTest extends BaseCardTest {
     void doesNotAddMapWhenReplacementAbilityIsSuppressed() {
         addHelmAndMatterweaver();
         gd.addEffectOnPermanent("Test", null, player1.getId(),
-                new SuppressStaticEffectUntilEndOfTurnEffect(AddMapTokenToArtifactTokenCreationEffect.class),
+                new SuppressStaticEffectUntilEndOfTurnEffect(AddTokenCreationEffect.class),
                 findPermanent(player1, "Worldwalker Helm").getId(), Duration.UNTIL_END_OF_TURN);
 
         castCreatureAndChooseGnome();

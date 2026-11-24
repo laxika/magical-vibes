@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.q;
 
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
+import com.github.laxika.magicalvibes.cards.s.SigiledSwordOfValeron;
 import com.github.laxika.magicalvibes.cards.b.BladeSplicer;
 import com.github.laxika.magicalvibes.cards.c.CaptainsCall;
 import com.github.laxika.magicalvibes.cards.p.ParallelLives;
@@ -24,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({QuinaQuGourmet.class, BladeSplicer.class, WilyGoblin.class,
-        RelmsSketching.class, ScorpionSentinel.class})
+        RelmsSketching.class, ScorpionSentinel.class, SigiledSwordOfValeron.class, WalkingCorpse.class})
 class QuinaQuGourmetTest extends BaseCardTest {
 
     @Test
@@ -137,6 +140,25 @@ class QuinaQuGourmetTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Soldier")).hasSize(6);
         assertThat(findPermanents(player1, "Frog")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The Frog added to a token created attacking enters attacking and untapped too")
+    void frogAddedToAnAttackingTokenEntersAttackingUntapped() {
+        Permanent creature = addCreatureReady(player1, new WalkingCorpse());
+        Permanent sword = harness.addToBattlefieldAndReturn(player1, new SigiledSwordOfValeron());
+        sword.setAttachedTo(creature.getId());
+        harness.addToBattlefield(player1, new QuinaQuGourmet());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            harness.passBothPriorities();
+        });
+
+        Permanent frog = findPermanent(player1, "Frog");
+        assertThat(frog.isAttacking()).isTrue();
+        assertThat(frog.isTapped()).isFalse();
+        assertThat(frog.getAttackTarget()).isEqualTo(player2.getId());
     }
 
     private void castCaptainsCallWithQuinaAndParallelLives() {

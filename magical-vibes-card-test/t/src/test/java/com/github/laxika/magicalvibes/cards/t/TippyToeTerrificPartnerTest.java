@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.h.HeroOfBladehold;
 import com.github.laxika.magicalvibes.cards.a.AcademyManufactor;
 import com.github.laxika.magicalvibes.cards.b.BilboFellowConspirator;
 import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
@@ -24,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TippyToeTerrificPartner.class, ForswornPaladin.class, Forest.class,
         AcademyManufactor.class, RangerClass.class, YouSeeAPairOfGoblins.class, DoublingSeason.class,
-        BilboFellowConspirator.class, WorldwalkerHelm.class})
+        BilboFellowConspirator.class, WorldwalkerHelm.class, HeroOfBladehold.class})
 class TippyToeTerrificPartnerTest extends BaseCardTest {
 
     @Test
@@ -225,6 +226,24 @@ class TippyToeTerrificPartnerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 2, 0, null, null);
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("The Food added to tokens created tapped and attacking enters tapped but not attacking")
+    void foodAddedToAttackingTokensEntersTappedButNotAttacking() {
+        Permanent hero = harness.addToBattlefieldAndReturn(player1, new HeroOfBladehold());
+        hero.setSummoningSick(false);
+        harness.addToBattlefield(player1, new TippyToeTerrificPartner());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
+
+        Permanent food = findPermanent(player1, "Food");
+        assertThat(food.isTapped()).isTrue();
+        assertThat(food.isAttacking()).isFalse();
+        assertThat(findPermanents(player1, "Soldier")).hasSize(2)
+                .allSatisfy(soldier -> assertThat(soldier.isAttacking()).isTrue());
     }
 
     private void chooseReplacement(String optionPrefix) {

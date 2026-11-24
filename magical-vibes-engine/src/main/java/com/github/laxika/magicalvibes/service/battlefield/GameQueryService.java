@@ -252,7 +252,6 @@ import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsCantActivat
 import com.github.laxika.magicalvibes.model.effect.MayVoteAdditionalTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.MeliraPoisonReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MiracleGrantingEffect;
-import com.github.laxika.magicalvibes.model.effect.AddTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.HalveTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
@@ -12468,14 +12467,6 @@ public class GameQueryService {
                 replacement -> true);
     }
 
-    /** Applies creature-only count replacements newly made applicable by adding creature tokens. */
-    public int getNewCreatureTokenCreationAmount(GameData gameData, UUID controllerId, int amount,
-                                                 Collection<CardSubtype> tokenSubtypes) {
-        return getTokenCreationAmount(gameData, controllerId, amount, tokenSubtypes, true,
-                replacement -> replacement instanceof MultiplyTokenCreationEffect multiply
-                        && multiply.creatureTokensOnly());
-    }
-
     private int getTokenCreationAmount(GameData gameData, UUID controllerId, int amount,
                                        Collection<CardSubtype> tokenSubtypes, boolean creatureToken,
                                        Predicate<TokenCreationReplacementEffect> applicableReplacements) {
@@ -12560,8 +12551,6 @@ public class GameQueryService {
 
     private static String describeTokenCreationReplacement(TokenCreationReplacementEffect replacement) {
         return switch (replacement) {
-            case AddTokenCreationEffect add -> "create " + add.additionalTokens() + " additional"
-                    + (add.affectedSubtype() == null ? "" : " " + add.affectedSubtype().getDisplayName()) + " token";
             case MultiplyTokenCreationEffect multiply -> "create " + multiply.multiplier() + " times as many tokens";
             case HalveTokenCreationEffect halve -> "create half as many tokens";
             default -> "change the number of tokens created";

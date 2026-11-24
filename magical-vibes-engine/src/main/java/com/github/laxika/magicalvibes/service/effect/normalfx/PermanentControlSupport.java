@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -19,7 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.AddClueTokenToTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
@@ -104,18 +102,19 @@ public class PermanentControlSupport {
     /**
      * Creates the tokens after the player creating them has ordered the count replacements, additions and Jinnie
      * Fay's replacement (CR 616.1), so the creation may pause for the order prompt or Jinnie Fay's choice and then
-     * continue through {@link #applyCreateTokenAfterReplacementOrder}.
+     * continue through {@link #applyCreateTokenAfterReplacementOrder}. An event creating no token is no event: nothing
+     * replaces it.
      */
     private List<UUID> createOrdered(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount,
                                      String sourceSetCode, int power, int toughness,
                                      List<Ability> additionalAbilities) {
-        if (amount <= 0) {
-            return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness,
-                    true, true, true, additionalAbilities);
+        TokenCreationEvent event = new TokenCreationEvent(
+                controllerId, Math.max(amount, 0), Set.of(), token, power, toughness, sourceSetCode,
+                additionalAbilities, token.primaryType() == CardType.CREATURE, simultaneousTokenGroups(token));
+        if (event.amount() <= 0) {
+            return List.of();
         }
-        var outcome = replacementOrderService.run(gameData, new TokenCreationEvent(
-                controllerId, amount, Set.of(), token, power, toughness, sourceSetCode, additionalAbilities,
-                token.primaryType() == CardType.CREATURE, simultaneousTokenGroups(token)));
+        var outcome = replacementOrderService.run(gameData, event);
         if (outcome instanceof ReplacementOrderService.Outcome.Completed<TokenCreationEvent> completed) {
             return applyCreateTokenAfterReplacementOrder(gameData, completed.event());
         }
@@ -129,9 +128,8 @@ public class PermanentControlSupport {
      * created with the blueprint's tokens.
      */
     public List<UUID> applyCreateTokenAfterReplacementOrder(GameData gameData, TokenCreationEvent event) {
-        return applyCreateToken(gameData, event.controllerId(), event.token(), event.tokenCount(),
-                event.sourceSetCode(), event.power(), event.toughness(), true, true, true,
-                event.additionalAbilities(), event.tokenCount(), event.addedTokens());
+        return createInOneEvent(gameData, event.controllerId(), event.token(), event.sourceSetCode(), event.power(),
+                event.toughness(), event.additionalAbilities(), event.tokenCount(), event.addedTokens());
     }
 
     private static List<TokenCreationEvent.TokenGroup> simultaneousTokenGroups(CreateTokenEffect token) {
@@ -145,23 +143,14 @@ public class PermanentControlSupport {
         return groups;
     }
 
-    private List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount,
-                                        String sourceSetCode, int power, int toughness,
-                                        boolean applyAdditionalReplacements, boolean applyTokenMultiplier,
-        boolean fireTokenTriggers) {
-        return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness, applyAdditionalReplacements, applyTokenMultiplier, fireTokenTriggers, List.of());
-    }
-
-    private List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode, int power, int toughness, boolean applyAdditionalReplacements, boolean applyTokenMultiplier, boolean fireTokenTriggers, List<Ability> additionalAbilities) {
-        return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness, applyAdditionalReplacements, applyTokenMultiplier, fireTokenTriggers, additionalAbilities, -1, null);
-    }
-
     /**
-     * {@code orderedAmount} is the token count after its replacements were ordered and applied, or -1 to apply them
-     * in a fixed order; {@code orderedAddedTokens} are then the event's other tokens, which replace the blueprint's
-     * simultaneous tokens and every addition and Academy Manufactor replacement.
+     * Creates {@code tokenCount} tokens of {@code token} and every token of {@code addedTokens}: the event's final
+     * tokens, after its replacements were ordered and applied, so none of them applies again.
      */
-    private List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode, int power, int toughness, boolean applyAdditionalReplacements, boolean applyTokenMultiplier, boolean fireTokenTriggers, List<Ability> additionalAbilities, int orderedAmount, List<TokenCreationEvent.TokenGroup> orderedAddedTokens) {
+    private List<UUID> createInOneEvent(GameData gameData, UUID controllerId, CreateTokenEffect token,
+                                        String sourceSetCode, int power, int toughness,
+                                        List<Ability> additionalAbilities, int tokenCount,
+                                        List<TokenCreationEvent.TokenGroup> addedTokens) {
         // The tokens one creation puts onto the battlefield enter in one event (CR 603.2c): a "one or more" ability
         // that sees them triggers once.
         boolean alreadyCollectingEntries = gameData.collectingSimultaneousCreatureEntryTriggers;
@@ -171,9 +160,8 @@ public class PermanentControlSupport {
         }
         gameData.rulesEvents.beginBatch();
         try {
-            return createTokens(gameData, controllerId, token, amount, sourceSetCode, power, toughness,
-                    applyAdditionalReplacements, applyTokenMultiplier, fireTokenTriggers, additionalAbilities,
-                    orderedAmount, orderedAddedTokens);
+            return createTokens(gameData, controllerId, token, sourceSetCode, power, toughness, additionalAbilities,
+                    tokenCount, addedTokens);
         } finally {
             gameData.rulesEvents.endBatch();
             gameData.collectingSimultaneousCreatureEntryTriggers = alreadyCollectingEntries;
@@ -183,156 +171,24 @@ public class PermanentControlSupport {
         }
     }
 
-    private List<UUID> createTokens(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode, int power, int toughness, boolean applyAdditionalReplacements, boolean applyTokenMultiplier, boolean fireTokenTriggers, List<Ability> additionalAbilities, int orderedAmount, List<TokenCreationEvent.TokenGroup> orderedAddedTokens) {
-        boolean ordered = orderedAddedTokens != null;
-        boolean fixedAdditions = applyAdditionalReplacements && !ordered;
+    private List<UUID> createTokens(GameData gameData, UUID controllerId, CreateTokenEffect token, String sourceSetCode,
+                                    int power, int toughness, List<Ability> additionalAbilities, int tokenCount,
+                                    List<TokenCreationEvent.TokenGroup> addedTokens) {
         List<UUID> createdIds = new ArrayList<>();
-        boolean baseTokenIsCreature = token.primaryType() == CardType.CREATURE;
-        int totalAmount = orderedAmount >= 0 ? orderedAmount : applyTokenMultiplier ? gameQueryService.getTokenCreationAmount(gameData, controllerId, amount, token.subtypes(), baseTokenIsCreature) : amount;
-        int additionalMapTokenCount = fixedAdditions
-                ? TokenCreationReplacementSupport.additionalMapTokenCount(
-                        gameData, controllerId, token, amount)
-                : 0;
-        int additionalThopterTokenCount = fixedAdditions
-                ? TokenCreationReplacementSupport.additionalThopterTokenCount(
-                        gameData, controllerId, token, amount)
-                : 0;
-        int additionalMutagenTokenCount = fixedAdditions
-                ? TokenCreationReplacementSupport.additionalMutagenTokenCount(gameData, controllerId, amount)
-                : 0;
-        CreateTokenEffect additionalFrog = fixedAdditions
-                ? TokenCreationReplacementSupport.additionalFrogTokenIfApplicable(
-                        gameData, controllerId, token)
-                : null;
-        CreateTokenEffect additionalSquirrel = fixedAdditions
-                ? TokenCreationReplacementSupport.additionalSquirrelTokenIfApplicable(
-                        gameData, controllerId, token)
-                : null;
-        int additionalSoldierTokenCount = fixedAdditions
-                ? TokenCreationReplacementSupport.additionalSoldierTokenCountIfApplicable(
-                        gameData, controllerId, token)
-                : 0;
-        CreateTokenEffect additionalSoldier = additionalSoldierTokenCount > 0
-                ? TokenCreationReplacementSupport.additionalSoldierTokenIfApplicable(
-                        gameData, controllerId, token)
-                : null;
-        int additionalTreasureTokenCount = fixedAdditions
-                ? TokenCreationReplacementSupport.additionalTreasureTokenCount(
-                        gameData, controllerId, token, totalAmount)
-                : 0;
-        int additionalFoodTokenCount = fixedAdditions
-                ? TokenCreationReplacementSupport.additionalFoodTokenCount(gameData, controllerId, totalAmount)
-                : 0;
-        List<CreateTokenEffect> academyManufactorTokenBlueprints = fixedAdditions
-                ? TokenCreationReplacementSupport.academyManufactorTokenBlueprints(
-                        gameData, controllerId, token, totalAmount)
-                : List.of();
-        if (!academyManufactorTokenBlueprints.isEmpty()) {
-            int foodCount = (int) academyManufactorTokenBlueprints.stream()
-                    .filter(blueprint -> blueprint.subtypes() != null
-                            && blueprint.subtypes().contains(CardSubtype.FOOD)).count();
-            additionalTreasureTokenCount = TokenCreationReplacementSupport.additionalTreasureTokenCount(
-                    gameData, controllerId, CreateTokenEffect.ofFoodToken(1), foodCount);
-        }
-        // Each solved Case of the Pilfered Proof is its own replacement, adding one Clue apiece
-        int addedClueTokens = fixedAdditions && totalAmount > 0
-                ? solvedClueReplacementCount(gameData, controllerId) : 0;
         CreateTokenEffect evaluatedToken = token.withPowerToughness(power, toughness);
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         // CR 614.12: all tokens from one effect are created simultaneously, so none of them may
         // apply its own replacement/static abilities to the others as they enter.
         List<Permanent> batch = new ArrayList<>();
-        int additionalFrogTokenCount = additionalFrog != null && totalAmount > 0 ? 1 : 0;
-        int additionalSquirrelTokenCount = 0;
-        if (totalAmount <= 0) {
-            additionalSoldierTokenCount = 0;
+        List<CreateTokenEffect> tokenBlueprints = new ArrayList<>();
+        for (int i = 0; i < tokenCount; i++) {
+            tokenBlueprints.add(evaluatedToken);
         }
-        List<CreateTokenEffect> tokenBlueprints = new ArrayList<>(
-                        (academyManufactorTokenBlueprints.isEmpty() ? totalAmount : academyManufactorTokenBlueprints.size())
-                        + additionalMapTokenCount + additionalThopterTokenCount + additionalFrogTokenCount + additionalSquirrelTokenCount
-                        + additionalMutagenTokenCount + additionalTreasureTokenCount + additionalFoodTokenCount
-                        + additionalSoldierTokenCount);
-        if (academyManufactorTokenBlueprints.isEmpty()) {
-            for (int i = 0; i < totalAmount; i++) {
-                tokenBlueprints.add(evaluatedToken);
+        for (TokenCreationEvent.TokenGroup group : addedTokens) {
+            for (int tokenIndex = 0; tokenIndex < group.count(); tokenIndex++) {
+                tokenBlueprints.add(group.blueprint());
             }
-        } else {
-            tokenBlueprints.addAll(academyManufactorTokenBlueprints);
-        }
-        if (ordered) {
-            for (TokenCreationEvent.TokenGroup group : orderedAddedTokens) {
-                for (int tokenIndex = 0; tokenIndex < group.count(); tokenIndex++) {
-                    tokenBlueprints.add(group.blueprint());
-                }
-            }
-        }
-        for (CreateTokenEffect simultaneousToken : ordered ? List.<CreateTokenEffect>of() : token.simultaneousTokens()) {
-            if (!(simultaneousToken.amount() instanceof Fixed fixedAmount)) {
-                throw new IllegalStateException("Simultaneous token counts must be evaluated");
-            }
-            int simultaneousCount = applyTokenMultiplier
-                    ? gameQueryService.getTokenCreationAmount(gameData, controllerId,
-                    fixedAmount.value(), simultaneousToken.subtypes(),
-                    simultaneousToken.primaryType() == CardType.CREATURE)
-                    : fixedAmount.value();
-            for (int tokenIndex = 0; tokenIndex < simultaneousCount; tokenIndex++) {
-                tokenBlueprints.add(simultaneousToken);
-            }
-        }
-        CreateTokenEffect additionalTreasureToken = additionalTreasureTokenCount > 0
-                ? TokenCreationReplacementSupport.additionalTreasureToken(token)
-                : null;
-        for (int i = 0; i < additionalTreasureTokenCount; i++) {
-            tokenBlueprints.add(additionalTreasureToken);
-        }
-        // Tippy Toe's extra Food is its own token creation event, so Academy Manufactor replaces it too.
-        List<CreateTokenEffect> academyFoodBlueprints = additionalFoodTokenCount > 0
-                ? TokenCreationReplacementSupport.academyManufactorTokenBlueprints(
-                        gameData, controllerId, CreateTokenEffect.ofFoodToken(1), additionalFoodTokenCount)
-                : List.of();
-        if (!academyFoodBlueprints.isEmpty()) {
-            tokenBlueprints.addAll(academyFoodBlueprints);
-        } else {
-            CreateTokenEffect additionalFoodToken = additionalFoodTokenCount > 0
-                    ? TokenCreationReplacementSupport.additionalFoodToken(token)
-                    : null;
-            for (int i = 0; i < additionalFoodTokenCount; i++) {
-                tokenBlueprints.add(additionalFoodToken);
-            }
-        }
-        for (int i = 0; i < additionalMapTokenCount; i++) {
-            tokenBlueprints.add(TokenCreationReplacementSupport.additionalMapToken(token));
-        }
-        CreateTokenEffect additionalThopterToken = additionalThopterTokenCount > 0
-                ? TokenCreationReplacementSupport.additionalThopterToken(token)
-                : null;
-        for (int i = 0; i < additionalThopterTokenCount; i++) {
-            tokenBlueprints.add(additionalThopterToken);
-        }
-        if (additionalFrogTokenCount > 0) {
-            tokenBlueprints.add(additionalFrog);
-        }
-        for (int i = 0; i < additionalSoldierTokenCount; i++) {
-            tokenBlueprints.add(additionalSoldier);
-        }
-        for (int i = 0; i < additionalMutagenTokenCount; i++) {
-            tokenBlueprints.add(TokenCreationReplacementSupport.additionalMutagenToken(token));
-        }
-
-        additionalSquirrelTokenCount = additionalSquirrel == null ? 0
-                : TokenCreationReplacementSupport.additionalSquirrelTokenCount(
-                        gameData, controllerId, tokenBlueprints.size());
-        boolean originalEventHasCreature = baseTokenIsCreature && totalAmount > 0
-                || token.simultaneousTokens().stream().anyMatch(blueprint ->
-                blueprint.primaryType() == CardType.CREATURE
-                        && blueprint.amount() instanceof Fixed count && count.value() > 0);
-        if (!originalEventHasCreature && applyTokenMultiplier && additionalSquirrelTokenCount > 0) {
-            additionalSquirrelTokenCount = gameQueryService.getNewCreatureTokenCreationAmount(
-                    gameData, controllerId, additionalSquirrelTokenCount, additionalSquirrel.subtypes());
-        }
-        for (int i = 0; i < additionalSquirrelTokenCount; i++) {
-            tokenBlueprints.add(additionalSquirrel);
         }
 
         boolean hasNativeDevour = tokenBlueprints.stream().anyMatch(blueprint ->
@@ -341,17 +197,10 @@ public class PermanentControlSupport {
                         .flatMap(ability -> AbilityEffects.effectsOf(ability).stream())
                         .anyMatch(com.github.laxika.magicalvibes.model.effect.DevourEffect.class::isInstance));
         List<com.github.laxika.magicalvibes.model.BattlefieldEntryCard> nativeEntries = new ArrayList<>();
-        if (hasNativeDevour) {
-            for (int index = 0; index < addedClueTokens; index++) {
-                tokenBlueprints.add(CreateTokenEffect.ofClueToken(1));
-            }
-        }
         for (CreateTokenEffect originalTokenBlueprint : tokenBlueprints) {
             boolean originalBlueprint = originalTokenBlueprint == evaluatedToken;
-            // An ordered event already applied Divine Visitation and Fisher's Talent in the creator's order (CR 616.1).
-            CreateTokenEffect tokenBlueprint = ordered ? originalTokenBlueprint
-                    : TokenCreationReplacementSupport.replaceTokenSubtypeIfApplicable(
-                    gameData, controllerId, originalTokenBlueprint);
+            // The ordered event already applied Divine Visitation and Fisher's Talent in the creator's order (CR 616.1).
+            CreateTokenEffect tokenBlueprint = originalTokenBlueprint;
             boolean blueprintIsCreature = tokenBlueprint.primaryType() == CardType.CREATURE;
             int blueprintPower = fixedStat(tokenBlueprint.power(), tokenBlueprint);
             int blueprintToughness = fixedStat(tokenBlueprint.toughness(), tokenBlueprint);
@@ -359,13 +208,9 @@ public class PermanentControlSupport {
             if (originalBlueprint) {
                 additionalAbilities.forEach(tokenCard::addAbility);
             }
-            if (!ordered) {
-                tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
-                        gameData, controllerId, tokenCard);
-            }
 
             Permanent tokenPermanent = new Permanent(tokenCard);
-            tokenPermanent.setTokenKindReplacementsApplied(ordered);
+            tokenPermanent.setTokenKindReplacementsApplied(true);
             if (tokenBlueprint.initialPlusOnePlusOneCounters() > 0
                     && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, tokenPermanent, controllerId)) {
                 int initial = gameQueryService.doublePlusOnePlusOneCounters(
@@ -451,27 +296,8 @@ public class PermanentControlSupport {
 
         if (hasNativeDevour) battlefieldEntryBatchSupport.begin(gameData, nativeEntries);
 
-        if (addedClueTokens > 0 && !hasNativeDevour) {
-            createdIds.addAll(applyCreateToken(gameData, controllerId, CreateTokenEffect.ofClueToken(1),
-                    addedClueTokens, sourceSetCode, 0, 0, false, false, false));
-        }
-
 
         log.info("Game {} - {} token(s) created for player {}", gameData.id, createdIds.size(), controllerId);
         return createdIds;
-    }
-
-    int solvedClueReplacementCount(GameData gameData, UUID controllerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return 0;
-        }
-        return (int) battlefield.stream()
-                .filter(permanent -> permanent.isSolved()
-                        && !gameData.losesAllAbilitiesByEffect(permanent)
-                        && !gameData.removesOwnStaticAbility(permanent.getId(), AddClueTokenToTokenCreationEffect.class))
-                .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
-                .filter(AddClueTokenToTokenCreationEffect.class::isInstance)
-                .count();
     }
 }

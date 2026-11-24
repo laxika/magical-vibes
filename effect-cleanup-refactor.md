@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b (each in Findings; the fold queue marks its rows). Fold runs 19d, 22b and 21c are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                       |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b (each in Findings; the fold queue marks its rows). Fold runs 21c, 23 and 25 are running in worktrees; 19d waits to merge. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                        |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,588 / 2,861 (after fold run 21b) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,578 / 2,861 (after fold run 22b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,713 rows over 4,440 classes (after fold run 21b). Latest verdict per class: `step-9` 731, unique 1,173, absorbed 795, split 630, blocked-other 503, survivor 310, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 731 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,724 rows over 4,440 classes (after fold run 22b). Latest verdict per class: `step-9` 720, unique 1,173, absorbed 805, split 630, blocked-other 503, survivor 311, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 720 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -769,6 +769,9 @@ Delayed and global triggers:
 - `ShuffleTargetPermanentIntoLibraryEffect.of(subject)` / `.sourceAndTarget(f)` / `.sourceThen(effect, recipient)`: "shuffle [this / enchanted creature / each nonland permanent target player controls / the chosen creature] into its owner's library". One leave event, each library shuffled once (deferred to a following shuffle), CR 701.24c for a departed specific object. Records SHUFFLE_INTO_LIBRARY per owner for `playersThisWay` / `HappenedThisWay` (fold run 21b).
 - `RevealTopCardPermanentToBattlefieldEffect(PlayerSubject)`: "each player who [did X] reveals the top card … puts it onto the battlefield if it's a permanent card", one entry batch (fold run 21b).
 - `SacrificeSelfEffect(allTargets(), controllerOf(allTargets()), filter)`: "those players sacrifice those permanents", one event (fold run 21b).
+
+- `AddTokenCreationEffect.plus(token, when)` / `.plusThatMany(token)` / `.oneOfEach(when, tokens…)` with `TokenKind.any()` / `creature()` / `artifact()` / `withAnySubtype(…)` and the shared blueprints `TREASURE`, `CLUE`, `FOOD`, `MAP`, `MUTAGEN`, `THOPTER`, `FROG`, `SQUIRREL`, `SOLDIER`: every static token addition, read by `TokenAdditionReplacements` for the tokens' creator after Crafty Cutpurse (fold run 22b).
+- `TokenCreationReplacementSupport.withEventModifiers(token, original)`: the one rider rule for added and substituted tokens (attacking, untapped attacking, granted keywords, delayed exile; a noncreature enters tapped instead of attacking, CR 506.3) (fold run 22b).
 
 ### Blocked causes still open
 
@@ -2849,6 +2852,46 @@ Only the `perm-shuffle` batch. Ratchet 3,623 / 2,886 → 3,616 / 2,879. Ledger: 
 - Elixir's 2011 ruling ("shuffle just your graveyard") predates CR 701.24c; the current rule was followed.
 
 **For the next run.** `multi-zone` with Research: a zone set (hand, library, graveyard, outside the game, face-up exile) on the to-hand / to-battlefield multi-zone search. `SearchLibraryAndOrGraveyardChoice` already carries the outside-the-game and hand id sets, but `SearchHandAndOrLibraryChoice` and `SearchOutsideGameOrExileCardChoice` are separate interactions to merge. Research needs an outside-the-game card subject. Serene Remembrance needs a `targetCards` subject.
+
+### Step 9, fold run 22b (2026-11-24, parallel worktree)
+
+`token-add`: 11 of 11 folded (1 survivor, 10 absorbed). Ratchet 3,604 / 2,877 → 3,594 / 2,877. 12 card files rewritten, Oracle text checked for all 12; rulings read for Academy Manufactor, Xorn, Chatterfang and Bilbo. CR 614.1a, 614.5, 616.1, 616.1f, 506.3 checked.
+
+**Shape.** `AddTokenCreationEffect(List<CreateTokenEffect> tokens, TokenKind when, Count count)`:
+- `Count.ONE`: each blueprint once per event ("those tokens plus an additional X").
+- `Count.PER_TOKEN`: once per token of `when` ("plus that many").
+- `Count.ONE_OF_EACH`: per token of `when`, each blueprint it shares no subtype with ("instead create a Food token and a Treasure token", "one of each").
+- `TokenKind.any()` / `creature()` / `artifact()` / `withAnySubtype(…)`.
+- Shared blueprint constants (`TREASURE`, `CLUE`, `FOOD`, `MAP`, `MUTAGEN`, `THOPTER`, `FROG`, `SQUIRREL`, `SOLDIER`), so equal additions from different permanents are equal and orders that end alike need no prompt.
+- A solved Case is `ConditionalEffect(SourceIsSolved, …)`.
+
+**How it is read.** `TokenAdditionReplacements` takes one option per active static instance (`getActiveStaticEffects`, plus `removesOwnStaticAbility`), from the battlefield of the player the tokens are created for after Crafty Cutpurse (`resolveTokenCreationController(…, false)`). Xorn and Jolene left `TokenCreationReplacements`; the count path is now multipliers and Halving Season only.
+
+**Riders.** `TokenCreationReplacementSupport.withEventModifiers` is the one rider rule for every added or substituted token:
+- an added creature keeps "attacking" and "attacking untapped";
+- an added noncreature is tapped where the others are tapped and attacking (CR 506.3);
+- granted keywords and delayed exile are kept.
+
+**Fixed-order path deleted.** `PermanentControlSupport` creates only through the ordered event. A creation with count 0 but simultaneous tokens is ordered too; a creation of no token is no event. Gone: the per-kind counters, Manufactor's ×3 compounding, Xorn's special case inside Manufactor, the Clue re-create, and `GameQueryService.getNewCreatureTokenCreationAmount`.
+
+**Behaviour changes.**
+- Under Crafty Cutpurse, additions come from the player the tokens are created for (Chatterfang's ruling). New test, fails on old code.
+- Added creature tokens of an "attacking" creation attack untapped (ruling). New Quina test, fails on old code.
+- An added noncreature token of a tapped-and-attacking creation is flagged tapped only. The Tippy-Toe test also passes on old code, which already kept the Food out of combat.
+- Map and Bilbo's Treasure keep "gains [keyword] until end of turn" riders. Untested.
+- In a token-copy event, Xorn adds a plain Treasure, not another copy (Oracle). Not observable.
+- Additions read active statics (layered card, conditions); Divine Visitation and Fisher's substitutes keep "attacking untapped" too. Untested.
+- Labels: Xorn "create an additional Treasure token"; Bilbo and Manufactor "create one each of … for each … token".
+
+**Tests changed.** 3 added (Crafty Cutpurse, Quina, Tippy-Toe). `WorldwalkerHelmTest` suppresses `AddTokenCreationEffect` instead of the old marker; no assertion changed.
+
+**Defects.** Partly fixed: "`TokenCreationReplacementSupport`'s static counts … ask only the floating flag". The Bilbo, Manufactor and Map counts are gone. The subtype and Divine Visitation reads on the non-ordered entry path (`activeTokenSubtypeReplacements`, `staticEffectCount`) remain.
+
+**Seen, not changed.**
+- `TokenKindReplacements` and `JinnieFayTokenReplacements` read `event.controllerId()`'s battlefield, not the creator after Cutpurse; the count replacements resolve with Gather Specimens for creature tokens, though Chatterfang's ruling says entering-control changes apply after. Fairly sure.
+- Stridehangar Automaton's "Thopters you control get +1/+1" uses `otherCreaturesYouControl()`, so it would skip itself if it became a Thopter. Sure, low.
+
+**For the next run.** 19d as fold run 19c's plan says. The two remaining fixed-order `getTokenMultiplier` callers (`CreateTokensAttachedToControlledCreaturesEffectHandler`, `ReturnTargetCreatureToHandAndCreateTokenCopyEffectHandler`) could move onto the ordered event in a defect run.
 
 ## Prompt
 

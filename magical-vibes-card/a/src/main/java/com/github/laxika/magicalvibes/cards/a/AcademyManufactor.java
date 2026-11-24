@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.effect.AddTokenCreationEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AcademyManufactorTokenReplacementEffect;
 
 @CardRegistration(set = "SLD", collectorNumber = "2195")
 @CardRegistration(set = "MH2", collectorNumber = "219")
@@ -13,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.AcademyManufactorTokenReplace
 public class AcademyManufactor extends Card {
 
     public AcademyManufactor() {
-        addStaticEffect(new AcademyManufactorTokenReplacementEffect());
+        addStaticEffect(AddTokenCreationEffect.oneOfEach(
+                AddTokenCreationEffect.TokenKind.withAnySubtype(CardSubtype.CLUE, CardSubtype.FOOD, CardSubtype.TREASURE),
+                AddTokenCreationEffect.CLUE, AddTokenCreationEffect.FOOD, AddTokenCreationEffect.TREASURE));
     }
 }

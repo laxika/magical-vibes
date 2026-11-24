@@ -1,61 +1,34 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.AcademyManufactorTokenReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.AddFoodTokenToTokenCreationEffect;
-import com.github.laxika.magicalvibes.model.effect.AddFrogTokenToTokenCreationEffect;
-import com.github.laxika.magicalvibes.model.effect.AddMapTokenToArtifactTokenCreationEffect;
-import com.github.laxika.magicalvibes.model.effect.AddMutagenTokenToTokenCreationEffect;
-import com.github.laxika.magicalvibes.model.effect.AddSoldierTokenToCreatureTokenCreationEffect;
-import com.github.laxika.magicalvibes.model.effect.AddThopterTokenToArtifactTokenCreationEffect;
-import com.github.laxika.magicalvibes.model.effect.AddTreasureToFoodTokenCreationEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.AddSquirrelTokenToTokenCreationEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCreatureTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceTokenSubtypeCreationEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent;
 import java.util.ArrayList;
-
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 /**
- * Applies static replacement effects that change the characteristics of newly created tokens.
+ * The tokens replacement effects put in place of or beside a token creation event's tokens (Divine Visitation, Fisher's
+ * Talent, Jinnie Fay, every {@code AddTokenCreationEffect}), each keeping the creating effect's riders.
  */
 public final class TokenCreationReplacementSupport {
 
     private static final CreateTokenEffect DIVINE_VISITATION_TOKEN = new CreateTokenEffect(
             "Angel", 4, 4, CardColor.WHITE, List.of(CardSubtype.ANGEL),
             Set.of(Keyword.FLYING, Keyword.VIGILANCE), Set.of());
-
-    /*
-     * Additions put these blueprints, or riders-carrying copies sharing their abilities, into a token creation
-     * event. Sharing one instance keeps equal additions equal, so orders that end in the same tokens are recognised
-     * as the same outcome and need no prompt (CR 616.1).
-     */
-    private static final CreateTokenEffect MAP_TOKEN = CreateTokenEffect.ofMapToken(1);
-    private static final CreateTokenEffect CLUE_TOKEN = CreateTokenEffect.ofClueToken(1);
-    private static final CreateTokenEffect FOOD_TOKEN = CreateTokenEffect.ofFoodToken(1);
-    private static final CreateTokenEffect TREASURE_TOKEN = CreateTokenEffect.ofTreasureToken(1);
-    private static final CreateTokenEffect MUTAGEN_TOKEN = mutagenToken();
 
     private TokenCreationReplacementSupport() {
     }
@@ -101,20 +74,6 @@ public final class TokenCreationReplacementSupport {
                 false, false, List.of(), List.of(), false, false, false, 0, Set.of(), Set.of());
     }
 
-    /** Applies token-profile replacements before a token permanent is created. */
-    public static CreateTokenEffect replaceTokenSubtypeIfApplicable(GameData gameData,
-                                                                     UUID controllerId,
-                                                                     CreateTokenEffect token) {
-        CreateTokenEffect replaced = token;
-        for (ReplaceTokenSubtypeCreationEffect effect : activeTokenSubtypeReplacements(
-                gameData, controllerId)) {
-            if (replaced.subtypes() != null && replaced.subtypes().contains(effect.sourceSubtype())) {
-                replaced = withEventModifiers(effect.replacementToken(), replaced);
-            }
-        }
-        return replaced;
-    }
-
     /**
      * Divine Visitation's 4/4 white Angel created in place of a creature token of {@code original}, keeping the
      * creating effect's riders (tapped, attacking, exiled at end of combat, ...) but none of the replaced token's
@@ -142,437 +101,6 @@ public final class TokenCreationReplacementSupport {
             replacement.freeze();
             permanent.setCard(replacement);
         }
-    }
-
-    static int additionalMapTokenCount(GameData gameData, UUID controllerId,
-                                       CreateTokenEffect token, int amount) {
-        if (amount <= 0 || !isArtifactToken(token)) {
-            return 0;
-        }
-        return additionalMapTokenCount(gameData, controllerId);
-    }
-
-    static int additionalThopterTokenCount(GameData gameData, UUID controllerId,
-                                           CreateTokenEffect token, int amount) {
-        if (amount <= 0 || !isArtifactToken(token)) {
-            return 0;
-        }
-        return countActiveStaticEffects(gameData, controllerId,
-                AddThopterTokenToArtifactTokenCreationEffect.class);
-    }
-
-    public static CreateTokenEffect additionalThopterToken(CreateTokenEffect original) {
-        return withEventModifiers(thopterToken(), original);
-    }
-
-    private static CreateTokenEffect thopterToken() {
-        return new CreateTokenEffect("Thopter", 1, 1, null,
-                List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT));
-    }
-
-    static int additionalMapTokenCount(GameData gameData, UUID controllerId,
-                                       Card tokenCard, int amount) {
-        if (amount <= 0 || tokenCard == null || !tokenCard.hasType(CardType.ARTIFACT)) {
-            return 0;
-        }
-        return additionalMapTokenCount(gameData, controllerId);
-    }
-
-    public static CreateTokenEffect additionalMapToken(CreateTokenEffect token) {
-        CreateTokenEffect map = MAP_TOKEN;
-        return new CreateTokenEffect(
-                CardType.ARTIFACT,
-                1,
-                map.tokenName(),
-                0,
-                0,
-                map.color(),
-                map.colors(),
-                map.subtypes(),
-                map.keywords(),
-                map.additionalTypes(),
-                false,
-                token.tapped() || token.tappedAndAttacking(),
-                map.tokenEffects(),
-                map.tokenAbilities(),
-                token.exileAtEndOfCombat(),
-                token.exileAtEndStep(),
-                false,
-                token.initialPlusOnePlusOneCounters(),
-                Set.of());
-    }
-
-    static CreateTokenEffect additionalMapToken(boolean tapped, boolean tappedAndAttacking) {
-        return CreateTokenEffect.ofMapToken(1).withTapped(tapped || tappedAndAttacking);
-    }
-
-    static int additionalMutagenTokenCount(GameData gameData, UUID controllerId, int amount) {
-        if (amount <= 0) {
-            return 0;
-        }
-        return countActiveStaticEffects(gameData, controllerId, AddMutagenTokenToTokenCreationEffect.class);
-    }
-
-    /** Returns one additional Food token per active Tippy-Toe replacement for this event. */
-    static int additionalFoodTokenCount(GameData gameData, UUID controllerId, int amount) {
-        if (amount <= 0) {
-            return 0;
-        }
-        return countActiveStaticEffects(gameData, controllerId, AddFoodTokenToTokenCreationEffect.class);
-    }
-
-    public static CreateTokenEffect additionalFoodToken(CreateTokenEffect original) {
-        return withEventModifiers(FOOD_TOKEN, original);
-    }
-
-    static CreateTokenEffect additionalFoodToken(boolean tapped, boolean tappedAndAttacking) {
-        return CreateTokenEffect.ofFoodToken(1).withTapped(tapped || tappedAndAttacking);
-    }
-
-    public static CreateTokenEffect additionalMutagenToken(CreateTokenEffect original) {
-        CreateTokenEffect mutagen = MUTAGEN_TOKEN;
-        return new CreateTokenEffect(
-                CardType.ARTIFACT,
-                1,
-                mutagen.tokenName(),
-                0,
-                0,
-                mutagen.color(),
-                mutagen.colors(),
-                mutagen.subtypes(),
-                mutagen.keywords(),
-                mutagen.additionalTypes(),
-                false,
-                original.tapped() || original.tappedAndAttacking(),
-                mutagen.tokenEffects(),
-                mutagen.tokenAbilities(),
-                original.exileAtEndOfCombat(),
-                original.exileAtEndStep(),
-                false,
-                original.initialPlusOnePlusOneCounters(),
-                original.grantedKeywordsUntilEndOfTurn(),
-                mutagen.supertypes());
-    }
-
-    static CreateTokenEffect additionalMutagenToken(boolean tapped, boolean tappedAndAttacking) {
-        return MUTAGEN_TOKEN.withTapped(tapped || tappedAndAttacking);
-    }
-
-    private static CreateTokenEffect mutagenToken() {
-        return CreateTokenEffect.ofArtifactToken(
-                1,
-                "Mutagen",
-                List.of(CardSubtype.MUTAGEN),
-                List.of(new ActivatedAbility(
-                        true,
-                        "{1}",
-                        List.of(
-                                new SacrificeSelfCost(),
-                                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)),
-                        "{1}, {T}, Sacrifice this token: Put a +1/+1 counter on target creature. "
-                                + "Activate only as a sorcery.",
-                        TargetFilters.creature(),
-                        null,
-                        null,
-                        ActivationTimingRestriction.SORCERY_SPEED
-                )));
-    }
-
-    /** Returns the Frog token blueprint when Quina's token-creation replacement is active. */
-    public static CreateTokenEffect additionalFrogTokenIfApplicable(GameData gameData,
-                                                                      UUID controllerId,
-                                                                      CreateTokenEffect original) {
-        if (!hasStaticEffect(gameData, controllerId, AddFrogTokenToTokenCreationEffect.class)) {
-            return null;
-        }
-        return additionalFrogToken(original);
-    }
-
-    /** The 1/1 green Frog an addition puts in a token creation event, carrying the riders of {@code original}. */
-    public static CreateTokenEffect additionalFrogToken(CreateTokenEffect original) {
-        return new CreateTokenEffect(
-                CardType.CREATURE, 1, "Frog", 1, 1, CardColor.GREEN, null,
-                List.of(CardSubtype.FROG), Set.of(), Set.of(),
-                original.tappedAndAttacking(), original.tapped(), List.of(), List.of(),
-                original.exileAtEndOfCombat(), original.exileAtEndStep(), false,
-                original.initialPlusOnePlusOneCounters(), original.grantedKeywordsUntilEndOfTurn(), Set.of());
-    }
-
-    /** Returns the Squirrel token blueprint when Chatterfang's token-creation replacement applies. */
-    public static CreateTokenEffect additionalSquirrelTokenIfApplicable(GameData gameData,
-                                                                          UUID controllerId,
-                                                                          CreateTokenEffect original) {
-        if (!hasStaticEffect(gameData, controllerId, AddSquirrelTokenToTokenCreationEffect.class)) {
-            return null;
-        }
-        return additionalSquirrelToken(original);
-    }
-
-    /** The 1/1 green Squirrel an addition puts in a token creation event, carrying the riders of {@code original}. */
-    public static CreateTokenEffect additionalSquirrelToken(CreateTokenEffect original) {
-        return new CreateTokenEffect(
-                CardType.CREATURE, 1, "Squirrel", 1, 1, CardColor.GREEN, null,
-                List.of(CardSubtype.SQUIRREL), Set.of(), Set.of(),
-                original.tappedAndAttacking(), original.tapped(), List.of(), List.of(),
-                original.exileAtEndOfCombat(), original.exileAtEndStep(), false,
-                original.initialPlusOnePlusOneCounters(), original.grantedKeywordsUntilEndOfTurn(), Set.of());
-    }
-
-    /** Counts additional Squirrels after each applicable replacement modifies the same token event. */
-    public static int additionalSquirrelTokenCount(GameData gameData, UUID controllerId, int amount) {
-        int total = amount;
-        int replacements = countActiveStaticEffects(gameData, controllerId,
-                AddSquirrelTokenToTokenCreationEffect.class);
-        for (int i = 0; i < replacements; i++) {
-            total = Math.multiplyExact(total, 2);
-        }
-        return total - amount;
-    }
-
-    /** Returns the Soldier token blueprint when Queen Allenal's replacement applies. */
-    public static CreateTokenEffect additionalSoldierTokenIfApplicable(GameData gameData,
-                                                                         UUID controllerId,
-                                                                         CreateTokenEffect original) {
-        return additionalSoldierTokenIfApplicable(gameData, controllerId,
-                original.primaryType() == CardType.CREATURE,
-                original.tappedAndAttacking(), original.tapped(),
-                original.exileAtEndOfCombat(), original.exileAtEndStep(),
-                original.initialPlusOnePlusOneCounters(), original.grantedKeywordsUntilEndOfTurn());
-    }
-
-    /** Returns the number of active Queen Allenal replacements for a token-creation event. */
-    public static int additionalSoldierTokenCountIfApplicable(GameData gameData,
-                                                               UUID controllerId,
-                                                               CreateTokenEffect original) {
-        return additionalSoldierTokenCountIfApplicable(gameData, controllerId,
-                original.primaryType() == CardType.CREATURE);
-    }
-
-    /** Returns the Soldier token blueprint for a token-copy creation event, when applicable. */
-    public static CreateTokenEffect additionalSoldierTokenIfApplicable(GameData gameData,
-                                                                         UUID controllerId,
-                                                                         boolean creatureTokenEvent,
-                                                                         boolean tappedAndAttacking,
-                                                                         boolean tapped) {
-        return additionalSoldierTokenIfApplicable(gameData, controllerId, creatureTokenEvent,
-                tappedAndAttacking, tapped, false, false, 0, Set.of());
-    }
-
-    /** Returns the number of active Queen Allenal replacements for a token-copy event. */
-    public static int additionalSoldierTokenCountIfApplicable(GameData gameData,
-                                                               UUID controllerId,
-                                                               boolean creatureTokenEvent) {
-        return creatureTokenEvent
-                ? staticEffectCount(gameData, controllerId, AddSoldierTokenToCreatureTokenCreationEffect.class)
-                : 0;
-    }
-
-    private static CreateTokenEffect additionalSoldierTokenIfApplicable(GameData gameData,
-                                                                          UUID controllerId,
-                                                                          boolean creatureTokenEvent,
-                                                                          boolean tappedAndAttacking,
-                                                                          boolean tapped,
-                                                                          boolean exileAtEndOfCombat,
-                                                                          boolean exileAtEndStep,
-                                                                          int initialCounters,
-                                                                          Set<Keyword> grantedKeywords) {
-        if (!creatureTokenEvent
-                || !hasStaticEffect(gameData, controllerId, AddSoldierTokenToCreatureTokenCreationEffect.class)) {
-            return null;
-        }
-        return soldierToken(tappedAndAttacking, tapped, exileAtEndOfCombat, exileAtEndStep, initialCounters,
-                grantedKeywords);
-    }
-
-    /** Queen Allenal's 1/1 white Soldier, carrying the event-level riders of {@code original}. */
-    public static CreateTokenEffect additionalSoldierToken(CreateTokenEffect original) {
-        return soldierToken(original.tappedAndAttacking(), original.tapped(), original.exileAtEndOfCombat(),
-                original.exileAtEndStep(), original.initialPlusOnePlusOneCounters(),
-                original.grantedKeywordsUntilEndOfTurn());
-    }
-
-    private static CreateTokenEffect soldierToken(boolean tappedAndAttacking, boolean tapped,
-                                                  boolean exileAtEndOfCombat, boolean exileAtEndStep,
-                                                  int initialCounters, Set<Keyword> grantedKeywords) {
-        return new CreateTokenEffect(
-                CardType.CREATURE, 1, "Soldier", 1, 1, CardColor.WHITE, null,
-                List.of(CardSubtype.SOLDIER), Set.of(), Set.of(), tappedAndAttacking, tapped,
-                List.of(), List.of(), exileAtEndOfCombat, exileAtEndStep, false,
-                initialCounters, grantedKeywords, Set.of());
-    }
-
-    /** Returns the number of Treasure tokens added by active Bilbo replacements. */
-    static int additionalTreasureTokenCount(GameData gameData, UUID controllerId,
-                                             CreateTokenEffect original, int amount) {
-        if (amount <= 0 || original.subtypes() == null || !original.subtypes().contains(CardSubtype.FOOD)) {
-            return 0;
-        }
-        return additionalTreasureTokenCount(gameData, controllerId, amount);
-    }
-
-    static int additionalTreasureTokenCount(GameData gameData, UUID controllerId,
-                                            Card tokenCard, int amount) {
-        if (amount <= 0 || tokenCard == null || !tokenCard.getSubtypes().contains(CardSubtype.FOOD)) {
-            return 0;
-        }
-        return additionalTreasureTokenCount(gameData, controllerId, amount);
-    }
-
-    private static int additionalTreasureTokenCount(GameData gameData, UUID controllerId, int amount) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return 0;
-        }
-        int bilboCount = 0;
-        for (Permanent permanent : battlefield) {
-            if (permanent.isFaceDown() || gameData.losesAllAbilitiesByEffect(permanent)
-                    || gameData.removesOwnStaticAbility(permanent.getId(), AddTreasureToFoodTokenCreationEffect.class)) {
-                continue;
-            }
-            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
-                if (effect instanceof AddTreasureToFoodTokenCreationEffect) {
-                    bilboCount++;
-                }
-            }
-        }
-        return amount * bilboCount;
-    }
-
-    /** Returns Academy Manufactor's replacement token event, or an empty list when it does not apply. */
-    static List<CreateTokenEffect> academyManufactorTokenBlueprints(GameData gameData, UUID controllerId,
-                                                                      CreateTokenEffect original, int amount) {
-        if (amount <= 0 || !isAcademyManufactorToken(original)) {
-            return List.of();
-        }
-        if (countActiveStaticEffects(gameData, controllerId,
-                AcademyManufactorTokenReplacementEffect.class) == 0) {
-            return List.of();
-        }
-        int multiplier = academyManufactorMultiplier(gameData, controllerId, original.subtypes());
-
-        int replacementAmount = Math.multiplyExact(amount, multiplier);
-        CreateTokenEffect clue = academyManufactorToken(original, CreateTokenEffect.ofClueToken(1));
-        CreateTokenEffect food = academyManufactorToken(original, foodToken());
-        CreateTokenEffect treasure = academyManufactorToken(original, CreateTokenEffect.ofTreasureToken(1));
-        List<CreateTokenEffect> blueprints = new ArrayList<>(replacementAmount * 3);
-        for (int i = 0; i < replacementAmount; i++) {
-            blueprints.add(clue);
-            blueprints.add(food);
-            blueprints.add(treasure);
-        }
-        if (!original.subtypes().contains(CardSubtype.TREASURE)) {
-            List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(controllerId, List.of());
-            for (Permanent permanent : battlefield) {
-                if (permanent.isFaceDown() || gameData.losesAllAbilitiesByEffect(permanent)) continue;
-                for (CardEffect effect : permanent.getCard().getStaticEffects()) {
-                    if (effect instanceof com.github.laxika.magicalvibes.model.effect.AddTokenCreationEffect add
-                            && add.affectedSubtype() == CardSubtype.TREASURE
-                            && !gameData.removesOwnStaticAbility(permanent.getId(), add.getClass())) {
-                        for (int i = 0; i < add.additionalTokens(); i++) {
-                            blueprints.add(treasure);
-                        }
-                    }
-                }
-            }
-        }
-        return blueprints;
-    }
-
-    /**
-     * The tokens one Academy Manufactor replacement adds for each token of {@code original}'s kind: a token
-     * that is a Clue, Food or Treasure is created together with one of each of the other two kinds, carrying
-     * the riders of {@code original}. Empty when {@code original} is none of those kinds.
-     */
-    public static List<CreateTokenEffect> academyManufactorAdditions(CreateTokenEffect original) {
-        CardSubtype kind = manufactorTokenSubtype(original);
-        if (kind == null) {
-            return List.of();
-        }
-        List<CreateTokenEffect> additions = new ArrayList<>(2);
-        if (kind != CardSubtype.CLUE) {
-            additions.add(academyManufactorToken(original, CLUE_TOKEN));
-        }
-        if (kind != CardSubtype.FOOD) {
-            additions.add(academyManufactorToken(original, FOOD_TOKEN));
-        }
-        if (kind != CardSubtype.TREASURE) {
-            additions.add(academyManufactorToken(original, TREASURE_TOKEN));
-        }
-        return additions;
-    }
-
-    /** The Clue a solved Case of the Pilfered Proof adds to a token creation event, carrying the riders of {@code original}. */
-    public static CreateTokenEffect additionalClueToken(CreateTokenEffect original) {
-        return withEventModifiers(CLUE_TOKEN, original);
-    }
-
-    /** Whether {@code token} is an artifact token, which Worldwalker Helm's and Stridehangar Automaton's additions need. */
-    public static boolean isArtifactToken(CreateTokenEffect token) {
-        return token.primaryType() == CardType.ARTIFACT
-                || (token.additionalTypes() != null && token.additionalTypes().contains(CardType.ARTIFACT));
-    }
-
-    /** Whether {@code token} is a Food token, which Bilbo's replacement needs. */
-    public static boolean isFoodToken(CreateTokenEffect token) {
-        return token.subtypes() != null && token.subtypes().contains(CardSubtype.FOOD);
-    }
-
-    private static int academyManufactorMultiplier(GameData gameData, UUID controllerId,
-                                                    Collection<CardSubtype> tokenSubtypes) {
-        if (!isAcademyManufactorToken(tokenSubtypes)) {
-            return 1;
-        }
-        int multiplier = 1;
-        int count = countActiveStaticEffects(gameData, controllerId,
-                AcademyManufactorTokenReplacementEffect.class);
-        for (int i = 1; i < count; i++) {
-            multiplier = Math.multiplyExact(multiplier, 3);
-        }
-        return multiplier;
-    }
-
-    private static boolean isAcademyManufactorToken(CreateTokenEffect token) {
-        return isAcademyManufactorToken(token.subtypes());
-    }
-
-    private static boolean isAcademyManufactorToken(Collection<CardSubtype> tokenSubtypes) {
-        return tokenSubtypes != null
-                && (tokenSubtypes.contains(CardSubtype.CLUE)
-                || tokenSubtypes.contains(CardSubtype.FOOD)
-                || tokenSubtypes.contains(CardSubtype.TREASURE));
-    }
-
-    private static CreateTokenEffect academyManufactorToken(CreateTokenEffect original,
-                                                              CreateTokenEffect replacement) {
-        return new CreateTokenEffect(
-                replacement.primaryType(), replacement.amount(), replacement.tokenName(), replacement.power(),
-                replacement.toughness(), replacement.color(), replacement.colors(), replacement.subtypes(),
-                replacement.keywords(), replacement.additionalTypes(), original.tappedAndAttacking(),
-                original.tapped(), replacement.tokenEffects(), replacement.tokenAbilities(),
-                original.exileAtEndOfCombat(), original.exileAtEndStep(), replacement.legendary(),
-                original.initialPlusOnePlusOneCounters(), original.grantedKeywordsUntilEndOfTurn(),
-                replacement.supertypes(), replacement.tokenTargetFilter());
-    }
-
-    private static CreateTokenEffect foodToken() {
-        return CreateTokenEffect.ofArtifactToken(1, "Food", List.of(CardSubtype.FOOD), List.of(
-                new ActivatedAbility(
-                        true,
-                        "{2}",
-                        List.of(new SacrificeSelfCost(), new GainLifeEffect(3)),
-                        "{2}, {T}, Sacrifice this token: You gain 3 life."
-                )));
-    }
-
-    /** Returns Bilbo's Treasure token while preserving event-level token riders. */
-    public static CreateTokenEffect additionalTreasureToken(CreateTokenEffect original) {
-        CreateTokenEffect treasure = TREASURE_TOKEN;
-        return new CreateTokenEffect(
-                CardType.ARTIFACT, 1, treasure.tokenName(), 0, 0, treasure.color(), treasure.colors(),
-                treasure.subtypes(), treasure.keywords(), treasure.additionalTypes(), false,
-                original.tapped() || original.tappedAndAttacking(), List.of(), treasure.tokenAbilities(),
-                original.exileAtEndOfCombat(), original.exileAtEndStep(), false,
-                original.initialPlusOnePlusOneCounters(), Set.of());
     }
 
     /** Returns Jinnie Fay's replacement token while preserving event-level token riders. */
@@ -697,90 +225,29 @@ public final class TokenCreationReplacementSupport {
         return count;
     }
 
-    private static int additionalMapTokenCount(GameData gameData, UUID controllerId) {
-        return countActiveStaticEffects(gameData, controllerId, AddMapTokenToArtifactTokenCreationEffect.class);
-    }
-
-    private static int countActiveStaticEffects(GameData gameData, UUID controllerId,
-                                                Class<? extends CardEffect> effectType) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return 0;
-        }
-        int count = 0;
-        for (Permanent permanent : battlefield) {
-            if (permanent.isFaceDown()
-                    || gameData.losesAllAbilitiesByEffect(permanent)
-                    || gameData.removesOwnStaticAbility(permanent.getId(), effectType)) {
-                continue;
-            }
-            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
-                if (effectType.isInstance(effect)
-                        && !gameData.removesOwnStaticAbility(permanent.getId(), effect.getClass())) {
-                    count++;
-                }
-            }
-        }
-        return count;
-    }
-
-    static List<CreateTokenEffect> additionalAcademyManufactorTokens(
-            GameData gameData, UUID controllerId, CreateTokenEffect original, int amount) {
-        if (amount <= 0 || original == null) {
-            return List.of();
-        }
-        CardSubtype originalSubtype = manufactorTokenSubtype(original);
-        if (originalSubtype == null) {
-            return List.of();
-        }
-
-        int manufactorCount = academyManufactorCount(gameData, controllerId);
-        if (manufactorCount == 0) {
-            return List.of();
-        }
-
-        int tokensPerSubtype = amount;
-        for (int i = 1; i < manufactorCount; i++) {
-            tokensPerSubtype = Math.multiplyExact(tokensPerSubtype, 3);
-        }
-
-        List<CreateTokenEffect> additional = new ArrayList<>();
-        for (int i = amount; i < tokensPerSubtype; i++) {
-            additional.add(original);
-        }
-        for (CardSubtype subtype : List.of(CardSubtype.CLUE, CardSubtype.FOOD, CardSubtype.TREASURE)) {
-            if (subtype == originalSubtype) {
-                continue;
-            }
-            CreateTokenEffect standardToken = switch (subtype) {
-                case CLUE -> CreateTokenEffect.ofClueToken(1);
-                case FOOD -> CreateTokenEffect.ofFoodToken(1);
-                case TREASURE -> CreateTokenEffect.ofTreasureToken(1);
-                default -> throw new IllegalStateException("Unexpected Academy Manufactor subtype: " + subtype);
-            };
-            CreateTokenEffect eventToken = withEventModifiers(standardToken, original);
-            for (int i = 0; i < tokensPerSubtype; i++) {
-                additional.add(eventToken);
-            }
-        }
-        return additional;
-    }
-
-    private static CreateTokenEffect withEventModifiers(CreateTokenEffect token,
-                                                         CreateTokenEffect original) {
+    /**
+     * One token of {@code token} created by an event whose creating effect made {@code original}: the token's own
+     * characteristics and abilities with the effect's riders (tapped, attacking, "gains haste until end of turn",
+     * exiled at end of combat or at the end step, entering with +1/+1 counters), never {@code original}'s
+     * characteristics or abilities (Chatterfang's ruling). A noncreature token can't attack (CR 506.3), so it enters
+     * tapped where the effect's tokens enter tapped and attacking. Used for the tokens replacements add to or put in
+     * place of the event's tokens.
+     */
+    public static CreateTokenEffect withEventModifiers(CreateTokenEffect token, CreateTokenEffect original) {
+        boolean attacking = token.primaryType() == CardType.CREATURE && original.tappedAndAttacking();
         return new CreateTokenEffect(
                 token.primaryType(),
-                1,
+                new Fixed(1),
                 token.tokenName(),
-                token.tokenPower(),
-                token.tokenToughness(),
+                token.power(),
+                token.toughness(),
                 token.color(),
                 token.colors(),
                 token.subtypes(),
                 token.keywords(),
                 token.additionalTypes(),
-                original.tappedAndAttacking(),
-                original.tapped(),
+                attacking,
+                original.tapped() || (original.tappedAndAttacking() && !attacking),
                 token.tokenEffects(),
                 token.tokenAbilities(),
                 original.exileAtEndOfCombat(),
@@ -788,38 +255,12 @@ public final class TokenCreationReplacementSupport {
                 token.legendary(),
                 original.initialPlusOnePlusOneCounters(),
                 original.grantedKeywordsUntilEndOfTurn(),
-                token.supertypes());
-    }
-
-    private static CardSubtype manufactorTokenSubtype(CreateTokenEffect token) {
-        if (token.subtypes() == null) {
-            return null;
-        }
-        for (CardSubtype subtype : List.of(CardSubtype.CLUE, CardSubtype.FOOD, CardSubtype.TREASURE)) {
-            if (token.subtypes().contains(subtype)) {
-                return subtype;
-            }
-        }
-        return null;
-    }
-
-    private static int academyManufactorCount(GameData gameData, UUID controllerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return 0;
-        }
-        int count = 0;
-        for (Permanent permanent : battlefield) {
-            if (gameData.losesAllAbilitiesByEffect(permanent)
-                    || gameData.removesOwnStaticAbility(permanent.getId(), AcademyManufactorTokenReplacementEffect.class)) {
-                continue;
-            }
-            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
-                if (effect instanceof AcademyManufactorTokenReplacementEffect) {
-                    count++;
-                }
-            }
-        }
-        return count;
+                token.supertypes(),
+                token.tokenTargetFilter(),
+                false,
+                List.of(),
+                attacking && original.attackingUntapped(),
+                token.manaCost(),
+                token.controller());
     }
 }
