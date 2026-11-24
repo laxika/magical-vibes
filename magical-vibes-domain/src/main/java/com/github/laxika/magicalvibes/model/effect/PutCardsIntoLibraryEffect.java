@@ -5,7 +5,7 @@ import java.util.Objects;
 /**
  * "Put the rest on the bottom of their owners' libraries", "put that card on top of its owner's library", "puts all
  * the cards from their graveyard on the bottom of their library in a random order": each card {@code cards} names
- * that is in a graveyard, in exile or in a hand, or still revealed in that library (CR 701.20b:
+ * that is in a graveyard, in exile, in a hand or outside the game, or still revealed in that library (CR 701.20b:
  * {@code Subjects.revealedThisWay()}, "the rest on the bottom"), goes there, all as one event, each owner ordering
  * their own unless the order is random (CR 401.4). A card the subject finds in another zone stays there. Records
  * {@code StepKind.PUT_INTO_LIBRARY}: "if you do, draw a card", "then draw that many cards".

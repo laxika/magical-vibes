@@ -88,7 +88,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice,
         PendingInteraction.DoomsdayChoice,
         PendingInteraction.SearchLibraryAndOrGraveyardChoice,
-        PendingInteraction.SearchHandAndOrLibraryChoice,
         PendingInteraction.SearchLibraryToTopChoice,
         PendingInteraction.IntuitionSearchChoice,
         PendingInteraction.TurtlesForeverSearchChoice,
@@ -151,7 +150,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.SearchOutsideGameOrExileCardChoice,
         PendingInteraction.ExchangeOutsideGameCardChoice,
         PendingInteraction.ExchangeOutsideGameHandChoice,
-        PendingInteraction.ShuffleCardsFromOutsideGameChoice,
         PendingInteraction.ExiledCreatureCopyChoice,
         PendingInteraction.EspersToMagiciteCreatureChoice,
         PendingInteraction.FaceUpExiledCardChoice,
@@ -1943,7 +1941,11 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
-    /** One matching card from the controller's library or graveyard is chosen for its destination. */
+    /**
+     * Matching cards the controller owns, chosen across their library, hand, graveyard, cards outside the game and
+     * face-up exile, for their destination. A pool card in none of the id sets is in the graveyard. With
+     * {@code optional} ("you may") no card has to be chosen.
+     */
     record SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
                                              java.util.Set<UUID> libraryCardIds,
                                              java.util.Set<UUID> handCardIds,
@@ -1957,7 +1959,29 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                              int maxCount,
                                              boolean attachAuraOrEquipment,
                                              boolean shuffleAfterSearch,
-                                             UUID oppositionAgentControllerId) implements PendingInteraction {
+                                             UUID oppositionAgentControllerId,
+                                             java.util.Set<UUID> exileCardIds,
+                                             boolean optional) implements PendingInteraction {
+
+        /** Constructor for a search of no face-up exile, a card outside the library and hand having to be taken. */
+        public SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
+                                                 java.util.Set<UUID> libraryCardIds,
+                                                 java.util.Set<UUID> handCardIds,
+                                                 java.util.Set<UUID> outsideGameCardIds,
+                                                 boolean librarySearchAllowed,
+                                                 String cardLabel,
+                                                 LibrarySearchDestination destination,
+                                                 UUID attachToPermanentId,
+                                                 CounterType enterWithCounterType,
+                                                 int enterWithCounterCount,
+                                                 int maxCount,
+                                                 boolean attachAuraOrEquipment,
+                                                 boolean shuffleAfterSearch,
+                                                 UUID oppositionAgentControllerId) {
+            this(playerId, pool, libraryCardIds, handCardIds, outsideGameCardIds, librarySearchAllowed, cardLabel,
+                    destination, attachToPermanentId, enterWithCounterType, enterWithCounterCount, maxCount,
+                    attachAuraOrEquipment, shuffleAfterSearch, oppositionAgentControllerId, java.util.Set.of(), false);
+        }
 
         /**
          * Opposition Agent: the searching opponent's library search is controlled by the Agent's controller,
@@ -2086,6 +2110,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             libraryCardIds = java.util.Set.copyOf(libraryCardIds);
             handCardIds = java.util.Set.copyOf(handCardIds);
             outsideGameCardIds = java.util.Set.copyOf(outsideGameCardIds);
+            exileCardIds = java.util.Set.copyOf(exileCardIds);
             if (maxCount < 1) {
                 throw new IllegalArgumentException("maxCount must be positive");
             }
@@ -2101,39 +2126,13 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     Math.min(maxCount, pool.size()));
         }
 
-        /** Whether a lone find can't be failed, a card outside the library and hand being among those offered. */
+        /**
+         * Whether a lone find can't be failed: no "you may", and a card outside the library and hand among those offered
+         * (CR 701.23b).
+         */
         public boolean mustFind() {
-            return maxCount == 1 && pool.stream().anyMatch(card -> !libraryCardIds.contains(card.getId())
+            return !optional && maxCount == 1 && pool.stream().anyMatch(card -> !libraryCardIds.contains(card.getId())
                     && !handCardIds.contains(card.getId()));
-        }
-    }
-
-    /** One matching card from the controller's hand or library is chosen for its destination. */
-    record SearchHandAndOrLibraryChoice(UUID playerId, java.util.List<Card> pool,
-                                        java.util.Set<UUID> libraryCardIds,
-                                        java.util.Set<UUID> handCardIds,
-                                        boolean librarySearchAllowed, String cardLabel,
-                                        LibrarySearchDestination destination)
-            implements PendingInteraction {
-
-        public SearchHandAndOrLibraryChoice {
-            pool = java.util.List.copyOf(pool);
-            libraryCardIds = java.util.Set.copyOf(libraryCardIds);
-            handCardIds = java.util.Set.copyOf(handCardIds);
-        }
-
-        public java.util.List<UUID> validCardIds() {
-            return pool.stream().map(Card::getId).toList();
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds(), 0, 1);
         }
     }
 
@@ -5393,19 +5392,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
-    /** Chooses an eligible card from outside the game or face-up exile, optionally requiring one. */
+    /**
+     * Chooses one matching card the player owns from outside the game, which stays there: {@code followUpEffect} reads
+     * it as the resolving entry's chosen card (Grizzled Huntmaster).
+     */
     record SearchOutsideGameOrExileCardChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                CardPredicate filter, String cardLabel,
-                                               boolean mandatory, boolean leaveOutsideGame,
                                                CardEffect followUpEffect) implements PendingInteraction {
 
         public SearchOutsideGameOrExileCardChoice {
             validCardIds = java.util.List.copyOf(validCardIds);
-        }
-
-        public SearchOutsideGameOrExileCardChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                                  CardPredicate filter, String cardLabel) {
-            this(playerId, validCardIds, filter, cardLabel, false, false, null);
         }
 
         @Override
@@ -5415,7 +5411,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds, mandatory ? 1 : 0, 1);
+            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
         }
     }
 
@@ -5482,29 +5478,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
-        }
-    }
-
-    /** Chooses up to a number of cards owned by the player from outside the game. */
-    record ShuffleCardsFromOutsideGameChoice(UUID playerId, java.util.List<Card> pool,
-                                              int maxCount) implements PendingInteraction {
-
-        public ShuffleCardsFromOutsideGameChoice {
-            pool = java.util.List.copyOf(pool);
-        }
-
-        public java.util.List<UUID> validCardIds() {
-            return pool.stream().map(Card::getId).toList();
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds(), 0, Math.min(maxCount, pool.size()));
         }
     }
 

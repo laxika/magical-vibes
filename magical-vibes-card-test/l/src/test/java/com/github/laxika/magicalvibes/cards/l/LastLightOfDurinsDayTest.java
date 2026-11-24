@@ -32,7 +32,7 @@ class LastLightOfDurinsDayTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.SearchHandAndOrLibraryChoice.class);
+                .isInstanceOf(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         harness.assertInGraveyard(player1, "Last Light of Durin's Day");
 
         harness.handleMultipleCardsChosen(player1, List.of(dragon.getId()));
@@ -155,7 +155,8 @@ class LastLightOfDurinsDayTest extends BaseCardTest {
     }
 
     @Test
-    void unsuccessfulSearchMustNotAutomaticallySearchLibrary() {
+    @DisplayName("With no Dragon anywhere the library is still searched and shuffled, so nothing about it is revealed")
+    void fruitlessSearchStillSearchesLibrary() {
         Permanent light = harness.addToBattlefieldAndReturn(player1, new LastLightOfDurinsDay());
         light.setCounterCount(CounterType.QUEST, 5);
         harness.setHand(player1, List.of(new Forest()));
@@ -165,7 +166,8 @@ class LastLightOfDurinsDayTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Last Light of Durin's Day");
-        assertThat(gd.playersWhoSearchedLibraryThisTurn).doesNotContain(player1.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player1.getId());
     }
 
     @Test
@@ -180,7 +182,7 @@ class LastLightOfDurinsDayTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Mountain());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.SearchHandAndOrLibraryChoice.class).pool())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class).pool())
                 .containsExactly(dragon);
     }
 }

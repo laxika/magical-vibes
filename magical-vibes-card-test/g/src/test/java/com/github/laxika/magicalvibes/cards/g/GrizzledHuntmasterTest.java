@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HeroOfBretagard;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.InteractionOptions;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -44,7 +45,7 @@ class GrizzledHuntmasterTest extends BaseCardTest {
         PendingInteraction.SearchOutsideGameOrExileCardChoice outsideChoice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchOutsideGameOrExileCardChoice.class);
         assertThat(outsideChoice).isNotNull();
-        assertThat(outsideChoice.mandatory()).isTrue();
+        assertThat(((InteractionOptions.MultiCardPick) outsideChoice.legalOptions()).minCount()).isEqualTo(1);
         assertThat(outsideChoice.validCardIds()).containsExactly(outsideCreature.getId());
         harness.handleMultipleCardsChosen(player1, List.of(outsideCreature.getId()));
 

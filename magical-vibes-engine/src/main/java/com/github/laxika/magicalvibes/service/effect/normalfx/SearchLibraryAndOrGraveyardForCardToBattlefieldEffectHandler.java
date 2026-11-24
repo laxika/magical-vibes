@@ -6,9 +6,12 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -20,6 +23,7 @@ import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.List;
 import java.util.UUID;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +39,8 @@ public class SearchLibraryAndOrGraveyardForCardToBattlefieldEffectHandler implem
     private final PredicateEvaluationService predicateEvaluationService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final AmountEvaluationService amountEvaluationService;
+
+    private static final CardPredicate PERMANENT_CARD = new CardIsPermanentPredicate();
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -56,16 +62,18 @@ public class SearchLibraryAndOrGraveyardForCardToBattlefieldEffectHandler implem
         Integer boundValue = manaValueBound == null ? null
                 : amountEvaluationService.evaluate(gameData, manaValueBound.amount(),
                         AmountContext.forStackEntry(entry, null)) + manaValueBound.offset();
-        boolean librarySearchAllowed = effect.includeLibrary()
+        boolean searchesLibrary = effect.zones().contains(Zone.LIBRARY);
+        boolean librarySearchAllowed = searchesLibrary
                 && !librarySearchSupport.isSearchPrevented(gameData, controllerId, false);
 
-        List<Card> graveyard = gameData.playerGraveyards.getOrDefault(controllerId, List.of());
-        List<Card> graveyardMatches = graveyard.stream()
-                .filter(card -> matches(card, effect, sourceCardId, gameData, controllerId, xValue,
-                        boundValue, manaValueBound))
-                .toList();
+        List<Card> graveyardMatches = effect.zones().contains(Zone.GRAVEYARD)
+                ? gameData.playerGraveyards.getOrDefault(controllerId, List.of()).stream()
+                        .filter(card -> matches(card, effect, sourceCardId, gameData, controllerId, xValue,
+                                boundValue, manaValueBound))
+                        .toList()
+                : List.of();
 
-        List<Card> handMatches = effect.includeHand()
+        List<Card> handMatches = effect.zones().contains(Zone.HAND)
                 ? gameData.playerHands.getOrDefault(controllerId, List.of()).stream()
                         .filter(card -> matches(card, effect, sourceCardId, gameData, controllerId, xValue,
                                 boundValue, manaValueBound))
@@ -74,7 +82,7 @@ public class SearchLibraryAndOrGraveyardForCardToBattlefieldEffectHandler implem
 
         List<Card> libraryMatches = List.of();
         List<Card> deck = gameData.playerDecks.get(controllerId);
-        if (effect.includeLibrary() && librarySearchAllowed && deck != null) {
+        if (librarySearchAllowed && deck != null) {
             int topLimit = librarySearchSupport.opponentSearchTopCardsLimit(gameData, controllerId);
             libraryMatches = deck.stream()
                     .limit(Math.min(topLimit, deck.size()))
@@ -95,8 +103,8 @@ public class SearchLibraryAndOrGraveyardForCardToBattlefieldEffectHandler implem
                 if (deck != null) {
                     LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
                 }
-                gameLogService.append(gameData, GameLog.text(playerName + " searches their library and graveyard but finds no "
-                        + description + "." + (deck == null ? "" : " Library is shuffled.")));
+                gameLogService.append(gameData, GameLog.text(playerName + " searches their " + searched(effect.zones(), "and")
+                        + " but finds no " + description + "." + (deck == null ? "" : " Library is shuffled.")));
             }
             return;
         }
@@ -114,16 +122,37 @@ public class SearchLibraryAndOrGraveyardForCardToBattlefieldEffectHandler implem
                 controllerId, pool, new HashSet<>(libraryMatches.stream().map(Card::getId).toList()),
                 new HashSet<>(handMatches.stream().map(Card::getId).toList()), new HashSet<>(),
                 librarySearchAllowed, description, LibrarySearchDestination.BATTLEFIELD,
-                attachToPermanentId, enterWithCounterType, enterWithCounterCount,
-                effect.attachAuraOrEquipment()));
-        gameLogService.append(gameData, GameLog.text(playerName + " searches their library and/or graveyard."));
+                attachToPermanentId, enterWithCounterType, enterWithCounterCount, 1,
+                effect.attachAuraOrEquipment(), searchesLibrary));
+        gameLogService.append(gameData, GameLog.text(playerName + " searches their " + searched(effect.zones(), "and/or")
+                + "."));
         log.info("Game {} - {} searches library and/or graveyard for a card to battlefield", gameData.id, playerName);
     }
 
+    /** "Library and/or graveyard", "hand and/or library", "graveyard, hand, and/or library". */
+    private static String searched(Set<Zone> zones, String conjunction) {
+        List<String> names = new ArrayList<>();
+        for (Zone zone : List.of(Zone.GRAVEYARD, Zone.HAND, Zone.LIBRARY)) {
+            if (zones.contains(zone)) {
+                names.add(zone == Zone.GRAVEYARD ? "graveyard" : zone == Zone.HAND ? "hand" : "library");
+            }
+        }
+        if (names.equals(List.of("graveyard", "library"))) {
+            return "library " + conjunction + " graveyard";
+        }
+        if (names.size() <= 2) {
+            return String.join(" " + conjunction + " ", names);
+        }
+        return String.join(", ", names.subList(0, names.size() - 1)) + ", " + conjunction + " " + names.getLast();
+    }
+
+    /** Only a permanent card can be put onto the battlefield (CR 400.4a). */
     private boolean matches(Card card, SearchLibraryAndOrGraveyardForCardToBattlefieldEffect effect,
                             UUID sourceCardId, GameData gameData,
                             UUID controllerId, int xValue, Integer boundValue, ManaValueBound bound) {
-        return predicateEvaluationService.matchesCardPredicate(
+        return predicateEvaluationService.matchesCardPredicate(card, PERMANENT_CARD, sourceCardId, gameData,
+                controllerId, null, null, xValue)
+                && predicateEvaluationService.matchesCardPredicate(
                 card, effect.filter(), sourceCardId, gameData, controllerId, null, null, xValue)
                 && (bound == null || (bound.exact()
                 ? card.getManaValue() == boundValue

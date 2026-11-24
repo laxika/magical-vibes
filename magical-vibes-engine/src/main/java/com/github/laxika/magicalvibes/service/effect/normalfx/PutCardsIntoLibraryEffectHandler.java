@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
+import com.github.laxika.magicalvibes.service.OutsideGameCards;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService.LocatedCard;
@@ -77,6 +78,12 @@ public class PutCardsIntoLibraryEffectHandler implements NormalEffectHandlerBean
                     if (!gameData.removeFromExile(card.getId())) {
                         continue;
                     }
+                } else if (located.zone() == Zone.OUTSIDE_GAME) {
+                    if (!OutsideGameCards.view(gameData, located.ownerId())
+                            .removeIf(outside -> outside.getId().equals(card.getId()))) {
+                        continue;
+                    }
+                    gameData.spendPlayFromOutsideGame(card.getId());
                 } else if (located.zone() != Zone.HAND || !gameData.playerHands.get(located.ownerId())
                         .removeIf(held -> held.getId().equals(card.getId()))) {
                     continue;

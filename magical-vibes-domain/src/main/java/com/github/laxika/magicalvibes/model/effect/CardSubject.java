@@ -13,8 +13,8 @@ import java.util.Objects;
  * {@link PlayerSubject}: "the exiled card", "each card put into a graveyard this way", "target creature card in your
  * graveyard". Built through {@link Subjects}; resolved only by the engine's {@code SubjectResolutionService}, which
  * names each card as it is now, in the zone it is expected to be in, and nothing for a card that has left that
- * zone (a card that moves is a new object, CR 400.7). Five variants name cards in a hidden zone, {@link InHand},
- * {@link InLibrary}, {@link TopmostInLibrary}, {@link TriggeringCardsInHand} and {@link Owned}
+ * zone (a card that moves is a new object, CR 400.7). Six variants name cards no other player may see, {@link InHand},
+ * {@link InLibrary}, {@link TopmostInLibrary}, {@link TriggeringCardsInHand}, {@link Owned} and {@link OutsideTheGame}
  * ({@link #inHiddenZone()}): they say nothing about who may see those cards. {@link Owned} alone also names the cards
  * of permanents and spells, so only the perpetual verbs read it.
  *
@@ -31,7 +31,7 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
         CardSubject.InGraveyards, CardSubject.InExile, CardSubject.ExiledWithSource, CardSubject.Except,
         CardSubject.TargetExiledCard, CardSubject.TopOfGraveyard, CardSubject.InHand, CardSubject.InLibrary,
         CardSubject.TopmostInLibrary, CardSubject.InCommandZone, CardSubject.ExiledAsCost, CardSubject.Voted,
-        CardSubject.Owned {
+        CardSubject.Owned, CardSubject.OutsideTheGame {
 
     /** Whether this subject declares a target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -407,6 +407,31 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
     record TopmostInLibrary(PlayerSubject owners, CardPredicate filter) implements CardSubject {
 
         public TopmostInLibrary {
+            Objects.requireNonNull(owners, "owners");
+        }
+
+        @Override
+        public boolean declaresTarget() {
+            return owners.declaresTarget();
+        }
+
+        @Override
+        public boolean inHiddenZone() {
+            return true;
+        }
+    }
+
+    /**
+     * "Cards you own from outside the game": the matching cards the players {@code owners} names own outside the game
+     * (their sideboards; CR 400.11), judged as they are, since no effect of the game applies to them. Nobody else may
+     * see them, so a choice among them names none.
+     *
+     * @param owners whose cards
+     * @param filter which cards; {@code null} for every card
+     */
+    record OutsideTheGame(PlayerSubject owners, CardPredicate filter) implements CardSubject {
+
+        public OutsideTheGame {
             Objects.requireNonNull(owners, "owners");
         }
 

@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d (each in Findings; the fold queue marks its rows). Fold runs 23, 25 and 28 are running in worktrees; 21c waits to merge. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                         |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c (each in Findings; the fold queue marks its rows). Fold runs 23, 25 and 28 are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                          |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,576 / 2,857 (after fold run 19d) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,572 / 2,853 (after fold run 21c) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,730 rows over 4,442 classes (after fold run 19d). Latest verdict per class: `step-9` 718, unique 1,173, absorbed 807, split 630, blocked-other 503, survivor 313, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 718 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,737 rows over 4,442 classes (after fold run 21c). Latest verdict per class: `step-9` 714, unique 1,172, absorbed 810, split 631, blocked-other 503, survivor 314, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 714 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -777,6 +777,10 @@ Delayed and global triggers:
 - `EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect.by(players)`: "return a [filter] card from your graveyard" over any player subject; returners control what they return (fold run 19d).
 - `EachPlayerSearchesLibraryEffect.leavingLibrariesUnshuffled()` + `ShuffleLibraryEffect(PlayerSubject)`: "then each player who searched a library this way shuffles" after several searches, one shuffle each (fold run 19d).
 - `PlayerCanSearchTheirLibraryPredicate` / `LibrarySearchRestrictions.find`: the quiet "may this player search" check (fold run 19d).
+
+- `SearchLibraryAndOrGraveyardForCardToHandEffect.inZones(filter, Zone...)` / `.mayTakeFrom(filter, Zone...)`: "search your library, graveyard, and/or outside the game", "you may reveal ... from outside the game or choose a face-up ... in exile"; only a library search records, shuffles or answers to Opposition Agent (fold run 21c).
+- `SearchLibraryAndOrGraveyardForCardToBattlefieldEffect.inZones(filter, Zone...)` (GRAVEYARD, HAND, LIBRARY): "search your hand and/or library for a [filter] card and put it onto the battlefield", permanent cards only (fold run 21c).
+- `Subjects.cardsOutsideTheGame(players, filter)` (`CardSubject.OutsideTheGame`): "cards you own from outside the game", hidden, judged with no game effects; `ChooseCardEffect` and `PutCardsIntoLibraryEffect` handle it (fold run 21c).
 
 ### Blocked causes still open
 
@@ -2926,6 +2930,35 @@ Only the `perm-shuffle` batch. Ratchet 3,623 / 2,886 → 3,616 / 2,879. Ledger: 
 **Seen, not changed.** None new.
 
 **For the next run.** The four `CreateTokenFor*` records (token-controller cause) need their own run; Terrapact Intimidator's is a may-carrier with a target.
+
+### Step 9, fold run 21c (2026-11-24, parallel worktree)
+
+Two of three batches done. Ratchet 3,600 / 2,873 → 3,596 / 2,869. Ledger 7 rows: absorbed 3, split 1, survivor 2, step-9 1. 5 card files rewritten, Oracle text checked for all (and for Serene Remembrance and Turn the Earth). Rulings read for Coax, Karn, Last Light and Arcavios. CR 400.2, 400.4a, 400.11, 406.3, 608.2b, 608.2c, 608.2d, 701.23a–e, 701.23h and 701.24a–e checked.
+
+| Batch | Result |
+|---|---|
+| multi-zone | 3 folded. The to-hand survivor gains `Set<Zone> zones` (LIBRARY, GRAVEYARD, OUTSIDE_GAME, face-up EXILE) and `optional`, with factories `inZones` (Arcavios) and `mayTakeFrom` (Coax, Karn). In the battlefield survivor, `includeHand` / `includeLibrary` became a zone set (the boolean constructors stay), plus `inZones` (Last Light). `SearchLibraryAndOrGraveyardChoice` gains `exileCardIds` and `optional`. `SearchHandAndOrLibraryChoice` (interaction, handler, AI strategy, projection) is gone. `SearchOutsideGameOrExileCardChoice` keeps only Grizzled Huntmaster's choose-and-keep use. |
+| outside-game (Research) | 1 split into `ChooseCardEffect.upTo(cardsOutsideTheGame(you(), null), 4)` + `PutCardsIntoLibraryEffect.shuffledIn(cardsThisWay(CHOOSE)).alwaysShuffling(you())`. `ShuffleCardsFromOutsideGameChoice` (interaction, handler, AI strategy, projection) is gone. |
+| card-shuffle (Serene, Turn the Earth) | left; see "For the next run" |
+
+**Behaviour changes.**
+- Arcavios's library search passes Opposition Agent's controller (defect fixed; new test).
+- Last Light offers only permanent cards (CR 400.4a, ruling). The survivor's entry-ban check now applies to it.
+- Last Light with no Dragon anywhere now searches and shuffles the library. The old skip used the library's hidden contents and showed them to the opponent through the missing shuffle (CR 400.2); test rewritten.
+- A card taken from outside the game spends the play permission naming it (Arcavios now as well).
+- Cards outside the game are judged with no game effects for all searchers (CR 400.11). Coax already did this; Arcavios now does too.
+- A battlefield search whose zones exclude the library no longer shuffles it on a decline.
+- Research's choice is logged as "A card / Cards [player] owns outside the game is / are chosen.", naming no card (new test). The survivors' log lines win.
+
+**Seen, not changed.**
+- `SearchLibraryAndOrGraveyardChoiceAiStrategy` answers only when the AI is `playerId`, not `decidingPlayerId()`, so an AI that controls Opposition Agent never answers these searches. Sure of the code.
+- When a library search is prevented, the to-hand survivor still shuffles on a fruitless search or a decline ("If you search your library this way, shuffle"). Sure of the code, low.
+- `SearchOutsideGameOrExileCardChoice` keeps a name that no longer fits; rename it to an outside-the-game choice when it is next touched.
+
+**For the next run.** Serene Remembrance / Turn the Earth need:
+1. A `CardSubject` that names every target card of the effect, with the max count and the single-graveyard rule. `TargetCard` names one.
+2. `SpellCastingService`'s two branches keyed on the record (the hand cast at the up-to-N all-graveyards check, and the flashback path) keyed on that subject instead.
+3. Serene's `ShuffleIntoLibraryEffect` merged into the owner's library shuffle, possibly deferring through fold run 21b's `deferredLibraryShuffleOwnerIds`, so Psychogenic Probe sees one shuffle.
 
 ## Prompt
 

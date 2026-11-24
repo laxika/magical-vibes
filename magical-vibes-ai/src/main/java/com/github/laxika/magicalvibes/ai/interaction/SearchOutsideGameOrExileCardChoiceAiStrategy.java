@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.ai.interaction;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 
@@ -9,9 +8,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Stream;
 
-/** Chooses the highest-mana-value eligible card available from the AI's sideboard or exile. */
+/** Chooses the highest-mana-value eligible card from the AI's cards outside the game. */
 class SearchOutsideGameOrExileCardChoiceAiStrategy
         implements AiInteractionStrategy<PendingInteraction.SearchOutsideGameOrExileCardChoice> {
 
@@ -28,17 +26,7 @@ class SearchOutsideGameOrExileCardChoiceAiStrategy
         }
 
         Set<UUID> validIds = Set.copyOf(interaction.validCardIds());
-        Stream<Card> sideboardCards = ctx.gameData().playerSideboards
-                .getOrDefault(ctx.aiPlayerId(), List.of()).stream();
-        Stream<Card> exiledCards;
-        synchronized (ctx.gameData().exiledCards) {
-            exiledCards = ctx.gameData().exiledCards.stream()
-                    .filter(entry -> ctx.aiPlayerId().equals(entry.ownerId()) && !entry.faceDown())
-                    .map(ExiledCardEntry::card)
-                    .toList()
-                    .stream();
-        }
-        List<UUID> chosen = Stream.concat(sideboardCards, exiledCards)
+        List<UUID> chosen = ctx.gameData().playerSideboards.getOrDefault(ctx.aiPlayerId(), List.of()).stream()
                 .filter(card -> validIds.contains(card.getId()))
                 .max(Comparator.comparingInt(Card::getManaValue))
                 .map(card -> List.of(card.getId()))

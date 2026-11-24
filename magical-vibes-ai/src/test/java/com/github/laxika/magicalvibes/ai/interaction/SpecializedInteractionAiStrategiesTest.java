@@ -402,7 +402,7 @@ class SpecializedInteractionAiStrategiesTest {
 
         new SearchOutsideGameOrExileCardChoiceAiStrategy().answer(
                 new PendingInteraction.SearchOutsideGameOrExileCardChoice(
-                        aiPlayerId, List.of(cheap.getId(), expensive.getId()), null, "card"),
+                        aiPlayerId, List.of(cheap.getId(), expensive.getId()), null, "card", null),
                 context);
 
         assertThat(capturedAnswer())
@@ -526,21 +526,6 @@ class SpecializedInteractionAiStrategiesTest {
     }
 
     @Test
-    void shuffleCardsFromOutsideGameChoiceSelectsHighestManaValuesUpToMaximum() throws Exception {
-        Card cheap = card("Cheap", "{1}");
-        Card expensive = card("Expensive", "{5}");
-        Card medium = card("Medium", "{3}");
-
-        new ShuffleCardsFromOutsideGameChoiceAiStrategy().answer(
-                new PendingInteraction.ShuffleCardsFromOutsideGameChoice(
-                        aiPlayerId, List.of(cheap, expensive, medium), 2),
-                context);
-
-        assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.CardsChosen(
-                List.of(expensive.getId(), medium.getId())));
-    }
-
-    @Test
     void allNewSpecializedTypesAreRegistered() {
         assertThat(AiInteractionStrategies.registeredTypes()).contains(
                 PendingInteraction.BrilliantUltimatumPileSeparationChoice.class,
@@ -552,7 +537,6 @@ class SpecializedInteractionAiStrategiesTest {
                 PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice.class,
                 PendingInteraction.ExiledCardMayPlayChoice.class,
                 PendingInteraction.SearchOutsideGameOrExileCardChoice.class,
-                PendingInteraction.ShuffleCardsFromOutsideGameChoice.class,
                 PendingInteraction.TargetHandSpellCopyChoice.class,
                 PendingInteraction.TargetedHandBattlefieldChoice.class,
                 PendingInteraction.LifeBidChoice.class,

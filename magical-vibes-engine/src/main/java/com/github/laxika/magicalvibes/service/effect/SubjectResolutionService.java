@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.service.OutsideGameCards;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
@@ -191,6 +192,7 @@ public class SubjectResolutionService {
                     .filter(Objects::nonNull)
                     .toList();
             case CardSubject.Owned owned -> owned(gameData, entry, effect, owned);
+            case CardSubject.OutsideTheGame outside -> outsideTheGame(gameData, entry, effect, outside);
             case CardSubject.InYourGraveyard yours -> locatedCards(gameData, entry, effect, yours.cards()).stream()
                     .filter(located -> located.zone() == Zone.GRAVEYARD
                             && entry.getControllerId().equals(located.ownerId()))
@@ -574,6 +576,24 @@ public class SubjectResolutionService {
         return named;
     }
 
+    /**
+     * {@link CardSubject.OutsideTheGame}: each owner's cards outside the game, judged with no game context, as no effect
+     * of the game applies to them (CR 400.11).
+     */
+    private List<LocatedCard> outsideTheGame(GameData gameData, StackEntry entry, CardEffect effect,
+                                             CardSubject.OutsideTheGame outside) {
+        List<LocatedCard> named = new ArrayList<>();
+        for (UUID ownerId : players(gameData, entry, effect, outside.owners())) {
+            for (Card card : List.copyOf(OutsideGameCards.view(gameData, ownerId))) {
+                if (outside.filter() == null || predicateEvaluationService.matchesCardPredicate(
+                        card, outside.filter(), null, null, ownerId)) {
+                    named.add(new LocatedCard(card, Zone.OUTSIDE_GAME, ownerId));
+                }
+            }
+        }
+        return named;
+    }
+
     /** {@link CardSubject.InHand}, {@link CardSubject.InLibrary}, {@link CardSubject.InCommandZone}. */
     private List<LocatedCard> inZone(GameData gameData, StackEntry entry, CardEffect effect, PlayerSubject owners,
                                      CardPredicate filter, Zone zone, Map<UUID, List<Card>> zones) {
@@ -826,6 +846,16 @@ public class SubjectResolutionService {
         if (zone == Zone.EXILE) {
             ExiledCardEntry exiled = gameData.findExiledCard(cardId);
             return exiled == null ? null : new LocatedCard(exiled.card(), Zone.EXILE, exiled.ownerId());
+        }
+        if (zone == Zone.OUTSIDE_GAME) {
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                for (Card card : OutsideGameCards.view(gameData, playerId)) {
+                    if (card.getId().equals(cardId)) {
+                        return new LocatedCard(card, zone, playerId);
+                    }
+                }
+            }
+            return null;
         }
         if (zone == Zone.HAND || zone == Zone.LIBRARY || zone == Zone.COMMAND) {
             Map<UUID, List<Card>> zones = zone == Zone.HAND ? gameData.playerHands

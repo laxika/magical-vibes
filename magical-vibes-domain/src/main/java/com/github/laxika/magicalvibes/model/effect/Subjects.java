@@ -540,6 +540,11 @@ public final class Subjects {
         return new CardSubject.Owned(you(), filter);
     }
 
+    /** "Up to four cards you own from outside the game": the matching cards {@code owners} owns outside the game. */
+    public static CardSubject cardsOutsideTheGame(PlayerSubject owners, CardPredicate filter) {
+        return new CardSubject.OutsideTheGame(owners, filter);
+    }
+
     /** "From the command zone": the cards matching {@code filter} in the controller's command zone. */
     public static CardSubject cardsInYourCommandZone(CardPredicate filter) {
         return new CardSubject.InCommandZone(you(), filter);

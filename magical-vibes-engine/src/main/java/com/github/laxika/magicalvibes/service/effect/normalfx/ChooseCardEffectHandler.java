@@ -136,8 +136,8 @@ public class ChooseCardEffectHandler implements NormalEffectHandlerBean {
     }
 
     /**
-     * A choice among cards in a hand or library that nothing revealed (CR 400.2): one line for each hand or library
-     * chosen from, which names no card and counts none but as the instruction does ("a card", "cards"); the step that
+     * A choice among cards in a hand or library that nothing revealed (CR 400.2), or among cards outside the game: one
+     * line for each hand, library or owner chosen from, which names no card and counts none but as the instruction does ("a card", "cards"); the step that
      * moves the cards says what everybody sees.
      */
     private void logHiddenChoice(GameData gameData, ChooseCardEffect choose, List<LocatedCard> chosen,
@@ -146,9 +146,15 @@ public class ChooseCardEffectHandler implements NormalEffectHandlerBean {
                 && choose.count() instanceof Fixed fixed && fixed.value() == 1;
         Set<String> lines = new LinkedHashSet<>();
         for (LocatedCard card : chosen) {
+            String how = chooserId == null ? " chosen at random." : " chosen.";
+            if (card.zone() == Zone.OUTSIDE_GAME) {
+                String owner = gameData.playerIdToName.get(card.ownerId());
+                lines.add(one ? "A card " + owner + " owns outside the game is" + how
+                        : "Cards " + owner + " owns outside the game are" + how);
+                continue;
+            }
             String where = gameData.playerIdToName.get(card.ownerId()) + "'s "
                     + (card.zone() == Zone.HAND ? "hand" : "library");
-            String how = chooserId == null ? " chosen at random." : " chosen.";
             lines.add(one ? "A card in " + where + " is" + how : "Cards in " + where + " are" + how);
         }
         lines.forEach(line -> gameLogService.append(gameData, GameLog.text(line)));

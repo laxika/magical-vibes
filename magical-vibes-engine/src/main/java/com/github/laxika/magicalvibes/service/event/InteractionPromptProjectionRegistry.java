@@ -154,8 +154,6 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.DoomsdayChoice.class, this::projectDoomsdayChoice);
         register(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class,
                 this::projectSearchLibraryAndOrGraveyardChoice);
-        register(PendingInteraction.SearchHandAndOrLibraryChoice.class,
-                this::projectSearchHandAndOrLibraryChoice);
         register(PendingInteraction.SearchLibraryToTopChoice.class,
                 this::projectSearchLibraryToTopChoice);
         register(PendingInteraction.IntuitionSearchChoice.class, this::projectIntuitionSearchChoice);
@@ -285,8 +283,6 @@ public class InteractionPromptProjectionRegistry {
                 this::projectExchangeOutsideGameCardChoice);
         register(PendingInteraction.ExchangeOutsideGameHandChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
-        register(PendingInteraction.ShuffleCardsFromOutsideGameChoice.class,
-                this::projectShuffleCardsFromOutsideGameChoice);
         register(PendingInteraction.FaceUpExiledCardChoice.class,
                 this::projectFaceUpExiledCardChoice);
         register(PendingInteraction.SuspendedCardTimeCounterChoice.class,
@@ -877,34 +873,33 @@ public class InteractionPromptProjectionRegistry {
     private InteractionPromptMessage projectSearchLibraryAndOrGraveyardChoice(
             GameData gameData, PendingInteraction.SearchLibraryAndOrGraveyardChoice interaction) {
         boolean toBattlefield = interaction.destination() == LibrarySearchDestination.BATTLEFIELD;
-        boolean hasLibrary = !interaction.libraryCardIds().isEmpty();
-        boolean hasHand = !interaction.handCardIds().isEmpty();
-        boolean hasOutsideGame = !interaction.outsideGameCardIds().isEmpty();
-        String source = hasLibrary && hasHand && hasOutsideGame ? "library, hand, graveyard, or outside the game"
-                : hasLibrary && hasHand ? "library, hand, or graveyard"
-                : hasLibrary && hasOutsideGame ? "library, graveyard, or outside the game"
-                : hasHand && hasOutsideGame ? "hand, graveyard, or outside the game"
-                : hasLibrary ? "library or graveyard"
-                : hasHand ? "hand or graveyard"
-                : hasOutsideGame ? "graveyard or outside the game"
-                : "graveyard";
+        boolean hasGraveyard = interaction.pool().stream().map(Card::getId)
+                .anyMatch(id -> !interaction.libraryCardIds().contains(id) && !interaction.handCardIds().contains(id)
+                        && !interaction.outsideGameCardIds().contains(id) && !interaction.exileCardIds().contains(id));
+        List<String> sources = new ArrayList<>();
+        if (!interaction.libraryCardIds().isEmpty()) {
+            sources.add("your library");
+        }
+        if (!interaction.handCardIds().isEmpty()) {
+            sources.add("your hand");
+        }
+        if (hasGraveyard) {
+            sources.add("your graveyard");
+        }
+        if (!interaction.outsideGameCardIds().isEmpty()) {
+            sources.add("outside the game");
+        }
+        if (!interaction.exileCardIds().isEmpty()) {
+            sources.add("face-up exile");
+        }
+        String source = sources.size() <= 2 ? String.join(" or ", sources)
+                : String.join(", ", sources.subList(0, sources.size() - 1)) + ", or " + sources.getLast();
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
                 cardViews(interaction.pool()),
                 1,
-                "Choose a " + interaction.cardLabel() + " from your " + source + " to reveal and put it "
-                        + (toBattlefield ? "onto the battlefield." : "into your hand."));
-    }
-
-    private InteractionPromptMessage projectSearchHandAndOrLibraryChoice(
-            GameData gameData, PendingInteraction.SearchHandAndOrLibraryChoice interaction) {
-        boolean toBattlefield = interaction.destination() == LibrarySearchDestination.BATTLEFIELD;
-        return InteractionPromptMessage.multiCardPick(
-                new ArrayList<>(interaction.validCardIds()),
-                cardViews(interaction.pool()),
-                1,
-                "Choose a " + interaction.cardLabel() + " from your hand or library to reveal and put it "
-                        + (toBattlefield ? "onto the battlefield." : "into your hand."));
+                (interaction.optional() ? "You may choose a " : "Choose a ") + interaction.cardLabel() + " from "
+                        + source + " to put " + (toBattlefield ? "onto the battlefield." : "into your hand."));
     }
 
     private InteractionPromptMessage projectSearchLibraryToTopChoice(
@@ -1629,20 +1624,9 @@ public class InteractionPromptProjectionRegistry {
         addMatchingCardViews(cardViews,
                 com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, interaction.playerId()),
                 interaction.validCardIds());
-        synchronized (gameData.exiledCards) {
-            gameData.exiledCards.stream()
-                    .filter(entry -> interaction.playerId().equals(entry.ownerId()) && !entry.faceDown())
-                    .filter(entry -> interaction.validCardIds().contains(entry.card().getId()))
-                    .map(ExiledCardEntry::card)
-                    .map(cardViewFactory::create)
-                    .forEach(cardViews::add);
-        }
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, 1,
-                interaction.mandatory()
-                        ? "Choose a " + interaction.cardLabel() + " from outside the game."
-                        : "You may reveal a " + interaction.cardLabel()
-                                + " from outside the game or choose one in face-up exile.");
+                "Choose a " + interaction.cardLabel() + " from outside the game.");
     }
 
     private InteractionPromptMessage projectExchangeOutsideGameCardChoice(
@@ -1655,16 +1639,6 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()), cardViews(interaction.cards()), 1,
                 "You may reveal a " + cardDescription
                         + " you own from outside the game to exchange with a card in your hand.");
-    }
-
-    private InteractionPromptMessage projectShuffleCardsFromOutsideGameChoice(
-            GameData gameData, PendingInteraction.ShuffleCardsFromOutsideGameChoice interaction) {
-        return InteractionPromptMessage.multiCardPick(
-                new ArrayList<>(interaction.validCardIds()),
-                cardViews(interaction.pool()),
-                Math.min(interaction.maxCount(), interaction.pool().size()),
-                "Choose up to " + interaction.maxCount()
-                        + " cards you own from outside the game to shuffle into your library.");
     }
 
     private InteractionPromptMessage projectFaceUpExiledCardChoice(

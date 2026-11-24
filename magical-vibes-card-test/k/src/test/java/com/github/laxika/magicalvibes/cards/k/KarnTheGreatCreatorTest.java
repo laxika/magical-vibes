@@ -99,8 +99,8 @@ class KarnTheGreatCreatorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        PendingInteraction.SearchOutsideGameOrExileCardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.SearchOutsideGameOrExileCardChoice.class);
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.validCardIds()).containsExactlyInAnyOrder(
                 sideboardArtifact.getId(), exiledArtifact.getId());
 
@@ -196,8 +196,8 @@ class KarnTheGreatCreatorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        PendingInteraction.SearchOutsideGameOrExileCardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.SearchOutsideGameOrExileCardChoice.class);
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.validCardIds()).containsExactly(eligible.getId());
 
         harness.handleMultipleCardsChosen(player1, List.of());

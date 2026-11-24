@@ -31,7 +31,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Completes a card pick from a combined library and graveyard search pool. */
+/** Completes a card pick from a pool across the library, hand, graveyard, outside the game and face-up exile. */
 @Component
 @RequiredArgsConstructor
 public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
@@ -89,8 +89,10 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
 
         if (selectedCards.isEmpty()) {
             finishSearch(gameData, interaction, selectedCards);
-            gameLogService.append(gameData, GameLog.text(
-                    gameData.playerIdToName.get(playerId) + " searches their library and graveyard but finds no "
+            gameLogService.append(gameData, GameLog.text(interaction.optional()
+                    ? gameData.playerIdToName.get(playerId) + " chooses not to put a " + interaction.cardLabel()
+                            + " into their hand."
+                    : gameData.playerIdToName.get(playerId) + " searches their library and graveyard but finds no "
                             + interaction.cardLabel() + "."
                             + (gameData.playerDecks.get(playerId) == null ? "" : " Library is shuffled.")));
         } else if (interaction.maxCount() > 1) {
@@ -127,6 +129,7 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
         boolean fromLibrary = interaction.libraryCardIds().contains(chosen.getId());
         boolean fromHand = interaction.handCardIds().contains(chosen.getId());
         boolean fromOutsideGame = interaction.outsideGameCardIds().contains(chosen.getId());
+        boolean fromExile = interaction.exileCardIds().contains(chosen.getId());
         List<UUID> attachTargetIds = List.of();
         List<UUID> attachPlayerIds = List.of();
         if (toBattlefield && interaction.attachAuraOrEquipment() && chosen.isAura()) {
@@ -158,11 +161,15 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
                 : fromOutsideGame
                 ? com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, playerId)
                 : gameData.playerGraveyards.getOrDefault(playerId, List.of());
-        boolean removed = zone.removeIf(card -> card.getId().equals(chosen.getId()));
+        boolean removed = fromExile ? gameData.removeFromExile(chosen.getId())
+                : zone.removeIf(card -> card.getId().equals(chosen.getId()));
         if (!removed) {
             throw new IllegalStateException("Chosen card is no longer in its search zone");
         }
-        if (!fromLibrary && !fromHand && !fromOutsideGame) {
+        if (fromOutsideGame) {
+            gameData.spendPlayFromOutsideGame(chosen.getId());
+        }
+        if (!fromLibrary && !fromHand && !fromOutsideGame && !fromExile) {
             graveyardService.notifyCardsLeftGraveyard(gameData, playerId, chosen);
         }
         if (fromLibrary && !toBattlefield && interaction.oppositionAgentControllerId() != null) {
@@ -201,6 +208,11 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
                 : fromOutsideGame ? "sideboard"
                 : "graveyard";
         String destination = toBattlefield ? "onto the battlefield" : "into their hand";
+        if (fromExile) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    gameData.playerIdToName.get(playerId) + " puts ", chosen, " from exile " + destination + "."));
+            return false;
+        }
         gameLogService.append(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(playerId) + " searches their " + zoneName + ", reveals ",
                 chosen, ", and puts it " + destination + "."));

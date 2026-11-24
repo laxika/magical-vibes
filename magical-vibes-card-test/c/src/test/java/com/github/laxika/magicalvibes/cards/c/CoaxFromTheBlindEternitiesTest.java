@@ -27,8 +27,8 @@ class CoaxFromTheBlindEternitiesTest extends BaseCardTest {
         gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(eldrazi, nonEldrazi)));
         castCoax();
 
-        PendingInteraction.SearchOutsideGameOrExileCardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.SearchOutsideGameOrExileCardChoice.class);
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.validCardIds()).contains(eldrazi.getId()).doesNotContain(nonEldrazi.getId());
 
         harness.handleMultipleCardsChosen(player1, List.of(eldrazi.getId()));
@@ -44,7 +44,7 @@ class CoaxFromTheBlindEternitiesTest extends BaseCardTest {
         gd.addToExile(player1.getId(), eldrazi);
         castCoax();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.SearchOutsideGameOrExileCardChoice.class))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class))
                 .isNotNull();
         harness.handleMultipleCardsChosen(player1, List.of(eldrazi.getId()));
 
@@ -92,8 +92,8 @@ class CoaxFromTheBlindEternitiesTest extends BaseCardTest {
         gd.addToExile(player1.getId(), nonEldrazi);
         castCoax();
 
-        PendingInteraction.SearchOutsideGameOrExileCardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.SearchOutsideGameOrExileCardChoice.class);
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.validCardIds()).containsExactlyInAnyOrder(sideboardCard.getId(), exiledCard.getId());
         harness.handleMultipleCardsChosen(player1, List.of(exiledCard.getId()));
 
@@ -138,8 +138,8 @@ class CoaxFromTheBlindEternitiesTest extends BaseCardTest {
         gd.addToExile(player1.getId(), creature);
         castCoax();
 
-        PendingInteraction.SearchOutsideGameOrExileCardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.SearchOutsideGameOrExileCardChoice.class);
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.validCardIds()).containsExactly(creature.getId());
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
 

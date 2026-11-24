@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardGrantFreePlayUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.cards.d.Divination;
+import com.github.laxika.magicalvibes.cards.o.OppositionAgent;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -23,7 +24,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Divination.class, InvasionOfArcavios.class, InvocationOfTheFounders.class,
-        Shock.class})
+        Shock.class, OppositionAgent.class})
 class InvasionOfArcaviosTest extends BaseCardTest {
 
     @Test
@@ -50,6 +51,27 @@ class InvasionOfArcaviosTest extends BaseCardTest {
         assertThat(gd.playerSideboards.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardCard);
+    }
+
+    @Test
+    @DisplayName("Under an opponent's Opposition Agent, the Agent's controller chooses and a library find is exiled")
+    void oppositionAgentControlsTheLibrarySearch() {
+        harness.addToBattlefield(player2, new OppositionAgent());
+        Card libraryCard = new Shock();
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setGraveyard(player1, List.of());
+
+        castInvasion();
+
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        assertThat(choice.decidingPlayerId()).isEqualTo(player2.getId());
+
+        harness.handleMultipleCardsChosen(player2, List.of(libraryCard.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(libraryCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(libraryCard);
+        assertThat(gd.exilePlayPermissionHolder(libraryCard.getId())).isEqualTo(player2.getId());
     }
 
     @Test

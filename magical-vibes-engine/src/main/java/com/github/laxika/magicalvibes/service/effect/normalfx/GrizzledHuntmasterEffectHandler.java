@@ -95,7 +95,7 @@ public class GrizzledHuntmasterEffectHandler implements NormalEffectHandlerBean 
 
         playerInputService.beginOutsideGameCardChoice(
                 gameData, controllerId, creatureCards, new CardTypePredicate(CardType.CREATURE),
-                "creature card", true, true,
+                "creature card",
                 new GrizzledHuntmasterEffect(Step.CONJURE, cardName, conjureCount));
     }
 

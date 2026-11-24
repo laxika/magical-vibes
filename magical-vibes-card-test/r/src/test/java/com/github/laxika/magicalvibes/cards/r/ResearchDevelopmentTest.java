@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.p.PillarOfTheParuns;
 import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -36,13 +37,29 @@ class ResearchDevelopmentTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, 0, List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.ShuffleCardsFromOutsideGameChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).maxCount())
+                .isEqualTo(4);
         List<Card> chosen = sideboard.subList(0, 4);
         harness.handleMultipleCardsChosen(player1, chosen.stream().map(Card::getId).toList());
 
         assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(sideboard.get(4));
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(chosen);
+    }
+
+    @Test
+    @DisplayName("The public log names none of the cards Research shuffles in from outside the game")
+    void researchLogsNoCardName() {
+        Card outsideCard = new PillarOfTheParuns();
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(outsideCard)));
+        harness.setLibrary(player1, List.of());
+
+        castResearch();
+        harness.handleMultipleCardsChosen(player1, List.of(outsideCard.getId()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(outsideCard);
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .noneMatch(line -> line.contains(outsideCard.getName()))
+                .anyMatch(line -> line.contains("shuffles 1 card(s) into their library"));
     }
 
     @Test

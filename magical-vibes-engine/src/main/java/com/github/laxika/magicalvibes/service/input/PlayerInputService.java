@@ -2831,12 +2831,11 @@ public class PlayerInputService {
                 false));
     }
 
+    /** "Choose a [filter] card you own from outside the game": it stays there, and {@code followUpEffect} reads it. */
     public void beginOutsideGameCardChoice(GameData gameData, UUID playerId, List<Card> matchingCards,
-                                           CardPredicate filter, String cardLabel, boolean mandatory,
-                                           boolean leaveOutsideGame, CardEffect followUpEffect) {
+                                           CardPredicate filter, String cardLabel, CardEffect followUpEffect) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.SearchOutsideGameOrExileCardChoice(
-                playerId, matchingCards.stream().map(Card::getId).toList(), filter, cardLabel,
-                mandatory, leaveOutsideGame, followUpEffect));
+                playerId, matchingCards.stream().map(Card::getId).toList(), filter, cardLabel, followUpEffect));
     }
 
     /** "You may exile a card from your hand or graveyard": linked to the source, and nothing is shuffled. */
