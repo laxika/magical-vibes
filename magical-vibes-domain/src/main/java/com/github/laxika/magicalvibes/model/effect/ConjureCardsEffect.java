@@ -92,7 +92,10 @@ public record ConjureCardsEffect(Cards cards, DynamicAmount count, ConjureDestin
         return new ConjureCardsEffect(new DuplicatesOf(Subjects.target(), filter), new Fixed(1), destination);
     }
 
-    /** "Conjure a duplicate of [that card] into [destination]": the cards {@code of} names in a public zone. */
+    /**
+     * "Conjure a duplicate of [that card] into [destination]": the cards {@code of} names in a public zone; for
+     * {@code Subjects.triggeringCardsInHand()} the cards an event put into a hand, as last known (CR 608.2h).
+     */
     public static ConjureCardsEffect duplicateOf(CardSubject of, ConjureDestination destination) {
         return new ConjureCardsEffect(new DuplicatesOfCards(of), new Fixed(1), destination);
     }

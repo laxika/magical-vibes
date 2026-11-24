@@ -13,9 +13,10 @@ import java.util.Objects;
  * {@link PlayerSubject}: "the exiled card", "each card put into a graveyard this way", "target creature card in your
  * graveyard". Built through {@link Subjects}; resolved only by the engine's {@code SubjectResolutionService}, which
  * names each card as it is now, in the zone it is expected to be in, and nothing for a card that has left that
- * zone (a card that moves is a new object, CR 400.7). Three variants name cards in a hidden zone, {@link InHand},
- * {@link InLibrary} and {@link TopmostInLibrary} ({@link #inHiddenZone()}): they say nothing about who may see
- * those cards.
+ * zone (a card that moves is a new object, CR 400.7). Five variants name cards in a hidden zone, {@link InHand},
+ * {@link InLibrary}, {@link TopmostInLibrary}, {@link TriggeringCardsInHand} and {@link Owned}
+ * ({@link #inHiddenZone()}): they say nothing about who may see those cards. {@link Owned} alone also names the cards
+ * of permanents and spells, so only the perpetual verbs read it.
  *
  * <p>{@link TargetCard} and {@link TargetExiledCard} declare a card target, and a variant of a target player's cards
  * that player ({@link #declaresTarget()}, {@link #targetSpec()}). Every variant reads a stack entry, so a
@@ -24,10 +25,11 @@ import java.util.Objects;
  * <p>The variants and the wording each stands for are listed in {@code agent-docs/SUBJECTS_REFERENCE.md}.
  */
 public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubject.TargetCard,
-        CardSubject.TriggeringCards, CardSubject.SourceCard, CardSubject.InYourGraveyard,
+        CardSubject.TriggeringCards, CardSubject.TriggeringCardsInHand, CardSubject.SourceCard, CardSubject.InYourGraveyard,
         CardSubject.InGraveyards, CardSubject.InExile, CardSubject.ExiledWithSource, CardSubject.Except,
         CardSubject.TargetExiledCard, CardSubject.TopOfGraveyard, CardSubject.InHand, CardSubject.InLibrary,
-        CardSubject.TopmostInLibrary, CardSubject.InCommandZone, CardSubject.ExiledAsCost, CardSubject.Voted {
+        CardSubject.TopmostInLibrary, CardSubject.InCommandZone, CardSubject.ExiledAsCost, CardSubject.Voted,
+        CardSubject.Owned {
 
     /** Whether this subject declares a target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -99,6 +101,22 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
      * @param filter which of the event's cards are named; {@code null} for all of them
      */
     record TriggeringCards(CardPredicate filter) implements CardSubject {
+    }
+
+    /**
+     * "That card", "those cards" of an event that put cards into a hand: "whenever a Kithkin card is put into your hand
+     * from your library", "whenever a card in your graveyard is put into your hand", "whenever you seek one or more
+     * cards": the event's cards, each while it is still in the hand it was put into (CR 400.7). A hand is hidden
+     * (CR 400.2), so a step that only needs information about such a card ("conjure a duplicate of that card") reads it
+     * as the event last knew it, also once it has left the hand (CR 608.2h; {@code SubjectResolutionService
+     * .cardsToDuplicate}).
+     */
+    record TriggeringCardsInHand() implements CardSubject {
+
+        @Override
+        public boolean inHiddenZone() {
+            return true;
+        }
     }
 
     /**
@@ -366,6 +384,32 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
         @Override
         public boolean declaresTarget() {
             return owners.declaresTarget();
+        }
+    }
+
+    /**
+     * "All creature cards you own with mana value 2 or less", "each card you own with {X} in its mana cost" (digital
+     * only): every card matching {@code filter} that a player {@code owners} names owns, in every zone: library,
+     * hand, graveyard, command zone, exile, the battlefield (a nontoken permanent's card, judged as the permanent is
+     * now and named as its own physical card, which a copy effect doesn't change) and the stack (a spell's card; no
+     * copy of a spell, which is no card, CR 707.10). Only for the perpetual verbs, which change the cards themselves:
+     * it names cards no mover may move.
+     *
+     * @param owners whose cards
+     * @param filter which cards; {@code null} for every card
+     */
+    record Owned(PlayerSubject owners, CardPredicate filter) implements CardSubject {
+
+        public Owned {
+            Objects.requireNonNull(owners, "owners");
+            if (owners.declaresTarget()) {
+                throw new IllegalArgumentException("The effect reading the cards declares a player target: " + owners);
+            }
+        }
+
+        @Override
+        public boolean inHiddenZone() {
+            return true;
         }
     }
 

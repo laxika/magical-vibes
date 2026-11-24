@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.cast.PerpetualCardCastCostSupport;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -111,8 +112,7 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
                 for (Card exiledCard : leavingCards) {
                     UUID exiledCardId = exiledCard.getId();
                     if (e.perpetualCastCostIncrease() != 0) {
-                        gameData.perpetualGenericCastCostIncreases.merge(
-                                exiledCardId, e.perpetualCastCostIncrease(), Integer::sum);
+                        PerpetualCardCastCostSupport.change(gameData, exiledCard, e.perpetualCastCostIncrease());
                     }
                     if (e.perpetualEnterTapped()) {
                         gameData.perpetualEnterTappedCardIds.add(exiledCardId);

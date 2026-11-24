@@ -172,8 +172,8 @@ class NaktamunShinesAgainTest extends BaseCardTest {
 
         triggerChapter();
 
-        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals("Naktamun Shines Again perpetually gives"
-                + " +1/+0 to each matching card " + gd.playerIdToName.get(player1.getId()) + " owns."));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals("Each affected card "
+                + gd.playerIdToName.get(player1.getId()) + " owns perpetually gets +1/+0."));
         assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("card(s)"));
     }
 }

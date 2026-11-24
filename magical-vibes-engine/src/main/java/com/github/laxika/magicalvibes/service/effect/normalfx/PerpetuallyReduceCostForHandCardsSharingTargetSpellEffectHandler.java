@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyReduceCostForHandCardsSharingTargetSpellEffect;
+import com.github.laxika.magicalvibes.service.cast.PerpetualCardCastCostSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -51,7 +52,7 @@ public class PerpetuallyReduceCostForHandCardsSharingTargetSpellEffectHandler
         List<Card> hand = gameData.playerHands.getOrDefault(entry.getControllerId(), List.of());
         for (Card card : hand) {
             if (counterSupport.sharesCardType(card, targetCardTypes)) {
-                gameData.perpetualGenericCastCostIncreases.merge(card.getId(), -1, Integer::sum);
+                PerpetualCardCastCostSupport.change(gameData, card, -1);
             }
         }
     }

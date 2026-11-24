@@ -349,6 +349,14 @@ public final class Subjects {
     }
 
     /**
+     * "That card", "those cards" after "whenever a card is put into your hand from [zone]" or "whenever you seek one or
+     * more cards": the event's cards in the hand they were put into.
+     */
+    public static CardSubject triggeringCardsInHand() {
+        return new CardSubject.TriggeringCardsInHand();
+    }
+
+    /**
      * "The exiled card" after "exile a card from your graveyard" as a cost, "the exiled cards" after "exile two creature
      * cards from your graveyard": {@link CardSubject.ExiledAsCost}.
      */
@@ -450,6 +458,14 @@ public final class Subjects {
     /** "The topmost creature card in your library": the matching card nearest the top of your library. */
     public static CardSubject topmostCardInYourLibrary(CardPredicate filter) {
         return new CardSubject.TopmostInLibrary(you(), filter);
+    }
+
+    /**
+     * "All [filter] cards you own" (digital only): those cards in every zone, the battlefield and the stack included;
+     * only for the perpetual verbs.
+     */
+    public static CardSubject cardsYouOwn(CardPredicate filter) {
+        return new CardSubject.Owned(you(), filter);
     }
 
     /** "From the command zone": the cards matching {@code filter} in the controller's command zone. */

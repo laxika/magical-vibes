@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.cast.PerpetualCardCastCostSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -65,8 +66,7 @@ public class PerpetualPowerToughnessChoiceInteractionHandler
                     });
         }
         if (interaction.genericCostReduction() != 0) {
-            gameData.perpetualGenericCastCostIncreases.merge(
-                    chosenCard.getId(), -interaction.genericCostReduction(), Integer::sum);
+            PerpetualCardCastCostSupport.change(gameData, chosenCard, -interaction.genericCostReduction());
         }
         if (interaction.noncombatDamageBonus() != 0) {
             GameData.addDamageBonusGrant(gameData.perpetualNoncombatDamageBonuses, chosenCard.getId(),

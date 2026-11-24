@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfCardReturnedFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -12,6 +14,6 @@ public class VeteranGhoulcaller extends Card {
 
     public VeteranGhoulcaller() {
         addTrigger(Triggers.putIntoHandFrom(Zone.GRAVEYARD, null, ObjectRelation.YOU_OWN),
-                new ConjureDuplicateOfCardReturnedFromGraveyardToHandEffect());
+                ConjureCardsEffect.duplicateOf(Subjects.triggeringCardsInHand(), ConjureDestination.intoHand()));
     }
 }

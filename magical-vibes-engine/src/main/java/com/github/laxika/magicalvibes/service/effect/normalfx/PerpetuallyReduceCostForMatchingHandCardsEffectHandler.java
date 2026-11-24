@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyReduceCostForMatchingHandCardsEffect;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.cast.PerpetualCardCastCostSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -32,8 +33,7 @@ public class PerpetuallyReduceCostForMatchingHandCardsEffectHandler
         for (Card card : hand) {
             if (predicateEvaluationService.matchesCardPredicate(
                     card, reduction.filter(), null, gameData, controllerId)) {
-                gameData.perpetualGenericCastCostIncreases.merge(
-                        card.getId(), -reduction.amount(), Integer::sum);
+                PerpetualCardCastCostSupport.change(gameData, card, -reduction.amount());
             }
         }
     }

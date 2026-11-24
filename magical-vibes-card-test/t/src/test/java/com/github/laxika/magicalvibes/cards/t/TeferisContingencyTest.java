@@ -139,7 +139,7 @@ class TeferisContingencyTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, castCopy.getId());
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(castCopy);
-        assertThat(PerpetualCardCastCostSupport.increaseFor(gd, castCopy)).isZero();
-        assertThat(PerpetualCardCastCostSupport.increaseFor(gd, handCopy)).isZero();
+        assertThat(PerpetualCardCastCostSupport.changeFor(gd, castCopy)).isZero();
+        assertThat(PerpetualCardCastCostSupport.changeFor(gd, handCopy)).isZero();
     }
 }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetualReduceRandomGreatestManaValueCreatureCardCostEffect;
+import com.github.laxika.magicalvibes.service.cast.PerpetualCardCastCostSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -40,7 +41,6 @@ public class PerpetualReduceRandomGreatestManaValueCreatureCardCostEffectHandler
                 .filter(card -> card.getManaValue() == greatestManaValue)
                 .toList();
         Card chosen = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
-        gameData.perpetualCardCastCostReductions.merge(
-                chosen.getId(), reduction.amount(), Integer::sum);
+        PerpetualCardCastCostSupport.remember(gameData, chosen, reduction.amount());
     }
 }

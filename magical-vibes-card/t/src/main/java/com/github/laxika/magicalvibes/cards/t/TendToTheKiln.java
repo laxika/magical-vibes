@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantCardCharacteristicsToOwnedCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantCardCharacteristicsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -29,20 +29,20 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "YECL", collectorNumber = "13")
 public class TendToTheKiln extends Card {
 
     public TendToTheKiln() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new PerpetuallyGrantCardCharacteristicsToOwnedCardsEffect(
-                        new CardAllOfPredicate(List.of(
+                new PerpetuallyGrantCardCharacteristicsEffect(
+                        Set.of(CardType.KINDRED), Set.of(CardSubtype.ELEMENTAL), List.of())
+                        .to(Subjects.cardsYouOwn(new CardAllOfPredicate(List.of(
                                 new CardAnyOfPredicate(List.of(
                                         new CardTypePredicate(CardType.INSTANT),
                                         new CardTypePredicate(CardType.SORCERY))),
-                                new CardNotPredicate(new CardSubtypePredicate(CardSubtype.ELEMENTAL)))),
-                        CardType.KINDRED,
-                        CardSubtype.ELEMENTAL));
+                                new CardNotPredicate(new CardSubtypePredicate(CardSubtype.ELEMENTAL)))))));
 
         addTrigger(Triggers.youCastSpell().withFilter(new CardSubtypePredicate(CardSubtype.ELEMENTAL)),
                 new PutCountersOnSelfEffect(CounterType.FLAME),

@@ -572,9 +572,7 @@ public class CastingCostService {
         int delta = (sourceZone == Zone.COMMAND || playerId.equals(gameData.commandCastPlayerId))
                 && card.getStaticEffects().stream().noneMatch(PayLifeInsteadOfCommanderTaxEffect.class::isInstance)
                 ? gameData.commanderTaxByCardId.getOrDefault(commanderId, 0) : 0;
-        delta -= PerpetualCardCastCostSupport.reductionFor(gameData, card);
-        delta += PerpetualCardCastCostSupport.increaseFor(gameData, card);
-        delta += gameData.perpetualGenericCastCostIncreases.getOrDefault(card.getId(), 0);
+        delta += PerpetualCardCastCostSupport.changeFor(gameData, card);
         List<CollectedCostModifier> afterOtherModifiers = new ArrayList<>();
         var exilePlayCostModifier = gameData.exilePlayCostModifier(card.getId());
         if (exilePlayCostModifier != null

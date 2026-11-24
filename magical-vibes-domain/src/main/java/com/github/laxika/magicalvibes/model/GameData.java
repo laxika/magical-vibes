@@ -562,13 +562,12 @@ public class GameData {
     /** Perpetual valued spell-casting abilities granted to physical cards, keyed by card id. */
     public final Map<UUID, List<SpellCastingAbilityGrantingEffect>> perpetualCardSpellCastingAbilityGrants =
             new ConcurrentHashMap<>();
-    /** Perpetual generic spell-cost reductions granted to physical cards, keyed by stable card id. */
-    public final Map<UUID, Integer> perpetualCardCastCostReductions = new ConcurrentHashMap<>();
-    /** Perpetual generic spell-cost increases granted to physical cards, keyed by stable card id. */
-    public final Map<UUID, Integer> perpetualCardCastCostIncreases = new ConcurrentHashMap<>();
     /** Total toxic value perpetually gained by a card (each grant adds 1), keyed by the card's identity. */
     public final Map<UUID, Integer> perpetualToxicValues = new ConcurrentHashMap<>();
-    /** Perpetual generic cast-cost increases keyed by the affected card's identity. */
+    /**
+     * The one store of perpetual generic cast-cost changes, keyed by the affected card's identity: how much more generic
+     * mana it costs to cast, negative for less; written through {@code PerpetualCardCastCostSupport}.
+     */
     public final Map<UUID, Integer> perpetualGenericCastCostIncreases = new ConcurrentHashMap<>();
     /** Perpetual colored mana-cost additions keyed by the affected card's identity. */
     public final Map<UUID, ManaCost> perpetualManaCostIncreases = new ConcurrentHashMap<>();
@@ -10182,8 +10181,6 @@ public class GameData {
         copy.perpetualCreatureTypeReplacedCardIds.addAll(this.perpetualCreatureTypeReplacedCardIds);
         this.perpetualEvokeAlternateCasts.forEach((cardId, alternateCasts) ->
                 copy.perpetualEvokeAlternateCasts.put(cardId, List.copyOf(alternateCasts)));
-        copy.perpetualCardCastCostReductions.putAll(this.perpetualCardCastCostReductions);
-        copy.perpetualCardCastCostIncreases.putAll(this.perpetualCardCastCostIncreases);
         copy.cardsGrantedPerpetualUnearth.addAll(this.cardsGrantedPerpetualUnearth);
         this.perpetualCardRemovedKeywords.forEach((cardId, keywords) -> {
             Set<Keyword> copiedKeywords = ConcurrentHashMap.newKeySet();

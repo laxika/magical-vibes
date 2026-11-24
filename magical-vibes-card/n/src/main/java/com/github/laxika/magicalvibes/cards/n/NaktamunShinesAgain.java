@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostOwnedCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
@@ -23,8 +23,8 @@ public class NaktamunShinesAgain extends Card {
 
     public NaktamunShinesAgain() {
         addTrigger(Triggers.chapter(1),
-                new PerpetuallyBoostOwnedCardsEffect(new CardAllOfPredicate(List.of(
-                        new CardTypePredicate(CardType.CREATURE), new CardMaxManaValuePredicate(2))), 1, 0));
+                PerpetuallyBoostCardEffect.toCards(Subjects.cardsYouOwn(new CardAllOfPredicate(List.of(
+                        new CardTypePredicate(CardType.CREATURE), new CardMaxManaValuePredicate(2)))), 1, 0));
         addTrigger(Triggers.chapter(2),
                 new SeekLibraryEffect(new CardTypePredicate(CardType.CREATURE), 2));
         addTrigger(Triggers.chapter(3),

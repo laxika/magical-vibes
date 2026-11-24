@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryAndPerpetuallyModifySoughtCardEffect;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
+import com.github.laxika.magicalvibes.service.cast.PerpetualCardCastCostSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -59,8 +60,7 @@ public class SeekLibraryAndPerpetuallyModifySoughtCardEffectHandler
                     SeekLibraryAndPerpetuallyModifySoughtCardEffectHandler::mergeKeywords);
         }
         if (seek.genericCastCostReduction() > 0) {
-            gameData.perpetualCardCastCostReductions.merge(
-                    cardId, seek.genericCastCostReduction(), Integer::sum);
+            PerpetualCardCastCostSupport.remember(gameData, sought, seek.genericCastCostReduction());
         }
         if (seek.grantedAbility() != null) {
             gameData.grantPerpetualAbility(cardId, seek.grantedAbility());

@@ -20,7 +20,9 @@ import java.util.UUID;
  * public (CR 400.2): a card in a public zone is named, one line each, but the cards in a hand or library get one line
  * per owner and zone, "Each affected card in Alice's hand perpetually gains an ability.", which names no card and gives
  * no count. An instruction over the cards in a hand or library ({@link CardSubject#inHiddenZone()}) logs that line also
- * when no card there matches, so the line doesn't tell whether one did.
+ * when no card there matches, so the line doesn't tell whether one did. An instruction over every card a player owns
+ * ({@link CardSubject.Owned}) is one line per owner, "Each affected card Alice owns perpetually gets +1/+1.", which
+ * names no card even where some are public: it may name hidden and face-down ones too.
  */
 final class PerpetualChangeLog {
 
@@ -35,6 +37,13 @@ final class PerpetualChangeLog {
     static void log(GameLogService gameLogService, SubjectResolutionService subjectResolutionService,
                     GameData gameData, StackEntry entry, CardEffect effect, CardSubject subject,
                     List<LocatedCard> located, String change) {
+        if (subject instanceof CardSubject.Owned owned) {
+            for (UUID owner : subjectResolutionService.players(gameData, entry, effect, owned.owners())) {
+                gameLogService.append(gameData, GameLog.text("Each affected card "
+                        + gameData.playerIdToName.get(owner) + " owns" + change));
+            }
+            return;
+        }
         Set<HiddenZone> hiddenZones = new LinkedHashSet<>();
         addHiddenZones(subjectResolutionService, gameData, entry, effect, subject, hiddenZones);
         for (LocatedCard card : located) {

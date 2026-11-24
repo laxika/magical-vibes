@@ -1626,6 +1626,72 @@ class SubjectResolutionServiceTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("The cards an event put into a hand are named while there; a duplicate reads one that left as last known")
+        void triggeringCardsInHand() {
+            Card bears = new GrizzlyBears();
+            Card giant = new HillGiant();
+            harness.setHand(player1, List.of(bears, giant));
+            StackEntry entry = entry(player1, null, null);
+            entry.setTriggeringCards(List.of(bears, giant));
+
+            assertThat(subjects.locatedCards(gd, entry, EFFECT, Subjects.triggeringCardsInHand()))
+                    .containsExactly(new SubjectResolutionService.LocatedCard(bears, Zone.HAND, player1.getId()),
+                            new SubjectResolutionService.LocatedCard(giant, Zone.HAND, player1.getId()));
+
+            harness.setHand(player1, List.of(giant));
+            assertThat(subjects.cards(gd, entry, EFFECT, Subjects.triggeringCardsInHand())).containsExactly(giant);
+            assertThat(subjects.cardsToDuplicate(gd, entry, EFFECT, Subjects.triggeringCardsInHand()))
+                    .extracting(SubjectResolutionService.LocatedCard::card).containsExactly(bears, giant);
+        }
+
+        @Test
+        @DisplayName("The cards a player owns are named in every zone, a permanent's as its physical card, no token")
+        void cardsYouOwn() {
+            Card inLibrary = new GrizzlyBears();
+            Card inHand = new GrizzlyBears();
+            Card inGraveyard = new GrizzlyBears();
+            Card inExile = new GrizzlyBears();
+            Card opponents = new GrizzlyBears();
+            Card land = new Forest();
+            harness.setLibrary(player1, List.of(inLibrary, land));
+            harness.setHand(player1, List.of(inHand));
+            harness.setGraveyard(player1, List.of(inGraveyard));
+            harness.setGraveyard(player2, List.of(opponents));
+            gd.addToExile(player1.getId(), inExile);
+            Permanent onBattlefield = addCreatureReady(player1, new HillGiant());
+            Card tokenCard = new GrizzlyBears();
+            tokenCard.setToken(true);
+            addCreatureReady(player1, tokenCard);
+            StackEntry entry = entry(player1, null, null);
+            CardPredicate creature = new CardTypePredicate(CardType.CREATURE);
+
+            assertThat(subjects.locatedCards(gd, entry, EFFECT, Subjects.cardsYouOwn(creature)))
+                    .containsExactlyInAnyOrder(
+                            new SubjectResolutionService.LocatedCard(inLibrary, Zone.LIBRARY, player1.getId()),
+                            new SubjectResolutionService.LocatedCard(inHand, Zone.HAND, player1.getId()),
+                            new SubjectResolutionService.LocatedCard(inGraveyard, Zone.GRAVEYARD, player1.getId()),
+                            new SubjectResolutionService.LocatedCard(inExile, Zone.EXILE, player1.getId()),
+                            new SubjectResolutionService.LocatedCard(onBattlefield.getOriginalCard(), Zone.BATTLEFIELD,
+                                    player1.getId()));
+        }
+
+        @Test
+        @DisplayName("A permanent that is a copy is judged as the copy and named as its own physical card")
+        void cardsYouOwnNamesACopysPhysicalCard() {
+            harness.setLibrary(player1, List.of());
+            harness.setHand(player1, List.of());
+            Card forest = new Forest();
+            Permanent copying = harness.addToBattlefieldAndReturn(player1, forest);
+            copying.setCard(new GrizzlyBears());
+            StackEntry entry = entry(player1, null, null);
+
+            assertThat(subjects.locatedCards(gd, entry, EFFECT,
+                    Subjects.cardsYouOwn(new CardTypePredicate(CardType.CREATURE))))
+                    .containsExactly(new SubjectResolutionService.LocatedCard(forest, Zone.BATTLEFIELD,
+                            player1.getId()));
+        }
+
+        @Test
         @DisplayName("A target card is named while it is in a graveyard of its scope and matches its filter")
         void targetCard() {
             Card bears = new GrizzlyBears();

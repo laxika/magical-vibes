@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostOwnedCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,6 +23,6 @@ public class UnbreakableRemnant extends Card {
                 false, false, true));
         addTrigger(Triggers.youCastThisSpell(),
                 TriggerOptions.DEFAULT.withInterveningIf(new CastFromZone(Zone.GRAVEYARD)),
-                new PerpetuallyBoostOwnedCardsEffect(new CardNamedPredicate("Unbreakable Remnant"), 1, 1));
+                PerpetuallyBoostCardEffect.toCards(Subjects.cardsYouOwn(new CardNamedPredicate("Unbreakable Remnant")), 1, 1));
     }
 }

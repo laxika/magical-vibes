@@ -156,6 +156,10 @@ public class SubjectResolutionService {
                     .toList();
             case CardSubject.TargetCard target -> targetCard(gameData, entry, target);
             case CardSubject.TriggeringCards triggering -> triggeringCards(gameData, entry, triggering);
+            case CardSubject.TriggeringCardsInHand ignored -> eventCardsPutIntoHand(entry).stream()
+                    .map(card -> locate(gameData, card.getId(), Zone.HAND))
+                    .filter(Objects::nonNull)
+                    .toList();
             case CardSubject.SourceCard ignored -> sourceCard(gameData, entry);
             case CardSubject.InGraveyards in -> inGraveyards(gameData, entry, effect, in);
             case CardSubject.InExile in -> inExile(gameData, entry, effect, in);
@@ -183,6 +187,7 @@ public class SubjectResolutionService {
                     })
                     .filter(Objects::nonNull)
                     .toList();
+            case CardSubject.Owned owned -> owned(gameData, entry, effect, owned);
             case CardSubject.InYourGraveyard yours -> locatedCards(gameData, entry, effect, yours.cards()).stream()
                     .filter(located -> located.zone() == Zone.GRAVEYARD
                             && entry.getControllerId().equals(located.ownerId()))
@@ -317,8 +322,42 @@ public class SubjectResolutionService {
         return cards.stream().filter(card -> !card.isToken()).toList();
     }
 
+    /**
+     * The originals of "conjure a duplicate of [those cards]", each where it is: the cards {@code subject} names, but
+     * for {@link CardSubject.TriggeringCardsInHand} each card the event put into a hand as the event recorded it, also
+     * once it has left that hand: a hand is hidden, so the duplicate reads the card's last known information
+     * (CR 608.2h). No token, which is no card (CR 108.2b).
+     */
+    public List<LocatedCard> cardsToDuplicate(GameData gameData, StackEntry entry, CardEffect effect,
+                                              CardSubject subject) {
+        if (!(subject instanceof CardSubject.TriggeringCardsInHand)) {
+            return locatedCards(gameData, entry, effect, subject).stream()
+                    .filter(located -> !located.card().isToken()).toList();
+        }
+        List<LocatedCard> originals = new ArrayList<>();
+        for (Card card : eventCardsPutIntoHand(entry)) {
+            if (card.isToken()) {
+                continue;
+            }
+            LocatedCard inHand = locate(gameData, card.getId(), Zone.HAND);
+            originals.add(inHand != null ? inHand : new LocatedCard(card, Zone.HAND, gameData.ownerOf(card)));
+        }
+        return originals;
+    }
+
+    /** The cards a "put into a hand" or seek event was about, as the entry recorded them, each once. */
+    private static List<Card> eventCardsPutIntoHand(StackEntry entry) {
+        if (!entry.getTriggeringCards().isEmpty()) {
+            Map<UUID, Card> byId = new LinkedHashMap<>();
+            entry.getTriggeringCards().forEach(card -> byId.putIfAbsent(card.getId(), card));
+            return List.copyOf(byId.values());
+        }
+        return entry.getTriggeringCardSnapshot() == null ? List.of() : List.of(entry.getTriggeringCardSnapshot());
+    }
+
     /** A card a {@link CardSubject} names, in the zone it is in ({@link Zone#GRAVEYARD}, {@link Zone#EXILE},
-     * {@link Zone#COMMAND}, or a hand or library for a subject of one, a sought, revealed or chosen card). */
+     * {@link Zone#COMMAND}, or a hand or library for a subject of one, a sought, revealed or chosen card; the
+     * battlefield or the stack only for {@link CardSubject.Owned}). */
     public record LocatedCard(Card card, Zone zone, UUID ownerId) {
     }
 
@@ -446,6 +485,62 @@ public class SubjectResolutionService {
             }
         }
         return named;
+    }
+
+    /**
+     * {@link CardSubject.Owned}: the matching cards those players own in each zone, each once: a library, hand,
+     * graveyard or command zone card (one with no owner recorded belongs to the player whose zone it is in), an exiled
+     * card, a nontoken permanent's physical card judged as the permanent is now, and a spell's card, no copy.
+     */
+    private List<LocatedCard> owned(GameData gameData, StackEntry entry, CardEffect effect, CardSubject.Owned owned) {
+        Set<UUID> owners = new LinkedHashSet<>(players(gameData, entry, effect, owned.owners()));
+        Map<UUID, LocatedCard> named = new LinkedHashMap<>();
+        for (var zone : List.of(Map.entry(Zone.LIBRARY, gameData.playerDecks), Map.entry(Zone.HAND, gameData.playerHands),
+                Map.entry(Zone.GRAVEYARD, gameData.playerGraveyards),
+                Map.entry(Zone.COMMAND, gameData.playerCommandZones))) {
+            zone.getValue().forEach((zoneOwnerId, cards) -> {
+                for (Card card : List.copyOf(cards)) {
+                    UUID ownerId = Objects.requireNonNullElse(gameData.ownerOf(card), zoneOwnerId);
+                    addOwned(gameData, entry, owned, owners, named, card, card, zone.getKey(), ownerId);
+                }
+            });
+        }
+        gameData.playerBattlefields.forEach((controllerId, permanents) -> {
+            for (Permanent permanent : List.copyOf(permanents)) {
+                Card physical = permanent.getOriginalCard() != null ? permanent.getOriginalCard() : permanent.getCard();
+                if (permanent.getCard().isToken() || physical.isToken()) {
+                    continue;
+                }
+                UUID ownerId = Objects.requireNonNullElse(gameData.ownerOf(physical), controllerId);
+                addOwned(gameData, entry, owned, owners, named, permanent.getCard(), physical, Zone.BATTLEFIELD,
+                        ownerId);
+            }
+        });
+        List<ExiledCardEntry> exiled;
+        synchronized (gameData.exiledCards) {
+            exiled = List.copyOf(gameData.exiledCards);
+        }
+        for (ExiledCardEntry held : exiled) {
+            addOwned(gameData, entry, owned, owners, named, held.card(), held.card(), Zone.EXILE, held.ownerId());
+        }
+        for (StackEntry spell : List.copyOf(gameData.stack)) {
+            if (spell.getEntryType().isAbility() || spell.isCopy() || spell.getCard() == null) {
+                continue;
+            }
+            addOwned(gameData, entry, owned, owners, named, spell.getCard(), spell.getCard(), Zone.STACK,
+                    gameData.ownerOf(spell.getCard()));
+        }
+        return List.copyOf(named.values());
+    }
+
+    /** Names {@code physical} for {@link #owned} when it is a card one of {@code owners} owns and {@code judged} matches. */
+    private void addOwned(GameData gameData, StackEntry entry, CardSubject.Owned owned, Set<UUID> owners,
+                          Map<UUID, LocatedCard> named, Card judged, Card physical, Zone zone, UUID ownerId) {
+        if (physical.isToken() || ownerId == null || !owners.contains(ownerId) || named.containsKey(physical.getId())
+                || !cardMatches(gameData, entry, judged, ownerId, owned.filter())) {
+            return;
+        }
+        named.put(physical.getId(), new LocatedCard(physical, zone, ownerId));
     }
 
     /** {@link CardSubject.TopmostInLibrary}: in each library, the first card from the top that matches. */

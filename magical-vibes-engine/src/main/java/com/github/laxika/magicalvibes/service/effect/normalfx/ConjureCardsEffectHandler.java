@@ -161,11 +161,8 @@ public class ConjureCardsEffectHandler implements NormalEffectHandlerBean {
                 }
             }
             case ConjureCardsEffect.DuplicatesOfCards of -> {
-                for (var located : subjectResolutionService.locatedCards(gameData, entry, conjure, of.of())) {
+                for (var located : subjectResolutionService.cardsToDuplicate(gameData, entry, conjure, of.of())) {
                     Card original = located.card();
-                    if (original.isToken()) {
-                        continue;
-                    }
                     ExiledCardEntry exiled = located.zone() == Zone.EXILE ? gameData.findExiledCard(original.getId())
                             : null;
                     boolean named = located.zone() != Zone.HAND && located.zone() != Zone.LIBRARY

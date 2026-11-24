@@ -36,7 +36,7 @@ class RichlauHeadmasterTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
                 .containsExactly(nonArtifact.getId());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, target, bottomCard);
-        assertThat(gd.perpetualCardCastCostReductions).containsEntry(target.getId(), 1);
+        assertThat(gd.perpetualGenericCastCostIncreases).containsEntry(target.getId(), -1);
         assertThat(gd.perpetualCardPowerToughnessModifiers).doesNotContainKey(target.getId());
     }
 
@@ -52,7 +52,7 @@ class RichlauHeadmasterTest extends BaseCardTest {
         resolveRichlauAndPay(target);
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, target);
-        assertThat(gd.perpetualCardCastCostReductions).containsEntry(target.getId(), 1);
+        assertThat(gd.perpetualGenericCastCostIncreases).containsEntry(target.getId(), -1);
         assertThat(gd.perpetualCardPowerToughnessModifiers)
                 .containsEntry(target.getId(), new CardPowerToughnessModifier(2, 2));
     }
@@ -70,7 +70,7 @@ class RichlauHeadmasterTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(target);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
-        assertThat(gd.perpetualCardCastCostReductions).doesNotContainKey(target.getId());
+        assertThat(gd.perpetualGenericCastCostIncreases).doesNotContainKey(target.getId());
     }
 
     @Test
@@ -90,7 +90,7 @@ class RichlauHeadmasterTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.perpetualCardCastCostReductions).doesNotContainKey(target.getId());
+        assertThat(gd.perpetualGenericCastCostIncreases).doesNotContainKey(target.getId());
     }
 
     private void resolveRichlauAndPay(Card target) {

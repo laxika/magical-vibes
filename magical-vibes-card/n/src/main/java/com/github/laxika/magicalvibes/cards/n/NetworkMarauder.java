@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostOwnedCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -30,8 +31,8 @@ public class NetworkMarauder extends Card {
             ARTIFACT_CREATURE,
             new CardSubtypePredicate(CardSubtype.SPACECRAFT)));
 
-    private static final PerpetuallyBoostOwnedCardsEffect BOOST =
-            new PerpetuallyBoostOwnedCardsEffect(BOOSTED_CARDS, 1, 1);
+    private static final PerpetuallyBoostCardEffect BOOST =
+            PerpetuallyBoostCardEffect.toCards(Subjects.cardsYouOwn(BOOSTED_CARDS), 1, 1);
 
     public NetworkMarauder() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{1}{U}"))));

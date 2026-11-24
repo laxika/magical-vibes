@@ -271,10 +271,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    /** Vodalian Tide Mage: choose one of the creatures from the triggering combat-damage event. */
-    record ConjureDuplicateOfCombatDamageDealerChoice(UUID controllerId, Card sourceCard,
-                                                       List<UUID> combatDamageDealerIds)
-            implements PermanentChoiceContext {}
     record ZndrsplatsJudgmentCreatureChoice(
             List<ZndrsplatsJudgmentSelection> remainingSelections,
             List<ZndrsplatsJudgmentSelection> chosenSelections,

@@ -52,7 +52,7 @@ class PlunderersPrizeTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Fountain of Youth");
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(prize);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(prize);
-        assertThat(gd.perpetualCardCastCostIncreases).doesNotContainKey(prize.getId());
+        assertThat(gd.perpetualGenericCastCostIncreases).doesNotContainKey(prize.getId());
     }
 
     @Test
@@ -161,7 +161,7 @@ class PlunderersPrizeTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(thopter);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(prize);
         harness.assertNotInHand(player1, "Plunderer's Prize");
-        assertThat(gd.perpetualCardCastCostIncreases).doesNotContainKey(prize.getId());
+        assertThat(gd.perpetualGenericCastCostIncreases).doesNotContainKey(prize.getId());
     }
 
     private void addManaForX(int xValue) {

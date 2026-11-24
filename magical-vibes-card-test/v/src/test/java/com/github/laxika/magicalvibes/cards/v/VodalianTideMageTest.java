@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,9 +12,11 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -42,6 +45,25 @@ class VodalianTideMageTest extends BaseCardTest {
                     assertThat(card.getId()).isNotEqualTo(attacker.getCard().getId());
                     assertThat(card.getOwnerId()).isEqualTo(player1.getId());
                 });
+    }
+
+    @Test
+    @DisplayName("A duplicate of a face-down dealer has only its face-down values, and the log names no card")
+    void duplicateOfAFaceDownDealerIsANamelessTwoTwo() {
+        addCreatureReady(player1, new VodalianTideMage());
+        Permanent attacker = addCreatureReady(player1, new ShivanDragon());
+        attacker.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        attacker.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).singleElement().satisfies(duplicate -> {
+            assertThat(duplicate.getName()).isEmpty();
+            assertThat(duplicate.getPower()).isEqualTo(2);
+            assertThat(duplicate.getToughness()).isEqualTo(2);
+        });
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("Shivan Dragon"));
     }
 
     @Test

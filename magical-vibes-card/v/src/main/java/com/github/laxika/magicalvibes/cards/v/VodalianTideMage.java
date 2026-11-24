@@ -2,7 +2,12 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -22,6 +27,9 @@ public class VodalianTideMage extends Card {
                 new PermanentNotPredicate(new PermanentIsTokenPredicate())));
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer().withFilter(otherNontokenCreature),
                 TriggerOptions.ONE_OR_MORE,
-                new ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffect());
+                SequenceEffect.of(
+                        ChoosePermanentsEffect.exactly(1, Subjects.triggeringAll(), "one of those creatures"),
+                        ConjureCardsEffect.duplicateOf(Subjects.thisWay(StepKind.CHOOSE),
+                                ConjureDestination.intoHand())));
     }
 }

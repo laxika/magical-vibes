@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
+import com.github.laxika.magicalvibes.service.cast.PerpetualCardCastCostSupport;
 import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
@@ -409,6 +410,24 @@ class GameDataDeepCopyTest {
                 .isEqualTo(new CardPowerToughnessModifier(3, 3));
         assertThat(gd.perpetualCardPowerToughnessModifiers.get(card.getId()))
                 .isEqualTo(new CardPowerToughnessModifier(1, 1));
+    }
+
+    @Test
+    @DisplayName("Deep copy keeps perpetual cast-cost changes in their one store, and the copy's changes stay its own")
+    void deepCopyPreservesPerpetualCastCostChangesIndependently() {
+        Card cheaper = new GrizzlyBears();
+        Card dearer = new GrizzlyBears();
+        PerpetualCardCastCostSupport.remember(gd, cheaper, 1);
+        PerpetualCardCastCostSupport.rememberIncrease(gd, dearer, 2);
+
+        GameData copy = gd.simulationCopy();
+        PerpetualCardCastCostSupport.remember(copy, cheaper, 2);
+        PerpetualCardCastCostSupport.remember(copy, dearer, 2);
+
+        assertThat(PerpetualCardCastCostSupport.changeFor(copy, cheaper)).isEqualTo(-3);
+        assertThat(copy.perpetualGenericCastCostIncreases).doesNotContainKey(dearer.getId());
+        assertThat(PerpetualCardCastCostSupport.changeFor(gd, cheaper)).isEqualTo(-1);
+        assertThat(PerpetualCardCastCostSupport.changeFor(gd, dearer)).isEqualTo(2);
     }
 
     @Test

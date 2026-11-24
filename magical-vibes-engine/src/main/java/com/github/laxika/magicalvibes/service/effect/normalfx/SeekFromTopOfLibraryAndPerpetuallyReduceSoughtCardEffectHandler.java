@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekFromTopOfLibraryAndPerpetuallyReduceSoughtCardEffect;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
+import com.github.laxika.magicalvibes.service.cast.PerpetualCardCastCostSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -53,8 +54,7 @@ public class SeekFromTopOfLibraryAndPerpetuallyReduceSoughtCardEffectHandler
         if (chosenCard != null) {
             cardsToReturn.remove(chosenCard);
             gameData.playerHands.get(controllerId).add(chosenCard);
-            gameData.perpetualCardCastCostReductions.merge(
-                    chosenCard.getId(), seek.costReduction(), Integer::sum);
+            PerpetualCardCastCostSupport.remember(gameData, chosenCard, seek.costReduction());
         }
 
         gameData.playerDecks.get(controllerId).addAll(cardsToReturn);
