@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetPermanentUntilYourNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSubjectEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyExceptions;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -20,7 +22,6 @@ import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "MSH", collectorNumber = "199")
 public class AbsorbingMan extends Card {
@@ -38,11 +39,13 @@ public class AbsorbingMan extends Card {
                 targetPredicate,
                 "Target must be an artifact, non-Aura enchantment, or land"), 0, 1)
                 .addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
-                        new BecomeCopyOfTargetPermanentUntilYourNextTurnEffect(
-                                "Absorbing Man", 4, 4,
-                                Set.of(CardSubtype.HUMAN, CardSubtype.VILLAIN),
-                                Set.of(CardType.CREATURE),
-                                Set.of(CardSupertype.LEGENDARY),
-                                Set.of(Keyword.VIGILANCE)));
+                        BecomeCopyOfSubjectEffect.of(Subjects.target())
+                                .lasting(Duration.UNTIL_YOUR_NEXT_TURN)
+                                .except(CopyExceptions.named("Absorbing Man")
+                                        .alsoLegendary()
+                                        .alsoWithBasePowerToughness(4, 4)
+                                        .alsoStillA(CardType.CREATURE)
+                                        .alsoWithSubtypes(CardSubtype.HUMAN, CardSubtype.VILLAIN)
+                                        .alsoWithKeywords(Keyword.VIGILANCE)));
     }
 }

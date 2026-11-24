@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20 (each in Findings; the fold queue marks its rows). Fold runs 17c, 21 and 12e are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                               |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c (each in Findings; the fold queue marks its rows). Fold runs 21 and 12e are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,653 / 2,914 (after fold run 20) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,648 / 2,909 (after fold run 17c) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,612 rows over 4,431 classes (after fold run 20). Latest verdict per class: `step-9` 797, unique 1,169, absorbed 742, split 616, blocked-other 507, survivor 302, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 797 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,620 rows over 4,433 classes (after fold run 17c). Latest verdict per class: `step-9` 793, unique 1,169, absorbed 747, split 616, blocked-other 507, survivor 303, blocked-step-model 140, blocked-player-loop 96, dead 62. Waiting: 793 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -735,6 +735,10 @@ Delayed and global triggers:
 - `Subjects.ownersOf(CardSubject)` (`PlayerSubject.OwnersOfCards`): "the exiled card's owner [seeks]" (fold run 20).
 - `ChooseOneAtResolutionEffect.secretly(choice)`: "secretly choose land or nonland", mode not logged (fold run 20).
 - "Seek N; put one onto the battlefield / keep one and shuffle the rest": `SeekLibraryEffect` + `ChooseCardEffect.oneOf(cardsThisWay(SEEK))` + mover + `PutCardsIntoLibraryEffect.onBottomInRandomOrder(except(cardsThisWay(SEEK), cardsThisWay(CHOOSE)))` + `ShuffleLibraryEffect(false)`; a choice among sought cards is hidden (`CardsThisWay(SEEK).inHiddenZone()`) (fold run 20).
+
+- `Subjects.paidAsCost()` (`PermanentSubject.PaidAsCost`): "the sacrificed / exiled creature" of the cost, read as it last existed; `lastKnownCopiableCard` reads the cost-tracked snapshots (fold run 17c).
+- `CopyExceptions.alsoStillA`, `.alsoWithSubtypes` (CR 205.3d), `.alsoColored`, `.withAbilities` / `.alsoWithAbilities` (CR 707.9a); a kept ability is one instance, a second one when the copied values already have it (CR 707.9a, 113.2c), and a kept trigger keeps its target group (fold run 17c).
+- `CopyCreatureCardInGraveyardOnEnterEffect.of(cardsInGraveyards(...) | exiledCards(...))` + `.except`, `.gainingHaste`, `.exilingCopiedCard`, `.exilingTwoAddingTheOthersPower`; `CardPutIntoGraveyardFromLibraryThisTurnPredicate` (fold run 17c).
 
 ### Blocked causes still open
 
@@ -2561,6 +2565,23 @@ Blockers found:
 - Fold run 4's line (no enter abilities for a sought noncreature, nonland permanent) is still open.
 
 **For the next run.** Step 10 can merge `SeekEffect` (17 cards), `SeekCardsToHandEffect` (21), `SeekLibraryToHandEffect` (4) and `SeekCardToBattlefieldEffect` (5) into `SeekLibraryEffect`; they differ only in options it now has. A zone-based hidden check in `ChooseCardEffectHandler` breaks choices among revealed cards still in a hand or library (Addle, Intuition): keep hidden-ness on the subject.
+
+### Step 9, fold run 17c (2026-11-24, parallel worktree)
+Fold run 17b's leftovers in `cost-paid-copy`, `copy-on-enter`, plus Absorbing Man's record. Ratchet 3,690 / 2,954 → 3,685 / 2,949. Ledger 8 rows (absorbed 5, survivor 2, step-9 1). 11 card files rewritten, Oracle text checked for all; rulings for Curie, 'Dane, Crystalline Resonance, Volrath, Thespian's Stage, Absorbing Man (none). CR 113.2c, 205.1b, 205.3d, 608.2h, 707.2, 707.3, 707.9a, 707.9b, 707.9d, 613.2a checked.
+
+**The shape.** `Subjects.paidAsCost()` (`PermanentSubject.PaidAsCost`): the entry's sacrificed snapshot, then its cost-tracked permanents; copied through `lastKnownCopiableCard`, which also reads `chosenCostPermanentSnapshots`. `CopyExceptions` gains `alsoStillA`, `alsoWithSubtypes` (a creature type only on a creature or kindred copy, CR 205.3d), `alsoColored` and `withAbilities` (CR 707.9a). The survivor's kept ability is one instance, and a second one when the copied values already have it (CR 707.9a, 113.2c); this drops the old rule of 'Dane, Crystalline Resonance and Thespian's Stage of not adding it twice. A kept triggered ability keeps its target group. `CopyCreatureCardInGraveyardOnEnterEffect(candidates, exceptions, grantHaste, exileCopied, exileTwo)`: the candidates are a static `cardsInGraveyards` / `exiledCards` subject (`SubjectResolutionService.namedCards`). Graveyard candidates go to the graveyard prompt, exiled ones to `ExiledCreatureCopyChoice` (a lone one is taken unasked); `CloneService.copyCandidates` / `isCopyCandidate` validate every answer.
+
+| Batch | Result |
+|---|---|
+| cost-paid-copy | 2 folded: Curie (`withAbilities(trigger)`), 'Dane (`keepingThisAbility`) |
+| copy-on-enter | 2 folded: The Master (`exiledCards(allOf(creature, CardHasCounterInExilePredicate(TAKEOVER)))`), Lazotep Convert (`withBasePowerToughness(4, 4).alsoColored(BLACK).alsoWithSubtypes(ZOMBIE)`); the survivor's 4 cards moved to the candidate form (`CardPutIntoGraveyardFromLibraryThisTurnPredicate` for The Fourteenth Doctor). Gone: `ExiledCreatureCopyOnEnterService`, two mayfx handlers, CloneService's fixed graveyard path |
+| copy-exc / copier (17 rows) | `BecomeCopyOfTargetPermanentUntilYourNextTurnEffect` folded (Absorbing Man, Crystalline Resonance with a card target filter, Volrath). Not reached: Aegis/Headdress, Kaya, Spirit of Resilience's pair |
+
+**Behaviour changes.** Curie copies an animated noncreature artifact as printed (the old creature-card check did nothing; CR 707.2; new test). 'Dane copies a face-down sacrificed creature by its face-down values (CR 708.2a; new test). A copy of Volrath keeps the ability it activated (ruling; new test). A kept triggered ability keeps its target. The Fourteenth Doctor's candidates are Doctor cards, as its text says (no creature requirement). The survivor's log line wins (The Master logs its decline). A copy of a copy of 'Dane, Crystalline Resonance or Thespian's Stage has two instances of the kept ability, each working on its own, and a Resonance copy of a Resonance triggers twice (CR 707.9a, 113.2c; tests); Thespian's Stage's handler changed to match.
+
+**Seen, not changed.** None new.
+
+**For the next run.** Aegis: `ChooseCardEffect.oneOf(exiledWithSourceMatching(creature))` + `BecomeCopyOfSubjectEffect.of(cardsThisWay(CHOOSE)).by(triggering()).lasting(WHILE_REMAINS_ATTACHED)`; Headdress needs `AttachmentTriggers`' direct handler call replaced by a two-step resolution and `WHILE_ATTACHED` on the survivor. Then Kaya (per-card exile-stay map on `StackEntry`) and Spirit (CHOOSE over last-known event cards).
 
 ## Prompt
 

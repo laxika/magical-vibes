@@ -239,6 +239,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardSharesCardTypeWithCardsPredicate) {
             return "card that shares a card type with that card";
         }
+        if (predicate instanceof CardPutIntoGraveyardFromLibraryThisTurnPredicate) {
+            return "card put into a graveyard from a library this turn";
+        }
         if (predicate instanceof CardPutIntoGraveyardFromNonBattlefieldThisTurnPredicate) {
             return "card put into a graveyard from a non-battlefield zone this turn";
         }

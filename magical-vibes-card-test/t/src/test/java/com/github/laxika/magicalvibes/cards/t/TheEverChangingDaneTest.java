@@ -3,13 +3,17 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -50,6 +54,48 @@ class TheEverChangingDaneTest extends BaseCardTest {
         assertThat(dane.getCard().getName()).isEqualTo("Llanowar Elves");
         assertThat(dane.getCard().getPower()).isEqualTo(1);
         assertThat(dane.getCard().getToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Sacrificing a face-down creature copies only its face-down characteristics")
+    void copiesFaceDownSacrificedCreatureByItsFaceDownValues() {
+        Permanent dane = addCreatureReady(player1, new TheEverChangingDane());
+        Permanent hidden = addCreatureReady(player1, new LlanowarElves());
+        hidden.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, battlefieldIndex(dane), null, null);
+        harness.passBothPriorities();
+
+        assertThat(dane.getCard().getName()).isEmpty();
+        assertThat(dane.getCard().getPower()).isEqualTo(2);
+        assertThat(dane.getCard().getToughness()).isEqualTo(2);
+        assertThat(dane.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Copying a creature that already has the ability gives the copy two instances of it (CR 707.9a)")
+    void copyOfACopyOfTheDaneHasTwoInstancesOfTheAbility() {
+        Permanent dane = addCreatureReady(player1, new TheEverChangingDane());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, battlefieldIndex(dane), null, null);
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, dane.getId());
+        Permanent copy = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent != dane)
+                .findFirst().orElseThrow();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, battlefieldIndex(dane), null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Clone");
+        assertThat(dane.getCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(dane.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).hasSize(2);
     }
 
     @Test

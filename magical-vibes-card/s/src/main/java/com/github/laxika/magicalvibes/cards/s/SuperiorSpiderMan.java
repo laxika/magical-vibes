@@ -2,10 +2,13 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.CopyExceptions;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInGraveyardOnEnterEffect;
 
-import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "155")
 @CardRegistration(set = "SPM", collectorNumber = "275")
@@ -13,8 +16,11 @@ import java.util.Set;
 public class SuperiorSpiderMan extends Card {
 
     public SuperiorSpiderMan() {
-        addStaticEffect(new CopyCreatureCardInGraveyardOnEnterEffect(
-                        "Superior Spider-Man", 4, 4,
-                        Set.of(CardSubtype.SPIDER, CardSubtype.HUMAN, CardSubtype.HERO)));
+        addStaticEffect(CopyCreatureCardInGraveyardOnEnterEffect.of(
+                        Subjects.cardsInGraveyards(Subjects.eachPlayer(), new CardTypePredicate(CardType.CREATURE)))
+                .except(CopyExceptions.named("Superior Spider-Man")
+                        .alsoWithBasePowerToughness(4, 4)
+                        .alsoWithSubtypes(CardSubtype.SPIDER, CardSubtype.HUMAN, CardSubtype.HERO))
+                .exilingCopiedCard());
     }
 }

@@ -26,7 +26,7 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
         PermanentSubject.TriggeringSpellTargets, PermanentSubject.CreatedThisResolution, PermanentSubject.BandmatesOf,
         PermanentSubject.WithCreaturesSharingAColor, PermanentSubject.OtherPermanentsSharing, PermanentSubject.AttachedAndSharingCreatureType,
         PermanentSubject.Searched, PermanentSubject.Picked, PermanentSubject.ThisWay, PermanentSubject.DepartedThisWay,
-        PermanentSubject.TargetDeclaredElsewhere, PermanentSubject.Voted {
+        PermanentSubject.TargetDeclaredElsewhere, PermanentSubject.PaidAsCost, PermanentSubject.Voted {
 
     /** Whether this subject is the effect's own target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -633,6 +633,20 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
      * ("destroy target permanent ... conjure a duplicate of that permanent").
      */
     record TargetDeclaredElsewhere() implements PermanentSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * "The sacrificed creature", "the exiled creature" naming what the spell's or ability's cost moved ("{1}, Sacrifice
+     * another creature: ... becomes a copy of the sacrificed creature"): the permanents the cost sacrificed, exiled or
+     * tapped, as the stack entry recorded them. One that left the battlefield is read as it last existed there
+     * (CR 608.2h) and a verb acting on permanents finds none (CR 400.7).
+     */
+    record PaidAsCost() implements PermanentSubject {
 
         @Override
         public boolean needsStackEntry() {

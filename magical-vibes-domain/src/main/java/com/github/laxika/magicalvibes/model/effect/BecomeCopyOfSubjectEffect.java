@@ -13,6 +13,8 @@ import java.util.Set;
  * still a legal target (CR 608.2b); with both a target card and a target creature ({@link #ofCreatureOrCard}), the one target
  * is copied, whichever it is. A face-down permanent
  * is copied by its face-down values (CR 708.2a); a permanent that is itself a copy is copied as that copy (CR 707.3).
+ * "The sacrificed creature" or "the exiled creature" of the ability's cost is {@link Subjects#paidAsCost()}, copied as
+ * it last existed (The Ever-Changing 'Dane, Curie).
  *
  * <p>The copier is {@link Subjects#source()} ("this creature becomes a copy of"), a target ("target Shapeshifter
  * becomes a copy of target creature"), the triggering permanent ("that creature becomes a copy of this creature") or a
@@ -28,7 +30,8 @@ import java.util.Set;
  *                         long as this Equipment remains attached to it", which does nothing once the source is no
  *                         longer attached to the copier as it resolves, CR 611.2b)
  * @param keepsThisAbility "except it has this ability": the copy has each ability of the source, as it was, that this
- *                         effect is part of; only for the source as copier
+ *                         effect is part of (a kept triggered ability with its target group), a second instance when
+ *                         the copied values already have it (CR 707.9a, 113.2c); only for the source as copier
  * @param exceptions       the copy's other exceptions, part of its copiable values (CR 707.9b)
  */
 public record BecomeCopyOfSubjectEffect(CardSubject card, PermanentSubject permanent, PermanentSubject copier,

@@ -1,11 +1,8 @@
 package com.github.laxika.magicalvibes.service.input;
 
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -21,8 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyActivatedAbilityRetargetEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardFromGraveyardOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInExileOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -33,6 +28,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetRedirectionSupport;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -136,24 +132,42 @@ public class MayCopyHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
+    /**
+     * The answer to "you may have it enter as a copy of [a candidate card]": accepted, the candidates found now are
+     * offered (graveyard cards with the graveyard prompt; exiled cards with the exiled-card prompt, a lone one taken
+     * unasked); declined or with too few candidates left, it enters as itself.
+     */
     public void handleCopyCreatureCardInGraveyardOnEnterChoice(
             GameData gameData, Player player, boolean accepted, PendingMayAbility ability,
             CopyCreatureCardInGraveyardOnEnterEffect copyEffect) {
+        boolean exileTwo = copyEffect.exileTwoAndAddOtherPowerCounters();
+        String zone = copyEffect.choosesFromExile() ? "in exile" : "from a graveyard";
         if (accepted) {
-            List<Card> creatureCards = gameData.playerGraveyards.entrySet().stream()
-                    .flatMap(entry -> entry.getValue().stream()
-                            .filter(card -> cloneService.isValidGraveyardCopyCard(
-                                    gameData, ability.controllerId(), entry.getKey(), card, copyEffect)))
+            List<Card> candidates = cloneService.copyCandidates(gameData, ability.controllerId(), copyEffect).stream()
+                    .map(SubjectResolutionService.LocatedCard::card)
                     .toList();
-            int requiredCards = copyEffect.exileTwoAndAddOtherPowerCounters() ? 2 : 1;
-            if (creatureCards.size() >= requiredCards) {
+            int requiredCards = exileTwo ? 2 : 1;
+            if (copyEffect.choosesFromExile() && candidates.size() == 1) {
+                finishCloneEntryFromCard(gameData, candidates.getFirst());
+                return;
+            }
+            if (copyEffect.choosesFromExile() && candidates.size() > 1) {
+                gameLogService.append(gameData, GameLog.text(
+                        player.getUsername() + " accepts — choosing a creature card in exile to copy."));
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExiledCreatureCopyChoice(
+                        ability.controllerId(), null,
+                        candidates.stream().map(Card::getId).toList(),
+                        ability.sourceCard().getName()));
+                return;
+            }
+            if (candidates.size() >= requiredCards) {
                 playerInputService.beginMultiGraveyardChoice(
-                        gameData, ability.controllerId(), creatureCards, requiredCards, requiredCards,
-                        copyEffect.exileTwoAndAddOtherPowerCounters()
+                        gameData, ability.controllerId(), candidates, requiredCards, requiredCards,
+                        exileTwo
                                 ? "Choose two creature cards from graveyards."
                                 : "Choose a creature card in a graveyard to copy.");
                 gameLogService.append(gameData, GameLog.text(
-                        player.getUsername() + (copyEffect.exileTwoAndAddOtherPowerCounters()
+                        player.getUsername() + (exileTwo
                                 ? " accepts — choosing two creature cards from graveyards."
                                 : " accepts — choosing a creature card in a graveyard to copy.")));
                 return;
@@ -161,89 +175,18 @@ public class MayCopyHandlerService {
         }
 
         String message = accepted
-                ? player.getUsername() + (copyEffect.exileTwoAndAddOtherPowerCounters()
+                ? player.getUsername() + (exileTwo
                         ? " has fewer than two creature cards to exile; it enters without copying."
                         : " has no creature card to copy; it enters without copying.")
-                : player.getUsername() + " declines to copy a creature card from a graveyard. ";
+                : player.getUsername() + " declines to copy a creature card " + zone + ". ";
         gameLogService.append(gameData, GameLog.textCardText(message, ability.sourceCard(), " enters without copying."));
         finishCloneEntryWithoutFurtherChoice(gameData);
     }
 
-    private boolean isValidGraveyardCopyCard(GameData gameData, UUID controllerId, UUID graveyardOwnerId,
-                                             Card graveyardCard,
-                                             CopyCreatureCardInGraveyardOnEnterEffect copyEffect) {
-        if (!graveyardCard.hasType(CardType.CREATURE)) {
-            return false;
-        }
-        if (copyEffect.controllerGraveyardOnly() && !controllerId.equals(graveyardOwnerId)) {
-            return false;
-        }
-        if (copyEffect.cardFilter() != null
-                && !predicateEvaluationService.matchesCardPredicate(
-                graveyardCard, copyEffect.cardFilter(), null, gameData, graveyardOwnerId)) {
-            return false;
-        }
-        return !copyEffect.onlyCardsPutIntoGraveyardFromLibraryThisTurn()
-                || gameData.cardsPutIntoGraveyardFromLibraryThisTurn
-                .getOrDefault(graveyardOwnerId, Set.of())
-                .contains(graveyardCard.getId());
-    }
-
-    public void handleCopyCreatureCardFromGraveyardChoice(GameData gameData, Player player, boolean accepted,
-                                                           PendingMayAbility ability,
-                                                           CopyCreatureCardFromGraveyardOnEnterEffect copyEffect) {
-        if (accepted) {
-            List<Card> validCards = new ArrayList<>();
-            for (UUID playerId : gameData.orderedPlayerIds) {
-                List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-                if (graveyard != null) {
-                    graveyard.stream()
-                            .filter(card -> card.hasType(CardType.CREATURE))
-                            .forEach(validCards::add);
-                }
-            }
-            if (validCards.isEmpty()) {
-                finishCloneEntryWithoutFurtherChoice(gameData);
-                return;
-            }
-            playerInputService.beginMultiGraveyardChoice(gameData, ability.controllerId(), validCards, 1,
-                    "Choose a creature card in a graveyard to copy.");
-            gameLogService.append(gameData, GameLog.text(
-                    player.getUsername() + " accepts — choosing a creature card in a graveyard to copy."));
-            log.info("Game {} - {} accepts graveyard copy", gameData.id, player.getUsername());
-            return;
-        }
-
-        gameLogService.append(gameData, GameLog.textCardText(
-                player.getUsername() + " declines to copy a creature card. ", ability.sourceCard(),
-                " enters without copying."));
-        log.info("Game {} - {} declines graveyard copy", gameData.id, player.getUsername());
-        finishCloneEntryWithoutFurtherChoice(gameData);
-    }
-
-    public void handleCopyCreatureCardInExileOnEnterChoice(
-            GameData gameData, Player player, boolean accepted, PendingMayAbility ability,
-            CopyCreatureCardInExileOnEnterEffect copyEffect) {
-        if (!accepted) {
-            finishCloneEntryWithoutFurtherChoice(gameData);
-            return;
-        }
-
-        List<ExiledCardEntry> eligible = gameData.exiledCards.stream()
-                .filter(entry -> !entry.faceDown())
-                .filter(entry -> entry.card().hasType(CardType.CREATURE))
-                .filter(entry -> gameData.exiledCardHasCounter(entry.card().getId(), CounterType.TAKEOVER))
-                .toList();
-        if (eligible.isEmpty()) {
-            finishCloneEntryWithoutFurtherChoice(gameData);
-        } else if (eligible.size() == 1) {
-            finishCloneEntryFromCard(gameData, eligible.getFirst().card());
-        } else {
-            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExiledCreatureCopyChoice(
-                    ability.controllerId(), null,
-                    eligible.stream().map(entry -> entry.card().getId()).toList(),
-                    "The Master, Formed Anew"));
-        }
+    /** Whether {@code cardId} is still a candidate of the open "enter as a copy of a card" choice. */
+    public boolean isOpenCardCopyCandidate(GameData gameData, UUID cardId) {
+        return cloneService.isCopyCandidate(gameData, gameData.cloneOperation.controllerId, cardId,
+                gameData.cloneOperation.graveyardCopyEffect);
     }
 
     public void finishCloneEntryWithoutFurtherChoice(GameData gameData) {

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.e.EnsoulArtifact;
 import com.github.laxika.magicalvibes.cards.s.SolemnSimulacrum;
 import com.github.laxika.magicalvibes.cards.j.JhoirasFamiliar;
+import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CurieEmergentIntelligence.class, JhoirasFamiliar.class, GrizzlyBears.class,
-        EnsoulArtifact.class, SolemnSimulacrum.class, CodsworthHandyHelper.class})
+        EnsoulArtifact.class, SolemnSimulacrum.class, CodsworthHandyHelper.class, SolRing.class})
 class CurieEmergentIntelligenceTest extends BaseCardTest {
 
     @Test
@@ -36,6 +37,27 @@ class CurieEmergentIntelligenceTest extends BaseCardTest {
         assertThat(curie.getCard().getToughness()).isEqualTo(2);
         assertThat(curie.getCard().hasType(CardType.ARTIFACT)).isTrue();
         assertThat(curie.getCard().hasType(CardType.CREATURE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Exiling an artifact animated by an Aura copies the noncreature artifact it is printed as")
+    void copiesAnimatedNoncreatureArtifactByItsCopiableValues() {
+        Permanent curie = addCreatureReady(player1, new CurieEmergentIntelligence());
+        Permanent solRing = harness.addToBattlefieldAndReturn(player1, new SolRing());
+        harness.setHand(player1, List.of(new EnsoulArtifact()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, solRing.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, solRing)).isTrue();
+
+        activateCopyAbility();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(solRing);
+        assertThat(curie.getCard().getName()).isEqualTo("Sol Ring");
+        assertThat(curie.getCard().hasType(CardType.ARTIFACT)).isTrue();
+        assertThat(gqs.isCreature(gd, curie)).isFalse();
+        assertThat(curie.getCard().getTriggeredAbilities()).hasSize(1);
     }
 
     @Test

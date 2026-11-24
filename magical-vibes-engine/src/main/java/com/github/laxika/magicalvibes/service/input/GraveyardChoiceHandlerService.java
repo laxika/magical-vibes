@@ -1205,11 +1205,9 @@ public class GraveyardChoiceHandlerService {
             Card selectedCard = gameQueryService.findCardInGraveyardById(gameData, cardIds.getFirst());
             UUID graveyardOwnerId = selectedCard == null
                     ? null : gameQueryService.findGraveyardOwnerById(gameData, selectedCard.getId());
-            if (selectedCard == null || graveyardOwnerId == null || !selectedCard.hasType(CardType.CREATURE)
-                    || (gameData.cloneOperation.graveyardCopyEffect != null
-                    && !cloneService.isValidGraveyardCopyCard(
-                    gameData, gameData.cloneOperation.controllerId, graveyardOwnerId, selectedCard,
-                    gameData.cloneOperation.graveyardCopyEffect))) {
+            if (selectedCard == null || graveyardOwnerId == null
+                    || !cloneService.isCopyCandidate(gameData, gameData.cloneOperation.controllerId,
+                    selectedCard.getId(), gameData.cloneOperation.graveyardCopyEffect)) {
                 throw new IllegalStateException("Chosen creature card is no longer in a graveyard");
             }
 

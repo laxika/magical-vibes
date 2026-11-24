@@ -57,7 +57,6 @@ class CardImmutabilityArchTest {
             "BecomeCopyOfTargetCreaturePermanentlyEffectHandler", // decorates the fresh clone-copy card installed by PermanentCopierService
             "BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler", // decorates the fresh clone-copy card installed by PermanentCopierService
             "BecomeCopyOfTargetPermanentUntilEndOfTurnEffectHandler", // decorates the fresh clone-copy card installed by PermanentCopierService
-            "BecomeCopyOfTargetPermanentUntilYourNextTurnEffectHandler", // decorates the fresh clone-copy card installed by PermanentCopierService
             "BecomeCopyOfTargetCreatureOrGraveyardCreatureCardUntilYourNextTurnEffectHandler", // decorates the fresh clone-copy card installed by PermanentCopierService
             "BecomeCopyOfCreatureCardInOpponentGraveyardEffectHandler", // name/legendary/hexproof/"this ability" on the fresh clone-copy card (Lazav, Dimir Mastermind)
             "BecomeCopyOfTargetCreatureCardInGraveyardEffectHandler", // name/legendary/activated ability on the fresh clone-copy card
@@ -94,7 +93,6 @@ class CardImmutabilityArchTest {
             "LibraryChoiceHandlerService", // marks a fresh runtime copy for end-step sacrifice before casting
             "ExileRandomCardFromEachOpponentGraveyardMayCastFreeEffectHandler", // stamps owner on a fresh runtime copy when missing
             "HandCastCardCharacteristicsService", // assembles a fresh hand-casting face and adventure copy
-            "BecomeCopyOfExiledCreaturePermanentlyEffectHandler", // decorates the fresh clone-copy card
             "CreateModalDoubleFacedCardFromTopTwoEffectHandler", // combines two fresh runtime copies
             "DestroyTargetArtifactsThenConjurePerpetualCopiesIntoHandEffectHandler", // decorates a conjured copy
             "SeekLibraryAndConjureDuplicatesInGraveyardEffectHandler", // stamps newly conjured copies

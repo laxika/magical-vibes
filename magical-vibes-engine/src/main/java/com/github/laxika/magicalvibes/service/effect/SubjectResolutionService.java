@@ -1359,6 +1359,7 @@ public class SubjectResolutionService {
             case PermanentSubject.ThisWay thisWay -> thisWayIds(ctx, thisWay);
             case PermanentSubject.DepartedThisWay departed -> departedThisWayIds(ctx, departed);
             case PermanentSubject.TargetDeclaredElsewhere ignored -> targetIds(ctx, null);
+            case PermanentSubject.PaidAsCost ignored -> paidAsCostIds(ctx.entry());
             case PermanentSubject.BandmatesOf bandmates -> bandmateIds(ctx, bandmates.permanent());
             case PermanentSubject.WithCreaturesSharingAColor sharing -> sharingAColorIds(ctx, sharing.permanent());
             case PermanentSubject.OtherPermanentsSharing sharing -> otherPermanentsSharingIds(ctx, sharing);
@@ -1460,6 +1461,21 @@ public class SubjectResolutionService {
             }
         }
         return matching;
+    }
+
+    /**
+     * {@link PermanentSubject.PaidAsCost}: the permanent the entry recorded as sacrificed (to its cost, or by the ability
+     * itself, as exploit does), then the permanents its cost tracked as exiled or tapped, each once.
+     */
+    private static List<UUID> paidAsCostIds(StackEntry entry) {
+        List<UUID> ids = new ArrayList<>();
+        if (entry.getSacrificedPermanentSnapshot() != null) {
+            ids.add(entry.getSacrificedPermanentSnapshot().getId());
+        }
+        if (entry.getChosenCostPermanentIds() != null) {
+            ids.addAll(entry.getChosenCostPermanentIds());
+        }
+        return ids.stream().distinct().toList();
     }
 
     /**

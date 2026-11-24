@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.b.BurnishedHart;
+import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.w.Willbender;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -18,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VolrathTheShapestealer.class, BurnishedHart.class, Forest.class, Willbender.class})
+@CardUsed({VolrathTheShapestealer.class, BurnishedHart.class, Clone.class, Forest.class, Willbender.class})
 class VolrathTheShapestealerTest extends BaseCardTest {
 
     @Test
@@ -141,6 +142,29 @@ class VolrathTheShapestealerTest extends BaseCardTest {
         assertThat(volrath.getCard().getName()).isEqualTo("Willbender");
         assertThat(gqs.getEffectivePower(gd, volrath)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, volrath)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("A Clone of Volrath keeps the copy ability it activated")
+    void cloneOfVolrathKeepsTheAbilityItActivated() {
+        Permanent volrath = addCreatureReady(player2, new VolrathTheShapestealer());
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, volrath.getId());
+        Permanent clone = gd.playerBattlefields.get(player1.getId()).getFirst();
+        clone.setSummoningSick(false);
+        Permanent hart = addCreatureReady(player2, new BurnishedHart());
+        hart.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, hart.getId());
+        harness.passBothPriorities();
+
+        assertThat(clone.getCard().getName()).isEqualTo("Burnished Hart");
+        assertThat(clone.getCard().getPower()).isEqualTo(7);
+        assertThat(clone.getCard().getToughness()).isEqualTo(5);
+        assertThat(clone.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).hasSize(2);
     }
 
     @Test

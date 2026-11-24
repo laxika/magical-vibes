@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.s.ScabClanCharger;
 import com.github.laxika.magicalvibes.cards.s.StompingGround;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -49,6 +50,20 @@ class ThespiansStageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(stage.getCard().getName()).isEqualTo("Island");
+    }
+
+    @Test
+    @DisplayName("Copying another Thespian's Stage gives the copy two instances of the copy ability (CR 707.9a)")
+    void copyingAnotherStageGivesTwoInstancesOfTheCopyAbility() {
+        Permanent stage = harness.addToBattlefieldAndReturn(player1, new ThespiansStage());
+        Permanent otherStage = harness.addToBattlefieldAndReturn(player2, new ThespiansStage());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, otherStage.getId());
+        harness.passBothPriorities();
+
+        assertThat(stage.getCard().getName()).isEqualTo("Thespian's Stage");
+        assertThat(stage.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).hasSize(3);
     }
 
     @Test

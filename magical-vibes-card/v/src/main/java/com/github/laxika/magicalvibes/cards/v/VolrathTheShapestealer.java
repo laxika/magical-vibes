@@ -4,8 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetPermanentUntilYourNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSubjectEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyExceptions;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,8 +31,10 @@ public class VolrathTheShapestealer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new BecomeCopyOfTargetPermanentUntilYourNextTurnEffect(
-                        new PermanentIsCreaturePredicate(), 7, 5, true)),
+                List.of(BecomeCopyOfSubjectEffect.of(Subjects.target())
+                        .lasting(Duration.UNTIL_YOUR_NEXT_TURN)
+                        .except(CopyExceptions.withBasePowerToughness(7, 5))
+                        .keepingThisAbility()),
                 "{1}: Until your next turn, Volrath becomes a copy of target creature, except it's 7/5 and it has this ability.",
                 new PermanentPredicateTargetFilter(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

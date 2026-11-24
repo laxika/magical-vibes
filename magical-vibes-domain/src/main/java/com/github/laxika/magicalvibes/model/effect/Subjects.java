@@ -28,6 +28,7 @@ public final class Subjects {
     private static final PermanentSubject SOURCE = new PermanentSubject.Source();
     private static final PermanentSubject TARGET = new PermanentSubject.Target(null);
     private static final PermanentSubject TARGET_DECLARED_ELSEWHERE = new PermanentSubject.TargetDeclaredElsewhere();
+    private static final PermanentSubject PAID_AS_COST = new PermanentSubject.PaidAsCost();
     private static final PermanentSubject ALL_TARGETS = new PermanentSubject.AllTargets();
     private static final PermanentSubject ATTACHED = new PermanentSubject.Attached();
     private static final PermanentSubject ATTACHED_CREATURE = new PermanentSubject.Attached(true);
@@ -291,6 +292,14 @@ public final class Subjects {
      */
     public static PermanentSubject targetDeclaredElsewhere() {
         return TARGET_DECLARED_ELSEWHERE;
+    }
+
+    /**
+     * "The sacrificed creature", "the exiled creature": the permanents the spell's or ability's cost sacrificed, exiled
+     * or tapped, as they last existed (see {@link PermanentSubject.PaidAsCost}).
+     */
+    public static PermanentSubject paidAsCost() {
+        return PAID_AS_COST;
     }
 
     /**

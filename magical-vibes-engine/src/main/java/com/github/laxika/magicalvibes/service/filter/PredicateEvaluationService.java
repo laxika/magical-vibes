@@ -127,6 +127,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPutIntoHandThisTurnPredic
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSurveilledThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPutIntoGraveyardFromNonBattlefieldThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPutIntoGraveyardFromLibraryThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPutIntoGraveyardThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithCardsPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
@@ -1373,6 +1374,10 @@ public class PredicateEvaluationService {
             case CardPutIntoGraveyardFromBattlefieldThisTurnPredicate ignored ->
                     gameData != null && cardOwnerId != null && card != null
                             && gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn
+                            .getOrDefault(cardOwnerId, Set.of()).contains(card.getId());
+            case CardPutIntoGraveyardFromLibraryThisTurnPredicate ignored ->
+                    gameData != null && cardOwnerId != null && card != null
+                            && gameData.cardsPutIntoGraveyardFromLibraryThisTurn
                             .getOrDefault(cardOwnerId, Set.of()).contains(card.getId());
             case CardPutIntoGraveyardThisTurnPredicate ignored ->
                     gameData != null && cardOwnerId != null && card != null

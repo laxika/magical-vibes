@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -46,7 +45,7 @@ public class ExiledCreatureCopyChoiceInteractionHandler
 
         ExiledCardEntry chosen = gameData.findExiledCard(chosenIds.getFirst());
         boolean sourceMatches = interaction.sourcePermanentId() == null
-                ? chosen != null && gameData.exiledCardHasCounter(chosenIds.getFirst(), CounterType.TAKEOVER)
+                ? chosen != null && mayCopyHandlerService.isOpenCardCopyCandidate(gameData, chosenIds.getFirst())
                 : chosen != null && interaction.sourcePermanentId().equals(chosen.sourcePermanentId());
         if (chosen == null || !sourceMatches
                 || chosen.faceDown() || !chosen.card().hasType(CardType.CREATURE)) {

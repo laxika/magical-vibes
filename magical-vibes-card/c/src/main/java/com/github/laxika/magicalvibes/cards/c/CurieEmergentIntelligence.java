@@ -3,10 +3,13 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfExiledCreaturePermanentlyEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSubjectEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyExceptions;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -38,8 +41,10 @@ public class CurieEmergentIntelligence extends Card {
                 List.of(
                         new ExilePermanentCost(anotherNontokenArtifactCreature,
                                 "another nontoken artifact creature", true),
-                        new BecomeCopyOfExiledCreaturePermanentlyEffect(
-                                new DrawCardEffect(new SourcePower(false, true)))
+                        BecomeCopyOfSubjectEffect.of(Subjects.paidAsCost())
+                                .except(CopyExceptions.withAbilities(new TriggeredAbility(
+                                        Triggers.dealsCombatDamageToPlayer(),
+                                        new DrawCardEffect(new SourcePower(false, true)))))
                 ),
                 "{1}{U}, Exile another nontoken artifact creature you control: Curie becomes a copy of the exiled creature, "
                         + "except it has \"Whenever this creature deals combat damage to a player, draw cards equal to its base power.\""

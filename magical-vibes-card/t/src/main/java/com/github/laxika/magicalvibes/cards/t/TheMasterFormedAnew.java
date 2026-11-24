@@ -2,14 +2,21 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInExileOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileChosenPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasCounterInExilePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "143")
 @CardRegistration(set = "WHO", collectorNumber = "426")
@@ -25,6 +32,8 @@ public class TheMasterFormedAnew extends Card {
                         ExileChosenPermanentsEffect.youControl(new PermanentIsCreaturePredicate(), "creature"),
                         PutCounterOnExiledCardsEffect.onCardsExiledThisWay(CounterType.TAKEOVER)),
                 "Exile a creature you control and put a takeover counter on it?"));
-        addStaticEffect(new CopyCreatureCardInExileOnEnterEffect());
+        addStaticEffect(CopyCreatureCardInGraveyardOnEnterEffect.of(Subjects.exiledCards(new CardAllOfPredicate(List.of(
+                new CardTypePredicate(CardType.CREATURE),
+                new CardHasCounterInExilePredicate(CounterType.TAKEOVER))))));
     }
 }

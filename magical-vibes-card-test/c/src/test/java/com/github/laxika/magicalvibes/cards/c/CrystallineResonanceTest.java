@@ -124,6 +124,23 @@ class CrystallineResonanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A copy of another Crystalline Resonance has two instances of the cycling ability, each triggering (CR 707.9a)")
+    void copyOfAnotherResonanceTriggersTwice() {
+        Permanent resonance = addResonance();
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new CrystallineResonance());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        resolveCopy(enchantment);
+        cycleCard();
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        assertThat(resonance.getCard().getTriggeredAbilities()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, bears.getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
     @DisplayName("An opponent cycling a card does not trigger the enchantment")
     void opponentsCyclingDoesNotTrigger() {
         Permanent resonance = addResonance();

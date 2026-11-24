@@ -1,7 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -9,6 +13,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TargetGroup;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSubjectEffect;
@@ -24,9 +29,11 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService.LocatedCard;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -75,23 +82,30 @@ public class BecomeCopyOfSubjectEffectHandler implements NormalEffectHandlerBean
                             Card copied, String copiedName) {
         boolean lasting = !become.duration().equals(Duration.PERMANENT);
         Card preCopyCard = lasting ? PermanentCopierService.preCopyCard(gameData, copier) : null;
-        // "Except it has this ability" keeps only this ability, wherever the permanent got it (printed, or copied from
-        // another such permanent): read from the card before the copy replaces it.
+        // "Except it has this ability" keeps this one ability, wherever the permanent got it (printed, or copied from
+        // another such permanent): read from the card before the copy replaces it, one instance however many equal
+        // ones it had. A copied permanent that already has it gives the copy a second instance, each functioning
+        // independently (CR 707.9a, 113.2c).
         Card asItWas = copier.getCard();
         List<ActivatedAbility> keptActivated = !become.keepsThisAbility() ? List.of()
                 : asItWas.getActivatedAbilities(Zone.BATTLEFIELD).stream()
                 .filter(ability -> ability.getEffects().stream().anyMatch(part -> contains(part, become)))
+                .limit(1)
                 .toList();
         List<TriggeredAbility> keptTriggered = !become.keepsThisAbility() ? List.of()
                 : asItWas.getTriggeredAbilities().stream()
                 .filter(ability -> ability.effects().stream().map(EffectRegistration::effect)
                         .anyMatch(part -> contains(part, become)))
+                .limit(1)
                 .toList();
         String originalName = FaceDownVisibility.publicName(gameData, copier);
         CopyExceptions exceptions = become.exceptions();
         permanentCopierService.applyCloneCopy(copier, copied, exceptions.power(), exceptions.toughness(),
                 exceptions.addedCardTypes(), keptActivated);
-        keptTriggered.forEach(copier.getCard()::addTriggeredAbility);
+        for (TriggeredAbility kept : keptTriggered) {
+            copier.getCard().addTriggeredAbility(kept);
+            kept.effects().forEach(registration -> keepTargetGroup(asItWas, copier.getCard(), registration.effect()));
+        }
         applyExceptions(copier, exceptions);
         // The copy's activated abilities are new instances: "activate only once each turn" counts again (Lazav, the
         // Multifarious's ruling).
@@ -107,8 +121,9 @@ public class BecomeCopyOfSubjectEffectHandler implements NormalEffectHandlerBean
     }
 
     /**
-     * The exceptions beside the copied values, part of the copy's copiable values (CR 707.9b): a set name, card types
-     * and creature types replace the copied ones (CR 205.1a), supertypes and keywords are added.
+     * The exceptions beside the copied values, part of the copy's copiable values (CR 707.9a, 707.9b): a set name, card
+     * types and creature types replace the copied ones (CR 205.1a); supertypes, keywords, subtypes, colors and
+     * abilities are added.
      */
     private void applyExceptions(Permanent copier, CopyExceptions exceptions) {
         Card copy = copier.getCard();
@@ -131,6 +146,49 @@ public class BecomeCopyOfSubjectEffectHandler implements NormalEffectHandlerBean
             keywords.addAll(exceptions.addedKeywords());
             copy.setKeywords(keywords);
         }
+        if (!exceptions.addedSubtypes().isEmpty()) {
+            // A creature type only on a creature or kindred copy (CR 205.3d).
+            boolean creatureTypesAllowed = copy.hasType(CardType.CREATURE) || copy.hasType(CardType.KINDRED);
+            List<CardSubtype> subtypes = new ArrayList<>(copy.getSubtypes());
+            for (CardSubtype subtype : exceptions.addedSubtypes()) {
+                if ((creatureTypesAllowed || !StaticEffectSupport.isCreatureSubtype(subtype))
+                        && !subtypes.contains(subtype)) {
+                    subtypes.add(subtype);
+                }
+            }
+            copy.setSubtypes(subtypes);
+        }
+        if (!exceptions.addedColors().isEmpty()) {
+            Set<CardColor> colors = EnumSet.noneOf(CardColor.class);
+            colors.addAll(copy.getColors());
+            if (copy.getColor() != null) {
+                colors.add(copy.getColor());
+            }
+            colors.addAll(exceptions.addedColors());
+            copy.setColors(List.copyOf(colors));
+            copy.setColor(colors.size() == 1 ? colors.iterator().next() : null);
+        }
+        for (Ability ability : exceptions.addedAbilities()) {
+            if (ability instanceof ActivatedAbility activated) {
+                copy.addActivatedAbility(activated);
+            } else {
+                copy.addAbility(ability);
+            }
+        }
+    }
+
+    /**
+     * Binds {@code effect} on the copy to the target group it had on the card it was kept from: a kept triggered
+     * ability's target ("another target permanent") is declared by the card's target groups, which the copy replaced.
+     */
+    private static void keepTargetGroup(Card from, Card copy, CardEffect effect) {
+        int index = from.getEffectTargetIndex(effect);
+        // An equal effect the copied values already bound (a second instance) keeps that equal group.
+        if (index < 0 || copy.hasEffectTargetIndex(effect)) {
+            return;
+        }
+        TargetGroup group = from.getTargetGroups().get(index);
+        copy.target(group.getFilter(), group.getMinTargets(), group.getMaxTargets()).bindEffect(effect);
     }
 
     /**
