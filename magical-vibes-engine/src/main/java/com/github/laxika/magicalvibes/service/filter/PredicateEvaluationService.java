@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaValueParity;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.AddManaOfTypeProducedByTappedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
 import com.github.laxika.magicalvibes.model.Card;
@@ -5687,7 +5687,7 @@ public class PredicateEvaluationService {
         return WatchedAbilities.rawEffects(WatchedAbilities.printed(card, Triggers.playerTapsLandForMana(),
                 Zone.BATTLEFIELD)).stream()
                 .map(effect -> effect instanceof SequenceEffect sequence ? sequence.steps().getFirst() : effect)
-                .anyMatch(effect -> effect instanceof AddExtraManaOfChosenColorOnLandTapEffect
+                .anyMatch(effect -> effect instanceof AddManaOfTypeProducedByTappedPermanentEffect
                         || effect instanceof AddOneOfEachManaTypeProducedByLandEffect
                         || effect instanceof AddManaOnEnchantedLandTapEffect);
     }

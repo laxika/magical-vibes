@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.cards.c.CrystalVein;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.StartingTown;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UltimaOriginOfOblivion.class, Forest.class, StartingTown.class})
+@CardUsed({UltimaOriginOfOblivion.class, CrystalVein.class, Forest.class, StartingTown.class})
 class UltimaOriginOfOblivionTest extends BaseCardTest {
 
     @Test
@@ -163,6 +164,18 @@ class UltimaOriginOfOblivionTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isOne();
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("A land sacrificed to its own mana ability still gets the bonus for the {C} it produced")
+    void sacrificedLandGetsBonus() {
+        harness.addToBattlefield(player1, new CrystalVein());
+        castUltima();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Crystal Vein");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
     }
 
     private Permanent castUltima() {

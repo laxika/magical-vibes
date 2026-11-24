@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35 (each in Findings; the fold queue marks its rows). Fold runs 33b, 36 and 29c are reported and wait to merge; 27b, 32b and 29d are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold runs done: 1, 2, 3, 4, 5, 6, 6b, 7, 8, 9, 10, 11, 9b, 12, 11b, 10b, 12a, 14, 13, 12b, 14b, 13b, 14c, 12c, 8b, 16, 15, 12d, 17, 16c, 18, 16b, 15b, 17b, 19, 18b, 19b, 20, 17c, 21, 12e, 19c, 22, 17d, 18c, 21b, 22b, 19d, 21c, 23, 25, 28, 31, 30, 26, 23b, 25b, 28b, 31b, 29, 26b, 34, 23c, 33, 29b, 27, 32, 28c, 34b, 23d, 35, 33b (each in Findings; the fold queue marks its rows). Fold runs 36, 29c, 27b and 32b are reported and wait to merge; 29d, 38 and 35b are running in worktrees. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10).                                                                 |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,355 / 2,699 (after fold run 35) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,351 / 2,695 (after fold run 33b) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,7 +64,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,077 rows over 4,483 classes (after fold run 35). Latest verdict per class: `step-9` 459, unique 1,174, absorbed 1,023, split 646, blocked-other 521, survivor 361, blocked-step-model 140, blocked-player-loop 96, dead 63. Waiting: 459 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 6,083 rows over 4,486 classes (after fold run 33b). Latest verdict per class: `step-9` 456, unique 1,174, absorbed 1,027, split 646, blocked-other 521, survivor 363, blocked-step-model 140, blocked-player-loop 96, dead 63. Waiting: 456 `step-9` rows for the fold runs still open; 5 rows on the owner's open questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -894,6 +894,10 @@ Delayed and global triggers:
 - `GrantProtectionFromPlayerEffect(from, permanents, duration)`: "you and [permanents] gain protection from [player]"; floated `ProtectionFromPlayersEffect` is read by `playerHasProtectionFromOpponents` (fold run 35).
 - `IgnoreOpponentHexproofEffect(opponents, Breadth)` / `.opponentsCreatures()` / `.opponentsAndTheirCreatures()`: the one hexproof-ignore, static or floated (fold run 35).
 - `GrantControllerKeywordUntilEndOfTurnEffect(keyword, PlayerSubject, duration)` / `.eachPlayer(keyword)`: player keywords shroud, hexproof, flying (fold run 35).
+
+- `AddManaOfTypeProducedByTappedPermanentEffect` (`()`, `(ManaColor)`, `ofSourceChosenColor()`, `.toItsController()`): every "whenever you tap / a land is tapped for [type / the chosen colour] mana, add one [more] of it"; reads only the produced types and waits for the land's own mana choice (fold run 33b).
+- `AwardPersistentManaEffect` (`(ManaColor, amount[, Recipient])`, `anyOneColor(amount)`, `inAnyCombinationOf(colors, amount)`, `.spendOnlyToCastSpells()`): every "until end of turn, you don't lose this mana as steps and phases end" (fold run 33b).
+- `ChoiceHandlerService.handleSpellOnlyManaColorChosen` resolves the tap triggers waiting on the produced mana type (Piracy) (fold run 33b).
 
 ### Blocked causes still open
 
@@ -3791,6 +3795,30 @@ Six of seven batches done. Ratchet 3,427 / 2,745 → 3,411 / 2,739. Ledger 31 ro
 - Due Respect and Nahiri's Lithoforming become floated copies on players.
 - Ashling's Prerogative needs a parity predicate judged against its source.
 - PlayersSkipUntapStepEffect (3 cards, one of them a plane) and RevealOpponentHandsEffect (Telepathy) can join this run's survivors.
+
+### Step 9, fold run 33b (2026-11-24, parallel worktree)
+Batches `produced-mana` and `persistent-mana` are done. Ratchet 3,414 / 2,737 → 3,410 / 2,733. Ledger 6 rows (absorbed 4, survivor 2). 7 card files rewritten, Oracle text checked for all 7. CR 106.4, 106.12, 106.12a, 106.12b, 605.1b and 605.4a checked.
+
+| Batch | Result |
+|---|---|
+| produced-mana | 2 of 2 folded onto `AddManaOfTypeProducedByTappedPermanentEffect` (`requiredColor`, `ofSourceChosenColor()`, `.toItsController()`). The fallback question is settled: every land-tap event reports the pool's newly produced types, except Piracy's basic-type path, which fires while its spell-only colour choice is open. The survivor already waits (`readsProducedMana`), so both fallbacks are gone, and `handleSpellOnlyManaColorChosen` now resolves the waiting triggers. A tap that produced none of the type adds nothing (CR 106.12a; Forsaken Monument ruling: "only if it produces one or more {C} as it resolves"). |
+| persistent-mana | 2 of 2 folded onto `AwardPersistentManaEffect` (the most-used record), not onto `AwardManaOfColorsEffect`. That record would have needed one colour for all of it, spell-only and a target recipient for these cards alone, and it would have pulled in its creature-mana and riot tags. The survivor takes `colors` (one: no choice), `eachChosenSeparately` and a `NONE` / `SPELL_ONLY` restriction; its 19 fixed-colour cards keep their constructors. Radha's attacker count stays the X recorded when the ability triggers. |
+
+**Behaviour changes.**
+- Ultima with Crystal Vein: sacrificing it for {C}{C} gets the extra {C} (the old guard required the land on the battlefield). Test.
+- Caged Sun with Piracy on an opponent's Taiga: the extra mana waits for the chosen colour (it used to be added from the land's basic land types, whatever was picked). Test ×2.
+- Through Piracy, the triggers waiting on a replacement-order prompt are also resolved now, by the same `ChoiceHandlerService` path (no test of their own).
+- The survivors' log lines win.
+
+**Tests changed.** `TapTriggersTest`: the Ultima case asserted nothing for a land that had left, which contradicts CR 106.12a; handlers re-registered. `AddManaPerAttackingCreatureEffectHandlerTest` deleted with its handler; `GrandWarlordRadhaTest` covers it.
+
+**Seen, not changed.**
+- Piracy's nonbasic path replaces the land's own `ManaColorChoice` with an any-colour `SpellOnlyManaColorChoice`. The parked activation's land-tap event never fires, so Caged Sun and Mana Flare miss a City of Brass tapped through Piracy. Fairly sure, from reading the code.
+- Caged Sun's "a land's ability causes you to add" also covers land mana abilities without {T}. `youTapLandForMana` fires only for {T} abilities. Sure; low impact.
+- `TappedLandManaSupport.producedManaTypes` keeps its basic-land-type fallback for Mana Flare's `AddOneOfEachManaTypeProducedByLandEffect` and `AddManaForEachOtherLandWithSameNameEffect`. That fallback fires only for an empty report with no choice open, where CR 106.12a says nothing triggers. Unsure whether such a tap exists.
+- The tap family's "its controller adds" uses `TappedLandManaSupport.tappedPermanentController`, not a `PlayerSubject`. `controllerOf(triggering())` would lose a departed land, because the tap request records no controller.
+
+**For the next run.** Step 10 can move the tap family's recipients (`AddManaWhenTappedForManaEffect`, `AddManaOnEnchantedLandTapEffect`, this survivor) onto a `PlayerSubject` once `TapTriggers.tapRequest` records the tapped permanent's controller.
 
 ## Prompt
 

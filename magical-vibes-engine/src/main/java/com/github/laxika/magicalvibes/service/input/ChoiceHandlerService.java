@@ -1652,6 +1652,11 @@ public class ChoiceHandlerService {
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds "
                 + (ctx.amount() == 1 ? "one" : ctx.amount()) + " "
                 + colorName.toLowerCase() + " mana (spells only)."));
+        if (!ctx.anyColorCombination()) {
+            // A land tapped through Piracy for one of its basic land types' colors: the abilities that read the
+            // type it produced waited for this choice (CR 106.12a).
+            resolveProducedManaTriggers(gameData, manaColor);
+        }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

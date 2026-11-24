@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfColorTappedForManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AddManaOfTypeProducedByTappedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectsToCounterBearersEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllLandTypesEffect;
@@ -34,6 +34,6 @@ public class UltimaOriginOfOblivion extends Card {
                         true));
 
         addTrigger(Triggers.youTapLandForMana(),
-                new AddManaWhenLandOfColorTappedForManaEffect(ManaColor.COLORLESS));
+                new AddManaOfTypeProducedByTappedPermanentEffect(ManaColor.COLORLESS));
     }
 }

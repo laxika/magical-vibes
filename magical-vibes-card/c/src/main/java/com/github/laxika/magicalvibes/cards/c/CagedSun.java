@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
+import com.github.laxika.magicalvibes.model.effect.AddManaOfTypeProducedByTappedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,6 +18,6 @@ public class CagedSun extends Card {
     public CagedSun() {
         addStaticEffect(new ChooseColorOnEnterEffect());
         addStaticEffect(new BoostCreaturesOfChosenColorEffect(1, 1));
-        addTrigger(Triggers.youTapLandForMana(), new AddExtraManaOfChosenColorOnLandTapEffect());
+        addTrigger(Triggers.youTapLandForMana(), AddManaOfTypeProducedByTappedPermanentEffect.ofSourceChosenColor());
     }
 }

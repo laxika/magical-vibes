@@ -16,10 +16,8 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
-import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaOfTypeProducedByTappedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
-import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfColorTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
@@ -52,10 +50,8 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
-import com.github.laxika.magicalvibes.service.effect.normalfx.AddExtraManaOfChosenColorOnLandTapEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AddManaOfTypeProducedByTappedPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AddManaOnEnchantedLandTapEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.AddManaWhenLandOfColorTappedForManaEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AddManaWhenTappedForManaEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AddOneOfEachManaTypeProducedByLandEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler;
@@ -145,14 +141,11 @@ class TapTriggersTest {
         effectHandlerRegistry.register(AddOneOfEachManaTypeProducedByLandEffect.class, addOneOfEachHandler);
         effectHandlerRegistry.register(AddManaOnEnchantedLandTapEffect.class, new AddManaOnEnchantedLandTapEffectHandler(
                 gameQueryService, gameLogService, amountEvaluationService, interactionHandlerRegistry));
-        effectHandlerRegistry.register(AddExtraManaOfChosenColorOnLandTapEffect.class,
-                new AddExtraManaOfChosenColorOnLandTapEffectHandler(gameQueryService, gameLogService));
         effectHandlerRegistry.register(AddManaWhenTappedForManaEffect.class,
                 new AddManaWhenTappedForManaEffectHandler(gameQueryService, gameLogService));
-        effectHandlerRegistry.register(AddManaWhenLandOfColorTappedForManaEffect.class,
-                new AddManaWhenLandOfColorTappedForManaEffectHandler(gameQueryService, gameLogService));
         effectHandlerRegistry.register(AddManaOfTypeProducedByTappedPermanentEffect.class,
-                new AddManaOfTypeProducedByTappedPermanentEffectHandler(gameLogService, interactionHandlerRegistry));
+                new AddManaOfTypeProducedByTappedPermanentEffectHandler(gameQueryService, gameLogService,
+                        interactionHandlerRegistry));
         effectHandlerRegistry.register(DealDamageToPlayersEffect.class, dealDamageHandler);
     }
 
@@ -418,7 +411,7 @@ class TapTriggersTest {
             when(gameQueryService.findPermanentById(gd, forest.getId())).thenReturn(forest);
             when(gameQueryService.findPermanentById(gd, mountain.getId())).thenReturn(mountain);
             when(gameQueryService.findPermanentById(gd, cagedSun.getId())).thenReturn(cagedSun);
-            var effect = new AddExtraManaOfChosenColorOnLandTapEffect();
+            var effect = AddManaOfTypeProducedByTappedPermanentEffect.ofSourceChosenColor();
 
             tapLand(cagedSun, player1Id, effect, player1Id, forest.getId(), ManaColor.GREEN);
             tapLand(cagedSun, player1Id, effect, player1Id, mountain.getId(), ManaColor.RED);
@@ -454,17 +447,19 @@ class TapTriggersTest {
         }
 
         @Test
-        @DisplayName("\"a land tapped for {C}\" adds {C} for a land on the battlefield that produced it, else nothing")
+        @DisplayName("\"a land tapped for {C}\" adds {C} whenever the tap produced it, the land gone or not, else nothing")
         void colorTapBonusReadsTheProducedMana() {
             Permanent ultima = createPermanent("Ultima, Origin of Oblivion");
             Permanent wastes = createLandPermanent("Wastes", ManaColor.COLORLESS);
-            when(gameQueryService.findPermanentById(gd, wastes.getId())).thenReturn(wastes);
-            var effect = new AddManaWhenLandOfColorTappedForManaEffect(ManaColor.COLORLESS);
+            Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
+            var effect = new AddManaOfTypeProducedByTappedPermanentEffect(ManaColor.COLORLESS);
 
             tapLand(ultima, player1Id, effect, player1Id, wastes.getId(), ManaColor.COLORLESS);
             tapLand(ultima, player1Id, effect, player1Id, UUID.randomUUID(), ManaColor.COLORLESS);
+            tapLand(ultima, player1Id, effect, player1Id, forest.getId(), ManaColor.GREEN);
 
-            assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.COLORLESS)).isEqualTo(1);
+            assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.COLORLESS)).isEqualTo(2);
+            assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isZero();
         }
 
         @Test

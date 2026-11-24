@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GemstoneMine;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.p.Piracy;
+import com.github.laxika.magicalvibes.cards.t.Taiga;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -24,7 +26,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CagedSun.class, Forest.class, GemstoneMine.class, Mountain.class, ShimmeringGrotto.class, WoodlandCemetery.class})
+@CardUsed({CagedSun.class, Forest.class, GemstoneMine.class, Mountain.class, Piracy.class, ShimmeringGrotto.class, Taiga.class,
+        WoodlandCemetery.class})
 class CagedSunTest extends BaseCardTest {
 
     private static Card createCreature(String name, int power, int toughness, CardColor color) {
@@ -313,6 +316,38 @@ class CagedSunTest extends BaseCardTest {
         harness.handleListChoice(player1, "GREEN");
 
         harness.assertNotOnBattlefield(player1, "Gemstone Mine");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A land tapped through Piracy adds the extra mana only once its chosen mana is of the chosen color")
+    void foreignLandWaitsForItsManaChoice() {
+        Permanent sun = harness.addToBattlefieldAndReturn(player1, new CagedSun());
+        sun.setChosenColor(CardColor.GREEN);
+        Permanent taiga = harness.addToBattlefieldAndReturn(player2, new Taiga());
+        harness.castFromHand(player1, new Piracy(), "{U}{U}");
+        harness.passBothPriorities();
+
+        harness.tapForeignLandForMana(player1, taiga.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("A land tapped through Piracy for the chosen color adds one extra mana of it")
+    void foreignLandChosenColorGetsBonus() {
+        Permanent sun = harness.addToBattlefieldAndReturn(player1, new CagedSun());
+        sun.setChosenColor(CardColor.GREEN);
+        Permanent taiga = harness.addToBattlefieldAndReturn(player2, new Taiga());
+        harness.castFromHand(player1, new Piracy(), "{U}{U}");
+        harness.passBothPriorities();
+
+        harness.tapForeignLandForMana(player1, taiga.getId());
+        harness.handleListChoice(player1, "GREEN");
+
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
     }
 }

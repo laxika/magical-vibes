@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.TotalPowerOfControlledCreatures;
-import com.github.laxika.magicalvibes.model.effect.AwardPersistentAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
+import com.github.laxika.magicalvibes.model.effect.AwardPersistentManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -13,8 +13,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class KlauthUnrivaledAncient extends Card {
 
     public KlauthUnrivaledAncient() {
-        addTrigger(Triggers.attacks(), new AwardPersistentAnyColorManaEffect(
-                new TotalPowerOfControlledCreatures(new PermanentIsAttackingPredicate()),
-                ManaSpendRestriction.SPELL_ONLY, true));
+        addTrigger(Triggers.attacks(), AwardPersistentManaEffect.inAnyCombinationOf(ManaColor.COLORS,
+                new TotalPowerOfControlledCreatures(new PermanentIsAttackingPredicate())).spendOnlyToCastSpells());
     }
 }

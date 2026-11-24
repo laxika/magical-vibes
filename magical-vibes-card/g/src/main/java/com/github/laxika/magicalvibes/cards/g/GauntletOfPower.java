@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
+import com.github.laxika.magicalvibes.model.effect.AddManaOfTypeProducedByTappedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -22,6 +22,6 @@ public class GauntletOfPower extends Card {
         addStaticEffect(new StaticBoostEffect(1, 1, Subjects.allCreatures(),
                 new PermanentHasSourceChosenColorPredicate()));
         addTrigger(Triggers.playerTapsLandForMana().withFilter(new PermanentHasSupertypePredicate(CardSupertype.BASIC)),
-                AddExtraManaOfChosenColorOnLandTapEffect.ofItsController());
+                AddManaOfTypeProducedByTappedPermanentEffect.ofSourceChosenColor().toItsController());
     }
 }
