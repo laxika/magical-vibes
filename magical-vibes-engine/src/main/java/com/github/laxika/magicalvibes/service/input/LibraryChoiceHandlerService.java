@@ -1515,7 +1515,7 @@ public class LibraryChoiceHandlerService {
             if (followUp.opponentExileChoice() != null) {
                 PendingOpponentExileChoice pending = followUp.opponentExileChoice();
                 // "Any opponent may": the opponents decide in turn order (Distant Memories ruling 2011-06-01).
-                List<UUID> opponents = com.github.laxika.magicalvibes.service.effect.normalfx.MayPayManaEffectHandler
+                List<UUID> opponents = com.github.laxika.magicalvibes.service.effect.SubjectResolutionService
                         .apnapOpponents(gameData, pending.controllerId());
                 if (!opponents.isEmpty()) {
                     MayPenaltyChoiceHandlerService.offerOpponentExileChoice(gameData, chosenCard,

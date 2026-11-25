@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import java.util.Objects;
 
 /**
@@ -14,5 +15,10 @@ public record DamageFromSourceCost(DynamicAmount amount) implements CostEffect {
 
     public DamageFromSourceCost {
         Objects.requireNonNull(amount, "amount");
+    }
+
+    /** "Have [this] deal {@code amount} damage to you." */
+    public static DamageFromSourceCost of(int amount) {
+        return new DamageFromSourceCost(new Fixed(amount));
     }
 }

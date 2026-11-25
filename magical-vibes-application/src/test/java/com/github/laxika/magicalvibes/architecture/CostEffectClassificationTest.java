@@ -45,7 +45,8 @@ class CostEffectClassificationTest {
             "DamageFromSourceCost",
             "ExileCardsCost",
             "ExileGraveyardCost",
-            "GetPoisonCountersCost");
+            "GetPoisonCountersCost",
+            "SourceControllerDrawsCost");
 
     /**
      * Cost types only ever used as activation costs (activated/triggered abilities, crew, etc.).

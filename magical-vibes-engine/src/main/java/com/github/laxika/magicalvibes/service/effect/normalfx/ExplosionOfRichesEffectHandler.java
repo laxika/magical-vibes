@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -51,7 +53,7 @@ public class ExplosionOfRichesEffectHandler implements NormalEffectHandlerBean {
         }
 
         List<UUID> opponents = riches.remainingOpponentIds() == null
-                ? MayPayManaEffectHandler.apnapOpponents(gameData, controllerId)
+                ? SubjectResolutionService.apnapOpponents(gameData, controllerId)
                 : new ArrayList<>(riches.remainingOpponentIds());
         opponents.removeIf(id -> !gameData.playerIds.contains(id));
         if (opponents.isEmpty()) {
@@ -105,7 +107,7 @@ public class ExplosionOfRichesEffectHandler implements NormalEffectHandlerBean {
      * by the door, which picks its "target opponent chosen at random" as it goes there (CR 603.3d).
      */
     private void queueDamageTriggers(GameData gameData, Card sourceCard, UUID controllerId, int count) {
-        if (MayPayManaEffectHandler.apnapOpponents(gameData, controllerId).isEmpty()) {
+        if (SubjectResolutionService.apnapOpponents(gameData, controllerId).isEmpty()) {
             return;
         }
         StackEntry resolving = ReflexiveAbilitySupport.resolvingEntryOf(gameData, sourceCard, null);

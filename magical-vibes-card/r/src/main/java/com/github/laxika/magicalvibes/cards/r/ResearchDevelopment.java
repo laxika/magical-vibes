@@ -4,17 +4,15 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
-import com.github.laxika.magicalvibes.model.StepKind;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SourceControllerDrawsCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import java.util.List;
 import java.util.Set;
 
@@ -25,10 +23,11 @@ public class ResearchDevelopment extends Card {
     public ResearchDevelopment() {
         CreateTokenEffect elemental = new CreateTokenEffect(
                 1, "Elemental", 3, 1, CardColor.RED, List.of(CardSubtype.ELEMENTAL), Set.of(), Set.of());
-        CardEffect elementalUnlessYouDraw = MayPayManaEffect.anyPlayerMay(MayPayPayer.ANY_OPPONENT,
-                new DrawCardEffect(1, Subjects.you()),
-                "Have its controller draw a card? If no opponent does, they create a 3/1 red Elemental creature token.",
-                null, elemental);
+        CardEffect elementalUnlessYouDraw = UnlessPaysEffect.unlessPays(Subjects.eachOpponent(),
+                new SourceControllerDrawsCost(1), elemental)
+                .withPrompt("Have its controller draw a card? If no opponent does, they create a 3/1 red Elemental"
+                        + " creature token.")
+                .payingTogether();
         List<CardEffect> development = List.of(elementalUnlessYouDraw, elementalUnlessYouDraw, elementalUnlessYouDraw);
 
         addSpellEffect(new ChooseOneEffect(List.of(

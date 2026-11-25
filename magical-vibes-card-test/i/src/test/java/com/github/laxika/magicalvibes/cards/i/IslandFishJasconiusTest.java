@@ -107,7 +107,7 @@ class IslandFishJasconiusTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.passBothPriorities(); // resolve MayPayManaEffect from stack
+        harness.passBothPriorities(); // resolve UnlessPaysEffect from stack
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(fish.isTapped()).isFalse();

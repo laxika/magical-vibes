@@ -43,7 +43,7 @@ class ManaVaultTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.passBothPriorities(); // resolve MayPayManaEffect from stack
+        harness.passBothPriorities(); // resolve UnlessPaysEffect from stack
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(vault.isTapped()).isFalse();

@@ -88,16 +88,13 @@ public interface ManaProducingEffect extends CardEffect {
     }
 
     /**
-     * Whether an activated ability's effect can add mana when it resolves (CR 605.1a). A
-     * {@link MayPayManaEffect} whose wrapped or else effect adds mana counts. Rhystic Cave's "add one
-     * mana of that color unless any player pays {1}" adds mana through the else effect when nobody pays.
+     * Whether an activated ability's effect can add mana when it resolves (CR 605.1a). An
+     * {@link UnlessPaysEffect} whose branch adds mana counts: Rhystic Cave's "add one mana of that
+     * color unless any player pays {1}" adds mana through that branch when nobody pays.
      */
     static boolean addsManaWhenResolved(CardEffect effect) {
         return effect instanceof ManaProducingEffect
                 || effect instanceof UnlessPaysEffect unless
-                && (unless.ifPaid() instanceof ManaProducingEffect || unless.ifNotPaid() instanceof ManaProducingEffect)
-                || effect instanceof MayPayManaEffect mayPay
-                && (mayPay.wrapped() instanceof ManaProducingEffect
-                || mayPay.elseEffect() instanceof ManaProducingEffect);
+                && (unless.ifPaid() instanceof ManaProducingEffect || unless.ifNotPaid() instanceof ManaProducingEffect);
     }
 }

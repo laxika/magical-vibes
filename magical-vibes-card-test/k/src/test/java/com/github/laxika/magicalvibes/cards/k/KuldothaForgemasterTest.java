@@ -101,7 +101,7 @@ class KuldothaForgemasterTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, spellbombId);
 
-        // Ability should now be on the stack (Flight Spellbomb's death trigger also adds a MayPayManaEffect)
+        // Ability should now be on the stack (Flight Spellbomb's death trigger also adds a UnlessPaysEffect)
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.ACTIVATED_ABILITY);
 

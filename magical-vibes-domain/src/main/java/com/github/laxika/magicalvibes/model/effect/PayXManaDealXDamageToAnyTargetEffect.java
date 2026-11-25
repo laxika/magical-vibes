@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
  * {@link com.github.laxika.magicalvibes.model.ManaCost#calculateMaxX}, which reserves the colored
  * part of {@code manaCost}), pays {@code manaCost}, then deals X damage. Choosing X=0 declines.
  * Tap lands during the prompt to fill the pool before confirming. Do NOT use
- * {@code MayPayManaEffect("{X}…", …)} — it can't pay/plumb {X} at resolution.
+ * {@code UnlessPaysEffect.youMayPay("{X}…", …)}: it can't choose X at resolution.
  *
  *
  * <p>The {@linkplain #reflexive(String, TargetPredicate) reflexive} form models "you may pay {X}.

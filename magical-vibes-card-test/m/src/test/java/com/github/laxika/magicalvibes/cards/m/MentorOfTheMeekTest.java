@@ -32,7 +32,7 @@ class MentorOfTheMeekTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1); // for Mentor's {1} cost
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // Resolve Darkthicket Wolf
-        harness.passBothPriorities(); // Resolve MayPayManaEffect from stack -> may prompt
+        harness.passBothPriorities(); // Resolve UnlessPaysEffect from stack -> may prompt
 
         // Accept and pay {1} to draw a card.
         harness.handleMayAbilityChosen(player1, true);
@@ -51,7 +51,7 @@ class MentorOfTheMeekTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // Resolve Darkthicket Wolf
-        harness.passBothPriorities(); // Resolve MayPayManaEffect from stack -> may prompt
+        harness.passBothPriorities(); // Resolve UnlessPaysEffect from stack -> may prompt
 
         // Decline
         harness.handleMayAbilityChosen(player1, false);
@@ -112,7 +112,7 @@ class MentorOfTheMeekTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1); // for Mentor's {1} cost
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // Resolve Avacyn's Pilgrim
-        harness.passBothPriorities(); // Resolve MayPayManaEffect from stack -> may prompt
+        harness.passBothPriorities(); // Resolve UnlessPaysEffect from stack -> may prompt
 
         harness.handleMayAbilityChosen(player1, true);
 

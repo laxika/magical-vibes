@@ -820,9 +820,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     }
 
     /**
-     * A player who accepted a "[any player] may sacrifice / tap a [permanent]" payment
-     * ({@code MayPayManaEffect.anyPlayerMay}) picks which one; the pick waits on the payment until every player has
-     * answered, unless it is paid as each accepts.
+     * A player who chose to pay a "[any player] may sacrifice / tap a [permanent]" ransom paid together
+     * ({@code UnlessPaysEffect.payingTogether()}) picks which one; the pick waits on the resolving entry's
+     * {@code UnlessAnswer} until every player has answered.
      */
     record AnyPlayerPaymentPick(UUID playerId) implements PermanentChoiceContext {}
 

@@ -39,7 +39,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetEffe
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleSelfPowerToughnessEffect;
@@ -201,15 +200,6 @@ public class TargetPolarityClassifier {
             TargetPolarity declined = unless.ifNotPaid() == null
                     ? null
                     : classify(gameData, unless.ifNotPaid(), aiPlayerId);
-            return higherPriority(paid, declined);
-        }
-        if (effect instanceof MayPayManaEffect mayPay) {
-            TargetPolarity paid = mayPay.wrapped() == null
-                    ? null
-                    : classify(gameData, mayPay.wrapped(), aiPlayerId);
-            TargetPolarity declined = mayPay.elseEffect() == null
-                    ? null
-                    : classify(gameData, mayPay.elseEffect(), aiPlayerId);
             return higherPriority(paid, declined);
         }
         if (effect instanceof ConditionalReplacementEffect replacement) {

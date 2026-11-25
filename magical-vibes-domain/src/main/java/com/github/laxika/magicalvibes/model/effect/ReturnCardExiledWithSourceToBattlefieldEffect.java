@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
  * the chosen card leaves exile. Battlefield sibling of {@link PutCardExiledWithSourceIntoHandEffect}.
  * When {@code returnAtRandom} is true, one matching card is selected at random instead.
  *
- * <p>Purgatory's upkeep trigger, wrapped in a {@code MayPayManaEffect("{4}", 2, …)} for the
+ * <p>Purgatory's upkeep trigger, wrapped in a {@code UnlessPaysEffect.youMayPay("{4}", 2, …)} for the
  * "you may pay {4} and 2 life" gate. The filter, mana-value-X restriction, and persistent subtype
  * grant are used by Ashiok, Nightmare Weaver's loyalty ability.
  */

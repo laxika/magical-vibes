@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -37,7 +39,7 @@ public class ProtectionRacketEffectHandler implements NormalEffectHandlerBean {
         ProtectionRacketEffect racket = (ProtectionRacketEffect) effect;
         UUID controllerId = entry.getControllerId();
         List<UUID> opponents = racket.remainingOpponentIds().isEmpty()
-                ? MayPayManaEffectHandler.apnapOpponents(gameData, controllerId)
+                ? SubjectResolutionService.apnapOpponents(gameData, controllerId)
                 : new ArrayList<>(racket.remainingOpponentIds());
         opponents.removeIf(id -> !gameData.playerIds.contains(id));
         if (opponents.isEmpty()) {

@@ -343,6 +343,7 @@ class LichsDuelMasteryLifePaymentEffectTest extends BaseCardTest {
         assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Dash Hopes"));
 
         answerExile(player1, mastery);
+        harness.handleMayAbilityChosen(player2, false);
 
         harness.assertLife(player1, 20);
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Dash Hopes"));

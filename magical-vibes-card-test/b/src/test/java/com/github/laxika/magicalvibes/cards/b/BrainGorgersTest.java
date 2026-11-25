@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.p.PiracyCharm;
+import com.github.laxika.magicalvibes.cards.t.TheMasterMultiplied;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BrainGorgers.class, BloodKnight.class, PiracyCharm.class})
+@CardUsed({BrainGorgers.class, BloodKnight.class, PiracyCharm.class, TheMasterMultiplied.class})
 class BrainGorgersTest extends BaseCardTest {
 
     @Test
@@ -37,6 +38,7 @@ class BrainGorgersTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, creature.getId());
 
         harness.assertInGraveyard(player1, "Brain Gorgers");
         harness.assertInGraveyard(player2, "Blood Knight");
@@ -53,6 +55,7 @@ class BrainGorgersTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, casterCreature.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, false);
@@ -77,6 +80,7 @@ class BrainGorgersTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, opponentCreature.getId());
 
         harness.assertInGraveyard(player1, "Brain Gorgers");
         harness.assertInGraveyard(player2, "Blood Knight");
@@ -133,22 +137,23 @@ class BrainGorgersTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The first sacrifice counters it at once, and the next player still gets the choice")
-    void firstSacrificeCountersAtOnceAndTheNextPlayerIsStillAsked() {
-        harness.addToBattlefield(player1, new BloodKnight());
-        harness.addToBattlefield(player2, new BloodKnight());
+    @DisplayName("The first sacrifice is made at once, the next player still gets the choice, and it is countered once")
+    void firstSacrificeIsMadeAtOnceAndTheNextPlayerIsStillAsked() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new BloodKnight());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new BloodKnight());
         castBrainGorgers(player1);
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, first.getId());
 
         harness.assertInGraveyard(player1, "Blood Knight");
-        harness.assertInGraveyard(player1, "Brain Gorgers");
         harness.assertOnBattlefield(player2, "Blood Knight");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player2.getId());
 
         harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, second.getId());
 
         harness.assertInGraveyard(player2, "Blood Knight");
         harness.assertInGraveyard(player1, "Brain Gorgers");
@@ -185,11 +190,29 @@ class BrainGorgersTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, harness.getPermanentId(player2, "Blood Knight"));
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Brain Gorgers");
         harness.assertInGraveyard(player2, "Blood Knight");
         harness.assertNotOnBattlefield(player1, "Brain Gorgers");
+    }
+
+    @Test
+    @DisplayName("Its caster isn't asked when The Master, Multiplied keeps their only creatures, tokens, from the sacrifice")
+    void protectedCreatureTokensCantBeSacrificedByItsCaster() {
+        TheMasterMultiplied master = new TheMasterMultiplied();
+        master.setToken(true);
+        harness.addToBattlefield(player1, master);
+        BloodKnight knight = new BloodKnight();
+        knight.setToken(true);
+        harness.addToBattlefield(player1, knight);
+        castBrainGorgers(player1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.assertOnBattlefield(player1, "Blood Knight");
     }
 
     private void castBrainGorgers(Player player) {

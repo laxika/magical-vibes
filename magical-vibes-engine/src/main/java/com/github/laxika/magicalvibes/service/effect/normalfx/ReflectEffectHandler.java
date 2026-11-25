@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -32,7 +34,7 @@ public class ReflectEffectHandler implements NormalEffectHandlerBean {
                 ? reflect.sourcePermanentId()
                 : entry.getSourcePermanentId();
         List<UUID> opponents = reflect.remainingOpponentIds() == null
-                ? MayPayManaEffectHandler.apnapOpponents(gameData, controllerId)
+                ? SubjectResolutionService.apnapOpponents(gameData, controllerId)
                 : new ArrayList<>(reflect.remainingOpponentIds());
         opponents.removeIf(id -> !gameData.playerIds.contains(id));
 

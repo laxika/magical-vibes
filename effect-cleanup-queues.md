@@ -667,6 +667,15 @@ P*nn* = chunk *nn*, "run *n*" = step 9's run *n*, 8.*n* / 5*x* = older steps), h
 - ~~`OutsideGameNormalCostCastSupport`'s modal path (maximum `choicesMax + 1`) doesn't use `requiredOrAllModes`, so an entwine card's in-between mode count is refused only by the hand path's check. Run 50. Sure of the code.~~ Not a defect (defect run D17): every printed entwine spell has two modes, so choicesMax + 1 is always every mode.
 - ~~Resolution-time "pay N life" options in `MayAbilityHandlerService`, `MayPenaltyChoiceHandlerService` and about 15 handlers check `canPlayerLifeChange` but not `canPlayerLoseLife`, so a per-player "can't lose life" doesn't stop the payment (CR 119.8). Defect run D17. Sure of the code. The counter-unless-pays life ransoms (ward—pay N life, "{2}, Pay 2 life") moved onto `UnlessPaysEffect`, which checks `canPlayerLoseLife` at resolution and at the answer (step 10 run U1); the rest stay.~~ Fixed in defect run D25: every resolution-time life check is `ResolutionCostPaymentService.canPayLife` (or `canPlayerLoseLife` for a running total): Sylvan Library, Lim-Dûl's Vault, Zur's Weirding, shocklands, Killing Wave, the pay-life-per-card looks and searches included.
 - Chisei, Heart of Oceans' `ForcedCostOrElseEffect` counter removal may take the first kind of counter instead of letting the payer choose. Defect run D17. Unverified.
+- Development (Research // Development): two or more opponents letting its controller draw in one round draw one card, not one per
+  accepting opponent (CR 118.12a: each paid cost is that player's; its 2006 rulings don't settle it). Kept one per round (no change in
+  play), pinned (`ResearchDevelopmentTest.twoOpponentsChoosingTheDrawInOneRoundDrawOneCard`); owner to review. Step 10 run U3c. Sure of the
+  code.
+- A one-permanent sacrifice ransom paid at once (`ResolutionCostPaymentService.pay` of `SacrificePermanentCost`: ward "sacrifice a
+  creature", Blood Funnel, Mana Vortex and now Brain Gorgers) asks the pick even when only one permanent could be sacrificed (the "one
+  possible answer is made unasked" convention, CR 608.2d); the paid-together path picks it unasked. Step 10 run U3c. Sure; cosmetic.
+- The paid-together tap ransom (Reservoir Kraken) logs "taps an untapped permanent" / "chooses to tap an untapped permanent": the ransom
+  text of `TapMultiplePermanentsCost` names no permanent kind (its filter has no label). Step 10 run U3c. Sure; cosmetic.
 
 **7. Layers and copy values.**
 

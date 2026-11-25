@@ -37,7 +37,7 @@ class HorizonSpellbombTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Horizon Spellbomb");
         harness.assertInGraveyard(player1, "Horizon Spellbomb");
 
-        // Death trigger MayPayManaEffect resolves first (on top per CR 603.3)
+        // Death trigger UnlessPaysEffect resolves first (on top per CR 603.3)
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.passBothPriorities();
 
@@ -54,7 +54,7 @@ class HorizonSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        // Death trigger MayPayManaEffect resolves first (on top per CR 603.3)
+        // Death trigger UnlessPaysEffect resolves first (on top per CR 603.3)
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
@@ -77,7 +77,7 @@ class HorizonSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        // Death trigger MayPayManaEffect resolves first (on top per CR 603.3)
+        // Death trigger UnlessPaysEffect resolves first (on top per CR 603.3)
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
@@ -106,7 +106,7 @@ class HorizonSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        // Death trigger MayPayManaEffect resolves first (on top per CR 603.3)
+        // Death trigger UnlessPaysEffect resolves first (on top per CR 603.3)
         harness.passBothPriorities();
 
         // Accept death trigger — pay {G}, inner draw resolves inline
@@ -132,7 +132,7 @@ class HorizonSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        // Death trigger MayPayManaEffect resolves first (on top per CR 603.3)
+        // Death trigger UnlessPaysEffect resolves first (on top per CR 603.3)
         harness.passBothPriorities();
 
         // Decline death trigger
@@ -158,7 +158,7 @@ class HorizonSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        // Death trigger MayPayManaEffect resolves first (on top per CR 603.3)
+        // Death trigger UnlessPaysEffect resolves first (on top per CR 603.3)
         harness.passBothPriorities();
 
         // Accept but cannot pay {G} — auto-treats as decline
@@ -185,7 +185,7 @@ class HorizonSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        // Death trigger MayPayManaEffect resolves first (on top per CR 603.3)
+        // Death trigger UnlessPaysEffect resolves first (on top per CR 603.3)
         harness.passBothPriorities();
 
         // Accept death trigger — pay {G} to draw, inner effect resolves inline

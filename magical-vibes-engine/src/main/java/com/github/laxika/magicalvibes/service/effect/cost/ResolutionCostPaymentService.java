@@ -19,8 +19,18 @@ import com.github.laxika.magicalvibes.model.effect.AllOfCost;
 import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.UnlessAnswer;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DepartPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.SourceControllerDrawsCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.service.DrawService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.StepDepartureSupport;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentTapCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.TapCostSupport;
@@ -122,7 +132,17 @@ import org.springframework.stereotype.Component;
  *   alternative at a time.</li>
  *   <li>{@link AllOfCost}: payable while every part is; its caller checks {@link #canPayNow} and pays one part at a
  *   time (CR 601.2h).</li>
+ *   <li>{@link SourceControllerDrawsCost}: the source's controller draws (the draw action, its replacements); always
+ *   payable.</li>
  * </ul>
+ * A sacrifice is offered only the permanents the payer could sacrifice for that effect (CR 608.2d, 701.21a): none while
+ * an effect of an opponent can't make them sacrifice (Sigarda, Host of Herons: "you can't take that option"), never one
+ * that can't be sacrificed or chosen, nor a creature token the asking triggered ability can't make its controller
+ * sacrifice (The Master, Multiplied).
+ *
+ * <p>A ransom paid together after everyone answered ({@code UnlessPaysEffect.payingTogether()}, CR 101.4) is chosen
+ * first ({@link #choose}: the permanents picked, {@link #completePick}) and paid once the last player answered
+ * ({@link #payTogether}: one sacrifice, tap, damage or draw step for every choice).
  * A payment with a choice ({@link Outcome#ASKING}) is finished by that prompt's completion, which ends through its own
  * epilogue and resumes the asking resolution ({@link #completePermanentChoice}, {@link #completeMultiPermanentChoice},
  * the evidence and discard completions); a life payment that a Lich's Duel Mastery sacrifice would follow asks that
@@ -159,8 +179,27 @@ public class ResolutionCostPaymentService {
         }
     }
 
+    /**
+     * How a {@link #choose} call ended: {@link Outcome#PAID} when the choice is made ({@code objectIds} the permanents
+     * chosen, none for a payment with nothing to pick), {@link Outcome#ASKING} while a pick finishes it
+     * ({@link #completePick}), {@link Outcome#NOT_PAID} when the payer couldn't pay (CR 118.3).
+     */
+    public record Choice(Outcome outcome, List<UUID> objectIds) {
+
+        public Choice {
+            objectIds = List.copyOf(objectIds);
+        }
+
+        static Choice chosen(List<UUID> objectIds) {
+            return new Choice(Outcome.PAID, objectIds);
+        }
+    }
+
     private final GameQueryService gameQueryService;
     private final LifeSupport lifeSupport;
+    @Autowired
+    @Lazy
+    private DrawService drawService;
     @Autowired
     @Lazy
     private PotentialManaService potentialManaService;
@@ -264,6 +303,7 @@ public class ResolutionCostPaymentService {
             case TapMultiplePermanentsCost tap -> tapHandler(gameData, tap, entry).getValidChoiceIds(gameData, payerId)
                     .size() >= tapCount(gameData, tap, entry);
             case ExileCardsCost exile -> !cardsToExile(gameData, entry, exile).isEmpty();
+            case SourceControllerDrawsCost ignored -> true;
             case AnyOfCost anyOf -> anyOf.alternatives().stream()
                     .anyMatch(alternative -> canPay(gameData, payerId, alternative, sourceCard, entry));
             case AllOfCost allOf -> allOf.parts().stream()
@@ -596,10 +636,133 @@ public class ResolutionCostPaymentService {
                 }
                 yield afterImmediatePayment(gameData);
             }
+            case SourceControllerDrawsCost draw -> {
+                if (payment.sourceControllerId() != null) {
+                    drawService.resolveDrawCards(gameData, payment.sourceControllerId(), draw.count());
+                }
+                yield afterImmediatePayment(gameData);
+            }
             case AllOfCost ignored -> throw new IllegalArgumentException(
                     "An all-of cost is paid one part at a time, after canPayNow: " + cost);
             default -> throw new IllegalArgumentException("No resolution-time payment for " + cost);
         };
+    }
+
+    /**
+     * {@code payer}'s choice to pay {@code cost}, paid later with the other players' ({@link #payTogether}): nothing
+     * changes now. The permanents of a sacrifice or tap are picked now, unasked when only that many could be chosen
+     * (CR 608.2d); a pick asked ({@link PermanentChoiceContext.AnyPlayerPaymentPick},
+     * {@link MultiPermanentChoiceContext.AnyPlayerPaymentPick}) is kept on the resolving entry by {@link #completePick}.
+     * Damage and a draw have nothing to choose.
+     */
+    public Choice choose(GameData gameData, Player payer, CostEffect cost, Payment payment) {
+        UUID payerId = payer.getId();
+        StackEntry entry = payment.entry();
+        return switch (cost) {
+            case SacrificePermanentCost sacrifice -> pick(gameData, payerId,
+                    sacrificeCandidates(gameData, payerId, sacrifice.filter(), sacrifice.excludeSource(), entry), 1,
+                    "Choose " + (sacrifice.description() == null ? "a permanent" : "a " + sacrifice.description())
+                            + " to sacrifice.");
+            case SacrificeMultiplePermanentsCost sacrifice -> pick(gameData, payerId,
+                    sacrificeCandidates(gameData, payerId, sacrifice.filter(), false, entry), sacrifice.count(),
+                    "Choose " + sacrifice.count() + " "
+                            + (sacrifice.description() == null ? "permanents" : sacrifice.description())
+                            + " to sacrifice.");
+            case TapMultiplePermanentsCost tap -> {
+                int count = tapCount(gameData, tap, entry);
+                List<UUID> candidates = tapHandler(gameData, tap, entry).getValidChoiceIds(gameData, payerId).stream()
+                        .filter(id -> !gameQueryService.cantBeChosen(gameData,
+                                gameQueryService.findPermanentById(gameData, id)))
+                        .toList();
+                yield pick(gameData, payerId, candidates, count, count == 1 ? "Choose a permanent to tap." : "Choose " + count + " permanents to tap.");
+            }
+            case DamageFromSourceCost ignored -> Choice.chosen(List.of());
+            case SourceControllerDrawsCost ignored -> Choice.chosen(List.of());
+            default -> throw new IllegalArgumentException("No payment chosen now and paid later for " + cost);
+        };
+    }
+
+    private Choice pick(GameData gameData, UUID payerId, List<UUID> candidates, int count, String prompt) {
+        if (candidates.size() < count) {
+            return new Choice(Outcome.NOT_PAID, List.of());
+        }
+        if (candidates.size() == count) {
+            return Choice.chosen(candidates);
+        }
+        if (count == 1) {
+            playerInputService.beginPermanentChoice(gameData, payerId, candidates,
+                    new PermanentChoiceContext.AnyPlayerPaymentPick(payerId), prompt);
+        } else {
+            playerInputService.beginMultiPermanentChoice(gameData, payerId, candidates, count,
+                    new MultiPermanentChoiceContext.AnyPlayerPaymentPick(payerId), prompt);
+        }
+        return new Choice(Outcome.ASKING, List.of());
+    }
+
+    /**
+     * Completes an {@code AnyPlayerPaymentPick}: {@code payerId}'s picked permanents are kept with their choice on the
+     * waiting entry's {@link UnlessAnswer}, to be paid with the others once everyone answered. The caller ends through
+     * the epilogue, which resumes the asking resolution.
+     */
+    public void completePick(GameData gameData, UUID payerId, List<UUID> permanentIds) {
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        if (entry == null) {
+            return;
+        }
+        UnlessAnswer state = entry.unlessAnswer(gameData.pendingEffectResolutionIndex);
+        if (state != null) {
+            entry.setUnlessAnswer(state.withChoice(payerId, permanentIds));
+        }
+    }
+
+    /**
+     * The steps paying {@code cost} for every one of {@code choices} together, after the last answer (CR 101.4,
+     * 608.2e): the chosen permanents sacrificed as one departure (death replacements asked first, CR 616.1; they die
+     * together, CR 603.10a) or tapped as one tap step; the source dealing the damage to every payer at once, dealt by
+     * the object as it is or last was (CR 608.2h) and paid even if prevented (CR 118.12); the source's controller
+     * drawing once for the round, however many chose it (Development's rulings). A chosen permanent that is gone or no
+     * longer its chooser's, or a payer who left the game, is skipped: nothing else is done instead (CR 609.3), and the
+     * branch still follows the choice (CR 118.12).
+     */
+    public List<CardEffect> payTogether(GameData gameData, StackEntry entry, CostEffect cost,
+                                        List<UnlessAnswer.Choice> choices) {
+        List<UnlessAnswer.Choice> live = choices.stream()
+                .filter(choice -> gameData.playerIds.contains(choice.payerId()))
+                .toList();
+        List<UUID> payers = live.stream().map(UnlessAnswer.Choice::payerId).distinct().toList();
+        if (payers.isEmpty()) {
+            return List.of();
+        }
+        List<UUID> chosen = new ArrayList<>();
+        for (UnlessAnswer.Choice choice : live) {
+            for (UUID id : choice.objectIds()) {
+                Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+                if (permanent != null
+                        && choice.payerId().equals(gameQueryService.findPermanentController(gameData, id))) {
+                    chosen.add(id);
+                }
+            }
+        }
+        return switch (cost) {
+            case SacrificePermanentCost ignored -> sacrificeTogether(entry, payers, chosen);
+            case SacrificeMultiplePermanentsCost ignored -> sacrificeTogether(entry, payers, chosen);
+            case TapMultiplePermanentsCost ignored -> {
+                entry.recordStep(StepKind.CHOOSE, StepOutcome.ofObjects(chosen, payers));
+                yield List.of(new TapPermanentsEffect(Subjects.thisWay(StepKind.CHOOSE)));
+            }
+            case DamageFromSourceCost damage -> {
+                entry.setAcceptedPlayerIds(payers);
+                yield List.of(new DealDamageToPlayersEffect(damage.amount(), Subjects.acceptedPlayers()));
+            }
+            case SourceControllerDrawsCost draw -> List.of(new DrawCardEffect(draw.count(), Subjects.you()));
+            default -> throw new IllegalArgumentException("No payment made together for " + cost);
+        };
+    }
+
+    private static List<CardEffect> sacrificeTogether(StackEntry entry, List<UUID> payers, List<UUID> chosen) {
+        entry.setAcceptedPlayerIds(payers);
+        return chosen.isEmpty() ? List.of()
+                : List.of(new DepartPermanentsEffect(StepDepartureSupport.sacrifices(chosen)));
     }
 
     /**
@@ -958,13 +1121,17 @@ public class ResolutionCostPaymentService {
 
     /**
      * The payer's permanents they could sacrifice for {@code filter}, judged from the resolving {@code entry}'s source
-     * ("an Aura attached to Three Dog") and without that source when the cost leaves it out.
+     * ("an Aura attached to Three Dog") and without that source when the cost leaves it out: none while the entry's
+     * controller, an opponent, can't make them sacrifice (Sigarda, Host of Herons' rulings); never one that can't be
+     * sacrificed or chosen, nor a creature token the asking triggered ability can't make its controller sacrifice
+     * (CR 608.2d, 701.21a).
      */
     private List<UUID> sacrificeCandidates(GameData gameData, UUID payerId,
                                            com.github.laxika.magicalvibes.model.filter.PermanentPredicate filter,
                                            boolean excludeSource, StackEntry entry) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(payerId);
-        if (battlefield == null) {
+        if (battlefield == null || entry != null
+                && !gameQueryService.canEffectCauseSacrifice(gameData, payerId, entry.getControllerId())) {
             return List.of();
         }
         FilterContext context = filterContext(gameData, entry);
@@ -974,6 +1141,9 @@ public class ResolutionCostPaymentService {
                 .filter(permanent -> filter == null || (context == null
                         ? predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, filter)
                         : predicateEvaluationService.matchesPermanentPredicate(permanent, filter, context)))
+                .filter(permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent, filter))
+                .filter(permanent -> !gameQueryService.isCreatureTokenProtectedFromTriggeredAbility(gameData,
+                        permanent, entry))
                 .map(Permanent::getId)
                 .toList();
     }

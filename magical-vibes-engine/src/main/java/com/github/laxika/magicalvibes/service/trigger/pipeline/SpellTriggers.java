@@ -28,7 +28,6 @@ import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DemonstrateEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -1370,7 +1369,6 @@ public class SpellTriggers {
             for (int group = 0; index < 0 && group < groups.size(); group++) {
                 for (CardEffect candidate : sourceCard.getEffectsBoundToTargetGroup(group)) {
                     CardEffect wrapped = candidate instanceof MayEffect may ? may.wrapped()
-                            : candidate instanceof MayPayManaEffect pay ? pay.wrapped()
                             : candidate instanceof UnlessPaysEffect unless ? unless.ifPaid() : null;
                     if (wrapped == effect || wrapped instanceof SequenceEffect sequence
                             && sequence.steps().stream().anyMatch(step -> step == effect)) {

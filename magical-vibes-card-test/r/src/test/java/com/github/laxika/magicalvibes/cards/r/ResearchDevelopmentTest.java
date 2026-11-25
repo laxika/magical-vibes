@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import java.util.UUID;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.cards.p.PillarOfTheParuns;
 import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.model.Card;
@@ -196,5 +200,65 @@ class ResearchDevelopmentTest extends BaseCardTest {
 
         harness.castModalInstant(player1, 0, 1, List.of());
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Development with two opponents: a different opponent may let its controller draw each time")
+    void aDifferentOpponentMayLetTheControllerDrawEachTime() {
+        Player player3 = addThirdPlayer();
+        Card firstDraw = new PillarOfTheParuns();
+        Card secondDraw = new PillarOfTheParuns();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        castDevelopment();
+
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player3.getId());
+        harness.handleMayAbilityChosen(player3, false);
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player3, true);
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player3, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(findPermanents(player1, "Elemental")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Development with two opponents both letting its controller draw in one round: one card, no token")
+    void twoOpponentsChoosingTheDrawInOneRoundDrawOneCard() {
+        Player player3 = addThirdPlayer();
+        Card firstDraw = new PillarOfTheParuns();
+        Card secondDraw = new PillarOfTheParuns();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        castDevelopment();
+
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player3, true);
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player3, false);
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player3, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw);
+        assertThat(findPermanents(player1, "Elemental")).hasSize(2);
+    }
+
+    private Player addThirdPlayer() {
+        UUID player3Id = UUID.randomUUID();
+        Player player3 = new Player(player3Id, "Charlie");
+        gd.playerIds.add(player3Id);
+        gd.orderedPlayerIds.add(player3Id);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(player3Id, "Charlie");
+        gd.playerDecks.put(player3Id, new ArrayList<>());
+        gd.playerHands.put(player3Id, new ArrayList<>());
+        gd.playerBattlefields.put(player3Id, new ArrayList<>());
+        gd.playerGraveyards.put(player3Id, new ArrayList<>());
+        gd.playerCommandZones.put(player3Id, new ArrayList<>());
+        gd.playerManaPools.put(player3Id, new ManaPool());
+        gd.playerLifeTotals.put(player3Id, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), player3Id, "Charlie");
+        return player3;
     }
 }

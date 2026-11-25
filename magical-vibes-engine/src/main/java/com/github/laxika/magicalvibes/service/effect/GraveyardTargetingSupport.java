@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.CardSubject;
 import com.github.laxika.magicalvibes.model.effect.CastCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEachOpponentThenIfMilledEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetEquipmentFromGraveyardAndAttachToCreatedTokenEffect;
@@ -101,9 +100,6 @@ public class GraveyardTargetingSupport {
                 unwrapped = conditional.wrapped();
             } else if (unwrapped instanceof UnlessPaysEffect unless && unless.ifPaid() != null) {
                 unwrapped = unless.ifPaid();
-            } else if (unwrapped instanceof MayPayManaEffect mayPay && mayPay.wrapped() != null) {
-                // "You may pay {U}. If you don't, …" (Knight of the Mists) offers nothing to pay for.
-                unwrapped = mayPay.wrapped();
             } else {
                 return unwrapped;
             }

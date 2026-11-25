@@ -116,7 +116,7 @@ public class PermanentChoiceHandlerService {
     private final InputCompletionService inputCompletionService;
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
-    private com.github.laxika.magicalvibes.service.effect.normalfx.MayPayManaEffectHandler mayPayManaEffectHandler;
+    private com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService resolutionCostPaymentService;
     private final EarthbendTargetLandThenFightEffectHandler earthbendThenFightHandler;
     private final ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler
             returnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler;
@@ -847,8 +847,8 @@ public class PermanentChoiceHandlerService {
             earthbendThenFightHandler.handleTargetChoice(gameData, permanentId, earthbendFight);
         } else if (context instanceof PermanentChoiceContext.ResolvingModalTarget rmt) {
             triggerHandler.handleResolvingModalTarget(gameData, permanentId, rmt);
-        } else if (context instanceof PermanentChoiceContext.AnyPlayerPaymentPick) {
-            mayPayManaEffectHandler.completePaymentPick(gameData, java.util.List.of(permanentId));
+        } else if (context instanceof PermanentChoiceContext.AnyPlayerPaymentPick pick) {
+            resolutionCostPaymentService.completePick(gameData, pick.playerId(), java.util.List.of(permanentId));
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.LibraryCastSpellTarget lct) {
             spellHandler.handleLibraryCastSpellTarget(gameData, permanentId, lct);

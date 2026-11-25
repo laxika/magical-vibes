@@ -27,7 +27,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -285,10 +284,10 @@ public final class EffectResolution {
             // targeting after entry, doing nothing when there are no legal targets.
             if (e instanceof MayEffect) continue;
             // "You may pay {X}. If you don't, [targeted effect]" (Knight of the Mists) — and the
-            // "if you do" MayPayMana shape — choose targets as the trigger goes on the stack
+            // "if you do" shape — choose targets as the trigger goes on the stack
             // after the permanent enters (CR 603.3d), never at cast time. Cast-time targeting
             // would miss the entering permanent itself as a legal target.
-            if (e instanceof MayPayManaEffect || e instanceof UnlessPaysEffect) continue;
+            if (e instanceof UnlessPaysEffect) continue;
             // A gate-conditional ETB ("Metalcraft — When ~ enters, ... target player loses
             // 4 life") is an intervening-if trigger (CR 603.4): whether it triggers at all
             // depends on game state as the permanent enters, so the target can't be a

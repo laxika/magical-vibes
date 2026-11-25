@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -49,7 +51,7 @@ public class TemptingOfferCopySpellEffectHandler implements NormalEffectHandlerB
         }
 
         List<UUID> opponents = offer.remainingOpponentIds() == null
-                ? new ArrayList<>(MayPayManaEffectHandler
+                ? new ArrayList<>(SubjectResolutionService
                         .apnapOpponents(gameData, controllerId))
                 : new ArrayList<>(offer.remainingOpponentIds());
         opponents.removeIf(id -> !gameData.playerIds.contains(id));

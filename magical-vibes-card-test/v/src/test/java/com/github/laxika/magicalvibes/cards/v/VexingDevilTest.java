@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.n.NecromancersMagemark;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -167,5 +169,17 @@ class VexingDevilTest extends BaseCardTest {
         gd.playerLifeTotals.put(player3Id, 20);
         harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), player3Id, "Charlie");
         return player3;
+    }
+
+    @Test
+    @DisplayName("An opponent who chose the damage sacrifices the Devil even when the damage is prevented")
+    void preventedDamageStillSacrificesTheDevil() {
+        castAndResolveToChoice();
+        Prevention.addOnPlayer(gd, PreventDamageEffect.allToControllerAndCreatures(), player2.getId());
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Vexing Devil");
     }
 }

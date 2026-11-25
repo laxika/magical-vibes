@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.b.BloodArtist;
 import com.github.laxika.magicalvibes.cards.g.Gingerbrute;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ClackbridgeTroll.class, Gingerbrute.class})
+@CardUsed({ClackbridgeTroll.class, Gingerbrute.class, BloodArtist.class})
 class ClackbridgeTrollTest extends BaseCardTest {
 
     @Test
@@ -181,6 +182,29 @@ class ClackbridgeTrollTest extends BaseCardTest {
         assertThat(troll.isTapped()).isTrue();
         harness.assertLife(player1, 23);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Creatures two opponents chose die together: a sacrificed Blood Artist sees the other creature die")
+    void creaturesSacrificedTogetherSeeEachOtherDie() {
+        Player player3 = addThirdPlayer();
+        harness.addToBattlefieldAndReturn(player1, new ClackbridgeTroll());
+        harness.addToBattlefield(player2, new BloodArtist());
+        harness.addToBattlefield(player3, new Gingerbrute());
+        harness.setHand(player1, new ArrayList<>());
+        harness.setLibrary(player1, List.of(new Gingerbrute()));
+
+        resolveBeginningOfCombat(player1);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player3, true);
+
+        harness.assertInGraveyard(player2, "Blood Artist");
+        harness.assertInGraveyard(player3, "Gingerbrute");
+        for (int i = 0; i < 2; i++) {
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+            harness.handlePermanentChosen(player2, player1.getId());
+        }
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Blood Artist")).hasSize(2);
     }
 
     private Player addThirdPlayer() {

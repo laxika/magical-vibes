@@ -41,7 +41,7 @@ class CradleOfVitalityTest extends BaseCardTest {
         harness.passBothPriorities(); // gain 3 life → Cradle trigger → target choice pending
 
         harness.handlePermanentChosen(player1, bearsId);
-        harness.passBothPriorities(); // resolve MayPayManaEffect → may prompt
+        harness.passBothPriorities(); // resolve UnlessPaysEffect → may prompt
 
         harness.handleMayAbilityChosen(player1, true); // pay {1}{W}
         harness.passBothPriorities(); // resolve counter placement

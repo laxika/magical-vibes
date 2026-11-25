@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlStealingEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
@@ -3302,6 +3303,15 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         PendingMayAbility pending = gameData.pendingMayAbilities.getFirst();
         double value = spellEvaluator.evaluateAbilityEffects(gameData, pending.effects(), aiPlayer.getId());
+        // An "unless" ransom other than mana (life, damage, a sacrifice, a discard) costs what it takes; life or damage
+        // at or above the AI's life total is never paid. A mana ransom is weighed below from the mana itself.
+        if (pending.manaCost() == null || pending.manaCost().isEmpty()) {
+            for (CardEffect effect : pending.effects()) {
+                if (effect instanceof UnlessPaysEffect unless && aiPlayer.getId().equals(pending.controllerId())) {
+                    value -= spellEvaluator.ransomCost(gameData, unless.ransom(), aiPlayer.getId());
+                }
+            }
+        }
 
         // If the ability has a mana cost, factor that in — paying mana is a real cost
         ManaCost cost = pending.manaCost() != null && !pending.manaCost().isEmpty()

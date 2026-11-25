@@ -513,6 +513,13 @@ public class EffectResolutionService {
                     } else if (branch != null) {
                         entry.spliceSequenceSteps(i, List.of(branch), false);
                     }
+                    // A ransom paid together: every chosen payment, one event, before the branch (CR 101.4, 608.2e).
+                    List<CardEffect> payment = paid
+                            ? unlessPaysEffectHandler.paymentMadeTogether(gameData, entry, unless, i) : List.of();
+                    if (!payment.isEmpty()) {
+                        entry.spliceSequenceSteps(i, payment, false);
+                    }
+                    effects = entry.getEffectsToResolve();
                     skipEffect = true;
                 }
             }

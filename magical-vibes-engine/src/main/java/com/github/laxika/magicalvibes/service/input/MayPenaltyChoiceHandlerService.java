@@ -722,7 +722,7 @@ public class MayPenaltyChoiceHandlerService {
         if (!accepted) {
             // "Any opponent may": the next opponent in turn order decides; the controller draws only if none does
             // (Distant Memories ruling 2011-06-01).
-            List<UUID> opponents = com.github.laxika.magicalvibes.service.effect.normalfx.MayPayManaEffectHandler
+            List<UUID> opponents = com.github.laxika.magicalvibes.service.effect.SubjectResolutionService
                     .apnapOpponents(gameData, controllerId);
             int next = opponents.indexOf(opponentId) + 1;
             ExiledCardEntry stillExiled = gameData.findExiledCard(exiledCardId);

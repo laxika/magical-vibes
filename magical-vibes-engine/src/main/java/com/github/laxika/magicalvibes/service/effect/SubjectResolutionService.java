@@ -2823,6 +2823,16 @@ public class SubjectResolutionService {
         return targetId != null && ctx.gameData().playerIds.contains(targetId) ? targetId : null;
     }
 
+    /**
+     * The opponents of {@code controllerId} in APNAP order (CR 101.4): from the active player, in turn order. A new,
+     * mutable list.
+     */
+    public static List<UUID> apnapOpponents(GameData gameData, UUID controllerId) {
+        List<UUID> opponents = new ArrayList<>(apnapOrder(gameData));
+        opponents.removeIf(controllerId::equals);
+        return opponents;
+    }
+
     /** The players in APNAP order (CR 101.4): the active player, then the others in turn order. */
     private static List<UUID> apnapOrder(GameData gameData) {
         List<UUID> seats = List.copyOf(gameData.orderedPlayerIds);

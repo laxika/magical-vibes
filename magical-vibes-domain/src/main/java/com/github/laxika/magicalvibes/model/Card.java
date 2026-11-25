@@ -31,7 +31,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCre
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.AllCardNamesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEffect;
@@ -1041,10 +1040,6 @@ public class Card {
             case com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect e ->
                     bindEffectToTargetGroup(e.wrapped(), targetIndex);
             case SacrificePermanentThenEffect e -> bindEffectToTargetGroup(e.thenEffect(), targetIndex);
-            case MayPayManaEffect e -> {
-                if (e.wrapped() != null) bindEffectToTargetGroup(e.wrapped(), targetIndex);
-                if (e.elseEffect() != null) bindEffectToTargetGroup(e.elseEffect(), targetIndex);
-            }
             case UnlessPaysEffect e -> {
                 bindEffectToTargetGroup(e.ifNotPaid(), targetIndex);
                 if (e.ifPaid() != null) bindEffectToTargetGroup(e.ifPaid(), targetIndex);

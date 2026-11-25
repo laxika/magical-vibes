@@ -6,15 +6,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SeekCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -34,16 +33,15 @@ public class GitrogHorrorOfZhava extends Card {
         // nontoken creature. If they do, tap Gitrog, then seek a land card onto the battlefield tapped.
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceUntapped()),
-                MayPayManaEffect.anyPlayerMay(MayPayPayer.ANY_OPPONENT,
-                        new SacrificePermanentsEffect(1, new PermanentAllOfPredicate(List.of(
+                UnlessPaysEffect.mayPay(Subjects.eachOpponent(),
+                        new SacrificePermanentCost(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
-                                new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
-                                Subjects.acceptedPlayers()),
-                        "Sacrifice a nontoken creature? If you do, it becomes tapped, then its controller seeks"
-                                + " a land card onto the battlefield tapped.",
+                                new PermanentNotPredicate(new PermanentIsTokenPredicate()))), "nontoken creature", false),
                         SequenceEffect.of(new TapPermanentsEffect(Subjects.source()),
-                                new SeekCardToBattlefieldEffect(new CardTypePredicate(CardType.LAND), true)),
-                        null));
+                                new SeekCardToBattlefieldEffect(new CardTypePredicate(CardType.LAND), true)))
+                        .withPrompt("Sacrifice a nontoken creature? If you do, it becomes tapped, then its controller seeks"
+                                + " a land card onto the battlefield tapped.")
+                        .payingTogether());
 
         // Whenever a land enters under your control, it perpetually gains the activated ability.
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),

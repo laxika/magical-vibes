@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -46,7 +48,7 @@ public class EachOpponentMaySacrificeMatchingPermanentOrLoseLifeAndControllerDra
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var braidsEffect = (EachOpponentMaySacrificeMatchingPermanentOrLoseLifeAndControllerDrawsEffect) effect;
-        List<UUID> opponents = MayPayManaEffectHandler
+        List<UUID> opponents = SubjectResolutionService
                 .apnapOpponents(gameData, entry.getControllerId());
         Map<UUID, Integer> lossesAtOnce = new LinkedHashMap<>();
         for (UUID opponentId : opponents) {

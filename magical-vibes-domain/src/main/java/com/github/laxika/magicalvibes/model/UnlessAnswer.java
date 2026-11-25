@@ -17,18 +17,34 @@ import java.util.UUID;
  *                        order (every earlier one declined or unpayable)
  * @param payingPlayerId  the player paying the parts of an all-of ransom still to pay, or {@code null}
  * @param partsToPay      the parts of an all-of ransom still to pay once the part being paid (which asked) is done
+ * @param choices         for a ransom paid together once everyone answered ({@code UnlessPaysEffect.payingTogether()}),
+ *                        what each player who chose to pay chose to pay with, in the order they were asked
  */
 public record UnlessAnswer(int effectIndex, List<UUID> remainingPayers, boolean anyPaid, int alternative,
-                           UUID payingPlayerId, List<CostEffect> partsToPay) {
+                           UUID payingPlayerId, List<CostEffect> partsToPay, List<Choice> choices) {
+
+    /**
+     * One player's choice to pay a ransom paid together: the permanents they chose (to sacrifice or tap), none for a
+     * payment with nothing to choose (damage, a draw).
+     *
+     * @param payerId   the player who chose to pay
+     * @param objectIds the permanents they chose
+     */
+    public record Choice(UUID payerId, List<UUID> objectIds) {
+        public Choice {
+            objectIds = List.copyOf(objectIds);
+        }
+    }
 
     public UnlessAnswer {
         remainingPayers = List.copyOf(remainingPayers);
         partsToPay = List.copyOf(partsToPay);
+        choices = List.copyOf(choices);
     }
 
     /** The state before anyone was asked: {@code payers} to ask, in APNAP order. */
     public static UnlessAnswer asking(int effectIndex, List<UUID> payers) {
-        return new UnlessAnswer(effectIndex, payers, false, 0, null, List.of());
+        return new UnlessAnswer(effectIndex, payers, false, 0, null, List.of(), List.of());
     }
 
     /** The player being asked, or {@code null} once nobody is left. */
@@ -39,17 +55,28 @@ public record UnlessAnswer(int effectIndex, List<UUID> remainingPayers, boolean 
     /** The first remaining player answered: they leave the list, and {@code paid} counts towards "if a player does". */
     public UnlessAnswer answered(boolean paid) {
         return new UnlessAnswer(effectIndex, remainingPayers.isEmpty() ? List.of()
-                : remainingPayers.subList(1, remainingPayers.size()), anyPaid || paid, 0, payingPlayerId, partsToPay);
+                : remainingPayers.subList(1, remainingPayers.size()), anyPaid || paid, 0, payingPlayerId, partsToPay,
+                choices);
     }
 
     /** The first remaining player is asked the any-of ransom's {@code next} alternative. */
     public UnlessAnswer askingAlternative(int next) {
-        return new UnlessAnswer(effectIndex, remainingPayers, anyPaid, next, payingPlayerId, partsToPay);
+        return new UnlessAnswer(effectIndex, remainingPayers, anyPaid, next, payingPlayerId, partsToPay, choices);
     }
 
     /** {@code payerId} still has {@code parts} of an all-of ransom to pay ({@code List.of()} once paid). */
     public UnlessAnswer paying(UUID payerId, List<CostEffect> parts) {
         return new UnlessAnswer(effectIndex, remainingPayers, anyPaid, alternative,
-                parts.isEmpty() ? null : payerId, parts);
+                parts.isEmpty() ? null : payerId, parts, choices);
+    }
+
+    /**
+     * {@code payerId} chose to pay with {@code objectIds} (the permanents a pick chose, or none): kept until everyone
+     * answered, then paid together with the others' choices.
+     */
+    public UnlessAnswer withChoice(UUID payerId, List<UUID> objectIds) {
+        List<Choice> next = new java.util.ArrayList<>(choices);
+        next.add(new Choice(payerId, objectIds));
+        return new UnlessAnswer(effectIndex, remainingPayers, true, alternative, payingPlayerId, partsToPay, next);
     }
 }

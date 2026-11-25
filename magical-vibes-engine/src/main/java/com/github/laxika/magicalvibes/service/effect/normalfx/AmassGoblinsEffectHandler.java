@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CompleteAmassGoblinsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -80,10 +79,6 @@ public class AmassGoblinsEffectHandler implements NormalEffectHandlerBean {
         for (int i = 0; i < effects.size(); i++) {
             if (effects.get(i) instanceof ConditionalEffect conditional
                     && conditional.wrapped() == effect) {
-                return i;
-            }
-            if (effects.get(i) instanceof MayPayManaEffect mayPay
-                    && mayPay.wrapped() == effect) {
                 return i;
             }
             if (effects.get(i) instanceof UnlessPaysEffect unless && unless.ifPaid() == effect) {

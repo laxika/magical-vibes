@@ -79,14 +79,17 @@ class DashHopesTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Remaining players may still pay after Dash Hopes has been countered")
+    @DisplayName("Remaining players may still pay after one paid; Dash Hopes is countered after the last answer")
     void bothPlayersMayPay() {
         castTargetSpell();
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.assertInGraveyard(player2, "Dash Hopes");
+        harness.assertLife(player1, 15);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
         harness.handleMayAbilityChosen(player2, true);
+        harness.assertInGraveyard(player2, "Dash Hopes");
         harness.passBothPriorities();
 
         harness.assertLife(player1, 15);

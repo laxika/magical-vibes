@@ -25,8 +25,8 @@ class MirrorworksTest extends BaseCardTest {
         addMirrorworksReady(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castFromHand(player1, new GlintHawkIdol(), "{2}");
-        harness.passBothPriorities(); // resolve artifact spell, artifact enters, MayPayManaEffect on stack
-        harness.passBothPriorities(); // resolve MayPayManaEffect from stack -> may prompt
+        harness.passBothPriorities(); // resolve artifact spell, artifact enters, UnlessPaysEffect on stack
+        harness.passBothPriorities(); // resolve UnlessPaysEffect from stack -> may prompt
 
         // Should be prompted with may ability to pay {2}
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -38,8 +38,8 @@ class MirrorworksTest extends BaseCardTest {
         addMirrorworksReady(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castFromHand(player1, new GlintHawkIdol(), "{2}");
-        harness.passBothPriorities(); // resolve artifact spell, artifact enters, MayPayManaEffect on stack
-        harness.passBothPriorities(); // resolve MayPayManaEffect from stack -> may prompt
+        harness.passBothPriorities(); // resolve artifact spell, artifact enters, UnlessPaysEffect on stack
+        harness.passBothPriorities(); // resolve UnlessPaysEffect from stack -> may prompt
 
         // Accept and pay {2}; the copy effect resolves inline.
         harness.handleMayAbilityChosen(player1, true);
@@ -60,8 +60,8 @@ class MirrorworksTest extends BaseCardTest {
     void decliningDoesNotCreateToken() {
         addMirrorworksReady(player1);
         harness.castFromHand(player1, new GlintHawkIdol(), "{2}");
-        harness.passBothPriorities(); // resolve artifact spell, artifact enters, MayPayManaEffect on stack
-        harness.passBothPriorities(); // resolve MayPayManaEffect from stack -> may prompt
+        harness.passBothPriorities(); // resolve artifact spell, artifact enters, UnlessPaysEffect on stack
+        harness.passBothPriorities(); // resolve UnlessPaysEffect from stack -> may prompt
 
         // Decline
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
@@ -76,8 +76,8 @@ class MirrorworksTest extends BaseCardTest {
     void cannotPayIfNotEnoughMana() {
         addMirrorworksReady(player1);
         harness.castFromHand(player1, new GlintHawkIdol(), "{2}");
-        harness.passBothPriorities(); // resolve artifact spell, artifact enters, MayPayManaEffect on stack
-        harness.passBothPriorities(); // resolve MayPayManaEffect from stack -> may prompt
+        harness.passBothPriorities(); // resolve artifact spell, artifact enters, UnlessPaysEffect on stack
+        harness.passBothPriorities(); // resolve UnlessPaysEffect from stack -> may prompt
 
         // Try to accept but can't afford it
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
@@ -93,8 +93,8 @@ class MirrorworksTest extends BaseCardTest {
         addMirrorworksReady(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castFromHand(player1, new GlintHawkIdol(), "{2}");
-        harness.passBothPriorities(); // resolve artifact spell, artifact enters, MayPayManaEffect on stack
-        harness.passBothPriorities(); // resolve MayPayManaEffect from stack -> may prompt
+        harness.passBothPriorities(); // resolve artifact spell, artifact enters, UnlessPaysEffect on stack
+        harness.passBothPriorities(); // resolve UnlessPaysEffect from stack -> may prompt
 
         // Accept and pay {2}; the copy effect resolves inline.
         harness.handleMayAbilityChosen(player1, true);
@@ -122,8 +122,8 @@ class MirrorworksTest extends BaseCardTest {
         addMirrorworksReady(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castFromHand(player1, new GlintHawkIdol(), "{2}");
-        harness.passBothPriorities(); // resolve artifact spell, artifact enters, MayPayManaEffect on stack
-        harness.passBothPriorities(); // resolve MayPayManaEffect from stack -> may prompt
+        harness.passBothPriorities(); // resolve artifact spell, artifact enters, UnlessPaysEffect on stack
+        harness.passBothPriorities(); // resolve UnlessPaysEffect from stack -> may prompt
 
         // Accept and pay {2}; the copy effect resolves inline.
         harness.handleMayAbilityChosen(player1, true);

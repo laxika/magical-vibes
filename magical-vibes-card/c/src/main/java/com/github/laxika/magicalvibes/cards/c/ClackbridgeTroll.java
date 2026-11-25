@@ -8,12 +8,11 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -38,13 +37,12 @@ public class ClackbridgeTroll extends Card {
         ));
 
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                MayPayManaEffect.anyPlayerMay(MayPayPayer.ANY_OPPONENT,
-                        new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
-                                Subjects.acceptedPlayers()),
-                        "Sacrifice a creature? If a player does, it becomes tapped, its controller gains 3 life"
-                                + " and draws a card.",
+                UnlessPaysEffect.mayPay(Subjects.eachOpponent(),
+                        new SacrificePermanentCost(new PermanentIsCreaturePredicate(), "creature", false),
                         SequenceEffect.of(new TapPermanentsEffect(Subjects.source()),
-                                new GainLifeEffect(3, Subjects.you()), new DrawCardEffect(1)),
-                        null));
+                                new GainLifeEffect(3, Subjects.you()), new DrawCardEffect(1)))
+                        .withPrompt("Sacrifice a creature? If a player does, it becomes tapped, its controller gains 3 life"
+                                + " and draws a card.")
+                        .payingTogether());
     }
 }

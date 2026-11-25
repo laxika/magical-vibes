@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.a.AlexiosDeimosOfKosmos;
 import com.github.laxika.magicalvibes.cards.a.AshadTheLoneCyberman;
 import com.github.laxika.magicalvibes.cards.d.DeadlyCoverUp;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SigardaHostOfHerons;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -19,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AshadTheLoneCyberman.class, VeinRipper.class, GiantGrowth.class, GrizzlyBears.class, Shock.class, DeadlyCoverUp.class})
+@CardUsed({AlexiosDeimosOfKosmos.class, SigardaHostOfHerons.class, AshadTheLoneCyberman.class, VeinRipper.class, GiantGrowth.class, GrizzlyBears.class, Shock.class, DeadlyCoverUp.class})
 class VeinRipperTest extends BaseCardTest {
 
     @Test
@@ -192,5 +194,45 @@ class VeinRipperTest extends BaseCardTest {
         assertThat(ripper.getMarkedDamage()).isEqualTo(2);
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A payer whose opponents can't make them sacrifice (Sigarda) isn't asked, and the spell is countered")
+    void sigardaKeepsThePayerFromTakingTheSacrificeOption() {
+        harness.addToBattlefield(player1, new VeinRipper());
+        harness.addToBattlefield(player2, new SigardaHostOfHerons());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Vein Ripper"));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.assertInGraveyard(player2, "Giant Growth");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Sigarda, Host of Herons");
+    }
+
+    @Test
+    @DisplayName("A creature that can't be sacrificed doesn't pay the ward: a payer with only that creature isn't asked")
+    void creatureThatCantBeSacrificedDoesNotPayTheWard() {
+        harness.addToBattlefield(player1, new VeinRipper());
+        harness.addToBattlefield(player2, new AlexiosDeimosOfKosmos());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Vein Ripper"));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.assertInGraveyard(player2, "Giant Growth");
+        harness.assertOnBattlefield(player2, "Alexios, Deimos of Kosmos");
     }
 }

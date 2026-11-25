@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.AllOfCost;
+import com.github.laxika.magicalvibes.model.effect.DamageFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
@@ -283,5 +286,66 @@ class UnlessPaysEffectHandlerTest {
 
         assertThat(ransom.action()).isEqualTo("Pay {1} and discard a card");
         assertThat(ransom.manaCost()).isEqualTo("{1}");
+    }
+
+    @Test
+    @DisplayName("Paid together: each answer only chooses, and after the last one the damage comes as one step (CR 101.4)")
+    void paidTogetherChoosesThenPaysOnceAfterTheLastAnswer() {
+        gd.playerIdToName.put(player1Id, "Player1");
+        gd.playerIdToName.put(player2Id, "Player2");
+        UnlessPaysEffect effect = UnlessPaysEffect.mayPay(Subjects.eachPlayer(), DamageFromSourceCost.of(4),
+                new SacrificeSelfEffect()).payingTogether();
+        StackEntry entry = counterEntry(effect);
+        entry.setResolvingEffectIndex(0);
+        when(subjectResolutionService.players(gd, entry, effect, effect.payer()))
+                .thenReturn(List.of(player1Id, player2Id));
+        when(amountEvaluationService.evaluate(eq(gd), eq(new com.github.laxika.magicalvibes.model.amount.Fixed(4)),
+                any())).thenReturn(4);
+        gd.pendingEffectResolutionEntry = entry;
+        gd.pendingEffectResolutionIndex = 0;
+
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.ASK);
+        handler.resolve(gd, entry, effect);
+        handler.answer(gd, new Player(player1Id, "Player1"), true, gd.pendingMayAbilities.removeFirst(), effect);
+        assertThat(UnlessPaysEffectHandler.anotherPlayerAlreadyPaid(gd)).isTrue();
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.ASK);
+        handler.resolve(gd, entry, effect);
+        handler.answer(gd, new Player(player2Id, "Player2"), true, gd.pendingMayAbilities.removeFirst(), effect);
+
+        assertThat(entry.getAcceptedPlayerIds()).isEmpty();
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.PAID);
+        assertThat(handler.paymentMadeTogether(gd, entry, effect, 0)).singleElement()
+                .isEqualTo(new DealDamageToPlayersEffect(4, Subjects.acceptedPlayers()));
+        assertThat(entry.getAcceptedPlayerIds()).containsExactly(player1Id, player2Id);
+        assertThat(entry.unlessAnswer(0)).isNull();
+    }
+
+    @Test
+    @DisplayName("Paid together: with every player declining nothing is paid and \"if no one does\" follows")
+    void paidTogetherWithEveryoneDecliningPaysNothing() {
+        gd.playerIdToName.put(player1Id, "Player1");
+        UnlessPaysEffect effect = UnlessPaysEffect.unlessPays(Subjects.eachPlayer(), DamageFromSourceCost.of(4),
+                new DrawCardEffect(1)).payingTogether();
+        StackEntry entry = counterEntry(effect);
+        entry.setResolvingEffectIndex(0);
+        when(subjectResolutionService.players(gd, entry, effect, effect.payer())).thenReturn(List.of(player1Id));
+        when(amountEvaluationService.evaluate(eq(gd), eq(new com.github.laxika.magicalvibes.model.amount.Fixed(4)),
+                any())).thenReturn(4);
+        gd.pendingEffectResolutionEntry = entry;
+        gd.pendingEffectResolutionIndex = 0;
+
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.ASK);
+        handler.resolve(gd, entry, effect);
+        handler.answer(gd, new Player(player1Id, "Player1"), false, gd.pendingMayAbilities.removeFirst(), effect);
+
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.NOT_PAID);
+        assertThat(handler.paymentMadeTogether(gd, entry, effect, 0)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only a sacrifice, tap, damage or draw ransom can be paid together")
+    void onlyChoosableRansomsArePaidTogether() {
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> UnlessPaysEffect.youMayPay("{1}",
+                new DrawCardEffect(1)).payingTogether()).isInstanceOf(IllegalArgumentException.class);
     }
 }

@@ -36,7 +36,7 @@ class WarcryPhoenixTest extends BaseCardTest {
 
         declareAttackers(List.of(0, 1, 2));
 
-        // Resolve the MayPayManaEffect from stack
+        // Resolve the UnlessPaysEffect from stack
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.passBothPriorities();
@@ -86,7 +86,7 @@ class WarcryPhoenixTest extends BaseCardTest {
 
         declareAttackers(List.of(0, 1, 2));
 
-        // Resolve the MayPayManaEffect from stack
+        // Resolve the UnlessPaysEffect from stack
         harness.passBothPriorities();
         // Accept the may ability
         harness.handleMayAbilityChosen(player1, true);

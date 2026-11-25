@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -34,7 +36,7 @@ public class EachOpponentChoosesCreatureCardFromTheirGraveyardToBattlefieldEffec
         gameData.pendingGraveyardReturnBatch = new PendingGraveyardReturnBatch(
                 controllerId, List.of(), java.util.Map.of());
 
-        List<UUID> opponents = MayPayManaEffectHandler.apnapOpponents(
+        List<UUID> opponents = SubjectResolutionService.apnapOpponents(
                 gameData, controllerId);
         CardTypePredicate creatureFilter = new CardTypePredicate(CardType.CREATURE);
         for (UUID opponentId : opponents) {

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.s.Sunforger;
 import com.github.laxika.magicalvibes.cards.s.SupremeVerdict;
+import com.github.laxika.magicalvibes.cards.t.TheMasterMultiplied;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BloodFunnel.class, BorosRecruit.class, Sunforger.class, SupremeVerdict.class})
+@CardUsed({BloodFunnel.class, BorosRecruit.class, Sunforger.class, SupremeVerdict.class, TheMasterMultiplied.class})
 class BloodFunnelTest extends BaseCardTest {
 
     @Test
@@ -172,5 +173,25 @@ class BloodFunnelTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Sunforger");
         harness.assertOnBattlefield(player2, "Boros Recruit");
+    }
+
+    @Test
+    @DisplayName("Creature tokens The Master, Multiplied keeps from its controller's triggered abilities can't pay the sacrifice")
+    void protectedCreatureTokensCantPayTheSacrifice() {
+        harness.addToBattlefield(player1, new BloodFunnel());
+        TheMasterMultiplied master = new TheMasterMultiplied();
+        master.setToken(true);
+        harness.addToBattlefield(player1, master);
+        BorosRecruit recruit = new BorosRecruit();
+        recruit.setToken(true);
+        harness.addToBattlefield(player1, recruit);
+
+        harness.castFromHand(player1, new Sunforger(), "{1}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(
+                com.github.laxika.magicalvibes.model.PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.assertInGraveyard(player1, "Sunforger");
+        harness.assertOnBattlefield(player1, "Boros Recruit");
     }
 }

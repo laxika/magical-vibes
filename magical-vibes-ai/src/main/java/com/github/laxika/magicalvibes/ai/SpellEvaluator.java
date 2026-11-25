@@ -32,10 +32,17 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.effect.SourceControllerDrawsCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.DamageFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.TokenCreatingEffect;
@@ -238,6 +245,53 @@ public class SpellEvaluator {
             }
         }
         return cost;
+    }
+
+    /**
+     * What paying an "unless" ransom other than mana costs {@code payerId}, as a score deduction: life and damage per
+     * point, the cheapest matching permanents to sacrifice, each permanent tapped, each card discarded, each card the
+     * source's controller draws. {@link Double#POSITIVE_INFINITY} for a life payment or damage at or above the payer's
+     * life total, which the AI never pays. Mana ransoms are scored by the caller from the mana itself (0 here).
+     */
+    public double ransomCost(GameData gameData, CostEffect ransom, UUID payerId) {
+        UUID opponentId = getOpponentId(gameData, payerId);
+        int life = gameData.getLife(payerId);
+        AmountContext context = AmountContext.forEstimation(payerId);
+        return switch (ransom) {
+            case PayLifeCost payLife -> {
+                int amount = amountEvaluationService.evaluate(gameData, payLife.amount(), context);
+                yield amount > 0 && amount >= life ? Double.POSITIVE_INFINITY : amount * 1.5;
+            }
+            case DamageFromSourceCost damage -> {
+                int amount = amountEvaluationService.evaluate(gameData, damage.amount(), context);
+                yield amount > 0 && amount >= life ? Double.POSITIVE_INFINITY : amount * 1.5;
+            }
+            case SacrificePermanentCost sacrifice -> cheapestSacrifices(gameData, payerId, opponentId,
+                    sacrifice.filter(), 1);
+            case SacrificeMultiplePermanentsCost sacrifice -> cheapestSacrifices(gameData, payerId, opponentId,
+                    sacrifice.filter(), sacrifice.count());
+            case TapMultiplePermanentsCost tap -> amountEvaluationService.evaluate(gameData, tap.count(), context);
+            case DiscardCardTypeCost discard -> discard.count() * 2.0;
+            case DiscardRandomCardCost discard -> discard.count() * 2.0;
+            case DiscardHandCost ignored -> gameData.playerHands.getOrDefault(payerId, List.of()).size() * 2.0;
+            case SourceControllerDrawsCost draw -> draw.count() * 2.0;
+            default -> 0;
+        };
+    }
+
+    /** The value of the {@code count} cheapest of {@code payerId}'s permanents matching {@code filter} to sacrifice. */
+    private double cheapestSacrifices(GameData gameData, UUID payerId, UUID opponentId,
+                                      com.github.laxika.magicalvibes.model.filter.PermanentPredicate filter,
+                                      int count) {
+        return gameData.playerBattlefields.getOrDefault(payerId, List.of()).stream()
+                .filter(p -> filter == null || predicateEvaluationService.matchesPermanentPredicate(gameData, p,
+                        filter))
+                .mapToDouble(p -> gameQueryService.isCreature(gameData, p)
+                        ? boardEvaluator.sacrificeCost(gameData, p, payerId, opponentId)
+                        : Math.max(3.0, p.getCard().getManaValue() * 3.0))
+                .sorted()
+                .limit(count)
+                .sum();
     }
 
     /**
@@ -491,10 +545,6 @@ public class SpellEvaluator {
                     .anyMatch(this::isBoardWipeEffect);
         }
         // "If no one does, destroy all creatures" (Breaking Point): the wipe behind a punisher payment.
-        if (effect instanceof MayPayManaEffect mayPay) {
-            return mayPay.wrapped() != null && isBoardWipeEffect(mayPay.wrapped())
-                    || mayPay.elseEffect() != null && isBoardWipeEffect(mayPay.elseEffect());
-        }
         if (effect instanceof UnlessPaysEffect unless) {
             return unless.ifPaid() != null && isBoardWipeEffect(unless.ifPaid())
                     || unless.ifNotPaid() != null && isBoardWipeEffect(unless.ifNotPaid());

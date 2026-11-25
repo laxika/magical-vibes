@@ -107,9 +107,6 @@ public class MultiPermanentChoiceHandlerService {
     private final InputCompletionService inputCompletionService;
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
-    private com.github.laxika.magicalvibes.service.effect.normalfx.MayPayManaEffectHandler mayPayManaEffectHandler;
-    @org.springframework.beans.factory.annotation.Autowired
-    @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.combat.CombatDamageService combatDamageService;
     private final com.github.laxika.magicalvibes.service.effect.WaterbendPaymentService waterbendPaymentService;
     private final MayCastHandlerService mayCastHandlerService;
@@ -858,8 +855,8 @@ public class MultiPermanentChoiceHandlerService {
             }
         } else if (context instanceof MultiPermanentChoiceContext.TapOtherCreaturesForUnblockable ctx) {
             handleTapOtherCreaturesForUnblockable(gameData, playerId, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.AnyPlayerPaymentPick) {
-            mayPayManaEffectHandler.completePaymentPick(gameData, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.AnyPlayerPaymentPick pick) {
+            resolutionCostPaymentService.completePick(gameData, pick.playerId(), permanentIds);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else if (killsBeforeChangingAnything(context)) {
             completeAskingDeathReplacementsFirst(gameData, multiPermanentChoice, permanentIds);

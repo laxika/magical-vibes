@@ -29,11 +29,12 @@ import java.util.Objects;
  * <p>Ransoms: {@link PayManaCost} (a fixed or exact cost, {@code withGenericIncrease} for "{1} for each …", {@link
  * PayManaCost#x()} for the announced X, {@link PayManaCost#ofTriggeringSpell()} for "that spell's mana cost",
  * {@code lifeAmount} for "{2} and 2 life"), {@link PayLifeCost}, a discard
- * ({@link DiscardCardTypeCost} of one card, {@link DiscardRandomCardCost}, {@link DiscardHandCost}), a sacrifice
+ * ({@link DiscardCardTypeCost} of one or more cards, {@link DiscardRandomCardCost}, {@link DiscardHandCost}), a sacrifice
  * ({@link SacrificePermanentCost}, {@link SacrificeMultiplePermanentsCost}), a blight
  * ({@link PutCounterOnControlledCreatureCost#blight}), {@link CollectEvidenceCost}, {@link ExileGraveyardCost},
  * {@link GetPoisonCountersCost}, {@link DamageFromSourceCost}, {@link WaterbendCost}, {@link SacrificeSelfCost},
  * {@link ExileNCardsFromGraveyardCost}, {@link TapMultiplePermanentsCost} with a fixed count, {@link ExileCardsCost},
+ * {@link SourceControllerDrawsCost},
  * {@link AnyOfCost} over them ("discard a card or pay {2}") and {@link AllOfCost} ("pay {1} and discard a card"). The
  * factories read as the Oracle text: {@code counterUnlessPays(3)} is "counter target spell unless its controller pays
  * {3}" and ward {3}.
@@ -46,14 +47,23 @@ import java.util.Objects;
  * <p>The chosen branch is put next in the resolution and resolved like any other step, so a wrapper in it (an "if"
  * on the "if you do", a "you may" in "you may copy that spell unless …") is judged as at the top level.
  *
+ * <p>{@link #payingTogether()}: "any player may sacrifice a creature of their choice. If a player does, …", "unless a
+ * player has this deal 4 damage to them". Every player is asked in APNAP order, knowing the earlier answers; a player
+ * choosing to pay picks the permanents right then (unasked when only that many could be chosen, CR 608.2d), and
+ * nothing is paid until the last answer; then every chosen payment is made together, one event (CR 101.4, 608.2e: the
+ * chosen permanents are sacrificed or tapped at the same time, the damage dealt at once), followed by the branch. A
+ * chosen payment that can no longer be made then is skipped, and the branch still follows the choice (CR 118.12).
+ * Without it, each player who chooses to pay pays at once, before the next player is asked.
+ *
  * @param payer     who may pay ("its controller", "that player", "you")
  * @param ransom    the cost they may pay
  * @param ifNotPaid what happens unless they pay, or {@code null} for nothing
  * @param ifPaid    what happens when they pay, or {@code null} for nothing
  * @param prompt    the question asked, or {@code null} for the one the ransom reads ("Pay {1}?")
+ * @param paidTogether whether every chosen payment is made together after the last answer ({@link #payingTogether()})
  */
 public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffect ifNotPaid, CardEffect ifPaid,
-                               String prompt)
+                               String prompt, boolean paidTogether)
         implements CardEffect {
 
     public UnlessPaysEffect {
@@ -69,17 +79,35 @@ public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffec
         } else {
             requirePayableAtResolution(ransom);
         }
+        if (paidTogether && !payableTogether(ransom)) {
+            throw new IllegalArgumentException("No payment made together for this ransom: " + ransom);
+        }
     }
 
     public UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffect ifNotPaid, CardEffect ifPaid) {
-        this(payer, ransom, ifNotPaid, ifPaid, null);
+        this(payer, ransom, ifNotPaid, ifPaid, null, false);
+    }
+
+    public UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffect ifNotPaid, CardEffect ifPaid,
+                            String prompt) {
+        this(payer, ransom, ifNotPaid, ifPaid, prompt, false);
+    }
+
+    /**
+     * The ransoms a player can choose now and pay later with the others' ({@link #payingTogether()}): a sacrifice or a
+     * tap of permanents picked as they answer, damage from the source, the source's controller drawing.
+     */
+    private static boolean payableTogether(CostEffect ransom) {
+        return ransom instanceof SacrificePermanentCost || ransom instanceof SacrificeMultiplePermanentsCost
+                || ransom instanceof TapMultiplePermanentsCost || ransom instanceof DamageFromSourceCost
+                || ransom instanceof SourceControllerDrawsCost;
     }
 
     private static void requirePayableAtResolution(CostEffect ransom) {
         boolean payable = switch (ransom) {
             case PayManaCost ignored -> true;
             case PayLifeCost ignored -> true;
-            case DiscardCardTypeCost discard -> discard.count() == 1 && !discard.manaValueEqualsX()
+            case DiscardCardTypeCost discard -> !discard.manaValueEqualsX()
                     && !discard.sameName() && !discard.trackManaValue() && !discard.imprintOnSource();
             case DiscardRandomCardCost ignored -> true;
             case DiscardHandCost ignored -> true;
@@ -98,6 +126,7 @@ public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffec
             case ExileNCardsFromGraveyardCost exile -> !exile.onlyFromGraveyard() && !exile.trackExiledCards();
             case TapMultiplePermanentsCost tap -> tap.count() instanceof Fixed && !tap.tracksChosenPermanents();
             case ExileCardsCost ignored -> true;
+            case SourceControllerDrawsCost ignored -> true;
             default -> false;
         };
         if (!payable) {
@@ -284,6 +313,14 @@ public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffec
         return new UnlessPaysEffect(payer, cost, null, Objects.requireNonNull(ifTheyDo, "ifTheyDo"));
     }
 
+    /**
+     * "{@code effect} unless {@code payer} {@code cost}" for a cost other than mana alone ("unless a player has this deal
+     * 4 damage to them", "unless any opponent sacrifices a creature"); "[P] may [cost]. If no one does, …".
+     */
+    public static UnlessPaysEffect unlessPays(PlayerSubject payer, CostEffect cost, CardEffect effect) {
+        return new UnlessPaysEffect(payer, cost, Objects.requireNonNull(effect, "effect"), null);
+    }
+
     /** "{@code effect} unless {@code payer} pays {@code life} life". */
     public static UnlessPaysEffect unlessPaysLife(PlayerSubject payer, int life, CardEffect effect) {
         return new UnlessPaysEffect(payer, new PayLifeCost(life), Objects.requireNonNull(effect, "effect"), null);
@@ -299,22 +336,34 @@ public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffec
             throw new IllegalStateException("Only a counter exiles what it counters: " + ifNotPaid);
         }
         return new UnlessPaysEffect(payer, ransom,
-                new CounterSpellEffect(CounteredSpellDestination.EXILE, counter.spell()), ifPaid, prompt);
+                new CounterSpellEffect(CounteredSpellDestination.EXILE, counter.spell()), ifPaid, prompt, paidTogether);
     }
 
     /** "If they do / If that player pays, [effect]." */
     public UnlessPaysEffect ifPaid(CardEffect effect) {
-        return new UnlessPaysEffect(payer, ransom, ifNotPaid, Objects.requireNonNull(effect, "effect"), prompt);
+        return new UnlessPaysEffect(payer, ransom, ifNotPaid, Objects.requireNonNull(effect, "effect"), prompt,
+                paidTogether);
     }
 
     /** "If they don't / If you don't, [effect]." */
     public UnlessPaysEffect ifNotPaid(CardEffect effect) {
-        return new UnlessPaysEffect(payer, ransom, Objects.requireNonNull(effect, "effect"), ifPaid, prompt);
+        return new UnlessPaysEffect(payer, ransom, Objects.requireNonNull(effect, "effect"), ifPaid, prompt,
+                paidTogether);
     }
 
     /** This payment asked with {@code question} rather than the question its ransom reads ("Pay {1}?"). */
     public UnlessPaysEffect withPrompt(String question) {
-        return new UnlessPaysEffect(payer, ransom, ifNotPaid, ifPaid, Objects.requireNonNull(question, "question"));
+        return new UnlessPaysEffect(payer, ransom, ifNotPaid, ifPaid, Objects.requireNonNull(question, "question"),
+                paidTogether);
+    }
+
+    /**
+     * Every player's choice first, the payments together after the last answer (CR 101.4, 608.2e): "any player may
+     * sacrifice a creature of their choice", "any player may have this deal 6 damage to them". The ransom is a
+     * sacrifice, a tap, damage from the source or "has you draw a card".
+     */
+    public UnlessPaysEffect payingTogether() {
+        return new UnlessPaysEffect(payer, ransom, ifNotPaid, ifPaid, prompt, true);
     }
 
     /**

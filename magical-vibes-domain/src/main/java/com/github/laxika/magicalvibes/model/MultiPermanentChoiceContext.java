@@ -543,9 +543,9 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
-     * A player who accepted a "[any player] may sacrifice / tap N [permanents]" payment
-     * ({@code MayPayManaEffect.anyPlayerMay}) picks which ones; the picks wait on the payment until every player has
-     * answered, unless it is paid as each accepts (Prowling Pangolin).
+     * A player who chose to pay a "[any player] may sacrifice / tap N [permanents]" ransom paid together
+     * ({@code UnlessPaysEffect.payingTogether()}, Prowling Pangolin) picks which ones; the picks wait on the resolving
+     * entry's {@code UnlessAnswer} until every player has answered.
      */
     record AnyPlayerPaymentPick(UUID playerId) implements MultiPermanentChoiceContext {
     }

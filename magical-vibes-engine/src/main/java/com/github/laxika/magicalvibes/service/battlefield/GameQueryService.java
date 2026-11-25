@@ -2328,6 +2328,23 @@ public class GameQueryService {
         return !triggeredAbilityCanMoveCreatureToken(gameData, permanent);
     }
 
+    /**
+     * As {@link #isCreatureTokenProtectedFromResolvingTriggeredAbility} for the ability {@code entry} that asks: whether
+     * a static ability such as The Master, Multiplied's stops that triggered ability from making its controller sacrifice
+     * this creature token (the token's controller controls the ability and the static ability).
+     */
+    public boolean isCreatureTokenProtectedFromTriggeredAbility(GameData gameData, Permanent permanent,
+                                                                StackEntry entry) {
+        if (entry == null || entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY
+                || !isCreatureToken(gameData, permanent)) {
+            return false;
+        }
+        UUID tokenControllerId = findPermanentController(gameData, permanent.getId());
+        return entry.getControllerId().equals(tokenControllerId)
+                && playerBattlefieldHasStaticEffect(gameData, tokenControllerId,
+                TriggeredAbilitiesCantCauseSacrificeOrExileCreatureTokensEffect.class);
+    }
+
     private static UUID resolvingTriggeredAbilityControllerId(GameData gameData) {
         UUID abilityControllerId = gameData.currentlyResolvingTriggeredAbilityControllerId;
         if (abilityControllerId == null && gameData.pendingEffectResolutionEntry != null

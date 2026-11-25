@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.f.FieryTemper;
 import com.github.laxika.magicalvibes.cards.g.GossamerPhantasm;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.ArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Phantasmagorian.class, GossamerPhantasm.class})
+@CardUsed({Phantasmagorian.class, GossamerPhantasm.class, FieryTemper.class})
 class PhantasmagorianTest extends BaseCardTest {
 
     @Test
@@ -195,6 +196,24 @@ class PhantasmagorianTest extends BaseCardTest {
 
     private List<Card> threeGossamerPhantasms() {
         return List.of(new GossamerPhantasm(), new GossamerPhantasm(), new GossamerPhantasm());
+    }
+
+
+    @Test
+    @DisplayName("A madness card among the three discarded cards is exiled and its madness triggers")
+    void discardedMadnessCardTriggersMadness() {
+        FieryTemper temper = new FieryTemper();
+        castPhantasmagorian(player1, List.of(), List.of(temper, new GossamerPhantasm(), new GossamerPhantasm()));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        discardThreeCards(player2);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).anyMatch(card -> card.getId().equals(temper.getId()));
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).anyMatch(entry -> entry.getDescription().contains("madness"));
+        harness.assertInGraveyard(player1, "Phantasmagorian");
     }
 
 }

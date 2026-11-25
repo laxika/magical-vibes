@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -66,7 +68,7 @@ public class EachOpponentMaySacrificeNontokenCreatureOrLoseLifeEffectHandler
             return;
         }
 
-        List<UUID> opponents = MayPayManaEffectHandler
+        List<UUID> opponents = SubjectResolutionService
                 .apnapOpponents(gameData, controllerId);
         Map<UUID, Integer> lossesAtOnce = new LinkedHashMap<>();
         for (UUID opponentId : opponents) {

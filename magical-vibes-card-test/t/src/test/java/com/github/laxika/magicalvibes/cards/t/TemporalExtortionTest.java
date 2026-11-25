@@ -82,7 +82,7 @@ class TemporalExtortionTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Remaining players may still pay after the spell is countered")
+    @DisplayName("Remaining players may still pay after one paid; the spell is countered after the last answer")
     void bothPlayersMayPay() {
         harness.setLife(player1, 19);
         harness.setLife(player2, 14);
@@ -90,7 +90,7 @@ class TemporalExtortionTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.assertInGraveyard(player1, "Temporal Extortion");
+        harness.assertLife(player1, 9);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
 

@@ -1,6 +1,21 @@
 package com.github.laxika.magicalvibes.service.effect.cost;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishSpiritGuide;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.UnlessAnswer;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.DamageFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DepartPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.SourceControllerDrawsCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -37,6 +52,10 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class ResolutionCostPaymentServiceTest {
@@ -228,5 +247,132 @@ class ResolutionCostPaymentServiceTest {
             assertThat(service.couldPossiblyPay(gd, payerId,
                     AnyOfCost.of(new PayManaCost("{R}{R}"), new PayLifeCost(9)), null)).isFalse();
         }
+    }
+
+    @Nested
+    @DisplayName("Ransoms chosen as each player answers and paid together after the last answer")
+    class PaidTogether {
+
+        private UUID otherId;
+        private StackEntry entry;
+
+        @BeforeEach
+        void withTwoPlayers() {
+            otherId = UUID.randomUUID();
+            gd.playerIds.add(otherId);
+            gd.playerBattlefields.put(payerId, new ArrayList<>());
+            gd.playerBattlefields.put(otherId, new ArrayList<>());
+            Card source = new Card();
+            source.setName("Desecration Demon");
+            entry = com.github.laxika.magicalvibes.testutil.TestStackDoor.triggered(source, otherId, source.getName(),
+                    List.of());
+        }
+
+        @Test
+        @DisplayName("Damage and \"has you draw a card\" are chosen with nothing to pick")
+        void damageAndDrawAreChosenWithNothingToPick() {
+            ResolutionCostPaymentService.Payment payment = new ResolutionCostPaymentService.Payment(
+                    entry.getCard(), otherId, null, entry);
+            Player payer = new Player(payerId, "Payer");
+
+            assertThat(service.choose(gd, payer, DamageFromSourceCost.of(4), payment).outcome())
+                    .isEqualTo(ResolutionCostPaymentService.Outcome.PAID);
+            assertThat(service.choose(gd, payer, new SourceControllerDrawsCost(1), payment).objectIds()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("A sacrifice with only one possible permanent is chosen unasked (CR 608.2d)")
+        void onePossibleSacrificeIsChosenUnasked() {
+            Permanent bears = new Permanent(new GrizzlyBears());
+            gd.playerBattlefields.get(payerId).add(bears);
+            when(gameQueryService.canEffectCauseSacrifice(gd, payerId, otherId)).thenReturn(true);
+
+            ResolutionCostPaymentService.Choice choice = service.choose(gd, new Player(payerId, "Payer"),
+                    new SacrificePermanentCost(null, "creature", false),
+                    new ResolutionCostPaymentService.Payment(entry.getCard(), otherId, null, entry));
+
+            assertThat(choice.outcome()).isEqualTo(ResolutionCostPaymentService.Outcome.PAID);
+            assertThat(choice.objectIds()).containsExactly(bears.getId());
+        }
+
+        @Test
+        @DisplayName("Every payer is dealt the damage at once, by one damage step after the last answer")
+        void damageIsOneStepForEveryPayer() {
+            List<com.github.laxika.magicalvibes.model.effect.CardEffect> steps = service.payTogether(gd, entry, DamageFromSourceCost.of(6), List.of(
+                    new UnlessAnswer.Choice(payerId, List.of()), new UnlessAnswer.Choice(otherId, List.of())));
+
+            assertThat(steps).singleElement().isEqualTo(
+                    new DealDamageToPlayersEffect(new Fixed(6), Subjects.acceptedPlayers()));
+            assertThat(entry.getAcceptedPlayerIds()).containsExactly(payerId, otherId);
+        }
+
+        @Test
+        @DisplayName("Two players choosing \"has you draw a card\" in one round draw one card")
+        void drawIsMadeOnceForTheRound() {
+            List<com.github.laxika.magicalvibes.model.effect.CardEffect> steps = service.payTogether(gd, entry, new SourceControllerDrawsCost(1), List.of(
+                    new UnlessAnswer.Choice(payerId, List.of()), new UnlessAnswer.Choice(otherId, List.of())));
+
+            assertThat(steps).containsExactly(new DrawCardEffect(1, Subjects.you()));
+        }
+
+        @Test
+        @DisplayName("The chosen permanents are sacrificed as one departure; one gone by then is skipped")
+        void sacrificesAreOneDepartureSkippingWhatLeft() {
+            Permanent first = new Permanent(new GrizzlyBears());
+            Permanent second = new Permanent(new GrizzlyBears());
+            UUID goneId = UUID.randomUUID();
+            lenient().when(gameQueryService.findPermanentById(gd, goneId)).thenReturn(null);
+            when(gameQueryService.findPermanentById(gd, first.getId())).thenReturn(first);
+            when(gameQueryService.findPermanentById(gd, second.getId())).thenReturn(second);
+            when(gameQueryService.findPermanentController(gd, first.getId())).thenReturn(payerId);
+            when(gameQueryService.findPermanentController(gd, second.getId())).thenReturn(otherId);
+
+            List<com.github.laxika.magicalvibes.model.effect.CardEffect> steps = service.payTogether(gd, entry, new SacrificePermanentCost(null, "creature", false),
+                    List.of(new UnlessAnswer.Choice(payerId, List.of(first.getId(), goneId)),
+                            new UnlessAnswer.Choice(otherId, List.of(second.getId()))));
+
+            assertThat(steps).singleElement().isEqualTo(new DepartPermanentsEffect(List.of(
+                    DepartureIntent.sacrifice(first.getId()), DepartureIntent.sacrifice(second.getId()))));
+        }
+
+        @Test
+        @DisplayName("A payer whose opponents' effects can't make them sacrifice (Sigarda) can't pay a sacrifice")
+        void sigardaKeepsThePayerFromPayingASacrifice() {
+            gd.playerBattlefields.get(payerId).add(new Permanent(new GrizzlyBears()));
+            when(gameQueryService.canEffectCauseSacrifice(gd, payerId, otherId)).thenReturn(false);
+
+            assertThat(service.canPay(gd, payerId, new SacrificePermanentCost(null, "creature", false), null, entry))
+                    .isFalse();
+        }
+
+        @Test
+        @DisplayName("A permanent that can't be sacrificed doesn't pay a sacrifice")
+        void permanentThatCantBeSacrificedDoesNotPay() {
+            Permanent bears = new Permanent(new GrizzlyBears());
+            gd.playerBattlefields.get(payerId).add(bears);
+            when(gameQueryService.canEffectCauseSacrifice(gd, payerId, otherId)).thenReturn(true);
+            when(gameQueryService.cantBeChosenToSacrifice(eq(gd), eq(bears), any())).thenReturn(true);
+
+            assertThat(service.canPay(gd, payerId, new SacrificePermanentCost(null, "creature", false), null, entry))
+                    .isFalse();
+        }
+    }
+
+    @Test
+    @DisplayName("Discarding three cards needs three cards in hand and asks for all three at once")
+    void discardingThreeCardsAsksForThree() {
+        PlayerInputService playerInputService = org.mockito.Mockito.mock(PlayerInputService.class);
+        ReflectionTestUtils.setField(service, "playerInputService", playerInputService);
+        DiscardCardTypeCost discardThree = new DiscardCardTypeCost(null, null, 3);
+        gd.playerHands.put(payerId, new ArrayList<>(List.of(new GrizzlyBears(), new GrizzlyBears())));
+
+        assertThat(service.canPay(gd, payerId, discardThree, null)).isFalse();
+
+        gd.playerHands.get(payerId).add(new GrizzlyBears());
+        assertThat(service.pay(gd, new Player(payerId, "Payer"), discardThree,
+                new ResolutionCostPaymentService.Payment(new GrizzlyBears(), payerId, null)))
+                .isEqualTo(ResolutionCostPaymentService.Outcome.ASKING);
+        verify(playerInputService).beginDiscardChoice(eq(gd), eq(payerId), eq(List.of(0, 1, 2)),
+                eq("Choose 3 cards to discard."), eq(3));
     }
 }

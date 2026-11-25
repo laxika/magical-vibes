@@ -33,7 +33,7 @@ class FlightSpellbombTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Flight Spellbomb");
         harness.assertInGraveyard(player1, "Flight Spellbomb");
 
-        // Resolve death trigger MayPayManaEffect (on top per CR 603.3) — shows may prompt
+        // Resolve death trigger UnlessPaysEffect (on top per CR 603.3) — shows may prompt
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.passBothPriorities();
 
@@ -49,7 +49,7 @@ class FlightSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, bearsId);
 
-        // Resolve death trigger MayPayManaEffect (on top per CR 603.3)
+        // Resolve death trigger UnlessPaysEffect (on top per CR 603.3)
         harness.passBothPriorities();
 
         // Decline the death trigger draw
@@ -70,7 +70,7 @@ class FlightSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, bearsId);
 
-        // Resolve death trigger MayPayManaEffect (on top per CR 603.3)
+        // Resolve death trigger UnlessPaysEffect (on top per CR 603.3)
         harness.passBothPriorities();
 
         // Decline the death trigger draw
@@ -95,7 +95,7 @@ class FlightSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, bearsId);
 
-        // Resolve death trigger MayPayManaEffect (on top per CR 603.3)
+        // Resolve death trigger UnlessPaysEffect (on top per CR 603.3)
         harness.passBothPriorities();
 
         // Accept death trigger — pay {U}, draw resolves inline
@@ -122,7 +122,7 @@ class FlightSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, bearsId);
 
-        // Resolve death trigger MayPayManaEffect (on top per CR 603.3)
+        // Resolve death trigger UnlessPaysEffect (on top per CR 603.3)
         harness.passBothPriorities();
 
         // Decline death trigger
@@ -150,7 +150,7 @@ class FlightSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, bearsId);
 
-        // Resolve death trigger MayPayManaEffect (on top per CR 603.3)
+        // Resolve death trigger UnlessPaysEffect (on top per CR 603.3)
         harness.passBothPriorities();
 
         // Accept but cannot pay {U} — auto-treated as decline
@@ -175,7 +175,7 @@ class FlightSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, bearsId);
 
-        // Resolve death trigger MayPayManaEffect (on top per CR 603.3)
+        // Resolve death trigger UnlessPaysEffect (on top per CR 603.3)
         harness.passBothPriorities();
 
         // Accept death trigger — pay {U} to draw, resolves inline

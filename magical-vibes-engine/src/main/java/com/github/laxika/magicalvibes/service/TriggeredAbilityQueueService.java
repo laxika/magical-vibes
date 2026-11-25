@@ -41,7 +41,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHandOfOpponentsChoiceEffect;
@@ -1744,9 +1743,6 @@ public class TriggeredAbilityQueueService {
         if (effect instanceof MayEffect may) {
             return targetedReturnEffect(may.wrapped());
         }
-        if (effect instanceof MayPayManaEffect mayPay) {
-            return targetedReturnEffect(mayPay.wrapped());
-        }
         if (effect instanceof UnlessPaysEffect unless) {
             return targetedReturnEffect(unless.ifPaid());
         }
@@ -1773,9 +1769,6 @@ public class TriggeredAbilityQueueService {
         }
         if (effect instanceof MayEffect may) {
             return targetedReturnToHandEffect(may.wrapped());
-        }
-        if (effect instanceof MayPayManaEffect mayPay) {
-            return targetedReturnToHandEffect(mayPay.wrapped());
         }
         if (effect instanceof UnlessPaysEffect unless) {
             return targetedReturnToHandEffect(unless.ifPaid());
