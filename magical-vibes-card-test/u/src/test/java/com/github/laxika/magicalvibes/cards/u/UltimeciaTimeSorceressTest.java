@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.cards.l.LotusPetal;
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.s.ShinraReinforcements;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UltimeciaTimeSorceress.class, UltimeciaOmnipotent.class, ShinraReinforcements.class})
+@CardUsed({UltimeciaTimeSorceress.class, UltimeciaOmnipotent.class, ShinraReinforcements.class, LotusPetal.class})
 class UltimeciaTimeSorceressTest extends BaseCardTest {
 
     @Test
@@ -203,6 +205,76 @@ class UltimeciaTimeSorceressTest extends BaseCardTest {
         addManaForUltimecia();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(ultimecia.isTransformed()).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("With more than eight cards in the graveyard the payer chooses which eight to exile")
+    void payerChoosesTheEightCardsToExile() {
+        Permanent ultimecia = addUltimecia(player1);
+        List<Card> graveyard = new ArrayList<>();
+        for (int i = 0; i < 9; i++) {
+            graveyard.add(new ShinraReinforcements());
+        }
+        harness.setGraveyard(player1, graveyard);
+        advanceToEndStep(player1);
+        addManaForUltimecia();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+        for (int i = 0; i < 8; i++) {
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNotNull();
+            harness.handleGraveyardCardChosen(player1, 0);
+        }
+        harness.passBothPriorities();
+
+        assertThat(ultimecia.isTransformed()).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyard.getLast());
+    }
+
+    @Test
+    @DisplayName("Seven cards and a Lotus Petal: the trigger has no intervening \"if\", and the payer is asked")
+    void sevenCardsAndAManaSourceThatFillsTheGraveyardIsAsked() {
+        Permanent ultimecia = addUltimecia(player1);
+        harness.addToBattlefield(player1, new LotusPetal());
+        List<Card> graveyard = new ArrayList<>();
+        for (int i = 0; i < 7; i++) {
+            graveyard.add(new ShinraReinforcements());
+        }
+        harness.setGraveyard(player1, graveyard);
+        advanceToEndStep(player1);
+        addManaForUltimecia();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        assertThat(ultimecia.isTransformed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Seven cards and a Lotus Petal: sacrificing the Petal for the last {B} while asked makes the eighth card, and the payment is made")
+    void lotusPetalSacrificedWhileAskedPaysTheManaAndFillsTheGraveyard() {
+        Permanent ultimecia = addUltimecia(player1);
+        harness.addToBattlefield(player1, new LotusPetal());
+        List<Card> graveyard = new ArrayList<>();
+        for (int i = 0; i < 7; i++) {
+            graveyard.add(new ShinraReinforcements());
+        }
+        harness.setGraveyard(player1, graveyard);
+        advanceToEndStep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.passBothPriorities();
+
+        int petalIndex = gd.playerBattlefields.get(player1.getId()).indexOf(findPermanent(player1, "Lotus Petal"));
+        harness.tapPermanent(player1, petalIndex);
+        harness.handleListChoice(player1, "BLACK");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(8);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         assertThat(ultimecia.isTransformed()).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();

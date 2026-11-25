@@ -33,11 +33,20 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * @param lifeAmount           additional life to pay with the mana (0 for mana-only costs)
  * @param useSourceManaCost    whether to use the source permanent's mana cost at resolution
  * @param announcedX           whether the cost is {X}, the announced X
+ * @param useTriggeringSpellManaCost whether the cost is the mana cost of the spell that caused the trigger, read as it
+ *                             resolves ({@link #ofTriggeringSpell()})
  */
 public record PayManaCost(
         String manaCost, DynamicAmount genericReduction, DynamicAmount genericIncrease,
-        boolean forCumulativeUpkeep, int lifeAmount, boolean useSourceManaCost, boolean announcedX)
+        boolean forCumulativeUpkeep, int lifeAmount, boolean useSourceManaCost, boolean announcedX,
+        boolean useTriggeringSpellManaCost)
         implements CostEffect {
+
+    public PayManaCost(String manaCost, DynamicAmount genericReduction, DynamicAmount genericIncrease,
+                       boolean forCumulativeUpkeep, int lifeAmount, boolean useSourceManaCost, boolean announcedX) {
+        this(manaCost, genericReduction, genericIncrease, forCumulativeUpkeep, lifeAmount, useSourceManaCost,
+                announcedX, false);
+    }
 
     public PayManaCost(String manaCost, DynamicAmount genericReduction, DynamicAmount genericIncrease,
                        boolean forCumulativeUpkeep, int lifeAmount, boolean useSourceManaCost) {
@@ -73,6 +82,16 @@ public record PayManaCost(
     /** "Pay {X}", X announced as the spell or ability was put on the stack. */
     public static PayManaCost x() {
         return new PayManaCost("{X}", null, null, false, 0, false, true);
+    }
+
+    /**
+     * "Pay that spell's mana cost" (Ice Cave): the mana cost of the spell that caused the trigger, as it is on the stack
+     * or as it last was there, with its announced X, without cost increases or reductions (Ice Cave's ruling). A spell
+     * cast face down has no mana cost (CR 708.2), and a spell with no mana cost can't have it paid (CR 118.6); {0} can
+     * always be paid (CR 118.3a).
+     */
+    public static PayManaCost ofTriggeringSpell() {
+        return new PayManaCost(null, null, null, false, 0, false, false, true);
     }
 
     @Override

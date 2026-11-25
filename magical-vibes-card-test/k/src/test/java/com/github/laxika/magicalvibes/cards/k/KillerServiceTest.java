@@ -26,6 +26,7 @@ class KillerServiceTest extends BaseCardTest {
     @Test
     @DisplayName("Pays and sacrifices a token to create a Rhino Warrior")
     void paysAndSacrificesTokenToCreateRhinoWarrior() {
+        giveManaSource(player1);
         harness.enterBattlefieldAndReturn(player1, new KillerService());
         harness.passBothPriorities();
         Permanent food = findPermanent(player1, "Food");
@@ -47,6 +48,7 @@ class KillerServiceTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the end-step ability keeps the token")
     void mayBeDeclined() {
+        giveManaSource(player1);
         harness.enterBattlefieldAndReturn(player1, new KillerService());
         harness.passBothPriorities();
 
@@ -64,6 +66,7 @@ class KillerServiceTest extends BaseCardTest {
     @Test
     @DisplayName("Creates the Rhino during the original end-step ability's resolution")
     void createsRhinoWithoutAnotherPriorityRound() {
+        giveManaSource(player1);
         harness.enterBattlefieldAndReturn(player1, new KillerService());
         harness.passBothPriorities();
         Permanent food = findPermanent(player1, "Food");
@@ -100,6 +103,7 @@ class KillerServiceTest extends BaseCardTest {
     @Test
     @DisplayName("Insufficient mana does not sacrifice the token or create a Rhino")
     void cannotPayWithOnlyOneMana() {
+        giveManaSource(player1);
         harness.enterBattlefieldAndReturn(player1, new KillerService());
         harness.passBothPriorities();
         advanceToEndStep();
@@ -128,6 +132,7 @@ class KillerServiceTest extends BaseCardTest {
     @Test
     @DisplayName("A Rhino creature token can be sacrificed instead of Food")
     void canSacrificeANonFoodToken() {
+        giveManaSource(player1);
         harness.enterBattlefieldAndReturn(player1, new KillerService());
         harness.passBothPriorities();
         Permanent food = findPermanent(player1, "Food");

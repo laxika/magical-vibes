@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.h.HelpingHand;
 import com.github.laxika.magicalvibes.cards.m.MalametBrawler;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -91,6 +93,7 @@ class ThousandMoonsSmithyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With only four untapped artifacts and creatures nothing is asked and the Smithy does not transform")
     void cannotTransformWithOnlyFourUntappedPermanents() {
         Permanent smithy = addSmithyByCasting();
         harness.addToBattlefield(player1, new MalametBrawler());
@@ -101,7 +104,7 @@ class ThousandMoonsSmithyTest extends BaseCardTest {
 
         advanceToPrecombatMain(player1);
         resolveAllTriggers();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(smithy.isTransformed()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId()).stream().filter(Permanent::isTapped))

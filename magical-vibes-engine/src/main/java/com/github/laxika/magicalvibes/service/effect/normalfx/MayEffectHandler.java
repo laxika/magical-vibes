@@ -291,7 +291,6 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                     ? targetId
                     : gameQueryService.findPermanentController(gameData, targetId);
             case TRIGGERING_SPELL_CONTROLLER -> targetId;
-            case LAST_MANA_PAYMENT_PLAYER -> entry.getLastManaPaymentPlayerId();
             case SOURCE_OWNER -> sourceOwnerId(entry);
         };
         if (choicePlayerId == null) {

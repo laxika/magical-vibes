@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -20,6 +21,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ShieldDancer.class, FaultRiders.class, RhysticLightning.class})
 class ShieldDancerTest extends BaseCardTest {
+
+    /** The payers have a mana source, so a "may pay" with an empty pool is still asked (CR 605.3a). */
+    @BeforeEach
+    void givePayersAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     @Test
     @DisplayName("Redirects the next combat damage from the target attacker to that attacker")

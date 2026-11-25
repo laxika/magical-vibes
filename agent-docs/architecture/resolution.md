@@ -30,9 +30,9 @@ Why: targets are fixed on the stack; an ability with none resolves without one.
 Owner: `ResolutionCostPaymentService`.
 Why: hand-rolled payments forgot the tax-paid event (Tax Taker), judged life by "can the life total change" (CR 119.8) and countered on a paid cost's shortfall (CR 118.12).
 
-### An "unless" payer's choice is kept on the resolving entry (CR 118.12)
-`UnlessPaysEffectHandler.answer` records the choice to pay on the waiting entry (`StackEntry.answerUnless`); `EffectResolutionService` takes it when it resumes the effect, after any payment prompt's completion.
-Owner: `UnlessPaysEffectHandler`, `StackEntry.unlessAnswer`.
+### An "unless" payer's choice is kept on the resolving entry (CR 118.12, 101.4)
+Every player the payer subject names is asked in APNAP order, every one even after another paid; the answers, the players left and an all-of ransom's parts still to pay live on the waiting entry (`StackEntry.unlessAnswer`), and `UnlessPaysEffectHandler.nextStep` picks the branch once nobody is left.
+Owner: `UnlessPaysEffectHandler`, `UnlessAnswer`.
 Why: a global flag could be taken by another question answered during the payment's own choice.
 
 ## Coin flips (Krark's Thumb)

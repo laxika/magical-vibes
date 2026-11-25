@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.AllOfCost;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -10,7 +14,6 @@ import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaAndSacrificePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -39,13 +42,11 @@ public class KillerService extends Card {
                         ))));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new MayPayManaAndSacrificePermanentEffect(
-                        "{2}",
-                        new PermanentIsTokenPredicate(),
+                UnlessPaysEffect.youMayPay(AllOfCost.of(new PayManaCost("{2}"),
+                                new SacrificePermanentCost(new PermanentIsTokenPredicate(), "token", false)),
                         new CreateTokenEffect(
                                 "Rhino Warrior", 4, 4, CardColor.GREEN,
                                 List.of(CardSubtype.RHINO, CardSubtype.WARRIOR),
-                                Set.of(), Set.of()),
-                        "a token"));
+                                Set.of(), Set.of())));
     }
 }

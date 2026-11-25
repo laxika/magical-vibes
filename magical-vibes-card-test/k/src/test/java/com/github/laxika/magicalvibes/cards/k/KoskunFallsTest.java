@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class KoskunFallsTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Upkeep with no creature at all sacrifices Koskun Falls")
+    @DisplayName("Upkeep with no creature at all sacrifices Koskun Falls without asking")
     void upkeepWithoutCreatureSacrificesFalls() {
         harness.addToBattlefield(player1, new KoskunFalls());
 
@@ -27,14 +27,14 @@ class KoskunFallsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Nothing can be tapped, so accepting cannot pay the cost — the else half resolves.
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertNotOnBattlefield(player1, "Koskun Falls");
         harness.assertInGraveyard(player1, "Koskun Falls");
     }
 
     @Test
-    @DisplayName("Upkeep with only a tapped creature sacrifices Koskun Falls")
+    @DisplayName("Upkeep with only a tapped creature sacrifices Koskun Falls without asking")
     void upkeepWithOnlyTappedCreatureSacrificesFalls() {
         harness.addToBattlefield(player1, new KoskunFalls());
         Permanent bear = addCreatureReady(player1, new AnabaBodyguard());
@@ -45,7 +45,7 @@ class KoskunFallsTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.UPKEEP);
         harness.passBothPriorities();
 
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertNotOnBattlefield(player1, "Koskun Falls");
         harness.assertInGraveyard(player1, "Koskun Falls");
@@ -116,14 +116,14 @@ class KoskunFallsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An opponent's creature cannot pay the upkeep cost")
+    @DisplayName("An opponent's creature cannot pay the upkeep cost: nothing is asked and Koskun Falls is sacrificed")
     void opponentCreatureCannotPayUpkeep() {
         harness.addToBattlefield(player1, new KoskunFalls());
         Permanent opponentCreature = addCreatureReady(player2, new AnabaBodyguard());
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(opponentCreature.isTapped()).isFalse();
         harness.assertInGraveyard(player1, "Koskun Falls");

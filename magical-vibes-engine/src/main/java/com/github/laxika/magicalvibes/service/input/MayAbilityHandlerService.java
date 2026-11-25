@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.PlayCardFromHandByWordOfCommandEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
@@ -62,7 +61,6 @@ public class MayAbilityHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MakeAnExampleEffectHandler makeAnExampleEffectHandler;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BrilliantUltimatumSupport brilliantUltimatumSupport;
-    private final MayAbilityTapCostService mayAbilityTapCostService;
     private final MayEffectHandlerRegistry mayEffectHandlerRegistry;
     private final RagingRiverEffectHandler ragingRiverEffectHandler;
 
@@ -91,7 +89,6 @@ public class MayAbilityHandlerService {
                                     com.github.laxika.magicalvibes.service.effect.normalfx.MakeAnExampleEffectHandler makeAnExampleEffectHandler,
                                     GraveyardReturnSupport graveyardReturnSupport,
                                     com.github.laxika.magicalvibes.service.effect.normalfx.BrilliantUltimatumSupport brilliantUltimatumSupport,
-                                    MayAbilityTapCostService mayAbilityTapCostService,
                                     MayEffectHandlerRegistry mayEffectHandlerRegistry,
                                     RagingRiverEffectHandler ragingRiverEffectHandler) {
         this.inputCompletionService = inputCompletionService;
@@ -106,7 +103,6 @@ public class MayAbilityHandlerService {
         this.makeAnExampleEffectHandler = makeAnExampleEffectHandler;
         this.graveyardReturnSupport = graveyardReturnSupport;
         this.brilliantUltimatumSupport = brilliantUltimatumSupport;
-        this.mayAbilityTapCostService = mayAbilityTapCostService;
         this.mayEffectHandlerRegistry = mayEffectHandlerRegistry;
         this.ragingRiverEffectHandler = ragingRiverEffectHandler;
     }
@@ -321,14 +317,11 @@ public class MayAbilityHandlerService {
             return;
         }
         MayPayManaEffect anyPlayerMayPay = ability.effects().stream()
-                .filter(e -> e instanceof MayPayManaEffect mayPay
-                        && (mayPay.payer() == MayPayPayer.ANY_PLAYER
-                        || mayPay.payer() == MayPayPayer.ANY_OTHER_PLAYER
-                        || mayPay.payer() == MayPayPayer.ANY_OPPONENT))
+                .filter(e -> e instanceof MayPayManaEffect mayPay && mayPay.payment() != null)
                 .map(MayPayManaEffect.class::cast)
                 .findFirst().orElse(null);
         if (anyPlayerMayPay != null) {
-            handleAnyPlayerMayPayChoice(gameData, player, accepted, ability, anyPlayerMayPay);
+            handleNonManaPaymentChoice(gameData, player, accepted, ability, anyPlayerMayPay);
             return;
         }
         RegisterDelayedCounterTriggerEffect dct = ability.effects().stream().filter(e -> e instanceof RegisterDelayedCounterTriggerEffect).map(e -> (RegisterDelayedCounterTriggerEffect) e).findFirst().orElse(null);
@@ -362,12 +355,7 @@ public class MayAbilityHandlerService {
             }
         }
         if (accepted) {
-            if (ability.tapPermanentsCost() != null) {
-                // beginTapCostPayment either awaits input or continues the parked resolution.
-                mayAbilityTapCostService.beginTapCostPayment(
-                        gameData, player, ability.tapPermanentsCost(), ability.sourcePermanentId(), ability);
-                return;
-            } else if (ability.manaCost() != null) {
+            if (ability.manaCost() != null) {
                 ManaCost cost = new ManaCost(ability.manaCost());
                 ManaPool pool = gameData.playerManaPools.get(player.getId());
                 boolean paidWithLife = false;
@@ -449,20 +437,6 @@ public class MayAbilityHandlerService {
     }
 
     /**
-     * Continues the resolving ability once the tap cost of its accepted "you may" is paid. Like every answer of a
-     * resolving ability's own "you may", it chooses no target (see {@link #handleResolutionTimeMayChoice}).
-     */
-    public void continueAfterTapCost(GameData gameData, Player player, PendingMayAbility ability) {
-        gameData.resolvingMayEffectFromStack = false;
-        // Paying the tap cost is accepting: a "do this only once each turn" ability is used up (CR 603.2h).
-        markOncePerTurnTriggerOnAcceptance(gameData, ability);
-        gameLogService.append(gameData, GameLog.textCardText(
-                player.getUsername() + " accepts — resolving ", ability.sourceCard(), "'s ability."));
-        gameData.resolvedMayAccepted = true;
-        resumeAfterResolutionTimeMayChoice(gameData);
-    }
-
-    /**
      * Uses up a "do this only once each turn" ability (CR 603.2h) as its "you may" is accepted: the ability's limit
      * ({@code TriggerLimit.DO_ONLY_ONCE_EACH_TURN}) marked the resolving entry as its collector put it on the stack, so
      * no effect is read for it.
@@ -472,49 +446,6 @@ public class MayAbilityHandlerService {
             TriggeredAbilityStackService.markActionTaken(gameData, ability.sourcePermanentId(),
                     gameData.pendingEffectResolutionEntry.getOnceEachTurnActionKey());
         }
-    }
-
-    /**
-     * One player's answer to "unless any player pays [mana]" (or "any player may pay"): each player, in turn order from
-     * the active player, gets the option to pay as the ability resolves, even after another player paid (PCY rulings);
-     * the payment counts once every player has answered.
-     */
-    private void handleAnyPlayerMayPayChoice(GameData gameData, Player player, boolean accepted,
-                                             PendingMayAbility ability, MayPayManaEffect mayPay) {
-        if (mayPay.payment() != null) {
-            handleNonManaPaymentChoice(gameData, player, accepted, ability, mayPay);
-            return;
-        }
-        if (accepted && ability.manaCost() != null) {
-            ManaCost cost = new ManaCost(ability.manaCost());
-            ManaPool pool = gameData.playerManaPools.get(player.getId());
-            if (cost.canPayResolutionCost(pool)) {
-                cost.payResolutionCost(pool);
-                gameLogService.append(gameData, GameLog.textCardText(
-                        player.getUsername() + " pays " + ability.manaCost() + ". (", ability.sourceCard(), ")"));
-                // Each player still gets the option to pay as the ability resolves, in turn order (PCY rulings).
-                gameData.anyPlayerMayPayManaPaid = true;
-            }
-        }
-
-        if (!gameData.anyPlayerMayPayManaRemainingPlayers.isEmpty()) {
-            UUID next = gameData.anyPlayerMayPayManaRemainingPlayers.removeFirst();
-            gameData.resolvingMayEffectFromStack = true;
-            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                    ability.sourceCard(), next, ability.effects(), ability.description(), ability.targetCardId(),
-                    ability.manaCost(), ability.sourcePermanentId(), ability.tapPermanentsCost(),
-                    ability.lifeCost(), ability.additionalLifeCost(), ability.attackedTargetId(),
-                    ability.activePlayerId(), ability.choicePlayerId(), ability.sourcePermanentSnapshot(),
-                    ability.sourceControllerId(), ability.triggeringCardId(), ability.eventValue()));
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        boolean anyPaid = gameData.anyPlayerMayPayManaPaid;
-        gameData.anyPlayerMayPayManaRemainingPlayers.clear();
-        gameData.anyPlayerMayPayManaPaid = false;
-        gameData.resolvedMayAccepted = anyPaid;
-        resumeAfterResolutionTimeMayChoice(gameData);
     }
 
     /**

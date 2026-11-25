@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -359,7 +360,7 @@ class LibraryTriggersTest {
         void graveyardSecondDrawAbility() {
             Card wolfbat = createCard("Wolfbat", CardType.CREATURE);
             wolfbat.addTrigger(new TriggerCondition(Triggers.youDrawSecondCardEachTurn(), AbilityZones.GRAVEYARD),
-                    TriggerOptions.DEFAULT, new MayPayManaEffect("{B}", new BoostSelfEffect(1, 1), "Pay {B}?"));
+                    TriggerOptions.DEFAULT, UnlessPaysEffect.youMayPay("{B}", new BoostSelfEffect(1, 1)));
             gd.playerGraveyards.put(player1Id, new ArrayList<>(List.of(wolfbat)));
 
             draw(player1Id, null);
@@ -369,7 +370,7 @@ class LibraryTriggersTest {
                 assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
                 assertThat(entry.getCard()).isEqualTo(wolfbat);
                 assertThat(entry.getTriggeringCardId()).isEqualTo(wolfbat.getId());
-                assertThat(entry.getEffectsToResolve()).singleElement().isInstanceOf(MayPayManaEffect.class);
+                assertThat(entry.getEffectsToResolve()).singleElement().isInstanceOf(UnlessPaysEffect.class);
             });
         }
 

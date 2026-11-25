@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -1018,36 +1019,36 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("Triggers.upkeep(ActivePlayer.YOU) from the graveyard with MayPayManaEffect queues onto stack")
+        @DisplayName("Triggers.upkeep(ActivePlayer.YOU) from the graveyard with a you-may-pay UnlessPaysEffect queues onto stack")
         void graveyardUpkeepMayPayQueuesOntoStack() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Graveyard May Card");
             card.addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
                     TriggerOptions.DEFAULT,
-                    new MayPayManaEffect("{2}", new GainLifeEffect(1), "Pay {2} to gain life?"));
+                    UnlessPaysEffect.youMayPay("{2}", new GainLifeEffect(1)).withPrompt("Pay {2} to gain life?"));
             gd.playerGraveyards.get(player1Id).add(card);
 
             sut.handleUpkeepTriggers(gd);
 
-            // MayPayManaEffect goes through queueMayAbility, which adds to stack
+            // The "you may pay" goes through queueMayAbility, which adds to stack
             assertThat(gd.stack).isNotEmpty();
             assertThat(gd.stack.getFirst().getDescription()).contains("Graveyard May Card");
         }
 
         @Test
-        @DisplayName("Triggers.upkeep(ActivePlayer.YOU) from the graveyard with targeted MayPayManaEffect queues graveyard target selection")
+        @DisplayName("Triggers.upkeep(ActivePlayer.YOU) from the graveyard with a targeted you-may-pay UnlessPaysEffect queues graveyard target selection")
         void graveyardUpkeepTargetedMayPayQueuesGraveyardTargetSelection() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Graveyard Target Card");
             card.addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
                     TriggerOptions.DEFAULT,
-                    new MayPayManaEffect("{2}{G}",
+                    UnlessPaysEffect.youMayPay("{2}{G}",
                             ReturnCardFromGraveyardEffect.builder()
                                     .destination(GraveyardChoiceDestination.HAND)
                                     .filter(new CardTypePredicate(CardType.CREATURE))
                                     .targetGraveyard(true)
-                                    .build(),
-                            "Pay {2}{G} to return a creature card?"));
+                                    .build())
+                            .withPrompt("Pay {2}{G} to return a creature card?"));
             gd.playerGraveyards.get(player1Id).add(card);
             gd.playerGraveyards.get(player1Id).add(creatureCard());
 
@@ -1077,7 +1078,7 @@ class StepTriggerServiceTest {
         void graveyardMetalcraftSkipsWhenNotMet() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Metalcraft Card");
-            card.addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT.withInterveningIf(new Metalcraft()), new MayPayManaEffect("{2}", new GainLifeEffect(1), "Pay?"));
+            card.addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT.withInterveningIf(new Metalcraft()), UnlessPaysEffect.youMayPay("{2}", new GainLifeEffect(1)).withPrompt("Pay?"));
             gd.playerGraveyards.get(player1Id).add(card);
 
             when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
@@ -1094,7 +1095,7 @@ class StepTriggerServiceTest {
             gd.turnNumber = 2;
             Card card = createCardWithName("Metalcraft Card");
             ConditionalEffect effect = new ConditionalEffect(
-                    new Metalcraft(), new MayPayManaEffect("{2}", new GainLifeEffect(1), "Pay?"));
+                    new Metalcraft(), UnlessPaysEffect.youMayPay("{2}", new GainLifeEffect(1)).withPrompt("Pay?"));
             card.addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
                     TriggerOptions.DEFAULT.withInterveningIf(effect.condition()), effect.wrapped());
             gd.playerGraveyards.get(player1Id).add(card);
@@ -2159,12 +2160,12 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("Triggers.endStep(ActivePlayer.YOU) with reflexive MayPayManaEffect queues may ability")
-        void controllerEndStepReflexiveMayPayManaEffectQueuesMayAbility() {
+        @DisplayName("Triggers.endStep(ActivePlayer.YOU) with a reflexive you-may-pay UnlessPaysEffect queues may ability")
+        void controllerEndStepReflexiveMayPayQueuesMayAbility() {
             Card card = createCardWithName("Controller Reflexive May Pay Card");
             card.addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                    new MayPayManaEffect("{1}", new QueueReflexiveAbilityEffect(new GainLifeEffect(1)),
-                            "Pay {1} to gain life?"));
+                    UnlessPaysEffect.youMayPay("{1}", new QueueReflexiveAbilityEffect(new GainLifeEffect(1)))
+                            .withPrompt("Pay {1} to gain life?"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             sut.handleEndStepTriggers(gd);

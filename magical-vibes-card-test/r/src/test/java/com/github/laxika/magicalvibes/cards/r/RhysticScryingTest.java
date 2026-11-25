@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -108,6 +109,7 @@ class RhysticScryingTest extends BaseCardTest {
         RhysticScrying drawnThird = new RhysticScrying();
         harness.setLibrary(player1, List.of(drawnFirst, drawnSecond, drawnThird));
         harness.addMana(player2, ManaColor.COLORLESS, 2);
+        giveManaSource(player1);
         harness.castFromHand(player1, new RhysticScrying(), "{2}{U}{U}");
         harness.setHand(player1, List.of(oldFirst, oldSecond, oldThird));
         harness.passBothPriorities();
@@ -124,7 +126,32 @@ class RhysticScryingTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("After one player pays, the other is still asked, and the three cards are discarded once")
+    void otherPlayerStillAskedAfterAPaymentAndDiscardHappensOnce() {
+        harness.setLibrary(player1, List.of(new RhysticScrying(), new RhysticScrying(), new RhysticScrying(),
+                new RhysticScrying()));
+        castScrying();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
     private void castScrying() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.castFromHand(player1, new RhysticScrying(), "{2}{U}{U}");
         harness.passBothPriorities();
     }

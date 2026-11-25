@@ -455,11 +455,6 @@ public class StackEntry {
     /** Whether the spell's controller controlled a modified creature when the spell was finished being cast. */
     @Setter private boolean controlledModifiedCreatureAsCast;
     /** Card exiled as an additional behold cost, pending the permanent spell entering. */
-    /**
-     * The player who was last offered a mana payment by this entry's resolution, kept on the entry so a later
-     * choice or copy reads this resolution's payer and not another entry's.
-     */
-    @Setter private UUID lastManaPaymentPlayerId;
     /** The cards milled to pay this ability's activation cost, kept on the entry and copied with it. */
     @Setter private List<Card> cardsMilledAsActivationCost = List.of();
     /**
@@ -657,41 +652,20 @@ public class StackEntry {
     }
     /** The resolution scratchpad: results an earlier step left for later steps to read. */
     private ResolutionResults resolutionResults = ResolutionResults.EMPTY;
-    /** The payer's answer to the "unless" effect this entry is resolving, or {@code null} (CR 118.12a). */
+    /** Where the payers of the "unless" effect this entry is resolving stand, or {@code null} (CR 118.12a). */
     private UnlessAnswer unlessAnswer;
 
-    /** The payer of the "unless" effect at {@code effectIndex} chose to pay ({@code true}) or not (CR 118.12). */
-    public void answerUnless(int effectIndex, boolean paid) {
-        unlessAnswer = new UnlessAnswer(effectIndex, paid, unlessAlternative(effectIndex));
+    /** The state of the "unless" effect at {@code effectIndex}, or {@code null} before anyone was asked. */
+    public UnlessAnswer unlessAnswer(int effectIndex) {
+        return unlessAnswer != null && unlessAnswer.effectIndex() == effectIndex ? unlessAnswer : null;
     }
 
-    /** The payer of the "unless" effect at {@code effectIndex} is asked its ransom's {@code alternative} (in order). */
-    public void askUnlessAlternative(int effectIndex, int alternative) {
-        unlessAnswer = new UnlessAnswer(effectIndex, null, alternative);
+    /** Records where the payers of the "unless" effect at {@code answer.effectIndex()} stand. */
+    public void setUnlessAnswer(UnlessAnswer answer) {
+        unlessAnswer = answer;
     }
 
-    /**
-     * The alternative of the "unless" effect at {@code effectIndex} its payer is asked, every earlier one declined or
-     * unpayable; 0 before any was asked.
-     */
-    public int unlessAlternative(int effectIndex) {
-        return unlessAnswer != null && unlessAnswer.effectIndex() == effectIndex ? unlessAnswer.alternative() : 0;
-    }
-
-    /**
-     * The payer's answer to the "unless" effect at {@code effectIndex}, or {@code null} while none was given; an
-     * answer is read once, which ends that effect's state on this entry.
-     */
-    public Boolean takeUnlessAnswer(int effectIndex) {
-        if (unlessAnswer == null || unlessAnswer.effectIndex() != effectIndex || unlessAnswer.paid() == null) {
-            return null;
-        }
-        Boolean paid = unlessAnswer.paid();
-        unlessAnswer = null;
-        return paid;
-    }
-
-    /** Ends the state of the "unless" effect at {@code effectIndex} (its branch was chosen without an answer). */
+    /** Ends the state of the "unless" effect at {@code effectIndex} (its branch was chosen). */
     public void clearUnlessAnswer(int effectIndex) {
         if (unlessAnswer != null && unlessAnswer.effectIndex() == effectIndex) {
             unlessAnswer = null;
@@ -1513,7 +1487,6 @@ public class StackEntry {
         this.controlledDragonAsCast = source.controlledDragonAsCast;
         this.controlledFaerieAsCast = source.controlledFaerieAsCast;
         this.controlledModifiedCreatureAsCast = source.controlledModifiedCreatureAsCast;
-        this.lastManaPaymentPlayerId = source.lastManaPaymentPlayerId;
         this.cardsMilledAsActivationCost = List.copyOf(source.cardsMilledAsActivationCost);
         this.revealedPowerCostCard = source.revealedPowerCostCard;
         this.revealedPowerCostCardLastKnownPower = source.revealedPowerCostCardLastKnownPower;
@@ -2234,7 +2207,6 @@ public class StackEntry {
         this.controlledDragonAsCast = false;
         this.controlledFaerieAsCast = false;
         this.controlledModifiedCreatureAsCast = false;
-        this.lastManaPaymentPlayerId = null;
         this.cardsMilledAsActivationCost = List.of();
         this.revealedPowerCostCard = null;
         this.revealedPowerCostCardLastKnownPower = 0;

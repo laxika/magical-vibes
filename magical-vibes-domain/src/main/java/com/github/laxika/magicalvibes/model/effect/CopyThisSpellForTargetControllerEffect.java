@@ -9,8 +9,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * spell" and "that player may copy this spell" (Chain of Plasma, Chain of Smog).
  *
  * <p>The "chain" half of Chain Stasis and Chain Lightning — the targeted permanent's controller
- * or player may pay, then copy this spell. Wrap it in a {@link MayPayManaEffect} with the matching
- * target-based payer so the payment prompt goes to the same player. Because the copy carries the
+ * or player may pay, then copy this spell: {@code UnlessPaysEffect.mayPay(payer, "{R}{R}", new MayEffect(copy, prompt,
+ * null, MayChoicePlayer.TARGET_PLAYER_OR_PERMANENT_CONTROLLER))}, the "you may copy" asked of the same player the payer
+ * subject names. Because the copy carries the
  * source's whole effect list, the copy offers the pay-to-copy choice again and the chain continues
  * on its own.</p>
  */

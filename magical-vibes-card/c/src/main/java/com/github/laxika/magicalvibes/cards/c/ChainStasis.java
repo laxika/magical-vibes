@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForTargetControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -18,12 +18,11 @@ public class ChainStasis extends Card {
                 .addSpellEffect(new MayEffect(
                         new TapOrUntapTargetPermanentEffect(),
                         "Tap or untap target creature?"))
-                .addSpellEffect(new MayPayManaEffect(
+                .addSpellEffect(UnlessPaysEffect.mayPay(
+                        Subjects.controllerOf(Subjects.target()),
                         "{2}{U}",
                         new MayEffect(new CopyThisSpellForTargetControllerEffect(),
-                                "Copy Chain Stasis?", null, MayChoicePlayer.LAST_MANA_PAYMENT_PLAYER),
-                        "Pay {2}{U} to copy Chain Stasis?",
-                        MayPayPayer.TARGET_PERMANENT_CONTROLLER
-                ));
+                                "Copy Chain Stasis?", null, MayChoicePlayer.TARGET_PERMANENT_CONTROLLER))
+                        .withPrompt("Pay {2}{U} to copy Chain Stasis?"));
     }
 }

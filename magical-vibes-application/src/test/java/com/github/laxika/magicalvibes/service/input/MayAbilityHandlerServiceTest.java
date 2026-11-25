@@ -91,7 +91,6 @@ class MayAbilityHandlerServiceTest {
                 mock(MakeAnExampleEffectHandler.class),
                 mock(GraveyardReturnSupport.class),
                 mock(BrilliantUltimatumSupport.class),
-                mock(MayAbilityTapCostService.class),
                 mayEffectHandlerRegistry,
                 mock(RagingRiverEffectHandler.class));
 
@@ -284,26 +283,6 @@ class MayAbilityHandlerServiceTest {
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> svc.handleMayAbilityChosen(gd, player1, true))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
-    }
-
-    @Test
-    @DisplayName("Paying a \"you may tap\" cost uses up the ability's \"do this only once each turn\"")
-    void paidTapCostMarksTheOnceEachTurnAction() {
-        Card sourceCard = new Card();
-        sourceCard.setName("Test Source");
-        sourceCard.setType(CardType.CREATURE);
-        UUID sourcePermanentId = UUID.randomUUID();
-        StackEntry resolving = TestStackDoor.triggered(sourceCard, PLAYER1_ID,
-                "Test Source's ability", new ArrayList<>(List.of(new CardEffect() { })), null, sourcePermanentId);
-        resolving.setOnceEachTurnActionKey("once");
-        gd.pendingEffectResolutionEntry = resolving;
-        PendingMayAbility ability = new PendingMayAbility(sourceCard, PLAYER1_ID, List.of(new CardEffect() { }),
-                "Test Source — tap?", null, null, sourcePermanentId);
-
-        svc.continueAfterTapCost(gd, player1, ability);
-
-        // CR 603.2h: once its controller took the action this turn, the ability doesn't trigger again.
-        assertThat(TriggeredAbilityStackService.actionTaken(gd, sourcePermanentId, "once")).isTrue();
     }
 
     @Test

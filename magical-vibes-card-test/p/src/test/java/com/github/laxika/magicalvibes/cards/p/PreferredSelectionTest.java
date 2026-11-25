@@ -13,10 +13,17 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @CardUsed({PreferredSelection.class, Foratog.class, NettletoothDjinn.class, Forest.class})
 class PreferredSelectionTest extends BaseCardTest {
+
+    /** The payers have a mana source, so a "may pay" with an empty pool is still asked (CR 605.3a). */
+    @BeforeEach
+    void givePayersAManaSource() {
+        giveManaSource(player1);
+    }
 
     private Card top;
     private Card second;

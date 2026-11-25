@@ -984,10 +984,6 @@ public class GameData {
      * declines (the pending ability's {@code controllerId} is the deciding player, not the source).
      */
     public UUID forcedCostOrElseSourceControllerId;
-    /** MayPayManaEffect ({@code ANY_PLAYER}): players still to be offered the payment in APNAP order. */
-    public final List<UUID> anyPlayerMayPayManaRemainingPlayers = new ArrayList<>();
-    /** MayPayManaEffect ({@code ANY_PLAYER}): whether a player asked so far paid; the later players are still asked. */
-    public boolean anyPlayerMayPayManaPaid;
     /**
      * EachPlayerTakesDamageUnlessPays: players still to be offered the pay-or-take-damage prompt
      * after the one currently deciding (APNAP remainder). Cleared when the queue drains.
@@ -10691,8 +10687,6 @@ public class GameData {
         copy.tariffPendingSacrificeIds.addAll(this.tariffPendingSacrificeIds);
         copy.forcedCostOrElseRemainingPlayers.addAll(this.forcedCostOrElseRemainingPlayers);
         copy.forcedCostOrElseSourceControllerId = this.forcedCostOrElseSourceControllerId;
-        copy.anyPlayerMayPayManaRemainingPlayers.addAll(this.anyPlayerMayPayManaRemainingPlayers);
-        copy.anyPlayerMayPayManaPaid = this.anyPlayerMayPayManaPaid;
         copy.eachPlayerDamageUnlessPaysRemaining.addAll(this.eachPlayerDamageUnlessPaysRemaining);
         copy.eachPlayerDamageUnlessPaysDeclined.addAll(this.eachPlayerDamageUnlessPaysDeclined);
         copy.eachPlayerDamageUnlessPaysBatched = this.eachPlayerDamageUnlessPaysBatched;

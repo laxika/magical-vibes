@@ -114,6 +114,7 @@ class BanonTheReturnersLeaderTest extends BaseCardTest {
 
     @Test
     void mayDeclineAttackCost() {
+        giveManaSource(player1);
         addCreatureReady(player1, new BanonTheReturnersLeader());
         Card kept = new GrizzlyBears();
         Card drawn = new Forest();
@@ -132,6 +133,7 @@ class BanonTheReturnersLeaderTest extends BaseCardTest {
 
     @Test
     void cannotDiscardOrDrawWithoutPayingMana() {
+        giveManaSource(player1);
         addCreatureReady(player1, new BanonTheReturnersLeader());
         Card kept = new GrizzlyBears();
         Card drawn = new Forest();
@@ -149,6 +151,7 @@ class BanonTheReturnersLeaderTest extends BaseCardTest {
 
     @Test
     void triggersOnceForMultipleAttackersWithoutBanonAttacking() {
+        giveManaSource(player1);
         harness.addToBattlefield(player1, new BanonTheReturnersLeader());
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
@@ -224,6 +227,23 @@ class BanonTheReturnersLeaderTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, voiceIndex))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("With no card in hand the payment can't be made, so nothing is asked and no card is drawn")
+    void emptyHandIsNotAsked() {
+        addCreatureReady(player1, new BanonTheReturnersLeader());
+        Card drawn = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
     }
 
     private Card discardCreatureWithVoice() {

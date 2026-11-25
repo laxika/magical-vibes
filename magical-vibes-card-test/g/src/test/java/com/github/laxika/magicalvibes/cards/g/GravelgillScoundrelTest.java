@@ -50,13 +50,13 @@ class GravelgillScoundrelTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The attacking Scoundrel cannot be tapped for its ability")
+    @DisplayName("The attacking Scoundrel cannot be tapped for its ability: nothing is asked")
     void requiresAnotherMerfolk() {
         Permanent scoundrel = addCreatureReady(player1, new GravelgillScoundrel());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gqs.hasCantBeBlocked(gd, scoundrel)).isFalse();
     }
@@ -110,7 +110,7 @@ class GravelgillScoundrelTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Tapped creatures and opposing creatures cannot pay for the ability")
+    @DisplayName("Tapped creatures and opposing creatures cannot pay for the ability: nothing is asked")
     void cannotTapTappedOrOpposingCreature() {
         Permanent scoundrel = addCreatureReady(player1, new GravelgillScoundrel());
         Permanent tapped = addCreatureReady(player1, new GravelgillScoundrel());
@@ -119,7 +119,7 @@ class GravelgillScoundrelTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gqs.hasCantBeBlocked(gd, scoundrel)).isFalse();
         assertThat(scoundrel.isTapped()).isFalse();

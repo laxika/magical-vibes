@@ -53,6 +53,7 @@ class TimotharBaronOfBatsTest extends BaseCardTest {
     @Test
     @DisplayName("Declining leaves the dying Vampire in its graveyard")
     void decliningLeavesVampireInGraveyard() {
+        giveManaSource(player1);
         addTimotharAndVampire();
 
         killCreatureWithShock(findPermanent(player1, "Vampire Noble").getId());
@@ -298,6 +299,29 @@ class TimotharBaronOfBatsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         bat.setAttacking(true);
         harness.resolveCombatDamage();
+    }
+
+    @Test
+    @DisplayName("A dying Vampire card that left the graveyard can't be exiled, so nothing is asked and no Bat is made")
+    void cardGoneFromGraveyardIsNotAsked() {
+        addTimotharAndVampire();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        Permanent vampire = findPermanent(player1, "Vampire Noble");
+        Card vampireCard = vampire.getCard();
+
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, vampire.getId());
+        harness.passBothPriorities();
+        gd.playerGraveyards.get(player1.getId()).remove(vampireCard);
+        if (gd.interaction.activeInteraction() == null) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(findPermanents(player1, "Bat")).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
     }
 
     private void addTimotharAndVampire() {

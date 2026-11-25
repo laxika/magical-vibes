@@ -1,9 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.AllOfCost;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopiesOfSacrificedAuraAttachedToOtherAttackingCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaAndSacrificePermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToSourcePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -15,10 +19,10 @@ public class ThreeDogGalaxyNewsDJ extends Card {
 
     public ThreeDogGalaxyNewsDJ() {
         addTrigger(Triggers.youAttack(),
-                new MayPayManaAndSacrificePermanentEffect(
-                        "{2}",
-                        new PermanentIsAuraAttachedToSourcePredicate(),
-                        new CreateTokenCopiesOfSacrificedAuraAttachedToOtherAttackingCreaturesEffect(),
-                        "an Aura attached to Three Dog"));
+                // "When you sacrifice an Aura this way" is a reflexive trigger (CR 603.12).
+                UnlessPaysEffect.youMayPay(AllOfCost.of(new PayManaCost("{2}"), new SacrificePermanentCost(
+                                new PermanentIsAuraAttachedToSourcePredicate(), "Aura attached to Three Dog", false)),
+                        new QueueReflexiveAbilityEffect(
+                                new CreateTokenCopiesOfSacrificedAuraAttachedToOtherAttackingCreaturesEffect())));
     }
 }

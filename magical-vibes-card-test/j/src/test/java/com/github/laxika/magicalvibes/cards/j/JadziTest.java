@@ -58,7 +58,7 @@ class JadziTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Declining the revealed nonland card leaves it on top")
+    @DisplayName("With no way to pay the {1}, nothing is asked and the revealed nonland card stays on top")
     void decliningRevealedNonlandLeavesItOnTop() {
         addCreatureReady(player1, new Jadzi());
         Card topCard = new GrizzlyBears();
@@ -67,7 +67,7 @@ class JadziTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(topCard);
     }

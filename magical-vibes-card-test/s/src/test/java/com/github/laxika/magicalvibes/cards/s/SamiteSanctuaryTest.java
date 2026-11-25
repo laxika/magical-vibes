@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -17,6 +18,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SamiteSanctuary.class, AvatarOfMight.class, RhysticLightning.class})
 class SamiteSanctuaryTest extends BaseCardTest {
+
+    /** The payers have a mana source, so a "may pay" with an empty pool is still asked (CR 605.3a). */
+    @BeforeEach
+    void givePayersAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     @Test
     @DisplayName("Any player may pay {2} to shield a target creature from the next damage")

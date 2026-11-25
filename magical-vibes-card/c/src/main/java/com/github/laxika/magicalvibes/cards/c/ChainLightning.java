@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForTargetControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
@@ -42,12 +42,12 @@ public class ChainLightning extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target"
         )).addSpellEffect(DealDamageEffect.toAnyTarget(3))
-                .addSpellEffect(new MayPayManaEffect(
+                .addSpellEffect(UnlessPaysEffect.mayPay(
+                        Subjects.allOf(Subjects.targetPlayerDeclaredElsewhere(),
+                                Subjects.controllerOf(Subjects.target())),
                         "{R}{R}",
                         new MayEffect(new CopyThisSpellForTargetControllerEffect(),
-                                "Copy Chain Lightning?", null, MayChoicePlayer.LAST_MANA_PAYMENT_PLAYER),
-                        "Pay {R}{R} to copy Chain Lightning?",
-                        MayPayPayer.TARGET_PLAYER_OR_PERMANENT_CONTROLLER
-                ));
+                                "Copy Chain Lightning?", null, MayChoicePlayer.TARGET_PLAYER_OR_PERMANENT_CONTROLLER))
+                        .withPrompt("Pay {R}{R} to copy Chain Lightning?"));
     }
 }

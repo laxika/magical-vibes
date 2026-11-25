@@ -1,15 +1,18 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.AllOfCost;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -21,8 +24,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ConspiracyTheorist extends Card {
 
     public ConspiracyTheorist() {
-        addTrigger(Triggers.attacks(), new MayPayManaEffect(
-                "{1}", new DiscardAndDrawCardEffect(), "Pay {1} and discard a card to draw a card?"));
+        addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay(
+                AllOfCost.of(new PayManaCost("{1}"), new DiscardCardTypeCost(null, null)), new DrawCardEffect(1))
+                .withPrompt("Pay {1} and discard a card to draw a card?"));
         CardNotPredicate nonland = new CardNotPredicate(new CardTypePredicate(CardType.LAND));
         addTrigger(Triggers.youDiscardOneOrMoreCards().withFilter(nonland), new MayEffect(
                 SequenceEffect.of(

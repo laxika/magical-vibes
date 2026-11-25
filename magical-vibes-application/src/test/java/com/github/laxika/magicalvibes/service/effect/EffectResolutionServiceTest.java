@@ -30,7 +30,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -192,10 +192,10 @@ class EffectResolutionServiceTest {
     }
 
     @Test
-    @DisplayName("An accepted may-pay resumes its inner effect after nested input")
-    void acceptedMayPayResumesInnerEffectAfterNestedInput() {
+    @DisplayName("An accepted \"you may\" resumes its inner effect after nested input")
+    void acceptedMayResumesInnerEffectAfterNestedInput() {
         CardEffect wrapped = new DrawCardEffect(1);
-        CardEffect mayPay = new MayPayManaEffect("{1}", wrapped, "Pay {1}?");
+        CardEffect mayPay = new MayEffect(wrapped, "Draw a card?");
         StackEntry entry = createEntry(createCard("Nested choice"), player1Id, List.of(mayPay));
         EffectHandler handler = stubHandler(wrapped);
         gd.resolvedMayAccepted = true;

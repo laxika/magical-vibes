@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -17,6 +18,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ChainStasis.class, EbonyRhino.class, ApocalypseChime.class})
 class ChainStasisTest extends BaseCardTest {
+
+    /** The payers have a mana source, so a "may pay" with an empty pool is still asked (CR 605.3a). */
+    @BeforeEach
+    void givePayersAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     @Test
     @DisplayName("Taps an untapped target creature")

@@ -469,7 +469,9 @@ public abstract class AiDecisionEngine {
     protected boolean anyPlayerManaPaymentAlreadyMade(GameData gameData) {
         PendingInteraction.MayAbilityChoice mayChoice =
                 gameData.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
-        return gameData.anyPlayerMayPayManaPaid && mayChoice != null && aiPlayer.getId().equals(mayChoice.playerId());
+        return mayChoice != null && aiPlayer.getId().equals(mayChoice.playerId())
+                && com.github.laxika.magicalvibes.service.effect.normalfx.UnlessPaysEffectHandler
+                .anotherPlayerAlreadyPaid(gameData);
     }
 
     protected void handleMayAbilityChoice(GameData gameData) {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -116,7 +117,27 @@ class WildMightTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("After one player pays, the other is still asked, and the additional +4/+4 is prevented")
+    void otherPlayerStillAskedAfterAPayment() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DivingGriffin());
+
+        castWildMight(creature);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(2);
+    }
+
     private void castWildMight(Permanent target) {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.setHand(player1, List.of(new WildMight()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

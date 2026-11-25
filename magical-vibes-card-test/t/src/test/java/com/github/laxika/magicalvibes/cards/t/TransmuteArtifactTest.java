@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -55,6 +56,7 @@ class TransmuteArtifactTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With no mana source and an empty pool the difference can't be paid: nothing is asked and the more expensive artifact goes to its owner's graveyard")
     void declinesDifferencePaymentAndPutsMoreExpensiveArtifactIntoOwnersGraveyard() {
         harness.addToBattlefield(player1, new Ornithopter());
         Permanent sacrificed = findPermanent(player1, "Ornithopter");
@@ -64,7 +66,7 @@ class TransmuteArtifactTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, sacrificed.getId());
         harness.handleCardChosen(player1, 0);
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertInGraveyard(player1, "Ornithopter");
         harness.assertInGraveyard(player1, "Millstone");
@@ -138,6 +140,7 @@ class TransmuteArtifactTest extends BaseCardTest {
 
     @Test
     void selectedArtifactStaysInLibraryUntilPaymentIsDecided() {
+        giveManaSource(player1);
         harness.addToBattlefield(player1, new Ornithopter());
         Permanent sacrificed = findPermanent(player1, "Ornithopter");
         Millstone libraryCard = new Millstone();
@@ -154,6 +157,7 @@ class TransmuteArtifactTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Grafdigger's Cage doesn't stop finding the creature; with no way to pay nothing is asked and it goes to the graveyard")
     void cageDoesNotPreventFindingCreatureAndDecliningPayment() {
         harness.addToBattlefield(player2, new GrafdiggersCage());
         harness.addToBattlefield(player1, new Ornithopter());
@@ -166,7 +170,7 @@ class TransmuteArtifactTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         harness.handleCardChosen(player1, 0);
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertInGraveyard(player1, "Triskelion");
         harness.assertNotOnBattlefield(player1, "Triskelion");

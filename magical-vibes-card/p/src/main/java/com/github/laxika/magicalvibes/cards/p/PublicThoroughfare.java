@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -20,13 +20,12 @@ public class PublicThoroughfare extends Card {
 
     public PublicThoroughfare() {
         addStaticEffect(new EntersTappedEffect());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayPayTapPermanentsEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), UnlessPaysEffect.unlessYouPay(
                 new TapMultiplePermanentsCost(1, new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsLandPredicate()))),
-                null,
-                "Tap an untapped artifact or land you control?",
-                new SacrificeSelfEffect()));
+                new SacrificeSelfEffect())
+                .withPrompt("Tap an untapped artifact or land you control?"));
         addActivatedAbility(ManaAbilities.tapForAnyColor());
     }
 }

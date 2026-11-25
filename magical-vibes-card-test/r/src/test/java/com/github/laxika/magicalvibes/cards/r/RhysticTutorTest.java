@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.p.PlagueFiend;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RhysticTutor.class, RebelInformer.class, PlagueFiend.class})
+@CardUsed({RhysticTutor.class, RebelInformer.class, PlagueFiend.class, Swamp.class})
 class RhysticTutorTest extends BaseCardTest {
 
     @Test
@@ -150,7 +152,25 @@ class RhysticTutorTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
+    @Test
+    @DisplayName("A player with no mana source and an empty pool isn't asked; the others still are")
+    void playerWithNoWayToPayIsNotAsked() {
+        harness.setLibrary(player1, List.of(new RebelInformer()));
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        swamp.setSummoningSick(false);
+        harness.castFromHand(player1, new RhysticTutor(), "{2}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+    }
+
     private void castTutor() {
+        giveManaSource(player1);
+        giveManaSource(player2);
         harness.castFromHand(player1, new RhysticTutor(), "{2}{B}");
         harness.passBothPriorities();
     }

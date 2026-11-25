@@ -40,8 +40,10 @@ class CostEffectClassificationTest {
      * activation cost. Using one as a casting or activation cost needs that flow's support first.
      */
     private static final Set<String> RESOLUTION_ONLY_COST_TYPES = Set.of(
+            "AllOfCost",
             "AnyOfCost",
             "DamageFromSourceCost",
+            "ExileCardsCost",
             "ExileGraveyardCost",
             "GetPoisonCountersCost");
 

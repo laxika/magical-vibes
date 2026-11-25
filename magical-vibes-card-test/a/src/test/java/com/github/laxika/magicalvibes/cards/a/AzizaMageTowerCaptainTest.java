@@ -61,7 +61,7 @@ class AzizaMageTowerCaptainTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities(); // resolve MayPayTapPermanentsEffect -> may prompt
+        harness.passBothPriorities(); // resolve the trigger -> may prompt
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -85,7 +85,7 @@ class AzizaMageTowerCaptainTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities(); // resolve MayPayTapPermanentsEffect -> may prompt
+        harness.passBothPriorities(); // resolve the trigger -> may prompt
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).hasSize(1);
@@ -93,7 +93,7 @@ class AzizaMageTowerCaptainTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without enough untapped creatures does not create a copy")
+    @DisplayName("Without enough untapped creatures nothing is asked and no copy is created")
     void acceptingWithoutEnoughCreaturesDoesNotCopy() {
         addCreatureReady(player1, new AzizaMageTowerCaptain());
         addThreeUntappedCreatures(player1);
@@ -111,7 +111,7 @@ class AzizaMageTowerCaptainTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Lightning Bolt");

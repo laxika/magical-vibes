@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.r.RhysticTutor;
+
 import com.github.laxika.magicalvibes.cards.w.WhirlwindDenial;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.f.Firebolt;
@@ -46,7 +48,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         AegisSculptor.class, GiantGrowth.class, SoulBarrier.class, GrizzlyBears.class, IsolationCell.class,
         LimDLsHex.class, Erosion.class, Oasis.class, CutTheTethers.class, LanternKami.class, CrystalShard.class,
         AlphaMyr.class, ArcumsWhistle.class, BalduvianBears.class, TitaniaRuggedRumbler.class, Shock.class,
-        MindWhip.class, Divert.class, Firebolt.class, LightningBolt.class, WhirlwindDenial.class, TheUnagiOfKyoshiIsland.class})
+        MindWhip.class, Divert.class, Firebolt.class, LightningBolt.class, WhirlwindDenial.class, TheUnagiOfKyoshiIsland.class,
+        RhysticTutor.class})
 class TaxTakerTest extends BaseCardTest {
 
     @Test
@@ -369,6 +372,26 @@ class TaxTakerTest extends BaseCardTest {
             resolveAllTriggers();
 
             assertThat(countPermanents(player1, "Treasure")).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("An opponent paying Rhystic Tutor's {2} makes two Treasures")
+        void rhysticTutorPayment() {
+            harness.addToBattlefield(player1, new TaxTaker());
+            harness.setLibrary(player1, List.of(new GrizzlyBears()));
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            harness.clearPriorityPassed();
+            harness.addMana(player1, ManaColor.COLORLESS, 2);
+            harness.castFromHand(player1, new RhysticTutor(), "{2}{B}");
+            harness.passBothPriorities();
+
+            harness.addMana(player2, ManaColor.COLORLESS, 2);
+            harness.handleMayAbilityChosen(player1, false);
+            harness.handleMayAbilityChosen(player2, true);
+            resolveAllTriggers();
+
+            assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
         }
     }
 

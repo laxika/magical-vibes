@@ -113,6 +113,7 @@ class CaparoctiSunbornTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Tapped permanents, lands and an opponent's artifact can't pay the second tap: nothing is asked")
     void cannotPayWithTappedPermanentsLandsOrOpponentsPermanents() {
         addCreatureReady(player1, new CaparoctiSunborn());
         Permanent eligible = harness.addToBattlefieldAndReturn(player1, new TinkersTote());
@@ -125,7 +126,7 @@ class CaparoctiSunbornTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(eligible.isTapped()).isFalse();
         assertThat(land.isTapped()).isFalse();

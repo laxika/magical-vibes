@@ -27,13 +27,21 @@ import java.util.Objects;
  * (CR 608.2h).
  *
  * <p>Ransoms: {@link PayManaCost} (a fixed or exact cost, {@code withGenericIncrease} for "{1} for each …", {@link
- * PayManaCost#x()} for the announced X, {@code lifeAmount} for "{2} and 2 life"), {@link PayLifeCost}, a discard
+ * PayManaCost#x()} for the announced X, {@link PayManaCost#ofTriggeringSpell()} for "that spell's mana cost",
+ * {@code lifeAmount} for "{2} and 2 life"), {@link PayLifeCost}, a discard
  * ({@link DiscardCardTypeCost} of one card, {@link DiscardRandomCardCost}, {@link DiscardHandCost}), a sacrifice
  * ({@link SacrificePermanentCost}, {@link SacrificeMultiplePermanentsCost}), a blight
  * ({@link PutCounterOnControlledCreatureCost#blight}), {@link CollectEvidenceCost}, {@link ExileGraveyardCost},
- * {@link GetPoisonCountersCost}, {@link DamageFromSourceCost}, {@link WaterbendCost}, and {@link AnyOfCost} over
- * them ("discard a card or pay {2}"). The factories read as the Oracle text: {@code counterUnlessPays(3)} is "counter
- * target spell unless its controller pays {3}" and ward {3}.
+ * {@link GetPoisonCountersCost}, {@link DamageFromSourceCost}, {@link WaterbendCost}, {@link SacrificeSelfCost},
+ * {@link ExileNCardsFromGraveyardCost}, {@link TapMultiplePermanentsCost} with a fixed count, {@link ExileCardsCost},
+ * {@link AnyOfCost} over them ("discard a card or pay {2}") and {@link AllOfCost} ("pay {1} and discard a card"). The
+ * factories read as the Oracle text: {@code counterUnlessPays(3)} is "counter target spell unless its controller pays
+ * {3}" and ward {3}.
+ *
+ * <p>A payer subject naming several players ("any player may pay", "unless an opponent pays", "any other player")
+ * asks each of them, in APNAP order, every one even after another paid (CR 101.4); the branch is chosen once, after
+ * the last answer: {@code ifPaid} if any of them paid, else {@code ifNotPaid} ({@code unlessPays(eachPlayer(), "{2}",
+ * search)} is Rhystic Tutor).
  *
  * <p>The chosen branch is put next in the resolution and resolved like any other step, so a wrapper in it (an "if"
  * on the "if you do", a "you may" in "you may copy that spell unless …") is judged as at the top level.
@@ -56,6 +64,8 @@ public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffec
         }
         if (ransom instanceof AnyOfCost anyOf) {
             anyOf.alternatives().forEach(UnlessPaysEffect::requirePayableAtResolution);
+        } else if (ransom instanceof AllOfCost allOf) {
+            allOf.parts().forEach(UnlessPaysEffect::requirePayableAtResolution);
         } else {
             requirePayableAtResolution(ransom);
         }
@@ -84,6 +94,10 @@ public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffec
             case GetPoisonCountersCost ignored -> true;
             case DamageFromSourceCost ignored -> true;
             case WaterbendCost waterbend -> !waterbend.scalesWithX() && !waterbend.optional();
+            case SacrificeSelfCost sacrifice -> !sacrifice.trackPower() && !sacrifice.recordSacrificedPermanentSnapshot();
+            case ExileNCardsFromGraveyardCost exile -> !exile.onlyFromGraveyard() && !exile.trackExiledCards();
+            case TapMultiplePermanentsCost tap -> tap.count() instanceof Fixed && !tap.tracksChosenPermanents();
+            case ExileCardsCost ignored -> true;
             default -> false;
         };
         if (!payable) {
@@ -252,6 +266,24 @@ public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffec
         return new UnlessPaysEffect(payer, new PayManaCost(manaCost), Objects.requireNonNull(effect, "effect"), null);
     }
 
+    /**
+     * "You may {@code cost}. If you do, {@code ifYouDo}" for a cost other than mana alone: "you may tap two untapped
+     * creatures you control", "you may pay {1} and discard a card" ({@link AllOfCost}).
+     */
+    public static UnlessPaysEffect youMayPay(CostEffect cost, CardEffect ifYouDo) {
+        return mayPay(Subjects.you(), cost, ifYouDo);
+    }
+
+    /** "{@code effect} unless you {@code cost}" ("sacrifice it unless you tap an untapped permanent you control"). */
+    public static UnlessPaysEffect unlessYouPay(CostEffect cost, CardEffect effect) {
+        return new UnlessPaysEffect(Subjects.you(), cost, Objects.requireNonNull(effect, "effect"), null);
+    }
+
+    /** "{@code payer} may {@code cost}. If they do, {@code ifTheyDo}" ("that player may discard a card at random"). */
+    public static UnlessPaysEffect mayPay(PlayerSubject payer, CostEffect cost, CardEffect ifTheyDo) {
+        return new UnlessPaysEffect(payer, cost, null, Objects.requireNonNull(ifTheyDo, "ifTheyDo"));
+    }
+
     /** "{@code effect} unless {@code payer} pays {@code life} life". */
     public static UnlessPaysEffect unlessPaysLife(PlayerSubject payer, int life, CardEffect effect) {
         return new UnlessPaysEffect(payer, new PayLifeCost(life), Objects.requireNonNull(effect, "effect"), null);
@@ -309,6 +341,14 @@ public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffec
             return counter.spell();
         }
         return null;
+    }
+
+    /**
+     * Whether {@code ifPaid} counters the spell that caused the trigger ("any other player may pay that spell's mana
+     * cost. If a player does, counter the spell": Ice Cave): the prompt names that spell.
+     */
+    public boolean countersIfPaid() {
+        return ifPaid instanceof CounterSpellEffect;
     }
 
     /** Whether {@code ifNotPaid} changes the target of the target spell (Divert). */

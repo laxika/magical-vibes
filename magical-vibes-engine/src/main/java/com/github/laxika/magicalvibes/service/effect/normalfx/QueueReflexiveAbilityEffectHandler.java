@@ -68,6 +68,13 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
         }
         // "When you do, ... that creature's power": the ability reads what the earlier steps of this resolution did.
         record.carryResolutionResultsFrom(entry);
+        if (entry.getSacrificedPermanentSnapshot() != null) {
+            // "When you sacrifice [a permanent] this way, … that Aura": the permanent the resolution's sacrifice took.
+            record.setSacrificedPermanentSnapshot(entry.getSacrificedPermanentSnapshot());
+            record.setSacrificedPower(entry.getSacrificedPower());
+            record.setSacrificedColorCount(entry.getSacrificedColorCount());
+            record.setSacrificedToughness(entry.getSacrificedToughness());
+        }
         // Not a chapter ability, so it doesn't keep a Saga that has finished its chapters (CR 704.5s).
         record.setReflexiveTrigger(true);
         if (queueEffect.eventValue() != null) {

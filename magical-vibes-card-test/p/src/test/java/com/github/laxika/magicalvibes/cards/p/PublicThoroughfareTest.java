@@ -62,6 +62,7 @@ class PublicThoroughfareTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to tap an artifact or land sacrifices Public Thoroughfare")
     void decliningTapSacrificesIt() {
+        harness.addToBattlefield(player1, new Forest());
         playPublicThoroughfare();
         resolveEnterTrigger();
 
@@ -85,40 +86,40 @@ class PublicThoroughfareTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot pay with Public Thoroughfare when it is the only land")
+    @DisplayName("With Public Thoroughfare the only land nothing can pay: nothing is asked and it is sacrificed")
     void cannotPayWithTappedSource() {
         playPublicThoroughfare();
         resolveEnterTrigger();
 
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertNotOnBattlefield(player1, "Public Thoroughfare");
         harness.assertInGraveyard(player1, "Public Thoroughfare");
     }
 
     @Test
-    @DisplayName("Tapped lands and artifacts cannot pay the entry cost")
+    @DisplayName("Tapped lands and artifacts cannot pay the entry cost: nothing is asked")
     void tappedPermanentsCannotPay() {
         harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
         harness.addToBattlefieldAndReturn(player1, new Cryptex()).tap();
 
         playPublicThoroughfare();
         resolveEnterTrigger();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertNotOnBattlefield(player1, "Public Thoroughfare");
         harness.assertInGraveyard(player1, "Public Thoroughfare");
     }
 
     @Test
-    @DisplayName("Opponent's lands and artifacts cannot pay the entry cost")
+    @DisplayName("Opponent's lands and artifacts cannot pay the entry cost: nothing is asked")
     void opposingPermanentsCannotPay() {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
         Permanent cryptex = harness.addToBattlefieldAndReturn(player2, new Cryptex());
 
         playPublicThoroughfare();
         resolveEnterTrigger();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertInGraveyard(player1, "Public Thoroughfare");
         assertThat(forest.isTapped()).isFalse();

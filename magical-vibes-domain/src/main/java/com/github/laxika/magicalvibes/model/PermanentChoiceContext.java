@@ -2330,13 +2330,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    /** Tap-cost payment for a resolution-time may ability (e.g. Aziza, Mage Tower Captain). */
-    record MayAbilityTapCostChoice(UUID playerId,
-                                   UUID sourcePermanentId,
-                                   com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost costEffect,
-                                   int remaining,
-                                   PendingMayAbility mayAbility) implements PermanentChoiceContext {}
-
     /** Orzhov Advokist: the accepting player chooses which creature receives the counters. */
     record OrzhovAdvokistCreatureChoice(PendingMayAbility ability,
                                         com.github.laxika.magicalvibes.model.effect.EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffect effect)
@@ -2562,10 +2555,21 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /**
      * The payer of a cost a resolving effect asked for (an "unless" ransom, CR 118.12a) chooses the permanent that pays
-     * it (the creature that gets a blight's counters); the asking effect then resumes with the choice to pay made.
+     * it (the creature that gets a blight's counters, the next permanent to tap for a tap cost); the asking effect then
+     * resumes with the choice to pay made.
+     *
+     * @param sourcePermanentId the asking effect's source, which a tap cost may leave out
+     * @param remaining         how many permanents a tap cost still needs, this pick included
      */
     record ResolutionCostPayment(com.github.laxika.magicalvibes.model.effect.CostEffect cost, UUID payerId,
-                                 Card sourceCard, UUID sourceControllerId) implements PermanentChoiceContext {}
+                                 Card sourceCard, UUID sourceControllerId, UUID sourcePermanentId, int remaining)
+            implements PermanentChoiceContext {
+
+        public ResolutionCostPayment(com.github.laxika.magicalvibes.model.effect.CostEffect cost, UUID payerId,
+                                     Card sourceCard, UUID sourceControllerId) {
+            this(cost, payerId, sourceCard, sourceControllerId, null, 1);
+        }
+    }
 
     /** Each opponent chooses a creature they control for a mandatory blight action. */
     record EachOpponentBlightsCreature(

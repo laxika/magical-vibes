@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
@@ -174,11 +175,11 @@ class EtbTriggerServiceTest {
         creature.setName("Reflexive Creature");
         creature.setType(CardType.CREATURE);
         creature.target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MayPayManaEffect("{2}",
+                UnlessPaysEffect.youMayPay("{2}",
                         new QueueReflexiveAbilityEffect(SequenceEffect.of(
                                 new TapPermanentsEffect(Subjects.target()),
-                                new PutCountersEffect(CounterType.STUN))),
-                        "Pay {2} to tap and stun a creature?"));
+                                new PutCountersEffect(CounterType.STUN))))
+                        .withPrompt("Pay {2} to tap and stun a creature?"));
         gameData.playerBattlefields.get(controllerId).add(new Permanent(creature));
 
         service.processCreatureETBEffects(gameData, controllerId, creature, null, false);

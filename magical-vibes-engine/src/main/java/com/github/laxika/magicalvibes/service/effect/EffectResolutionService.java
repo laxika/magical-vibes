@@ -27,9 +27,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLandDropEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
+import com.github.laxika.magicalvibes.service.effect.normalfx.UnlessPaysEffectHandler;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -83,7 +82,7 @@ public class EffectResolutionService {
 
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
-    private com.github.laxika.magicalvibes.service.effect.normalfx.UnlessPaysEffectHandler unlessPaysEffectHandler;
+    private UnlessPaysEffectHandler unlessPaysEffectHandler;
 
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
@@ -412,27 +411,6 @@ public class EffectResolutionService {
                 }
             }
 
-            // CR 603.5 — resolution-time "you may pay" re-entry after player responded
-            if (effectToResolve instanceof MayPayManaEffect mayPay && gameData.resolvedMayAccepted != null) {
-                boolean accepted = gameData.resolvedMayAccepted;
-                gameData.resolvedMayAccepted = null;
-                if (accepted && mayPay.wrapped() != null) {
-                    effectToResolve = mayPay.wrapped();
-                    log.info("Game {} - Player accepted may-pay ability from {} — resolving inner effect",
-                            gameData.id, entry.getCard().getName());
-                } else if (!accepted && mayPay.elseEffect() != null) {
-                    // "If you don't, [effect]" — the decline half of a punisher choice.
-                    effectToResolve = mayPay.elseEffect();
-                    log.info("Game {} - Player declined may-pay ability from {} — resolving else effect",
-                            gameData.id, entry.getCard().getName());
-                } else {
-                    // Accepted with null wrapped (pay-to-avoid), or declined with no elseEffect.
-                    log.info("Game {} - Player {} may-pay ability from {} — nothing to resolve",
-                            gameData.id, accepted ? "accepted" : "declined", entry.getCard().getName());
-                    continue;
-                }
-            }
-
             if (effectToResolve instanceof MayPayLandDropEffect mayPayLandDrop
                     && gameData.resolvedMayAccepted != null) {
                 boolean accepted = gameData.resolvedMayAccepted;
@@ -449,25 +427,6 @@ public class EffectResolutionService {
                     effectToResolve = mayPayLandDrop.elseEffect();
                 } else {
                     log.info("Game {} - Player {} may-land-drop ability from {} — nothing to resolve",
-                            gameData.id, accepted ? "accepted" : "declined", entry.getCard().getName());
-                    continue;
-                }
-            }
-
-            if (effectToResolve instanceof MayPayTapPermanentsEffect mayPayTap && gameData.resolvedMayAccepted != null) {
-                boolean accepted = gameData.resolvedMayAccepted;
-                gameData.resolvedMayAccepted = null;
-                if (accepted && mayPayTap.wrapped() != null) {
-                    effectToResolve = mayPayTap.wrapped();
-                    log.info("Game {} - Player accepted may-tap ability from {} — resolving inner effect",
-                            gameData.id, entry.getCard().getName());
-                } else if (!accepted && mayPayTap.elseEffect() != null) {
-                    // "If you don't, [effect]" — the decline half of a punisher choice.
-                    effectToResolve = mayPayTap.elseEffect();
-                    log.info("Game {} - Player declined may-tap ability from {} — resolving else effect",
-                            gameData.id, entry.getCard().getName());
-                } else {
-                    log.info("Game {} - Player {} may-tap ability from {} — nothing to resolve",
                             gameData.id, accepted ? "accepted" : "declined", entry.getCard().getName());
                     continue;
                 }
@@ -536,14 +495,18 @@ public class EffectResolutionService {
             // question answered meanwhile can take it, or a payment they had no way to make (CR 118.3, 608.2d),
             // chooses the branch, which is put next as this resolution's next step: a wrapper in it (an "if" on the
             // "if you do", a "you may") is judged there as at the top level.
-            if (!skipEffect && effectToResolve instanceof UnlessPaysEffect unless) {
-                Boolean paid = entry.takeUnlessAnswer(i);
-                if (paid == null && unlessPaysEffectHandler != null
-                        && unlessPaysEffectHandler.cannotBePaid(gameData, entry, unless, i)) {
-                    paid = false;
-                    entry.clearUnlessAnswer(i);
-                }
-                if (paid != null) {
+            boolean waitsForPayment = false;
+            if (!skipEffect && effectToResolve instanceof UnlessPaysEffect unless && unlessPaysEffectHandler != null) {
+                // Every payer the subject names is asked in turn (CR 101.4); the branch comes after the last answer.
+                UnlessPaysEffectHandler.Step step = unlessPaysEffectHandler.nextStep(gameData, entry, unless, i);
+                if (step == UnlessPaysEffectHandler.Step.NOTHING) {
+                    skipEffect = true;
+                } else if (step == UnlessPaysEffectHandler.Step.PAYING) {
+                    // A part of the payment asks a choice; this effect resumes once it is answered.
+                    skipEffect = true;
+                    waitsForPayment = true;
+                } else if (step != UnlessPaysEffectHandler.Step.ASK) {
+                    boolean paid = step == UnlessPaysEffectHandler.Step.PAID;
                     CardEffect branch = paid ? unless.ifPaid() : unless.ifNotPaid();
                     if (branch instanceof SequenceEffect sequence) {
                         entry.spliceSequenceSteps(i, sequence.steps(), sequence.simultaneous());
@@ -652,7 +615,8 @@ public class EffectResolutionService {
                 boolean rerunCurrentEffect = !awaitsStepDeparture
                         && (gameData.interaction.activeInteraction(PendingInteraction.XValueChoice.class) != null
                         || gameData.resolvingMayEffectFromStack
-                        || gameData.rerunCurrentEffectAfterInteraction);
+                        || gameData.rerunCurrentEffectAfterInteraction
+                        || waitsForPayment);
                 // A handler may replace the parent wrapper while resolving a nested effect (for
                 // example Learn inside a conditional ETB or a declined may branch). Preserve that
                 // handler replacement instead of restoring the transient unwrapped effect here.

@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
@@ -21,7 +21,7 @@ import java.util.List;
 public class MeandersGuide extends Card {
 
     public MeandersGuide() {
-        addTrigger(Triggers.attacks(), new MayPayTapPermanentsEffect(
+        addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay(
                 new TapMultiplePermanentsCost(1,
                         new PermanentHasSubtypePredicate(CardSubtype.MERFOLK), true),
                 new QueueReflexiveAbilityEffect(ReturnCardFromGraveyardEffect.builder()
@@ -31,7 +31,7 @@ public class MeandersGuide extends Card {
                                 new CardMaxManaValuePredicate(3)
                         )))
                         .targetGraveyard(true)
-                        .build()),
-                "Tap another untapped Merfolk you control?"));
+                        .build()))
+                .withPrompt("Tap another untapped Merfolk you control?"));
     }
 }

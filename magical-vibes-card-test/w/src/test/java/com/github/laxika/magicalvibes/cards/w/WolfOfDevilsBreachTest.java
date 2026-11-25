@@ -54,6 +54,7 @@ class WolfOfDevilsBreachTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the attack trigger does not discard")
     void decliningDoesNothing() {
+        giveManaSource(player1);
         addReadyWolf();
         HulkingDevil discarded = new HulkingDevil();
         harness.setHand(player1, List.of(discarded));
@@ -70,6 +71,7 @@ class WolfOfDevilsBreachTest extends BaseCardTest {
     @Test
     @DisplayName("The attack trigger does not pay or discard when its mana cost cannot be paid")
     void cannotPayDoesNothing() {
+        giveManaSource(player1);
         addReadyWolf();
         HulkingDevil discarded = new HulkingDevil();
         harness.setHand(player1, List.of(discarded));

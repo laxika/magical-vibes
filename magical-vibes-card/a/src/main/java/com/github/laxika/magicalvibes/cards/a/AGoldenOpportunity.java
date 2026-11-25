@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.AllOfCost;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayTapAndSacrificePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -20,13 +22,11 @@ public class AGoldenOpportunity extends Card {
         addTrigger(Triggers.chapter(3), chapterTwoOrThreeEffect());
     }
 
-    private static MayPayTapAndSacrificePermanentEffect chapterTwoOrThreeEffect() {
-        return new MayPayTapAndSacrificePermanentEffect(
-                new TapMultiplePermanentsCost(
-                        1, new PermanentHasSubtypePredicate(CardSubtype.BIRD)),
-                new PermanentIsArtifactPredicate(),
-                new ConjureCardToBattlefieldEffect("ELD", "220"),
-                "an artifact",
-                "Tap an untapped Bird you control and sacrifice an artifact?");
+    private static UnlessPaysEffect chapterTwoOrThreeEffect() {
+        return UnlessPaysEffect.youMayPay(AllOfCost.of(
+                        new TapMultiplePermanentsCost(1, new PermanentHasSubtypePredicate(CardSubtype.BIRD)),
+                        new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "artifact", false)),
+                new ConjureCardToBattlefieldEffect("ELD", "220"))
+                .withPrompt("Tap an untapped Bird you control and sacrifice an artifact?");
     }
 }

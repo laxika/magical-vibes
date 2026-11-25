@@ -11,6 +11,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.AllOfCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -77,7 +82,7 @@ class UnlessPaysEffectHandlerTest {
     }
 
     private void payerIsTheSpellsController(StackEntry entry, UnlessPaysEffect effect) {
-        when(subjectResolutionService.player(gd, entry, effect, effect.payer())).thenReturn(player1Id);
+        when(subjectResolutionService.players(gd, entry, effect, effect.payer())).thenReturn(List.of(player1Id));
     }
 
     @Test
@@ -201,5 +206,82 @@ class UnlessPaysEffectHandlerTest {
         UnlessPaysEffectHandler.Ransom ransom = handler.ransom(gd, counterEntry(effect), effect);
 
         assertThat(ransom.text()).isEqualTo("{2} and 2 life");
+    }
+
+    @Test
+    @DisplayName("Every player the payer subject names is asked in APNAP order, the next one even after one paid (CR 101.4)")
+    void everyPayerIsAskedEvenAfterOnePaid() {
+        gd.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 2);
+        gd.playerManaPools.put(player2Id, new ManaPool());
+        gd.playerManaPools.get(player2Id).add(ManaColor.COLORLESS, 2);
+        gd.playerIdToName.put(player1Id, "Player1");
+        gd.playerIdToName.put(player2Id, "Player2");
+        UnlessPaysEffect effect = UnlessPaysEffect.unlessPays(Subjects.eachPlayer(), "{2}", new DrawCardEffect(1));
+        StackEntry entry = counterEntry(effect);
+        entry.setResolvingEffectIndex(0);
+        when(subjectResolutionService.players(gd, entry, effect, effect.payer()))
+                .thenReturn(List.of(player1Id, player2Id));
+        gd.pendingEffectResolutionEntry = entry;
+        gd.pendingEffectResolutionIndex = 0;
+
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.ASK);
+        handler.resolve(gd, entry, effect);
+        PendingMayAbility first = gd.pendingMayAbilities.removeFirst();
+        assertThat(first.controllerId()).isEqualTo(player1Id);
+        handler.answer(gd, new Player(player1Id, "Player1"), true, first, effect);
+
+        assertThat(gd.playerManaPools.get(player1Id).getTotal()).isZero();
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.ASK);
+        handler.resolve(gd, entry, effect);
+        PendingMayAbility second = gd.pendingMayAbilities.removeFirst();
+        assertThat(second.controllerId()).isEqualTo(player2Id);
+        handler.answer(gd, new Player(player2Id, "Player2"), false, second, effect);
+
+        assertThat(gd.playerManaPools.get(player2Id).getTotal()).isEqualTo(2);
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.PAID);
+        assertThat(entry.unlessAnswer(0)).isNull();
+    }
+
+    @Test
+    @DisplayName("A payer with no way at all to pay is left out of the loop; the others are still asked")
+    void payerWithNoWayToPayIsLeftOut() {
+        gd.playerManaPools.put(player2Id, new ManaPool());
+        gd.playerManaPools.get(player2Id).add(ManaColor.COLORLESS, 2);
+        UnlessPaysEffect effect = UnlessPaysEffect.unlessPays(Subjects.eachPlayer(), "{2}", new DrawCardEffect(1));
+        StackEntry entry = counterEntry(effect);
+        entry.setResolvingEffectIndex(0);
+        when(subjectResolutionService.players(gd, entry, effect, effect.payer()))
+                .thenReturn(List.of(player1Id, player2Id));
+
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.ASK);
+        handler.resolve(gd, entry, effect);
+
+        assertThat(gd.pendingMayAbilities).singleElement()
+                .extracting(PendingMayAbility::controllerId).isEqualTo(player2Id);
+    }
+
+    @Test
+    @DisplayName("With no payer able to pay at all, nobody is asked and the effect's \"unless\" happens")
+    void nobodyAbleToPayTakesTheUnpaidBranch() {
+        gd.playerManaPools.put(player2Id, new ManaPool());
+        UnlessPaysEffect effect = UnlessPaysEffect.unlessPays(Subjects.eachPlayer(), "{2}", new DrawCardEffect(1));
+        StackEntry entry = counterEntry(effect);
+        when(subjectResolutionService.players(gd, entry, effect, effect.payer()))
+                .thenReturn(List.of(player1Id, player2Id));
+
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.NOT_PAID);
+        assertThat(gd.pendingMayAbilities).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An all-of ransom reads as one cost, its parts joined in Oracle order")
+    void allOfRansomReadsAsOneCost() {
+        UnlessPaysEffect effect = UnlessPaysEffect.youMayPay(
+                AllOfCost.of(new PayManaCost("{1}"), new DiscardCardTypeCost(null, null)), new DrawCardEffect(1));
+
+        UnlessPaysEffectHandler.Ransom ransom = handler.ransom(gd, counterEntry(effect), effect);
+
+        assertThat(ransom.action()).isEqualTo("Pay {1} and discard a card");
+        assertThat(ransom.manaCost()).isEqualTo("{1}");
     }
 }

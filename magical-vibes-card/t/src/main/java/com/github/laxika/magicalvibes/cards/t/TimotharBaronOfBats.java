@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.CreateTokenLinkedToCardsExiledThisWayEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsCost;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.AllOfCost;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.Card;
@@ -9,8 +13,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileDyingCreatureCardAndCreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -32,9 +34,10 @@ public class TimotharBaronOfBats extends Card {
         addTrigger(Triggers.nontokenCreatureDies(
                         new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new MayPayManaEffect("{1}",
-                        new ExileDyingCreatureCardAndCreateTokenEffect(batToken()),
-                        "Pay {1} to exile that card and create a Bat?"));
+                UnlessPaysEffect.youMayPay(AllOfCost.of(new PayManaCost("{1}"),
+                                new ExileCardsCost(Subjects.triggeringCards())),
+                        new CreateTokenLinkedToCardsExiledThisWayEffect(batToken()))
+                        .withPrompt("Pay {1} and exile that card to create a Bat?"));
     }
 
     private static CreateTokenEffect batToken() {

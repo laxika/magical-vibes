@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -9,7 +10,6 @@ import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -34,10 +34,10 @@ public class ThousandMoonsSmithy extends Card {
 
         PermanentAnyOfPredicate artifactsOrCreatures = artifactsOrCreatures();
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
-                new MayPayTapPermanentsEffect(
+                UnlessPaysEffect.youMayPay(
                         new TapMultiplePermanentsCost(5, artifactsOrCreatures),
-                        new TransformSelfEffect(),
-                        "Tap five untapped artifacts and/or creatures to transform Thousand Moons Smithy?"));
+                        new TransformSelfEffect())
+                        .withPrompt("Tap five untapped artifacts and/or creatures to transform Thousand Moons Smithy?"));
     }
 
     static CreateTokenEffect gnomeToken() {

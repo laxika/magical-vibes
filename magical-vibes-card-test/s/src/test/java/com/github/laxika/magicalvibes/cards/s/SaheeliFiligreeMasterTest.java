@@ -143,7 +143,7 @@ class SaheeliFiligreeMasterTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("+1 cannot draw by tapping an already tapped or opposing artifact")
+    @DisplayName("+1 cannot draw by tapping an already tapped or opposing artifact: nothing is asked")
     void plusOneDoesNotDrawWithoutAnEligibleArtifact() {
         addReadySaheeli(player1, 3);
         Permanent tappedArtifact = harness.addToBattlefieldAndReturn(player1, new EnergyRefractor());
@@ -155,7 +155,7 @@ class SaheeliFiligreeMasterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         assertThat(opposingArtifact.isTapped()).isFalse();

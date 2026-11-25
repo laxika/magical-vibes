@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -62,6 +64,22 @@ class ApathyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The random discard is caused by the Aura's controller, the payer's opponent, so it counts as an opponent's discard")
+    void discardIsCausedByTheAurasControllerOpponent() {
+        Permanent bears = enchantOpponentBears();
+        bears.tap();
+        Card discarded = new BenalishInfantry();
+        harness.setHand(player2, List.of(discarded));
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.cardsDiscardedByOpponentThisTurn.getOrDefault(player2.getId(), java.util.Set.of()))
+                .contains(discarded.getId());
+    }
+
+    @Test
     @DisplayName("Declining the discard leaves the creature tapped and the hand intact")
     void decliningLeavesTapped() {
         Permanent bears = enchantOpponentBears();
@@ -88,7 +106,7 @@ class ApathyTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("With an empty hand nothing is discarded and the creature stays tapped")
+    @DisplayName("With an empty hand the random discard cannot be paid: nothing is asked and the creature stays tapped")
     void emptyHandLeavesTapped() {
         Permanent bears = enchantOpponentBears();
         bears.tap();
@@ -96,7 +114,7 @@ class ApathyTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(bears.isTapped()).isTrue();
     }

@@ -72,14 +72,14 @@ class MeandersGuideTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The attacking Meanders Guide cannot be tapped as the other Merfolk")
+    @DisplayName("The attacking Meanders Guide cannot be tapped as the other Merfolk: nothing is asked")
     void requiresAnotherMerfolk() {
         addCreatureReady(player1, new MeandersGuide());
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
@@ -128,7 +128,7 @@ class MeandersGuideTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An already tapped Merfolk cannot pay for reanimation")
+    @DisplayName("An already tapped Merfolk cannot pay for reanimation: nothing is asked")
     void cannotTapAlreadyTappedMerfolk() {
         addCreatureReady(player1, new MeandersGuide());
         Permanent merfolk = addCreatureReady(player1, new MeandersGuide());
@@ -137,14 +137,14 @@ class MeandersGuideTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertInGraveyard(player1, "Meanders Guide");
         assertThat(countPermanents(player1, "Meanders Guide")).isEqualTo(2);
     }
 
     @Test
-    @DisplayName("An opponent's untapped Merfolk cannot pay for reanimation")
+    @DisplayName("An opponent's untapped Merfolk cannot pay for reanimation: nothing is asked")
     void cannotTapOpponentsMerfolk() {
         addCreatureReady(player1, new MeandersGuide());
         Permanent merfolk = addCreatureReady(player2, new MeandersGuide());
@@ -152,7 +152,7 @@ class MeandersGuideTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(merfolk.isTapped()).isFalse();
         harness.assertInGraveyard(player1, "Meanders Guide");

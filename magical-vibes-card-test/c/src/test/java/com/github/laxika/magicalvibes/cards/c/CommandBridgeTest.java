@@ -47,6 +47,7 @@ class CommandBridgeTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to tap a permanent sacrifices Command Bridge")
     void decliningTapSacrificesIt() {
+        harness.addToBattlefield(player1, new Forest());
         playCommandBridge();
         resolveEnterTrigger();
 
@@ -87,14 +88,14 @@ class CommandBridgeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An already tapped permanent cannot pay the enter trigger cost")
+    @DisplayName("An already tapped permanent cannot pay the enter trigger cost: nothing is asked and it is sacrificed")
     void tappedPermanentCannotPay() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         forest.tap();
 
         playCommandBridge();
         resolveEnterTrigger();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(forest.isTapped()).isTrue();
         harness.assertNotOnBattlefield(player1, "Command Bridge");
@@ -102,13 +103,13 @@ class CommandBridgeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An opponent's untapped permanent cannot pay the enter trigger cost")
+    @DisplayName("An opponent's untapped permanent cannot pay the enter trigger cost: nothing is asked and it is sacrificed")
     void opponentsPermanentCannotPay() {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         playCommandBridge();
         resolveEnterTrigger();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(forest.isTapped()).isFalse();
         harness.assertNotOnBattlefield(player1, "Command Bridge");
@@ -147,6 +148,17 @@ class CommandBridgeTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Command Bridge");
         harness.assertNotInGraveyard(player1, "Command Bridge");
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("With no other untapped permanent, nothing can pay: Command Bridge is sacrificed unasked")
+    void noUntappedPermanentSacrificesUnasked() {
+        playCommandBridge();
+        resolveEnterTrigger();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(findCommandBridge(player1)).isNull();
+        harness.assertInGraveyard(player1, "Command Bridge");
     }
 
     private void playCommandBridge() {

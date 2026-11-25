@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -10,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -32,10 +32,10 @@ public class SaheeliFiligreeMaster extends Card {
                 +1,
                 List.of(
                         new ScryEffect(1),
-                        new MayPayTapPermanentsEffect(
-                                new TapMultiplePermanentsCost(1, new PermanentIsArtifactPredicate()),
-                                new DrawCardEffect(1),
-                                "Tap an untapped artifact you control?")),
+                        UnlessPaysEffect.youMayPay(
+                                        new TapMultiplePermanentsCost(1, new PermanentIsArtifactPredicate()),
+                                        new DrawCardEffect(1))
+                                .withPrompt("Tap an untapped artifact you control?")),
                 "+1: Scry 1. You may tap an untapped artifact you control. If you do, draw a card."
         ));
 

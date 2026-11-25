@@ -843,7 +843,7 @@ mean the same thing.
   `AmountContext` from the source permanent, its controller and the activation `xValue` — and handed
   to `MultiplePermanentTapCostHandler` as a plain int. That forced
   `AbilityActivationService.toPermanentChoiceCostHandler` to take `GameData` (both overloads, 10 call
-  sites, all of which already had it in scope) and `MayAbilityTapCostService` to inject the support
+  sites, all of which already had it in scope) and the may-ability tap-cost service (gone since step 10 run U3b') to inject the support
   at its two construction sites. `MultiplePermanentTapCostHandler`'s 4-arg convenience constructor
   had no user left and is gone.
 - **The AI's refusal cannot key on the merged class.** `AiDecisionEngine.acceptsAbilityCosts` refused

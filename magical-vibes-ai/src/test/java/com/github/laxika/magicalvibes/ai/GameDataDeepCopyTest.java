@@ -1220,18 +1220,22 @@ class GameDataDeepCopyTest {
     }
 
     @Test
-    @DisplayName("Deep copy keeps a stack entry's answer to an \"unless\" payment, and taking it on the copy leaves the original's")
+    @DisplayName("Deep copy keeps where an \"unless\" payment's payers stand, and answering on the copy leaves the original's")
     void deepCopyKeepsTheUnlessAnswerIndependently() {
         StackEntry entry = TestStackDoor.triggered(new SerraAngel(), player1.getId(), "Ward trigger", List.of());
-        entry.answerUnless(0, true);
+        entry.setUnlessAnswer(com.github.laxika.magicalvibes.model.UnlessAnswer.asking(0,
+                List.of(player1.getId(), player2.getId())).answered(true));
         gd.stack.add(entry);
 
         GameData copy = gd.simulationCopy();
         StackEntry copied = copy.stack.getFirst();
 
-        assertThat(copied.takeUnlessAnswer(0)).isTrue();
-        assertThat(copied.takeUnlessAnswer(0)).isNull();
-        assertThat(entry.takeUnlessAnswer(0)).isTrue();
+        assertThat(copied.unlessAnswer(0).anyPaid()).isTrue();
+        assertThat(copied.unlessAnswer(0).remainingPayers()).containsExactly(player2.getId());
+        copied.setUnlessAnswer(copied.unlessAnswer(0).answered(false));
+        copied.clearUnlessAnswer(0);
+        assertThat(copied.unlessAnswer(0)).isNull();
+        assertThat(entry.unlessAnswer(0).remainingPayers()).containsExactly(player2.getId());
     }
 
     @Test

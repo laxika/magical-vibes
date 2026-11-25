@@ -1,20 +1,30 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.a.AvenLiberator;
 import com.github.laxika.magicalvibes.cards.g.GaeasSkyfolk;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({IceCave.class, GaeasSkyfolk.class, Illuminate.class})
+@CardUsed({IceCave.class, GaeasSkyfolk.class, Illuminate.class, AvenLiberator.class})
 class IceCaveTest extends BaseCardTest {
+
+    /** The payers have a mana source, so a "may pay" with an empty pool is still asked (CR 605.3a). */
+    @BeforeEach
+    void givePayersAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     @Test
     @DisplayName("Another player may pay the spell's exact mana cost to counter it")
@@ -181,5 +191,29 @@ class IceCaveTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("A spell cast face down has no mana cost, which can't be paid, so nobody is asked")
+    void faceDownSpellIsNotCountered() {
+        harness.addToBattlefield(player1, new IceCave());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new AvenLiberator()));
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player2, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() == null && !gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(Permanent::isFaceDown);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(6);
     }
 }

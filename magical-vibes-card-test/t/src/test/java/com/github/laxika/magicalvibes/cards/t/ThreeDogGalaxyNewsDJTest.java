@@ -210,6 +210,30 @@ class ThreeDogGalaxyNewsDJTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Food")).isOne();
     }
 
+    @Test
+    @DisplayName("\"When you sacrifice an Aura this way\" is a reflexive trigger: the copies wait on the stack (CR 603.12)")
+    void copiesComeFromAReflexiveTrigger() {
+        Permanent dog = addCreatureReady(player1, new ThreeDogGalaxyNewsDJ());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        aura.setAttachedTo(dog.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        declareAttackers(player1, List.of(0, 1));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, aura.getId());
+
+        harness.assertInGraveyard(player1, "Holy Strength");
+        assertThat(findPermanents(player1, "Holy Strength")).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Holy Strength")).extracting(Permanent::getAttachedTo)
+                .containsExactly(attacker.getId());
+    }
+
     private Permanent[] attackAndSacrificeWithDoublingSeasonAndTippyToe() {
         Permanent dog = addCreatureReady(player1, new ThreeDogGalaxyNewsDJ());
         Permanent firstAttacker = addCreatureReady(player1, new GrizzlyBears());

@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForTargetControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -16,11 +16,11 @@ public class StringOfDisappearances extends Card {
     public StringOfDisappearances() {
         target(TargetFilters.creature())
                 .addSpellEffect(ReturnToHandEffect.target())
-                .addSpellEffect(new MayPayManaEffect(
+                .addSpellEffect(UnlessPaysEffect.mayPay(
+                        Subjects.controllerOf(Subjects.target()),
                         "{U}{U}",
                         new MayEffect(new CopyThisSpellForTargetControllerEffect(),
-                                "Copy String of Disappearances?", null, MayChoicePlayer.LAST_MANA_PAYMENT_PLAYER),
-                        "Pay {U}{U} to copy String of Disappearances?",
-                        MayPayPayer.TARGET_PERMANENT_CONTROLLER));
+                                "Copy String of Disappearances?", null, MayChoicePlayer.TARGET_PERMANENT_CONTROLLER))
+                        .withPrompt("Pay {U}{U} to copy String of Disappearances?"));
     }
 }

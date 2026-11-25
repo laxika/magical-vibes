@@ -7,8 +7,10 @@ import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -28,7 +30,7 @@ import java.util.UUID;
 public class ReturnTargetCardsFromGraveyardToHandEffectHandler implements NormalEffectHandlerBean {
 
     private final GraveyardReturnSupport graveyardReturnSupport;
-    private final MayPayManaEffectHandler mayPayManaEffectHandler;
+    private final UnlessPaysEffectHandler unlessPaysEffectHandler;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PredicateEvaluationService predicateEvaluationService;
 
@@ -38,18 +40,18 @@ public class ReturnTargetCardsFromGraveyardToHandEffectHandler implements Normal
 
     public ReturnTargetCardsFromGraveyardToHandEffectHandler(
             GraveyardReturnSupport graveyardReturnSupport,
-            MayPayManaEffectHandler mayPayManaEffectHandler) {
-        this(graveyardReturnSupport, mayPayManaEffectHandler, null, null);
+            UnlessPaysEffectHandler unlessPaysEffectHandler) {
+        this(graveyardReturnSupport, unlessPaysEffectHandler, null, null);
     }
 
     @Autowired
     public ReturnTargetCardsFromGraveyardToHandEffectHandler(
             GraveyardReturnSupport graveyardReturnSupport,
-            MayPayManaEffectHandler mayPayManaEffectHandler,
+            @org.springframework.context.annotation.Lazy UnlessPaysEffectHandler unlessPaysEffectHandler,
             InteractionHandlerRegistry interactionHandlerRegistry,
             PredicateEvaluationService predicateEvaluationService) {
         this.graveyardReturnSupport = graveyardReturnSupport;
-        this.mayPayManaEffectHandler = mayPayManaEffectHandler;
+        this.unlessPaysEffectHandler = unlessPaysEffectHandler;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
         this.predicateEvaluationService = predicateEvaluationService;
     }
@@ -63,17 +65,21 @@ public class ReturnTargetCardsFromGraveyardToHandEffectHandler implements Normal
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ReturnTargetCardsFromGraveyardToHandEffect) effect;
         if (e.unlessAnyPlayerPaysX()) {
+            // "… unless any player pays {X}" (CR 118.12a): every player is asked in turn, even after one paid
+            // (CR 101.4; Soul Strings' ruling); the return waits on the answers.
             int effectIndex = entry.getEffectsToResolve().indexOf(effect);
-            if (effectIndex >= 0 && mayPayManaEffectHandler != null) {
-                String manaCost = "{" + entry.getXValue() + "}";
-                entry.replaceEffectToResolve(effectIndex, new MayPayManaEffect(
-                        manaCost,
-                        null,
-                        "Pay " + manaCost + " to prevent " + entry.getCard().getName() + "'s effect?",
-                        MayPayPayer.ANY_PLAYER,
-                        e.withoutAnyPlayerPaysX(),
-                        0));
-                mayPayManaEffectHandler.resolve(gameData, entry, entry.getEffectsToResolve().get(effectIndex));
+            if (effectIndex >= 0 && unlessPaysEffectHandler != null) {
+                UnlessPaysEffect unless = new UnlessPaysEffect(Subjects.eachPlayer(), PayManaCost.x(),
+                        e.withoutAnyPlayerPaysX(), null)
+                        .withPrompt("Pay {" + entry.getXValue() + "} to prevent "
+                                + FaceDownVisibility.sourceName(gameData, entry) + "'s effect?");
+                entry.replaceEffectToResolve(effectIndex, unless);
+                switch (unlessPaysEffectHandler.nextStep(gameData, entry, unless, effectIndex)) {
+                    case ASK -> unlessPaysEffectHandler.resolve(gameData, entry, unless);
+                    case NOT_PAID -> resolve(gameData, entry, e.withoutAnyPlayerPaysX());
+                    default -> {
+                    }
+                }
                 return;
             }
         }

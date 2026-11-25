@@ -261,13 +261,14 @@ class EchocastingSymposiumTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A token copy of a multicoloured creature keeps every colour (Aziza alone can't pay its tap cost, so isn't asked)")
     void multicoloredCreatureCopyRetainsEveryColor() {
         Permanent original = harness.addToBattlefieldAndReturn(player1, new AzizaMageTowerCaptain());
         harness.setHand(player1, List.of(new EchocastingSymposium()));
         harness.addMana(player1, ManaColor.BLUE, 6);
         harness.castSorcery(player1, 0, List.of(player2.getId(), original.getId()));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);

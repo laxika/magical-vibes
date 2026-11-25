@@ -53,14 +53,14 @@ class CivilServantTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A non-Citizen cannot be tapped for Civil Servant")
+    @DisplayName("A non-Citizen cannot be tapped for Civil Servant: nothing is asked")
     void nonCitizenCannotBeTapped() {
         Permanent servant = addCreatureReady(player1, new CivilServant());
         Permanent soldier = addCreatureReady(player1, new DapperShieldmate());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(soldier.isTapped()).isFalse();
         assertThat(gqs.getEffectivePower(gd, servant)).isEqualTo(2);
@@ -104,13 +104,14 @@ class CivilServantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's Citizen cannot be tapped: nothing is asked")
     void cannotTapAnOpponentsCitizen() {
         Permanent servant = addCreatureReady(player1, new CivilServant());
         Permanent citizen = addCreatureReady(player2, new GatheringThrong());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(citizen.isTapped()).isFalse();
         assertThat(gqs.getEffectivePower(gd, servant)).isEqualTo(2);
@@ -118,6 +119,7 @@ class CivilServantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An already tapped Citizen cannot pay: nothing is asked")
     void cannotPayWithAnAlreadyTappedCitizen() {
         Permanent servant = addCreatureReady(player1, new CivilServant());
         Permanent citizen = addCreatureReady(player1, new GatheringThrong());
@@ -125,7 +127,7 @@ class CivilServantTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(citizen.isTapped()).isTrue();
         assertThat(gqs.getEffectivePower(gd, servant)).isEqualTo(2);
@@ -151,13 +153,14 @@ class CivilServantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Civil Servant cannot tap itself even if untapped before the trigger resolves: nothing is asked")
     void cannotTapItselfEvenIfUntappedBeforeTheTriggerResolves() {
         Permanent servant = addCreatureReady(player1, new CivilServant());
 
         declareAttackers(List.of(0));
         servant.untap();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(servant.isTapped()).isFalse();
         assertThat(gqs.getEffectivePower(gd, servant)).isEqualTo(2);

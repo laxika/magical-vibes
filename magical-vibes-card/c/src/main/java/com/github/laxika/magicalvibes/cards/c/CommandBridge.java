@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -19,11 +19,9 @@ public class CommandBridge extends Card {
         addStaticEffect(new EntersTappedEffect());
 
         // When this land enters, sacrifice it unless you tap an untapped permanent you control.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayPayTapPermanentsEffect(
-                new TapMultiplePermanentsCost(1, new PermanentTruePredicate()),
-                null,
-                "Tap an untapped permanent you control?",
-                new SacrificeSelfEffect()));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), UnlessPaysEffect.unlessYouPay(
+                new TapMultiplePermanentsCost(1, new PermanentTruePredicate()), new SacrificeSelfEffect())
+                .withPrompt("Tap an untapped permanent you control?"));
 
         // {T}: Add one mana of any color.
         addActivatedAbility(ManaAbilities.tapForAnyColor());

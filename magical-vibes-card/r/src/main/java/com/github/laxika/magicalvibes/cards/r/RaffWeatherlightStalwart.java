@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -30,10 +30,10 @@ public class RaffWeatherlightStalwart extends Card {
                 new CardTypePredicate(CardType.SORCERY)));
 
         addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery),
-                new MayPayTapPermanentsEffect(
+                UnlessPaysEffect.youMayPay(
                         new TapMultiplePermanentsCost(2, new PermanentIsCreaturePredicate()),
-                        new DrawCardEffect(1),
-                        "Tap two untapped creatures you control to draw a card?"));
+                        new DrawCardEffect(1))
+                        .withPrompt("Tap two untapped creatures you control to draw a card?"));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.m.MysteriosPhantasm;
 import com.github.laxika.magicalvibes.cards.p.PeterParkersCamera;
 import com.github.laxika.magicalvibes.model.Card;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -36,12 +38,14 @@ class RentIsDueTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With too few untapped creatures and Treasures nothing is asked and Rent Is Due is sacrificed")
     void sacrificesWhenTwoEligiblePermanentsCannotBeTapped() {
         harness.addToBattlefield(player1, new RentIsDue());
         Permanent creature = addCreatureReady(player1, new MysteriosPhantasm());
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new PeterParkersCamera());
 
-        resolveEndStepTrigger(true);
+        resolveEndStepTriggerUnanswered();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertInGraveyard(player1, "Rent Is Due");
         assertThat(creature.isTapped()).isFalse();
@@ -96,6 +100,7 @@ class RentIsDueTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Tapped and opposing permanents can't pay: nothing is asked and Rent Is Due is sacrificed")
     void tappedPermanentsAndOpponentsPermanentsCannotPay() {
         harness.addToBattlefield(player1, new RentIsDue());
         Permanent creature = addCreatureReady(player1, new MysteriosPhantasm());
@@ -106,7 +111,8 @@ class RentIsDueTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new MysteriosPhantasm()));
 
-        resolveEndStepTrigger(true);
+        resolveEndStepTriggerUnanswered();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertInGraveyard(player1, "Rent Is Due");
         assertThat(creature.isTapped()).isFalse();
@@ -150,12 +156,16 @@ class RentIsDueTest extends BaseCardTest {
     }
 
     private void resolveEndStepTrigger(boolean accept) {
+        resolveEndStepTriggerUnanswered();
+        harness.handleMayAbilityChosen(player1, accept);
+    }
+
+    private void resolveEndStepTriggerUnanswered() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.END_STEP);
         resolveAllTriggers();
-        harness.handleMayAbilityChosen(player1, accept);
     }
 
     private Permanent addTreasureToken(Player player) {

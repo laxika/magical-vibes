@@ -39,14 +39,14 @@ class RedcapRaidersTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A Human creature cannot be tapped for Redcap Raiders")
+    @DisplayName("A Human creature cannot be tapped for Redcap Raiders: nothing is asked")
     void humanCreatureCannotBeTapped() {
         Permanent raiders = addCreatureReady(player1, new RedcapRaiders());
         Permanent human = addCreatureReady(player1, new VenerableKnight());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(human.isTapped()).isFalse();
         assertThat(gqs.getEffectivePower(gd, raiders)).isEqualTo(3);
@@ -112,7 +112,7 @@ class RedcapRaidersTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An already-tapped creature cannot pay the attack trigger's tap cost")
+    @DisplayName("An already-tapped creature cannot pay the attack trigger's tap cost: nothing is asked")
     void tappedCreatureCannotPayTapCost() {
         Permanent raiders = addCreatureReady(player1, new RedcapRaiders());
         Permanent helper = addCreatureReady(player1, new RedcapRaiders());
@@ -120,7 +120,7 @@ class RedcapRaidersTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(helper.isTapped()).isTrue();
         assertThat(gqs.getEffectivePower(gd, raiders)).isEqualTo(3);
@@ -129,14 +129,14 @@ class RedcapRaidersTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An opponent's non-Human creature cannot pay the tap cost")
+    @DisplayName("An opponent's non-Human creature cannot pay the tap cost: nothing is asked")
     void opponentsCreatureCannotPayTapCost() {
         Permanent raiders = addCreatureReady(player1, new RedcapRaiders());
         Permanent opponentCreature = addCreatureReady(player2, new RedcapRaiders());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(opponentCreature.isTapped()).isFalse();
         assertThat(gqs.getEffectivePower(gd, raiders)).isEqualTo(3);

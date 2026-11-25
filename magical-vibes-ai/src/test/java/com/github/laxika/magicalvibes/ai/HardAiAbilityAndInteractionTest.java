@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.f.FlightSpellbomb;
 import com.github.laxika.magicalvibes.cards.k.KnightOfTheMists;
+import com.github.laxika.magicalvibes.cards.r.RhysticTutor;
 import com.github.laxika.magicalvibes.cards.k.KnightOfValor;
 import com.github.laxika.magicalvibes.cards.i.IslandSanctuary;
 import com.github.laxika.magicalvibes.cards.i.IronStar;
@@ -1804,6 +1805,55 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
             assertThat(island.isTapped()).isFalse();
             assertThat(gd.playerBattlefields.get(player2.getId()))
                     .noneMatch(permanent -> permanent.getId().equals(opposingKnightId));
+        }
+
+        @Test
+        @DisplayName("Hard AI doesn't pay its own Rhystic Tutor's {2}: paying would stop its own search")
+        void declinesPayingItsOwnRhysticTutorsRansom() {
+            HardAiDecisionEngine ai = createHardAi(player1);
+            gd.status = GameStatus.RUNNING;
+
+            givePlayerPlains(player1, 2);
+            harness.setLibrary(player1, List.of(new GrizzlyBears()));
+            harness.setHand(player1, List.of());
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            harness.clearPriorityPassed();
+            harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+            harness.castFromHand(player1, new RhysticTutor(), "{2}{B}");
+            harness.passBothPriorities();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                    .isEqualTo(player1.getId());
+
+            ai.handleEvent(AiDecisionKind.INTERACTION);
+
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Hard AI declines an \"any player may pay\" payment another player already made")
+        void declinesAPaymentAnotherPlayerAlreadyMade() {
+            HardAiDecisionEngine ai = createHardAi(player2);
+            gd.status = GameStatus.RUNNING;
+
+            givePlayerPlains(player2, 2);
+            harness.setLibrary(player1, List.of(new GrizzlyBears()));
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            harness.clearPriorityPassed();
+            harness.addMana(player1, ManaColor.COLORLESS, 2);
+            harness.castFromHand(player1, new RhysticTutor(), "{2}{B}");
+            harness.passBothPriorities();
+            harness.addMana(player2, ManaColor.COLORLESS, 2);
+            harness.handleMayAbilityChosen(player1, true);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                    .isEqualTo(player2.getId());
+
+            ai.handleEvent(AiDecisionKind.INTERACTION);
+
+            assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(2);
+            assertThat(gd.playerHands.get(player1.getId())).noneMatch(card -> card instanceof GrizzlyBears);
         }
     }
 }

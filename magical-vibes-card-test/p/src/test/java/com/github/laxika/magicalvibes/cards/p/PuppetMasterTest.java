@@ -41,6 +41,7 @@ class PuppetMasterTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the payment leaves Puppet Master in its owner's graveyard")
     void decliningPaymentLeavesAuraInGraveyard() {
+        giveManaSource(player1);
         Permanent boars = harness.addToBattlefieldAndReturn(player1, new DurkwoodBoars());
         attachPuppetMaster(boars);
 
@@ -56,6 +57,7 @@ class PuppetMasterTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting the payment without enough mana leaves Puppet Master in its owner's graveyard")
     void cannotPayFollowUpWithoutEnoughMana() {
+        giveManaSource(player1);
         Permanent boars = harness.addToBattlefieldAndReturn(player1, new DurkwoodBoars());
         attachPuppetMaster(boars);
 

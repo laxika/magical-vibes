@@ -239,7 +239,6 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final SoulbondSupport soulbondSupport;
 
-    private final MayAbilityTapCostService mayAbilityTapCostService;
 
     private final TargetPlayerSacrificesAttackingCreatureThenCreateTokensEqualToToughnessEffectHandler
             targetPlayerSacrificesAttackingCreatureThenCreateTokensHandler;
@@ -847,6 +846,11 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleResolutionCostPayment(GameData gameData, UUID permanentId,
                                             PermanentChoiceContext.ResolutionCostPayment context) {
         resolutionCostPaymentService.completePermanentChoice(gameData, context.payerId(), permanentId, context);
+        if (gameData.interaction.isAwaitingInput()) {
+            // The cost's next pick (a tap cost one permanent at a time).
+            inputCompletionService.publishStateAfterInput(gameData);
+            return;
+        }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -1227,11 +1231,6 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleHandAbilityCostChoice(GameData gameData, Player player, UUID permanentId,
                                              PermanentChoiceContext.HandAbilityCostChoice handCostChoice) {
         abilityActivationService.completeHandAbilityCostChoice(gameData, player, handCostChoice, permanentId);
-    }
-
-    public void handleMayAbilityTapCostChoice(GameData gameData, Player player, UUID permanentId,
-                                              PermanentChoiceContext.MayAbilityTapCostChoice mayTapCostChoice) {
-        mayAbilityTapCostService.completeTapCostChoice(gameData, player, mayTapCostChoice, permanentId);
     }
 
     public void handleRecordChosenPermanents(GameData gameData, UUID permanentId,

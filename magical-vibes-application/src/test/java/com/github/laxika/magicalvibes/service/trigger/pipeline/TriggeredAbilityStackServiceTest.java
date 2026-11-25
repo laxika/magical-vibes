@@ -297,13 +297,13 @@ class TriggeredAbilityStackServiceTest {
     @DisplayName("Queues may ability with mana cost")
     void queuesMayAbility() {
         Card card = createCreature("Mana Dude", 2, 2);
-        var mayPay = new MayPayManaEffect("{2}", new DrawCardEffect(1), "Pay 2?");
+        var mayPay = UnlessPaysEffect.youMayPay("{2}", new DrawCardEffect(1));
         Permanent perm = new Permanent(card);
         var ctx = dies(card, PLAYER1_ID, perm);
 
         trigger(ctx, mayPay);
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.get(0).getEffectsToResolve().get(0)).isInstanceOf(MayPayManaEffect.class);
+        assertThat(gd.stack.get(0).getEffectsToResolve().get(0)).isInstanceOf(UnlessPaysEffect.class);
     }
 
     @Test
@@ -1210,7 +1210,7 @@ class TriggeredAbilityStackServiceTest {
     void youMayPayBesideAnotherEffectChoosesItsTarget() {
         Card card = createCreature("Talisman", 0, 0);
         Permanent source = new Permanent(card);
-        var pay = new MayPayManaEffect("{1}", DealDamageEffect.toTargetCreature(1), "Pay {1}?");
+        var pay = UnlessPaysEffect.youMayPay("{1}", DealDamageEffect.toTargetCreature(1));
 
         stackService.put(gd, new TriggeredAbilityRequest(new TriggeredAbility(Triggers.youCastSpell(), pay,
                 new GainLifeEffect(1)), card, source, PLAYER1_ID, "cast",

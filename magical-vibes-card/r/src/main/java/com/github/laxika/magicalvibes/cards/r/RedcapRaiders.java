@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
@@ -22,13 +22,13 @@ import java.util.List;
 public class RedcapRaiders extends Card {
 
     public RedcapRaiders() {
-        addTrigger(Triggers.attacks(), new MayPayTapPermanentsEffect(
+        addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay(
                 new TapMultiplePermanentsCost(1, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HUMAN))))),
                 SequenceEffect.of(
                         new BoostSelfEffect(1, 1),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())),
-                "Tap an untapped non-Human creature you control?"));
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())))
+                .withPrompt("Tap an untapped non-Human creature you control?"));
     }
 }

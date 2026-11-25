@@ -102,7 +102,7 @@ class KittKantoMayhemDivaTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The tap cost cannot be accepted without two untapped creatures")
+    @DisplayName("Without two untapped creatures the tap cost cannot be paid: nothing is asked")
     void cannotPayTapCostWithoutTwoUntappedCreatures() {
         addCreatureReady(player1, new KittKantoMayhemDiva());
         Permanent tapper = addCreatureReady(player1, new GrizzlyBears());
@@ -110,7 +110,7 @@ class KittKantoMayhemDivaTest extends BaseCardTest {
         tapper.tap();
 
         advanceToCombat(player2);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(tapper.isTapped()).isTrue();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);

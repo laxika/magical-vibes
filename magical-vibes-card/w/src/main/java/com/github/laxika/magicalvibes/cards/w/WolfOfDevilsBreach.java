@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.AllOfCost;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
@@ -16,12 +18,9 @@ public class WolfOfDevilsBreach extends Card {
         // Whenever this creature attacks, you may pay {1}{R} and discard a card. If you do, this
         // creature deals damage to target creature or planeswalker equal to the discarded card's
         // mana value.
-        addTrigger(Triggers.attacks(), new MayPayManaEffect(
-                "{1}{R}",
-                new DiscardCardThenEffect(
-                        null,
-                        DealDamageEffect.toTargetCreatureOrPlaneswalker(new LastDiscardedCardManaValue()),
-                        "a card", null, true, null, null, Subjects.you(), true),
-                "Pay {1}{R} and discard a card to deal damage to target creature or planeswalker?"));
+        addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay(
+                AllOfCost.of(new PayManaCost("{1}{R}"), new DiscardCardTypeCost(null, null)),
+                DealDamageEffect.toTargetCreatureOrPlaneswalker(new LastDiscardedCardManaValue()))
+                .withPrompt("Pay {1}{R} and discard a card to deal damage to target creature or planeswalker?"));
     }
 }

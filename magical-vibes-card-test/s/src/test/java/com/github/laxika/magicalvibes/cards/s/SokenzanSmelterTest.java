@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.a.AkkiEmberKeeper;
 import com.github.laxika.magicalvibes.cards.a.AutomatedArtificer;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -16,7 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SokenzanSmelter.class, AutomatedArtificer.class, AkkiEmberKeeper.class})
+@CardUsed({SokenzanSmelter.class, AutomatedArtificer.class, AkkiEmberKeeper.class, Mountain.class})
 class SokenzanSmelterTest extends BaseCardTest {
 
     @Test
@@ -138,6 +140,30 @@ class SokenzanSmelterTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.assertNotOnBattlefield(player1, "Construct");
+    }
+
+    @Test
+    @DisplayName("With an empty pool the payer is asked and may tap a land for the {1} while asked (CR 605.3a)")
+    void payerMayTapALandWhileAsked() {
+        harness.addToBattlefield(player1, new SokenzanSmelter());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AutomatedArtificer());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        mountain.setSummoningSick(false);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(mountain));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Automated Artificer");
+        assertThat(findPermanents(player1, "Construct")).hasSize(1);
     }
 
     private void resolveBeginningOfCombatTrigger() {

@@ -771,7 +771,7 @@ class SpellTriggersTest {
         void targetingTriggerWithManaCostKeepsItsMayPayMana() {
             Permanent perm = createPermanent("Malachite Talisman");
             var innerEffect = new UntapPermanentsEffect(Subjects.target());
-            var pay = new MayPayManaEffect("{3}", innerEffect, "Pay {3}?");
+            var pay = UnlessPaysEffect.youMayPay("{3}", innerEffect);
             var ability = new CastAbility(SpellFilter.ANY, List.of(pay), null, TargetFilters.permanent());
             Card spellCard = createCard("Grizzly Bears", CardColor.GREEN);
             var ctx = new SpellEvent.Cast(spellCard, player2Id, Zone.HAND, null);

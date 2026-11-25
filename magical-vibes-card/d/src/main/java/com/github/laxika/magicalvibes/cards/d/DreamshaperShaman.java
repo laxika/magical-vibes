@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.AllOfCost;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaAndSacrificePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardsFromTopUntilEffect;
@@ -27,13 +30,11 @@ public class DreamshaperShaman extends Card {
         var match = new CardAllOfPredicate(List.of(
                 new CardIsPermanentPredicate(), new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new MayPayManaAndSacrificePermanentEffect(
-                        "{2}{R}",
-                        new PermanentNotPredicate(new PermanentIsLandPredicate()),
+                UnlessPaysEffect.youMayPay(AllOfCost.of(new PayManaCost("{2}{R}"), new SacrificePermanentCost(
+                                new PermanentNotPredicate(new PermanentIsLandPredicate()), "nonland permanent", false)),
                         SequenceEffect.of(
                                 new RevealCardsFromTopUntilEffect(match),
                                 new PutCardsOntoBattlefieldEffect(Subjects.revealedThisWay(match)),
-                                PutCardsIntoLibraryEffect.onBottomInRandomOrder(Subjects.revealedThisWay())),
-                        "nonland permanent"));
+                                PutCardsIntoLibraryEffect.onBottomInRandomOrder(Subjects.revealedThisWay()))));
     }
 }

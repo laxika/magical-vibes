@@ -31,6 +31,7 @@ class CanoptekWraithTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage offers the payment and sacrifice ability")
     void combatDamageOffersPayment() {
+        giveManaSource(player1);
         Permanent wraith = addCreatureReady(player1, new CanoptekWraith());
         wraith.setAttacking(true);
 
@@ -81,6 +82,7 @@ class CanoptekWraithTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the payment keeps Canoptek Wraith on the battlefield")
     void decliningKeepsWraith() {
+        giveManaSource(player1);
         Permanent wraith = addCreatureReady(player1, new CanoptekWraith());
         wraith.setAttacking(true);
 
@@ -137,6 +139,7 @@ class CanoptekWraithTest extends BaseCardTest {
 
     @Test
     void noLandsStillShufflesAfterPayingAndSacrificing() {
+        giveManaSource(player1);
         Permanent wraith = addCreatureReady(player1, new CanoptekWraith());
         wraith.setAttacking(true);
         harness.setLibrary(player1, List.of(new Plains(), new Forest()));
@@ -170,6 +173,23 @@ class CanoptekWraithTest extends BaseCardTest {
         }
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Once Canoptek Wraith has left the battlefield it can't be sacrificed, so nothing is asked")
+    void leftBeforeTheTriggerResolvesIsNotAsked() {
+        Permanent wraith = addCreatureReady(player1, new CanoptekWraith());
+        wraith.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(wraith);
+        gd.playerGraveyards.get(player1.getId()).add(wraith.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
