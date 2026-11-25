@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,9 +20,7 @@ public class MilitiasPride extends Card {
         // create a 1/1 white Kithkin Soldier creature token that's tapped and attacking.
         addTrigger(Triggers.creatureYouControlAttacks()
                         .withFilter(new PermanentNotPredicate(new PermanentIsTokenPredicate())),
-                new MayPayManaEffect("{W}",
-                        new CreateTokenEffect(1, "Kithkin Soldier", 1, 1, CardColor.WHITE,
-                                List.of(CardSubtype.KITHKIN, CardSubtype.SOLDIER), true),
-                        "Pay {W} to create a 1/1 white Kithkin Soldier token that's tapped and attacking?"));
+                UnlessPaysEffect.youMayPay("{W}", new CreateTokenEffect(1, "Kithkin Soldier", 1, 1, CardColor.WHITE,
+                                List.of(CardSubtype.KITHKIN, CardSubtype.SOLDIER), true)).withPrompt("Pay {W} to create a 1/1 white Kithkin Soldier token that's tapped and attacking?"));
     }
 }

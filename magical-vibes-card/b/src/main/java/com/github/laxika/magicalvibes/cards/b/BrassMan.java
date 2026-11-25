@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -21,9 +21,7 @@ public class BrassMan extends Card {
         addStaticEffect(DoesntUntapEffect.self());
 
         // At the beginning of your upkeep, you may pay {1}. If you do, untap this creature.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayPayManaEffect(
-                "{1}",
-                new UntapPermanentsEffect(Subjects.source()),
-                "Pay {1} to untap Brass Man?"));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), UnlessPaysEffect.youMayPay("{1}", new UntapPermanentsEffect(Subjects.source()))
+                .withPrompt("Pay {1} to untap Brass Man?"));
     }
 }

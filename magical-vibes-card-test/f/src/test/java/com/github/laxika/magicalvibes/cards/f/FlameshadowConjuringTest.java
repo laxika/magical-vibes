@@ -113,7 +113,7 @@ class FlameshadowConjuringTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(1);
     }

@@ -64,7 +64,7 @@ class MirrorworksTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayPayManaEffect from stack -> may prompt
 
         // Decline
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         // Should have only Mirrorworks + original Glint Hawk Idol
         long idolCount = countPermanents(player1, "Glint Hawk Idol");
@@ -80,7 +80,7 @@ class MirrorworksTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayPayManaEffect from stack -> may prompt
 
         // Try to accept but can't afford it
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         // No token should be created
         long idolCount = countPermanents(player1, "Glint Hawk Idol");

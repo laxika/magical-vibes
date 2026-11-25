@@ -37,6 +37,8 @@ class WarcryPhoenixTest extends BaseCardTest {
         declareAttackers(List.of(0, 1, 2));
 
         // Resolve the MayPayManaEffect from stack
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -196,7 +198,7 @@ class WarcryPhoenixTest extends BaseCardTest {
         declareAttackers(List.of(0, 1, 2));
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         // Phoenix stays in graveyard because mana cannot be paid
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -224,7 +226,7 @@ class WarcryPhoenixTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(p -> p.getCard() instanceof WarcryPhoenix).hasSize(1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
     }
 

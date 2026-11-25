@@ -88,7 +88,7 @@ class MilitiasPrideTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting with insufficient mana creates no token")
+    @DisplayName("Without any way to pay, nothing is asked and it creates no token")
     void insufficientManaCreatesNoToken() {
         addCreatureReady(player1, new MilitiasPride());
         addCreatureReady(player1, new GoldmeadowDodger());
@@ -97,8 +97,7 @@ class MilitiasPrideTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().isToken());

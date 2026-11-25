@@ -92,7 +92,7 @@ class SearingMeditationTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without enough mana deals no damage")
+    @DisplayName("Without any way to pay, nothing is asked and it deals no damage")
     void acceptingWithoutEnoughManaDoesNothing() {
         harness.addToBattlefield(player1, new SearingMeditation());
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
@@ -101,8 +101,7 @@ class SearingMeditationTest extends BaseCardTest {
         resolveAllTriggers();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertLife(player2, lifeBefore);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

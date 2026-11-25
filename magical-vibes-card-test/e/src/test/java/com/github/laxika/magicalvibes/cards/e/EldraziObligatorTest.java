@@ -98,7 +98,7 @@ class EldraziObligatorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         resolveCastTrigger();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();
@@ -223,6 +223,5 @@ class EldraziObligatorTest extends BaseCardTest {
 
     private void resolveCastTrigger() {
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 }

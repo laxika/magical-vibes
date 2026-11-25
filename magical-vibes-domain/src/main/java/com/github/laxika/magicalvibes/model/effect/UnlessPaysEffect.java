@@ -11,7 +11,16 @@ import java.util.Objects;
  * something]" (CR 118.12a). The payment is a cost paid as the effect resolves, and "if they do / don't" checks the
  * choice to pay, not what happened (CR 118.12). The payer is asked even when the effect can do nothing (a spell that
  * can't be countered): the payment can still be made. A payer who couldn't pay the cost in full (CR 118.3; a player who
- * can't lose life can't pay life, CR 119.8) isn't asked, and {@code ifNotPaid} happens (CR 608.2d).
+ * can't lose life can't pay life, CR 119.8) isn't asked, and {@code ifNotPaid} happens (CR 608.2d): only a payer
+ * with no way at all to pay is left unasked (the resolution-time payment service's {@code couldPossiblyPay}); one
+ * who might still make the mana is asked.
+ *
+ * <p>The same record is "[P] may pay [the cost]. If they do, [ifPaid]" ({@code ifNotPaid} {@code null}), and "[P]
+ * may pay … If they do, … If they don't, …" (both set); "[P] may pay" means the same as "unless [P] pays" with the
+ * branches the other way round (CR 118.12a). The factories read as the Oracle text: {@code youMayPay("{1}", draw)}
+ * is "you may pay {1}. If you do, draw a card", {@code unlessYouPay("{U}", destroy)} is "destroy … unless you pay
+ * {U}" and "you may pay {U}. If you don't, destroy …", {@code mayPay(triggeringPlayer(), "{2}", draw)} is "that
+ * player may pay {2}. If they do, …".
  *
  * <p>The chosen branch resolves in place of this effect, as a step of the same resolution (CR 608.2c): "that player"
  * after it is {@code Subjects.controllerOf(Subjects.targetSpell())}, the controller the spell had as it was countered
@@ -26,23 +35,34 @@ import java.util.Objects;
  * them ("discard a card or pay {2}"). The factories read as the Oracle text: {@code counterUnlessPays(3)} is "counter
  * target spell unless its controller pays {3}" and ward {3}.
  *
- * @param payer     who may pay ("its controller", "that player")
+ * <p>The chosen branch is put next in the resolution and resolved like any other step, so a wrapper in it (an "if"
+ * on the "if you do", a "you may" in "you may copy that spell unless …") is judged as at the top level.
+ *
+ * @param payer     who may pay ("its controller", "that player", "you")
  * @param ransom    the cost they may pay
- * @param ifNotPaid what happens unless they pay
+ * @param ifNotPaid what happens unless they pay, or {@code null} for nothing
  * @param ifPaid    what happens when they pay, or {@code null} for nothing
+ * @param prompt    the question asked, or {@code null} for the one the ransom reads ("Pay {1}?")
  */
-public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffect ifNotPaid, CardEffect ifPaid)
+public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffect ifNotPaid, CardEffect ifPaid,
+                               String prompt)
         implements CardEffect {
 
     public UnlessPaysEffect {
         Objects.requireNonNull(payer, "payer");
         Objects.requireNonNull(ransom, "ransom");
-        Objects.requireNonNull(ifNotPaid, "ifNotPaid");
+        if (ifNotPaid == null && ifPaid == null) {
+            throw new IllegalArgumentException("An \"unless\" or \"if you do\" needs an effect on one branch");
+        }
         if (ransom instanceof AnyOfCost anyOf) {
             anyOf.alternatives().forEach(UnlessPaysEffect::requirePayableAtResolution);
         } else {
             requirePayableAtResolution(ransom);
         }
+    }
+
+    public UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffect ifNotPaid, CardEffect ifPaid) {
+        this(payer, ransom, ifNotPaid, ifPaid, null);
     }
 
     private static void requirePayableAtResolution(CostEffect ransom) {
@@ -189,6 +209,54 @@ public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffec
                 new ChangeTargetOfTargetSpellWithSingleTargetEffect(), null);
     }
 
+    /** "You may pay {@code manaCost}. If you do, {@code ifYouDo}." */
+    public static UnlessPaysEffect youMayPay(String manaCost, CardEffect ifYouDo) {
+        return mayPay(Subjects.you(), manaCost, ifYouDo);
+    }
+
+    /** "You may pay {@code manaCost} and {@code life} life. If you do, {@code ifYouDo}" (both or neither). */
+    public static UnlessPaysEffect youMayPay(String manaCost, int life, CardEffect ifYouDo) {
+        return new UnlessPaysEffect(Subjects.you(), new PayManaCost(manaCost, null, false, life), null,
+                Objects.requireNonNull(ifYouDo, "ifYouDo"));
+    }
+
+    /** "{@code effect} unless you pay {@code manaCost}"; "you may pay {@code manaCost}. If you don't, {@code effect}." */
+    public static UnlessPaysEffect unlessYouPay(String manaCost, CardEffect effect) {
+        return unlessPays(Subjects.you(), manaCost, effect);
+    }
+
+    /** "You may pay {@code life} life. If you do, {@code ifYouDo}." */
+    public static UnlessPaysEffect youMayPayLife(int life, CardEffect ifYouDo) {
+        return youMayPayLife(new Fixed(life), ifYouDo);
+    }
+
+    /** "You may pay life equal to {@code life}. If you do, {@code ifYouDo}", the amount read as it resolves. */
+    public static UnlessPaysEffect youMayPayLife(DynamicAmount life, CardEffect ifYouDo) {
+        return new UnlessPaysEffect(Subjects.you(), new PayLifeCost(life), null,
+                Objects.requireNonNull(ifYouDo, "ifYouDo"));
+    }
+
+    /** "{@code effect} unless you pay {@code life} life"; "you may pay {@code life} life. If you don't, …". */
+    public static UnlessPaysEffect unlessYouPayLife(int life, CardEffect effect) {
+        return unlessPaysLife(Subjects.you(), life, effect);
+    }
+
+    /** "{@code payer} may pay {@code manaCost}. If they do, {@code ifTheyDo}" ("that player", "defending player"). */
+    public static UnlessPaysEffect mayPay(PlayerSubject payer, String manaCost, CardEffect ifTheyDo) {
+        return new UnlessPaysEffect(payer, new PayManaCost(manaCost), null,
+                Objects.requireNonNull(ifTheyDo, "ifTheyDo"));
+    }
+
+    /** "{@code effect} unless {@code payer} pays {@code manaCost}"; "{@code payer} may pay … If they don't, …". */
+    public static UnlessPaysEffect unlessPays(PlayerSubject payer, String manaCost, CardEffect effect) {
+        return new UnlessPaysEffect(payer, new PayManaCost(manaCost), Objects.requireNonNull(effect, "effect"), null);
+    }
+
+    /** "{@code effect} unless {@code payer} pays {@code life} life". */
+    public static UnlessPaysEffect unlessPaysLife(PlayerSubject payer, int life, CardEffect effect) {
+        return new UnlessPaysEffect(payer, new PayLifeCost(life), Objects.requireNonNull(effect, "effect"), null);
+    }
+
     private static UnlessPaysEffect counter(CostEffect ransom) {
         return new UnlessPaysEffect(Subjects.controllerOf(Subjects.targetSpell()), ransom, new CounterSpellEffect(), null);
     }
@@ -199,12 +267,22 @@ public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffec
             throw new IllegalStateException("Only a counter exiles what it counters: " + ifNotPaid);
         }
         return new UnlessPaysEffect(payer, ransom,
-                new CounterSpellEffect(CounteredSpellDestination.EXILE, counter.spell()), ifPaid);
+                new CounterSpellEffect(CounteredSpellDestination.EXILE, counter.spell()), ifPaid, prompt);
     }
 
     /** "If they do / If that player pays, [effect]." */
     public UnlessPaysEffect ifPaid(CardEffect effect) {
-        return new UnlessPaysEffect(payer, ransom, ifNotPaid, Objects.requireNonNull(effect, "effect"));
+        return new UnlessPaysEffect(payer, ransom, ifNotPaid, Objects.requireNonNull(effect, "effect"), prompt);
+    }
+
+    /** "If they don't / If you don't, [effect]." */
+    public UnlessPaysEffect ifNotPaid(CardEffect effect) {
+        return new UnlessPaysEffect(payer, ransom, Objects.requireNonNull(effect, "effect"), ifPaid, prompt);
+    }
+
+    /** This payment asked with {@code question} rather than the question its ransom reads ("Pay {1}?"). */
+    public UnlessPaysEffect withPrompt(String question) {
+        return new UnlessPaysEffect(payer, ransom, ifNotPaid, ifPaid, Objects.requireNonNull(question, "question"));
     }
 
     /**
@@ -238,9 +316,19 @@ public record UnlessPaysEffect(PlayerSubject payer, CostEffect ransom, CardEffec
         return ifNotPaid instanceof ChangeTargetOfTargetSpellWithSingleTargetEffect;
     }
 
+    /**
+     * The target of either branch: chosen as the ability is put on the stack (CR 603.3d), whichever branch the payment
+     * then picks (CR 603.5); {@code ifNotPaid}'s first.
+     */
     @Override
     public TargetSpec targetSpec() {
-        TargetSpec spec = ifNotPaid.targetSpec();
+        TargetSpec spec = ifNotPaid == null ? TargetSpec.NONE : ifNotPaid.targetSpec();
         return spec.equals(TargetSpec.NONE) && ifPaid != null ? ifPaid.targetSpec() : spec;
+    }
+
+    /** "You may pay {X}. When you do, [targeted effect]": the reflexive ability chooses the target (CR 603.12). */
+    @Override
+    public boolean targetsChosenByReflexiveAbility() {
+        return ifPaid != null && ifPaid.targetsChosenByReflexiveAbility();
     }
 }

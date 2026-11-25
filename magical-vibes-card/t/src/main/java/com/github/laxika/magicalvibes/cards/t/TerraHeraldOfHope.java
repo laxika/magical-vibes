@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -32,9 +32,7 @@ public class TerraHeraldOfHope extends Card {
                 new MillEffect(2, Subjects.you()),
                 new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
 
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new MayPayManaEffect(
-                "{2}",
-                new QueueReflexiveAbilityEffect(ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), UnlessPaysEffect.youMayPay("{2}", new QueueReflexiveAbilityEffect(ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
@@ -42,7 +40,6 @@ public class TerraHeraldOfHope extends Card {
                         )))
                         .targetGraveyard(true)
                         .enterTapped(true)
-                        .build()),
-                "Pay {2} to return target creature card with power 3 or less from your graveyard to the battlefield tapped?"));
+                        .build())).withPrompt("Pay {2} to return target creature card with power 3 or less from your graveyard to the battlefield tapped?"));
     }
 }

@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -15,6 +15,6 @@ public class VenomousBrutalizer extends Card {
     public VenomousBrutalizer() {
         addStaticEffect(new ToxicEffect(3));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MayPayManaEffect("{1}{G}", new ProliferateEffect(new Fixed(1)), "Pay {1}{G}?"));
+                UnlessPaysEffect.youMayPay("{1}{G}", new ProliferateEffect(new Fixed(1))));
     }
 }

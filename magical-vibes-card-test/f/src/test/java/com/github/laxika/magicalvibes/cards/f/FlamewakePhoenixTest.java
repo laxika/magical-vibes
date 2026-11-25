@@ -28,6 +28,7 @@ class FlamewakePhoenixTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new FlamewakePhoenix()));
 
         advanceToCombat(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -74,7 +75,7 @@ class FlamewakePhoenixTest extends BaseCardTest {
 
         advanceToCombat(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(phoenix.getId()));

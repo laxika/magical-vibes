@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFreerunningToSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -24,9 +24,7 @@ public class EzioAuditoreDaFirenze extends Card {
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new ConditionalEffect(
                         new TargetPlayerLifeAtMost(10),
-                        new MayPayManaEffect(
-                                "{W}{U}{B}{R}{G}",
-                                new QueueReflexiveAbilityEffect(new TargetPlayerLosesGameEffect(null)),
-                                "Pay {W}{U}{B}{R}{G} to make that player lose the game?")));
+                        UnlessPaysEffect.youMayPay("{W}{U}{B}{R}{G}", new QueueReflexiveAbilityEffect(new TargetPlayerLosesGameEffect(null)))
+                                .withPrompt("Pay {W}{U}{B}{R}{G} to make that player lose the game?")));
     }
 }

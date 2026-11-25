@@ -32,11 +32,11 @@ class SludgeStriderTest extends BaseCardTest {
         harness.passBothPriorities(); // Spellbook resolves and enters, trigger onto stack
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.passBothPriorities(); // Trigger resolves and offers the optional payment.
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertLife(player2, p2Before - 1);
@@ -63,11 +63,11 @@ class SludgeStriderTest extends BaseCardTest {
         harness.passBothPriorities(); // Shatter resolves, Spellbook destroyed, trigger enqueued
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.passBothPriorities(); // Trigger resolves and offers the optional payment.
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertLife(player2, p2Before - 1);

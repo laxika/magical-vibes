@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -48,7 +49,7 @@ class WolfbatTest extends BaseCardTest {
         drawCard(player1);
         assertThat(gd.stack).hasSize(1);
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         drawCard(player1);
         assertThat(gd.stack).isEmpty();
@@ -96,7 +97,7 @@ class WolfbatTest extends BaseCardTest {
         drawCard(player1);
         drawCard(player1);
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertInGraveyard(player1, "Wolfbat");
         harness.assertNotOnBattlefield(player1, "Wolfbat");

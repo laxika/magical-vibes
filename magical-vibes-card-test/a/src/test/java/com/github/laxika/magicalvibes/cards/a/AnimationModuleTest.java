@@ -28,6 +28,7 @@ class AnimationModuleTest extends BaseCardTest {
         harness.activateAbility(player1, moduleIndex, null, bears.getId());
         harness.passBothPriorities();
         harness.handleListChoice(player1, "+1/+1 counters");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);

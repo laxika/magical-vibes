@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -30,7 +30,7 @@ public class EraOfInnovation extends Card {
                                 new PermanentIsArtifactPredicate(),
                                 new PermanentHasSubtypePredicate(CardSubtype.ARTIFICER))),
                         ObjectRelation.YOU_CONTROL),
-                new MayPayManaEffect("{1}", new EnergyCountersEffect(2), "Pay {1}?"));
+                UnlessPaysEffect.youMayPay("{1}", new EnergyCountersEffect(2)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

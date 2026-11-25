@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.q;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -295,7 +296,7 @@ class QuicksilverGargantuanTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
         Permanent token = findPermanent(player1, "Myr");
         token.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);

@@ -3466,14 +3466,19 @@ class EasyAiDecisionEngineTest {
         }
 
         @Test
-        @DisplayName("Easy AI declines a may-cost it cannot pay")
-        void declinesUnpayableMayCost() {
+        @DisplayName("Easy AI isn't asked a may-cost it has no way at all to pay")
+        void notAskedAnUnpayableMayCost() {
             testHarness.addToBattlefield(aiTestPlayer, new com.github.laxika.magicalvibes.cards.i.IronStar());
 
             int lifeBefore = testGd.playerLifeTotals.get(aiTestPlayer.getId());
-            fireIronStarTrigger();
-
-            easyAi.handleEvent(AiDecisionKind.INTERACTION);
+            testHarness.forceActivePlayer(human);
+            testHarness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            testHarness.clearPriorityPassed();
+            testGd.status = GameStatus.RUNNING;
+            testHarness.setHand(human, List.of(new com.github.laxika.magicalvibes.cards.b.BogardanFirefiend()));
+            testHarness.addMana(human, ManaColor.RED, 3);
+            testHarness.castCreature(human, 0);
+            testHarness.passBothPriorities();
 
             assertThat(testGd.playerLifeTotals.get(aiTestPlayer.getId())).isEqualTo(lifeBefore);
             assertThat(testGd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();

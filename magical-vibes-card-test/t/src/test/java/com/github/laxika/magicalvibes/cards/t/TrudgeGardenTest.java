@@ -102,7 +102,7 @@ class TrudgeGardenTest extends BaseCardTest {
 
         gainLife(1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(findPermanents(player1, "Fungus Beast")).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);

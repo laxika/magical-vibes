@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ShuYunTheSilentTempest.class, Shock.class, GrizzlyBears.class, Forest.class})
 class ShuYunTheSilentTempestTest extends BaseCardTest {
+
+    /**
+     * Both players have a way to make mana, so every "you may pay" in this class is asked and the test answers it with
+     * the mana it adds (or without it); a payer with no way at all to pay isn't asked (CR 118.3, 608.2d).
+     */
+    @BeforeEach
+    void everyPayerHasAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     private Permanent addShuYun() {
         Permanent shuYun = harness.addToBattlefieldAndReturn(player1, new ShuYunTheSilentTempest());
@@ -102,9 +113,9 @@ class ShuYunTheSilentTempestTest extends BaseCardTest {
         Permanent shuYun = addShuYun();
         castShock();
         harness.handlePermanentChosen(player1, shuYun.getId());
-        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         while (!gd.stack.isEmpty()) {
             harness.passBothPriorities();

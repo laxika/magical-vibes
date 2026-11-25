@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
@@ -11,7 +12,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
@@ -32,14 +32,11 @@ public class EndlessRanksOfHYDRA extends Card {
                 new Sum(new PlayersInGame(), new Fixed(-1)), "Villain", 2, 1,
                 CardColor.BLACK, List.of(CardSubtype.VILLAIN), Set.of(Keyword.MENACE), Set.of()));
 
-        var returnToHand = new MayPayManaEffect(
-                "{1}{B}",
-                ReturnCardFromGraveyardEffect.builder()
+        var returnToHand = UnlessPaysEffect.youMayPay("{1}{B}", ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .filter(new CardIsSelfPredicate())
                         .returnAll(true)
-                        .build(),
-                "Pay {1}{B} to return this card from your graveyard to your hand?");
+                        .build()).withPrompt("Pay {1}{B} to return this card from your graveyard to your hand?");
 
         addTrigger(new TriggerCondition(Triggers.enters(new PermanentIsCommanderPredicate(true), ObjectRelation.ANY),
                         AbilityZones.GRAVEYARD),

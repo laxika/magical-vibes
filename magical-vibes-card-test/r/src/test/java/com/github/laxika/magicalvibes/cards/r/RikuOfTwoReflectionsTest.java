@@ -41,12 +41,12 @@ class RikuOfTwoReflectionsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.stagedSpellCopies).hasSize(1);
@@ -80,12 +80,12 @@ class RikuOfTwoReflectionsTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(2);
@@ -104,9 +104,9 @@ class RikuOfTwoReflectionsTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.pendingMayAbilities).isEmpty();
@@ -157,7 +157,7 @@ class RikuOfTwoReflectionsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         harness.assertLife(player2, 17);

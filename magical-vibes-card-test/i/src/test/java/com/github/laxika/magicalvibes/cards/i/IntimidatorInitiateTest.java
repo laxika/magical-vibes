@@ -72,7 +72,7 @@ class IntimidatorInitiateTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         resolveAllTriggers();
 
         assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isFalse();

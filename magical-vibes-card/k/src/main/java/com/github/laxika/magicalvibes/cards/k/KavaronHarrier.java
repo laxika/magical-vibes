@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatedPermanentsAttackingEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,9 +18,7 @@ import java.util.Set;
 public class KavaronHarrier extends Card {
 
     public KavaronHarrier() {
-        addTrigger(Triggers.attacks(), new MayPayManaEffect(
-                "{2}",
-                SequenceEffect.of(
+        addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay("{2}", SequenceEffect.of(
                         new CreateTokenEffect(
                                 CardType.CREATURE,
                                 1,
@@ -42,7 +40,6 @@ public class KavaronHarrier extends Card {
                                 0,
                                 Set.of()),
                         new MakeCreatedPermanentsAttackingEffect(true),
-                        new SacrificeCreatedPermanentsAtEndOfCombatEffect()),
-                "Pay {2} to create a Robot token?"));
+                        new SacrificeCreatedPermanentsAtEndOfCombatEffect())).withPrompt("Pay {2} to create a Robot token?"));
     }
 }

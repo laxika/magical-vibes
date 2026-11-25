@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.trigger.AbilityTrigger;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -33,8 +33,8 @@ public class ChandrasRegulator extends Card {
                         .withStackEntryFilter(new StackEntryAllOfPredicate(List.of(
                                 new StackEntryCardTypeInPredicate(Set.of(CardType.PLANESWALKER)),
                                 new StackEntrySubtypeInPredicate(Set.of(CardSubtype.CHANDRA))))),
-                new MayPayManaEffect("{1}", new CopyTriggeringSpellOrAbilityEffect(),
-                        "Pay {1} to copy that ability?"));
+                UnlessPaysEffect.youMayPay("{1}", new CopyTriggeringSpellOrAbilityEffect())
+                        .withPrompt("Pay {1} to copy that ability?"));
 
         // {1}, {T}, Discard a Mountain card or a red card: Draw a card.
         addActivatedAbility(new ActivatedAbility(

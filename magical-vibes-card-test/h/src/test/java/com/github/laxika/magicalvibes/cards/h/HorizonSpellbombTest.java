@@ -38,6 +38,7 @@ class HorizonSpellbombTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Horizon Spellbomb");
 
         // Death trigger MayPayManaEffect resolves first (on top per CR 603.3)
+        harness.addMana(player1, ManaColor.GREEN, 1);
         harness.passBothPriorities();
 
         // Death trigger may ability should prompt
@@ -55,7 +56,7 @@ class HorizonSpellbombTest extends BaseCardTest {
 
         // Death trigger MayPayManaEffect resolves first (on top per CR 603.3)
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false); // decline death trigger
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         // Resolve the search ability
         harness.passBothPriorities();
@@ -78,7 +79,7 @@ class HorizonSpellbombTest extends BaseCardTest {
 
         // Death trigger MayPayManaEffect resolves first (on top per CR 603.3)
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false); // decline death trigger
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         // Resolve the search ability
         harness.passBothPriorities();
@@ -145,7 +146,7 @@ class HorizonSpellbombTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting death trigger without enough mana treats as decline")
+    @DisplayName("Without any way to pay, nothing is asked and nothing happens")
     void acceptWithoutManaNoCard() {
         harness.addToBattlefield(player1, new HorizonSpellbomb());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -161,7 +162,7 @@ class HorizonSpellbombTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Accept but cannot pay {G} — auto-treats as decline
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         // No card drawn
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
@@ -216,7 +217,7 @@ class HorizonSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
         harness.handleCardChosen(player1, -1);
 

@@ -60,7 +60,7 @@ class UnifyingTheoryTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Island()));
 
         harness.castAndResolveSorcery(player2, 0, player1.getId());
-        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertNotInHand(player2, "Island");
     }
@@ -113,7 +113,7 @@ class UnifyingTheoryTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         harness.castAndResolveSorcery(player2, 0, player1.getId());
-        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertNotInHand(player2, "Island");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);

@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -23,8 +23,8 @@ import java.util.Set;
 @CardRegistration(set = "VOC", collectorNumber = "55")
 public class CrosswayTroublemakers extends Card {
 
-    private static final MayPayLifeEffect DEATH_TRIGGER = new MayPayLifeEffect(
-            2, new DrawCardEffect(), "Pay 2 life to draw a card?");
+    private static final UnlessPaysEffect DEATH_TRIGGER = UnlessPaysEffect.youMayPayLife(2, new DrawCardEffect())
+            .withPrompt("Pay 2 life to draw a card?");
 
     public CrosswayTroublemakers() {
         addStaticEffect(new GrantKeywordEffect(

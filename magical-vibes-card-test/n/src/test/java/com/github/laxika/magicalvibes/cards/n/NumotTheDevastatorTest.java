@@ -26,8 +26,8 @@ class NumotTheDevastatorTest extends BaseCardTest {
 
         resolveCombatToTargetChoice();
         harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId(), plains.getId()));
-        harness.passBothPriorities();
         addPaymentMana();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -45,7 +45,7 @@ class NumotTheDevastatorTest extends BaseCardTest {
         resolveCombatToTargetChoice();
         harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId(), plains.getId()));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(forest, plains);
     }
@@ -66,7 +66,7 @@ class NumotTheDevastatorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting the payment without enough mana does not destroy the lands")
+    @DisplayName("Without any way to pay, nothing is asked and it does not destroy the lands")
     void cannotPayAcceptedPayment() {
         addAttackingNumot();
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
@@ -74,7 +74,7 @@ class NumotTheDevastatorTest extends BaseCardTest {
         resolveCombatToTargetChoice();
         harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(forest);
     }
@@ -102,8 +102,8 @@ class NumotTheDevastatorTest extends BaseCardTest {
 
         resolveCombatToTargetChoice();
         harness.handleMultiplePermanentsChosen(player1, List.of());
-        harness.passBothPriorities();
         addPaymentMana();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(forest);
@@ -119,8 +119,8 @@ class NumotTheDevastatorTest extends BaseCardTest {
         resolveCombatToTargetChoice();
         harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId(), plains.getId()));
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, forest);
-        harness.passBothPriorities();
         addPaymentMana();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(plains);
@@ -152,8 +152,8 @@ class NumotTheDevastatorTest extends BaseCardTest {
         resolveCombatToTargetChoice();
         harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, numot);
-        harness.passBothPriorities();
         addPaymentMana();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(forest);

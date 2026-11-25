@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MRD", collectorNumber = "205")
@@ -16,6 +16,6 @@ public class MindsEye extends Card {
 
     public MindsEye() {
         addTrigger(Triggers.opponentDrawsCard(),
-                new MayPayManaEffect("{1}", new DrawCardEffect(1), "Pay {1} to draw a card?"));
+                UnlessPaysEffect.youMayPay("{1}", new DrawCardEffect(1)).withPrompt("Pay {1} to draw a card?"));
     }
 }

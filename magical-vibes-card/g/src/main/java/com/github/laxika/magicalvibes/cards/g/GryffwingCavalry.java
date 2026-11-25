@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -29,8 +29,7 @@ public class GryffwingCavalry extends Card {
         );
 
         target(attackingCreatureWithoutFlying).addTrigger(Triggers.attacks(),
-                new MayPayManaEffect("{1}{W}",
-                        new GrantKeywordEffect(Keyword.FLYING, Subjects.target()),
-                        "Pay {1}{W} to give target attacking creature flying until end of turn?"));
+                UnlessPaysEffect.youMayPay("{1}{W}", new GrantKeywordEffect(Keyword.FLYING, Subjects.target()))
+                        .withPrompt("Pay {1}{W} to give target attacking creature flying until end of turn?"));
     }
 }

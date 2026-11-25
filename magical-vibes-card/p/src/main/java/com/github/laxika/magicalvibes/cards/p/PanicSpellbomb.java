@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -28,6 +28,7 @@ public class PanicSpellbomb extends Card {
                 TargetFilters.creature()
         ));
 
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayPayManaEffect("{R}", new DrawCardEffect(1), "Pay {R} to draw a card?"));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), UnlessPaysEffect.youMayPay("{R}", new DrawCardEffect(1))
+                .withPrompt("Pay {R} to draw a card?"));
     }
 }

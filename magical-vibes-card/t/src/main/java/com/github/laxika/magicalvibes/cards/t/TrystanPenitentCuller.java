@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUpToOneCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -26,7 +26,7 @@ public class TrystanPenitentCuller extends Card {
                 new ConditionalEffect(HappenedThisWay.exiled(),
                         new LoseLifeEffect(2, Subjects.eachOpponent()))));
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
-                new MayPayManaEffect("{G}", new TransformSelfEffect(),
-                        "Pay {G} to transform Trystan?"));
+                UnlessPaysEffect.youMayPay("{G}", new TransformSelfEffect())
+                        .withPrompt("Pay {G} to transform Trystan?"));
     }
 }

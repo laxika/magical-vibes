@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.d.BrigidDounsMind;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -33,8 +33,8 @@ public class BrigidClachansHeart extends Card {
 
         // At the beginning of your first main phase, you may pay {G}. If you do, transform Brigid.
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
-                new MayPayManaEffect("{G}", new TransformSelfEffect(),
-                        "Pay {G} to transform Brigid?"));
+                UnlessPaysEffect.youMayPay("{G}", new TransformSelfEffect())
+                        .withPrompt("Pay {G} to transform Brigid?"));
     }
 
     @Override

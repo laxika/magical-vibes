@@ -1,6 +1,19 @@
 package com.github.laxika.magicalvibes.service.effect.cost;
 
+import com.github.laxika.magicalvibes.cards.e.ElvishSpiritGuide;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GetPoisonCountersCost;
+import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
+import org.junit.jupiter.api.Nested;
+import org.springframework.test.util.ReflectionTestUtils;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
@@ -30,6 +43,7 @@ class ResolutionCostPaymentServiceTest {
 
     @Mock private GameQueryService gameQueryService;
     @Mock private LifeSupport lifeSupport;
+    @Mock private AbilityActivationService abilityActivationService;
 
     private ResolutionCostPaymentService service;
     private GameData gd;
@@ -112,5 +126,107 @@ class ResolutionCostPaymentServiceTest {
         when(gameQueryService.canPlayerGetPoisonCounters(gd, payerId)).thenReturn(false);
 
         assertThat(service.canPay(gd, payerId, new GetPoisonCountersCost(5), null)).isFalse();
+    }
+
+    @Nested
+    @DisplayName("Whether a payer could possibly pay, so is asked at all")
+    class CouldPossiblyPay {
+
+        @BeforeEach
+        void withAbilityLookups() {
+            ReflectionTestUtils.setField(service, "abilityActivationService", abilityActivationService);
+            gd.playerBattlefields.put(payerId, new ArrayList<>());
+            gd.playerHands.put(payerId, new ArrayList<>());
+        }
+
+        @Test
+        @DisplayName("A short pool and no mana source at all is a proof that the mana can't be paid (CR 118.3)")
+        void shortPoolWithoutAnySourceCantPay() {
+            gd.playerManaPools.get(payerId).add(ManaColor.GREEN, 1);
+
+            assertThat(service.couldPossiblyPay(gd, payerId, new PayManaCost("{2}"), null)).isFalse();
+        }
+
+        @Test
+        @DisplayName("A pool that covers the mana can pay it")
+        void poolThatCoversTheManaCanPay() {
+            gd.playerManaPools.get(payerId).add(ManaColor.GREEN, 2);
+
+            assertThat(service.couldPossiblyPay(gd, payerId, new PayManaCost("{2}"), null)).isTrue();
+        }
+
+        @Test
+        @DisplayName("A land is a mana source, though it couldn't make all of the mana: the payer is asked")
+        void anyLandMakesThePayerAsked() {
+            Permanent forest = new Permanent(new GrizzlyBears());
+            gd.playerBattlefields.get(payerId).add(forest);
+            when(gameQueryService.intrinsicBasicLandManaColors(gd, forest)).thenReturn(Set.of(ManaColor.GREEN));
+
+            assertThat(service.couldPossiblyPay(gd, payerId, new PayManaCost("{5}"), null)).isTrue();
+        }
+
+        @Test
+        @DisplayName("A permanent with an activated mana ability, tapped or not, is a mana source")
+        void permanentWithAManaAbilityIsASource() {
+            Permanent elf = new Permanent(new GrizzlyBears());
+            elf.tap();
+            gd.playerBattlefields.get(payerId).add(elf);
+            when(gameQueryService.intrinsicBasicLandManaColors(gd, elf)).thenReturn(Set.of());
+            when(gameQueryService.getOverriddenLandManaColors(gd, elf)).thenReturn(List.of());
+            when(abilityActivationService.getEffectiveActivatedAbilities(gd, elf)).thenReturn(List.of(
+                    new ActivatedAbility(true, null, List.of(new AwardManaEffect(ManaColor.GREEN)), "{T}: Add {G}.")));
+
+            assertThat(service.couldPossiblyPay(gd, payerId, new PayManaCost("{1}"), null)).isTrue();
+        }
+
+        @Test
+        @DisplayName("A mana ability that works from the hand (Elvish Spirit Guide) is a mana source (CR 605.3a)")
+        void handManaAbilityIsASource() {
+            Card guide = new ElvishSpiritGuide();
+            gd.playerHands.get(payerId).add(guide);
+            when(abilityActivationService.effectiveHandAbilities(gd, guide, payerId))
+                    .thenReturn(guide.getActivatedAbilities(Zone.HAND));
+
+            assertThat(service.couldPossiblyPay(gd, payerId, new PayManaCost("{1}"), null)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Mana and life: a payer who can't lose life can't pay it, whatever mana they have (CR 119.8)")
+        void manaAndLifeNeedsAPayerWhoCanLoseLife() {
+            gd.playerManaPools.get(payerId).add(ManaColor.GREEN, 2);
+            when(gameQueryService.canPlayerLoseLife(gd, payerId)).thenReturn(false);
+
+            assertThat(service.couldPossiblyPay(gd, payerId, new PayManaCost("{2}", null, false, 2), null)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Mana and life: with the mana in the pool and no mana source, too little life is a proof (CR 119.4)")
+        void manaAndLifeWithTooLittleLifeAndNoSource() {
+            gd.playerManaPools.get(payerId).add(ManaColor.GREEN, 2);
+            when(gameQueryService.canPlayerLoseLife(gd, payerId)).thenReturn(true);
+
+            assertThat(service.couldPossiblyPay(gd, payerId, new PayManaCost("{2}", null, false, 6), null)).isFalse();
+            assertThat(service.couldPossiblyPay(gd, payerId, new PayManaCost("{2}", null, false, 5), null)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Life alone is judged on the life total and the ability to lose life (CR 119.4, 119.8)")
+        void lifeAloneIsJudgedOnLife() {
+            when(gameQueryService.canPlayerLoseLife(gd, payerId)).thenReturn(true);
+
+            assertThat(service.couldPossiblyPay(gd, payerId, new PayLifeCost(5), null)).isTrue();
+            assertThat(service.couldPossiblyPay(gd, payerId, new PayLifeCost(6), null)).isFalse();
+        }
+
+        @Test
+        @DisplayName("An any-of cost is possible while any alternative is")
+        void anyOfIsPossibleWhileAnAlternativeIs() {
+            when(gameQueryService.canPlayerLoseLife(gd, payerId)).thenReturn(true);
+
+            assertThat(service.couldPossiblyPay(gd, payerId,
+                    AnyOfCost.of(new PayManaCost("{R}{R}"), new PayLifeCost(2)), null)).isTrue();
+            assertThat(service.couldPossiblyPay(gd, payerId,
+                    AnyOfCost.of(new PayManaCost("{R}{R}"), new PayLifeCost(9)), null)).isFalse();
+        }
     }
 }

@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -26,6 +26,7 @@ public class HorizonSpellbomb extends Card {
         ));
 
         // When Horizon Spellbomb is put into a graveyard from the battlefield, you may pay {G}. If you do, draw a card.
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayPayManaEffect("{G}", new DrawCardEffect(1), "Pay {G} to draw a card?"));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), UnlessPaysEffect.youMayPay("{G}", new DrawCardEffect(1))
+                .withPrompt("Pay {G} to draw a card?"));
     }
 }

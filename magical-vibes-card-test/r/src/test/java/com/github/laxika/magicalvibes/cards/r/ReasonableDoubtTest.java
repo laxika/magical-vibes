@@ -36,6 +36,8 @@ class ReasonableDoubtTest extends BaseCardTest {
         harness.castInstant(player2, 0, spell.getId(), creatureId);
         harness.passBothPriorities();
 
+        // Tunnel Tipster is a mana source, so its controller is asked; they decline.
+        harness.handleMayAbilityChosen(player1, false);
         harness.assertInGraveyard(player1, "Nervous Gardener");
         Permanent creature = creatureTarget;
         assertThat(creature.isSuspected()).isTrue();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -10,7 +11,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -25,10 +25,8 @@ import java.util.Set;
 public class UnassumingSage extends Card {
 
     public UnassumingSage() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayPayManaEffect(
-                "{2}",
-                new CreateTokenAttachedToTargetEffect(sorcererRoleToken(), Subjects.source()),
-                "Pay {2} to create a Sorcerer Role token?"));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), UnlessPaysEffect.youMayPay("{2}", new CreateTokenAttachedToTargetEffect(sorcererRoleToken(), Subjects.source()))
+                .withPrompt("Pay {2} to create a Sorcerer Role token?"));
     }
 
     private static CreateTokenEffect sorcererRoleToken() {

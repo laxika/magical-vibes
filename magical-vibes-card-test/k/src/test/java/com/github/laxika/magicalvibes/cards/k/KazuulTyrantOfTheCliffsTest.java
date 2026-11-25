@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.e.ElvishSpiritGuide;
 import com.github.laxika.magicalvibes.cards.a.ArborElf;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.j.JaceTheMindSculptor;
@@ -20,7 +21,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KazuulTyrantOfTheCliffs.class, ArborElf.class, InvasionOfZendikar.class,
+@CardUsed({ElvishSpiritGuide.class, KazuulTyrantOfTheCliffs.class, ArborElf.class, InvasionOfZendikar.class,
         JaceTheMindSculptor.class})
 class KazuulTyrantOfTheCliffsTest extends BaseCardTest {
 
@@ -104,6 +105,7 @@ class KazuulTyrantOfTheCliffsTest extends BaseCardTest {
         var kazuul = addCreatureReady(player1, new KazuulTyrantOfTheCliffs());
         addCreatureReady(player2, new ArborElf());
 
+        gd.playerHands.get(player2.getId()).add(new ElvishSpiritGuide());
         declareAttackers(player2, List.of(0));
         gd.playerBattlefields.get(player1.getId()).remove(kazuul);
         gd.playerGraveyards.get(player1.getId()).add(kazuul.getCard());
@@ -171,7 +173,12 @@ class KazuulTyrantOfTheCliffsTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Ogre")).hasSize(1);
     }
 
+    /**
+     * Kazuul for {@code player}, and an Elvish Spirit Guide in the other player's hand: a mana source, so the
+     * attacker's payment is offered.
+     */
     private void addKazuul(Player player) {
         addCreatureReady(player, new KazuulTyrantOfTheCliffs());
+        gd.playerHands.get((player == player1 ? player2 : player1).getId()).add(new ElvishSpiritGuide());
     }
 }

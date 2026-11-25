@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +20,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Paralyze.class, GrizzlyBears.class, SolRing.class, Disenchant.class})
 class ParalyzeTest extends BaseCardTest {
+
+    /**
+     * Both players have a way to make mana, so every "you may pay" in this class is asked and the test answers it with
+     * the mana it adds (or without it); a payer with no way at all to pay isn't asked (CR 118.3, 608.2d).
+     */
+    @BeforeEach
+    void everyPayerHasAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     // ===== ETB tap =====
 
@@ -97,9 +109,9 @@ class ParalyzeTest extends BaseCardTest {
         attachParalyze(creature);
 
         advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.BLACK, 4); // mana available at payment time
         harness.passBothPriorities(); // resolve upkeep trigger -> may-pay prompt
 
-        harness.addMana(player2, ManaColor.BLACK, 4); // mana available at payment time
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(creature.isTapped()).isFalse();

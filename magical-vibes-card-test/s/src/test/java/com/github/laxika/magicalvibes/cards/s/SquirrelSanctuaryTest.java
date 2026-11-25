@@ -45,8 +45,7 @@ class SquirrelSanctuaryTest extends BaseCardTest {
         killWithShock(bear);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertOnBattlefield(player1, "Squirrel Sanctuary");
         harness.assertNotInHand(player1, "Squirrel Sanctuary");

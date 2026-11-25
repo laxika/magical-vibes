@@ -24,11 +24,11 @@ class DromarTheBanisherTest extends BaseCardTest {
         harness.addToBattlefield(player2, new ManaMaze());
 
         resolveCombat();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player1, true);
         harness.handleListChoice(player1, "BLUE");
 
@@ -48,7 +48,7 @@ class DromarTheBanisherTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
 
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertOnBattlefield(player1, "Dromar, the Banisher");
         harness.assertOnBattlefield(player2, "Dream Thrush");
@@ -64,9 +64,9 @@ class DromarTheBanisherTest extends BaseCardTest {
         harness.addToBattlefield(player2, new DreamThrush());
 
         resolveCombat();
-        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handleListChoice(player1, "BLACK");
 
@@ -84,9 +84,9 @@ class DromarTheBanisherTest extends BaseCardTest {
         harness.addToBattlefield(player2, new DreamThrush());
 
         resolveCombat();
-        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handleListChoice(player1, "GREEN");
 

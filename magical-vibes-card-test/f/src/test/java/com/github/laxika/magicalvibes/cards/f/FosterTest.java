@@ -39,7 +39,7 @@ class FosterTest extends BaseCardTest {
         Card creature = new FreshVolunteers();
         prepareDeathTrigger(List.of(snuffOut, creature), false);
 
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(snuffOut, creature);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(snuffOut, creature);
@@ -83,13 +83,12 @@ class FosterTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without enough mana does not reveal cards")
+    @DisplayName("Without the mana to pay {1}, nothing is asked and the library is unchanged")
     void acceptingWithoutEnoughManaDoesNothing() {
         Card snuffOut = new SnuffOut();
         Card island = new Island();
         Card deadCreature = prepareDeathTrigger(List.of(snuffOut, island), false);
 
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(snuffOut, island);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(snuffOut, island);
@@ -170,7 +169,12 @@ class FosterTest extends BaseCardTest {
                 harness.getPermanentId(player1, "Fresh Volunteers"));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        if (addPaymentMana) {
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        } else {
+            // With the pool spent, there is no way to pay {1} and nothing is asked (CR 118.3, 608.2d).
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        }
         return deadCreature;
     }
 }

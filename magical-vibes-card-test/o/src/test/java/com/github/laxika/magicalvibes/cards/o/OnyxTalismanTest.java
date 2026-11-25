@@ -124,7 +124,7 @@ class OnyxTalismanTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without three mana leaves the target tapped")
+    @DisplayName("Without any way to pay, nothing is asked and it leaves the target tapped")
     void cannotPayLeavesTargetTapped() {
         harness.addToBattlefield(player1, new OnyxTalisman());
         Permanent bears = addTappedBears(player1);
@@ -134,9 +134,7 @@ class OnyxTalismanTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
-                .isNotNull();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(bears.isTapped()).isTrue();
     }

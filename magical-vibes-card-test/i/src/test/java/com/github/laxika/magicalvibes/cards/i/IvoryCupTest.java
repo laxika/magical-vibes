@@ -60,7 +60,7 @@ class IvoryCupTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without enough mana gains no life")
+    @DisplayName("Without any way to pay, nothing is asked and it gains no life")
     void acceptWithoutManaNoLife() {
         harness.addToBattlefield(player1, new IvoryCup());
         harness.castFromHand(player1, new PearledUnicorn(), "{2}{W}");
@@ -68,7 +68,7 @@ class IvoryCupTest extends BaseCardTest {
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);

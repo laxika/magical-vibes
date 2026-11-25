@@ -44,7 +44,7 @@ class ForlornPseudammaTest extends BaseCardTest {
 
         advanceToUntapStep();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getName().equals("Zombie"));
@@ -68,9 +68,8 @@ class ForlornPseudammaTest extends BaseCardTest {
         advanceToUntapStep();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getName().equals("Zombie"));

@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -21,12 +21,10 @@ public class PunishingFire extends Card {
         addSpellEffect(DealDamageEffect.toAnyTarget(2));
 
         addTrigger(new TriggerCondition(Triggers.opponentGainsLife(), AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                new MayPayManaEffect("{R}",
-                        ReturnCardFromGraveyardEffect.builder()
+                UnlessPaysEffect.youMayPay("{R}", ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.HAND)
                                 .filter(new CardIsSelfPredicate())
                                 .returnAll(true)
-                                .build(),
-                        "Pay {R} to return Punishing Fire from your graveyard to your hand?"));
+                                .build()).withPrompt("Pay {R} to return Punishing Fire from your graveyard to your hand?"));
     }
 }

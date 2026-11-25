@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTrackWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -19,8 +19,7 @@ public class Purgatory extends Card {
         // At the beginning of your upkeep, you may pay {4} and 2 life. If you do, return a card
         // exiled with this enchantment to the battlefield.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new MayPayManaEffect("{4}", 2,
-                        new ReturnCardExiledWithSourceToBattlefieldEffect(),
-                        "Pay {4} and 2 life to return a card exiled with Purgatory to the battlefield?"));
+                UnlessPaysEffect.youMayPay("{4}", 2, new ReturnCardExiledWithSourceToBattlefieldEffect())
+                        .withPrompt("Pay {4} and 2 life to return a card exiled with Purgatory to the battlefield?"));
     }
 }

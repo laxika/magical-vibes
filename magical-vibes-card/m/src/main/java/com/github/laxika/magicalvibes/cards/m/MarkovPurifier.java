@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,6 +16,6 @@ public class MarkovPurifier extends Card {
     public MarkovPurifier() {
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new GainedLifeThisTurn()),
-                new MayPayManaEffect("{2}", new DrawCardEffect(1), "Pay {2} to draw a card?"));
+                UnlessPaysEffect.youMayPay("{2}", new DrawCardEffect(1)).withPrompt("Pay {2} to draw a card?"));
     }
 }

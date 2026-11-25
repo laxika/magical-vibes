@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -20,10 +20,8 @@ public class LorthosTheTidemaker extends Card {
 
     public LorthosTheTidemaker() {
         target(TargetFilters.permanent(), 0, 8)
-                .addTrigger(Triggers.attacks(), new MayPayManaEffect("{8}",
-                        SequenceEffect.of(
+                .addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay("{8}", SequenceEffect.of(
                                 new TapPermanentsEffect(Subjects.target()),
-                                new SkipNextUntapEffect(Subjects.target())),
-                        "Pay {8} to tap up to eight target permanents?"));
+                                new SkipNextUntapEffect(Subjects.target()))).withPrompt("Pay {8} to tap up to eight target permanents?"));
     }
 }

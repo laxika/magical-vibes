@@ -160,7 +160,7 @@ class NacreTalismanTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without three mana does not untap the target")
+    @DisplayName("Without any way to pay, nothing is asked and it does not untap the target")
     void cannotPayLeavesTargetTapped() {
         harness.addToBattlefield(player1, new NacreTalisman());
         Permanent bears = addTappedBears(player1);
@@ -169,9 +169,7 @@ class NacreTalismanTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
-                .isNotNull();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(bears.isTapped()).isTrue();
     }
@@ -210,7 +208,7 @@ class NacreTalismanTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(bears.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);

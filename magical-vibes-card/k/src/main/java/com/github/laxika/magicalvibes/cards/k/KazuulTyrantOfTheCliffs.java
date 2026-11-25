@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -28,12 +28,7 @@ public class KazuulTyrantOfTheCliffs extends Card {
         // Whenever a creature an opponent controls attacks, if you're the defending player, create a 3/3 red
         // Ogre creature token unless that creature's controller pays {3}. An attacked battle's protector is
         // the defending player (CR 310.9d), so attacks on a battle you protect count.
-        addTrigger(Triggers.creatureAttacksWhileYouDefend(), new MayPayManaEffect(
-                "{3}",
-                null,
-                "Pay {3} to prevent creating an Ogre token?",
-                MayPayPayer.TARGET_PERMANENT_CONTROLLER,
-                new CreateTokenEffect("Ogre", 3, 3, CardColor.RED, List.of(CardSubtype.OGRE), Set.of(), Set.of()),
-                0));
+        addTrigger(Triggers.creatureAttacksWhileYouDefend(), UnlessPaysEffect.unlessPays(Subjects.controllerOf(Subjects.target()), "{3}", new CreateTokenEffect("Ogre", 3, 3, CardColor.RED, List.of(CardSubtype.OGRE), Set.of(), Set.of()))
+                .withPrompt("Pay {3} to prevent creating an Ogre token?"));
     }
 }

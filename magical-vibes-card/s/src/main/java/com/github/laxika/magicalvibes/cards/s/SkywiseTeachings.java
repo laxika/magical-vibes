@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,11 +22,8 @@ public class SkywiseTeachings extends Card {
     public SkywiseTeachings() {
         CardNotPredicate noncreatureSpell = new CardNotPredicate(new CardTypePredicate(CardType.CREATURE));
         addTrigger(Triggers.youCastSpell().withFilter(noncreatureSpell),
-                new MayPayManaEffect(
-                        "{1}{U}",
-                        new CreateTokenEffect("Djinn Monk", 2, 2, CardColor.BLUE,
+                UnlessPaysEffect.youMayPay("{1}{U}", new CreateTokenEffect("Djinn Monk", 2, 2, CardColor.BLUE,
                                 List.of(CardSubtype.DJINN, CardSubtype.MONK),
-                                Set.of(Keyword.FLYING), Set.of()),
-                        "Pay {1}{U} to create a 2/2 blue Djinn Monk creature token with flying?"));
+                                Set.of(Keyword.FLYING), Set.of())).withPrompt("Pay {1}{U} to create a 2/2 blue Djinn Monk creature token with flying?"));
     }
 }

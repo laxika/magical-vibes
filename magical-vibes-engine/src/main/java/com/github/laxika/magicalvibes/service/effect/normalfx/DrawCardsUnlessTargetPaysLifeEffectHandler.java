@@ -1,24 +1,18 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.List;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsUnlessTargetPaysLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import org.springframework.stereotype.Component;
 
 /** Resolves a targeted opponent's choice to pay life instead of letting the controller draw. */
 @Component
 public class DrawCardsUnlessTargetPaysLifeEffectHandler implements NormalEffectHandlerBean {
-
-    private final MayPayLifeEffectResolutionHandler mayPayLifeEffectResolutionHandler;
-
-    public DrawCardsUnlessTargetPaysLifeEffectHandler(
-            MayPayLifeEffectResolutionHandler mayPayLifeEffectResolutionHandler) {
-        this.mayPayLifeEffectResolutionHandler = mayPayLifeEffectResolutionHandler;
-    }
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -28,11 +22,10 @@ public class DrawCardsUnlessTargetPaysLifeEffectHandler implements NormalEffectH
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         DrawCardsUnlessTargetPaysLifeEffect drawEffect = (DrawCardsUnlessTargetPaysLifeEffect) effect;
-        mayPayLifeEffectResolutionHandler.resolve(gameData, entry, new MayPayLifeEffect(
-                drawEffect.lifeCost(),
-                new DrawCardEffect(0),
-                "Pay " + drawEffect.lifeCost() + " life to prevent drawing?",
-                MayPayPayer.TRIGGERING_PLAYER,
-                new DrawCardEffect(drawEffect.drawCount())));
+        // "You draw N cards unless target opponent pays L life" (CR 118.12a), asked as the next step.
+        entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(
+                UnlessPaysEffect.unlessPaysLife(Subjects.targetPlayerDeclaredElsewhere(), drawEffect.lifeCost(),
+                                new DrawCardEffect(drawEffect.drawCount()))
+                        .withPrompt("Pay " + drawEffect.lifeCost() + " life to prevent drawing?")));
     }
 }

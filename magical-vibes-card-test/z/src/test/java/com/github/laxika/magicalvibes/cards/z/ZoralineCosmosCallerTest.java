@@ -179,7 +179,7 @@ class ZoralineCosmosCallerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertLife(player1, 1);
         harness.assertInGraveyard(player1, "Barkform Harvester");

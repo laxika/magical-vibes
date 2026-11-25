@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleSelfPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectTargetCreatureDamageFromChosenSourceToTargetEffect;
@@ -195,6 +196,13 @@ public class TargetPolarityClassifier {
         }
         // "You may pay {X}. If you do / don't, …" — classify whichever branch targets a permanent
         // (Knight of the Mists: wrapped null, elseEffect destroys; Spellbomb: wrapped does work).
+        if (effect instanceof UnlessPaysEffect unless) {
+            TargetPolarity paid = unless.ifPaid() == null ? null : classify(gameData, unless.ifPaid(), aiPlayerId);
+            TargetPolarity declined = unless.ifNotPaid() == null
+                    ? null
+                    : classify(gameData, unless.ifNotPaid(), aiPlayerId);
+            return higherPriority(paid, declined);
+        }
         if (effect instanceof MayPayManaEffect mayPay) {
             TargetPolarity paid = mayPay.wrapped() == null
                     ? null

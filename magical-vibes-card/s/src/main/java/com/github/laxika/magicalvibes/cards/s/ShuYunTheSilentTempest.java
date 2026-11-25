@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -19,6 +19,6 @@ public class ShuYunTheSilentTempest extends Card {
         CardNotPredicate noncreatureSpell = new CardNotPredicate(new CardTypePredicate(CardType.CREATURE));
 
         target(TargetFilters.creature()).addTrigger(Triggers.youCastSpell().withFilter(noncreatureSpell),
-                new MayPayManaEffect("{R/W}{R/W}", new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target()), "Pay {R/W}{R/W}?"));
+                UnlessPaysEffect.youMayPay("{R/W}{R/W}", new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target())));
     }
 }

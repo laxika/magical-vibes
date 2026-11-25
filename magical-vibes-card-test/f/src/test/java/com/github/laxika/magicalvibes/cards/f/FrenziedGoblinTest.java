@@ -64,7 +64,7 @@ class FrenziedGoblinTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without red mana leaves the target able to block")
+    @DisplayName("Without any way to pay, nothing is asked and it leaves the target able to block")
     void cannotPayLeavesTargetAbleToBlock() {
         addCreatureReady(player1, new FrenziedGoblin());
         Permanent recruit = addCreatureReady(player2, new BorosRecruit());
@@ -72,7 +72,7 @@ class FrenziedGoblinTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, recruit.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.hasFloatingEffectOnPermanent(recruit.getId(), CantBlockEffect.class)).isFalse();
     }
@@ -169,7 +169,7 @@ class FrenziedGoblinTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, recruit.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.hasFloatingEffectOnPermanent(recruit.getId(), CantBlockEffect.class)).isFalse();
     }

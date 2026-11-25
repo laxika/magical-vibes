@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesInsteadOfDyingThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileControlledPermanentsInsteadOfDyingThisTurnEffect;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
@@ -60,7 +61,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileNontokenCreaturesInstead
 import com.github.laxika.magicalvibes.model.effect.ExileOwnCreaturesOfSubtypeInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCreaturesInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCreatureCardExileReplacement;
 import com.github.laxika.magicalvibes.model.effect.PersistReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturesUntilSourceLeavesEffect;
@@ -1007,7 +1007,7 @@ public class PermanentRemovalService {
         if (whenExiledEffect == null) {
             return;
         }
-        if (whenExiledEffect instanceof MayPayManaEffect || whenExiledEffect instanceof MayEffect) {
+        if (whenExiledEffect instanceof UnlessPaysEffect || whenExiledEffect instanceof MayEffect) {
             // "When you do, you may pay {2}. If you do, …" (Valentin, Dean of the Vein): a reflexive ability the
             // replacement made (CR 603.12), its "you may" asked as it resolves (CR 603.5).
             StackEntry reflexive = TriggeredAbilityStackService.madeAbility(replacement.sourceCard(),

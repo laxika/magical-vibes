@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -21,12 +21,10 @@ public class DrakeHaven extends Card {
         // Whenever you cycle or discard a card, you may pay {1}. If you do, create a 2/2 blue Drake with
         // flying. Cycling is a discard (CR 702.29e), so the single "controller discards" trigger covers both.
         addTrigger(Triggers.youDiscardCard(),
-                new MayPayManaEffect("{1}",
-                        new CreateTokenEffect("Drake", 2, 2,
+                UnlessPaysEffect.youMayPay("{1}", new CreateTokenEffect("Drake", 2, 2,
                                 CardColor.BLUE,
                                 List.of(CardSubtype.DRAKE),
                                 Set.of(Keyword.FLYING),
-                                Set.of()),
-                        "Pay {1} to create a 2/2 blue Drake creature token with flying?"));
+                                Set.of())).withPrompt("Pay {1} to create a 2/2 blue Drake creature token with flying?"));
     }
 }

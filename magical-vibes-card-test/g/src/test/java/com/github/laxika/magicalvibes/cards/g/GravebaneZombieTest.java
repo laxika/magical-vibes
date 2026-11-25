@@ -1768,7 +1768,7 @@ class GravebaneZombieTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         List<UUID> keptForests = forests.subList(0, 6).stream().map(Permanent::getId).toList();
@@ -2316,9 +2316,9 @@ class GravebaneZombieTest extends BaseCardTest {
         Permanent zombie = addCreatureReady(player2, zombieCard);
         zombie.setAttacking(true);
         resolveCombat(player2);
-        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         harness.handleMayAbilityChosen(player2, false);

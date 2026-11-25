@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GhostWarden;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -95,7 +96,7 @@ class LeylineOfLightningTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);

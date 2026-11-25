@@ -44,7 +44,7 @@ class TabletOfEpityrTest extends BaseCardTest {
         destroyArtifact(player1, 2);
         harness.passBothPriorities();
 
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertLife(player1, 20);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);

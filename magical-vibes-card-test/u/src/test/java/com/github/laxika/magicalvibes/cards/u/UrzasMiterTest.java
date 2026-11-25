@@ -116,7 +116,7 @@ class UrzasMiterTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Mind Stone"));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);

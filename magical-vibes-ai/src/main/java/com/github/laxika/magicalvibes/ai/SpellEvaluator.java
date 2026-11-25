@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
@@ -272,6 +273,14 @@ public class SpellEvaluator {
     private double evaluateAbilityEffect(GameData gameData, CardEffect effect,
                                          UUID aiPlayerId, UUID opponentId,
                                          List<Permanent> aiBattlefield, List<Permanent> oppBattlefield) {
+        // "[P] may pay. If they do, X. If they don't, Y" asked of this AI: paying is worth what X gains over Y.
+        if (effect instanceof UnlessPaysEffect unless) {
+            double paid = unless.ifPaid() == null ? 0 : evaluateAbilityEffect(gameData, unless.ifPaid(),
+                    aiPlayerId, opponentId, aiBattlefield, oppBattlefield);
+            double notPaid = unless.ifNotPaid() == null ? 0 : evaluateAbilityEffect(gameData, unless.ifNotPaid(),
+                    aiPlayerId, opponentId, aiBattlefield, oppBattlefield);
+            return paid - notPaid;
+        }
         // Self-pump (e.g. Shivan Dragon's {R}: +1/+0)
         if (effect instanceof BoostSelfEffect boost && boost.subject() instanceof PermanentSubject.Source) {
             AmountContext ctx = AmountContext.forEstimation(aiPlayerId);
@@ -485,6 +494,10 @@ public class SpellEvaluator {
         if (effect instanceof MayPayManaEffect mayPay) {
             return mayPay.wrapped() != null && isBoardWipeEffect(mayPay.wrapped())
                     || mayPay.elseEffect() != null && isBoardWipeEffect(mayPay.elseEffect());
+        }
+        if (effect instanceof UnlessPaysEffect unless) {
+            return unless.ifPaid() != null && isBoardWipeEffect(unless.ifPaid())
+                    || unless.ifNotPaid() != null && isBoardWipeEffect(unless.ifNotPaid());
         }
         return false;
     }

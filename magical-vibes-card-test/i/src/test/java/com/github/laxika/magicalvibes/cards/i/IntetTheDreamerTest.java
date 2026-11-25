@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GossamerPhantasm;
 import com.github.laxika.magicalvibes.cards.e.Enslave;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.u.UrborgTombOfYawgmoth;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -20,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({IntetTheDreamer.class, GossamerPhantasm.class, UrborgTombOfYawgmoth.class, Enslave.class})
+@CardUsed({Island.class, IntetTheDreamer.class, GossamerPhantasm.class, UrborgTombOfYawgmoth.class, Enslave.class})
 class IntetTheDreamerTest extends BaseCardTest {
 
     @Test
@@ -247,7 +249,9 @@ class IntetTheDreamerTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Intet, the Dreamer");
     }
 
+    /** Intet attacking, with an Island so its controller has a mana source and the payment is offered. */
     private Permanent addAttackingIntet() {
+        harness.addToBattlefield(player1, new Island());
         Permanent intet = addCreatureReady(player1, new IntetTheDreamer());
         intet.setAttacking(true);
         return intet;

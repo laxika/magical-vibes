@@ -87,7 +87,7 @@ class KrovikanRotTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, gd.playerHands.get(player1.getId()).indexOf(rot), target.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(rot);
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(rot);
@@ -121,8 +121,7 @@ class KrovikanRotTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, druid));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(rot);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(rot);

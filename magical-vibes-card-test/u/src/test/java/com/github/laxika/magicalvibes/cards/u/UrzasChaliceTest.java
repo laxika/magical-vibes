@@ -45,7 +45,7 @@ class UrzasChaliceTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
@@ -104,7 +104,7 @@ class UrzasChaliceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without enough mana gains no life")
+    @DisplayName("Without any way to pay, nothing is asked and it gains no life")
     void acceptWithoutManaNoLife() {
         harness.addToBattlefield(player1, new UrzasChalice());
         harness.setHand(player1, List.of(new Spellbook()));
@@ -113,7 +113,7 @@ class UrzasChaliceTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertLife(player1, lifeBefore);
     }

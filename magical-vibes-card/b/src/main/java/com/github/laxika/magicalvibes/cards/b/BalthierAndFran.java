@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -11,7 +12,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -33,7 +33,7 @@ public class BalthierAndFran extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE),
                         new PermanentCrewedThisTurnBySourcePredicate()))),
                 TriggerOptions.DEFAULT.withInterveningIf(new FirstCombatPhase()),
-                new MayPayManaEffect("{1}{R}{G}", new AdditionalCombatPhaseEffect(1),
-                        "Pay {1}{R}{G} to get an additional combat phase?"));
+                UnlessPaysEffect.youMayPay("{1}{R}{G}", new AdditionalCombatPhaseEffect(1))
+                        .withPrompt("Pay {1}{R}{G} to get an additional combat phase?"));
     }
 }

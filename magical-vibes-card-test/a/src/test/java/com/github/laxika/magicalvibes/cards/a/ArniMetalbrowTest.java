@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.i.IlhargTheRazeBoar;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArniMetalbrow.class, GrizzlyBears.class, HillGiant.class, IlhargTheRazeBoar.class})
+@CardUsed({Mountain.class, ArniMetalbrow.class, GrizzlyBears.class, HillGiant.class, IlhargTheRazeBoar.class})
 class ArniMetalbrowTest extends BaseCardTest {
 
     @Test
@@ -92,6 +93,7 @@ class ArniMetalbrowTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HillGiant(), new GrizzlyBears()));
 
         declareAttackers(List.of(1));
+        harness.addToBattlefield(player1, new Mountain());
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();

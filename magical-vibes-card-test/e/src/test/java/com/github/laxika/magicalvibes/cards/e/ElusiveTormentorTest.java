@@ -49,10 +49,10 @@ class ElusiveTormentorTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLACK, 3);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.addMana(player1, ManaColor.BLACK, 3);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(mist.isTransformed()).isFalse();
@@ -70,7 +70,7 @@ class ElusiveTormentorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(mist.isTransformed()).isTrue();
         assertThat(mist.getCard().getName()).isEqualTo("Insidious Mist");

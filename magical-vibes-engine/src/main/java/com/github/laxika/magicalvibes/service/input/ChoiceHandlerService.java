@@ -1385,10 +1385,6 @@ public class ChoiceHandlerService {
             handleForgottenLorePaymentChoice(gameData, player, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.TargetPlayerManaOrLifePaymentChoice ctx) {
-            handleTargetPlayerManaOrLifePaymentChoice(gameData, colorName, ctx);
-            return;
-        }
         if (colorChoice.context() instanceof ChoiceContext.EnchantedPermanentManaOrLifePaymentChoice ctx) {
             handleEnchantedPermanentManaOrLifePaymentChoice(gameData, colorName, ctx);
             return;
@@ -4754,52 +4750,6 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handleTargetPlayerManaOrLifePaymentChoice(
-            GameData gameData, String chosen, ChoiceContext.TargetPlayerManaOrLifePaymentChoice ctx) {
-        PendingInteraction.ColorChoice active =
-                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        if (active == null || !active.options().contains(chosen)) {
-            throw new IllegalArgumentException("Invalid mana-or-life payment choice: " + chosen);
-        }
-
-        boolean paid = false;
-        boolean paysLife = false;
-        if (ctx.payManaOption().equals(chosen)) {
-            ManaCost cost = new ManaCost(ctx.manaCost());
-            ManaPool pool = gameData.playerManaPools.get(ctx.payerId());
-            if (pool != null && cost.canPayResolutionCost(pool)) {
-                cost.payResolutionCost(pool);
-                paid = true;
-            }
-        } else if (ctx.payLifeOption().equals(chosen)
-                && resolutionCostPaymentService.canPayLife(gameData, ctx.payerId(), ctx.lifeCost())) {
-            paysLife = true;
-        } else if (!ChoiceContext.TargetPlayerManaOrLifePaymentChoice.DECLINE.equals(chosen)) {
-            throw new IllegalArgumentException("Invalid mana-or-life payment choice: " + chosen);
-        }
-
-        gameData.interaction.clearAwaitingInput();
-        gameData.rerunCurrentEffectAfterInteraction = false;
-        if (paysLife) {
-            // The payment is this answer's first change, so a Lich's Duel Mastery it would sacrifice (paying life is
-            // losing it, CR 119.4) is asked about before any life is paid (CR 616.1), and the payment is completed
-            // again after.
-            permanentChoiceHandlerService.runAskingDeathReplacementsFirst(gameData,
-                    () -> payLifeForTargetPlayerManaOrLifePayment(gameData, ctx),
-                    new GameData.ListChoiceReplay(active, chosen));
-            return;
-        }
-        gameData.resolvedMayAccepted = paid;
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void payLifeForTargetPlayerManaOrLifePayment(GameData gameData,
-                                                         ChoiceContext.TargetPlayerManaOrLifePaymentChoice ctx) {
-        lifeSupport.applyLifePayment(gameData, ctx.payerId(), ctx.lifeCost(), ctx.sourceCardName());
-        gameData.resolvedMayAccepted = true;
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
     private void handleEnchantedPermanentManaOrLifePaymentChoice(
             GameData gameData, String chosen,
             ChoiceContext.EnchantedPermanentManaOrLifePaymentChoice ctx) {
@@ -4883,11 +4833,6 @@ public class ChoiceHandlerService {
         if (replay.choice().context() instanceof ChoiceContext.RedistributePlayerLifeTotalsChoice redistribution) {
             permanentChoiceHandlerService.runAskingDeathReplacementsFirst(gameData,
                     () -> redistributeLifeTotals(gameData, replay.chosen(), redistribution), replay);
-            return;
-        }
-        if (replay.choice().context() instanceof ChoiceContext.TargetPlayerManaOrLifePaymentChoice payment) {
-            permanentChoiceHandlerService.runAskingDeathReplacementsFirst(gameData,
-                    () -> payLifeForTargetPlayerManaOrLifePayment(gameData, payment), replay);
             return;
         }
         if (replay.choice().context() instanceof ChoiceContext.PayAnyAmountOfLifeAsEnters asEnters) {

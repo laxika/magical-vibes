@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -24,6 +24,6 @@ public class LeafCrownedVisionary extends Card {
 
         // Whenever you cast an Elf spell, you may pay {G}. If you do, draw a card.
         addTrigger(Triggers.youCastSpell().withFilter(new CardSubtypePredicate(CardSubtype.ELF)),
-                new MayPayManaEffect("{G}", new DrawCardEffect(1), "Pay {G} to draw a card?"));
+                UnlessPaysEffect.youMayPay("{G}", new DrawCardEffect(1)).withPrompt("Pay {G} to draw a card?"));
     }
 }

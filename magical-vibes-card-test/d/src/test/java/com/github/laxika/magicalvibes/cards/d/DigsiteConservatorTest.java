@@ -40,7 +40,7 @@ class DigsiteConservatorTest extends BaseCardTest {
         harness.activateAbilityWithGraveyardTargets(player1, battlefieldIndex(conservator), 0,
                 List.of(card1.getId(), card2.getId(), card3.getId(), card4.getId()));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(conservator);
@@ -158,7 +158,7 @@ class DigsiteConservatorTest extends BaseCardTest {
         harness.setHand(player2, List.of(departed));
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(remaining);

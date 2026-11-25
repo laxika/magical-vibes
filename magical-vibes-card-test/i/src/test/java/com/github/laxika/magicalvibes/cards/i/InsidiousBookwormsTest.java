@@ -90,7 +90,7 @@ class InsidiousBookwormsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without enough mana does not resolve the optional effect")
+    @DisplayName("Without any way to pay, nothing is asked and it does not resolve the optional effect")
     void acceptingWithoutEnoughManaDoesNothing() {
         harness.addToBattlefield(player1, new InsidiousBookworms());
 
@@ -98,7 +98,7 @@ class InsidiousBookwormsTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
@@ -137,7 +137,7 @@ class InsidiousBookwormsTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);

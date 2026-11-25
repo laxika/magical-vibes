@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
@@ -1746,6 +1747,9 @@ public class TriggeredAbilityQueueService {
         if (effect instanceof MayPayManaEffect mayPay) {
             return targetedReturnEffect(mayPay.wrapped());
         }
+        if (effect instanceof UnlessPaysEffect unless) {
+            return targetedReturnEffect(unless.ifPaid());
+        }
         if (effect instanceof SacrificePermanentThenEffect sacrificeThen) {
             return targetedReturnEffect(sacrificeThen.thenEffect());
         }
@@ -1772,6 +1776,9 @@ public class TriggeredAbilityQueueService {
         }
         if (effect instanceof MayPayManaEffect mayPay) {
             return targetedReturnToHandEffect(mayPay.wrapped());
+        }
+        if (effect instanceof UnlessPaysEffect unless) {
+            return targetedReturnToHandEffect(unless.ifPaid());
         }
         if (effect instanceof SacrificePermanentThenEffect sacrificeThen) {
             return targetedReturnToHandEffect(sacrificeThen.thenEffect());

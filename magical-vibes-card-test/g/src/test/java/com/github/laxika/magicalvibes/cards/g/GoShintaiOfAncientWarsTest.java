@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.h.HondenOfSeeingWinds;
 import com.github.laxika.magicalvibes.cards.t.TezzeretBetrayerOfFlesh;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -24,8 +25,8 @@ class GoShintaiOfAncientWarsTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         advanceToEndStep(player1);
-        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
@@ -41,7 +42,7 @@ class GoShintaiOfAncientWarsTest extends BaseCardTest {
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
@@ -70,8 +71,8 @@ class GoShintaiOfAncientWarsTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         advanceToEndStep(player1);
-        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.withAutoStop(TurnStep.END_STEP,
                 () -> harness.handlePermanentChosen(player1, player2.getId()));
@@ -92,8 +93,8 @@ class GoShintaiOfAncientWarsTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         advanceToEndStep(player1);
-        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, planeswalker.getId());
         harness.passBothPriorities();
@@ -110,8 +111,8 @@ class GoShintaiOfAncientWarsTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         advanceToEndStep(player1);
-        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
@@ -126,8 +127,8 @@ class GoShintaiOfAncientWarsTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         advanceToEndStep(player1);
-        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.withAutoStop(TurnStep.END_STEP,
                 () -> harness.handlePermanentChosen(player1, player2.getId()));
@@ -138,14 +139,14 @@ class GoShintaiOfAncientWarsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without enough mana creates no damage trigger")
+    @DisplayName("Without any way to pay, nothing is asked and it creates no damage trigger")
     void cannotDealDamageWithoutPaying() {
         harness.addToBattlefield(player1, new GoShintaiOfAncientWars());
         harness.setLife(player2, 20);
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.stack).isEmpty();

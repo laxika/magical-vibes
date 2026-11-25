@@ -60,7 +60,7 @@ class HurkylsProdigyTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gqs.hasCantBeBlocked(gd, prodigy)).isFalse();
         assertThat(gqs.getEffectivePower(gd, prodigy)).isEqualTo(1);

@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnteringPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -28,9 +28,7 @@ public class CadricSoulKindler extends Card {
                                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new MayPayManaEffect(
-                        "{1}",
-                        new CreateTokenCopyOfEnteringPermanentEffect(true, false, true),
-                        "Pay {1} to create a hasty token copy of that legendary permanent?"));
+                UnlessPaysEffect.youMayPay("{1}", new CreateTokenCopyOfEnteringPermanentEffect(true, false, true))
+                        .withPrompt("Pay {1} to create a hasty token copy of that legendary permanent?"));
     }
 }

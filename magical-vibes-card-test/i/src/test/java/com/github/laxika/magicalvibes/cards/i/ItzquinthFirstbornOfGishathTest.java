@@ -119,7 +119,12 @@ class ItzquinthFirstbornOfGishathTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, pay);
+        if (pay) {
+            harness.handleMayAbilityChosen(player1, true);
+        } else {
+            // Without the {2}, there is no way to pay and nothing is asked (CR 118.3, 608.2d).
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        }
 
         if (!pay) {
             return;

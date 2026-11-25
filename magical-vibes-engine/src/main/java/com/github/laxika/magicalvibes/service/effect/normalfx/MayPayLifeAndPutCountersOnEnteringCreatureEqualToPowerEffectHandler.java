@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.List;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeAndPutCountersOnEnteringCreatureEqualToPowerEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,6 @@ public class MayPayLifeAndPutCountersOnEnteringCreatureEqualToPowerEffectHandler
         implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final MayPayLifeEffectResolutionHandler mayPayLifeEffectResolutionHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,10 +35,9 @@ public class MayPayLifeAndPutCountersOnEnteringCreatureEqualToPowerEffectHandler
                 ? Math.max(0, entry.getTriggeringPermanentPowerAtTrigger() == null
                         ? 0 : entry.getTriggeringPermanentPowerAtTrigger())
                 : Math.max(0, gameQueryService.getEffectivePower(gameData, enteringPermanent));
-        MayPayLifeEffect mayPayLife = new MayPayLifeEffect(
-                power,
-                PutCountersEffect.onTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE, power),
-                "Pay " + power + " life to put " + power + " +1/+1 counter(s) on it?");
-        mayPayLifeEffectResolutionHandler.resolve(gameData, entry, mayPayLife);
+        entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(
+                UnlessPaysEffect.youMayPayLife(power,
+                                PutCountersEffect.onTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE, power))
+                        .withPrompt("Pay " + power + " life to put " + power + " +1/+1 counter(s) on it?")));
     }
 }

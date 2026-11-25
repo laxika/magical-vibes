@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.c.ColossodonYearling;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NecromasterDragon.class, ColossodonYearling.class})
+@CardUsed({Island.class, NecromasterDragon.class, ColossodonYearling.class})
 class NecromasterDragonTest extends BaseCardTest {
 
     @Test
@@ -53,7 +54,7 @@ class NecromasterDragonTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without enough mana creates no token and mills no cards")
+    @DisplayName("Accepting without enough mana in the pool creates no token and mills no cards")
     void insufficientManaDoesNothing() {
         addAttackingDragon();
         harness.setLibrary(player2, List.of(new ColossodonYearling(), new ColossodonYearling()));
@@ -110,6 +111,7 @@ class NecromasterDragonTest extends BaseCardTest {
     }
 
     private void addAttackingDragon() {
+        harness.addToBattlefield(player1, new Island());
         Permanent dragon = addCreatureReady(player1, new NecromasterDragon());
         dragon.setAttacking(true);
     }

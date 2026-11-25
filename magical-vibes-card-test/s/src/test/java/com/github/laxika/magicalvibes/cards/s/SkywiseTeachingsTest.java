@@ -158,7 +158,7 @@ class SkywiseTeachingsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))

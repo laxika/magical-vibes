@@ -53,6 +53,7 @@ class OhabiCaleriaTest extends BaseCardTest {
         harness.setLibrary(player1, new ArrayList<>(List.of(new Forest())));
         harness.setHand(player1, new ArrayList<>());
 
+        harness.addToBattlefield(player1, new Forest());
         resolveCombat();
         harness.passBothPriorities();
 
@@ -75,6 +76,7 @@ class OhabiCaleriaTest extends BaseCardTest {
         harness.setLibrary(player1, new ArrayList<>(List.of(new Forest())));
         harness.setHand(player1, new ArrayList<>());
 
+        harness.addToBattlefield(player1, new Forest());
         resolveCombat();
         harness.passBothPriorities();
 

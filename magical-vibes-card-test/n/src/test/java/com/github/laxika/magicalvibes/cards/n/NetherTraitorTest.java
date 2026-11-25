@@ -46,8 +46,7 @@ class NetherTraitorTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bear));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertInGraveyard(player1, "Nether Traitor");
         harness.assertNotOnBattlefield(player1, "Nether Traitor");
@@ -69,7 +68,7 @@ class NetherTraitorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without {B} does not return Nether Traitor")
+    @DisplayName("Without any way to pay, nothing is asked and it does not return Nether Traitor")
     void cannotReturnWithoutBlackMana() {
         Card traitor = new NetherTraitor();
         harness.setGraveyard(player1, List.of(traitor));
@@ -78,8 +77,7 @@ class NetherTraitorTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bear));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertInGraveyard(player1, "Nether Traitor");
         harness.assertNotOnBattlefield(player1, "Nether Traitor");

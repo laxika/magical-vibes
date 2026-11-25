@@ -87,11 +87,11 @@ class ClovenCastingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, victim.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.passBothPriorities(); // resolve MayPayManaEffect -> may-pay prompt
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.handleMayAbilityChosen(player1, true); // pay {1} -> resolve copy
 
         assertThat(terminateCount()).isEqualTo(2);
@@ -109,7 +109,7 @@ class ClovenCastingTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, victim.getId());
         harness.passBothPriorities(); // resolve MayPayManaEffect -> may-pay prompt
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(terminateCount()).isEqualTo(1);
     }

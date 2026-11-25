@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -16,9 +16,8 @@ public class IcewroughtSentry extends Card {
 
     public IcewroughtSentry() {
         target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.attacks(),
-                new MayPayManaEffect("{1}{U}",
-                        new QueueReflexiveAbilityEffect(new TapPermanentsEffect(Subjects.target())),
-                        "Pay {1}{U} to tap target creature an opponent controls?"));
+                UnlessPaysEffect.youMayPay("{1}{U}", new QueueReflexiveAbilityEffect(new TapPermanentsEffect(Subjects.target())))
+                        .withPrompt("Pay {1}{U} to tap target creature an opponent controls?"));
         addTrigger(Triggers.youTapPermanentOpponentControls()
                         .withFilter(new PermanentIsCreaturePredicate()),
                 new BoostSelfEffect(2, 1));

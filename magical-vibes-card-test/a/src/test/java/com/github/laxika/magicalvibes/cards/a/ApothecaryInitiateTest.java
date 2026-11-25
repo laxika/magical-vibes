@@ -112,7 +112,7 @@ class ApothecaryInitiateTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without {1} does not gain life")
+    @DisplayName("Without any way to pay, nothing is asked and it does not gain life")
     void acceptingWithoutManaDoesNotGainLife() {
         harness.addToBattlefield(player1, new ApothecaryInitiate());
         harness.castFromHand(player1, new KithkinShielddare(), "{1}{W}");
@@ -123,10 +123,8 @@ class ApothecaryInitiateTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)
-                .playerId()).isEqualTo(player1.getId());
 
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getCard().getName().equals("Apothecary Initiate"));

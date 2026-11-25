@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -34,7 +34,7 @@ public class JeditOjanenMercenary extends Card {
                                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
                                         new PermanentIsSourceCardPredicate())))),
                         ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
-                new MayPayManaEffect("{G}", catWarriorToken,
-                        "Pay {G} to create a 2/2 green Cat Warrior creature token with forestwalk?"));
+                UnlessPaysEffect.youMayPay("{G}", catWarriorToken)
+                        .withPrompt("Pay {G} to create a 2/2 green Cat Warrior creature token with forestwalk?"));
     }
 }

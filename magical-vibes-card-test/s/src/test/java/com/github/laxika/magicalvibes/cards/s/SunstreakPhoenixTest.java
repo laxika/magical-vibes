@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.o.OtherworldlyGaze;
 import com.github.laxika.magicalvibes.cards.t.TurnTheEarth;
 import com.github.laxika.magicalvibes.model.DayNight;
@@ -53,7 +54,7 @@ class SunstreakPhoenixTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(phoenix));
 
         makeItNight();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(phoenix);
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -100,7 +101,7 @@ class SunstreakPhoenixTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         makeItNight();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(phoenix);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();

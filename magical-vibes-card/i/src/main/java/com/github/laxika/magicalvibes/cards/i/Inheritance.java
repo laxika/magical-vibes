@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -13,8 +13,7 @@ public class Inheritance extends Card {
 
     public Inheritance() {
         // Whenever a creature dies, you may pay {3}. If you do, draw a card.
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANY), new MayPayManaEffect(
-                "{3}", new DrawCardEffect(1), "Pay {3} to draw a card?"
-        ));
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANY), UnlessPaysEffect.youMayPay("{3}", new DrawCardEffect(1))
+                .withPrompt("Pay {3} to draw a card?"));
     }
 }

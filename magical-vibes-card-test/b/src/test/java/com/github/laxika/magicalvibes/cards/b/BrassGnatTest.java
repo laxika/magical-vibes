@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -42,7 +43,7 @@ class BrassGnatTest extends BaseCardTest {
         advanceToUpkeep(player1);
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gnat.isTapped()).isTrue();
     }
@@ -54,7 +55,7 @@ class BrassGnatTest extends BaseCardTest {
         advanceToUpkeep(player1);
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gnat.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
@@ -97,7 +98,7 @@ class BrassGnatTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gnat.isTapped()).isFalse();
     }

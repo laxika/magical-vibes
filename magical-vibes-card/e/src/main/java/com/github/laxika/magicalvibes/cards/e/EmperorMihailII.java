@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,10 +24,7 @@ public class EmperorMihailII extends Card {
         addStaticEffect(new AllowCastFromTopOfLibraryEffect(new CardSubtypePredicate(CardSubtype.MERFOLK)));
 
         addTrigger(Triggers.youCastSpell().withFilter(new CardSubtypePredicate(CardSubtype.MERFOLK)),
-                new MayPayManaEffect(
-                        "{1}",
-                        new CreateTokenEffect("Merfolk", 1, 1, CardColor.BLUE,
-                                List.of(CardSubtype.MERFOLK), Set.of(), Set.of()),
-                        "Pay {1} to create a 1/1 blue Merfolk creature token?"));
+                UnlessPaysEffect.youMayPay("{1}", new CreateTokenEffect("Merfolk", 1, 1, CardColor.BLUE,
+                                List.of(CardSubtype.MERFOLK), Set.of(), Set.of())).withPrompt("Pay {1} to create a 1/1 blue Merfolk creature token?"));
     }
 }

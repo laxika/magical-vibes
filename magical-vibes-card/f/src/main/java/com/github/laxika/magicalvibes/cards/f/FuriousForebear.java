@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -16,8 +16,7 @@ public class FuriousForebear extends Card {
     public FuriousForebear() {
         addTrigger(new TriggerCondition(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
                 AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                new MayPayManaEffect("{1}{W}",
-                        new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
-                        "Pay {1}{W} to return Furious Forebear from your graveyard to your hand?"));
+                UnlessPaysEffect.youMayPay("{1}{W}", new ReturnSourceCardFromGraveyardToOwnerHandEffect())
+                        .withPrompt("Pay {1}{W} to return Furious Forebear from your graveyard to your hand?"));
     }
 }

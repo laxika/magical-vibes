@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -34,13 +34,13 @@ import java.util.List;
 public class InallaArchmageRitualist extends Card {
 
     public InallaArchmageRitualist() {
-        MayPayManaEffect copyWizard = new MayPayManaEffect(
-                "{1}",
-                new ConditionalEffect(
-                        new AnyOf(List.of(new SourceIsOnBattlefield(), new SourceCardInCommandZone())),
-                        new CreateTokenCopyOfTargetPermanentEffect(true, true).ofTriggeringPermanent()),
-                "Pay {1} to create a token that's a copy of that Wizard?");
-        CardEffect wizardTrigger = copyWizard;
+        // "If Inalla is in the command zone or on the battlefield" is an intervening "if" (CR 603.4): with it false as
+        // the ability resolves, nothing is asked.
+        CardEffect wizardTrigger = new ConditionalEffect(
+                new AnyOf(List.of(new SourceIsOnBattlefield(), new SourceCardInCommandZone())),
+                UnlessPaysEffect.youMayPay("{1}",
+                                new CreateTokenCopyOfTargetPermanentEffect(true, true).ofTriggeringPermanent())
+                        .withPrompt("Pay {1} to create a token that's a copy of that Wizard?"));
 
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(

@@ -32,6 +32,7 @@ class LingeringPhantomTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0);
         // Stack: [Spellbook (bottom), MayPayMana trigger (top)]
+        harness.addMana(player1, ManaColor.BLACK, 1);
         harness.passBothPriorities(); // resolve MayPayMana trigger -> may prompt
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -65,7 +66,7 @@ class LingeringPhantomTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities(); // resolve MayPayMana trigger -> may prompt
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertNotInHand(player1, "Lingering Phantom");
         harness.assertInGraveyard(player1, "Lingering Phantom");
@@ -136,7 +137,7 @@ class LingeringPhantomTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting may-pay without enough mana treats as decline")
+    @DisplayName("Without any way to pay, nothing is asked and nothing happens")
     void acceptWithoutManaIsDecline() {
         LingeringPhantom phantom = new LingeringPhantom();
         harness.setGraveyard(player1, List.of(phantom));
@@ -145,7 +146,7 @@ class LingeringPhantomTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities(); // resolve MayPayMana trigger -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept without mana
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         // Phantom should remain in graveyard
         harness.assertInGraveyard(player1, "Lingering Phantom");
@@ -189,7 +190,7 @@ class LingeringPhantomTest extends BaseCardTest {
                 .filteredOn(c -> c instanceof LingeringPhantom).hasSize(1);
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId()))
                 .filteredOn(c -> c instanceof LingeringPhantom).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId()))

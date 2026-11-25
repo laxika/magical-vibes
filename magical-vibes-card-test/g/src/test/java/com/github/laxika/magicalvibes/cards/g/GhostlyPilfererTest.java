@@ -49,7 +49,7 @@ class GhostlyPilfererTest extends BaseCardTest {
         runUntapStep(player1);
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore);
     }

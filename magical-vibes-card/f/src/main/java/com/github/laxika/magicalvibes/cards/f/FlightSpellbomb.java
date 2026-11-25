@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -27,6 +27,7 @@ public class FlightSpellbomb extends Card {
                 TargetFilters.creature()
         ));
 
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayPayManaEffect("{U}", new DrawCardEffect(1), "Pay {U} to draw a card?"));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), UnlessPaysEffect.youMayPay("{U}", new DrawCardEffect(1))
+                .withPrompt("Pay {U} to draw a card?"));
     }
 }

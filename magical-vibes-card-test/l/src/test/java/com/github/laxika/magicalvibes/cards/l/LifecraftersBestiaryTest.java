@@ -160,7 +160,7 @@ class LifecraftersBestiaryTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawn);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);

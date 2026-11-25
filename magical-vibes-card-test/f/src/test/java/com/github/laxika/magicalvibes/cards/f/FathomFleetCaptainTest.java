@@ -118,7 +118,7 @@ class FathomFleetCaptainTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting with insufficient mana treats as decline")
+    @DisplayName("Without any way to pay, nothing is asked and nothing happens")
     void cannotPayTreatsAsDecline() {
         addCreatureReady(player1, new FathomFleetCaptain());
         addPirateCreature(player1);
@@ -129,9 +129,8 @@ class FathomFleetCaptainTest extends BaseCardTest {
         // Resolve trigger to get the may-pay prompt
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         // No token created (insufficient mana)
         assertThat(gd.playerBattlefields.get(player1.getId()))

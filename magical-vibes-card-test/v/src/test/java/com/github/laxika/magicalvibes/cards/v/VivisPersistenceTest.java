@@ -67,10 +67,10 @@ class VivisPersistenceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card.getId().equals(persistence.getId()));

@@ -28,6 +28,12 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatur
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.MayPayLifeForColorlessManaUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.MayTapLandsYouDontControlForSpellsUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.effect.WaterbendPaymentService;
@@ -57,7 +63,8 @@ import org.springframework.stereotype.Component;
 /**
  * Pays a cost a resolving spell or ability asks a player for: "[do something]" in an "if you do / unless" construction
  * is a cost paid as the effect resolves (CR 118.12, 118.12a), by its controller or by any other player the text names.
- * A caller asks {@link #canPay} (CR 118.3: a cost can't be paid without the resources to pay it fully) and, once the
+ * A caller asks {@link #couldPossiblyPay} whether to ask the payer at all (no question only when they have no way at
+ * all to pay), or {@link #canPay} (CR 118.3: a cost can't be paid without the resources to pay it fully) and, once the
  * payer chose to pay, {@link #pay}. Each cost type is paid through the action every other payment of it uses, so the
  * events and replacements of that action apply:
  * <ul>
@@ -176,6 +183,9 @@ public class ResolutionCostPaymentService {
     @Autowired
     @Lazy
     private GameLogService gameLogService;
+    @Autowired
+    @Lazy
+    private AbilityActivationService abilityActivationService;
 
     public ResolutionCostPaymentService(GameQueryService gameQueryService, LifeSupport lifeSupport) {
         this.gameQueryService = gameQueryService;
@@ -208,6 +218,105 @@ public class ResolutionCostPaymentService {
                     .anyMatch(alternative -> canPay(gameData, payerId, alternative, sourceCard));
             default -> throw new IllegalArgumentException("No resolution-time payment for " + cost);
         };
+    }
+
+    /**
+     * Whether {@code payerId} could possibly pay {@code cost} as it is asked for now, so is asked at all: {@code false}
+     * only when it is certain they can't, as they have no way at all to pay it (CR 118.3, 608.2d). Where it can't be
+     * sure, it answers {@code true} and the payer is asked; {@link #pay} still pays only what they then have.
+     * <ul>
+     *   <li>Life alone ({@link PayLifeCost}): {@link #canPayLife} (CR 119.4, 119.8). No mana is asked for, so no mana
+     *   ability can be activated meanwhile to change the life total (CR 605.3a).</li>
+     *   <li>Mana ({@link PayManaCost}, a {@link WaterbendCost}'s mana part): their pool pays it ({B} as 2 life under
+     *   K'rrik, Son of Yawgmoth included), or they have any mana source at all ({@link #hasManaSource}), whatever it
+     *   could make: with no activated mana ability, no triggered one can trigger either (CR 605.1b).</li>
+     *   <li>Mana and life: a payer who can't lose life can't pay it (CR 119.8); otherwise the life falls short for
+     *   certain only when no mana ability could be activated (a mana ability may gain life), so the mana decides.</li>
+     *   <li>Every other cost: {@link #canPay}, which no mana payment can change.</li>
+     *   <li>{@link AnyOfCost}: any alternative.</li>
+     * </ul>
+     */
+    public boolean couldPossiblyPay(GameData gameData, UUID payerId, CostEffect cost, Card sourceCard) {
+        return switch (cost) {
+            case PayLifeCost life -> canPayLife(gameData, payerId, fixedLife(life));
+            case PayManaCost mana -> couldPossiblyPayMana(gameData, payerId, mana);
+            case WaterbendCost waterbend -> canPay(gameData, payerId, waterbend, sourceCard)
+                    || hasManaSource(gameData, payerId);
+            case AnyOfCost anyOf -> anyOf.alternatives().stream()
+                    .anyMatch(alternative -> couldPossiblyPay(gameData, payerId, alternative, sourceCard));
+            default -> canPay(gameData, payerId, cost, sourceCard);
+        };
+    }
+
+    private boolean couldPossiblyPayMana(GameData gameData, UUID payerId, PayManaCost mana) {
+        if (mana.lifeAmount() > 0 && !gameQueryService.canPlayerLoseLife(gameData, payerId)) {
+            return false;
+        }
+        if (lifeForMana(gameData, payerId, mana, false) >= 0) {
+            return true;
+        }
+        return manaCostOf(mana) != null && hasManaSource(gameData, payerId);
+    }
+
+    /**
+     * Whether {@code playerId} has any way at all to make mana: a permanent they control with a mana ability (an
+     * intrinsic basic land type's, a printed or granted one, tapped or not, whatever its cost); another player's
+     * permanent's mana ability any player may activate; a card they own in their hand, graveyard, exile or the command
+     * zone with a mana ability that works there (Elvish Spirit Guide); or a permission to make mana (Channel's "pay 1
+     * life: add {C}", tapping lands they don't control for mana). Counted generously: an answer of {@code false} is
+     * a proof that no mana can be made.
+     */
+    public boolean hasManaSource(GameData gameData, UUID playerId) {
+        if (abilityActivationService == null) {
+            return false;
+        }
+        if (gameData.hasFloatingEffectOnPlayer(playerId, MayPayLifeForColorlessManaUntilEndOfTurnEffect.class)
+                || gameData.hasFloatingEffectOnPlayer(playerId,
+                MayTapLandsYouDontControlForSpellsUntilEndOfTurnEffect.class)) {
+            return true;
+        }
+        for (Map.Entry<UUID, List<Permanent>> battlefield : gameData.playerBattlefields.entrySet()) {
+            boolean own = battlefield.getKey().equals(playerId);
+            for (Permanent permanent : battlefield.getValue()) {
+                if (own && (!gameQueryService.intrinsicBasicLandManaColors(gameData, permanent).isEmpty()
+                        || !gameQueryService.getOverriddenLandManaColors(gameData, permanent).isEmpty())) {
+                    return true;
+                }
+                for (ActivatedAbility ability : abilityActivationService.getEffectiveActivatedAbilities(
+                        gameData, permanent)) {
+                    if ((own || ability.isActivatableByAnyPlayer()) && AbilityActivationService.isManaAbility(ability)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        for (Card card : gameData.playerHands.getOrDefault(playerId, List.of())) {
+            if (hasManaAbility(abilityActivationService.effectiveHandAbilities(gameData, card, playerId))) {
+                return true;
+            }
+        }
+        for (Card card : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
+            if (hasManaAbility(card.getActivatedAbilities(Zone.GRAVEYARD))) {
+                return true;
+            }
+        }
+        synchronized (gameData.exiledCards) {
+            for (ExiledCardEntry exiled : gameData.exiledCards) {
+                if (playerId.equals(exiled.ownerId()) && hasManaAbility(exiled.card().getActivatedAbilities(Zone.EXILE))) {
+                    return true;
+                }
+            }
+        }
+        for (Card card : gameData.playerCommandZones.getOrDefault(playerId, List.of())) {
+            if (hasManaAbility(card.getActivatedAbilities(Zone.COMMAND))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasManaAbility(List<ActivatedAbility> abilities) {
+        return abilities.stream().anyMatch(AbilityActivationService::isManaAbility);
     }
 
     /**

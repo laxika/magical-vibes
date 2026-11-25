@@ -52,7 +52,7 @@ class BearerOfSilenceTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.passBothPriorities();
@@ -103,7 +103,7 @@ class BearerOfSilenceTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertOnBattlefield(player2, "Bearer of Silence");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);

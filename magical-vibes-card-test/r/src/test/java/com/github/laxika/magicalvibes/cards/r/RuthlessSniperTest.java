@@ -121,7 +121,7 @@ class RuthlessSniperTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         resolveAllTriggers();
     }
 
@@ -180,8 +180,7 @@ class RuthlessSniperTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, sniper.getId());
         resolveAllTriggers();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         resolveAllTriggers();
 
         assertThat(sniper.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();

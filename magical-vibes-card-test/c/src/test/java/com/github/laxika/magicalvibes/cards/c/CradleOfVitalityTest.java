@@ -72,7 +72,7 @@ class CradleOfVitalityTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without enough mana places no counters")
+    @DisplayName("Without any way to pay, nothing is asked and it places no counters")
     void cannotPayNoCounters() {
         harness.addToBattlefield(player1, new CradleOfVitality());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -87,7 +87,7 @@ class CradleOfVitalityTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        harness.handleMayAbilityChosen(player1, true); // accept but cannot pay → treated as decline
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

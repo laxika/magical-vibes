@@ -25,6 +25,7 @@ class LlanowarSentinelTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
         harness.assertOnBattlefield(player1, "Llanowar Sentinel");
 
+        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
@@ -46,18 +47,17 @@ class LlanowarSentinelTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting may without enough mana does not search")
+    @DisplayName("Without any way to pay, nothing is asked and it does not search")
     void acceptingMayWithoutEnoughManaDoesNotSearch() {
         setupAndCast(3);
         setupLibraryWithSentinels();
 
         harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
         harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline (can't pay)
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(countSentinelsOnBattlefield()).isEqualTo(1);
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("cannot pay {1}{G}"));
     }
 
     @Test
@@ -170,7 +170,7 @@ class LlanowarSentinelTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
         assertThat(gd.interaction.activeInteraction()).isNull();

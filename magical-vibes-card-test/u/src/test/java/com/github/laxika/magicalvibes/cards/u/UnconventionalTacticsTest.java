@@ -79,12 +79,12 @@ class UnconventionalTacticsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2); // cast the Zombie
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature, leaving graveyard trigger on stack
+        harness.addMana(player1, ManaColor.WHITE, 1);
         harness.passBothPriorities(); // resolve trigger, opening may-pay prompt
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.pendingMayAbilities.getFirst().manaCost()).isEqualTo("{W}");
 
-        harness.addMana(player1, ManaColor.WHITE, 1);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(tactics.getId()));
@@ -104,8 +104,7 @@ class UnconventionalTacticsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature, leaving graveyard trigger on stack
         harness.passBothPriorities(); // resolve trigger, opening may-pay prompt
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getId().equals(tactics.getId()));
     }
@@ -124,7 +123,7 @@ class UnconventionalTacticsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger, opening may-pay prompt
 
         // No white mana available to pay the {W}
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getId().equals(tactics.getId()));
         assertThat(gd.playerHands.get(player1.getId())).noneMatch(c -> c.getId().equals(tactics.getId()));
@@ -191,7 +190,7 @@ class UnconventionalTacticsTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
     }

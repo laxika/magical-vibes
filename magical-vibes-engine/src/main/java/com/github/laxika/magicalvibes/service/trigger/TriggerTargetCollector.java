@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -637,7 +638,7 @@ public class TriggerTargetCollector {
     /**
      * Looks through the wrappers that hide an effect's own targeting from this collector.
      *
-     * <p>{@link MayEffect} and {@link MayPayManaEffect} carry the target restriction on the
+     * <p>{@link MayEffect}, {@link MayPayManaEffect} and {@link UnlessPaysEffect} carry the target restriction on the
      * effective wrapped or else effect, while the target of the ability as a whole is still chosen
      * when the trigger is put on the stack. {@link ConditionalEffect} is unwrapped only for the slots whose
      * {@link Options#unwrapConditional()} says so.
@@ -647,6 +648,7 @@ public class TriggerTargetCollector {
             case MayEffect may -> effectiveTargetEffect(may.wrapped(), may.elseEffect(), effect);
             case MayPayManaEffect mayPay -> effectiveTargetEffect(
                     mayPay.wrapped(), mayPay.elseEffect(), effect);
+            case UnlessPaysEffect unless -> effectiveTargetEffect(unless.ifPaid(), unless.ifNotPaid(), effect);
             default -> effect;
         };
         return options.unwrapConditional() && unwrapped instanceof ConditionalEffect ce ? ce.wrapped() : unwrapped;

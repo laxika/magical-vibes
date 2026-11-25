@@ -103,7 +103,7 @@ class WoodenSphereTest extends BaseCardTest {
 
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertLife(player1, lifeBefore);
     }
@@ -124,7 +124,7 @@ class WoodenSphereTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without enough mana gains no life")
+    @DisplayName("Without any way to pay {1}, nothing is asked and no life is gained")
     void acceptWithoutManaNoLife() {
         harness.addToBattlefield(player1, new WoodenSphere());
 
@@ -132,14 +132,15 @@ class WoodenSphereTest extends BaseCardTest {
 
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertLife(player1, lifeBefore);
     }
 
     @Test
-    @DisplayName("Accepting without enough mana gains no life")
+    @DisplayName("Accepting with an untapped land but nothing in the pool gains no life")
     void acceptWithoutManaNoLifeUpstreamReview() {
+        harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new WoodenSphere());
         int lifeBefore = gd.getLife(player1.getId());
 

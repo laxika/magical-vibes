@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
@@ -22,12 +22,10 @@ public class GoblinVandal extends Card {
         // target artifact defending player controls and this creature assigns no combat damage
         // this turn. "If you do" is the payment of {R} (CR 118.12), not the destruction.
         addTrigger(Triggers.attacksUnblocked(),
-                new MayPayManaEffect("{R}",
-                        SequenceEffect.of(
+                UnlessPaysEffect.youMayPay("{R}", SequenceEffect.of(
                                 new DestroyTargetPermanentEffect(new PermanentAllOfPredicate(List.of(
                                         new PermanentIsArtifactPredicate(),
                                         new PermanentControlledByDefendingPlayerPredicate()))),
-                                new AssignNoCombatDamageEffect()),
-                        "pay {R} to destroy target artifact defending player controls"));
+                                new AssignNoCombatDamageEffect())).withPrompt("pay {R} to destroy target artifact defending player controls"));
     }
 }

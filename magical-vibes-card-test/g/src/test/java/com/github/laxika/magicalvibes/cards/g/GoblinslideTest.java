@@ -78,7 +78,7 @@ class GoblinslideTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Goblinslide());
         harness.castFromHand(player1, new WeaveFate(), "{3}{U}");
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertNotOnBattlefield(player1, "Goblin");
     }

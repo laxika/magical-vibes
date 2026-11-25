@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,9 +18,7 @@ public class RuthlessSniper extends Card {
         // covers both. As with Drake Haven, the may-pay comes up at resolution; the target creature is
         // chosen there too (the resolution-time targeting path, as in Furnace Celebration).
         addTrigger(Triggers.youDiscardCard(),
-                new MayPayManaEffect("{1}",
-                        PutCountersEffect.withTargetRestriction(
-                                CounterType.MINUS_ONE_MINUS_ONE, 1, new PermanentIsCreaturePredicate()),
-                        "Pay {1} to put a -1/-1 counter on target creature?"));
+                UnlessPaysEffect.youMayPay("{1}", PutCountersEffect.withTargetRestriction(
+                                CounterType.MINUS_ONE_MINUS_ONE, 1, new PermanentIsCreaturePredicate())).withPrompt("Pay {1} to put a -1/-1 counter on target creature?"));
     }
 }

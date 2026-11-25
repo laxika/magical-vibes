@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +21,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TrevaTheRenewer.class, RagingKavu.class, Forest.class, BlazingSpecter.class})
 class TrevaTheRenewerTest extends BaseCardTest {
+
+    /**
+     * Both players have a way to make mana, so every "you may pay" in this class is asked and the test answers it with
+     * the mana it adds (or without it); a payer with no way at all to pay isn't asked (CR 118.3, 608.2d).
+     */
+    @BeforeEach
+    void everyPayerHasAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     private int life(Player player) {
         return harness.getGameData().playerLifeTotals.get(player.getId());
@@ -126,7 +137,7 @@ class TrevaTheRenewerTest extends BaseCardTest {
 
         harness.assertLife(player1, before);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
-        assertThat(gameLogContains("cannot pay {2}{W}")).isTrue();
+        assertThat(gameLogContains("declines to pay {2}{W}")).isTrue();
     }
 
     @Test

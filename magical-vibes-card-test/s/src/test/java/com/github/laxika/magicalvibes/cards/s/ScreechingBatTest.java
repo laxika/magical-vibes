@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ScreechingBat.class})
 class ScreechingBatTest extends BaseCardTest {
+
+    /**
+     * Both players have a way to make mana, so every "you may pay" in this class is asked and the test answers it with
+     * the mana it adds (or without it); a payer with no way at all to pay isn't asked (CR 118.3, 608.2d).
+     */
+    @BeforeEach
+    void everyPayerHasAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     @Test
     @DisplayName("Transforms to Stalking Vampire when controller pays {2}{B}{B} during upkeep")
@@ -56,9 +68,9 @@ class ScreechingBatTest extends BaseCardTest {
 
         // Transform to Stalking Vampire first
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         assertThat(bat.isTransformed()).isTrue();
 
@@ -126,9 +138,9 @@ class ScreechingBatTest extends BaseCardTest {
     void cannotTransformWithoutTwoBlackMana() {
         Permanent bat = harness.addToBattlefieldAndReturn(player1, new ScreechingBat());
         advanceToUpkeep(player1);
-        resolveAllTriggers();
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(bat.isTransformed()).isFalse();

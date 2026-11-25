@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromHandFaceDownWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 import java.util.List;
@@ -23,8 +23,8 @@ public class JacobHaukenInspector extends Card {
                 List.of(
                         new DrawCardEffect(1),
                         new ExileCardFromHandFaceDownWithSourceEffect(false),
-                        new MayPayManaEffect("{4}{U}{U}", new TransformSelfEffect(),
-                                "Pay {4}{U}{U} to transform Jacob Hauken?")),
+                        UnlessPaysEffect.youMayPay("{4}{U}{U}", new TransformSelfEffect())
+                                .withPrompt("Pay {4}{U}{U} to transform Jacob Hauken?")),
                 "{T}: Draw a card, then exile a card from your hand face down. You may pay "
                         + "{4}{U}{U}. If you do, transform Jacob Hauken.")
         );

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -12,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -32,11 +32,9 @@ public class GiantsAmulet extends Card {
                 "Giant Wizard", 4, 4, CardColor.BLUE,
                 List.of(CardSubtype.GIANT, CardSubtype.WIZARD), Set.of(), Set.of());
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MayPayManaEffect("{3}{U}",
-                        SequenceEffect.of(giantWizard,
+                UnlessPaysEffect.youMayPay("{3}{U}", SequenceEffect.of(giantWizard,
                                 new AttachMatchingEquipmentToCreatedPermanentEffect(
-                                        new PermanentIsSourcePermanentPredicate())),
-                        "Pay {3}{U} to create a Giant Wizard token and attach Giant's Amulet to it?"));
+                                        new PermanentIsSourcePermanentPredicate()))).withPrompt("Pay {3}{U} to create a Giant Wizard token and attach Giant's Amulet to it?"));
         addStaticEffect(new AttachedBoostEffect(new Fixed(0), new Fixed(1), Subjects.attachedCreature()));
         addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentNotPredicate(new PermanentIsTappedPredicate()),

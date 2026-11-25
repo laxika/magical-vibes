@@ -56,7 +56,7 @@ class ThousandMoonsCrackshotTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(target.isTapped()).isFalse();
         assertThat(gd.stack).isEmpty();

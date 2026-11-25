@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.l.LashOut;
 import com.github.laxika.magicalvibes.cards.w.WoodlandChangeling;
@@ -134,7 +135,7 @@ class RebellionOfTheFlamekinTest extends BaseCardTest {
 
         harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId()));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertNotOnBattlefield(player1, "Elemental Shaman");
         assertThat(gd.stack).isEmpty();

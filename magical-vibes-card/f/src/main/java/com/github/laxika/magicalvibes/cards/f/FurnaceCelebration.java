@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -18,9 +18,7 @@ public class FurnaceCelebration extends Card {
         addTrigger(Triggers.sacrificed(
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new MayPayManaEffect(
-                                "{2}", DealDamageEffect.toAnyTarget(2),
-                                "Pay {2} to deal 2 damage to any target?"
-                        ));
+                UnlessPaysEffect.youMayPay("{2}", DealDamageEffect.toAnyTarget(2))
+                        .withPrompt("Pay {2} to deal 2 damage to any target?"));
     }
 }

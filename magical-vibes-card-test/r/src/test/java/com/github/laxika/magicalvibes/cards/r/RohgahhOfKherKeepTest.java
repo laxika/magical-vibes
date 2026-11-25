@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +22,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({RohgahhOfKherKeep.class, KherKeep.class, BarbaryApes.class,
         KoboldsOfKherKeep.class, Boomerang.class, CrimsonKobolds.class, PsychicPaper.class})
 class RohgahhOfKherKeepTest extends BaseCardTest {
+
+    /**
+     * Both players have a way to make mana, so every "you may pay" in this class is asked and the test answers it with
+     * the mana it adds (or without it); a payer with no way at all to pay isn't asked (CR 118.3, 608.2d).
+     */
+    @BeforeEach
+    void everyPayerHasAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     @Test
     @DisplayName("Boosts creatures named Kobolds of Kher Keep that you control")
@@ -107,9 +118,9 @@ class RohgahhOfKherKeepTest extends BaseCardTest {
     void unableToPayTransfersPermanents() {
         Permanent rohgahh = harness.addToBattlefieldAndReturn(player1, new RohgahhOfKherKeep());
         Permanent kobold = harness.addToBattlefieldAndReturn(player1, new KoboldsOfKherKeep());
-        beginUpkeep(player1);
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+        beginUpkeep(player1);
 
         harness.handleMayAbilityChosen(player1, true);
 

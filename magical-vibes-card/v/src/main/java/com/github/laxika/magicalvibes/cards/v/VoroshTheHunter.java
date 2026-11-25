@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,8 +14,6 @@ public class VoroshTheHunter extends Card {
 
     public VoroshTheHunter() {
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new MayPayManaEffect("{2}{G}",
-                        PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 6),
-                        "Pay {2}{G}?"));
+                UnlessPaysEffect.youMayPay("{2}{G}", PutCountersEffect.onSelf(CounterType.PLUS_ONE_PLUS_ONE, 6)));
     }
 }

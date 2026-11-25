@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -19,7 +20,6 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "STX", collectorNumber = "156")
@@ -49,7 +49,8 @@ public class RowanScholarOfSparks extends Card {
                 -4,
                 List.of(new CreateEmblemEffect(
                         new TriggeredAbility(Triggers.youCastSpell().withFilter(instantOrSorcery),
-                                new MayPayManaEffect("{2}", new CopyTriggeringSpellEffect(), "Pay {2} to copy that spell?")),
+                                UnlessPaysEffect.youMayPay("{2}", new CopyTriggeringSpellEffect())
+                                        .withPrompt("Pay {2} to copy that spell?")),
                         EMBLEM_TEXT)),
                 "-4: You get an emblem with \"" + EMBLEM_TEXT + "\""));
 

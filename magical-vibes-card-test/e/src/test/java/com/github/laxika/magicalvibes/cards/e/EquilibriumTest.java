@@ -80,7 +80,7 @@ class EquilibriumTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without enough mana does not return the target creature")
+    @DisplayName("Without any way to pay, nothing is asked and it does not return the target creature")
     void acceptingWithoutEnoughManaDoesNotReturnTarget() {
         harness.addToBattlefield(player1, new Equilibrium());
         harness.addToBattlefield(player2, new HillGiant());
@@ -89,7 +89,7 @@ class EquilibriumTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, giantId);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertOnBattlefield(player2, "Hill Giant");
     }
@@ -103,7 +103,7 @@ class EquilibriumTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Hill Giant"));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertOnBattlefield(player2, "Hill Giant");
     }

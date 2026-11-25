@@ -135,8 +135,7 @@ class PunishingFireTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertInGraveyard(player1, "Punishing Fire");
         harness.assertNotInHand(player1, "Punishing Fire");

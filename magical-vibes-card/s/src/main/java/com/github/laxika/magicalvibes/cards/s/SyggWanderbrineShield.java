@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -32,6 +32,6 @@ public class SyggWanderbrineShield extends Card {
 
         // At the beginning of your first main phase, you may pay {U}. If you do, transform Sygg.
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
-                new MayPayManaEffect("{U}", new TransformSelfEffect(), "Pay {U} to transform Sygg?"));
+                UnlessPaysEffect.youMayPay("{U}", new TransformSelfEffect()).withPrompt("Pay {U} to transform Sygg?"));
     }
 }

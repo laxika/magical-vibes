@@ -42,23 +42,21 @@ class SigilOfTheNewDawnTest extends BaseCardTest {
 
         destroy(glorySeeker);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertInGraveyard(player1, "Glory Seeker");
         harness.assertNotInHand(player1, "Glory Seeker");
     }
 
     @Test
-    @DisplayName("Accepting without enough mana leaves the creature in its owner's graveyard")
+    @DisplayName("Without any way to pay, nothing is asked and it leaves the creature in its owner's graveyard")
     void acceptingWithoutEnoughManaLeavesCreatureInGraveyard() {
         harness.addToBattlefield(player1, new SigilOfTheNewDawn());
         Permanent glorySeeker = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
 
         destroy(glorySeeker);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertInGraveyard(player1, "Glory Seeker");
         harness.assertNotInHand(player1, "Glory Seeker");
@@ -108,7 +106,7 @@ class SigilOfTheNewDawnTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         destroy(glorySeeker);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertInGraveyard(player1, "Glory Seeker");
         harness.assertNotInHand(player1, "Glory Seeker");

@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.c.Channel;
+import com.github.laxika.magicalvibes.cards.e.ElvishSpiritGuide;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.cards.c.Combust;
 import com.github.laxika.magicalvibes.cards.f.Firebolt;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -22,7 +25,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ManaLeak.class, Shock.class, RuneclawBear.class, Combust.class, Island.class, RocEgg.class, Firebolt.class})
+@CardUsed({ManaLeak.class, ElvishSpiritGuide.class, Channel.class, Shock.class, RuneclawBear.class, Combust.class, Island.class, RocEgg.class, Firebolt.class})
 class ManaLeakTest extends BaseCardTest {
 
     @Test
@@ -307,5 +310,77 @@ class ManaLeakTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Firebolt");
         assertThat(gd.getPlayerExiledCards(player1.getId())).anyMatch(card -> card.getId().equals(firebolt.getId()));
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A payer whose only mana source is Elvish Spirit Guide in hand is asked and pays by exiling it")
+    void payerWithOnlyASpiritGuideInHandIsAskedAndPays() {
+        RuneclawBear bears = new RuneclawBear();
+        harness.castFromHand(player1, bears, "{1}{G}");
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.setHand(player1, List.of(new ElvishSpiritGuide()));
+
+        harness.setHand(player2, List.of(new ManaLeak()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+
+        // A mana ability can be activated whenever an effect asks for a mana payment (CR 605.3a).
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Runeclaw Bear");
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getName().equals("Elvish Spirit Guide"));
+    }
+
+    @Test
+    @DisplayName("A payer whose only mana source is Channel's life-for-mana permission is asked and pays with it")
+    void payerWithOnlyChannelsPermissionIsAskedAndPays() {
+        harness.setHand(player1, List.of(new Channel()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        RuneclawBear bears = new RuneclawBear();
+        harness.castFromHand(player1, bears, "{1}{G}");
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.setHand(player1, List.of());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.setHand(player2, List.of(new ManaLeak()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.payLifeForColorlessMana(player1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Runeclaw Bear");
+        harness.assertLife(player1, lifeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("A payer with two Islands is asked for {3}, though their lands can't make all of it")
+    void payerWithTooFewLandsIsStillAsked() {
+        RuneclawBear bears = new RuneclawBear();
+        harness.castFromHand(player1, bears, "{1}{G}");
+        for (int i = 0; i < 2; i++) {
+            Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+            island.setSummoningSick(false);
+        }
+        harness.setHand(player2, List.of(new ManaLeak()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Runeclaw Bear");
     }
 }

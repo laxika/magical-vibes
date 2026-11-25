@@ -31,5 +31,10 @@ public enum CountScope {
      * "you"). Evaluates to nothing when the source is unattached. Used by Righteous Authority
      * ("+1/+1 for each card in its controller's hand").
      */
-    ATTACHED_CONTROLLER
+    ATTACHED_CONTROLLER,
+    /**
+     * The player whose turn it is ("that opponent" of an "on each opponent's turn" trigger: "the number of cards in
+     * their hand", Champions of Minas Tirith).
+     */
+    ACTIVE_PLAYER
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -10,7 +11,6 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.NontokenCreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -47,9 +47,7 @@ public class VileRedeemer extends Card {
             Set.of());
 
     public VileRedeemer() {
-        addTrigger(Triggers.youCastThisSpell(), new MayPayManaEffect(
-                "{C}",
-                SCION_TOKEN,
-                "Pay {C} to create an Eldrazi Scion token for each nontoken creature that died under your control this turn?"));
+        addTrigger(Triggers.youCastThisSpell(), UnlessPaysEffect.youMayPay("{C}", SCION_TOKEN)
+                .withPrompt("Pay {C} to create an Eldrazi Scion token for each nontoken creature that died under your control this turn?"));
     }
 }

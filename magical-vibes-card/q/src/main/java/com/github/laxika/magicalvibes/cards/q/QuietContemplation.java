@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.q;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -21,8 +21,8 @@ public class QuietContemplation extends Card {
         // an opponent controls and it doesn't untap during its controller's next untap step.
         target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.youCastSpell()
                         .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
-                new MayPayManaEffect("{1}", SequenceEffect.of(
+                UnlessPaysEffect.youMayPay("{1}", SequenceEffect.of(
                         new TapPermanentsEffect(Subjects.target()),
-                        new SkipNextUntapEffect(Subjects.target())), "Pay {1}?"));
+                        new SkipNextUntapEffect(Subjects.target()))));
     }
 }

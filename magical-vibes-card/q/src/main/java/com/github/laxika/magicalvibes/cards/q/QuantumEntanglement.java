@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.q;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -20,9 +20,8 @@ public class QuantumEntanglement extends Card {
         creatureTarget.addTrigger(Triggers.endStep(ActivePlayer.YOU), mayFlicker());
     }
 
-    private static MayPayManaEffect mayFlicker() {
-        return new MayPayManaEffect("{1}{W}",
-                new QueueReflexiveAbilityEffect(FlickerEffect.flickerTarget()),
-                "Pay {1}{W} to exile target creature you control, then return it?");
+    private static UnlessPaysEffect mayFlicker() {
+        return UnlessPaysEffect.youMayPay("{1}{W}", new QueueReflexiveAbilityEffect(FlickerEffect.flickerTarget()))
+                .withPrompt("Pay {1}{W} to exile target creature you control, then return it?");
     }
 }

@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -29,10 +29,8 @@ public class FelhideSpiritbinder extends Card {
         );
 
         target(anotherCreature).addTrigger(Triggers.becomesUntapped(),
-                new MayPayManaEffect("{1}{R}",
-                        new CreateTokenCopyOfTargetPermanentEffect(
+                UnlessPaysEffect.youMayPay("{1}{R}", new CreateTokenCopyOfTargetPermanentEffect(
                                 List.of(), Set.of(CardType.ENCHANTMENT), null, null, Map.of(),
-                                true, true, false, false),
-                        "Pay {1}{R} to create a hasty enchantment token copy of another creature?"));
+                                true, true, false, false)).withPrompt("Pay {1}{R} to create a hasty enchantment token copy of another creature?"));
     }
 }

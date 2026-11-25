@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -22,8 +22,7 @@ public class BitterChill extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(Subjects.attached()))
                 .addStaticEffect(DoesntUntapEffect.enchanted());
         addTrigger(Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, ObjectRelation.THIS),
-                new MayPayManaEffect("{1}",
-                        SequenceEffect.of(new ScryEffect(1), new DrawCardEffect(1)),
-                        "Pay {1} to scry 1, then draw a card?"));
+                UnlessPaysEffect.youMayPay("{1}", SequenceEffect.of(new ScryEffect(1), new DrawCardEffect(1)))
+                        .withPrompt("Pay {1} to scry 1, then draw a card?"));
     }
 }

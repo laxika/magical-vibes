@@ -37,13 +37,13 @@ class TomakulPhoenixTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(phoenix));
 
         advanceToCombat(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.pendingMayAbilities.getFirst().manaCost()).isEqualTo("{2}{R}");
         // Mana empties between steps (CR 500.5), so it is added once the trigger asks for payment.
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.addMana(player1, ManaColor.RED, 1);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -60,7 +60,7 @@ class TomakulPhoenixTest extends BaseCardTest {
 
         advanceToCombat(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(phoenix.getId()));

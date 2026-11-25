@@ -176,6 +176,8 @@ class BrasssTunnelGrinderTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castModalInstantWithModes(player2, 0, 1, new int[]{1}, spell.getId(), List.of());
         harness.passBothPriorities();
+        // The tapped Rift is a mana source, so the Riddle's {4} is offered (CR 118.12a); its controller declines.
+        harness.handleMayAbilityChosen(player1, false);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
         harness.passBothPriorities();
 

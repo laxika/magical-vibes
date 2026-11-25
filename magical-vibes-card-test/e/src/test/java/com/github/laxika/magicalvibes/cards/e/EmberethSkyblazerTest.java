@@ -60,8 +60,7 @@ class EmberethSkyblazerTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gqs.getEffectivePower(gd, skyblazer)).isEqualTo(4);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);

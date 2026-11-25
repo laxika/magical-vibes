@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesLandsThenDestroyRestEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -30,9 +30,7 @@ public class UrzasSylex extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addTrigger(Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD), null, ObjectRelation.THIS), new MayPayManaEffect(
-                        "{2}",
-                        new SearchLibraryEffect(new CardTypePredicate(CardType.PLANESWALKER)),
-                        "Pay {2} to search your library for a planeswalker card?"));
+        addTrigger(Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD), null, ObjectRelation.THIS), UnlessPaysEffect.youMayPay("{2}", new SearchLibraryEffect(new CardTypePredicate(CardType.PLANESWALKER)))
+                .withPrompt("Pay {2} to search your library for a planeswalker card?"));
     }
 }

@@ -52,7 +52,7 @@ class MarkovPurifierTest extends BaseCardTest {
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
@@ -129,7 +129,7 @@ class MarkovPurifierTest extends BaseCardTest {
         advanceToEndStep(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(card);

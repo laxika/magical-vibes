@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -12,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEf
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -30,9 +30,8 @@ public class MerryBards extends Card {
 
     public MerryBards() {
         target(TargetFilters.creatureYouControl()).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MayPayManaEffect("{1}",
-                        new QueueReflexiveAbilityEffect(new CreateTokenAttachedToTargetEffect(youngHeroRoleToken())),
-                        "Pay {1} to create a Young Hero Role token?"));
+                UnlessPaysEffect.youMayPay("{1}", new QueueReflexiveAbilityEffect(new CreateTokenAttachedToTargetEffect(youngHeroRoleToken())))
+                        .withPrompt("Pay {1} to create a Young Hero Role token?"));
     }
 
     private static CreateTokenEffect youngHeroRoleToken() {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -9,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -34,9 +34,8 @@ public class NimDeathmantle extends Card {
         // you may pay {4}. If you do, return that card to the battlefield and attach
         // Nim Deathmantle to it.
         addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANY),
-                new MayPayManaEffect("{4}",
-                        new ReturnDyingCreatureToBattlefieldEffect(true),
-                        "Pay {4} to return this creature to the battlefield?"));
+                UnlessPaysEffect.youMayPay("{4}", new ReturnDyingCreatureToBattlefieldEffect(true))
+                        .withPrompt("Pay {4} to return this creature to the battlefield?"));
 
         // Equip {4}
         addActivatedAbility(new EquipActivatedAbility("{4}"));

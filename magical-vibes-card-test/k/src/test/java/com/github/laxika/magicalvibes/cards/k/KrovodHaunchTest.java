@@ -34,7 +34,7 @@ class KrovodHaunchTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         harness.assertLife(player1, 23);

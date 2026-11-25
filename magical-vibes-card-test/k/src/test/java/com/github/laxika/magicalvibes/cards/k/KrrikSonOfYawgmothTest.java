@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.b.BeseechTheQueen;
 import com.github.laxika.magicalvibes.cards.b.BlindObedience;
+import com.github.laxika.magicalvibes.cards.n.NihilSpellbomb;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.cards.z.ZofShade;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -13,13 +14,14 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({KrrikSonOfYawgmoth.class, DarkRitual.class, ZofShade.class,
-        BeseechTheQueen.class, BlindObedience.class, SolRing.class})
+        BeseechTheQueen.class, BlindObedience.class, SolRing.class, NihilSpellbomb.class})
 class KrrikSonOfYawgmothTest extends BaseCardTest {
 
     private Permanent addKrrik() {
@@ -222,5 +224,20 @@ class KrrikSonOfYawgmothTest extends BaseCardTest {
         harness.assertLife(player1, 14);
         assertThat(findPermanent(player1, "K'rrik, Son of Yawgmoth")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A spellbomb's \"you may pay {B}\" is paid with 2 life when no black mana is floating")
+    void paysASpellbombsBlackManaWithLife() {
+        addKrrik();
+        harness.addToBattlefield(player1, new NihilSpellbomb());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 }

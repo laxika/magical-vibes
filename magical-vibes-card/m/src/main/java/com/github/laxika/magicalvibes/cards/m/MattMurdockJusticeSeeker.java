@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -20,10 +19,8 @@ public class MattMurdockJusticeSeeker extends Card {
 
     public MattMurdockJusticeSeeker() {
         target(TargetFilters.creatureYouControl()).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new MayPayManaEffect("{1}",
-                        new QueueReflexiveAbilityEffect(
-                                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE)),
-                        "Pay {1} to put a +1/+1 counter on target creature you control?"));
+                UnlessPaysEffect.youMayPay("{1}", new QueueReflexiveAbilityEffect(
+                                new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE))).withPrompt("Pay {1} to put a +1/+1 counter on target creature you control?"));
 
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),

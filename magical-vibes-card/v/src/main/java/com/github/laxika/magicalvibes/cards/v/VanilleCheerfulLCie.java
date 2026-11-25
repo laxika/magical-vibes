@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.r.RagnarokDivineDeliverance;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MeldWithNamedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -54,9 +54,8 @@ public class VanilleCheerfulLCie extends Card {
                                         new PermanentNamedPredicate(PARTNER_NAME),
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentOwnedBySourceControllerPredicate())))))),
-                new MayPayManaEffect("{3}{B}{G}",
-                        new MeldWithNamedCreatureEffect(PARTNER_NAME),
-                        "Pay {3}{B}{G} to meld Vanille and Fang?"));
+                UnlessPaysEffect.youMayPay("{3}{B}{G}", new MeldWithNamedCreatureEffect(PARTNER_NAME))
+                        .withPrompt("Pay {3}{B}{G} to meld Vanille and Fang?"));
     }
 
     @Override

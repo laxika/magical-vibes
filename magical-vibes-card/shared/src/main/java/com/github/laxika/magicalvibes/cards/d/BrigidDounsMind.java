@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -37,7 +37,7 @@ public class BrigidDounsMind extends Card {
 
         // At the beginning of your first main phase, you may pay {W}. If you do, transform Brigid.
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
-                new MayPayManaEffect("{W}", new TransformSelfEffect(),
-                        "Pay {W} to transform Brigid?"));
+                UnlessPaysEffect.youMayPay("{W}", new TransformSelfEffect())
+                        .withPrompt("Pay {W} to transform Brigid?"));
     }
 }

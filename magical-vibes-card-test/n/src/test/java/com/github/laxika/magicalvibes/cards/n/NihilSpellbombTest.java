@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GalvanicBlast;
 import com.github.laxika.magicalvibes.cards.m.MoriokReaver;
 import com.github.laxika.magicalvibes.cards.s.Shatter;
@@ -30,7 +31,7 @@ class NihilSpellbombTest extends BaseCardTest {
         // Per CR 603.3, death triggers from sacrifice resolve first
 
         harness.passBothPriorities(); // resolve MayPayMana death trigger -> may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline death trigger
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.passBothPriorities(); // resolve ExileGraveyard ability
 
@@ -64,7 +65,7 @@ class NihilSpellbombTest extends BaseCardTest {
         // Stack: [ExileGraveyard (bottom), MayPayMana death trigger (top)]
 
         harness.passBothPriorities(); // resolve MayPayMana death trigger -> may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.passBothPriorities(); // resolve ExileGraveyard
 
@@ -87,7 +88,7 @@ class NihilSpellbombTest extends BaseCardTest {
         // Stack: [ExileGraveyard (bottom), MayPayMana death trigger (top)]
 
         harness.passBothPriorities(); // resolve MayPayMana death trigger -> may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.passBothPriorities(); // resolve ExileGraveyard - should not error
 
@@ -146,7 +147,7 @@ class NihilSpellbombTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting death trigger without enough mana treats as decline")
+    @DisplayName("Without any way to pay, nothing is asked and nothing happens")
     void acceptWithoutManaNoCard() {
         harness.addToBattlefield(player1, new NihilSpellbomb());
         harness.setGraveyard(player2, List.of(new MoriokReaver()));
@@ -160,7 +161,7 @@ class NihilSpellbombTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayPayMana death trigger -> may prompt
 
         // Accept but cannot pay {B} — treated as decline
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         // No card drawn
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
@@ -198,7 +199,7 @@ class NihilSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.castAndResolveInstant(player2, 0, player1.getId());
         harness.assertInGraveyard(player2, "Galvanic Blast");
         harness.passBothPriorities();

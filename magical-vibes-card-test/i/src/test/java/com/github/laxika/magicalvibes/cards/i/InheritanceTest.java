@@ -35,8 +35,7 @@ class InheritanceTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -56,8 +55,7 @@ class InheritanceTest extends BaseCardTest {
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

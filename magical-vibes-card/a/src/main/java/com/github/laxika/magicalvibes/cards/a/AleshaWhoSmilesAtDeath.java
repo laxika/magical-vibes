@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostPredicate;
@@ -24,9 +24,7 @@ import java.util.List;
 public class AleshaWhoSmilesAtDeath extends Card {
 
     public AleshaWhoSmilesAtDeath() {
-        addTrigger(Triggers.attacks(), new MayPayManaEffect(
-                "{W/B}{W/B}",
-                ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay("{W/B}{W/B}", ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
@@ -35,8 +33,6 @@ public class AleshaWhoSmilesAtDeath extends Card {
                         .targetGraveyard(true)
                         .enterTapped(true)
                         .enterAttacking(true)
-                        .build(),
-                "Pay {W/B}{W/B} to return target creature card with power 2 or less from your graveyard to the battlefield tapped and attacking?"
-        ));
+                        .build()).withPrompt("Pay {W/B}{W/B} to return target creature card with power 2 or less from your graveyard to the battlefield tapped and attacking?"));
     }
 }

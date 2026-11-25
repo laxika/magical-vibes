@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -28,11 +28,8 @@ public class AncestralKatana extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.SAMURAI),
                                 new PermanentHasSubtypePredicate(CardSubtype.WARRIOR)))),
                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
-                new MayPayManaEffect(
-                        "{1}",
-                        QueueReflexiveAbilityEffect.aboutEntryTarget(
-                                AttachSourceEquipmentToTargetCreatureEffect.forTriggeringCreature()),
-                        "Pay {1} to attach Ancestral Katana to it?"));
+                UnlessPaysEffect.youMayPay("{1}", QueueReflexiveAbilityEffect.aboutEntryTarget(
+                                AttachSourceEquipmentToTargetCreatureEffect.forTriggeringCreature())).withPrompt("Pay {1} to attach Ancestral Katana to it?"));
 
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }

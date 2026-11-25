@@ -93,7 +93,7 @@ class CrystalRodTest extends BaseCardTest {
                 && e.getCard().getName().equals("Crystal Rod"));
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getCard().getName().equals("Crystal Rod"));
@@ -156,7 +156,7 @@ class CrystalRodTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without spare mana does not gain life")
+    @DisplayName("Without any way to pay, nothing is asked and it does not gain life")
     void acceptingWithoutSpareManaDoesNotGainLife() {
         harness.addToBattlefield(player1, new CrystalRod());
 
@@ -169,9 +169,7 @@ class CrystalRodTest extends BaseCardTest {
                 && e.getCard().getName().equals("Crystal Rod"));
 
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
-                .isEqualTo(player1.getId());
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }

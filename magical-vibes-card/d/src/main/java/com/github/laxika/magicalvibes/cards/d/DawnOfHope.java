@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class DawnOfHope extends Card {
 
     public DawnOfHope() {
         addTrigger(Triggers.youGainLife(),
-                new MayPayManaEffect("{2}", new DrawCardEffect(1), "Pay {2} to draw a card?"));
+                UnlessPaysEffect.youMayPay("{2}", new DrawCardEffect(1)).withPrompt("Pay {2} to draw a card?"));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

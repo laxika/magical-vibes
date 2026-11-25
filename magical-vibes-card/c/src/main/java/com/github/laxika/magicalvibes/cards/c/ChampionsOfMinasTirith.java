@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
@@ -8,8 +10,6 @@ import com.github.laxika.magicalvibes.model.condition.ControllerIsMonarch;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -26,12 +26,10 @@ public class ChampionsOfMinasTirith extends Card {
 
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.OPPONENT),
                 TriggerOptions.DEFAULT.withInterveningIf(new ControllerIsMonarch()),
-                MayPayManaEffect.dynamic(
-                        new CardsInHand(CountScope.CONTROLLER),
-                        null,
-                        "Pay {X}, where X is the number of cards in your hand?",
-                        MayPayPayer.ACTIVE_PLAYER,
+                new UnlessPaysEffect(Subjects.activePlayer(),
+                        PayManaCost.withGenericIncrease("{0}", new CardsInHand(CountScope.ACTIVE_PLAYER)),
                         new CreaturesCantAttackControllerUntilNextTurnEffect(Subjects.activePlayer(), Subjects.you(),
-                                false, Duration.UNTIL_END_OF_COMBAT)));
+                                false, Duration.UNTIL_END_OF_COMBAT), null,
+                        "Pay {X}, where X is the number of cards in your hand?"));
     }
 }

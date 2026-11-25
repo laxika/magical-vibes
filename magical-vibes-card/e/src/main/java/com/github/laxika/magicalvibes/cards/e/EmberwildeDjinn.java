@@ -1,9 +1,13 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerMayPayManaOrLifeEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,8 +18,8 @@ public class EmberwildeDjinn extends Card {
         // At the beginning of each player's upkeep, that player may pay {R}{R} or 2 life. If the
         // player does, they gain control of this creature. Triggers.upkeep(ActivePlayer.ANY) puts the active
         // player on the trigger's targetId, which is both who is asked to pay and who gains control.
-        addTrigger(Triggers.upkeep(ActivePlayer.ANY), new TargetPlayerMayPayManaOrLifeEffect(
-                "{R}{R}", 2, new TargetPlayerGainsControlOfSourceCreatureEffect(),
-                "pay {R}{R} or 2 life to gain control of Emberwilde Djinn"));
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY), new UnlessPaysEffect(Subjects.activePlayer(),
+                AnyOfCost.of(new PayManaCost("{R}{R}"), new PayLifeCost(2)), null,
+                new TargetPlayerGainsControlOfSourceCreatureEffect()));
     }
 }

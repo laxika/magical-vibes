@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,10 +21,8 @@ public class OrosTheAvenger extends Card {
 
     public OrosTheAvenger() {
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new MayPayManaEffect("{2}{W}",
-                        new MassDamageEffect(3, false, false, new PermanentAllOfPredicate(List.of(
+                UnlessPaysEffect.youMayPay("{2}{W}", new MassDamageEffect(3, false, false, new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
-                                new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.WHITE)))))),
-                        "Pay {2}{W}?"));
+                                new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.WHITE))))))));
     }
 }

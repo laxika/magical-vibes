@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapAndChooseOpponentGainsControlOfSourceAndMatchingPermanentsEffect;
@@ -25,11 +25,8 @@ public class RohgahhOfKherKeep extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentNamedPredicate(KOBOLDS_OF_KHER_KEEP)));
 
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayPayManaEffect(
-                "{R}{R}{R}",
-                null,
-                "Pay {R}{R}{R} to keep control of Rohgahh of Kher Keep?",
-                new TapAndChooseOpponentGainsControlOfSourceAndMatchingPermanentsEffect(kobolds)));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), UnlessPaysEffect.unlessYouPay("{R}{R}{R}", new TapAndChooseOpponentGainsControlOfSourceAndMatchingPermanentsEffect(kobolds))
+                .withPrompt("Pay {R}{R}{R} to keep control of Rohgahh of Kher Keep?"));
         addStaticEffect(new StaticBoostEffect(2, 2, Subjects.creaturesYouControl(), kobolds));
     }
 }

@@ -114,7 +114,7 @@ class SpitFlameTest extends BaseCardTest {
         harness.castFromHand(player1, new DragonEgg(), "{2}{R}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getId().equals(spitFlame.getId()));
         assertThat(gd.playerHands.get(player1.getId())).noneMatch(c -> c.getId().equals(spitFlame.getId()));
@@ -137,7 +137,7 @@ class SpitFlameTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
     }

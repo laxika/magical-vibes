@@ -35,6 +35,8 @@ class AyeshaTanakaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, battery.getCard().getId());
         harness.passBothPriorities();
 
+        // Black Mana Battery is a mana source, so its controller is asked; they decline.
+        harness.handleMayAbilityChosen(player2, false);
         assertThat(battery.getCounterCount(CounterType.CHARGE)).isZero();
         assertThat(gd.stack).isEmpty();
         assertThat(ayesha.isTapped()).isTrue();

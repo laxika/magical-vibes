@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -22,8 +22,8 @@ public class Farmstead extends Card {
         target(TargetFilters.land())
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
-                        new MayPayManaEffect("{W}{W}", new GainLifeEffect(1),
-                                "Pay {W}{W} to gain 1 life?")),
+                        UnlessPaysEffect.youMayPay("{W}{W}", new GainLifeEffect(1))
+                                .withPrompt("Pay {W}{W} to gain 1 life?")),
                         Subjects.attached()));
     }
 }

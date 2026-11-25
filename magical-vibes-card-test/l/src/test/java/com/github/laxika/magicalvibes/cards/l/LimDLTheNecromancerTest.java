@@ -53,7 +53,7 @@ class LimDLTheNecromancerTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, reavers.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertInGraveyard(player2, "Drudge Reavers");
         harness.assertNotOnBattlefield(player1, "Drudge Reavers");

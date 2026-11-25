@@ -87,7 +87,7 @@ class AetherBarrierTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.castFromHand(player1, new Oraxid(), "{3}{U}");
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -108,7 +108,7 @@ class AetherBarrierTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.castFromHand(player2, new Oraxid(), "{3}{U}");
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         harness.assertOnBattlefield(player1, "Aether Barrier");
@@ -128,7 +128,7 @@ class AetherBarrierTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.castFromHand(player2, new Oraxid(), "{3}{U}");
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         PendingInteraction.MultiPermanentChoice choice =

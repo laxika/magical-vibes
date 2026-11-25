@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
@@ -9,7 +10,6 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -32,12 +32,10 @@ public class HormagauntHorde extends Card {
         // from your graveyard to your hand.
         addTrigger(new TriggerCondition(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                 AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                new MayPayManaEffect("{2}{G}",
-                        ReturnCardFromGraveyardEffect.builder()
+                UnlessPaysEffect.youMayPay("{2}{G}", ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.HAND)
                                 .filter(new CardIsSelfPredicate())
                                 .returnAll(true)
-                                .build(),
-                        "Pay {2}{G} to return Hormagaunt Horde from your graveyard to your hand?"));
+                                .build()).withPrompt("Pay {2}{G} to return Hormagaunt Horde from your graveyard to your hand?"));
     }
 }

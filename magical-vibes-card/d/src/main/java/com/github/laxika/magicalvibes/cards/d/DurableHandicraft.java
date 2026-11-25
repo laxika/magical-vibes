@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,11 +21,8 @@ public class DurableHandicraft extends Card {
     public DurableHandicraft() {
         // Whenever a creature you control enters, you may pay {1}. If you do, put a +1/+1 counter
         // on that creature.
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL), new MayPayManaEffect(
-                "{1}",
-                new PutCountersEffect(
-                        Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE),
-                "Pay {1} to put a +1/+1 counter on that creature?"));
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL), UnlessPaysEffect.youMayPay("{1}", new PutCountersEffect(
+                        Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE)).withPrompt("Pay {1} to put a +1/+1 counter on that creature?"));
 
         // {5}{G}, Sacrifice this enchantment: Put a +1/+1 counter on each creature you control.
         addActivatedAbility(new ActivatedAbility(

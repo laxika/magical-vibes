@@ -46,7 +46,7 @@ class BasilicaGuardsTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
@@ -40,7 +41,7 @@ class VekoDeathsDoorkeeperTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -67,7 +68,7 @@ class VekoDeathsDoorkeeperTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
         Permanent spirit = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(target.getId()))
@@ -88,7 +89,7 @@ class VekoDeathsDoorkeeperTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
         Permanent spirit = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(target.getId()))

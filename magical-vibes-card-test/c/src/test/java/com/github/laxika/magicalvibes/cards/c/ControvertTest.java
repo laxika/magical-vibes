@@ -62,8 +62,7 @@ class ControvertTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, druid));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(controvert);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(controvert);
@@ -108,7 +107,7 @@ class ControvertTest extends BaseCardTest {
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, druid));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(controvert);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(controvert);

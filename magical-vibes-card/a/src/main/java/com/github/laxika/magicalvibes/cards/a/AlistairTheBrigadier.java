@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -32,8 +32,7 @@ public class AlistairTheBrigadier extends Card {
         // until end of turn, where X is the number of historic permanents you control.
         PermanentCount historicPermanents = new PermanentCount(
                 new PermanentIsHistoricPredicate(), CountScope.CONTROLLER);
-        addTrigger(Triggers.attacks(), new MayPayManaEffect("{8}",
-                new BoostAllOwnCreaturesEffect(historicPermanents, historicPermanents),
-                "Pay {8} to boost creatures you control?"));
+        addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay("{8}", new BoostAllOwnCreaturesEffect(historicPermanents, historicPermanents))
+                .withPrompt("Pay {8} to boost creatures you control?"));
     }
 }

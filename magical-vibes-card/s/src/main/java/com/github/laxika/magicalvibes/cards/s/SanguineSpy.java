@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.DistinctManaValuesAmongCardsInGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -27,6 +27,6 @@ public class SanguineSpy extends Card {
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new DistinctManaValuesAmongCardsInGraveyardAtLeast(5)),
-                new MayPayLifeEffect(2, new DrawCardEffect(), "Pay 2 life to draw a card?"));
+                UnlessPaysEffect.youMayPayLife(2, new DrawCardEffect()).withPrompt("Pay 2 life to draw a card?"));
     }
 }

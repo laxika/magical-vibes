@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentManaValue;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -24,12 +24,8 @@ import java.util.List;
 public class ArniMetalbrow extends Card {
 
     public ArniMetalbrow() {
-        MayPayManaEffect ability = new MayPayManaEffect(
-                "{1}{R}",
-                PutCardToBattlefieldEffect.tappedAndAttacking(new CardTypePredicate(CardType.CREATURE), "creature")
-                        .boundedBy(new Sum(new TriggeringPermanentManaValue(), new Fixed(-1))),
-                "Put a creature card from your hand onto the battlefield tapped and attacking?"
-        );
+        UnlessPaysEffect ability = UnlessPaysEffect.youMayPay("{1}{R}", PutCardToBattlefieldEffect.tappedAndAttacking(new CardTypePredicate(CardType.CREATURE), "creature")
+                        .boundedBy(new Sum(new TriggeringPermanentManaValue(), new Fixed(-1)))).withPrompt("Put a creature card from your hand onto the battlefield tapped and attacking?");
         addTrigger(Triggers.creatureYouControlAttacks(), ability);
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(Triggers.CREATURE, new PermanentIsAttackingPredicate())),

@@ -63,7 +63,7 @@ class GravityNegatorTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, drone.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gqs.hasKeyword(gd, drone, Keyword.FLYING)).isFalse();
     }
@@ -78,7 +78,7 @@ class GravityNegatorTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, drone.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gqs.hasKeyword(gd, drone, Keyword.FLYING)).isFalse();
     }

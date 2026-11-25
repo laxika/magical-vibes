@@ -50,8 +50,7 @@ class LazotepChancellorTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(findPermanents(player1, "Zombie Army")).isEmpty();
     }
@@ -86,8 +85,7 @@ class LazotepChancellorTest extends BaseCardTest {
 
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(findPermanents(player1, "Zombie Army")).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();

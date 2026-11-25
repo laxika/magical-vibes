@@ -148,7 +148,7 @@ class LorthosTheTidemakerTest extends BaseCardTest {
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(lorthos)));
         harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         resolveAllTriggers();
 
         assertThat(target.isTapped()).isFalse();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -38,9 +38,7 @@ public class KrenkoBaronOfTinStreet extends Card {
         ));
 
         addTrigger(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY),
-                new MayPayManaEffect(
-                        "{R}",
-                        new CreateTokenEffect(
+                UnlessPaysEffect.youMayPay("{R}", new CreateTokenEffect(
                                 1,
                                 "Goblin",
                                 1,
@@ -49,7 +47,6 @@ public class KrenkoBaronOfTinStreet extends Card {
                                 null,
                                 List.of(CardSubtype.GOBLIN),
                                 Set.of(),
-                                Set.of(Keyword.HASTE)),
-                        "Pay {R} to create a 1/1 red Goblin creature token?"));
+                                Set.of(Keyword.HASTE))).withPrompt("Pay {R} to create a 1/1 red Goblin creature token?"));
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.ArrogantOutlaw;
 import com.github.laxika.magicalvibes.cards.f.Frogify;
 import com.github.laxika.magicalvibes.cards.o.OrmendahlTheCorrupter;
@@ -91,9 +92,9 @@ class JerrenTest extends BaseCardTest {
         Permanent jerren = addReadyJerren();
         harness.setLife(player1, 13);
         advanceToEndStep(player1);
-        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(jerren.isTransformed()).isTrue();
@@ -202,7 +203,7 @@ class JerrenTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         advanceToEndStep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(jerren.isTransformed()).isFalse();
         assertThat(gd.getLife(player1.getId())).isEqualTo(13);

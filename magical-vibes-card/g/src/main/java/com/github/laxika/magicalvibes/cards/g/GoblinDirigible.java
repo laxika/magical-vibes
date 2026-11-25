@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -14,9 +14,7 @@ public class GoblinDirigible extends Card {
 
     public GoblinDirigible() {
         addStaticEffect(DoesntUntapEffect.self());
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayPayManaEffect(
-                "{4}",
-                new UntapPermanentsEffect(Subjects.source()),
-                "Pay {4} to untap Goblin Dirigible?"));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), UnlessPaysEffect.youMayPay("{4}", new UntapPermanentsEffect(Subjects.source()))
+                .withPrompt("Pay {4} to untap Goblin Dirigible?"));
     }
 }

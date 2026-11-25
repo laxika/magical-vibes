@@ -3,9 +3,10 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PayPerCounterOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -56,8 +57,8 @@ public class PayPerCounterOrElseEffectHandler implements NormalEffectHandlerBean
         CardEffect unpaid = e.elseEffects().isEmpty() ? null : oneOrSequence(e.elseEffects());
         int effectIndex = entry.getEffectsToResolve().indexOf(effect);
         if (effectIndex >= 0) {
-            entry.insertEffectsToResolve(effectIndex + 1, List.of(new MayPayManaEffect(
-                    totalCost, paid, "Pay " + totalCost + "?", unpaid)));
+            entry.insertEffectsToResolve(effectIndex + 1, List.of(new UnlessPaysEffect(
+                    Subjects.you(), new PayManaCost(totalCost), unpaid, paid)));
         }
     }
 

@@ -46,7 +46,7 @@ class GenesisTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.handleMultipleCardsChosen(player1, List.of(warthog.getId()));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertInGraveyard(player1, "Genesis");
         harness.assertInGraveyard(player1, "Giant Warthog");
@@ -77,7 +77,7 @@ class GenesisTest extends BaseCardTest {
         assertThat(choice.cards().getFirst().getName()).isEqualTo("Genesis");
         harness.handleMultipleCardsChosen(player1, List.of(choice.cards().getFirst().getId()));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertInGraveyard(player1, "Genesis");
         harness.assertInGraveyard(player1, "Riftstone Portal");
@@ -199,7 +199,7 @@ class GenesisTest extends BaseCardTest {
         assertThat(choice.validCardIds()).containsExactly(genesis.getId());
         harness.handleMultipleCardsChosen(player1, List.of(genesis.getId()));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertInGraveyard(player1, "Genesis");
         harness.assertInGraveyard(player2, "Giant Warthog");

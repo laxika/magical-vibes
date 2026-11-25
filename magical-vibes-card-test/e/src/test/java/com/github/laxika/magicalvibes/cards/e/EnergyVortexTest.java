@@ -67,8 +67,7 @@ class EnergyVortexTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertLife(player2, 17);
         harness.assertLife(player1, 20);
@@ -82,9 +81,9 @@ class EnergyVortexTest extends BaseCardTest {
         vortex.setCounterCount(CounterType.VORTEX, 2);
 
         advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.passBothPriorities();
 
-        harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player2, true);
 
         harness.assertLife(player2, 20);
@@ -98,10 +97,10 @@ class EnergyVortexTest extends BaseCardTest {
         vortex.setCounterCount(CounterType.VORTEX, 2);
 
         advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.passBothPriorities();
 
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertLife(player2, 17);
     }
@@ -133,8 +132,7 @@ class EnergyVortexTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, vortex.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertLife(player2, 17);
     }

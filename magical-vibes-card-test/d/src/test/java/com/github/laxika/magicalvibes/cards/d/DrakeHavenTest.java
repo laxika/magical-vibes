@@ -155,7 +155,7 @@ class DrakeHavenTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without enough mana does not create a Drake")
+    @DisplayName("Without any way to pay, nothing is asked and it does not create a Drake")
     void unpaidAbilityCreatesNoDrake() {
         harness.addToBattlefield(player1, new DrakeHaven());
         harness.setHand(player1, List.of(new Censor()));
@@ -164,8 +164,7 @@ class DrakeHavenTest extends BaseCardTest {
 
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getCard().isToken());

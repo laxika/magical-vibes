@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -22,10 +22,8 @@ public class AntManColonyCommander extends Card {
 
     public AntManColonyCommander() {
         target(TargetFilters.creature()).addTrigger(Triggers.attacks(),
-                new MayPayManaEffect(
-                        "{1}",
-                        new QueueReflexiveAbilityEffect(new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)),
-                        "Pay {1} to put a +1/+1 counter on target creature?"));
+                UnlessPaysEffect.youMayPay("{1}", new QueueReflexiveAbilityEffect(new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)))
+                        .withPrompt("Pay {1} to put a +1/+1 counter on target creature?"));
 
         addTrigger(Triggers.youPutPlusOneCountersOnCreature(),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),

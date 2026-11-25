@@ -31,7 +31,7 @@ class KrenkoBaronOfTinStreetTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Spellbook");
@@ -69,7 +69,7 @@ class KrenkoBaronOfTinStreetTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         assertThat(ownGoblinEnchantment.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

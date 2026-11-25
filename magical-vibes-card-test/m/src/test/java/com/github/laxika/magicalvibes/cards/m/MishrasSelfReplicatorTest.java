@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,6 +23,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({MishrasSelfReplicator.class, AdelizTheCinderWind.class, GrizzlyBears.class,
         Spellbook.class, HistoryOfBenalia.class})
 class MishrasSelfReplicatorTest extends BaseCardTest {
+
+    /**
+     * Both players have a way to make mana, so every "you may pay" in this class is asked and the test answers it with
+     * the mana it adds (or without it); a payer with no way at all to pay isn't asked (CR 118.3, 608.2d).
+     */
+    @BeforeEach
+    void everyPayerHasAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     @Test
     @DisplayName("Casting an artifact triggers may ability prompt")

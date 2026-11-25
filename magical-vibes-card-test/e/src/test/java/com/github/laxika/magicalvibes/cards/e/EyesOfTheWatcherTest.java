@@ -58,13 +58,13 @@ class EyesOfTheWatcherTest extends BaseCardTest {
 
         harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0}, List.of());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
     }
 
     @Test
-    @DisplayName("Accepting without enough mana does not scry")
+    @DisplayName("Without any way to pay, nothing is asked and it does not scry")
     void acceptingWithoutManaDoesNotScry() {
         setUp(new Arachnoid(), new ChannelTheSuns());
         harness.setHand(player1, List.of(new AbunasChant()));
@@ -73,7 +73,7 @@ class EyesOfTheWatcherTest extends BaseCardTest {
 
         harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0}, List.of());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
     }
@@ -172,9 +172,7 @@ class EyesOfTheWatcherTest extends BaseCardTest {
                 new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
-                .isNotNull();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
     }
 

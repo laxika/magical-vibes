@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -28,10 +28,8 @@ public class RohgahhKherKeepOverlord extends Card {
         // Whenever you cast a Kobold spell, you may pay {2}. If you do, create a 4/4 red Dragon
         // creature token with flying.
         addTrigger(Triggers.youCastSpell().withFilter(new CardSubtypePredicate(CardSubtype.KOBOLD)),
-                new MayPayManaEffect("{2}",
-                        new CreateTokenEffect("Dragon", 4, 4, CardColor.RED,
-                                List.of(CardSubtype.DRAGON), Set.of(Keyword.FLYING), Set.of()),
-                        "Pay {2} to create a 4/4 red Dragon creature token with flying?"));
+                UnlessPaysEffect.youMayPay("{2}", new CreateTokenEffect("Dragon", 4, 4, CardColor.RED,
+                                List.of(CardSubtype.DRAGON), Set.of(Keyword.FLYING), Set.of())).withPrompt("Pay {2} to create a 4/4 red Dragon creature token with flying?"));
 
         // Whenever you cast a Dragon spell, create a 0/1 red Kobold creature token named Kobolds
         // of Kher Keep.

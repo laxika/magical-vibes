@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardAllCardsOfChosenColorEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "INV", collectorNumber = "242")
@@ -13,7 +13,6 @@ public class CrosisThePurger extends Card {
 
     public CrosisThePurger() {
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new MayPayManaEffect("{2}{B}", DiscardAllCardsOfChosenColorEffect.damagedPlayer(),
-                        "Pay {2}{B}?"));
+                UnlessPaysEffect.youMayPay("{2}{B}", DiscardAllCardsOfChosenColorEffect.damagedPlayer()));
     }
 }

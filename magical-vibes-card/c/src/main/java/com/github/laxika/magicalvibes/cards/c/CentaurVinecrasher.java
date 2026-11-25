@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -29,9 +29,7 @@ public class CentaurVinecrasher extends Card {
 
         addTrigger(new TriggerCondition(Triggers.putIntoGraveyardFromAnywhere(Triggers.LAND_CARD, ObjectRelation.ANY),
                 AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                new MayPayManaEffect(
-                        "{G}{G}",
-                        new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
-                        "Pay {G}{G} to return Centaur Vinecrasher from your graveyard to your hand?"));
+                UnlessPaysEffect.youMayPay("{G}{G}", new ReturnSourceCardFromGraveyardToOwnerHandEffect())
+                        .withPrompt("Pay {G}{G} to return Centaur Vinecrasher from your graveyard to your hand?"));
     }
 }

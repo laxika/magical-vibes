@@ -608,10 +608,10 @@ class LichsDuelMasteryPunisherTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, trader);
         attacker.setAttacking(true);
         resolveCombat(player2);
-        harness.passBothPriorities();
-        Permanent mastery = noncreatureShieldlessMasteryBetweenWheelAndLeyline();
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
+        Permanent mastery = noncreatureShieldlessMasteryBetweenWheelAndLeyline();
         harness.handleMayAbilityChosen(player1, true);
 
         harness.handleMayAbilityChosen(player2, true);
@@ -762,7 +762,9 @@ class LichsDuelMasteryPunisherTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 2);
         harness.passBothPriorities();
 
-        harness.handleListChoice(player2, "Pay 2 life");
+        // One question per alternative in Oracle order: {R}{R} is declined, then 2 life chosen.
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player2, true);
 
         assertMasteryAskedLibraryOrExile();
         harness.assertLife(player2, 20);

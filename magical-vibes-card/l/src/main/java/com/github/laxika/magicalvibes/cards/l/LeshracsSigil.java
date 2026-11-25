@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,10 +23,8 @@ public class LeshracsSigil extends Card {
         // player's hand and choose a card from it. The player discards that card.
         // "That player" is the caster, the stack entry's non-targeting target.
         addTrigger(Triggers.opponentCastsSpell().withFilter(new CardColorPredicate(CardColor.GREEN)),
-                new MayPayManaEffect("{B}{B}",
-                        ChooseCardsFromTargetHandEffect.lookAtTargetHand(
-                                new Fixed(1), HandChoiceDestination.DISCARD).ofTriggeringPlayer(),
-                        "Pay {B}{B} to look at that player's hand and discard a card?"));
+                UnlessPaysEffect.youMayPay("{B}{B}", ChooseCardsFromTargetHandEffect.lookAtTargetHand(
+                                new Fixed(1), HandChoiceDestination.DISCARD).ofTriggeringPlayer()).withPrompt("Pay {B}{B} to look at that player's hand and discard a card?"));
 
         // {B}{B}: Return this enchantment to its owner's hand.
         addActivatedAbility(new ActivatedAbility(false, "{B}{B}", List.of(ReturnToHandEffect.self()),

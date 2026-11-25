@@ -61,7 +61,7 @@ class GodFavoredGeneralTest extends BaseCardTest {
         advanceToUntapStep();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getName().equals("Soldier"));

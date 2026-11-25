@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -74,10 +74,10 @@ public class ReturnEnchantedCreatureToOwnerHandOnDeathEffectHandler implements N
         if (e.followUpManaCost() != null) {
             int effectIndex = entry.getEffectsToResolve().indexOf(effect);
             if (effectIndex >= 0) {
-                entry.insertEffectsToResolve(effectIndex + 1, List.of(new MayPayManaEffect(
-                        e.followUpManaCost(),
-                        new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
-                        e.followUpPrompt())));
+                UnlessPaysEffect returnSource = UnlessPaysEffect.youMayPay(e.followUpManaCost(),
+                        new ReturnSourceCardFromGraveyardToOwnerHandEffect());
+                entry.insertEffectsToResolve(effectIndex + 1, List.of(e.followUpPrompt() == null
+                        ? returnSource : returnSource.withPrompt(e.followUpPrompt())));
             }
         }
     }

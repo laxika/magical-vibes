@@ -204,7 +204,7 @@ class LeshracsSigilTest extends BaseCardTest {
 
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND")).isEmpty();

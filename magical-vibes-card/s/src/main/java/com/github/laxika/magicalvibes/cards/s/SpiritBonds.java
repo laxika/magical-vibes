@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -30,8 +30,8 @@ public class SpiritBonds extends Card {
                                 Triggers.CREATURE,
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
                         ObjectRelation.YOU_CONTROL),
-                new MayPayManaEffect("{W}", CreateTokenEffect.whiteSpirit(1),
-                        "Pay {W} to create a 1/1 white Spirit creature token?"));
+                UnlessPaysEffect.youMayPay("{W}", CreateTokenEffect.whiteSpirit(1))
+                        .withPrompt("Pay {W} to create a 1/1 white Spirit creature token?"));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

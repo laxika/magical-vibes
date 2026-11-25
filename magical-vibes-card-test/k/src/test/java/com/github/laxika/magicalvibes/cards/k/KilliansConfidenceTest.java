@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -17,11 +19,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KilliansConfidence.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({Plains.class, KilliansConfidence.class, GrizzlyBears.class, FountainOfYouth.class})
 class KilliansConfidenceTest extends BaseCardTest {
 
     private Card putConfidenceInGraveyard() {
         Card confidence = new KilliansConfidence();
+        harness.addToBattlefield(player1, new Plains());
         harness.setGraveyard(player1, List.of(confidence));
         return confidence;
     }

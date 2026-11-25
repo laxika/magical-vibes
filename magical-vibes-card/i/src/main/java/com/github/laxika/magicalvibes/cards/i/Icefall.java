@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -32,9 +32,8 @@ public class Icefall extends Card {
 
         addTrigger(new TriggerCondition(Triggers.creatureDies(ObjectRelation.YOU_OWN),
                 AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                new MayPayManaEffect("{R}{R}",
-                        new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
-                        "Pay {R}{R} to return Icefall from your graveyard to your hand?",
-                        new ExileSourceCardFromGraveyardEffect()));
+                UnlessPaysEffect.youMayPay("{R}{R}", new ReturnSourceCardFromGraveyardToOwnerHandEffect())
+                        .ifNotPaid(new ExileSourceCardFromGraveyardEffect())
+                        .withPrompt("Pay {R}{R} to return Icefall from your graveyard to your hand?"));
     }
 }

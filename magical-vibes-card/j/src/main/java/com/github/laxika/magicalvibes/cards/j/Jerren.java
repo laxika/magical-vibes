@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.o.OrmendahlTheCorrupter;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -13,7 +14,6 @@ import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -61,7 +61,8 @@ public class Jerren extends Card {
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new AllOf(List.of(new ControllerLifeAtLeast(13), new ControllerLifeAtMost(13)))),
-                new MayPayManaEffect("{4}{B}{B}", new TransformSelfEffect(), "Pay {4}{B}{B} to transform Jerren?"));
+                UnlessPaysEffect.youMayPay("{4}{B}{B}", new TransformSelfEffect())
+                        .withPrompt("Pay {4}{B}{B} to transform Jerren?"));
     }
 
     @Override

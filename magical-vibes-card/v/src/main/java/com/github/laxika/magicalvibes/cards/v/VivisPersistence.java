@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.AbilityZones;
@@ -11,7 +12,6 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
@@ -39,14 +39,11 @@ public class VivisPersistence extends Card {
                 1, "Wizard", 0, 1, CardColor.BLACK, List.of(CardSubtype.WIZARD),
                 Set.of(), Set.of(), wizardTokenEffects));
 
-        var returnToHand = new MayPayManaEffect(
-                "{2}",
-                ReturnCardFromGraveyardEffect.builder()
+        var returnToHand = UnlessPaysEffect.youMayPay("{2}", ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .filter(new CardIsSelfPredicate())
                         .returnAll(true)
-                        .build(),
-                "Pay {2} to return this card from your graveyard to your hand?");
+                        .build()).withPrompt("Pay {2} to return this card from your graveyard to your hand?");
 
         addTrigger(new TriggerCondition(Triggers.enters(new PermanentIsCommanderPredicate(true), ObjectRelation.ANY),
                         AbilityZones.GRAVEYARD),

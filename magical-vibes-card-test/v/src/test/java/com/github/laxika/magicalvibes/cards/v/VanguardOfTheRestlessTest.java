@@ -60,11 +60,11 @@ class VanguardOfTheRestlessTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(vanguard));
 
         harness.enterBattlefieldAndReturn(player1, new ApothecaryGeist());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -119,9 +119,9 @@ class VanguardOfTheRestlessTest extends BaseCardTest {
         VanguardOfTheRestless second = new VanguardOfTheRestless();
         harness.setGraveyard(player1, List.of(first, second));
         harness.enterBattlefieldAndReturn(player1, new VanguardOfTheRestless());
-        resolveAllTriggers();
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -147,9 +147,9 @@ class VanguardOfTheRestlessTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(vanguard));
         gd.markGraveyardEntry(vanguard);
 
-        resolveAllTriggers();
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AddAnotherCounterOfChosenTypeToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 import java.util.Set;
@@ -18,10 +18,8 @@ public class AnimationModule extends Card {
 
     public AnimationModule() {
         addTrigger(Triggers.youPutPlusOneCountersOnPermanentYouControl(),
-                new MayPayManaEffect("{1}",
-                        new CreateTokenEffect(1, "Servo", 1, 1, null,
-                                List.of(CardSubtype.SERVO), Set.of(), Set.of(CardType.ARTIFACT)),
-                        "Pay {1} to create a 1/1 colorless Servo artifact creature token?"));
+                UnlessPaysEffect.youMayPay("{1}", new CreateTokenEffect(1, "Servo", 1, 1, null,
+                                List.of(CardSubtype.SERVO), Set.of(), Set.of(CardType.ARTIFACT))).withPrompt("Pay {1} to create a 1/1 colorless Servo artifact creature token?"));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

@@ -82,7 +82,7 @@ class UnassumingSageTest extends BaseCardTest {
     void decliningPaymentDoesNotCreateSorcererRole() {
         castSage(1);
 
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(findPermanents(player1, "Sorcerer")).isEmpty();
         assertThat(findPermanents(player1, "Unassuming Sage")).hasSize(1);

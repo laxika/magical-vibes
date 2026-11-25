@@ -59,7 +59,7 @@ class ErraticPortalTest extends BaseCardTest {
 
         activate(target);
 
-        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertNotOnBattlefield(player2, "Crashing Boars");
         harness.assertInHand(player2, "Crashing Boars");
@@ -74,7 +74,7 @@ class ErraticPortalTest extends BaseCardTest {
 
         activate(target);
 
-        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.assertNotOnBattlefield(player2, "Crashing Boars");
         harness.assertInHand(player2, "Crashing Boars");
     }
@@ -116,7 +116,7 @@ class ErraticPortalTest extends BaseCardTest {
         assertThat(portal.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.assertInHand(player2, "Crashing Boars");
     }
 

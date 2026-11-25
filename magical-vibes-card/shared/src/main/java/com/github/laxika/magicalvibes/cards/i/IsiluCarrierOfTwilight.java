@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -29,7 +29,6 @@ public class IsiluCarrierOfTwilight extends Card {
 
         // At the beginning of your first main phase, you may pay {W}. If you do, transform Isilu.
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
-                new MayPayManaEffect("{W}", new TransformSelfEffect(),
-                        "Pay {W} to transform Isilu?"));
+                UnlessPaysEffect.youMayPay("{W}", new TransformSelfEffect()).withPrompt("Pay {W} to transform Isilu?"));
     }
 }

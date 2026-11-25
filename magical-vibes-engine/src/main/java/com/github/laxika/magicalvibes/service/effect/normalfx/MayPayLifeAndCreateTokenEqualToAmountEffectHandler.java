@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.List;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeAndCreateTokenEqualToAmountEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -20,7 +21,6 @@ public class MayPayLifeAndCreateTokenEqualToAmountEffectHandler
 
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
-    private final MayPayLifeEffectResolutionHandler mayPayLifeEffectResolutionHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,9 +44,8 @@ public class MayPayLifeAndCreateTokenEqualToAmountEffectHandler
         }
 
         var tokenEffect = dynamicEffect.tokenEffect().withPowerToughness(amount, amount);
-        mayPayLifeEffectResolutionHandler.resolve(gameData, entry,
-                new MayPayLifeEffect(amount, tokenEffect,
-                        "Pay " + amount + " life to create a " + amount + "/" + amount
-                                + " " + tokenEffect.tokenName() + " token?"));
+        entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(
+                UnlessPaysEffect.youMayPayLife(amount, tokenEffect).withPrompt("Pay " + amount
+                        + " life to create a " + amount + "/" + amount + " " + tokenEffect.tokenName() + " token?")));
     }
 }

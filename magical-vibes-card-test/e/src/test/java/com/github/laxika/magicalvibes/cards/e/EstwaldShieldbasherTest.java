@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -75,13 +76,13 @@ class EstwaldShieldbasherTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without mana does not grant indestructible")
+    @DisplayName("Without any way to pay, nothing is asked and it does not grant indestructible")
     void cannotGainIndestructibleWithoutPaying() {
         Permanent shieldbasher = addCreatureReady(player1, new EstwaldShieldbasher());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gqs.hasKeyword(gd, shieldbasher, Keyword.INDESTRUCTIBLE)).isFalse();
     }

@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -30,11 +30,8 @@ public class PassengerFerry extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
                 "Target must be another attacking creature"
-        )).addTrigger(Triggers.attacks(), new MayPayManaEffect(
-                "{U}",
-                new QueueReflexiveAbilityEffect(new MakeCreatureUnblockableEffect()),
-                "Pay {U} to make another attacking creature unblockable?"
-        ));
+        )).addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay("{U}", new QueueReflexiveAbilityEffect(new MakeCreatureUnblockableEffect()))
+                .withPrompt("Pay {U} to make another attacking creature unblockable?"));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

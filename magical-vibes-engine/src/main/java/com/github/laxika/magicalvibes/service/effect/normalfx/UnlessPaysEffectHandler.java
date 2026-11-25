@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,8 +48,11 @@ import org.springframework.stereotype.Component;
  * which {@code EffectResolutionService} then resolves as the branch the choice made ({@code ifPaid} or
  * {@code ifNotPaid}, CR 118.12: the choice to pay, not what happened). The choice is the entry's, not the game's, so a
  * question another ability asks while a payment's own choice is made (which card to discard, which creature to blight)
- * can't take it. A payer who couldn't pay the cost in full isn't asked and {@code ifNotPaid} resolves at once
- * ({@link #cannotBePaid}, CR 118.3, 608.2d).
+ * can't take it. A payer who has no way at all to pay the cost isn't asked and {@code ifNotPaid} resolves at once
+ * ({@link #cannotBePaid}, {@link ResolutionCostPaymentService#couldPossiblyPay}, CR 118.3, 608.2d); one who might
+ * still make the mana is asked, and an answer to pay without the resources pays nothing (CR 118.3). "Do this only
+ * once each turn" (CR 603.2h): once its action was taken this turn, the payment can't be made again, and a paid answer
+ * takes it.
  *
  * <p>An any-of ransom ("discard a card or pay {2}") is asked one alternative at a time, in its order, skipping those
  * the payer couldn't pay; declining one asks the next, and declining every one is not paying.
@@ -151,7 +155,7 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var unless = (UnlessPaysEffect) effect;
         UUID payerId = payer(gameData, entry, unless);
-        if (payerId == null) {
+        if (payerId == null || onceEachTurnActionTaken(gameData, entry)) {
             return;
         }
         int index = entry.getResolvingEffectIndex();
@@ -165,7 +169,8 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
         }
         Ransom ransom = alternatives.get(asked);
         StackEntry spell = spellAskedAbout(gameData, entry, unless);
-        String prompt = ransom.action() + suffix(gameData, unless, spell, payerId) + "?";
+        String prompt = unless.prompt() != null && alternatives.size() == 1 ? unless.prompt()
+                : ransom.action() + suffix(gameData, unless, spell, payerId) + "?";
         gameData.resolvingMayEffectFromStack = true;
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), payerId, List.of(unless), prompt,
@@ -181,8 +186,14 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
      */
     public boolean cannotBePaid(GameData gameData, StackEntry entry, UnlessPaysEffect unless, int index) {
         UUID payerId = payer(gameData, entry, unless);
-        return payerId != null && firstPayable(gameData, payerId, alternatives(gameData, entry, unless),
-                entry.unlessAlternative(index)) < 0;
+        return payerId != null && (onceEachTurnActionTaken(gameData, entry)
+                || firstPayable(gameData, payerId, alternatives(gameData, entry, unless),
+                entry.unlessAlternative(index)) < 0);
+    }
+
+    /** Whether the entry's "do this only once each turn" action was already taken this turn (CR 603.2h). */
+    private static boolean onceEachTurnActionTaken(GameData gameData, StackEntry entry) {
+        return entry.marksOnceEachTurnAction() && TriggeredAbilityStackService.actionTaken(gameData, entry);
     }
 
     /** {@link #cannotBePaid(GameData, StackEntry, UnlessPaysEffect, int)} for the effect the entry is resolving. */
@@ -219,7 +230,7 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
 
     private int firstPayable(GameData gameData, UUID payerId, List<Ransom> alternatives, int from) {
         for (int i = Math.max(0, from); i < alternatives.size(); i++) {
-            if (costPayment.canPay(gameData, payerId, alternatives.get(i).cost(), null)) {
+            if (costPayment.couldPossiblyPay(gameData, payerId, alternatives.get(i).cost(), null)) {
                 return i;
             }
         }
@@ -243,8 +254,8 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
         return switch (cost) {
             case PayManaCost mana -> Ransom.ofManaAndLife(manaCost(gameData, entry, mana), mana.announcedX(),
                     mana.lifeAmount());
-            case PayLifeCost life -> Ransom.ofManaAndLife(null, false,
-                    amountEvaluationService.evaluate(gameData, life.amount(), amountContext(gameData, entry)));
+            case PayLifeCost life -> Ransom.ofManaAndLife(null, false, Math.max(0,
+                    amountEvaluationService.evaluate(gameData, life.amount(), amountContext(gameData, entry))));
             case DiscardCardTypeCost discard -> {
                 String card = discard.label() == null ? "a card" : article(discard.label()) + " card";
                 yield new Ransom(cost, "Discard " + card, "discards " + card, "discard " + card);
@@ -362,6 +373,10 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
             ResolutionCostPaymentService.Outcome outcome = costPayment.pay(gameData, player, ransom.cost(),
                     new ResolutionCostPaymentService.Payment(ability.sourceCard(), ability.sourceControllerId(),
                             ability, entry));
+            if (outcome != ResolutionCostPaymentService.Outcome.NOT_PAID) {
+                // Paying is taking the action of "do this only once each turn" (CR 603.2h).
+                TriggeredAbilityStackService.markActionTaken(gameData, entry);
+            }
             if (outcome == ResolutionCostPaymentService.Outcome.ASKING) {
                 if (!ransom.manaOrLife()) {
                     // Paid by the prompt's answer: the choice to pay is made now, the payment comes with the answer.

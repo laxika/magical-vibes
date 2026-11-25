@@ -51,7 +51,7 @@ class HematiteTalismanTest extends BaseCardTest {
         assertThat(targetChoice.validIds()).contains(bears.getId());
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(bears.isTapped()).isTrue();
     }

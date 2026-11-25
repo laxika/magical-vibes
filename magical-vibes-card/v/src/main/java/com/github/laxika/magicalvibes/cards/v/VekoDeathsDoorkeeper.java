@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureCardToHandAndPerpetuallyModifyEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -24,9 +24,8 @@ public class VekoDeathsDoorkeeper extends Card {
     public VekoDeathsDoorkeeper() {
         // Extort.
         addTrigger(Triggers.youCastSpell().anySpell(),
-                new MayPayManaEffect("{W/B}",
-                        new LoseLifeEffect(1, Subjects.eachOpponent(), true),
-                        "Pay {W/B} to extort?"));
+                UnlessPaysEffect.youMayPay("{W/B}", new LoseLifeEffect(1, Subjects.eachOpponent(), true))
+                        .withPrompt("Pay {W/B} to extort?"));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

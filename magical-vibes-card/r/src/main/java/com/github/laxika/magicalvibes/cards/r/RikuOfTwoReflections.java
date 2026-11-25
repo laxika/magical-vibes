@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -23,15 +23,13 @@ public class RikuOfTwoReflections extends Card {
         addTrigger(Triggers.youCastSpell().withFilter(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY)))),
-                new MayPayManaEffect("{U}{R}", new CopyTriggeringSpellEffect(), "Pay {U}{R} to copy that spell?"));
+                UnlessPaysEffect.youMayPay("{U}{R}", new CopyTriggeringSpellEffect())
+                        .withPrompt("Pay {U}{R} to copy that spell?"));
 
         // Whenever another nontoken creature you control enters, you may pay {G}{U}. If you do,
         // create a token that's a copy of that creature.
         addTrigger(Triggers.enters(Triggers.NONTOKEN_CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new MayPayManaEffect(
-                "{G}{U}",
-                new CreateTokenCopyOfTargetPermanentEffect().ofTriggeringPermanent(),
-                "Pay {G}{U} to create a token that's a copy of that creature?"
-        ));
+                UnlessPaysEffect.youMayPay("{G}{U}", new CreateTokenCopyOfTargetPermanentEffect().ofTriggeringPermanent())
+                        .withPrompt("Pay {G}{U} to create a token that's a copy of that creature?"));
     }
 }

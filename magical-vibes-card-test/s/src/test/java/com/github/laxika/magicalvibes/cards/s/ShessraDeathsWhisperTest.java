@@ -157,7 +157,7 @@ class ShessraDeathsWhisperTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting with only 1 life cannot pay the cost or draw a card")
+    @DisplayName("Without any way to pay, nothing is asked and it cannot pay the cost or draw a card")
     void cannotPayWithInsufficientLife() {
         harness.addToBattlefield(player1, new ShessraDeathsWhisper());
         Permanent dyingCreature = addCreatureReady(player2, new GrizzlyBears());
@@ -169,7 +169,7 @@ class ShessraDeathsWhisperTest extends BaseCardTest {
 
         advanceToEndStep(player1);
         resolveAllTriggers();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertLife(player1, 1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);

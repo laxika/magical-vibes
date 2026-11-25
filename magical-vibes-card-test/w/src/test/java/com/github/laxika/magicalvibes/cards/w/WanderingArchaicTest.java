@@ -112,6 +112,8 @@ class WanderingArchaicTest extends BaseCardTest {
         harness.addToBattlefield(player1, new WanderingArchaic());
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
+        // {2} left over, so the payment is offered.
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
 
         harness.castInstant(player2, 0, player1.getId());
         harness.passBothPriorities();
@@ -129,6 +131,8 @@ class WanderingArchaicTest extends BaseCardTest {
         harness.addToBattlefield(player1, new WanderingArchaic());
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
+        // {2} left over, so the payment is offered.
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
 
         harness.castInstant(player2, 0, player1.getId());
         harness.passBothPriorities();
@@ -296,7 +300,7 @@ class WanderingArchaicTest extends BaseCardTest {
         harness.setHand(player2, List.of(new WanderingArchaic()));
         harness.setLibrary(player1, List.of());
         harness.setLibrary(player2, List.of());
-        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.COLORLESS, 5);
 
         harness.castModalSorcery(player2, 0, 1, List.of());
         harness.passBothPriorities();

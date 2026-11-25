@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -21,6 +21,6 @@ public class EyesOfTheWatcher extends Card {
                                 new CardTypePredicate(CardType.INSTANT),
                                 new CardTypePredicate(CardType.SORCERY)
                         ))),
-                new MayPayManaEffect("{1}", new ScryEffect(2), "Pay {1} to scry 2?"));
+                UnlessPaysEffect.youMayPay("{1}", new ScryEffect(2)).withPrompt("Pay {1} to scry 2?"));
     }
 }

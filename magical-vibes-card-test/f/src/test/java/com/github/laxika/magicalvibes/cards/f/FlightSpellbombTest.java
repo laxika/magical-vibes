@@ -34,6 +34,7 @@ class FlightSpellbombTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Flight Spellbomb");
 
         // Resolve death trigger MayPayManaEffect (on top per CR 603.3) — shows may prompt
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.passBothPriorities();
 
         // Death trigger may ability should prompt
@@ -52,7 +53,7 @@ class FlightSpellbombTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Decline the death trigger draw
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         // Resolve flying ability
         harness.passBothPriorities();
@@ -73,7 +74,7 @@ class FlightSpellbombTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Decline the death trigger draw
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         // Resolve flying ability
         harness.passBothPriorities();
@@ -138,7 +139,7 @@ class FlightSpellbombTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting death trigger without enough mana treats as decline")
+    @DisplayName("Without any way to pay, nothing is asked and nothing happens")
     void acceptWithoutManaNoCard() {
         harness.addToBattlefield(player1, new FlightSpellbomb());
         harness.addToBattlefield(player1, new CarapaceForger());
@@ -153,7 +154,7 @@ class FlightSpellbombTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Accept but cannot pay {U} — auto-treated as decline
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         // No card drawn
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
@@ -199,7 +200,7 @@ class FlightSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, creature.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
@@ -231,4 +232,18 @@ class FlightSpellbombTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
 
+    @Test
+    @DisplayName("With no mana source and an empty pool, the draw isn't offered")
+    void noPromptWithoutAnyWayToPay() {
+        harness.addToBattlefield(player1, new FlightSpellbomb());
+        UUID forgerId = harness.addToBattlefieldAndReturn(player1, new CarapaceForger()).getId();
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, null, forgerId);
+        harness.passBothPriorities();
+
+        // A payer with no way at all to pay {U} can't choose to pay it (CR 118.3, 608.2d).
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+    }
 }

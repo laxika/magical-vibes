@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -30,6 +30,7 @@ public class NihilSpellbomb extends Card {
                 "{T}, Sacrifice Nihil Spellbomb: Exile target player's graveyard."
         ));
 
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayPayManaEffect("{B}", new DrawCardEffect(1), "Pay {B} to draw a card?"));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), UnlessPaysEffect.youMayPay("{B}", new DrawCardEffect(1))
+                .withPrompt("Pay {B} to draw a card?"));
     }
 }

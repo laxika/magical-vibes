@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndReturnAtNextEndStepUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -91,9 +91,9 @@ public class ExileTargetPermanentAndReturnAtNextEndStepUnlessPaysEffectHandler
     private static TemporaryGlobalTriggeredAbility returnUnlessPaid(GameData gameData, UUID cardId,
                                                                     UUID controllerId, Card sourceCard,
                                                                     UUID sourcePermanentId) {
-        MayPayManaEffect payOrReturn = new MayPayManaEffect("{3}{B}", null,
-                "Pay {3}{B}? If you don't, that card returns to the battlefield under its owner's control.",
-                new PutCardsOntoBattlefieldEffect(Subjects.cardsThisWay(StepKind.EXILE)));
+        UnlessPaysEffect payOrReturn = UnlessPaysEffect.unlessYouPay("{3}{B}",
+                        new PutCardsOntoBattlefieldEffect(Subjects.cardsThisWay(StepKind.EXILE)))
+                .withPrompt("Pay {3}{B}? If you don't, that card returns to the battlefield under its owner's control.");
         return TemporaryGlobalTriggeredAbility.atNextStep(controllerId, sourceCard,
                 new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY), payOrReturn), sourcePermanentId, null, null,
                 DelayedExiledCardReturns.exiled(gameData, java.util.Collections.singletonList(cardId)));

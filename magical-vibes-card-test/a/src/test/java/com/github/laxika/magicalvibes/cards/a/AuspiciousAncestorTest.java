@@ -99,7 +99,7 @@ class AuspiciousAncestorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without {1} gains no life")
+    @DisplayName("Without any way to pay, nothing is asked and it gains no life")
     void cannotPayGainsNoLife() {
         harness.addToBattlefield(player1, new AuspiciousAncestor());
         setUpOpponentTurn();
@@ -107,7 +107,7 @@ class AuspiciousAncestorTest extends BaseCardTest {
         harness.castFromHand(player2, new FemerefScouts(), "{2}{W}");
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife);
     }

@@ -82,7 +82,7 @@ class KeyToTheCityTest extends BaseCardTest {
 
         runUntapStep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         // Declining leaves the game to proceed into the draw step, whose turn-based draw is the only card drawn.
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -144,7 +144,7 @@ class KeyToTheCityTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);

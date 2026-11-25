@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "RNA", collectorNumber = "22")
@@ -18,13 +18,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SmotheringTithe extends Card {
 
     public SmotheringTithe() {
-        addTrigger(Triggers.opponentDrawsCard(), new MayPayManaEffect(
-                "{2}",
-                null,
-                "Pay {2}?",
-                MayPayPayer.TRIGGERING_PLAYER,
-                CreateTokenEffect.ofTreasureToken(1),
-                0
-        ));
+        addTrigger(Triggers.opponentDrawsCard(), UnlessPaysEffect.unlessPays(Subjects.triggeringPlayer(), "{2}", CreateTokenEffect.ofTreasureToken(1)));
     }
 }

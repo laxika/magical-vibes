@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DGM", collectorNumber = "27")
@@ -24,8 +24,8 @@ public class PontiffOfBlight extends Card {
                 new TriggeredAbility(Triggers.youCastSpell().anySpell(), extort()), Subjects.otherCreaturesYouControl()));
     }
 
-    private static MayPayManaEffect extort() {
-        return new MayPayManaEffect("{W/B}",
-                new LoseLifeEffect(1, Subjects.eachOpponent(), true), "Pay {W/B} to extort?");
+    private static UnlessPaysEffect extort() {
+        return UnlessPaysEffect.youMayPay("{W/B}", new LoseLifeEffect(1, Subjects.eachOpponent(), true))
+                .withPrompt("Pay {W/B} to extort?");
     }
 }

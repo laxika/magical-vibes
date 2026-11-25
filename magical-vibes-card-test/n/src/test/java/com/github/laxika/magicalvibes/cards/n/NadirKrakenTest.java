@@ -79,14 +79,14 @@ class NadirKrakenTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without mana gives neither a counter nor a token")
+    @DisplayName("Without any way to pay, nothing is asked and it gives neither a counter nor a token")
     void cannotPayWithoutMana() {
         Permanent kraken = harness.addToBattlefieldAndReturn(player1, new NadirKraken());
         harness.setLibrary(player1, List.of(new NyxbornColossus()));
 
         draw();
         resolveTopOfStack();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(kraken.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(findPermanents(player1, "Tentacle")).isEmpty();

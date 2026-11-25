@@ -186,7 +186,7 @@ class KalastriaHighbornTest extends BaseCardTest {
         killPermanent(player1, "Kalastria Highborn");
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.l.LisetteDeanOfTheRoot;
 import com.github.laxika.magicalvibes.model.Card;
@@ -10,7 +11,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCreaturesInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,10 +27,7 @@ public class ValentinDeanOfTheVein extends Card {
 
         addStaticEffect(new ExileOpponentCreaturesInsteadOfDyingEffect(
                 true,
-                new MayPayManaEffect(
-                        "{2}",
-                        pestToken(),
-                        "Pay {2} to create a Pest token?")));
+                UnlessPaysEffect.youMayPay("{2}", pestToken()).withPrompt("Pay {2} to create a Pest token?")));
     }
 
     private static CreateTokenEffect pestToken() {

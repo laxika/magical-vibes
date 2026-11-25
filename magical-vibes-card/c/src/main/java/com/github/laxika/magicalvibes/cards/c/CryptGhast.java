@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,9 +20,8 @@ public class CryptGhast extends Card {
 
     public CryptGhast() {
         addTrigger(Triggers.youCastSpell().anySpell(),
-                new MayPayManaEffect("{W/B}",
-                        new LoseLifeEffect(1, Subjects.eachOpponent(), true),
-                        "Pay {W/B} to extort?"));
+                UnlessPaysEffect.youMayPay("{W/B}", new LoseLifeEffect(1, Subjects.eachOpponent(), true))
+                        .withPrompt("Pay {W/B} to extort?"));
         addTrigger(Triggers.youTapLandForMana().withFilter(new PermanentHasSubtypePredicate(CardSubtype.SWAMP)),
                 new AddManaWhenTappedForManaEffect(ManaColor.BLACK));
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.a.AssassinInitiate;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -18,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EzioAuditoreDaFirenze.class, AssassinInitiate.class})
+@CardUsed({Swamp.class, EzioAuditoreDaFirenze.class, AssassinInitiate.class})
 class EzioAuditoreDaFirenzeTest extends BaseCardTest {
 
     @Test
@@ -158,7 +159,9 @@ class EzioAuditoreDaFirenzeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreatureWithAlternateCost(player1, 0, List.of()))
                 .isInstanceOf(IllegalStateException.class);
     }
+    /** Ezio attacking, with a Swamp so its controller has a mana source and the payment is offered. */
     private Permanent addAttackingEzio() {
+        harness.addToBattlefield(player1, new Swamp());
         Permanent ezio = addCreatureReady(player1, new EzioAuditoreDaFirenze());
         ezio.setAttacking(true);
         return ezio;

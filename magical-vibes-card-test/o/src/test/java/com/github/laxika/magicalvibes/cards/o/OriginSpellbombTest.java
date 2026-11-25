@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -30,7 +31,7 @@ class OriginSpellbombTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Decline death trigger
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         // Resolve the token creation ability
         harness.passBothPriorities();
@@ -46,7 +47,7 @@ class OriginSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities(); // Resolve death trigger MayEffect (on top per CR 603.3)
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities(); // Resolve token creation ability
 
         Permanent myrToken = findPermanent(player1, "Myr");
@@ -126,7 +127,7 @@ class OriginSpellbombTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting death trigger without enough mana treats as decline")
+    @DisplayName("Without any way to pay, nothing is asked and nothing happens")
     void acceptWithoutManaNoCard() {
         harness.addToBattlefield(player1, new OriginSpellbomb());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -140,7 +141,7 @@ class OriginSpellbombTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Accept but cannot pay {W}
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         // No card drawn
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);

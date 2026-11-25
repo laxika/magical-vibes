@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -23,8 +23,7 @@ public class GoShintaiOfHiddenCruelty extends Card {
                 new PermanentToughnessAtMostControlledSubtypeCountPredicate(CardSubtype.SHRINE)
         ));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new MayPayManaEffect("{1}",
-                        new QueueReflexiveAbilityEffect(new DestroyTargetPermanentEffect(targetPredicate)),
-                        "Pay {1} to destroy target creature with toughness X or less?"));
+                UnlessPaysEffect.youMayPay("{1}", new QueueReflexiveAbilityEffect(new DestroyTargetPermanentEffect(targetPredicate)))
+                        .withPrompt("Pay {1} to destroy target creature with toughness X or less?"));
     }
 }

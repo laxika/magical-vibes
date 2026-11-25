@@ -66,8 +66,7 @@ class FelhideSpiritbinderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         assertThat(targetChoice).isNotNull();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().isToken());

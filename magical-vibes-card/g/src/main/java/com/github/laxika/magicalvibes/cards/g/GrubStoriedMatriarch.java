@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -29,8 +29,7 @@ public class GrubStoriedMatriarch extends Card {
         addTrigger(Triggers.transformsToFrontFace(ObjectRelation.THIS), returnGoblin);
 
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
-                new MayPayManaEffect("{R}", new TransformSelfEffect(),
-                        "Pay {R} to transform Grub?"));
+                UnlessPaysEffect.youMayPay("{R}", new TransformSelfEffect()).withPrompt("Pay {R} to transform Grub?"));
     }
 
     @Override

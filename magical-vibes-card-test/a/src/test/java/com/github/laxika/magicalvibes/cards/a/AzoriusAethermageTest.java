@@ -48,7 +48,7 @@ class AzoriusAethermageTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         castAndResolveBounce(target.getId());
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(target.getOriginalCard());
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawnCard);
@@ -56,7 +56,7 @@ class AzoriusAethermageTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting the payment without enough mana draws no card")
+    @DisplayName("Without any way to pay, nothing is asked: it draws no card")
     void acceptingPaymentWithoutEnoughManaDrawsNoCard() {
         Forest drawnCard = new Forest();
         harness.setLibrary(player1, List.of(drawnCard));
@@ -66,7 +66,7 @@ class AzoriusAethermageTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         castAndResolveBounce(target.getId());
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(target.getOriginalCard());
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawnCard);
@@ -156,7 +156,7 @@ class AzoriusAethermageTest extends BaseCardTest {
         castAndResolveBounce(target.getId());
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(target.getOriginalCard(), firstDraw);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondDraw);
@@ -182,7 +182,5 @@ class AzoriusAethermageTest extends BaseCardTest {
     private void castAndResolveBounce(UUID targetId) {
         harness.castAndResolveInstant(player1, 0, targetId);
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
-                .isEqualTo(player1.getId());
     }
 }

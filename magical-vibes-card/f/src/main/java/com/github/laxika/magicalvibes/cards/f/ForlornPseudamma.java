@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -17,9 +17,8 @@ public class ForlornPseudamma extends Card {
 
     public ForlornPseudamma() {
         addTrigger(Triggers.becomesUntapped(),
-                new MayPayManaEffect("{2}{B}", new CreateTokenEffect(
+                UnlessPaysEffect.youMayPay("{2}{B}", new CreateTokenEffect(
                         "Zombie", 2, 2, CardColor.BLACK,
-                        List.of(CardSubtype.ZOMBIE), Set.of(), Set.of(CardType.ENCHANTMENT)),
-                        "Pay {2}{B} to create a 2/2 black Zombie enchantment creature token?"));
+                        List.of(CardSubtype.ZOMBIE), Set.of(), Set.of(CardType.ENCHANTMENT))).withPrompt("Pay {2}{B} to create a 2/2 black Zombie enchantment creature token?"));
     }
 }

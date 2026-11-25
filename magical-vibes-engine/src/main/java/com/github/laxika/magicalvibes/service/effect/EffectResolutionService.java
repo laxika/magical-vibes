@@ -33,7 +33,6 @@ import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerMayPayManaOrLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -455,22 +454,6 @@ public class EffectResolutionService {
                 }
             }
 
-            // CR 603.5 — resolution-time "that player may pay {M} or N life" re-entry
-            if (effectToResolve instanceof TargetPlayerMayPayManaOrLifeEffect mayPayManaOrLife
-                    && gameData.resolvedMayAccepted != null) {
-                boolean accepted = gameData.resolvedMayAccepted;
-                gameData.resolvedMayAccepted = null;
-                if (accepted) {
-                    effectToResolve = mayPayManaOrLife.wrapped();
-                    log.info("Game {} - Player accepted pay-mana-or-life ability from {} — resolving inner effect",
-                            gameData.id, entry.getCard().getName());
-                } else {
-                    log.info("Game {} - Player declined pay-mana-or-life ability from {} — skipping",
-                            gameData.id, entry.getCard().getName());
-                    continue;
-                }
-            }
-
             if (effectToResolve instanceof MayPayTapPermanentsEffect mayPayTap && gameData.resolvedMayAccepted != null) {
                 boolean accepted = gameData.resolvedMayAccepted;
                 gameData.resolvedMayAccepted = null;
@@ -550,8 +533,9 @@ public class EffectResolutionService {
             }
 
             // CR 118.12a — "[do X] unless [a player pays]": the payer's answer, kept on this entry so no other
-            // question answered meanwhile can take it, or a payment they couldn't make (CR 118.3, 608.2d), chooses the
-            // branch that resolves as this effect.
+            // question answered meanwhile can take it, or a payment they had no way to make (CR 118.3, 608.2d),
+            // chooses the branch, which is put next as this resolution's next step: a wrapper in it (an "if" on the
+            // "if you do", a "you may") is judged there as at the top level.
             if (!skipEffect && effectToResolve instanceof UnlessPaysEffect unless) {
                 Boolean paid = entry.takeUnlessAnswer(i);
                 if (paid == null && unlessPaysEffectHandler != null
@@ -563,12 +547,10 @@ public class EffectResolutionService {
                     CardEffect branch = paid ? unless.ifPaid() : unless.ifNotPaid();
                     if (branch instanceof SequenceEffect sequence) {
                         entry.spliceSequenceSteps(i, sequence.steps(), sequence.simultaneous());
-                        skipEffect = true;
-                    } else if (branch == null) {
-                        skipEffect = true;
-                    } else {
-                        effectToResolve = branch;
+                    } else if (branch != null) {
+                        entry.spliceSequenceSteps(i, List.of(branch), false);
                     }
+                    skipEffect = true;
                 }
             }
 

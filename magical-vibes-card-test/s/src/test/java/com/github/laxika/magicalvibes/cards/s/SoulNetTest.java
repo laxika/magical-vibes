@@ -62,7 +62,7 @@ class SoulNetTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without enough mana gains no life")
+    @DisplayName("Without any way to pay, nothing is asked and it gains no life")
     void acceptWithoutManaNoLife() {
         harness.addToBattlefield(player1, new SoulNet());
         UUID bearsId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
@@ -76,7 +76,7 @@ class SoulNetTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearsId);
         harness.passBothPriorities();
 
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertLife(player1, 20);
     }

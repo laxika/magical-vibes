@@ -4,11 +4,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTopCardFromLibraryForManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayCastForManaOrPutLandOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -76,20 +75,9 @@ public class RevealTopCardMayCastForManaOrPutLandOntoBattlefieldEffectHandler
 
         CastTopCardFromLibraryForManaEffect castEffect =
                 new CastTopCardFromLibraryForManaEffect(topCard, e.manaCost());
-        entry.replaceEffectToResolve(effectIndex,
-                new MayPayManaEffect(e.manaCost(), castEffect,
-                        "Pay " + e.manaCost() + " to cast " + topCard.getName() + "?"));
-        gameData.resolvingMayEffectFromStack = true;
-        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                topCard,
-                controllerId,
-                List.of(castEffect),
-                entry.getCard().getName() + " — Cast " + topCard.getName()
-                        + " by paying " + e.manaCost() + "?",
-                null,
-                e.manaCost(),
-                entry.getSourcePermanentId()
-        ));
+        // "You may cast it by paying {M}": the payment is asked as the next step (CR 118.12).
+        entry.insertEffectsToResolve(effectIndex + 1, List.of(UnlessPaysEffect.youMayPay(e.manaCost(), castEffect)
+                .withPrompt("Cast " + topCard.getName() + " by paying " + e.manaCost() + "?")));
         log.info("Game {} - {} may cast {} from the top of the library by paying {}",
                 gameData.id, playerName, topCard.getName(), e.manaCost());
     }

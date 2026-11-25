@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinDestroyTargetOrRepeatEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.List;
@@ -55,11 +55,9 @@ public class FlipCoinDestroyTargetOrRepeatEffectHandler implements NormalEffectH
             ActionEvents.coinFlipLost(gameData, controllerId);
         }
 
-        MayPayManaEffect repeat = new MayPayManaEffect(
-                "{3}",
-                flipEffect,
-                "Pay {3} to repeat this process?",
-                DestroyTargetPermanentEffect.forTargetGroup(0));
+        UnlessPaysEffect repeat = UnlessPaysEffect.unlessYouPay("{3}", DestroyTargetPermanentEffect.forTargetGroup(0))
+                .ifPaid(flipEffect)
+                .withPrompt("Pay {3} to repeat this process?");
         int effectIndex = findEffectIndex(entry, flipEffect);
         entry.insertEffectsToResolve(effectIndex + 1, List.of(repeat));
     }

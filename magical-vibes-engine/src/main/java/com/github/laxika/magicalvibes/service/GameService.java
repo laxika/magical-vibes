@@ -2570,10 +2570,23 @@ public class GameService {
                         xValue, targetIds))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            requirePriority(gameData, player);
+            // A mana ability that works from the hand (Elvish Spirit Guide) may be activated while an effect asks
+            // this player for a mana payment, as one on the battlefield may (CR 605.3a).
+            boolean manaPayment = (isCombatCostManaPayment(gameData, player) || isMayCostManaPayment(gameData, player))
+                    && abilityActivationService.isHandManaAbilityAt(gameData, player.getId(), handCardIndex,
+                    abilityIndex);
+            if (!manaPayment) {
+                requirePriority(gameData, player);
+            }
             requireCanActivateAbilities(gameData, player);
-            abilityActivationService.activateHandAbility(gameData, player, handCardIndex, abilityIndex, targetId,
-                    xValue, targetIds);
+            Player activatingPlayer = player;
+            Runnable activation = () -> abilityActivationService.activateHandAbility(gameData, activatingPlayer,
+                    handCardIndex, abilityIndex, targetId, xValue, targetIds);
+            if (manaPayment) {
+                activateDuringManaPayment(gameData, activation);
+            } else {
+                activation.run();
+            }
         }
     }
 

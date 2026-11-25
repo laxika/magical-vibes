@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayLifeEqualToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
@@ -28,9 +28,8 @@ public class GrahaTiaScionReborn extends Card {
     public GrahaTiaScionReborn() {
         addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.DO_ONLY_ONCE_EACH_TURN),
-                new MayPayLifeEqualToAmountEffect(
-                        new TargetSpellManaValue(), heroToken(),
-                        "Pay life equal to that spell's mana value to create a Hero token?"));
+                UnlessPaysEffect.youMayPayLife(new TargetSpellManaValue(), heroToken())
+                        .withPrompt("Pay life equal to that spell's mana value to create a Hero token?"));
     }
 
     private static CreateXTokenWithXCountersEffect heroToken() {

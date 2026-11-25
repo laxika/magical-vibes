@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -23,10 +23,7 @@ public class FrenziedGoblin extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target creature"
-        )).addTrigger(Triggers.attacks(), new MayPayManaEffect(
-                "{R}",
-                new CantBlockThisTurnEffect(Subjects.target()),
-                "Pay {R} so target creature can't block this turn?"
-        ));
+        )).addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay("{R}", new CantBlockThisTurnEffect(Subjects.target()))
+                .withPrompt("Pay {R} so target creature can't block this turn?"));
     }
 }

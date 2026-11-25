@@ -211,7 +211,7 @@ class GoblinVandalTest extends BaseCardTest {
         int defenderLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         advanceToMayPayPrompt(artifact);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         resolveAllTriggers();
         resolveCombat();
 

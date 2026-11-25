@@ -104,7 +104,7 @@ class BringerOfTheBlackDawnTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(1);
         assertThat(deck).containsExactlyElementsOf(deckBefore);

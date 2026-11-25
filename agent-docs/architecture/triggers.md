@@ -22,7 +22,7 @@ or wording you are changing and read that section.
   "another" doesn't, "this or another" always does. "This or another [type] you control" is one ability with a `THIS`
   and an `ANOTHER_…` condition. A restriction on the object is the trigger's `withFilter(…)`, never a wrapper effect.
 - "You may" is no option: it stays a `MayEffect` and is asked as the ability resolves (CR 603.5); `MayEffect` and
-  `MayPayManaEffect` expose the offered effect's `targetSpec`, so its targets are chosen as it goes on the stack
+  `UnlessPaysEffect` ("you may pay … If you do") expose the offered effect's `targetSpec`, so its targets are chosen as it goes on the stack
   (CR 603.3d).
 - Code that only inspects a card's effects (cumulative upkeep, the conspiracy marker, the Oath active-player check,
   Wall of Nets, the AI) reads `Card.getTriggerEffects(trigger)`, `getTriggeredEffects()` or

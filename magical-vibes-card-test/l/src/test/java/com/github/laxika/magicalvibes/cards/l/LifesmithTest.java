@@ -27,6 +27,7 @@ class LifesmithTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
@@ -119,10 +120,9 @@ class LifesmithTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // May prompt fires
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         // Accept, but cannot pay
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.assertLife(player1, lifeBefore);
         assertThat(gd.stack).hasSize(1);
 

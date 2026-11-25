@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,6 +22,6 @@ public class SeersSundial extends Card {
     public SeersSundial() {
         // Landfall — Whenever a land you control enters, you may pay {2}. If you do, draw a card.
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
-                new MayPayManaEffect("{2}", new DrawCardEffect(), "Pay {2} to draw a card?"));
+                UnlessPaysEffect.youMayPay("{2}", new DrawCardEffect()).withPrompt("Pay {2} to draw a card?"));
     }
 }

@@ -47,11 +47,11 @@ class EndlessRanksOfHYDRATest extends BaseCardTest {
         Card commander = new ZuriWarriorOfWakanda();
         gd.makeCommander(player1.getId(), commander);
         harness.castFromHand(player1, commander, "{1}{G}");
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card.getId().equals(ranks.getId()));
@@ -102,6 +102,8 @@ class EndlessRanksOfHYDRATest extends BaseCardTest {
         gd.makeCommander(player1.getId(), commander);
         harness.enterBattlefieldAndReturn(player1, commander);
         assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);

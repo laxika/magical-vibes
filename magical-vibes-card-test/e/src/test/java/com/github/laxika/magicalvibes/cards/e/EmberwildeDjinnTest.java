@@ -28,8 +28,10 @@ class EmberwildeDjinnTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        harness.handleListChoice(player2, "Pay {R}{R}");
+        // The alternatives are asked one at a time in Oracle order, the mana first.
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).description())
+                .contains("{R}{R}");
+        harness.handleMayAbilityChosen(player2, true);
 
         assertThat(controls(player2, djinnId)).isTrue();
         assertThat(controls(player1, djinnId)).isFalse();
@@ -112,7 +114,7 @@ class EmberwildeDjinnTest extends BaseCardTest {
 
         harness.addMana(player2, ManaColor.RED, 2);
         harness.passBothPriorities();
-        harness.handleListChoice(player2, "Pay {R}{R}");
+        harness.handleMayAbilityChosen(player2, true);
 
         assertThat(controls(player1, returned.getId())).isTrue();
         assertThat(controls(player2, returned.getId())).isFalse();
@@ -120,7 +122,7 @@ class EmberwildeDjinnTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The player may choose life while enough red mana is available")
+    @DisplayName("Declining {R}{R} asks for the 2 life next, even while enough red mana is available")
     void canChooseLifeInsteadOfAvailableMana() {
         UUID djinnId = harness.addToBattlefieldAndReturn(player1, new EmberwildeDjinn()).getId();
         advanceToUpkeep(player2);
@@ -130,11 +132,12 @@ class EmberwildeDjinnTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        PendingInteraction.ColorChoice choice =
-                (PendingInteraction.ColorChoice) gd.interaction.activeInteraction();
-        assertThat(choice.options()).contains("Pay {R}{R}", "Pay 2 life");
-        harness.handleListChoice(player2, "Pay 2 life");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).description())
+                .contains("{R}{R}");
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).description())
+                .contains("2 life");
+        harness.handleMayAbilityChosen(player2, true);
 
         assertThat(controls(player2, djinnId)).isTrue();
         harness.assertLife(player2, lifeBefore - 2);

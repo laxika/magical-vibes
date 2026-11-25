@@ -52,6 +52,8 @@ class PowerSinkTest extends BaseCardTest {
         harness.castInstant(player2, 0, 4, lyrist.getId()); // X = 4
         harness.passBothPriorities();
 
+        // The Forests are mana sources, so the payer is asked; they decline (the lands can't make {4} anyway).
+        harness.handleMayAbilityChosen(player1, false);
         // Spell countered (player1 could not pay {4}).
         harness.assertInGraveyard(player1, "Elvish Lyrist");
         harness.assertNotOnBattlefield(player1, "Elvish Lyrist");

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -39,11 +39,8 @@ public class ZoralineCosmosCaller extends Card {
                 .enterWithCounter(CounterType.FINALITY)
                 .enterWithCounterCount(1)
                 .build();
-        var mayReturnPermanent = new MayPayManaEffect(
-                "{W}{B}",
-                2,
-                new QueueReflexiveAbilityEffect(returnPermanent),
-                "Pay {W}{B} and 2 life to return target nonland permanent card with mana value 3 or less from your graveyard to the battlefield with a finality counter on it?");
+        var mayReturnPermanent = UnlessPaysEffect.youMayPay("{W}{B}", 2, new QueueReflexiveAbilityEffect(returnPermanent))
+                .withPrompt("Pay {W}{B} and 2 life to return target nonland permanent card with mana value 3 or less from your graveyard to the battlefield with a finality counter on it?");
         addTrigger(Triggers.enters(ObjectRelation.THIS), mayReturnPermanent);
         addTrigger(Triggers.attacks(), mayReturnPermanent);
     }

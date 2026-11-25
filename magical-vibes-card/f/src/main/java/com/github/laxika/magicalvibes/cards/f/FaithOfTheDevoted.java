@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,10 +20,8 @@ public class FaithOfTheDevoted extends Card {
         // trigger covers both wordings. The gain is a fixed 2 (multiplayer: you gain 2 total no matter
         // how many opponents lose life), so a separate GainLifeEffect(2) rather than the drain flag.
         addTrigger(Triggers.youDiscardCard(),
-                new MayPayManaEffect("{1}",
-                        SequenceEffect.of(
+                UnlessPaysEffect.youMayPay("{1}", SequenceEffect.of(
                                 new LoseLifeEffect(2, Subjects.eachOpponent()),
-                                new GainLifeEffect(2)),
-                        "Pay {1} so each opponent loses 2 life and you gain 2 life?"));
+                                new GainLifeEffect(2))).withPrompt("Pay {1} so each opponent loses 2 life and you gain 2 life?"));
     }
 }

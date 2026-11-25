@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -13,6 +13,6 @@ public class TabletOfEpityr extends Card {
 
     public TabletOfEpityr() {
         addTrigger(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.YOU_CONTROL),
-                new MayPayManaEffect("{1}", new GainLifeEffect(1), "Pay {1} to gain 1 life?"));
+                UnlessPaysEffect.youMayPay("{1}", new GainLifeEffect(1)).withPrompt("Pay {1} to gain 1 life?"));
     }
 }

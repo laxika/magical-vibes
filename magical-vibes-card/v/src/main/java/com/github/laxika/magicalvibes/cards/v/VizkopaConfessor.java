@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -22,7 +22,8 @@ public class VizkopaConfessor extends Card {
     public VizkopaConfessor() {
         // Extort — whenever you cast a spell, you may pay {W/B} to drain each opponent for 1.
         addTrigger(Triggers.youCastSpell().anySpell(),
-                new MayPayManaEffect("{W/B}", new LoseLifeEffect(1, Subjects.eachOpponent(), true), "Pay {W/B} to extort?"));
+                UnlessPaysEffect.youMayPay("{W/B}", new LoseLifeEffect(1, Subjects.eachOpponent(), true))
+                        .withPrompt("Pay {W/B} to extort?"));
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

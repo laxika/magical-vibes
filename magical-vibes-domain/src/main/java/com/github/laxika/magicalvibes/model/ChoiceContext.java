@@ -2725,24 +2725,6 @@ public sealed interface ChoiceContext {
         }
     }
 
-    /**
-     * Chooses how to pay, or not pay, "that player may pay {M} or N life" (Emberwilde Djinn). Offered
-     * only when the player can afford both halves; otherwise the plain yes/no prompt is enough.
-     */
-    record TargetPlayerManaOrLifePaymentChoice(
-            UUID payerId, String sourceCardName, String manaCost, int lifeCost) implements ChoiceContext {
-
-        public static final String DECLINE = "Don't pay";
-
-        public String payManaOption() {
-            return "Pay " + manaCost;
-        }
-
-        public String payLifeOption() {
-            return "Pay " + lifeCost + " life";
-        }
-    }
-
     /** Indulgent Tormentor: the targeted opponent chooses sacrifice, payment, or a draw. */
     record IndulgentTormentorChoice(UUID affectedPlayerId, int lifeCost, String sourceCardName)
             implements ChoiceContext {

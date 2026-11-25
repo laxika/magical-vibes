@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -9,7 +10,6 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ClearChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasChosenSpellColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,14 +28,12 @@ public class RithTheAwakener extends Card {
         // Whenever Rith deals combat damage to a player, you may pay {2}{G}. If you do, choose a
         // color, then create a 1/1 green Saproling creature token for each permanent of that color.
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new MayPayManaEffect("{2}{G}",
-                        SequenceEffect.of(
+                UnlessPaysEffect.youMayPay("{2}{G}", SequenceEffect.of(
                                 new ChooseColorAtResolutionEffect(),
                                 new CreateTokenEffect("Saproling", 1, 1, CardColor.GREEN,
                                         List.of(CardSubtype.SAPROLING), Set.of(), Set.of())
                                         .withAmount(new PermanentCount(new PermanentHasChosenSpellColorPredicate(),
                                                 CountScope.ANY_PLAYER)),
-                                new ClearChosenColorEffect()),
-                        "Pay {2}{G}?"));
+                                new ClearChosenColorEffect())));
     }
 }

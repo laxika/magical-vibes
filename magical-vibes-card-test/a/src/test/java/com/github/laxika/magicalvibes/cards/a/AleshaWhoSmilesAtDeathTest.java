@@ -68,7 +68,7 @@ class AleshaWhoSmilesAtDeathTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.handleMultipleCardsChosen(player1, List.of(returnedCard.getId()));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();

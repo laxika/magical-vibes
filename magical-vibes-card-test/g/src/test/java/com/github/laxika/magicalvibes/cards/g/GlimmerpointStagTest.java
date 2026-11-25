@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.m.MoriokReaver;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.p.PullFromEternity;
@@ -247,7 +248,7 @@ class GlimmerpointStagTest extends BaseCardTest {
         harness.addToBattlefield(player1, new NihilSpellbomb());
         harness.activateAbility(player1, 1, null, player2.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         resolveAllTriggers();
         advanceToEndStep();
 

@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerEqualsToughnessPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -20,6 +20,6 @@ public class SymmetryMatrix extends Card {
                                 Triggers.CREATURE,
                                 new PermanentPowerEqualsToughnessPredicate())),
                         ObjectRelation.YOU_CONTROL),
-                new MayPayManaEffect("{1}", new DrawCardEffect(1), "Pay {1} to draw a card?"));
+                UnlessPaysEffect.youMayPay("{1}", new DrawCardEffect(1)).withPrompt("Pay {1} to draw a card?"));
     }
 }

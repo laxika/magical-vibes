@@ -38,10 +38,10 @@ class CentaurVinecrasherTest extends BaseCardTest {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, land));
+        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(vinecrasher);

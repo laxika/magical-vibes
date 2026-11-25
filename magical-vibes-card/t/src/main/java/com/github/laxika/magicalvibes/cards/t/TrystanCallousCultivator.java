@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -27,8 +27,8 @@ public class TrystanCallousCultivator extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), millThenGainLife());
         addTrigger(Triggers.transformsToFrontFace(ObjectRelation.THIS), millThenGainLife());
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
-                new MayPayManaEffect("{B}", new TransformSelfEffect(),
-                        "Pay {B} to transform Trystan?"));
+                UnlessPaysEffect.youMayPay("{B}", new TransformSelfEffect())
+                        .withPrompt("Pay {B} to transform Trystan?"));
     }
 
     @Override

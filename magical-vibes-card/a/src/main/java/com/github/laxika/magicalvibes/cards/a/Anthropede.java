@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -26,9 +26,8 @@ public class Anthropede extends Card {
                         new ChooseOneEffect.ChooseOneOption("Discard a card",
                                 new DiscardCardThenEffect(null, destroyRoom, "a card")),
                         new ChooseOneEffect.ChooseOneOption("Pay {2}",
-                                new MayPayManaEffect("{2}",
-                                        new QueueReflexiveAbilityEffect(destroyRoom),
-                                        "Pay {2} to destroy target Room?")))),
+                                UnlessPaysEffect.youMayPay("{2}", new QueueReflexiveAbilityEffect(destroyRoom))
+                                        .withPrompt("Pay {2} to destroy target Room?")))),
                 "Discard a card or pay {2}?"));
     }
 }

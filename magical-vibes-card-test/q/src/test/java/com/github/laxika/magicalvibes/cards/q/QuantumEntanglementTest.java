@@ -113,8 +113,7 @@ class QuantumEntanglementTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -156,7 +155,7 @@ class QuantumEntanglementTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         castQuantumEntanglement(1);
         beginEntryPayment();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertOnBattlefield(player1, "Quantum Entanglement");
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
@@ -165,7 +164,6 @@ class QuantumEntanglementTest extends BaseCardTest {
     private void beginEntryPayment() {
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     private void payAndChooseCreature(Permanent creature) {

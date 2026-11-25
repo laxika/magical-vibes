@@ -48,7 +48,7 @@ class PheresBandRaidersTest extends BaseCardTest {
 
         advanceToUntapStep();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getName().equals("Centaur"));

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.MayPayLifeForColorlessManaUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
@@ -242,6 +243,17 @@ public abstract class BaseCardTest {
                     + " End the completing handler through InputCompletionService"
                     + " (processMayAbilitiesThenAutoPass / sbaProcessMayAbilitiesThenAutoPass).");
         }
+    }
+
+    /**
+     * Gives {@code player} a way to make mana for the rest of the game that touches no zone or index a test reads (the
+     * life-for-{C} permission Channel grants). A "you may pay" is asked only of a player who could possibly pay
+     * ({@code ResolutionCostPaymentService.couldPossiblyPay}), so a test that adds the payment's mana while the question is
+     * open, or answers it without the mana, gives the payer this first.
+     */
+    protected void giveManaSource(Player player) {
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test mana source", null, player.getId(),
+                new MayPayLifeForColorlessManaUntilEndOfTurnEffect(), player.getId(), Duration.PERMANENT));
     }
 
     protected Permanent addCreatureReady(Player player, Card card) {

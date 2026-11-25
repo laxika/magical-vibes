@@ -4925,6 +4925,7 @@ public class AmountEvaluationService {
             case TARGET_PLAYERS -> targetPlayerIds(ctx).contains(playerId);
             case DEFENDING_PLAYER -> playerId.equals(defendingPlayerId(gameData, ctx));
             case ATTACHED_CONTROLLER -> playerId.equals(attachedControllerId(gameData, ctx));
+            case ACTIVE_PLAYER -> playerId.equals(gameData.activePlayerId);
         };
     }
 

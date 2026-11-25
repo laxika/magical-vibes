@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.BurstOfStrength;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -104,7 +105,7 @@ class InvisibleWomanTest extends BaseCardTest {
         declareAttackers(List.of(0));
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();

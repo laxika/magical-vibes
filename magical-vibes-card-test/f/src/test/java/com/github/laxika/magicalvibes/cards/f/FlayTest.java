@@ -61,7 +61,7 @@ class FlayTest extends BaseCardTest {
         harness.setHand(player2, List.of(new PlagueFiend(), new ZerapaMinotaur()));
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
-        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
@@ -76,9 +76,7 @@ class FlayTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, player1.getId());
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
-                .isEqualTo(player1.getId());
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
@@ -92,7 +90,7 @@ class FlayTest extends BaseCardTest {
         harness.setHand(player2, List.of());
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
-        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
@@ -111,7 +109,7 @@ class FlayTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         harness.assertInGraveyard(player2, "Plague Fiend");
-        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Flay");

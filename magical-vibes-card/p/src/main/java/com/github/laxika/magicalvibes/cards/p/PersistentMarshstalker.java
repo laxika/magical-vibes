@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
@@ -11,7 +12,6 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
@@ -33,14 +33,12 @@ public class PersistentMarshstalker extends Card {
                 TriggerOptions.DEFAULT
                         .withEventCondition(new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.RAT)))
                         .withInterveningIf(new GraveyardCardThreshold(7, null)),
-                new MayPayManaEffect("{2}{B}",
-                        ReturnCardFromGraveyardEffect.builder()
+                UnlessPaysEffect.youMayPay("{2}{B}", ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                                 .filter(new CardIsSelfPredicate())
                                 .returnAll(true)
                                 .enterTapped(true)
                                 .enterAttacking(true)
-                                .build(),
-                        "Pay {2}{B} to return Persistent Marshstalker from your graveyard to the battlefield tapped and attacking?"));
+                                .build()).withPrompt("Pay {2}{B} to return Persistent Marshstalker from your graveyard to the battlefield tapped and attacking?"));
     }
 }

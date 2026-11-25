@@ -128,7 +128,7 @@ class GhastlyRemainsTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getId().equals(card.getId()));
         assertThat(gd.playerHands.get(player1.getId())).noneMatch(c -> c.getId().equals(card.getId()));

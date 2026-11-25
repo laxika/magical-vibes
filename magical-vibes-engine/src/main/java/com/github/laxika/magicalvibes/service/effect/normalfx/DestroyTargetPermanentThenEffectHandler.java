@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -18,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolveRiderForPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerMayPayManaOrLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -255,9 +255,9 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
                 || !sequence.steps().stream().allMatch(step -> riderStepHandler.resolvesAsStep(step)
                         || !(step instanceof MayEffect || step instanceof SequenceEffect
                         || step instanceof ConditionalEffect || step instanceof ConditionalReplacementEffect
-                        || step instanceof MayPayManaEffect || step instanceof MayPayLandDropEffect
-                        || step instanceof MayPayTapPermanentsEffect
-                        || step instanceof TargetPlayerMayPayManaOrLifeEffect))) {
+                        || step instanceof MayPayManaEffect || step instanceof UnlessPaysEffect
+                        || step instanceof MayPayLandDropEffect
+                        || step instanceof MayPayTapPermanentsEffect))) {
             return List.of();
         }
         return sequence.steps();

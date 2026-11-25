@@ -92,7 +92,7 @@ class BlindObedienceTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BlindObedience());
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");

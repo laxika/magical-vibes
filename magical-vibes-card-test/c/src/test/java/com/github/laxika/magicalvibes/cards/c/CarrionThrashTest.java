@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.b.Blightning;
 import com.github.laxika.magicalvibes.cards.d.DregscapeZombie;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,10 +18,11 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CarrionThrash.class, CavernThoctar.class, DregscapeZombie.class, Blightning.class})
+@CardUsed({Swamp.class, CarrionThrash.class, CavernThoctar.class, DregscapeZombie.class, Blightning.class})
 class CarrionThrashTest extends BaseCardTest {
 
     private void killInCombat() {
+        harness.addToBattlefield(player1, new Swamp());
         Permanent blocker = harness.addToBattlefieldAndReturn(player1, new CarrionThrash());
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
@@ -56,9 +58,9 @@ class CarrionThrashTest extends BaseCardTest {
         DregscapeZombie target = new DregscapeZombie();
         harness.setGraveyard(player1, List.of(target));
         killInCombat();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         chooseTargetAndResolveUntilPayment(target);
 
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInHand(player1, "Dregscape Zombie");
@@ -127,9 +129,9 @@ class CarrionThrashTest extends BaseCardTest {
         DregscapeZombie target = new DregscapeZombie();
         harness.setGraveyard(player1, List.of(target));
         killInCombat();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         chooseTargetAndResolveUntilPayment(target);
 
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInGraveyard(player1, "Dregscape Zombie");

@@ -89,7 +89,7 @@ class GryffwingCavalryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         chooseAttackTriggerTarget(bears);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     @Test
@@ -125,7 +125,7 @@ class GryffwingCavalryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         chooseAttackTriggerTarget(attacker);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     @Test
@@ -138,7 +138,7 @@ class GryffwingCavalryTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         chooseAttackTriggerTarget(bears);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         resolveAllTriggers();
 
         assertThat(cavalry.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -154,7 +154,7 @@ class GryffwingCavalryTest extends BaseCardTest {
         declareAttackers(List.of(0, 1, 2));
         chooseAttackTriggerTarget(giant);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         resolveAllTriggers();
 
         assertThat(cavalry.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -182,7 +182,7 @@ class GryffwingCavalryTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         chooseAttackTriggerTarget(bears);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         resolveAllTriggers();
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();

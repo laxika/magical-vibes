@@ -121,7 +121,7 @@ class ZodiacDragonTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(dragon);

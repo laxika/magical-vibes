@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,10 +26,7 @@ public class GravityNegator extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
                 "Target must be another creature"
-        )).addTrigger(Triggers.attacks(), new MayPayManaEffect(
-                "{C}",
-                new GrantKeywordEffect(Keyword.FLYING, Subjects.target()),
-                "Pay {C} to give another target creature flying until end of turn?"
-        ));
+        )).addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay("{C}", new GrantKeywordEffect(Keyword.FLYING, Subjects.target()))
+                .withPrompt("Pay {C} to give another target creature flying until end of turn?"));
     }
 }

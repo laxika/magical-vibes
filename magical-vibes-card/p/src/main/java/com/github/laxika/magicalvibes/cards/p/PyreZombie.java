@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
@@ -28,13 +28,11 @@ public class PyreZombie extends Card {
         // {1}{B}{B}. If you do, return it to your hand.
         addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT,
-                new ConditionalEffect(new SourceCardInGraveyard(), new MayPayManaEffect("{1}{B}{B}",
-                        ReturnCardFromGraveyardEffect.builder()
+                new ConditionalEffect(new SourceCardInGraveyard(), UnlessPaysEffect.youMayPay("{1}{B}{B}", ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.HAND)
                                 .filter(new CardIsSelfPredicate())
                                 .returnAll(true)
-                                .build(),
-                        "Pay {1}{B}{B} to return Pyre Zombie from your graveyard to your hand?")));
+                                .build()).withPrompt("Pay {1}{B}{B} to return Pyre Zombie from your graveyard to your hand?")));
 
         // {1}{R}{R}, Sacrifice this creature: It deals 2 damage to any target.
         addActivatedAbility(new ActivatedAbility(

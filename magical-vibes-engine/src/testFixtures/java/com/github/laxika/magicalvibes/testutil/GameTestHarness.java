@@ -2002,7 +2002,9 @@ public class GameTestHarness {
     }
 
     public void payLifeForColorlessMana(Player player) {
-        ensurePriority(player);
+        if (!isPayingMayCost(player)) {
+            ensurePriority(player);
+        }
         gameService.payLifeForColorlessMana(gameData, player);
     }
 
@@ -2128,7 +2130,9 @@ public class GameTestHarness {
     }
 
     public void activateHandAbility(Player player, int handCardIndex, UUID targetId) {
-        ensurePriority(player);
+        if (!isPayingMayCost(player)) {
+            ensurePriority(player);
+        }
         gameService.activateHandAbility(gameData, player, handCardIndex, 0, targetId);
     }
 

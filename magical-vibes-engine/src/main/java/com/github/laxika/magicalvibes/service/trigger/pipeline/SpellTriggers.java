@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.condition.SpellManaValueEqualsSourceCounters;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityEffect;
@@ -1369,7 +1370,8 @@ public class SpellTriggers {
             for (int group = 0; index < 0 && group < groups.size(); group++) {
                 for (CardEffect candidate : sourceCard.getEffectsBoundToTargetGroup(group)) {
                     CardEffect wrapped = candidate instanceof MayEffect may ? may.wrapped()
-                            : candidate instanceof MayPayManaEffect pay ? pay.wrapped() : null;
+                            : candidate instanceof MayPayManaEffect pay ? pay.wrapped()
+                            : candidate instanceof UnlessPaysEffect unless ? unless.ifPaid() : null;
                     if (wrapped == effect || wrapped instanceof SequenceEffect sequence
                             && sequence.steps().stream().anyMatch(step -> step == effect)) {
                         index = group;

@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -35,7 +34,8 @@ public class Paralyze extends Card {
                 // At the beginning of the upkeep of enchanted creature's controller, that player
                 // may pay {4}. If the player does, untap the creature.
                 .addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),
-                        new MayPayManaEffect("{4}", new UntapPermanentsEffect(Subjects.attached()),
-                                "pay {4} to untap the creature", MayPayPayer.ENCHANTED_CONTROLLER));
+                        UnlessPaysEffect.mayPay(Subjects.activePlayer(), "{4}",
+                                        new UntapPermanentsEffect(Subjects.attached()))
+                                .withPrompt("Pay {4} to untap the creature?"));
     }
 }

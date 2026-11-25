@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CastCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -19,9 +19,7 @@ public class ThunderbladeCharge extends Card {
         addSpellEffect(DealDamageEffect.toAnyTarget(3));
         addTrigger(new TriggerCondition(Triggers.creatureYouControlDealsCombatDamageToPlayer(), AbilityZones.GRAVEYARD),
                 TriggerOptions.ONE_OR_MORE.withInterveningIf(new SourceCardInGraveyard()),
-                new MayPayManaEffect(
-                        "{2}{R}{R}{R}",
-                        CastCardFromGraveyardEffect.of(Subjects.sourceCard()).withoutPayingItsManaCost(),
-                        "Pay {2}{R}{R}{R} to cast Thunderblade Charge without paying its mana cost?"));
+                UnlessPaysEffect.youMayPay("{2}{R}{R}{R}", CastCardFromGraveyardEffect.of(Subjects.sourceCard()).withoutPayingItsManaCost())
+                        .withPrompt("Pay {2}{R}{R}{R} to cast Thunderblade Charge without paying its mana cost?"));
     }
 }

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
@@ -98,6 +99,8 @@ public class GraveyardTargetingSupport {
                 unwrapped = may.wrapped();
             } else if (unwrapped instanceof ConditionalEffect conditional) {
                 unwrapped = conditional.wrapped();
+            } else if (unwrapped instanceof UnlessPaysEffect unless && unless.ifPaid() != null) {
+                unwrapped = unless.ifPaid();
             } else if (unwrapped instanceof MayPayManaEffect mayPay && mayPay.wrapped() != null) {
                 // "You may pay {U}. If you don't, …" (Knight of the Mists) offers nothing to pay for.
                 unwrapped = mayPay.wrapped();

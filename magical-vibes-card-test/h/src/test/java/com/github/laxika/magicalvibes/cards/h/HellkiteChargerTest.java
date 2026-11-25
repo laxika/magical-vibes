@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.i.IntoTheRoil;
 import com.github.laxika.magicalvibes.cards.k.KrakenHatchling;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -50,7 +51,7 @@ class HellkiteChargerTest extends BaseCardTest {
         gd.combatPhasesThisTurn = 1;
         declareAttackers(List.of(0, 1));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(charger.isTapped()).isTrue();
         assertThat(attacker.isTapped()).isTrue();
@@ -68,7 +69,7 @@ class HellkiteChargerTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             harness.passBothPriorities();
-            harness.handleMayAbilityChosen(player1, true);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         });
 
         assertThat(charger.isTapped()).isTrue();

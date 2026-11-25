@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -22,8 +22,8 @@ public class CasalLurkwoodPathfinder extends Card {
                 new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.FOREST),
                         LibrarySearchDestination.BATTLEFIELD_TAPPED));
         addTrigger(Triggers.attacks(),
-                new MayPayManaEffect("{1}{G}", new TransformSelfEffect(),
-                        "Pay {1}{G} to transform Casal?"));
+                UnlessPaysEffect.youMayPay("{1}{G}", new TransformSelfEffect())
+                        .withPrompt("Pay {1}{G} to transform Casal?"));
     }
 
     @Override

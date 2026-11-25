@@ -70,9 +70,9 @@ class KnightOfTheMistsTest extends BaseCardTest {
 
         castKnightOfTheMists();
         harness.handlePermanentChosen(player1, opponentKnightId);
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.passBothPriorities(); // resolve ETB → may-pay prompt
 
-        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertOnBattlefield(player2, "Knight of Valor");
@@ -88,7 +88,7 @@ class KnightOfTheMistsTest extends BaseCardTest {
         castKnightOfTheMists();
         harness.handlePermanentChosen(player1, opponentKnightId);
         harness.passBothPriorities(); // resolve ETB → may-pay prompt
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertNotOnBattlefield(player2, "Knight of Valor");
         harness.assertOnBattlefield(player1, "Knight of the Mists");
@@ -101,13 +101,13 @@ class KnightOfTheMistsTest extends BaseCardTest {
         UUID selfId = harness.getPermanentId(player1, "Knight of the Mists");
         harness.handlePermanentChosen(player1, selfId);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertNotOnBattlefield(player1, "Knight of the Mists");
     }
 
     @Test
-    @DisplayName("Accepting without mana falls through to destroy")
+    @DisplayName("Without any way to pay, nothing is asked and it falls through to destroy")
     void acceptingWithoutManaDestroys() {
         harness.addToBattlefield(player2, new KnightOfValor());
         UUID opponentKnightId = harness.getPermanentId(player2, "Knight of Valor");
@@ -115,7 +115,7 @@ class KnightOfTheMistsTest extends BaseCardTest {
         castKnightOfTheMists();
         harness.handlePermanentChosen(player1, opponentKnightId);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true); // no {U} in pool
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertNotOnBattlefield(player2, "Knight of Valor");
     }
@@ -130,7 +130,7 @@ class KnightOfTheMistsTest extends BaseCardTest {
         castKnightOfTheMists();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertNotOnBattlefield(player2, "Knight of Valor");
         harness.assertInGraveyard(player2, "Knight of Valor");
@@ -142,8 +142,8 @@ class KnightOfTheMistsTest extends BaseCardTest {
     void payingSavesItself() {
         castKnightOfTheMists();
         harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Knight of the Mists"));
-        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertOnBattlefield(player1, "Knight of the Mists");
@@ -156,9 +156,9 @@ class KnightOfTheMistsTest extends BaseCardTest {
         harness.addToBattlefield(player2, new KnightOfValor());
         castKnightOfTheMists();
         harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Knight of Valor"));
-        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertInGraveyard(player2, "Knight of Valor");
         harness.assertOnBattlefield(player1, "Knight of the Mists");
@@ -177,5 +177,20 @@ class KnightOfTheMistsTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("With no mana source and an empty pool, the targeted Knight is destroyed unasked")
+    void destroysAtOnceWithoutAnyWayToPay() {
+        harness.addToBattlefield(player2, new KnightOfValor());
+        UUID opponentKnightId = harness.getPermanentId(player2, "Knight of Valor");
+
+        castKnightOfTheMists();
+        harness.handlePermanentChosen(player1, opponentKnightId);
+        harness.passBothPriorities();
+
+        // The payment can't be made, so "if you don't" happens (CR 118.3, 608.2d).
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.assertNotOnBattlefield(player2, "Knight of Valor");
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -9,7 +10,6 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,10 +25,9 @@ public class DigsiteEngineer extends Card {
         PermanentCount artifactsYouControl =
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
         addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.ARTIFACT)),
-                new MayPayManaEffect("{2}", new CreateTokenEffect(
+                UnlessPaysEffect.youMayPay("{2}", new CreateTokenEffect(
                         1, "Construct", 0, 0,
                         null, List.of(CardSubtype.CONSTRUCT), Set.of(), Set.of(CardType.ARTIFACT),
-                        List.of(StaticAbility.of(new BoostSelfEffect(artifactsYouControl, artifactsYouControl)))),
-                        "Pay {2} to create a 0/0 colorless Construct artifact creature token?"));
+                        List.of(StaticAbility.of(new BoostSelfEffect(artifactsYouControl, artifactsYouControl))))).withPrompt("Pay {2} to create a 0/0 colorless Construct artifact creature token?"));
     }
 }

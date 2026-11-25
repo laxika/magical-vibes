@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenColorPredicate;
@@ -20,10 +20,8 @@ public class CircleOfAffliction extends Card {
         addTrigger(Triggers.sourceDealsDamageToYou()
                         .withFilter(new PermanentHasSourceChosenColorPredicate())
                         .withSpellFilter(new CardHasSourceChosenColorPredicate()),
-                new MayPayManaEffect("{1}",
-                        SequenceEffect.of(
+                UnlessPaysEffect.youMayPay("{1}", SequenceEffect.of(
                                 new LoseLifeEffect(1, Subjects.targetPlayer()),
-                                new GainLifeEffect(1)),
-                        "Pay {1} to drain target player?"));
+                                new GainLifeEffect(1))).withPrompt("Pay {1} to drain target player?"));
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -10,7 +11,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -29,9 +29,8 @@ public class SpellbookVendor extends Card {
 
     public SpellbookVendor() {
         target(TargetFilters.creatureYouControl()).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new MayPayManaEffect("{1}",
-                        new QueueReflexiveAbilityEffect(new CreateTokenAttachedToTargetEffect(sorcererRoleToken())),
-                        "Pay {1} to create a Sorcerer Role token?"));
+                UnlessPaysEffect.youMayPay("{1}", new QueueReflexiveAbilityEffect(new CreateTokenAttachedToTargetEffect(sorcererRoleToken())))
+                        .withPrompt("Pay {1} to create a Sorcerer Role token?"));
     }
 
     private static CreateTokenEffect sorcererRoleToken() {

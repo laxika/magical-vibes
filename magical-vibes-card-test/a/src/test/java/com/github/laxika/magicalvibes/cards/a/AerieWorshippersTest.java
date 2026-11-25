@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.r.RetractionHelix;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AerieWorshippers.class, RetractionHelix.class})
+@CardUsed({Island.class, AerieWorshippers.class, RetractionHelix.class})
 class AerieWorshippersTest extends BaseCardTest {
 
     @Test
@@ -49,7 +50,7 @@ class AerieWorshippersTest extends BaseCardTest {
 
         advanceToWorshippersUpkeep();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getName().equals("Bird"));
@@ -58,6 +59,8 @@ class AerieWorshippersTest extends BaseCardTest {
     @Test
     void insufficientGenericManaCreatesNoToken() {
         addTappedWorshippers();
+        // An Island: a mana source, so the payment is offered and the pool's mana can be tried.
+        harness.addToBattlefield(player1, new Island());
         advanceToWorshippersUpkeep();
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -73,6 +76,8 @@ class AerieWorshippersTest extends BaseCardTest {
     @Test
     void genericManaCannotReplaceTheBluePayment() {
         addTappedWorshippers();
+        // An Island: a mana source, so the payment is offered and the pool's mana can be tried.
+        harness.addToBattlefield(player1, new Island());
         advanceToWorshippersUpkeep();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.passBothPriorities();

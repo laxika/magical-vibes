@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -19,9 +19,8 @@ public class SubwayTrain extends Card {
 
     public SubwayTrain() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MayPayManaEffect("{G}",
-                        new SearchLibraryEffect(CardPredicateUtils.basicLand()),
-                        "Pay {G} to search your library for a basic land card?"));
+                UnlessPaysEffect.youMayPay("{G}", new SearchLibraryEffect(CardPredicateUtils.basicLand()))
+                        .withPrompt("Pay {G} to search your library for a basic land card?"));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

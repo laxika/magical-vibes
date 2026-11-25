@@ -154,7 +154,7 @@ class EmbersmithTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.assertLife(player2, 20);
 
         // No triggered ability on stack

@@ -68,7 +68,7 @@ class HornOfPlentyTest extends BaseCardTest {
 
         harness.castFromHand(player2, new FreshVolunteers(), "{1}{W}");
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
     }
@@ -80,6 +80,7 @@ class HornOfPlentyTest extends BaseCardTest {
         prepareMainPhase(player1);
 
         harness.castFromHand(player1, new FreshVolunteers(), "{1}{W}");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -109,9 +110,6 @@ class HornOfPlentyTest extends BaseCardTest {
         harness.castFromHand(player2, new FreshVolunteers(), "{1}{W}");
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
-                .isEqualTo(player2.getId());
-        harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();

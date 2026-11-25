@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -32,7 +32,7 @@ public class PyrewildShaman extends Card {
         // in your graveyard, you may pay {3}. If you do, return this card to your hand.
         addTrigger(new TriggerCondition(Triggers.creatureYouControlDealsCombatDamageToPlayer(), AbilityZones.GRAVEYARD),
                 TriggerOptions.ONE_OR_MORE.withInterveningIf(new SourceCardInGraveyard()),
-                new MayPayManaEffect("{3}", new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
-                        "Pay {3} to return Pyrewild Shaman from your graveyard to your hand?"));
+                UnlessPaysEffect.youMayPay("{3}", new ReturnSourceCardFromGraveyardToOwnerHandEffect())
+                        .withPrompt("Pay {3} to return Pyrewild Shaman from your graveyard to your hand?"));
     }
 }

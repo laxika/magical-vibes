@@ -48,8 +48,8 @@ class YasovaDragonclawTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, bearsId);
-        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
@@ -70,7 +70,7 @@ class YasovaDragonclawTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(findPermanent(player2, bearsId)).isNotNull();
         assertThat(gqs.hasKeyword(gd, findPermanent(player2, bearsId), Keyword.HASTE)).isFalse();
@@ -85,8 +85,8 @@ class YasovaDragonclawTest extends BaseCardTest {
 
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, bearsId);
-        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.RED, 3);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -145,10 +145,10 @@ class YasovaDragonclawTest extends BaseCardTest {
 
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, bears.getId());
-        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 

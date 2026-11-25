@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -28,7 +28,7 @@ public class LilianasDevotee extends Card {
         // If you do, create a 2/2 black Zombie creature token.
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new Morbid()),
-                new MayPayManaEffect("{1}{B}", CreateTokenEffect.blackZombie(1),
-                        "Pay {1}{B} to create a Zombie token?"));
+                UnlessPaysEffect.youMayPay("{1}{B}", CreateTokenEffect.blackZombie(1))
+                        .withPrompt("Pay {1}{B} to create a Zombie token?"));
     }
 }

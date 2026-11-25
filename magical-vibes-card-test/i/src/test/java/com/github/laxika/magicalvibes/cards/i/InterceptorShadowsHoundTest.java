@@ -41,6 +41,8 @@ class InterceptorShadowsHoundTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new InterceptorShadowsHound()));
 
         declareAttackers(List.of(0));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);

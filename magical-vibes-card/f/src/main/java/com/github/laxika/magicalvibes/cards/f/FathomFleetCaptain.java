@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -29,13 +29,10 @@ public class FathomFleetCaptain extends Card {
                                         new PermanentHasSubtypePredicate(CardSubtype.PIRATE),
                                         new PermanentNotPredicate(new PermanentIsTokenPredicate())
                                 )))),
-                new MayPayManaEffect("{2}",
-                                new CreateTokenEffect("Pirate", 2, 2,
+                UnlessPaysEffect.youMayPay("{2}", new CreateTokenEffect("Pirate", 2, 2,
                                         CardColor.BLACK,
                                         List.of(CardSubtype.PIRATE),
                                         Set.of(Keyword.MENACE),
-                                        Set.of()),
-                                "Pay {2} to create a 2/2 black Pirate creature token with menace?"
-                        ));
+                                        Set.of())).withPrompt("Pay {2} to create a 2/2 black Pirate creature token with menace?"));
     }
 }

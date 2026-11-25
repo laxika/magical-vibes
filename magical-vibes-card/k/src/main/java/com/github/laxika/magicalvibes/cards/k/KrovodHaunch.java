@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -9,7 +10,6 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -31,12 +31,8 @@ public class KrovodHaunch extends Card {
                 "{2}, {T}, Sacrifice this Equipment: You gain 3 life."
         ));
         addTrigger(Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, ObjectRelation.THIS),
-                new MayPayManaEffect(
-                        "{1}{W}",
-                        new CreateTokenEffect(2, "Dog", 1, 1, CardColor.WHITE,
-                                List.of(CardSubtype.DOG), Set.of(), Set.of()),
-                        "Pay {1}{W} to create two Dog tokens?"
-                ));
+                UnlessPaysEffect.youMayPay("{1}{W}", new CreateTokenEffect(2, "Dog", 1, 1, CardColor.WHITE,
+                                List.of(CardSubtype.DOG), Set.of(), Set.of())).withPrompt("Pay {1}{W} to create two Dog tokens?"));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

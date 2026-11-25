@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.CardDirectlyAboveSelfInGraveyard;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -31,12 +31,10 @@ public class DeathSpark extends Card {
         addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new CardDirectlyAboveSelfInGraveyard(new CardTypePredicate(CardType.CREATURE))),
-                new MayPayManaEffect("{1}",
-                        ReturnCardFromGraveyardEffect.builder()
+                UnlessPaysEffect.youMayPay("{1}", ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.HAND)
                                 .filter(new CardIsSelfPredicate())
                                 .returnAll(true)
-                                .build(),
-                        "Pay {1} to return Death Spark from your graveyard to your hand?"));
+                                .build()).withPrompt("Pay {1} to return Death Spark from your graveyard to your hand?"));
     }
 }

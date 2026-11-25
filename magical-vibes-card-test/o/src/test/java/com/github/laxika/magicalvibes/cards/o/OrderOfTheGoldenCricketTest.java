@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -52,7 +53,7 @@ class OrderOfTheGoldenCricketTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without mana does not grant flying")
+    @DisplayName("Without any way to pay, nothing is asked and it does not grant flying")
     void cannotPayDoesNotGrantFlying() {
         Permanent cricket = addReadyCricket(player1);
         // No mana added
@@ -60,9 +61,8 @@ class OrderOfTheGoldenCricketTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gqs.hasKeyword(gd, cricket, Keyword.FLYING)).isFalse();
     }
@@ -88,6 +88,8 @@ class OrderOfTheGoldenCricketTest extends BaseCardTest {
     @DisplayName("Nonwhite mana cannot pay the white may-pay cost")
     void nonWhiteManaCannotPay() {
         Permanent cricket = addReadyCricket(player1);
+        // An Island: a mana source, so the payment is offered; blue mana still can't pay {W}.
+        harness.addToBattlefield(player1, new Island());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         declareAttackers(player1, List.of(0));

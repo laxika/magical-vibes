@@ -133,7 +133,7 @@ class MindMaggotsTest extends BaseCardTest {
         harness.ensurePriority(player2);
         harness.activateAbility(player2, 0, null, enteringMaggots.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.assertInHand(player1, "Mind Maggots");
 
         harness.passBothPriorities();

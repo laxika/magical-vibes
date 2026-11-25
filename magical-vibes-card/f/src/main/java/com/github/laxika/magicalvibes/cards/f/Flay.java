@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -20,12 +19,7 @@ public class Flay extends Card {
                 "Target must be a player"
         ))
                 .addSpellEffect(new DiscardEffect(1, Subjects.targetPlayer(), true))
-                .addSpellEffect(new MayPayManaEffect(
-                        "{1}",
-                        null,
-                        "Pay {1} to avoid discarding another card?",
-                        MayPayPayer.TRIGGERING_PLAYER,
-                        new DiscardEffect(1, Subjects.targetPlayer(), true),
-                        0));
+                .addSpellEffect(UnlessPaysEffect.unlessPays(Subjects.triggeringPlayer(), "{1}", new DiscardEffect(1, Subjects.targetPlayer(), true))
+                        .withPrompt("Pay {1} to avoid discarding another card?"));
     }
 }

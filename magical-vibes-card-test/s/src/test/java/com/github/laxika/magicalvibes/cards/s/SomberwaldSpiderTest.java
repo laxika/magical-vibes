@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.d.DarkthicketWolf;
 import com.github.laxika.magicalvibes.cards.d.DeadWeight;
 import com.github.laxika.magicalvibes.cards.m.MentorOfTheMeek;
@@ -115,7 +116,7 @@ class SomberwaldSpiderTest extends BaseCardTest {
         assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
     }
 

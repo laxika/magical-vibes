@@ -61,12 +61,12 @@ class LilianasDevoteeTest extends BaseCardTest {
         gd.creatureDeathCountThisTurn.merge(player2.getId(), 1, Integer::sum);
 
         advanceToEndStep(player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
 
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(findPermanents(player1, "Zombie")).hasSize(1);
@@ -80,7 +80,7 @@ class LilianasDevoteeTest extends BaseCardTest {
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(findPermanents(player1, "Zombie")).isEmpty();
     }
@@ -119,8 +119,8 @@ class LilianasDevoteeTest extends BaseCardTest {
 
         advanceToEndStep(player1);
         assertThat(gd.stack).hasSize(1);
-        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(findPermanents(player1, "Zombie")).hasSize(1);
@@ -148,10 +148,10 @@ class LilianasDevoteeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LilianasDevotee());
         gd.creatureDeathCountThisTurn.merge(player1.getId(), 1, Integer::sum);
         advanceToEndStep(player1);
-        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.passBothPriorities();
 
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(findPermanents(player1, "Zombie")).isEmpty();
     }
@@ -188,8 +188,8 @@ class LilianasDevoteeTest extends BaseCardTest {
         harness.castInstant(player1, 0, findPermanent(player1, "Liliana's Devotee").getId());
         harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Liliana's Devotee");
-        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(findPermanents(player1, "Zombie")).hasSize(1);

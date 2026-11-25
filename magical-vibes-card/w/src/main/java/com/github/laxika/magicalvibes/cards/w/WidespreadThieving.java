@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintFromTopCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayImprintedCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -17,8 +17,7 @@ public class WidespreadThieving extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ImprintFromTopCardsEffect(5, true));
         addTrigger(Triggers.youCastSpell().withFilter(new CardIsMulticoloredPredicate()),
                 CreateTokenEffect.ofTreasureToken(1),
-                new MayPayManaEffect("{W}{U}{B}{R}{G}",
-                        new PlayImprintedCardWithoutPayingManaCostEffect(),
-                        "Pay {W}{U}{B}{R}{G} to play the exiled card without paying its mana cost?"));
+                UnlessPaysEffect.youMayPay("{W}{U}{B}{R}{G}", new PlayImprintedCardWithoutPayingManaCostEffect())
+                        .withPrompt("Pay {W}{U}{B}{R}{G} to play the exiled card without paying its mana cost?"));
     }
 }

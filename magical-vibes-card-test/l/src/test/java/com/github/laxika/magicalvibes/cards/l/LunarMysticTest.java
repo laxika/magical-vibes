@@ -96,7 +96,7 @@ class LunarMysticTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without enough mana does not draw")
+    @DisplayName("Without any way to pay, nothing is asked and it does not draw")
     void insufficientManaDoesNotDraw() {
         var mystic = harness.addToBattlefieldAndReturn(player1, new LunarMystic());
         seedDeck();
@@ -105,7 +105,7 @@ class LunarMysticTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, mystic.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(hand()).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);

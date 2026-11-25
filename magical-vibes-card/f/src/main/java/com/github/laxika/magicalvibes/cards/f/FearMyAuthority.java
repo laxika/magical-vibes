@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.AnyOfCost;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -22,9 +22,7 @@ public class FearMyAuthority extends Card {
         addStaticEffect(new StaticBoostEffect(2, 2, Set.of(Keyword.FEAR), Subjects.creaturesYouControl()));
         // At the beginning of your upkeep, abandon this scheme unless you discard a card or pay 3 life. A scheme's
         // "sacrifice" of itself is its abandon (CR 701.33b).
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(new DiscardEffect(1, Subjects.you()),
-                "Discard a card? If you don't, you may pay 3 life to keep this scheme.",
-                new MayPayLifeEffect(3, null, "Pay 3 life? If you don't, abandon this scheme.",
-                        MayPayPayer.CONTROLLER, new SacrificeSelfEffect())));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new UnlessPaysEffect(Subjects.you(),
+                AnyOfCost.of(new DiscardCardTypeCost(null, null), new PayLifeCost(3)), new SacrificeSelfEffect(), null));
     }
 }

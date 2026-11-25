@@ -94,6 +94,8 @@ public interface ManaProducingEffect extends CardEffect {
      */
     static boolean addsManaWhenResolved(CardEffect effect) {
         return effect instanceof ManaProducingEffect
+                || effect instanceof UnlessPaysEffect unless
+                && (unless.ifPaid() instanceof ManaProducingEffect || unless.ifNotPaid() instanceof ManaProducingEffect)
                 || effect instanceof MayPayManaEffect mayPay
                 && (mayPay.wrapped() instanceof ManaProducingEffect
                 || mayPay.elseEffect() instanceof ManaProducingEffect);

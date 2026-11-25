@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,11 +22,7 @@ public class BringerOfTheBlackDawn extends Card {
 
         // At the beginning of your upkeep, you may pay 2 life. If you do, search your library for a
         // card, then shuffle and put that card on top.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayPayManaEffect(
-                "{0}",
-                2,
-                new SearchLibraryEffect(null, LibrarySearchDestination.TOP_OF_LIBRARY),
-                "Pay 2 life to search your library for a card?"
-        ));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), UnlessPaysEffect.youMayPayLife(2, new SearchLibraryEffect(null, LibrarySearchDestination.TOP_OF_LIBRARY))
+                .withPrompt("Pay 2 life to search your library for a card?"));
     }
 }

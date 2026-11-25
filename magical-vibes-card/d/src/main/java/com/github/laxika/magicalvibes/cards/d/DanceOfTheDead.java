@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReanimateEnchantedCreatureCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureOnLeaveEffect;
@@ -43,7 +42,7 @@ public class DanceOfTheDead extends Card {
         // "At the beginning of the upkeep of enchanted creature's controller, that player may
         // pay {1}{B}. If the player does, untap that creature."
         addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),
-                new MayPayManaEffect("{1}{B}", new UntapPermanentsEffect(Subjects.attached()),
-                        "pay {1}{B} to untap the creature", MayPayPayer.ENCHANTED_CONTROLLER));
+                UnlessPaysEffect.mayPay(Subjects.activePlayer(), "{1}{B}", new UntapPermanentsEffect(Subjects.attached()))
+                        .withPrompt("Pay {1}{B} to untap the creature?"));
     }
 }

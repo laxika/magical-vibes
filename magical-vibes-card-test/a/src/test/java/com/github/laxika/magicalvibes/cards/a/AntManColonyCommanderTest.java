@@ -110,8 +110,15 @@ class AntManColonyCommanderTest extends BaseCardTest {
     private void resolveAttackTrigger(Permanent target, boolean pay) {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, pay);
+        if (pay) {
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        } else {
+            // Without {1}, there is no way to pay and nothing is asked (CR 118.3, 608.2d).
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        }
+        if (pay) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
         if (pay) {
             harness.handlePermanentChosen(player1, target.getId());
             assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +22,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({RelentlessDead.class, DiregrafColossus.class, QuilledWolf.class, FieryTemper.class,
         LightningAxe.class, PulseOfMurasa.class})
 class RelentlessDeadTest extends BaseCardTest {
+
+    /**
+     * Both players have a way to make mana, so every "you may pay" in this class is asked and the test answers it with
+     * the mana it adds (or without it); a payer with no way at all to pay isn't asked (CR 118.3, 608.2d).
+     */
+    @BeforeEach
+    void everyPayerHasAManaSource() {
+        giveManaSource(player1);
+        giveManaSource(player2);
+    }
 
     @Test
     @DisplayName("When it dies, paying {B} returns Relentless Dead to its owner's hand")
@@ -90,7 +101,7 @@ class RelentlessDeadTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An old death trigger cannot return a card that left and reentered the graveyard")
+    @DisplayName("An old death trigger still asks for {B}, but paying returns no card that left and reentered the graveyard")
     void oldDeathTriggerDoesNotReturnNewGraveyardObject() {
         addCreatureReady(player1, new QuilledWolf());
         prepareDeath(List.of());
@@ -109,8 +120,11 @@ class RelentlessDeadTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        // The payment can still be made, and "if you do" checks the choice to pay (CR 118.12).
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
         harness.assertInGraveyard(player1, "Relentless Dead");
         harness.assertNotInHand(player1, "Relentless Dead");
     }

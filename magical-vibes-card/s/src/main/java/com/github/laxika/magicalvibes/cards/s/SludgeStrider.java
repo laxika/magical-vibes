@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,12 +18,10 @@ public class SludgeStrider extends Card {
     public SludgeStrider() {
         // Whenever another artifact you control enters or leaves the battlefield, you may pay {1}.
         // If you do, target player loses 1 life and you gain 1 life. Both triggers share one ability;
-        // the "may pay {1}" and the player target resolve on the stack via the MayPayManaEffect flow.
-        CardEffect drain = new MayPayManaEffect("{1}",
-                SequenceEffect.of(
+        // the "may pay {1}" and the player target resolve on the stack via the UnlessPaysEffect flow.
+        CardEffect drain = UnlessPaysEffect.youMayPay("{1}", SequenceEffect.of(
                         new LoseLifeEffect(1, Subjects.targetPlayer()),
-                        new GainLifeEffect(1)),
-                "pay {1}");
+                        new GainLifeEffect(1)));
         addTrigger(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL), drain);
         addTrigger(Triggers.leavesBattlefield(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL), drain);
     }

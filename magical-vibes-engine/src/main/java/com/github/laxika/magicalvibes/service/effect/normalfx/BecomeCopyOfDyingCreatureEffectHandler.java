@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -64,7 +65,9 @@ public class BecomeCopyOfDyingCreatureEffectHandler implements NormalEffectHandl
         for (TriggeredAbility ability : source.getOriginalCard().getTriggeredAbilities()) {
             if (ability.effects().stream().anyMatch(reg -> reg.effect() instanceof BecomeCopyOfDyingCreatureEffect
                     || reg.effect() instanceof MayPayManaEffect mayPay
-                    && mayPay.wrapped() instanceof BecomeCopyOfDyingCreatureEffect)
+                    && mayPay.wrapped() instanceof BecomeCopyOfDyingCreatureEffect
+                    || reg.effect() instanceof UnlessPaysEffect unless
+                    && unless.ifPaid() instanceof BecomeCopyOfDyingCreatureEffect)
                     && !copiedCard.getTriggeredAbilities().contains(ability)) {
                 copiedCard.addTriggeredAbility(ability);
             }

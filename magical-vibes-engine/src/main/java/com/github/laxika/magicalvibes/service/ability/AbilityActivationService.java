@@ -10874,6 +10874,21 @@ public class AbilityActivationService {
         return isManaAbility(resolveAbility(gameData, perm, abilityIndex));
     }
 
+    /**
+     * Whether the ability {@code abilityIndex} of the card at {@code handCardIndex} in {@code playerId}'s hand is a mana
+     * ability that works there (Elvish Spirit Guide), which may be activated whenever a mana payment is asked for
+     * (CR 605.3a).
+     */
+    public boolean isHandManaAbilityAt(GameData gameData, UUID playerId, int handCardIndex, Integer abilityIndex) {
+        List<Card> hand = gameData.playerHands.get(playerId);
+        if (hand == null || handCardIndex < 0 || handCardIndex >= hand.size()) {
+            return false;
+        }
+        List<ActivatedAbility> abilities = effectiveHandAbilities(gameData, hand.get(handCardIndex), playerId);
+        int index = abilityIndex != null ? abilityIndex : 0;
+        return index >= 0 && index < abilities.size() && isManaAbility(abilities.get(index));
+    }
+
     public boolean isManaAbilityAt(GameData gameData, UUID playerId, int permanentIndex, Integer abilityIndex) {
         Permanent perm = resolveActivationSource(gameData, playerId, permanentIndex, abilityIndex);
         if (perm == null) return false;

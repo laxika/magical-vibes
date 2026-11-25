@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -9,7 +10,6 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemWithChosenSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -27,7 +27,7 @@ public class OkoShadowmoorScion extends Card {
 
     public OkoShadowmoorScion() {
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
-                new MayPayManaEffect("{U}", new TransformSelfEffect(), "Pay {U} to transform Oko?"));
+                UnlessPaysEffect.youMayPay("{U}", new TransformSelfEffect()).withPrompt("Pay {U} to transform Oko?"));
 
         addActivatedAbility(new ActivatedAbility(
                 -1,

@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -32,9 +32,7 @@ public class WeaponsVendor extends Card {
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT))),
-                new MayPayManaEffect(
-                        "{1}",
-                        new QueueReflexiveAbilityEffect(attach),
-                        "Pay {1} to attach an Equipment you control to a creature you control?"));
+                UnlessPaysEffect.youMayPay("{1}", new QueueReflexiveAbilityEffect(attach))
+                        .withPrompt("Pay {1} to attach an Equipment you control to a creature you control?"));
     }
 }

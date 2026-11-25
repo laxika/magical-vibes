@@ -143,7 +143,7 @@ class AsgardianInspirationTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting with only one mana cannot pay the two-mana return cost")
+    @DisplayName("Without any way to pay, nothing is asked and it cannot pay the two-mana return cost")
     void insufficientManaDoesNotReturnCard() {
         harness.setGraveyard(player1, List.of(new AsgardianInspiration()));
         harness.setHand(player1, List.of(new Shock()));
@@ -152,8 +152,7 @@ class AsgardianInspirationTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertInGraveyard(player1, "Asgardian Inspiration");
         harness.assertNotInHand(player1, "Asgardian Inspiration");

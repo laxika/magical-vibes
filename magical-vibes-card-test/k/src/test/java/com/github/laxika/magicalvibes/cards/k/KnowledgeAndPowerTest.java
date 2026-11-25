@@ -90,7 +90,7 @@ class KnowledgeAndPowerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without enough mana does not deal damage")
+    @DisplayName("Without any way to pay, nothing is asked and it does not deal damage")
     void insufficientManaPreventsDamage() {
         prepareGame();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -99,7 +99,7 @@ class KnowledgeAndPowerTest extends BaseCardTest {
         chooseScryTopCard();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertLife(player2, 20);
     }

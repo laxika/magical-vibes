@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -11,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.AttachMatchingEquipmentToCrea
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -29,11 +29,9 @@ public class ElvenBow extends Card {
                 "Elf Warrior", 1, 1, CardColor.GREEN,
                 List.of(CardSubtype.ELF, CardSubtype.WARRIOR), Set.of(), Set.of());
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MayPayManaEffect("{2}",
-                        SequenceEffect.of(elfWarrior,
+                UnlessPaysEffect.youMayPay("{2}", SequenceEffect.of(elfWarrior,
                                 new AttachMatchingEquipmentToCreatedPermanentEffect(
-                                        new PermanentIsSourcePermanentPredicate())),
-                        "Pay {2} to create an Elf Warrior token and attach Elven Bow to it?"));
+                                        new PermanentIsSourcePermanentPredicate()))).withPrompt("Pay {2} to create an Elf Warrior token and attach Elven Bow to it?"));
         addStaticEffect(new AttachedBoostEffect(new Fixed(1), new Fixed(2), Subjects.attachedCreature()));
         addStaticEffect(new GrantKeywordEffect(Keyword.REACH, Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{3}"));

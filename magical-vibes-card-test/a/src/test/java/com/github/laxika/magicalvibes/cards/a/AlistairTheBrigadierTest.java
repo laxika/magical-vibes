@@ -79,8 +79,7 @@ class AlistairTheBrigadierTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         Permanent alistair = gd.playerBattlefields.get(player1.getId()).get(0);
         assertThat(gqs.getEffectivePower(gd, alistair)).isEqualTo(3);
@@ -219,7 +218,7 @@ class AlistairTheBrigadierTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gqs.getEffectivePower(gd, alistair)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, alistair)).isEqualTo(3);

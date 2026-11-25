@@ -83,7 +83,7 @@ class LightningRiftTest extends BaseCardTest {
 
         cycleLonelySandbar();
         chooseTarget(player2.getId());
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
@@ -125,7 +125,7 @@ class LightningRiftTest extends BaseCardTest {
 
         cycleLonelySandbar();
         chooseTarget(player2.getId());
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertLife(player2, 20);
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
@@ -168,7 +168,5 @@ class LightningRiftTest extends BaseCardTest {
     private void chooseTarget(UUID targetId) {
         harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 }

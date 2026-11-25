@@ -77,8 +77,7 @@ class IcefallTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, druid));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(icefall);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(icefall);
@@ -125,7 +124,7 @@ class IcefallTest extends BaseCardTest {
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, druid));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(icefall);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(icefall);

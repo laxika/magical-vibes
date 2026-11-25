@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.m.MarchOfOtherworldlyLight;
 import com.github.laxika.magicalvibes.cards.m.MoonsnareSpecialist;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
@@ -56,7 +57,7 @@ class PapercraftDecoyTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without enough mana does not draw a card")
+    @DisplayName("Without any way to pay, nothing is asked and it does not draw a card")
     void acceptingWithoutEnoughManaDoesNotDraw() {
         harness.addToBattlefield(player1, new PapercraftDecoy());
         harness.setHand(player1, List.of(new WrathOfGod()));
@@ -66,7 +67,7 @@ class PapercraftDecoyTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
         resolveAllTriggers();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(Card::getName)

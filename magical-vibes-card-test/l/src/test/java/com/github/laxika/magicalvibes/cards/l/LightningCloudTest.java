@@ -111,7 +111,7 @@ class LightningCloudTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without available red mana deals no damage")
+    @DisplayName("Without any way to pay, nothing is asked and it deals no damage")
     void cannotPayNoMana() {
         harness.addToBattlefield(player1, new LightningCloud());
         setUpOpponentTurn();
@@ -121,7 +121,7 @@ class LightningCloudTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertLife(player2, 20);
     }
@@ -171,7 +171,7 @@ class LightningCloudTest extends BaseCardTest {
         harness.assertLife(player2, 19);
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertLife(player2, 19);
     }

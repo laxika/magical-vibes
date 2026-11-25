@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -23,9 +23,8 @@ public class GrovetenderDruids extends Card {
                                 Triggers.CREATURE,
                                 new PermanentHasSubtypePredicate(CardSubtype.ALLY))),
                         ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
-                new MayPayManaEffect("{1}", new CreateTokenEffect(
+                UnlessPaysEffect.youMayPay("{1}", new CreateTokenEffect(
                         "Plant", 1, 1, CardColor.GREEN, List.of(CardSubtype.PLANT),
-                        Set.of(), Set.of()),
-                        "Pay {1} to create a 1/1 green Plant creature token?"));
+                        Set.of(), Set.of())).withPrompt("Pay {1} to create a 1/1 green Plant creature token?"));
     }
 }

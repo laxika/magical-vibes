@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDrawsCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedTargetPlayerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -21,9 +21,7 @@ public class ValiantBatrider extends Card {
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 RegisterDelayedTargetPlayerSpellCastTriggerEffect.boon(
                         new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                        List.of(new MayPayManaEffect(
-                                "{1}", null,
-                                "Pay {1} to stop each opponent from drawing a card?",
-                                new EachOpponentDrawsCardEffect(1)))));
+                        List.of(UnlessPaysEffect.unlessYouPay("{1}", new EachOpponentDrawsCardEffect(1))
+                                .withPrompt("Pay {1} to stop each opponent from drawing a card?"))));
     }
 }

@@ -27,6 +27,7 @@ class FurnaceCelebrationTest extends BaseCardTest {
         sacrificeCreatureAndChooseTarget(player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -92,15 +93,13 @@ class FurnaceCelebrationTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting with insufficient mana does not deal damage or spend partial mana")
+    @DisplayName("Without any way to pay, nothing is asked and it does not deal damage or spend partial mana")
     void cannotPayTreatsAsDecline() {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         sacrificeCreatureAndChooseTarget(player2.getId());
         resolveAllTriggers();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
-                .isEqualTo(player1.getId());
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertNoCelebrationTrigger();
         harness.assertLife(player2, 20);

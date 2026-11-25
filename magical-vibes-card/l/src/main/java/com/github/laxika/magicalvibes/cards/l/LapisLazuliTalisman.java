@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -17,6 +17,6 @@ public class LapisLazuliTalisman extends Card {
         // Whenever a player casts a blue spell, you may pay {3}. If you do, untap target permanent.
         target(TargetFilters.permanent()).addTrigger(Triggers.playerCastsSpell()
                         .withFilter(new CardColorPredicate(CardColor.BLUE)),
-                new MayPayManaEffect("{3}", new UntapPermanentsEffect(Subjects.target()), "Pay {3}?"));
+                UnlessPaysEffect.youMayPay("{3}", new UntapPermanentsEffect(Subjects.target())));
     }
 }

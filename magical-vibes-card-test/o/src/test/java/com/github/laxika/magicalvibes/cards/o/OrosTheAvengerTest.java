@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.c.Calciderm;
 import com.github.laxika.magicalvibes.cards.c.CitanulWoodreaders;
 import com.github.laxika.magicalvibes.cards.g.GiantDustwasp;
@@ -17,13 +18,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OrosTheAvenger.class, Calciderm.class, CitanulWoodreaders.class, GiantDustwasp.class})
+@CardUsed({Plains.class, OrosTheAvenger.class, Calciderm.class, CitanulWoodreaders.class, GiantDustwasp.class})
 class OrosTheAvengerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Paying {2}{W} deals 3 damage to each nonwhite creature")
     void payingManaDamagesEachNonwhiteCreature() {
         harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new Plains());
         Permanent oros = addCreatureReady(player1, new OrosTheAvenger());
         oros.setAttacking(true);
         Permanent ownDustwasp = addCreatureReady(player1, new GiantDustwasp());
@@ -52,6 +54,7 @@ class OrosTheAvengerTest extends BaseCardTest {
     @DisplayName("Declining to pay {2}{W} does not deal the additional damage")
     void decliningManaPaymentDoesNothing() {
         harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new Plains());
         Permanent oros = addCreatureReady(player1, new OrosTheAvenger());
         oros.setAttacking(true);
         Permanent ownDustwasp = addCreatureReady(player1, new GiantDustwasp());
@@ -70,6 +73,7 @@ class OrosTheAvengerTest extends BaseCardTest {
     @DisplayName("The additional damage cannot be paid with three colorless mana")
     void cannotPayAdditionalDamageWithoutWhiteMana() {
         harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new Plains());
         Permanent oros = addCreatureReady(player1, new OrosTheAvenger());
         oros.setAttacking(true);
         Permanent nonwhiteCreature = addCreatureReady(player2, new CitanulWoodreaders());
@@ -106,6 +110,7 @@ class OrosTheAvengerTest extends BaseCardTest {
     @DisplayName("The combat damage trigger still deals damage after Oros leaves the battlefield")
     void triggerResolvesAfterOrosLeavesBattlefield() {
         harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new Plains());
         Permanent oros = addCreatureReady(player1, new OrosTheAvenger());
         oros.setAttacking(true);
         Permanent nonwhiteCreature = addCreatureReady(player2, new CitanulWoodreaders());
@@ -117,11 +122,11 @@ class OrosTheAvengerTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.inMutationScope(() ->
                 harness.getPermanentRemovalService().removePermanentToGraveyard(gd, oros));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(oros);

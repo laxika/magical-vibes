@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.i.IsiluCarrierOfTwilight;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantSpellCastingAbilityToSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -24,8 +24,7 @@ public class EirduCarrierOfDawn extends Card {
 
         // At the beginning of your first main phase, you may pay {B}. If you do, transform Eirdu.
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
-                new MayPayManaEffect("{B}", new TransformSelfEffect(),
-                        "Pay {B} to transform Eirdu?"));
+                UnlessPaysEffect.youMayPay("{B}", new TransformSelfEffect()).withPrompt("Pay {B} to transform Eirdu?"));
     }
 
     @Override

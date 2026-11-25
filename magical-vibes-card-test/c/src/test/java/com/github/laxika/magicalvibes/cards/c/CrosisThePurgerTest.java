@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.t.TowerDrake;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.n.NomadicElf;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +19,7 @@ import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CrosisThePurger.class, TowerDrake.class, NomadicElf.class, Forest.class})
+@CardUsed({Swamp.class, CrosisThePurger.class, TowerDrake.class, NomadicElf.class, Forest.class})
 class CrosisThePurgerTest extends BaseCardTest {
 
     @Test
@@ -26,6 +27,7 @@ class CrosisThePurgerTest extends BaseCardTest {
     void combatDamageDiscardsAllCardsOfChosenColor() {
         Permanent crosis = addCreatureReady(player1, new CrosisThePurger());
         crosis.setAttacking(true);
+        harness.addToBattlefield(player1, new Swamp());
         harness.setHand(player2, List.of(
                 new TowerDrake(), new NomadicElf(), new Forest()));
 
@@ -54,6 +56,7 @@ class CrosisThePurgerTest extends BaseCardTest {
     void decliningPaymentDoesNothing() {
         Permanent crosis = addCreatureReady(player1, new CrosisThePurger());
         crosis.setAttacking(true);
+        harness.addToBattlefield(player1, new Swamp());
         harness.setHand(player2, List.of(new TowerDrake(), new NomadicElf()));
 
         resolveCombat();
@@ -71,6 +74,7 @@ class CrosisThePurgerTest extends BaseCardTest {
     void combatDamageDiscardsEveryMatchingCard() {
         Permanent crosis = addCreatureReady(player1, new CrosisThePurger());
         crosis.setAttacking(true);
+        harness.addToBattlefield(player1, new Swamp());
         harness.setHand(player2, List.of(
                 new TowerDrake(), new TowerDrake(), new CrosisThePurger(),
                 new NomadicElf(), new Forest()));
@@ -94,6 +98,7 @@ class CrosisThePurgerTest extends BaseCardTest {
     void blockedCrosisDoesNotTrigger() {
         Permanent crosis = addCreatureReady(player1, new CrosisThePurger());
         crosis.setAttacking(true);
+        harness.addToBattlefield(player1, new Swamp());
         Permanent blocker = addCreatureReady(player2, new TowerDrake());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
@@ -110,6 +115,7 @@ class CrosisThePurgerTest extends BaseCardTest {
     void noMatchingColorStillRevealsHand() throws Exception {
         Permanent crosis = addCreatureReady(player1, new CrosisThePurger());
         crosis.setAttacking(true);
+        harness.addToBattlefield(player1, new Swamp());
         harness.setHand(player2, List.of(new NomadicElf(), new Forest()));
         List<GameEventEnvelope> events = new ArrayList<>();
 
@@ -143,6 +149,7 @@ class CrosisThePurgerTest extends BaseCardTest {
     void emptyHandStillAllowsPaymentAndColorChoice() {
         Permanent crosis = addCreatureReady(player1, new CrosisThePurger());
         crosis.setAttacking(true);
+        harness.addToBattlefield(player1, new Swamp());
         harness.setHand(player2, List.of());
 
         resolveCombat();

@@ -228,7 +228,7 @@ class ImprisonTest extends BaseCardTest {
 
         harness.activateAbility(player2, 0, null, player1.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura);

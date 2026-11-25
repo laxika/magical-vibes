@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -30,9 +30,7 @@ public class DeathPriestOfMyrkul extends Card {
         // If you do, create a 1/1 black Skeleton creature token.
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new Morbid()),
-                new MayPayManaEffect("{1}",
-                        new CreateTokenEffect("Skeleton", 1, 1, CardColor.BLACK,
-                                List.of(CardSubtype.SKELETON), Set.of(), Set.of()),
-                        "Pay {1} to create a Skeleton token?"));
+                UnlessPaysEffect.youMayPay("{1}", new CreateTokenEffect("Skeleton", 1, 1, CardColor.BLACK,
+                                List.of(CardSubtype.SKELETON), Set.of(), Set.of())).withPrompt("Pay {1} to create a Skeleton token?"));
     }
 }

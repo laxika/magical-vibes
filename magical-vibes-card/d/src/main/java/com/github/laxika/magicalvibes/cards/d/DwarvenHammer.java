@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -11,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.AttachMatchingEquipmentToCrea
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -30,11 +30,9 @@ public class DwarvenHammer extends Card {
                 "Dwarf Berserker", 2, 1, CardColor.RED,
                 List.of(CardSubtype.DWARF, CardSubtype.BERSERKER), Set.of(), Set.of());
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MayPayManaEffect("{2}",
-                        SequenceEffect.of(dwarfBerserker,
+                UnlessPaysEffect.youMayPay("{2}", SequenceEffect.of(dwarfBerserker,
                                 new AttachMatchingEquipmentToCreatedPermanentEffect(
-                                        new PermanentIsSourcePermanentPredicate())),
-                        "Pay {2} to create a Dwarf Berserker token and attach Dwarven Hammer to it?"));
+                                        new PermanentIsSourcePermanentPredicate()))).withPrompt("Pay {2} to create a Dwarf Berserker token and attach Dwarven Hammer to it?"));
         addStaticEffect(new AttachedBoostEffect(new Fixed(3), new Fixed(0), Subjects.attachedCreature()));
         addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{3}"));

@@ -106,7 +106,7 @@ class IronStarTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without enough mana gains no life")
+    @DisplayName("Without any way to pay {1}, nothing is asked and no life is gained")
     void acceptWithoutManaNoLife() {
         harness.addToBattlefield(player1, new IronStar());
         harness.castFromHand(player1, new RagingGoblin(), "{R}");
@@ -114,15 +114,16 @@ class IronStarTest extends BaseCardTest {
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 
     @Test
-    @DisplayName("Accepting without enough mana gains no life")
+    @DisplayName("Accepting with an untapped land but nothing in the pool gains no life")
     void acceptWithoutManaNoLifeUpstreamReview() {
+        harness.addToBattlefield(player1, new Mountain());
         harness.addToBattlefield(player1, new IronStar());
         harness.castFromHand(player1, new RagingGoblin(), "{R}");
 
@@ -244,6 +245,7 @@ class IronStarTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Mountain());
         harness.castFromHand(player1, new RagingGoblin(), "{R}");
 
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.passBothPriorities();
 
         assertThatThrownBy(() -> harness.getGameService().tapPermanent(harness.getGameData(), player2, 0))
@@ -258,6 +260,7 @@ class IronStarTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Mountain());
         harness.castFromHand(player1, new RagingGoblin(), "{R}");
 
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.passBothPriorities();
 
         assertThatThrownBy(() -> harness.getGameService().tapPermanent(harness.getGameData(), player2, 0))
@@ -342,7 +345,7 @@ class IronStarTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertLife(player1, lifeBefore + 1);
     }

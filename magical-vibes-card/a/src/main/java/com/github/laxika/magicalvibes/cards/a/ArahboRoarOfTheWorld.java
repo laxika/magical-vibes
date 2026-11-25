@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
@@ -12,7 +13,6 @@ import com.github.laxika.magicalvibes.model.condition.SourceCardInCommandZone;
 import com.github.laxika.magicalvibes.model.condition.SourceCardOnBattlefield;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -53,11 +53,8 @@ public class ArahboRoarOfTheWorld extends Card {
                         .withFilter(new PermanentAllOfPredicate(List.of(
                                 new PermanentHasSubtypePredicate(CardSubtype.CAT),
                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())))),
-                new MayPayManaEffect(
-                        "{1}{G}{W}",
-                        SequenceEffect.of(
+                UnlessPaysEffect.youMayPay("{1}{G}{W}", SequenceEffect.of(
                                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()),
-                                new BoostTargetCreatureEffect(new TargetPower(), new TargetPower())),
-                        "Pay {1}{G}{W} to give it trample and +X/+X until end of turn?"));
+                                new BoostTargetCreatureEffect(new TargetPower(), new TargetPower()))).withPrompt("Pay {1}{G}{W} to give it trample and +X/+X until end of turn?"));
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.c.CrownOfTheAges;
 import com.github.laxika.magicalvibes.cards.o.OrderOfTheWhiteShield;
@@ -60,9 +61,9 @@ class DanceOfTheDeadTest extends BaseCardTest {
         Permanent bears = reanimateBears();
 
         advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
         harness.passBothPriorities(); // resolve upkeep trigger -> may-pay prompt
 
-        harness.addMana(player1, ManaColor.BLACK, 2);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(bears.isTapped()).isFalse();
@@ -77,19 +78,19 @@ class DanceOfTheDeadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(bears.isTapped()).isTrue();
     }
 
     @Test
-    @DisplayName("Accepting without enough mana leaves the creature tapped")
+    @DisplayName("Without any way to pay, nothing is asked and it leaves the creature tapped")
     void cannotPayLeavesTapped() {
         Permanent bears = reanimateBears();
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(bears.isTapped()).isTrue();
     }

@@ -152,7 +152,7 @@ class FleshbagMarauderTest extends BaseCardTest {
 
         setupAndCast();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
         harness.passBothPriorities();
 

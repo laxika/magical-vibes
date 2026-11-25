@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -21,6 +21,6 @@ public class LifecraftersBestiary extends Card {
     public LifecraftersBestiary() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ScryEffect(1));
         addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
-                new MayPayManaEffect("{G}", new DrawCardEffect(1), "Pay {G} to draw a card?"));
+                UnlessPaysEffect.youMayPay("{G}", new DrawCardEffect(1)).withPrompt("Pay {G} to draw a card?"));
     }
 }

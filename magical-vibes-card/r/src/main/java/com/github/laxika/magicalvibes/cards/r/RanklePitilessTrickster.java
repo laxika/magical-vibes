@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.condition.OpponentControlsNoPermanen
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,12 +26,9 @@ public class RanklePitilessTrickster extends Card {
                 new OpponentControlsNoPermanent(new PermanentIsCreaturePredicate()),
                 new GrantKeywordEffect(Set.of(Keyword.HASTE, Keyword.LIFELINK), Subjects.source())));
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayPayLifeEffect(
-                1,
-                SequenceEffect.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), UnlessPaysEffect.youMayPayLife(1, SequenceEffect.of(
                         new DiscardEffect(1, Subjects.eachPlayer()),
-                        new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.eachPlayer())),
-                "Pay 1 life to have each player discard a card and sacrifice a creature?"));
+                        new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.eachPlayer()))).withPrompt("Pay 1 life to have each player discard a card and sacrifice a creature?"));
 
         addTrigger(Triggers.youDiscardCard(), new PerpetuallyBoostSourceEffect(1, 0));
         addTrigger(Triggers.opponentDiscardsCard(), new PerpetuallyBoostSourceEffect(1, 0));

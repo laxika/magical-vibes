@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -18,10 +18,8 @@ public class SnaremasterSprite extends Card {
 
     public SnaremasterSprite() {
         target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MayPayManaEffect("{2}",
-                        new QueueReflexiveAbilityEffect(SequenceEffect.of(
+                UnlessPaysEffect.youMayPay("{2}", new QueueReflexiveAbilityEffect(SequenceEffect.of(
                                 new TapPermanentsEffect(Subjects.target()),
-                                new PutCountersEffect(CounterType.STUN))),
-                        "Pay {2} to tap target creature an opponent controls and put a stun counter on it?"));
+                                new PutCountersEffect(CounterType.STUN)))).withPrompt("Pay {2} to tap target creature an opponent controls and put a stun counter on it?"));
     }
 }

@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingOpponentCreatureUnderYourControlEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -18,11 +18,8 @@ import java.util.List;
 public class LimDLTheNecromancer extends Card {
 
     public LimDLTheNecromancer() {
-        addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS), new MayPayManaEffect(
-                "{1}{B}",
-                new ReturnDyingOpponentCreatureUnderYourControlEffect(CardSubtype.ZOMBIE),
-                "Pay {1}{B} to return that card to the battlefield under your control?"
-        ));
+        addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS), UnlessPaysEffect.youMayPay("{1}{B}", new ReturnDyingOpponentCreatureUnderYourControlEffect(CardSubtype.ZOMBIE))
+                .withPrompt("Pay {1}{B} to return that card to the battlefield under your control?"));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

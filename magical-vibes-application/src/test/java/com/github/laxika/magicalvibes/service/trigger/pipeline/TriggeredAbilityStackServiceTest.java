@@ -55,7 +55,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -311,7 +310,7 @@ class TriggeredAbilityStackServiceTest {
     @DisplayName("Adds the optional life payment to the stack")
     void addsLifePaymentToStack() {
         Card card = createCreature("Life Watcher", 2, 2);
-        var mayPay = new MayPayLifeEffect(2, new DrawCardEffect(1), "Pay 2?");
+        var mayPay = UnlessPaysEffect.youMayPayLife(2, new DrawCardEffect(1));
         Permanent perm = new Permanent(card);
         var ctx = dies(card, PLAYER1_ID, perm);
 

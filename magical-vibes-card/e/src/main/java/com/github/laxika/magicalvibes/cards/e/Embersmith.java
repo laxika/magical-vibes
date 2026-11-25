@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -15,6 +15,6 @@ public class Embersmith extends Card {
         // Whenever you cast an artifact spell, you may pay {1}. If you do, Embersmith deals 1 damage to any target.
         // The target is chosen as the trigger goes on the stack; the {1} payment is offered on resolution.
         addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.ARTIFACT)),
-                new MayPayManaEffect("{1}", DealDamageEffect.toAnyTarget(1), "Pay {1}?"));
+                UnlessPaysEffect.youMayPay("{1}", DealDamageEffect.toAnyTarget(1)));
     }
 }

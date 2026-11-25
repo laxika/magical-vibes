@@ -73,9 +73,6 @@ class CardEffectTargetingConsistencyTest {
             // Piggyback: rides on the counterspell's existing spell target (Dream Fracture) — reads
             // the targeted spell from entry.getTargetId(); never contributes a chosen player target.
             "TargetSpellControllerDrawsCardEffect",
-            // Pre-resolved: Triggers.upkeep(ActivePlayer.ANY) carries Emberwilde Djinn's active player on the
-            // stack entry, so this effect never asks the shared pipeline to choose a player.
-            "TargetPlayerMayPayManaOrLifeEffect",
             // Piggyback: Shuriken's effect reads the creature target already chosen for the
             // activated ability's damage effect; it does not choose a second target.
             "TargetPermanentControllerGainsControlOfGrantingEquipmentEffect",

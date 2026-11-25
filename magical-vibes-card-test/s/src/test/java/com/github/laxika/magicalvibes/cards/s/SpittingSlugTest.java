@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -34,7 +35,7 @@ class SpittingSlugTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gqs.hasKeyword(gd, blocker1, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, blocker2, Keyword.FIRST_STRIKE)).isTrue();
@@ -110,7 +111,7 @@ class SpittingSlugTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, slug, Keyword.FIRST_STRIKE)).isFalse();
@@ -126,7 +127,7 @@ class SpittingSlugTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         gd.playerBattlefields.get(player1.getId()).remove(slug);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isTrue();
     }
@@ -142,7 +143,7 @@ class SpittingSlugTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         gd.playerBattlefields.get(player2.getId()).remove(slug);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isTrue();
     }
@@ -163,7 +164,7 @@ class SpittingSlugTest extends BaseCardTest {
                 new BlockerAssignment(1, 1)));
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gqs.hasKeyword(gd, attacker1, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, attacker2, Keyword.FIRST_STRIKE)).isTrue();
@@ -206,7 +207,7 @@ class SpittingSlugTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, slug, Keyword.FIRST_STRIKE)).isFalse();

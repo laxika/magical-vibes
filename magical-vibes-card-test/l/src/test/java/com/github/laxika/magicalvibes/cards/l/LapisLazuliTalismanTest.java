@@ -134,7 +134,7 @@ class LapisLazuliTalismanTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without enough mana does not untap the target")
+    @DisplayName("Without any way to pay, nothing is asked and it does not untap the target")
     void insufficientManaLeavesTargetTapped() {
         harness.addToBattlefield(player1, new LapisLazuliTalisman());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
@@ -144,8 +144,7 @@ class LapisLazuliTalismanTest extends BaseCardTest {
         harness.castFromHand(player1, new ZuranSpellcaster(), "{2}{U}");
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(bears.isTapped()).isTrue();
     }

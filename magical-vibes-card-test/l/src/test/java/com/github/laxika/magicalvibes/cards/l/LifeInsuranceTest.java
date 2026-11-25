@@ -68,7 +68,7 @@ class LifeInsuranceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);

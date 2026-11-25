@@ -144,8 +144,7 @@ class SpiritCairnTest extends BaseCardTest {
         harness.handleListChoice(player1, "Cabal Therapy");
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().isToken() && p.getCard().getSubtypes().contains(CardSubtype.SPIRIT));
@@ -219,7 +218,7 @@ class SpiritCairnTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))

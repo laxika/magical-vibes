@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
@@ -22,14 +22,11 @@ public class RebornHero extends Card {
                 new GraveyardCardThreshold(7, null),
                 new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
-                        new MayPayManaEffect(
-                                "{W}{W}",
-                                ReturnCardFromGraveyardEffect.builder()
+                        UnlessPaysEffect.youMayPay("{W}{W}", ReturnCardFromGraveyardEffect.builder()
                                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                                         .filter(new CardIsSelfPredicate())
                                         .returnAll(true)
-                                        .build(),
-                                "Pay {W}{W} to return Reborn Hero to the battlefield?")),
+                                        .build()).withPrompt("Pay {W}{W} to return Reborn Hero to the battlefield?")),
                         Subjects.source())));
     }
 }

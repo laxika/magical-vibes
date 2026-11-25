@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -17,6 +17,6 @@ public class Equilibrium extends Card {
     public Equilibrium() {
         target(TargetFilters.creature()).addTrigger(Triggers.youCastSpell()
                         .withFilter(new CardTypePredicate(CardType.CREATURE)),
-                new MayPayManaEffect("{1}", ReturnToHandEffect.target(), "Pay {1}?"));
+                UnlessPaysEffect.youMayPay("{1}", ReturnToHandEffect.target()));
     }
 }

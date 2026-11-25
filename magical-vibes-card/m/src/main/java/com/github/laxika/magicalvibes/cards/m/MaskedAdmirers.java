@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -31,10 +31,10 @@ public class MaskedAdmirers extends Card {
         // return this card from your graveyard to your hand.
         addTrigger(new TriggerCondition(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)), AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT,
-                new MayPayManaEffect("{G}{G}", ReturnCardFromGraveyardEffect.builder()
+                UnlessPaysEffect.youMayPay("{G}{G}", ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .filter(new CardIsSelfPredicate())
                         .returnAll(true)
-                        .build(), "Pay {G}{G} to return Masked Admirers from your graveyard to your hand?"));
+                        .build()).withPrompt("Pay {G}{G} to return Masked Admirers from your graveyard to your hand?"));
     }
 }

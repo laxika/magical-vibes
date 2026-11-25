@@ -50,7 +50,7 @@ class VeinwitchCovenTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertNotInHand(player1, "Grizzly Bears");

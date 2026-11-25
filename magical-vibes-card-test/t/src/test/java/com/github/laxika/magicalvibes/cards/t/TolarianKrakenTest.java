@@ -109,7 +109,7 @@ class TolarianKrakenTest extends BaseCardTest {
 
         advanceToDraw(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(kraken.isTapped()).isFalse();
         assertThat(gd.stack).isEmpty();

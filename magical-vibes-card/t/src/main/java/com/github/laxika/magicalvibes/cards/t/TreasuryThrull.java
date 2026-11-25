@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -22,7 +22,8 @@ public class TreasuryThrull extends Card {
 
     public TreasuryThrull() {
         addTrigger(Triggers.youCastSpell().anySpell(),
-                new MayPayManaEffect("{W/B}", new LoseLifeEffect(1, Subjects.eachOpponent(), true), "Pay {W/B} to extort?"));
+                UnlessPaysEffect.youMayPay("{W/B}", new LoseLifeEffect(1, Subjects.eachOpponent(), true))
+                        .withPrompt("Pay {W/B} to extort?"));
 
         addTrigger(Triggers.attacks(), new MayEffect(
                 ReturnCardFromGraveyardEffect.builder()

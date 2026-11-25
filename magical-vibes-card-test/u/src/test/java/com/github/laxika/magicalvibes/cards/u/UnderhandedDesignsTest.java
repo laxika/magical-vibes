@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MycosynthLattice;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
@@ -48,7 +49,7 @@ class UnderhandedDesignsTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
@@ -121,12 +122,12 @@ class UnderhandedDesignsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without mana does not drain life")
+    @DisplayName("Without any way to pay, nothing is asked and it does not drain life")
     void cannotDrainWithoutPaying() {
         addReadyDesigns(player1);
         harness.enterBattlefieldAndReturn(player1, new Ornithopter());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
@@ -167,7 +168,7 @@ class UnderhandedDesignsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertLife(player1, 21);
         harness.assertLife(player2, 19);

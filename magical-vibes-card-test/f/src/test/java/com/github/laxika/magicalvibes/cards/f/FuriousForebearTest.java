@@ -23,11 +23,11 @@ class FuriousForebearTest extends BaseCardTest {
     @DisplayName("Paying {1}{W} returns Furious Forebear from the graveyard to hand")
     void payingManaReturnsToHand() {
         FuriousForebear forebear = putForebearInGraveyard();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
         destroyCreature(player1);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(forebear);
@@ -40,7 +40,7 @@ class FuriousForebearTest extends BaseCardTest {
         FuriousForebear forebear = putForebearInGraveyard();
         destroyCreature(player1);
 
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(forebear);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(forebear);
@@ -87,10 +87,10 @@ class FuriousForebearTest extends BaseCardTest {
     @DisplayName("Insufficient mana cannot return Furious Forebear")
     void insufficientManaLeavesItInGraveyard() {
         FuriousForebear forebear = putForebearInGraveyard();
-        destroyCreature(player1);
         harness.addMana(player1, ManaColor.WHITE, 1);
+        destroyCreature(player1);
 
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(forebear);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(forebear);
@@ -102,9 +102,9 @@ class FuriousForebearTest extends BaseCardTest {
         FuriousForebear first = new FuriousForebear();
         FuriousForebear second = new FuriousForebear();
         harness.setGraveyard(player1, List.of(first, second));
-        destroyCreature(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.WHITE, 2);
+        destroyCreature(player1);
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -133,9 +133,9 @@ class FuriousForebearTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Furious Forebear"));
         harness.passBothPriorities();
-        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
 

@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,10 +16,7 @@ public class FlameshadowConjuring extends Card {
         // that's a copy of that creature. That token gains haste. Exile it at the beginning of the next
         // end step.
         addTrigger(Triggers.enters(Triggers.NONTOKEN_CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new MayPayManaEffect(
-                "{R}",
-                new CreateTokenCopyOfTargetPermanentEffect(true, true).ofTriggeringPermanent(),
-                "Pay {R} to create a hasty token copy of that creature (exiled at the beginning of the next end step)?"
-        ));
+                UnlessPaysEffect.youMayPay("{R}", new CreateTokenCopyOfTargetPermanentEffect(true, true).ofTriggeringPermanent())
+                        .withPrompt("Pay {R} to create a hasty token copy of that creature (exiled at the beginning of the next end step)?"));
     }
 }

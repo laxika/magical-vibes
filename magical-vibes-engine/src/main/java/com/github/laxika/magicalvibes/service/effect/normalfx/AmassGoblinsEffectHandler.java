@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.AmassGoblinsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CompleteAmassGoblinsEffect;
@@ -83,6 +84,9 @@ public class AmassGoblinsEffectHandler implements NormalEffectHandlerBean {
             }
             if (effects.get(i) instanceof MayPayManaEffect mayPay
                     && mayPay.wrapped() == effect) {
+                return i;
+            }
+            if (effects.get(i) instanceof UnlessPaysEffect unless && unless.ifPaid() == effect) {
                 return i;
             }
         }

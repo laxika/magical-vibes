@@ -11,8 +11,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * Reverberation), and with {@code permanentSpellToken} a copy of a permanent spell becomes a token (Magus Lucea Kane).
  * <p>
  * An ability with an activation trigger and this effect, alone or behind a "you may" ({@link MayEffect}), a "you may
- * pay" ({@link MayPayManaEffect}, {@link MayPayLifeEqualToAmountEffect} with the life paid to activate it as the
- * entry's event value) or an "if", is collected once the activated ability is on the stack, so the copy has its
+ * pay" ({@link UnlessPaysEffect}: Verrak's life equal to the life paid to activate it, the entry's event value) or an "if", is collected once the activated ability is on the stack, so the copy has its
  * targets and X; the activation trigger's stack-entry and payment filters ({@code AbilityTrigger.withStackEntryFilter},
  * {@code withPayment}) are judged then. A "you may" is asked as the ability resolves (CR 603.5).
  */

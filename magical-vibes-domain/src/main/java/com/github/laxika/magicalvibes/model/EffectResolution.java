@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardSubject;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
@@ -287,7 +288,7 @@ public final class EffectResolution {
             // "if you do" MayPayMana shape — choose targets as the trigger goes on the stack
             // after the permanent enters (CR 603.3d), never at cast time. Cast-time targeting
             // would miss the entering permanent itself as a legal target.
-            if (e instanceof MayPayManaEffect) continue;
+            if (e instanceof MayPayManaEffect || e instanceof UnlessPaysEffect) continue;
             // A gate-conditional ETB ("Metalcraft — When ~ enters, ... target player loses
             // 4 life") is an intervening-if trigger (CR 603.4): whether it triggers at all
             // depends on game state as the permanent enters, so the target can't be a

@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -32,6 +32,6 @@ public class MentorOfTheMeek extends Card {
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(Triggers.CREATURE, new PermanentPowerAtMostPredicate(2))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new MayPayManaEffect("{1}", new DrawCardEffect(1), "Pay {1} to draw a card?"));
+                UnlessPaysEffect.youMayPay("{1}", new DrawCardEffect(1)).withPrompt("Pay {1} to draw a card?"));
     }
 }

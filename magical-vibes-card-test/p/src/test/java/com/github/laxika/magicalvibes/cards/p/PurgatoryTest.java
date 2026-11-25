@@ -179,7 +179,7 @@ class PurgatoryTest extends BaseCardTest {
 
             advanceToSecondTurnUpkeep(player1);
             harness.passBothPriorities();
-            harness.handleMayAbilityChosen(player1, true);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
             harness.assertNotOnBattlefield(player1, "Feral Shadow");
             assertThat(gd.getCardsExiledByPermanent(permId)).hasSize(1);
@@ -194,7 +194,7 @@ class PurgatoryTest extends BaseCardTest {
             advanceToSecondTurnUpkeep(player1);
             harness.addMana(player1, ManaColor.WHITE, 4);
             harness.passBothPriorities();
-            harness.handleMayAbilityChosen(player1, true);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
             harness.assertNotOnBattlefield(player1, "Feral Shadow");
             assertThat(gd.getCardsExiledByPermanent(permId)).hasSize(1);

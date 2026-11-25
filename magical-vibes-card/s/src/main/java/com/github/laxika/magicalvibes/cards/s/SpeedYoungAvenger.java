@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureBlockableOnlyByFilterThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -31,10 +31,8 @@ public class SpeedYoungAvenger extends Card {
 
         target(targetFilter).addTrigger(Triggers.youCastSpell()
                         .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
-                new MayPayManaEffect("{1}",
-                        new QueueReflexiveAbilityEffect(new MakeCreatureBlockableOnlyByFilterThisTurnEffect(
+                UnlessPaysEffect.youMayPay("{1}", new QueueReflexiveAbilityEffect(new MakeCreatureBlockableOnlyByFilterThisTurnEffect(
                                 hasteCreatures,
-                                "creatures with haste")),
-                        "Pay {1} to make target creature with haste blockable only by creatures with haste?"));
+                                "creatures with haste"))).withPrompt("Pay {1} to make target creature with haste blockable only by creatures with haste?"));
     }
 }

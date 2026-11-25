@@ -48,7 +48,7 @@ class ShroudedSerpentTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gqs.hasCantBeBlocked(gd, serpent)).isTrue();
         resolveCombat();
@@ -63,7 +63,7 @@ class ShroudedSerpentTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gqs.hasCantBeBlocked(gd, serpent)).isTrue();
 
@@ -75,13 +75,13 @@ class ShroudedSerpentTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without enough mana makes the Serpent unblockable")
+    @DisplayName("Without any way to pay, nothing is asked and it makes the Serpent unblockable")
     void acceptingWithoutManaMakesSerpentUnblockable() {
         Permanent serpent = addCreatureReady(player1, new ShroudedSerpent());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gqs.hasCantBeBlocked(gd, serpent)).isTrue();
     }
@@ -112,7 +112,7 @@ class ShroudedSerpentTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gqs.hasCantBeBlocked(gd, serpent)).isTrue();
         resolveCombat();

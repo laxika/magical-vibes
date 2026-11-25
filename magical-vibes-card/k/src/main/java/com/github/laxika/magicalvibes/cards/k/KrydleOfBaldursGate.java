@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -25,7 +25,7 @@ public class KrydleOfBaldursGate extends Card {
                 new ScryEffect(1)));
 
         target(TargetFilters.creature()).addTrigger(Triggers.youAttack(),
-                new MayPayManaEffect("{2}", new MakeCreatureUnblockableEffect(),
-                        "Pay {2} to make target creature unable to be blocked?"));
+                UnlessPaysEffect.youMayPay("{2}", new MakeCreatureUnblockableEffect())
+                        .withPrompt("Pay {2} to make target creature unable to be blocked?"));
     }
 }

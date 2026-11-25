@@ -44,6 +44,9 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.b.BogardanFirefiend;
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.f.FlightSpellbomb;
+import com.github.laxika.magicalvibes.cards.k.KnightOfTheMists;
+import com.github.laxika.magicalvibes.cards.k.KnightOfValor;
 import com.github.laxika.magicalvibes.cards.i.IslandSanctuary;
 import com.github.laxika.magicalvibes.cards.i.IronStar;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
@@ -1745,6 +1748,62 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
             ai.handleEvent(AiDecisionKind.INTERACTION);
 
             assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
+        }
+
+        @Test
+        @DisplayName("Hard AI taps a spare Island to pay Flight Spellbomb's {U} and draws")
+        void paysFlightSpellbombsDrawWithSpareMana() {
+            HardAiDecisionEngine ai = createHardAi(player1);
+            gd.status = GameStatus.RUNNING;
+
+            harness.addToBattlefield(player1, new FlightSpellbomb());
+            UUID bearsId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
+            Permanent island = new Permanent(new Island());
+            island.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(island);
+            harness.setHand(player1, List.of());
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            harness.clearPriorityPassed();
+
+            harness.activateAbility(player1, 0, null, bearsId);
+            harness.passBothPriorities();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                    .isEqualTo(player1.getId());
+
+            ai.handleEvent(AiDecisionKind.INTERACTION);
+
+            assertThat(island.isTapped()).isTrue();
+            assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("Hard AI declines Knight of the Mists' {U} when not paying destroys the opponent's Knight")
+        void declinesKnightOfTheMistsPaymentThatWouldSaveAnOpposingKnight() {
+            HardAiDecisionEngine ai = createHardAi(player1);
+            gd.status = GameStatus.RUNNING;
+
+            UUID opposingKnightId = harness.addToBattlefieldAndReturn(player2, new KnightOfValor()).getId();
+            Permanent island = new Permanent(new Island());
+            island.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(island);
+            harness.setHand(player1, List.of());
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            harness.clearPriorityPassed();
+
+            harness.castFromHand(player1, new KnightOfTheMists(), "{2}{U}");
+            harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, opposingKnightId);
+            harness.passBothPriorities();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                    .isEqualTo(player1.getId());
+
+            ai.handleEvent(AiDecisionKind.INTERACTION);
+
+            assertThat(island.isTapped()).isFalse();
+            assertThat(gd.playerBattlefields.get(player2.getId()))
+                    .noneMatch(permanent -> permanent.getId().equals(opposingKnightId));
         }
     }
 }

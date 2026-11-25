@@ -170,7 +170,7 @@ class MokuMeanderingDrummerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without enough mana does not grant either effect")
+    @DisplayName("Without any way to pay, nothing is asked and it does not grant either effect")
     void unpaidTriggerDoesNotGrantEffects() {
         Permanent moku = harness.addToBattlefieldAndReturn(player1, new MokuMeanderingDrummer());
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -178,7 +178,7 @@ class MokuMeanderingDrummerTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(PermanentGrants.powerBoostOf(gd, moku)).isZero();
         assertThat(PermanentGrants.toughnessBoostOf(gd, moku)).isZero();

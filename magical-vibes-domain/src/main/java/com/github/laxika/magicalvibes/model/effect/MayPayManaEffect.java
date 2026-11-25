@@ -6,8 +6,11 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Like {@link MayEffect}, but the player must pay a mana cost to get the effect.
- * Used for "you may pay {X}. If you do, [effect]" patterns (e.g. Spellbomb cycle).
+ * Like {@link MayEffect}, but a player must pay to get the effect: what is left of the "may pay" forms after step 10
+ * run U3a moved every single-payer mana and life payment ("you may pay {1}. If you do, …", "that player may pay …")
+ * onto {@link UnlessPaysEffect}. Left here: the any-player and any-opponent mana loop, the payments whose "if you do"
+ * is itself part of the cost (a discard, a sacrifice of the source, an exile), the Chain cards' "that player may copy"
+ * and the non-mana {@link #anyPlayerMay} payments (runs U3b' and U3c).
  *
  * <p>{@link MayPayPayer#ANY_PLAYER} offers the payment to each player in APNAP order and applies
  * the wrapped effect if at least one player pays.
@@ -25,8 +28,8 @@ import java.util.UUID;
  *
  * <p>{@code lifeCost} is life paid <em>in addition to</em> the mana ("you may pay {4} and 2 life" —
  * Purgatory). Both halves must be payable or the whole payment fails; leave it {@code 0} for the
- * mana-only shape. This is not the "pay {M} or N life" choice — that is
- * {@link TargetPlayerMayPayManaOrLifeEffect}.
+ * mana-only shape. This is not the "pay {M} or N life" choice — that is an {@link UnlessPaysEffect} over an
+ * {@link AnyOfCost}.
  *
  * <p>For "you may pay {X}. When you do, [targeted effect]" wrap the effect in a
  * {@link QueueReflexiveAbilityEffect}: paying puts a separate reflexive triggered ability on the

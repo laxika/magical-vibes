@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -24,11 +24,8 @@ public class OloroAgelessAscetic extends Card {
         addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.COMMAND),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCardInCommandZone()),
                 new GainLifeEffect(2));
-        addTrigger(Triggers.youGainLife(), new MayPayManaEffect(
-                "{1}",
-                SequenceEffect.of(
+        addTrigger(Triggers.youGainLife(), UnlessPaysEffect.youMayPay("{1}", SequenceEffect.of(
                         new DrawCardEffect(1),
-                        new LoseLifeEffect(1, Subjects.eachOpponent())),
-                "Pay {1} to draw a card and have each opponent lose 1 life?"));
+                        new LoseLifeEffect(1, Subjects.eachOpponent()))).withPrompt("Pay {1} to draw a card and have each opponent lose 1 life?"));
     }
 }

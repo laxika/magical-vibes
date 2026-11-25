@@ -99,7 +99,7 @@ class JeweledTorqueTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting the trigger without {2} does not gain life")
+    @DisplayName("Without any way to pay, nothing is asked and it does not gain life")
     void cannotPayOptionalCost() {
         Permanent torque = harness.addToBattlefieldAndReturn(player1, new JeweledTorque());
         torque.setChosenColor(CardColor.GREEN);
@@ -108,9 +108,7 @@ class JeweledTorqueTest extends BaseCardTest {
         harness.castFromHand(player1, new DeepwoodWolverine(), "{G}");
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)
-                .playerId()).isEqualTo(player1.getId());
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.assertLife(player1, lifeBefore);
     }

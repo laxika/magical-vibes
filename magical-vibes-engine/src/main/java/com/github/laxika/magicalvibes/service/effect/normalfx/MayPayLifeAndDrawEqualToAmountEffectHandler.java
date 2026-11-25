@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.List;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeAndDrawEqualToAmountEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -20,7 +21,6 @@ public class MayPayLifeAndDrawEqualToAmountEffectHandler implements NormalEffect
 
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
-    private final MayPayLifeEffectResolutionHandler mayPayLifeEffectResolutionHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,8 +43,8 @@ public class MayPayLifeAndDrawEqualToAmountEffectHandler implements NormalEffect
             return;
         }
 
-        mayPayLifeEffectResolutionHandler.resolve(gameData, entry,
-                new MayPayLifeEffect(amount, new DrawCardEffect(amount),
-                        "Pay " + amount + " life to draw " + amount + " cards?"));
+        entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(
+                UnlessPaysEffect.youMayPayLife(amount, new DrawCardEffect(amount))
+                        .withPrompt("Pay " + amount + " life to draw " + amount + " cards?")));
     }
 }

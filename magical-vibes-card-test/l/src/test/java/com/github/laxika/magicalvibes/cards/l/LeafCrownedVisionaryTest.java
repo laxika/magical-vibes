@@ -66,7 +66,7 @@ class LeafCrownedVisionaryTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .noneMatch(card -> card instanceof GrizzlyBears);
@@ -147,7 +147,7 @@ class LeafCrownedVisionaryTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting the choice without enough green mana does not draw")
+    @DisplayName("Without any way to pay, nothing is asked and it does not draw")
     void cannotDrawWithoutPayingGreenMana() {
         GrizzlyBears drawnCard = new GrizzlyBears();
         harness.addToBattlefield(player1, new LeafCrownedVisionary());
@@ -158,7 +158,7 @@ class LeafCrownedVisionaryTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawnCard);
         assertThat(gd.playerDecks.get(player1.getId())).contains(drawnCard);

@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -17,9 +17,8 @@ public class PheresBandRaiders extends Card {
 
     public PheresBandRaiders() {
         addTrigger(Triggers.becomesUntapped(),
-                new MayPayManaEffect("{2}{G}", new CreateTokenEffect(
+                UnlessPaysEffect.youMayPay("{2}{G}", new CreateTokenEffect(
                         "Centaur", 3, 3, CardColor.GREEN,
-                        List.of(CardSubtype.CENTAUR), Set.of(), Set.of(CardType.ENCHANTMENT)),
-                        "Pay {2}{G} to create a 3/3 green Centaur enchantment creature token?"));
+                        List.of(CardSubtype.CENTAUR), Set.of(), Set.of(CardType.ENCHANTMENT))).withPrompt("Pay {2}{G} to create a 3/3 green Centaur enchantment creature token?"));
     }
 }

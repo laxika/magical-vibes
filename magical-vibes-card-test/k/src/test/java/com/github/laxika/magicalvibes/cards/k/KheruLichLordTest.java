@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.a.AlpineGrizzly;
 import com.github.laxika.magicalvibes.cards.f.ForceAway;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -27,7 +28,7 @@ import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KheruLichLord.class, GrizzlyBears.class, LightningBolt.class, Shock.class,
+@CardUsed({Swamp.class, KheruLichLord.class, GrizzlyBears.class, LightningBolt.class, Shock.class,
         AlpineGrizzly.class, ForceAway.class, SundialOfTheInfinite.class,
         TreasureCruise.class, WetlandSambar.class})
 class KheruLichLordTest extends BaseCardTest {
@@ -209,6 +210,8 @@ class KheruLichLordTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new KheruLichLord());
         harness.addToBattlefield(player1, new SundialOfTheInfinite());
+        // A Swamp: a mana source, so the next upkeep's payment is offered (and declined) too.
+        harness.addToBattlefield(player1, new Swamp());
         Card creature = new AlpineGrizzly();
         harness.setGraveyard(player1, List.of(creature));
 

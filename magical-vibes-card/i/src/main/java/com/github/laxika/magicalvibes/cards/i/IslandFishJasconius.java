@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -29,10 +29,8 @@ public class IslandFishJasconius extends Card {
         addStaticEffect(DoesntUntapEffect.self());
 
         // "At the beginning of your upkeep, you may pay {U}{U}{U}. If you do, untap this creature."
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayPayManaEffect(
-                "{U}{U}{U}",
-                new UntapPermanentsEffect(Subjects.source()),
-                "Pay {U}{U}{U} to untap Island Fish Jasconius?"));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), UnlessPaysEffect.youMayPay("{U}{U}{U}", new UntapPermanentsEffect(Subjects.source()))
+                .withPrompt("Pay {U}{U}{U} to untap Island Fish Jasconius?"));
 
         // "This creature can't attack unless defending player controls an Island."
         addStaticEffect(new CantAttackUnlessEffect(

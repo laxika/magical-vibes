@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -35,12 +35,10 @@ public class SpitFlame extends Card {
                                 ObjectRelation.YOU_CONTROL),
                         AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT,
-                new MayPayManaEffect("{R}",
-                        ReturnCardFromGraveyardEffect.builder()
+                UnlessPaysEffect.youMayPay("{R}", ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.HAND)
                                 .filter(new CardIsSelfPredicate())
                                 .returnAll(true)
-                                .build(),
-                        "Pay {R} to return Spit Flame from your graveyard to your hand?"));
+                                .build()).withPrompt("Pay {R} to return Spit Flame from your graveyard to your hand?"));
     }
 }

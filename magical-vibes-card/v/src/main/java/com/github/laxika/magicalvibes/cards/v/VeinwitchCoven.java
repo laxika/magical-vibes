@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,12 +17,10 @@ public class VeinwitchCoven extends Card {
     public VeinwitchCoven() {
         // Whenever you gain life, you may pay {B}. If you do, return target creature card from your
         // graveyard to your hand.
-        addTrigger(Triggers.youGainLife(), new MayPayManaEffect("{B}",
-                ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.youGainLife(), UnlessPaysEffect.youMayPay("{B}", ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .filter(new CardTypePredicate(CardType.CREATURE))
                         .targetGraveyard(true)
-                        .build(),
-                "Pay {B} to return target creature card from your graveyard to your hand?"));
+                        .build()).withPrompt("Pay {B} to return target creature card from your graveyard to your hand?"));
     }
 }

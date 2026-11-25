@@ -68,7 +68,7 @@ class TenebTheHarvesterTest extends BaseCardTest {
         chooseTarget(target);
         harness.passBothPriorities();
 
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(target);
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -127,7 +127,7 @@ class TenebTheHarvesterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         chooseTarget(target);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(target);
         assertThat(gd.playerBattlefields.get(player1.getId()))

@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -15,8 +15,6 @@ public class InsidiousBookworms extends Card {
 
     public InsidiousBookworms() {
         // When this creature dies, you may pay {1}{B}. If you do, target player discards a card at random.
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayPayManaEffect("{1}{B}",
-                new DiscardEffect(1, Subjects.targetPlayer(), true),
-                "pay {1}{B}"));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), UnlessPaysEffect.youMayPay("{1}{B}", new DiscardEffect(1, Subjects.targetPlayer(), true)));
     }
 }

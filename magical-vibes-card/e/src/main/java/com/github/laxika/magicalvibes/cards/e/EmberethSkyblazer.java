@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -10,7 +11,6 @@ import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,9 +21,7 @@ public class EmberethSkyblazer extends Card {
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
 
-        addTrigger(Triggers.attacks(), new MayPayManaEffect("{2}{R}",
-                new BoostAllOwnCreaturesEffect(
-                        new Sum(new PlayersInGame(), new Fixed(-1)), new Fixed(0)),
-                "Pay {2}{R} to boost creatures you control?"));
+        addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay("{2}{R}", new BoostAllOwnCreaturesEffect(
+                        new Sum(new PlayersInGame(), new Fixed(-1)), new Fixed(0))).withPrompt("Pay {2}{R} to boost creatures you control?"));
     }
 }

@@ -146,7 +146,7 @@ class BloodOperativeTest extends BaseCardTest {
         castSurveilSpell();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(2);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(bloodOperative);

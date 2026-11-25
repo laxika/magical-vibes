@@ -28,8 +28,8 @@ class GoShintaiOfBoundlessVigorTest extends BaseCardTest {
         Permanent honden = harness.addToBattlefieldAndReturn(player1, new HondenOfSeeingWinds());
 
         advanceToEndStep(player1);
-        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, honden.getId());
         harness.passBothPriorities();
@@ -45,7 +45,7 @@ class GoShintaiOfBoundlessVigorTest extends BaseCardTest {
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(honden.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
@@ -58,8 +58,8 @@ class GoShintaiOfBoundlessVigorTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         advanceToEndStep(player1);
-        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -79,8 +79,8 @@ class GoShintaiOfBoundlessVigorTest extends BaseCardTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.interaction.isAwaitingInput()).isFalse();
 
-            harness.passBothPriorities();
             harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
             harness.handlePermanentChosen(player1, shrine.getId());
 
@@ -101,8 +101,8 @@ class GoShintaiOfBoundlessVigorTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.END_STEP, () -> {
             advanceToEndStep(player1);
-            harness.passBothPriorities();
             harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
             harness.handlePermanentChosen(player1, honden.getId());
 
@@ -124,8 +124,8 @@ class GoShintaiOfBoundlessVigorTest extends BaseCardTest {
         Permanent honden = harness.addToBattlefieldAndReturn(player2, new HondenOfSeeingWinds());
 
         advanceToEndStep(player1);
-        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, honden.getId());
         harness.passBothPriorities();
@@ -134,13 +134,13 @@ class GoShintaiOfBoundlessVigorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting without enough mana does not place counters")
+    @DisplayName("Without any way to pay, nothing is asked and it does not place counters")
     void cannotPayWithoutMana() {
         Permanent shrine = harness.addToBattlefieldAndReturn(player1, new GoShintaiOfBoundlessVigor());
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(shrine.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

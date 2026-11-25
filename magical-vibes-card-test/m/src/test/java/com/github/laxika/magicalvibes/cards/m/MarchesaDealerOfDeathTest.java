@@ -57,7 +57,7 @@ class MarchesaDealerOfDeathTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top, second);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(top, second);
